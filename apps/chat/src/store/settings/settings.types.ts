@@ -3,7 +3,7 @@ import { OAuthProviderType } from 'next-auth/providers';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
-import { Feature, UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, FeatureData, UploadStatus } from '@epam/ai-dial-shared';
 
 export interface SettingsState {
   appName: string;
@@ -12,17 +12,18 @@ export interface SettingsState {
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
+  enabledFeaturesData: Partial<Record<Feature, FeatureData>>;
   publicationFilters: string[];
   codeWarning: string;
   announcement: string;
-  defaultModelId: string | undefined;
-  overlayDefaultModelId?: string | undefined;
-  defaultAssistantSubmodelId: string;
+  defaultModelReference: string | undefined;
+  overlayDefaultModelReference?: string | undefined;
   defaultRecentModelsIds: string[];
-  defaultRecentAddonsIds: string[];
   storageType: StorageType;
   themesHostDefined: boolean;
   isolatedModelId?: string;
+  preselectedConversationId?: string;
+  preselectedAction?: string;
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
@@ -31,6 +32,7 @@ export interface SettingsState {
   quickAppsHost?: string;
   quickAppsModel?: string;
   quickAppsSchemaId?: string;
+  externalAppsSchemaId?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
   providerId: string | null;

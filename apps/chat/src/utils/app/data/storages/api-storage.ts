@@ -12,7 +12,11 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
-import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getOpsApiUrl,
+  parseEntityApiKey,
+} from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -27,10 +31,13 @@ import {
   BackendResourceType,
   MoveModel,
 } from '@/src/types/common';
+import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
 import { DialStorage } from '@/src/types/storage';
+import { ToolsetInfo, ToolsetModel } from '@/src/types/toolsets';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -40,12 +47,14 @@ import {
 import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
+import { ToolsetApiStorage } from './api/toolset-api-storage';
 
 import {
   ConversationInfo,
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -53,6 +62,7 @@ export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
   private _promptApiStorage = new PromptApiStorage();
   private _applicationApiStorage = new ApplicationApiStorage();
+  private _toolsetApiStorage = new ToolsetApiStorage();
 
   private tryCreateEntity<T extends Conversation | Prompt>(
     entity: T,
@@ -269,7 +279,7 @@ export class ApiStorage implements DialStorage {
   }
 
   move(data: MoveModel): Observable<MoveModel> {
-    return ApiUtils.request('/api/ops/resource/move', {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.RESOURCE_MOVE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
@@ -277,6 +287,64 @@ export class ApiStorage implements DialStorage {
         overwrite: data.overwrite,
       }),
     });
+  }
+
+  copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return ApiUtils.request('/api/files/copy', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+      signal: options?.signal,
+    });
+  }
+
+  moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return ApiUtils.request('/api/files/move', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+      signal: options?.signal,
+    });
+  }
+
+  deleteFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationsResult<string>> {
+    return ApiUtils.request('/api/files/delete', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  uploadArchive(data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    const encodedDestination = encodeURIComponent(data.destinationUrl);
+
+    return from(
+      fetch(`/api/files/upload-archive?destination=${encodedDestination}`, {
+        method: HTTPMethod.POST,
+        body: data.file,
+      }).then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            const message = text || 'Failed to upload archive';
+            throw new Error(message);
+          });
+        }
+
+        return undefined;
+      }),
+    );
   }
 
   createApplication(
@@ -292,20 +360,29 @@ export class ApiStorage implements DialStorage {
   ): Observable<ApplicationInfo> {
     return this._applicationApiStorage.updateEntity(application, schema);
   }
+
   getApplication(
     applicationId: string,
   ): Observable<CustomApplicationModel | null> {
     return this._applicationApiStorage.getEntity({
       id: applicationId,
       folderId: '',
-      ...parseApplicationApiKey(applicationId),
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
   }
+
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]> {
+    return this._applicationApiStorage.getEntities(path, recursive);
+  }
+
   deleteApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.deleteEntity({
       id: applicationId,
       folderId: '',
-      ...parseApplicationApiKey(applicationId),
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
   }
 
@@ -336,5 +413,36 @@ export class ApiStorage implements DialStorage {
 
   getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
     return this._applicationApiStorage.getConfigurationSchema(applicationId);
+  }
+
+  // Toolsets
+  getToolsetById(toolsetId: string): Observable<ToolsetModel | null> {
+    return this._toolsetApiStorage.getEntity({
+      id: toolsetId,
+      //TODO: add folderId to toolsets when folders for toolsets are implemented
+      folderId: '',
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
+    });
+  }
+
+  createToolset(data: ToolsetModel): Observable<ToolsetInfo> {
+    return this._toolsetApiStorage.createEntity(data);
+  }
+
+  updateToolset(data: ToolsetModel): Observable<ToolsetInfo> {
+    return this._toolsetApiStorage.updateEntity(data);
+  }
+
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return this._toolsetApiStorage.getEntities(path, true);
+  }
+
+  deleteToolset(toolsetId: string): Observable<void> {
+    return this._toolsetApiStorage.deleteEntity({
+      id: toolsetId,
+      //TODO: add folderId to toolsets when folders for toolsets are implemented
+      folderId: '',
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
+    });
   }
 }

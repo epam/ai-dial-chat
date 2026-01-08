@@ -21,23 +21,23 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { PageType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+  ConversationsActions,
+  FilesActions,
+  MarketplaceActions,
+  MigrationActions,
+  ModelsActions,
+  PromptsActions,
+  PublicationActions,
+  SettingsActions,
+  ToolsetActions,
+  UIActions,
+} from '@/src/store/actions';
+import { AuthSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { AddonsActions } from '../addons/addons.reducers';
-import { ApplicationTypesSchemasActions } from '../applicationTypeSchemas/applicationTypeSchemas.reducers';
-import { AuthSelectors } from '../auth/auth.selectors';
-import { FilesActions } from '../files/files.reducers';
-import { MarketplaceActions } from '../marketplace/marketplace.reducers';
-import { MigrationActions } from '../migration/migration.reducers';
-import { PublicationActions } from '../publication/publication.reducers';
-import { SettingsActions } from './settings.reducers';
-import { SettingsSelectors } from './settings.selectors';
 
 const getInitActions = (page?: PageType): Observable<AppAction>[] => {
   switch (page) {
@@ -46,12 +46,26 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(UIActions.init()),
         of(ModelsActions.init()),
         of(ApplicationActions.init()),
-        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ConversationsActions.initShare()),
         of(MarketplaceActions.init()),
+        of(ToolsetActions.init()),
+      ];
+    case PageType.ToolsetEditor:
+      return [of(UIActions.init()), of(ToolsetActions.init())];
+    case PageType.FileManager:
+      return [
+        of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(ApplicationActions.init()),
+        of(FilesActions.init()),
+        of(PublicationActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
+        of(ConversationsActions.initShare()),
+        of(MarketplaceActions.init()),
+        of(ToolsetActions.init()),
       ];
     case PageType.Chat:
       return [
@@ -59,37 +73,47 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(MigrationActions.init()),
         of(ModelsActions.init()),
         of(ApplicationActions.init()),
-        of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
+        of(ToolsetActions.init()),
       ];
-    case PageType.AppsEditorSettings:
-    case PageType.AppsEditorGeneralInfo:
+    case PageType.AppsEditor:
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
-        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
+        of(ToolsetActions.init()),
       ];
     default:
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
         of(ApplicationActions.init()),
-        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
+        of(ToolsetActions.init()),
       ];
   }
 };
+
+const preInitEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(SettingsActions.preInitApp.type),
+    switchMap(() => {
+      const storageType = SettingsSelectors.selectStorageType(state$.value);
+
+      DataService.init(storageType);
+      return of(UIActions.initTheme());
+    }),
+  );
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -137,4 +161,4 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-export const SettingsEpics = combineEpics(initEpic);
+export const SettingsEpics = combineEpics(initEpic, preInitEpic);

@@ -1,35 +1,39 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '@/src/hooks/useRouteHistory';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '@/src/utils/app/route';
-import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
-import { delay } from '@/src/utils/auth/delay';
-import { timeoutAsync } from '@/src/utils/auth/timeout-async';
+import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { AuthActions } from '@/src/store/auth/auth.reducers';
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { SettingsActions } from '@/src/store/settings/settings.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  AuthSelectors,
+  MarketplaceSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { NavigationWrapper } from '@/src/components/NavigationWrapper';
+import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper';
 
-import Loader from './Common/Loader';
+import { Loader } from './Common/Loader';
 import { Title } from './Title';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const removeQueryString = (url: string) => url.split('?')[0];
 
-export default function Layout({
+export function Layout({
   children,
   settings,
 }: {
@@ -54,8 +58,22 @@ export default function Layout({
   const isApplyingModel = useAppSelector(
     MarketplaceSelectors.selectIsApplyingModel,
   );
+  const isEditorLoader = useAppSelector(UISelectors.selectIsEditorLoader);
+  const isAnyMenuOpen = useAppSelector((state) =>
+    UISelectors.selectIsAnyMenuOpen(state, router.pathname),
+  );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+
+  const screenState = useScreenState();
 
   const [loading, setLoading] = useState(isApplyingModel);
+
+  const showFloatingOverlay =
+    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
+
+  const handleCloseOverlay = useCallback(() => {
+    dispatch(UIActions.closeAllPanels());
+  }, [dispatch]);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
@@ -111,50 +129,20 @@ export default function Layout({
   }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
-    const timeout = 30 * 1000;
-    let complete = false;
-    await Promise.race([
-      timeoutAsync(timeout),
-      (async () => {
-        const authWindowLocation = new AuthWindowLocationLike(
-          `/api/auth/signin`,
-          isSignInInSameWindow,
-        );
-
-        await authWindowLocation.ready; // ready after redirects
-        const t = Math.max(100, timeout / 1000);
-        // wait for redirection to back
-        while (!complete) {
-          try {
-            if (authWindowLocation.href === window.location.href) {
-              complete = true;
-              authWindowLocation.destroy();
-              break;
-            }
-          } catch {
-            // Do nothing
-          }
-          await delay(t);
-        }
-        window.location.reload();
-
-        return;
-      })(),
-    ]);
+    signInInOverlay(`/api/auth/signin`, isSignInInSameWindow);
   };
 
   return (
     <>
       <Title settings={settings} />
       {shouldOverlayLogin ? (
-        <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary">
-          <button
+        <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
+          <DialButton
+            label={t('Login')}
+            variant={ButtonVariant.Secondary}
             onClick={handleOverlayAuth}
-            className="button button-secondary"
             disabled={authStatus === 'loading'}
-          >
-            {t('Login')}
-          </button>
+          />
         </div>
       ) : (
         <main
@@ -162,10 +150,16 @@ export default function Layout({
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
+          {showFloatingOverlay && (
+            <FloatingOverlay
+              className="z-30 bg-blackout"
+              onClick={handleCloseOverlay}
+            />
+          )}
           <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}
-      {loading && (
+      {(loading || isEditorLoader) && (
         <Loader containerClassName="absolute bg-blackout size-full top-0 z-50" />
       )}
     </>

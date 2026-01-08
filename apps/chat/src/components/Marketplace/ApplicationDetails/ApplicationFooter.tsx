@@ -1,5 +1,9 @@
-import { IconPlayerPlay } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { IconExternalLink, IconPlayerPlay } from '@tabler/icons-react';
+import { useEffect, useMemo } from 'react';
+
+import Link from 'next/link';
+
+import classNames from 'classnames';
 
 import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -7,26 +11,32 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationSimpleStatus,
-  isApplicationPublic,
   isExecutableApp,
+  isExternalApp,
+  isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 
 import {
   ApplicationStatus,
+  ExternalAppConfig,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { AuthSelectors } from '@/src/store/auth/auth.selectors';
-import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
-import Tooltip from '@/src/components/Common/Tooltip';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ApplicationDetailsFooterProps } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -40,43 +50,56 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   }
 };
 
-interface Props {
-  entity: DialAIEntityModel;
-  allVersions: DialAIEntityModel[];
-  onChangeVersion: (entity: DialAIEntityModel) => void;
-  onUseEntity: () => void;
-  onBookmarkClick: (entity: DialAIEntityModel) => void;
-}
-
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
   onChangeVersion,
   onUseEntity,
   onBookmarkClick,
-}: Props) => {
+}: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const dispatch = useAppDispatch();
+
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const isAppLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
+  const appDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
 
   const screenState = useScreenState();
+  const isScreenSmall = screenState === ScreenState.SM;
+
+  const showContextMenu = entity.reference !== entity.id && isScreenSmall;
 
   const agentMenuItemsParams = useMemo(
     () => ({
       entity,
       disabledActions: {
-        copyLink: screenState !== ScreenState.SM,
+        copyLink: !isScreenSmall,
+        share: !showContextMenu,
+        unshare: !entity?.sharedWithMe,
       },
     }),
-    [entity, screenState],
+    [entity, isScreenSmall, showContextMenu],
   );
 
   const menuItems = useAgentMenuItems(agentMenuItemsParams);
+  const filteredMenuItems = useMemo(
+    () => menuItems.filter((item) => item.display),
+    [menuItems],
+  );
 
-  const showContextMenu =
-    entity.reference !== entity.id && screenState === ScreenState.SM;
-  const isPublicApp = isApplicationPublic(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
+
+  useEffect(() => {
+    if (isExternalApp(entity)) {
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
+    }
+  }, [dispatch, entity]);
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -84,30 +107,33 @@ export const ApplicationDetailsFooter = ({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <AgentContextMenu
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
               />
             </button>
           ) : (
-            menuItems.map(({ display, name, disabled, ...props }) =>
-              display ? (
+            filteredMenuItems.map(
+              ({ name, disabled, className, iconClassName, ...props }) => (
                 <IconButton
                   key={name}
                   name={disabled ? getDisabledTooltip(entity, name) : name}
                   disabled={disabled}
+                  className={classNames(iconClassName, className)}
                   {...props}
                 />
-              ) : null,
+              ),
             )
           )}
-          <AgentBookmark
-            entity={entity}
-            size={24}
-            className="icon-button group/bookmark"
-            onBookmarkClick={onBookmarkClick}
-          />
+          {onBookmarkClick && (
+            <MarketplaceEntityBookmark
+              entity={entity}
+              size={24}
+              className="icon-button group/bookmark"
+              onBookmarkClick={onBookmarkClick}
+            />
+          )}
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect
@@ -122,29 +148,51 @@ export const ApplicationDetailsFooter = ({
               !isExecutableApp(entity) ||
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
+            triggerClassName="shrink-0"
             tooltip={t(
               isPublicApp && !isAdmin
                 ? 'Ask your administrator to deploy this application to be able to use it'
                 : 'Deploy the application to be able to use it',
             )}
           >
-            <button
-              onClick={onUseEntity}
-              className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
-              data-qa="use-button"
-              disabled={
-                isExecutableApp(entity) &&
-                playerStatus !== SimpleApplicationStatus.UNDEPLOY
-              }
-            >
-              <IconPlayerPlay size={18} />
-              <span className="hidden md:block">
-                {t('Use {{modelType}}', {
-                  modelType: entity.type,
-                })}
-              </span>
-              <span className="block md:hidden">{t('Use')}</span>
-            </button>
+            {!isExternalApp(entity) ? (
+              <DialButton
+                onClick={onUseEntity}
+                textClassName="font-theme text-sm"
+                data-qa="use-button"
+                disabled={
+                  isExecutableApp(entity) &&
+                  playerStatus !== SimpleApplicationStatus.UNDEPLOY
+                }
+                iconBefore={<IconPlayerPlay size={18} />}
+                label={
+                  isScreenSmall
+                    ? t('Use')
+                    : t('Use {{modelType}}', {
+                        ns: Translation.Marketplace,
+                        modelType: entity.type,
+                      })
+                }
+                variant={ButtonVariant.Primary}
+              />
+            ) : (
+              <Link
+                href={
+                  (appDetails?.applicationProperties as ExternalAppConfig)
+                    ?.external_url ?? ''
+                }
+                target="_blank"
+                className={classNames(
+                  'button button-primary flex shrink-0 items-center gap-2 font-theme text-sm',
+                  isAppLoading && 'cursor-not-allowed',
+                )}
+                data-qa="external-link"
+              >
+                <IconExternalLink size={18} />
+                <span className="hidden md:block">{t('Open in New Tab')}</span>
+                <span className="block md:hidden">{t('Open')}</span>
+              </Link>
+            )}
           </Tooltip>
         </div>
       </div>

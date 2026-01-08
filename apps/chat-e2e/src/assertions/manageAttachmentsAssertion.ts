@@ -6,7 +6,6 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { AttachFilesModal, FileModalSection } from '@/src/ui/webElements';
-import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
 export class ManageAttachmentsAssertion extends BaseAssertion {
@@ -48,12 +47,10 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const arrowIconColor = await this.attachFilesModal
+    const arrowIconElement = this.attachFilesModal
       .getAllFilesTree()
-      .getAttachedFileArrowIconColor(entity.name, entity.index);
-    expect
-      .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-      .toBe(expectedColor);
+      .getAttachedFileArrowIcon(entity.name, entity.index);
+    await this.assertElementColor(arrowIconElement, expectedColor);
   }
 
   public async assertEntityState(
@@ -61,30 +58,49 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
     fileModalSection: FileModalSection,
     expectedState: ElementState,
   ) {
-    let entityTree: AttachFilesTree;
-    switch (fileModalSection) {
-      case FileModalSection.AllFiles:
-        entityTree = this.attachFilesModal.getAllFilesTree();
-        break;
-      case FileModalSection.SharedWithMe:
-        entityTree = this.attachFilesModal.getSharedWithMeTree();
-        break;
-      case FileModalSection.Organization:
-        entityTree = this.attachFilesModal.getOrganizationTree();
-        break;
-    }
-
+    const entityTree = this.attachFilesModal.getFilesTree(fileModalSection);
     const entityLocator = entityTree!.getEntityByName(
       entity.name,
       entity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityLocator, ExpectedMessages.entityIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(
+      entityLocator,
+      expectedState,
+      ExpectedMessages.entityIsVisible,
+    );
+  }
+
+  public async assertFolderState(
+    folderName: string,
+    fileModalSection: FileModalSection,
+    expectedState: ElementState,
+  ) {
+    const entityTree = this.attachFilesModal.getFolderTree(fileModalSection);
+    await this.assertElementState(
+      entityTree.getFolderName(folderName),
+      expectedState,
+      ExpectedMessages.entityIsVisible,
+    );
+  }
+
+  public async assertFolderEntityState(
+    folder: TreeEntity,
+    entity: TreeEntity,
+    fileModalSection: FileModalSection,
+    expectedState: ElementState,
+  ) {
+    const entityTree = this.attachFilesModal.getFolderTree(fileModalSection);
+    const folderEntity = entityTree.getFolderEntity(
+      folder.name,
+      entity.name,
+      folder.index,
+      entity.index,
+    );
+    await this.assertElementState(
+      folderEntity,
+      expectedState,
+      ExpectedMessages.entityIsVisible,
+    );
   }
 
   public async assertSectionState(

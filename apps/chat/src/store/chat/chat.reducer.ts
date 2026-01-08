@@ -12,9 +12,12 @@ import { MessageFormSchema, MessageFormValueType } from '@epam/ai-dial-shared';
 
 const initialState: ChatState = {
   inputContent: '',
-  isConfigurationSchemaLoading: false,
+  configurationSchemasLoadingIds: [],
   infoModalState: ModalState.CLOSED,
+  configurationSchemas: [],
 };
+
+const MAX_CONFIGURATION_SCHEMAS_AMOUNT = 10;
 
 export const chatSlice = createSlice({
   name: 'chat',
@@ -33,6 +36,7 @@ export const chatSlice = createSlice({
       }: PayloadAction<{
         property: string;
         value: MessageFormValueType;
+        modelId: string;
         content?: string;
         submit?: boolean;
       }>,
@@ -50,22 +54,45 @@ export const chatSlice = createSlice({
     getConfigurationSchema: (
       state,
       _action: PayloadAction<{ modelId: string }>,
+    ) => state,
+    startConfigurationSchemaUploading: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>,
     ) => {
-      state.isConfigurationSchemaLoading = true;
+      state.configurationSchemasLoadingIds.push(payload.modelId);
     },
     getConfigurationSchemaSuccess: (
       state,
-      { payload }: PayloadAction<MessageFormSchema>,
+      {
+        payload,
+      }: PayloadAction<{ modelId: string; schema: MessageFormSchema }>,
     ) => {
-      state.configurationSchema = payload;
-      state.isConfigurationSchemaLoading = false;
+      if (
+        !state.configurationSchemas.find(
+          (schema) => schema.modelId === payload.modelId,
+        )
+      ) {
+        state.configurationSchemas.push(payload);
+
+        if (
+          state.configurationSchemas.length > MAX_CONFIGURATION_SCHEMAS_AMOUNT
+        ) {
+          state.configurationSchemas.shift();
+        }
+      }
+      state.configurationSchemasLoadingIds =
+        state.configurationSchemasLoadingIds.filter(
+          (modelId) => modelId !== payload.modelId,
+        );
     },
-    getConfigurationSchemaFailed: (state) => {
-      state.isConfigurationSchemaLoading = false;
-    },
-    resetConfigurationSchema: (state) => {
-      state.configurationSchema = undefined;
-      state.isConfigurationSchemaLoading = false;
+    getConfigurationSchemaFailed: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>,
+    ) => {
+      state.configurationSchemasLoadingIds =
+        state.configurationSchemasLoadingIds.filter(
+          (modelId) => modelId !== payload.modelId,
+        );
     },
     setShouldFocusAndScroll: (state, { payload }: PayloadAction<boolean>) => {
       state.shouldFocusAndScroll = payload;

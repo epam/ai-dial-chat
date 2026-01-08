@@ -3,7 +3,6 @@ import {
   IconDots,
   IconEye,
   IconFileArrowRight,
-  IconFolderPlus,
   IconFolderShare,
   IconInfoCircle,
   IconPencilMinus,
@@ -17,8 +16,6 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -31,52 +28,21 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
 import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { ShareEntity } from '@epam/ai-dial-shared';
-
-const getFolderMenuItems = (
-  folders: FolderInterface[],
-  allFolders: FolderInterface[],
-  onClick: ({ folderId }: { folderId: string }) => void,
-): DisplayMenuItemProps[] => {
-  return folders.map((folder) => {
-    const subFolders = allFolders.filter((subFolder) =>
-      subFolder.folderId.startsWith(folder.id),
-    );
-
-    return {
-      name: folder.name,
-      dataQa: `folder-${folder.id}`,
-      onClick: () => {
-        onClick({ folderId: folder.id });
-      },
-      ...(subFolders.length && {
-        childMenuItems: getFolderMenuItems(
-          subFolders.filter((subFolder) => subFolder.folderId === folder.id),
-          subFolders,
-          onClick,
-        ),
-      }),
-    };
-  });
-};
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface ItemContextMenuProps {
   entity: ShareEntity;
-  folders: FolderInterface[];
   featureType: FeatureType;
   isEmptyConversation?: boolean;
   className?: string;
@@ -84,7 +50,6 @@ interface ItemContextMenuProps {
   useStandardColor?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onExport: (args?: unknown) => void;
@@ -92,6 +57,7 @@ interface ItemContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
   onShare?: MouseEventHandler<unknown>;
+  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
@@ -103,14 +69,14 @@ interface ItemContextMenuProps {
   isLoading?: boolean;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
   onShowInfo?: () => void;
+  hideTriggerIcon?: boolean;
 }
 
-export default function ItemContextMenu({
+export function ItemContextMenu({
   entity,
   featureType,
   isEmptyConversation,
   className,
-  folders,
   isOpen,
   useStandardColor,
   onDelete,
@@ -120,9 +86,9 @@ export default function ItemContextMenu({
   onReplay,
   onCompare,
   onPlayback,
-  onMoveToFolder,
   onOpenMoveToModal,
   onShare,
+  onUnshare,
   onPublish,
   onUnpublish,
   onOpenChange,
@@ -134,6 +100,7 @@ export default function ItemContextMenu({
   onUse,
   onShowInfo,
   TriggerIcon,
+  hideTriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -143,18 +110,9 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const allFoldersSelector = useMemo(() => {
-    switch (featureType) {
-      case FeatureType.Chat:
-        return ConversationsSelectors.selectFolders;
-      case FeatureType.Prompt:
-        return PromptsSelectors.selectFolders;
-      case FeatureType.File:
-      default:
-        return FilesSelectors.selectFolders;
-    }
-  }, [featureType]);
-  const allFolders = useAppSelector(allFoldersSelector);
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(state, entity.id),
+  );
 
   const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -191,7 +149,10 @@ export default function ItemContextMenu({
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: !isExternal && !!onRename,
+        display:
+          (!isExternal || isApproveRequiredEntity) &&
+          entity.publicationInfo?.action !== PublishActions.DELETE &&
+          !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -276,30 +237,7 @@ export default function ItemContextMenu({
         dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
-        className: 'md:hidden',
         disabled: disableAll,
-      },
-      {
-        name: t('Move to'),
-        display: !isExternal,
-        dataQa: 'move-to',
-        Icon: IconFolderShare,
-        className: 'max-md:hidden',
-        disabled: disableAll,
-        childMenuItems: [
-          {
-            name: t('New folder'),
-            dataQa: 'new-folder',
-            Icon: IconFolderPlus,
-            onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
-            },
-            className: classNames('invisible md:visible', {
-              'border-b border-primary': folders?.length > 0,
-            }),
-          },
-          ...getFolderMenuItems(folders, allFolders, onMoveToFolder),
-        ],
       },
       {
         name: t('Share'),
@@ -308,6 +246,14 @@ export default function ItemContextMenu({
           !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
+        disabled: disableAll,
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display: !!entity.sharedWithMe,
+        Icon: IconUserUnshare,
+        onClick: onUnshare,
         disabled: disableAll,
       },
       {
@@ -342,42 +288,41 @@ export default function ItemContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isExternal || !!entity.sharedWithMe,
+        display: !isExternal,
         Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
     [
-      allFolders,
-      disableAll,
+      t,
+      onUse,
       disableUse,
-      entity,
-      featureType,
-      folders,
-      isEmptyConversation,
+      onView,
       isExternal,
-      isFormSchemaConversation,
+      onSelect,
+      featureType,
+      isApproveRequiredEntity,
+      entity,
+      onRename,
+      disableAll,
       isNameInvalid,
-      isPublishingEnabled,
-      isSharingEnabled,
       onCompare,
-      onDelete,
+      isFormSchemaConversation,
+      isEmptyConversation,
       onDuplicate,
+      onReplay,
+      onPlayback,
       onExport,
-      onMoveToFolder,
       onOpenExportModal,
       onOpenMoveToModal,
-      onPlayback,
-      onPublish,
-      onRename,
-      onReplay,
-      onSelect,
+      isSharingEnabled,
       onShare,
-      onShowInfo,
+      onUnshare,
+      isPublishingEnabled,
+      onPublish,
       onUnpublish,
-      onUse,
-      onView,
-      t,
+      onShowInfo,
+      onDelete,
     ],
   );
 
@@ -386,6 +331,7 @@ export default function ItemContextMenu({
       menuItems={menuItems}
       isLoading={isLoading}
       TriggerIcon={TriggerIcon ?? IconDots}
+      hideTriggerIcon={hideTriggerIcon}
       triggerIconSize={18}
       className={className}
       featureType={featureType}

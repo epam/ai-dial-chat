@@ -1,6 +1,7 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -18,8 +19,7 @@ import {
   METADATA_PREFIX,
 } from '@/src/constants/folders';
 
-import { ApiUtils } from '../server/api';
-import { doesHaveDotsInTheEnd } from './common';
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
@@ -148,10 +148,12 @@ export const getFilesWithInvalidFileType = (
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
 export const notAllowedSymbols = ':;,=/{}%&\\"';
+export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)|[\x00-\x1F]`,
+  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
   'gm',
 );
+export const notAllowedSpacesRegex = new RegExp(notAllowedSpaces, 'gm');
 export const doesHaveNotAllowedSymbols = (name: string) =>
   !!name.match(notAllowedSymbolsRegex);
 
@@ -367,7 +369,9 @@ export const getNextFileName = (
 };
 
 export const prepareFileName = (filename: string) =>
-  `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
+  prepareEntityName(
+    getFileNameWithoutExtension(filename) + getFileNameExtension(filename),
+  );
 
 export const isAbsoluteUrl = (url: string): boolean => {
   const urlLower = url.toLowerCase();
@@ -466,62 +470,46 @@ export const validatePreUploadFiles = (
   return { validFiles, errorMsg };
 };
 
-const getIncorrectNamesError = (names: string[]) => {
-  const isThereDotsAtTheEnd = names.some(doesHaveDotsInTheEnd);
-  const isThereNotAllowedSymbols = names.some(doesHaveNotAllowedSymbols);
-  const fileNames = names.join(', ');
-
-  if (isThereDotsAtTheEnd && isThereNotAllowedSymbols)
-    return translate(
-      'The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
-      { notAllowedSymbols, fileNames },
-    );
-
-  if (isThereNotAllowedSymbols)
-    return translate(
-      'The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}',
-      { notAllowedSymbols, fileNames },
-    );
-
-  return translate(
-    'Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}',
-    { fileNames },
-  );
-};
-
-export const validateUploadFiles = <T extends { name: string }>(
+export const validateUploadFiles = <T extends File | { name: string }>(
   files: T[],
-): { validFiles: T[]; invalidFiles: T[]; errorMsg: string } => {
+): { validFiles: T[] } => {
   const validFiles: T[] = [];
-  const invalidFiles: T[] = [];
-  const byError: Partial<Record<FileValidationErrors, string[]>> = {};
 
   files.forEach((file) => {
-    if (
-      doesHaveDotsInTheEnd(file.name) ||
-      doesHaveNotAllowedSymbols(file.name)
-    ) {
-      byError[FileValidationErrors.IncorrectName] = [
-        ...(byError[FileValidationErrors.IncorrectName] ?? []),
-        file.name,
-      ];
-      invalidFiles.push(file);
-      return;
-    }
+    const sanitizedName = prepareEntityName(file.name, {
+      forRenaming: true,
+      trimEndDotsRequired: true,
+    });
 
-    validFiles.push(file);
+    if (file instanceof File) {
+      const renamedFile = new File([file], sanitizedName, {
+        type: file.type,
+        lastModified: file.lastModified,
+      });
+      validFiles.push(renamedFile as T);
+    } else {
+      validFiles.push({
+        ...file,
+        name: sanitizedName,
+      });
+    }
   });
 
-  const errorMsg = Object.entries(byError)
-    .map(([error, names]) => {
-      switch (error as FileValidationErrors) {
-        case FileValidationErrors.IncorrectName:
-          return getIncorrectNamesError(names);
-        default:
-          return '';
-      }
-    })
-    .join('\n');
+  return { validFiles };
+};
 
-  return { validFiles, invalidFiles, errorMsg };
+export const getFilesFromDataTransferItems = (
+  items: DataTransferItemList,
+): File[] => {
+  return Array.from(items)
+    .filter((item) => item.webkitGetAsEntry()?.isFile)
+    .map((item) => item.getAsFile()) as File[];
+};
+
+export const getMyBucketAttachments = (
+  attachments: Attachment[],
+): Attachment[] => {
+  return attachments.filter((attachment) =>
+    isMyEntity({ id: attachment.url ?? '' }),
+  );
 };

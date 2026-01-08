@@ -36,13 +36,6 @@ export interface ArithmeticRequestEntity extends Entity {
   systemPrompt?: string;
 }
 
-export interface EntityPlusAddonsRequest extends Entity {
-  addonIds: string[];
-  systemPrompt?: string;
-  request: string;
-  response: string;
-}
-
 export interface EntitySimpleRequest extends Entity {
   request: string;
   systemPrompt?: string;
@@ -57,14 +50,6 @@ export interface EntityPlusAttachmentRequest extends Entity {
   response: string;
 }
 
-export interface AssistantPlusAddonsRequest {
-  assistantId: string;
-  addonIds: string[];
-  assistantModelId: string;
-  request: string;
-  response: string;
-}
-
 export enum MarketplaceFilterTypes {
   type = 'Type',
   topics = 'Topics',
@@ -75,6 +60,7 @@ export enum SourcesFilterOptions {
   public = 'Public',
   sharedWithMe = 'Shared with me',
   myCustomApps = 'My Custom apps',
+  myExternalApps = 'My External apps',
   myQuickApps = 'My Quick apps',
   myCodeApps = 'My Code apps',
 }
@@ -82,4 +68,32 @@ export enum SourcesFilterOptions {
 export enum ApplicationTypes {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
+}
+
+export enum ImportResolutionOption {
+  Replace = 'Replace',
+  Postfix = 'Postfix',
+  Ignore = 'Ignore',
+}
+
+export enum OAuthOptions {
+  WithLogin = 'With login',
+  WithLoginAndConfig = 'With login & config',
+}
+
+export enum FilesManagerToolbarTabs {
+  MyFiles = 'My Files',
+  SharedWithMe = 'Shared with Me',
+  Organization = 'Organization',
+}
+
+export enum FileManagerColumnKey {
+  Name = 'name',
+  UpdatedAt = 'updatedAt',
+  Size = 'size',
+  Author = 'author',
+  Owner = 'owner',
+  Path = 'path',
+  Actions = '__actions',
+  Select = '__select',
 }

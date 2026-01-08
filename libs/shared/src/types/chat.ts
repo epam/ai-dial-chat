@@ -42,13 +42,18 @@ export enum LikeState {
   NoState = 0,
 }
 
+export type onLikeMessageHandler = (
+  likeStatus: LikeState,
+  comment?: string,
+) => void;
+
 export interface MessageSettings {
   prompt: string;
   temperature: number;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
+  /**
+   * @deprecated but required by core validation
+   */
+  selectedAddons?: string[];
 }
 
 export interface ConversationEntityModel {
@@ -89,12 +94,18 @@ export interface EntityDates {
   updatedAt?: number;
 }
 
+export enum SharePermission {
+  READ = 'READ',
+  WRITE = 'WRITE',
+}
+
 export interface Entity extends EntityDates {
   id: string;
   name: string;
   folderId: string;
   status?: UploadStatus;
   author?: string;
+  permissions?: SharePermission[];
 }
 
 export enum PublishActions {
@@ -104,15 +115,20 @@ export enum PublishActions {
 }
 
 export interface EntityPublicationInfo {
+  version?: string;
+  publicationUrl?: string;
   action?: PublishActions;
   isNotExist?: boolean;
-  version?: string;
   versionGroup?: string;
+  publishCredentials?: boolean;
 }
 
-export enum SharePermission {
-  READ = 'READ',
-  WRITE = 'WRITE',
+export enum FeatureType {
+  Chat = 'chat',
+  Prompt = 'prompt',
+  File = 'file',
+  Application = 'application',
+  Toolset = 'toolset',
 }
 
 export interface ShareInterface {
@@ -122,11 +138,21 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
-
-  permissions?: SharePermission[];
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
+
+export interface FolderInterface extends ShareEntity {
+  type: FeatureType;
+  temporary?: boolean;
+  serverSynced?: boolean;
+}
+
+export interface TemporaryFolderInterface
+  extends Omit<FolderInterface, 'type'> {
+  temporary: true;
+  type?: FeatureType;
+}
 
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
@@ -135,3 +161,34 @@ export interface ConversationInfo extends ShareEntity {
 }
 
 export type TemplateMapping = [string, string];
+
+export interface Replay {
+  replayAsIs?: boolean;
+  isReplay: boolean;
+  replayUserMessagesStack?: Message[];
+  activeReplayIndex?: number;
+  isError?: boolean;
+}
+
+export interface Playback {
+  isPlayback?: boolean;
+  messagesStack: Message[];
+  activePlaybackIndex: number;
+  customViewState?: Record<string, unknown>;
+}
+
+export interface Conversation extends ShareEntity, ConversationInfo {
+  messages: Message[];
+  prompt: string;
+  temperature: number;
+  /**
+   * @deprecated but required by core validation
+   */
+  selectedAddons?: string[];
+  reference?: string;
+  replay?: Replay;
+  playback?: Playback;
+
+  isMessageStreaming?: boolean;
+  customViewState?: Record<string, unknown>;
+}

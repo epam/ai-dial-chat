@@ -7,7 +7,10 @@ import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
+import {
+  isEntityNameOrPathInvalid,
+  replaceStringRange,
+} from '@/src/utils/app/common';
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
@@ -22,6 +25,7 @@ import {
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -31,12 +35,15 @@ import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
@@ -47,12 +54,15 @@ import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Mess
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
+import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
+
 import {
   Feature,
   Message,
   MessageFormValue,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -60,14 +70,19 @@ interface UserMessageProps {
   message: Message;
   conversation: Conversation;
   messageIndex: number;
+  realMessageIndex: number;
   allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
-  toggleEditing: (value: boolean) => void;
-  toggleEditingTemplates: (value: boolean) => void;
   withButtons?: boolean;
   editDisabled?: boolean;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onToggleEditing: (value: boolean) => void;
+  onToggleEditingTemplates: (value: boolean) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onDelete?: () => void;
 }
 
@@ -75,13 +90,14 @@ export const UserMessage = memo(function UserMessage({
   message,
   conversation,
   messageIndex,
+  realMessageIndex,
   allMessages,
   isEditing,
   isEditingTemplates,
-  toggleEditing,
-  toggleEditingTemplates,
   withButtons,
   editDisabled,
+  onToggleEditing,
+  onToggleEditingTemplates,
   onEdit,
   onDelete,
 }: UserMessageProps) {
@@ -95,8 +111,8 @@ export const UserMessage = memo(function UserMessage({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -116,6 +132,12 @@ export const UserMessage = memo(function UserMessage({
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
+  const isApproveRequiredEntitySelected = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntitySelected(
+      state,
+      conversation.id,
+    ),
+  );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
@@ -134,8 +156,11 @@ export const UserMessage = memo(function UserMessage({
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
   const showUserButtons =
-    !isReplay && !isPlayback && !isEditing && !isExternal && withButtons;
-
+    (!isReplay && !isPlayback && !isEditing && withButtons && !isReadOnly) ||
+    (isApproveRequiredEntitySelected &&
+      !isReplay &&
+      !isPlayback &&
+      withButtons);
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const mappedUserEditableAttachments = useMemo(() => {
@@ -224,7 +249,7 @@ export const UserMessage = memo(function UserMessage({
         f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
           ? ApiUtils.decodeApiUrl(f.id).replace(new RegExp('^metadata/'), '') +
             '/'
-          : f.id,
+          : ApiUtils.decodeApiUrl(f.id),
       ),
     [newEditableAttachments],
   );
@@ -244,10 +269,10 @@ export const UserMessage = memo(function UserMessage({
 
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
-      toggleEditing(value ?? !isEditing);
+      onToggleEditing(value ?? !isEditing);
       setShouldScroll(true);
     },
-    [isEditing, toggleEditing],
+    [isEditing, onToggleEditing],
   );
 
   const handleAddLinkToMessage = useCallback((link: DialLink) => {
@@ -275,6 +300,7 @@ export const UserMessage = memo(function UserMessage({
         ) as unknown as FolderInterface[],
         selectedDialLinks,
       );
+
       const isAttachmentsSame = isEqual(
         message.custom_content?.attachments,
         attachments?.attachments,
@@ -312,6 +338,7 @@ export const UserMessage = memo(function UserMessage({
               ).filter(([key]) => messageContent.includes(key)),
             },
             messageIndex,
+            conversation.id,
           );
           setSelectedDialLinks([]);
         }
@@ -330,12 +357,17 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
-      e.preventDefault();
-      handleEditMessage(formValue, messageContent);
-    }
-  };
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
+  const handlePressEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (!isTyping && allowEnterClick(e, enterType)) {
+        e.preventDefault();
+        handleEditMessage(formValue, messageContent);
+      }
+    },
+    [enterType, formValue, handleEditMessage, isTyping, messageContent],
+  );
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
@@ -353,14 +385,11 @@ export const UserMessage = memo(function UserMessage({
     [dispatch],
   );
 
-  const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
-    if (typeof result === 'object') {
-      const selectedFilesIds = result as string[];
-      const uniqueFilesIds = uniq(selectedFilesIds);
-      setNewEditableAttachmentsIds(
-        uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
-      );
-    }
+  const handleSelectAlreadyUploaded = useCallback((result: string[]) => {
+    const uniqueFilesIds = uniq(result);
+    setNewEditableAttachmentsIds(
+      uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
+    );
   }, []);
 
   const handleUploadFromDevice = useCallback(
@@ -388,9 +417,9 @@ export const UserMessage = memo(function UserMessage({
 
   const handleToggleEditingTemplates = useCallback(
     (value?: boolean) => {
-      toggleEditingTemplates(value ?? !isEditingTemplates);
+      onToggleEditingTemplates(value ?? !isEditingTemplates);
     },
-    [isEditingTemplates, toggleEditingTemplates],
+    [isEditingTemplates, onToggleEditingTemplates],
   );
 
   useEffect(() => {
@@ -432,14 +461,32 @@ export const UserMessage = memo(function UserMessage({
   );
 
   const handleUploadPastedFiles = useCallback(
-    (files: File[]) => {
-      uploadPastedFiles(files)?.then((newFiles) => {
-        setNewEditableAttachmentsIds((ids) =>
-          uniq(ids.concat(newFiles.map(({ id }) => id))),
+    (
+      files: File[],
+      textContent?: string,
+      selection?: { start: number; end: number },
+    ) => {
+      if (canAttachFiles) {
+        uploadPastedFiles(files)?.then((newFiles) => {
+          setNewEditableAttachmentsIds((ids) =>
+            uniq(ids.concat(newFiles.map(({ id }) => id))),
+          );
+        });
+      }
+      if (textContent) {
+        setMessageContent((prev) =>
+          selection
+            ? replaceStringRange(
+                prev,
+                textContent,
+                selection.start,
+                selection.end,
+              )
+            : textContent,
         );
-      });
+      }
     },
-    [uploadPastedFiles],
+    [uploadPastedFiles, canAttachFiles],
   );
 
   useFilePaste(textareaRef, handleUploadPastedFiles);
@@ -531,28 +578,26 @@ export const UserMessage = memo(function UserMessage({
           </div>
 
           <div className="relative flex gap-3">
-            <button
-              className="button button-secondary"
+            <DialButton
+              variant={ButtonVariant.Secondary}
+              label={t('Cancel')}
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
                 handleToggleEditing(false);
               }}
               data-qa="cancel"
-            >
-              {t('Cancel')}
-            </button>
+            />
             {!isInputHidden && (
-              <button
-                className="button button-primary"
+              <DialButton
+                variant={ButtonVariant.Primary}
+                label={t('Save & Submit')}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
                   isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
                 }
                 data-qa="save-and-submit"
-              >
-                {t('Save & Submit')}
-              </button>
+              />
             )}
             <div ref={anchorRef} className="absolute bottom-0"></div>
           </div>
@@ -583,7 +628,13 @@ export const UserMessage = memo(function UserMessage({
             {message.content}
           </div>
         )}
+
         <MessageAttachments attachments={message.custom_content?.attachments} />
+
+        {isOverlay && (
+          <OverlayMessageCustomButtons realMessageIndex={realMessageIndex} />
+        )}
+
         <div
           ref={anchorRef}
           className="absolute bottom-[-140px] select-none"
@@ -591,12 +642,15 @@ export const UserMessage = memo(function UserMessage({
       </div>
       {showUserButtons && !isConversationInvalid && (
         <MessageUserButtons
+          realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
-          isEditAvailable={!!onEdit}
-          editDisabled={editDisabled}
-          onDelete={() => onDelete?.()}
-          toggleEditing={handleToggleEditing}
-          isEditTemplatesAvailable={!isExternal && isMessageTemplatesEnabled}
+          isEditAvailable={!!onEdit && !editDisabled}
+          onDelete={onDelete}
+          onToggleEditing={handleToggleEditing}
+          isEditTemplatesAvailable={
+            (!isReadOnly || isApproveRequiredEntitySelected) &&
+            isMessageTemplatesEnabled
+          }
           onToggleTemplatesEditing={handleToggleEditingTemplates}
         />
       )}

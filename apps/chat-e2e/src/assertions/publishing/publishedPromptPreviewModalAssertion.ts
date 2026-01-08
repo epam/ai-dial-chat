@@ -8,6 +8,4 @@ export class PublishedPromptPreviewModalAssertion extends PromptPreviewModalAsse
     super(publishedPromptPreviewModal);
     this.publishedPromptPreviewModal = publishedPromptPreviewModal;
   }
-
-  // Add assertions specific to PublishedPromptPreviewModal here
 }

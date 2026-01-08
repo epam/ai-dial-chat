@@ -1,10 +1,11 @@
-import { Styles, Tags } from '@/src/ui/domData';
+import { AttributeValues, Tags } from '@/src/ui/domData';
 import {
-  AttachFilesModalSelectors,
   EntitySelectors,
   ErrorLabelSelectors,
   FileSelectors,
+  FilesManagerModalSelectors,
 } from '@/src/ui/selectors';
+import { Button } from '@/src/ui/webElements';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -15,27 +16,23 @@ export class AttachFilesTree extends EntitiesTree {
 
   public attachedFileIcon = (filename: string, index?: number) =>
     this.getEntityByName(filename, index).locator(
-      AttachFilesModalSelectors.attachedFileIcon,
+      FilesManagerModalSelectors.attachedFileIcon,
     );
 
   getAttachedFileArrowIcon(name: string, index?: number) {
-    return this.getEntityByName(name, index).locator(
-      AttachFilesModalSelectors.arrowAdditionalIcon,
-    );
-  }
-
-  getAttachedFileArrowIconColor(name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getAttachedFileArrowIcon(name, index).locator(Tags.svg),
-    ).getComputedStyleProperty(Styles.color);
+    return this.getEntityByName(name, index)
+      .locator(FilesManagerModalSelectors.arrowAdditionalIcon)
+      .locator(Tags.svg);
   }
 
   public attachedFileLoadingIndicator = (filename: string) =>
     this.getEntityByName(filename).locator(FileSelectors.loadingIndicator);
 
   public removeAttachedFileIcon = (filename: string) =>
-    this.createElementFromLocator(
-      this.getEntityByName(filename).locator(FileSelectors.remove),
+    new Button(
+      this.page,
+      AttributeValues.removeFile,
+      this.getEntityByName(filename),
     );
 
   public attachedFileErrorIcon = (filename: string) =>

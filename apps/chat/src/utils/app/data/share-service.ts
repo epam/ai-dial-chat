@@ -1,6 +1,7 @@
 import { Observable, map } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import {
@@ -25,11 +26,6 @@ import {
   ShareRevokeRequestModel,
 } from '@/src/types/share';
 
-import {
-  ApiUtils,
-  parseApplicationApiKey,
-  parseConversationApiKey,
-} from '../../server/api';
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
 
@@ -47,7 +43,7 @@ export const getFolderFromShareResult = (
     id,
     name: folder.name,
     folderId: constructPath(apiKey, bucket, parentPath),
-    type: EnumMapper.getFolderTypeByApiKey(apiKeyType),
+    type: EnumMapper.getFeatureTypeByApiKey(apiKeyType),
     permissions: folder.permissions,
   };
 };
@@ -134,8 +130,13 @@ export class ShareService {
 
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
+              const { name, modelInfo } = parseEntityApiKey(conversation.name, {
+                parseModel: true,
+              });
+
               entities.push({
-                ...parseConversationApiKey(conversation.name),
+                name,
+                ...modelInfo,
                 id,
                 updatedAt: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
@@ -193,8 +194,10 @@ export class ShareService {
                 name: file.name,
                 id,
                 folderId: absolutePath,
-                absolutePath: absolutePath,
+                absolutePath,
                 contentType: mimeType ? mimeType : 'application/octet-stream',
+                author: file.author,
+                permissions: file.permissions,
               });
             }
 
@@ -215,10 +218,13 @@ export class ShareService {
             if (entity.nodeType === BackendDataNodeType.ITEM) {
               const application = applicationResource as BackendEntity;
               const id = ApiUtils.decodeApiUrl(application.url);
+              const { version } = parseEntityApiKey(application.name, {
+                parseVersion: true,
+              });
 
               entities.push({
                 name: application.name,
-                version: parseApplicationApiKey(application.name).version,
+                version,
                 id,
                 permissions: application.permissions,
               });

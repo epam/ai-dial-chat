@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import Select, { components } from 'react-select';
+import Select, { Props as SelectProps, components } from 'react-select';
 
 import classNames from 'classnames';
 
@@ -8,53 +8,48 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
-interface Props {
-  values: DropdownSelectorOption[];
-  options: DropdownSelectorOption[];
-  placeholder: string;
-  disabled?: boolean;
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
+type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
-  onChange: (options: readonly DropdownSelectorOption[]) => void;
-  id?: string;
-}
+  closeMenuOnSelect?: boolean;
+};
 
 export function DropdownSelector({
-  options,
-  placeholder,
-  values,
-  id,
-  disabled,
   tooltip,
-  onChange,
+  closeMenuOnSelect = false,
+  ...selectProps
 }: Props) {
   const { t } = useTranslation(Translation.Common);
   return (
     <Tooltip
-      triggerClassName={classNames('w-full', disabled && 'cursor-not-allowed')}
+      triggerClassName={classNames(
+        'w-full',
+        selectProps.isDisabled && 'cursor-not-allowed',
+      )}
       tooltip={tooltip}
     >
       <Select
-        placeholder={placeholder}
-        isMulti
-        onChange={onChange}
-        closeMenuOnSelect={false}
+        {...selectProps}
+        closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
-        id={id}
-        isDisabled={disabled}
-        options={options}
-        value={values}
+        menuPortalTarget={document.body}
         components={{
           ClearIndicator: (props) => (
-            <button type="button" className="group p-2">
-              <IconX
-                className="shrink-0 text-secondary group-hover:text-accent-primary"
-                data-qa="clear-dropdown-selection"
-                onClick={() => props.clearValue()}
-                size={18}
-              />
-            </button>
+            <DialButton
+              className="group p-2"
+              onClick={() => props.clearValue()}
+              onTouchEnd={() => props.clearValue()}
+              iconBefore={
+                <IconX
+                  className="shrink-0 text-secondary group-hover:text-accent-primary"
+                  data-qa="clear-dropdown-selection"
+                  size={18}
+                />
+              }
+            />
           ),
           MultiValueRemove: (props) => (
             <components.MultiValueRemove
@@ -101,8 +96,14 @@ export function DropdownSelector({
             backgroundColor: '',
             cursor: 'pointer',
             ':hover': {
-              backgroundColor: state.data.backgroundColor,
+              backgroundColor:
+                state.data.backgroundColor ?? 'var(--bg-accent-primary-alpha)',
             },
+            ':active': {
+              backgroundColor:
+                state.data.backgroundColor ?? 'var(--bg-accent-primary-alpha)',
+            },
+            color: 'var(--text-primary)',
           }),
           dropdownIndicator: (styles, state) => ({
             ...styles,
@@ -162,6 +163,10 @@ export function DropdownSelector({
             ':hover': {
               border: '1px solid var(--stroke-accent-primary)',
             },
+          }),
+          singleValue: (styles) => ({
+            ...styles,
+            color: 'var(--text-primary)',
           }),
         }}
         noOptionsMessage={() => t('No options')}

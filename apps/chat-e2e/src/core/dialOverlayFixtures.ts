@@ -10,9 +10,10 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
+  FileDropArea,
   ModelInfoTooltip,
   PromptBar,
-  PublishingRequestModal,
+  PublishingRequestDialog,
   SendMessage,
   TalkToAgentDialog,
   Toast,
@@ -25,6 +26,7 @@ import {
   BaseAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
+  FolderAssertion,
   PromptAssertion,
   TalkToAgentDialogAssertion,
 } from '@/src/assertions';
@@ -47,6 +49,7 @@ import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
   ConversationsTree,
+  FolderConversations,
   OrganizationConversationsTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -74,6 +77,7 @@ const dialOverlayTest = test.extend<{
   beforeTestCleanup: string;
   overlayHomePage: OverlayHomePage;
   overlayMarketplacePage: OverlayMarketplacePage;
+  overlayFileDropArea: FileDropArea;
   overlayChat: Chat;
   overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
@@ -102,7 +106,7 @@ const dialOverlayTest = test.extend<{
   overlayConversationDropdownMenu: DropdownMenu;
   overlayPromptDropdownMenu: DropdownMenu;
   overlayShareModal: ShareModal;
-  overlayPublishingRequestModal: PublishingRequestModal;
+  overlayPublishingRequestDialog: PublishingRequestDialog;
   overlayAccountSettings: AccountSettings;
   overlayProfilePanel: ProfilePanel;
   overlaySettingsModal: SettingsModal;
@@ -114,10 +118,12 @@ const dialOverlayTest = test.extend<{
   overlayAttachFilesModal: AttachFilesModal;
   overlayPlaybackControl: PlaybackControl;
   overlayOrganizationConversations: OrganizationConversationsTree;
+  overlayFolderConversations: FolderConversations;
   overlayTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   overlayAssertion: OverlayAssertion;
   overlayConversationAssertion: ConversationAssertion;
   overlayPromptAssertion: PromptAssertion;
+  overlayChatBarFolderAssertion: FolderAssertion<FolderConversations>;
   overlayShareApiHelper: ShareApiHelper;
   adminUserRequestContext: APIRequestContext;
   adminPublicationApiHelper: PublicationApiHelper;
@@ -152,8 +158,14 @@ const dialOverlayTest = test.extend<{
     const overlayMarketplacePage = new OverlayMarketplacePage(page);
     await use(overlayMarketplacePage);
   },
-  overlayChat: async ({ overlayHomePage }, use) => {
-    const overlayChat = overlayHomePage.getOverlayContainer().getChat();
+  overlayFileDropArea: async ({ overlayHomePage }, use) => {
+    const overlayFileDropArea = overlayHomePage
+      .getOverlayContainer()
+      .getFileDropArea();
+    await use(overlayFileDropArea);
+  },
+  overlayChat: async ({ overlayFileDropArea }, use) => {
+    const overlayChat = overlayFileDropArea.getChat();
     await use(overlayChat);
   },
   overlayAgentInfo: async ({ overlayChat }, use) => {
@@ -287,12 +299,12 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayShareModal);
   },
-  overlayPublishingRequestModal: async ({ page, overlayHomePage }, use) => {
-    const publishingModal = new PublishingRequestModal(
+  overlayPublishingRequestDialog: async ({ page, overlayHomePage }, use) => {
+    const overlayPublishingRequestDialog = new PublishingRequestDialog(
       page,
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
-    await use(publishingModal);
+    await use(overlayPublishingRequestDialog);
   },
   overlayAccountSettings: async ({ overlayHeader }, use) => {
     const overlayAccountSettings = overlayHeader.getAccountSettings();
@@ -363,6 +375,10 @@ const dialOverlayTest = test.extend<{
       overlayChatBar.getOrganizationConversationsTree();
     await use(overlayOrganizationConversations);
   },
+  overlayFolderConversations: async ({ overlayChatBar }, use) => {
+    const overlaFolderConversations = overlayChatBar.getFolderConversations();
+    await use(overlaFolderConversations);
+  },
   overlayTalkToAgentDialogAssertion: async (
     { overlayTalkToAgentDialog },
     use,
@@ -386,6 +402,14 @@ const dialOverlayTest = test.extend<{
   overlayPromptAssertion: async ({ overlayPrompts }, use) => {
     const promptAssertion = new PromptAssertion(overlayPrompts);
     await use(promptAssertion);
+  },
+  overlayChatBarFolderAssertion: async (
+    { overlayFolderConversations },
+    use,
+  ) => {
+    const overlayChatBarFolderAssertion =
+      new FolderAssertion<FolderConversations>(overlayFolderConversations);
+    await use(overlayChatBarFolderAssertion);
   },
   overlayShareApiHelper: async ({ request }, use) => {
     const overlayShareApiHelper = new ShareApiHelper(request);

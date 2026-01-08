@@ -14,19 +14,23 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
+import { isMacOs } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  CodeEditorSelectors,
+  FilesSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
-import ContextMenu from '../Common/ContextMenu';
-import DownloadRenderer from './Download';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
+
+import { DownloadRenderer } from './Download';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
@@ -92,9 +96,7 @@ export function FileItemContextMenu({
         dataQa: 'save',
         additionalNameNode: isCodeEditorFile ? (
           <span className="pl-2 text-secondary">
-            {navigator.userAgent.toLowerCase().includes('mac')
-              ? 'Cmd+S'
-              : 'Ctrl+S'}
+            {isMacOs ? '⌘+S' : 'Ctrl+S'}
           </span>
         ) : null,
         display: !!onSave,
@@ -141,7 +143,7 @@ export function FileItemContextMenu({
         name: t('Delete'),
         dataQa: 'delete',
         display:
-          isMyEntity(file, FeatureType.File) ||
+          isMyEntity(file) ||
           canEditSharedFolderOrParent(folders, file.folderId),
         Icon: IconTrashX,
         onClick: onDelete,

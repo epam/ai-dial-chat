@@ -1,0 +1,131 @@
+import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
+import { MouseEvent, useCallback, useState } from 'react';
+
+import { useSearchParams } from 'next/navigation';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
+
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
+
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
+
+import { AgentAndToolsetChip } from './AgentAndToolsetChip';
+import { AgentAndToolsetModal } from './AgentAndToolsetModal';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
+const NoAgentsAndToolsets: React.FC = () => {
+  const { t } = useTranslation(Translation.Common);
+  return (
+    <div className="flex flex-col items-center justify-center rounded border border-primary py-4">
+      <IconLayoutGrid size={60} className="mb-2 text-secondary" stroke={0.5} />
+      <span>{t('No Agents & Toolsets added')}</span>
+    </div>
+  );
+};
+
+interface AgentAndToolsetSelectorProps {
+  value: string[];
+  onChange: (agentAndToolset: string[]) => void;
+  readonly?: boolean;
+  addBtnTooltip?: string;
+  allItemsMap: Record<string, MarketplaceEntity | undefined>;
+  tooltip?: string;
+  onItemClick?: (id: string) => void;
+}
+
+export const AgentAndToolsetSelector: React.FC<
+  AgentAndToolsetSelectorProps
+> = ({
+  value = [],
+  readonly,
+  addBtnTooltip,
+  tooltip,
+  allItemsMap,
+  onChange,
+  onItemClick,
+}) => {
+  const { t } = useTranslation(Translation.Common);
+
+  const searchParams = useSearchParams();
+
+  const [isSelectModalOpen, setSelectModalOpen] = useState(
+    searchParams.get(AgentsAndToolsetsModalQueryParams.Modal) === '1',
+  );
+
+  const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setSelectModalOpen(true);
+  };
+
+  const handleCloseModal = useCallback(() => {
+    setSelectModalOpen(false);
+  }, []);
+
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      onChange(value.filter((id) => id !== idToRemove));
+    },
+    [onChange, value],
+  );
+
+  const handleConfirmSelection = useCallback(
+    (newIds: string[]) => {
+      onChange(newIds);
+      setSelectModalOpen(false);
+    },
+    [onChange],
+  );
+
+  return (
+    <div className="relative grow space-y-4">
+      <div className="flex flex-col">
+        <div className="absolute right-0 top-[-22px]">
+          <Tooltip
+            tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
+          >
+            <DialButton
+              disabled={readonly}
+              className="flex items-center text-accent-primary"
+              textClassName="font-normal"
+              onClick={handleOpenSelectModal}
+              iconBefore={<IconPlus size={18} />}
+              label={t('Add')}
+            />
+          </Tooltip>
+        </div>
+        {!value.length ? (
+          <NoAgentsAndToolsets />
+        ) : (
+          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+            {value.map((id) => (
+              <AgentAndToolsetChip
+                key={id}
+                id={id}
+                item={allItemsMap[id]}
+                onRemove={readonly ? undefined : handleRemoveItem}
+                readonly={readonly}
+                onItemClick={onItemClick}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      <ToolsetLoginDialog />
+
+      {isSelectModalOpen && !readonly && (
+        <AgentAndToolsetModal
+          initialSelectedIds={value}
+          allItemsMap={allItemsMap}
+          saveSliderStateInURL
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmSelection}
+        />
+      )}
+    </div>
+  );
+};

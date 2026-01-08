@@ -1,4 +1,3 @@
-import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -6,7 +5,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import {
   DIAL_API_HOST,
   DIAL_API_VERSION,
-} from '../../constants/default-server-settings';
+} from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ApiUtils } from './api';
@@ -21,6 +20,7 @@ import {
   createParser,
 } from 'eventsource-parser';
 import fetch, { Response } from 'node-fetch';
+import { Readable } from 'stream';
 
 interface DialAIErrorResponse extends Response {
   error?: {
@@ -34,16 +34,8 @@ interface DialAIErrorResponse extends Response {
   };
 }
 
-function getUrl(
-  model: DialAIEntityModel,
-  selectedAddonsIds: string[] | undefined,
-): string {
-  const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
-  const { type, id } = model;
-  if (type === EntityType.Model && isAddonsAdded) {
-    return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
-  }
-
+function getUrl(model: DialAIEntityModel): string {
+  const { id } = model;
   return `${DIAL_API_HOST}/openai/deployments/${ApiUtils.encodeApiUrl(id)}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
@@ -64,8 +56,6 @@ export const OpenAIStream = async ({
   model,
   temperature,
   messages,
-  selectedAddonsIds,
-  assistantModelId,
   chatReference,
   userJWT,
   jobTitle,
@@ -75,8 +65,6 @@ export const OpenAIStream = async ({
   model: DialAIEntityModel;
   temperature: number | undefined;
   messages: Message[];
-  selectedAddonsIds: string[] | undefined;
-  assistantModelId: string | undefined;
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
@@ -84,7 +72,7 @@ export const OpenAIStream = async ({
   configurationSchemaValue?: MessageFormValue;
 }) => {
   let messagesToSend = messages;
-  const url = getUrl(model, selectedAddonsIds);
+  const url = getUrl(model);
 
   const requestHeaders = getApiHeaders({
     chatReference,
@@ -95,13 +83,13 @@ export const OpenAIStream = async ({
   let retries = 0;
   let body;
   let res: Response;
+  const abortController = new AbortController();
   do {
     body = JSON.stringify({
       messages: messagesToSend,
       temperature,
       stream: true,
-      model: assistantModelId ?? model.reference,
-      addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
+      model: model.reference,
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
       ...(configurationSchemaValue && {
         custom_fields: { configuration: configurationSchemaValue },
@@ -112,18 +100,17 @@ export const OpenAIStream = async ({
       headers: requestHeaders,
       method: HTTPMethod.POST,
       body,
+      signal: abortController.signal,
     });
 
     if (res.status !== 200) {
       let result: DialAIErrorResponse;
       try {
-        result = (await res.json()) as DialAIErrorResponse;
+        result = JSON.parse(await res.text()) as DialAIErrorResponse;
       } catch (e) {
-        throw new DialAIError(
-          `Chat Server error: ${res.statusText}`,
-          res.status,
-          url,
-        );
+        throw new DialAIError(res.statusText, res.status, url, {
+          displayMessage: res.statusText,
+        });
       }
 
       if (!result.error) {
@@ -150,9 +137,8 @@ export const OpenAIStream = async ({
         model.limits?.isMaxRequestTokensCustom
       ) {
         retries += 1;
-        const json = await res.json();
         logger.info(
-          json,
+          result,
           `Getting error with status ${res.status} and code '${dial_error.code}'. Retrying chat request to ${model.id} model`,
         );
         messagesToSend = hardLimitMessages(messagesToSend);
@@ -191,7 +177,7 @@ export const OpenAIStream = async ({
                 displayMessage: json.error.display_message,
               });
             }
-            if (!idSend) {
+            if (!idSend && json.id) {
               appendChunk(controller, { responseId: json.id });
               idSend = true;
             }
@@ -221,6 +207,29 @@ export const OpenAIStream = async ({
           }
           parser.feed(decoder.decode(chunk as Buffer));
         }
+      }
+    },
+    cancel() {
+      if (isFinished) return;
+      isFinished = true;
+
+      try {
+        abortController.abort();
+      } catch (error) {
+        logger.debug(
+          { error },
+          'AbortController: abort was called but the request was already aborted',
+        );
+      }
+
+      try {
+        const nodeBody = res.body as Readable | null;
+        nodeBody?.destroy?.();
+      } catch (error) {
+        logger.debug(
+          { error },
+          'Stream body: destroy was called but the stream was already closed',
+        );
       }
     },
   });

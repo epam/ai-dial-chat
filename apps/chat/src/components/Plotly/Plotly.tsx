@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
 import dynamic from 'next/dynamic';
@@ -15,6 +15,7 @@ interface Props {
 export const PlotlyComponent = memo(
   ({ plotlyData: { layout, ...data } }: Props) => {
     const containerRef = useRef<HTMLDivElement>(null);
+
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
     const [currentLayout, setCurrentLayout] = useState<Partial<Layout>>(layout);
@@ -32,10 +33,13 @@ export const PlotlyComponent = memo(
       setWidth(containerRef.current.scrollWidth);
     }, []);
 
-    const handleRelayout = (newLayout: PlotRelayoutEvent) => {
-      // save layout if changed
-      setCurrentLayout({ ...currentLayout, ...newLayout });
-    };
+    const handleRelayout = useCallback(
+      (newLayout: PlotRelayoutEvent) => {
+        // save layout if changed
+        setCurrentLayout({ ...currentLayout, ...newLayout });
+      },
+      [currentLayout],
+    );
 
     return (
       <div ref={containerRef} className="size-full">

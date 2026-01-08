@@ -10,8 +10,9 @@ export class OverlayHomePage extends OverlayBasePage<AppContainer> {
 
   public async waitForPageLoaded() {
     const overlayAppContainer = this.getOverlayContainer();
+    await overlayAppContainer.waitForState({ state: 'attached' });
     await overlayAppContainer.waitForAppLoaded(loadingTimeout);
-    const overlayChat = overlayAppContainer.getChat();
+    const overlayChat = overlayAppContainer.getFileDropArea().getChat();
     await overlayChat.waitForState({ state: 'attached' });
     await overlayChat.waitForChatLoaded();
     await overlayChat.getSendMessage().waitForMessageInputLoaded();

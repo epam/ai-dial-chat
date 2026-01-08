@@ -5,7 +5,7 @@ import {
 } from '../../../selectors';
 
 import { Chronology } from '@/src/testData';
-import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
 interface ConversationsChronologyType {
@@ -13,7 +13,7 @@ interface ConversationsChronologyType {
   conversations: string[];
 }
 
-export class ConversationsTree extends BaseSideBarConversationTree {
+export class ConversationsTree extends SideBarEntitiesTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
@@ -59,18 +59,22 @@ export class ConversationsTree extends BaseSideBarConversationTree {
   }
 
   public async getTodayConversations() {
+    await this.chronologyByTitle(Chronology.today).waitFor();
     return this.getChronologyConversations(Chronology.today);
   }
 
   public async getYesterdayConversations() {
+    await this.chronologyByTitle(Chronology.yesterday).waitFor();
     return this.getChronologyConversations(Chronology.yesterday);
   }
 
   public async getLastWeekConversations() {
+    await this.chronologyByTitle(Chronology.lastSevenDays).waitFor();
     return this.getChronologyConversations(Chronology.lastSevenDays);
   }
 
   public async getLastMonthConversations() {
+    await this.chronologyByTitle(Chronology.lastThirtyDays).waitFor();
     return this.getChronologyConversations(Chronology.lastThirtyDays);
   }
 

@@ -14,18 +14,19 @@ import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
+import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 
 import { Message, TemplateMapping } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   isOpen: boolean;
@@ -44,8 +45,11 @@ export const ChatMessageTemplatesModal = ({
   conversation,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
   const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
+
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
   const [templates, setTemplates] = useState<TemplateMapping[]>([
@@ -194,13 +198,12 @@ export const ChatMessageTemplatesModal = ({
                 )}
               >
                 {showMore && (
-                  <button
+                  <DialButton
                     onClick={() => setCollapsed(!collapsed)}
-                    className="flex text-accent-primary"
+                    textClassName="text-accent-primary"
                     data-qa={collapsed ? 'show-more' : 'show-less'}
-                  >
-                    {t(!collapsed ? 'Show less' : 'Show more')}
-                  </button>
+                    label={t(!collapsed ? 'Show less' : 'Show more')}
+                  />
                 )}
               </span>
             </div>
@@ -242,14 +245,13 @@ export const ChatMessageTemplatesModal = ({
         </div>
       </div>
       <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6">
-        <button
-          className="button button-primary"
+        <DialButton
+          label={t('Save')}
+          variant={ButtonVariant.Primary}
           onClick={handleSaveTemplate}
           data-qa="save-button"
           disabled={isInvalid}
-        >
-          {t('Save')}
-        </button>
+        />
       </div>
     </Modal>
   );

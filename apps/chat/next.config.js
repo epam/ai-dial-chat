@@ -61,6 +61,10 @@ class BasePathResolver {
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
+  experimental: {
+    reactCompiler: true,
+  },
+  devIndicators: false,
   nx: {
     // Set this to true if you would like to use SVGR
     // See: https://github.com/gregberge/svgr
@@ -71,9 +75,6 @@ const nextConfig = {
   i18n,
   poweredByHeader: false,
   reactStrictMode: true,
-  experimental: {
-    instrumentationHook: true,
-  },
   // @ts-ignore
   basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
 
@@ -92,6 +93,28 @@ const nextConfig = {
       {
         source: '/models/:slug([A-Za-z0-9@.-]+)',
         destination: '/?isolated-model-id=:slug',
+        permanent: false,
+      },
+      // Support old two route app editor links
+      {
+        source: '/apps-editor/:slug/settings',
+        has: [
+          { type: 'query', key: 'id', value: '(?<id>.*)' }
+        ],
+        destination: '/apps-editor?step=General&schema=:slug&id=:id',
+        permanent: false,
+      },
+      {
+        source: '/apps-editor/:slug',
+        has: [
+          { type: 'query', key: 'id', value: '(?<id>.*)' }
+        ],
+        destination: '/apps-editor?step=General&schema=:slug&id=:id',
+        permanent: false,
+      },
+      {
+        source: '/apps-editor/:slug',
+        destination: '/apps-editor?step=General&schema=:slug',
         permanent: false,
       },
     ];

@@ -1,22 +1,26 @@
-import { FloatingOverlay } from '@floating-ui/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
-
-import { ScreenState } from '@/src/types/common';
-
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  MarketplaceSelectors,
+  ModelsSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
+import { AgentsTabRenderer } from '@/src/components/Marketplace/AgentsTabRenderer';
+
+import { TabHeader } from './TabHeader';
+import { ToolsTabRenderer } from './ToolsTabRenderer';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -25,20 +29,58 @@ export const Marketplace = () => {
 
   const router = useRouter();
 
-  const isFilterbarOpen = useAppSelector(
-    UISelectors.selectShowMarketplaceFilterbar,
+  const isModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
   );
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isLoading = useAppSelector(ModelsSelectors.selectAreModelsLoading);
+  const isToolsetsEntitiesLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
+  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+
+  const isInstalledToolsetsInitialized = useAppSelector(
+    ToolsetSelectors.selectIsInstalledToolsetsInitialized,
+  );
+
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
+  const isBannerVisible = useAppSelector(
+    MarketplaceSelectors.selectIsBannerVisible,
+  );
 
-  const screenState = useScreenState();
+  const selectedEntitiesTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
 
-  const showOverlay =
-    (isFilterbarOpen || isProfileOpen) &&
-    (screenState === ScreenState.SM || screenState === ScreenState.MD);
+  const isMarketplaceLoading = useAppSelector(
+    MarketplaceSelectors.selectShowLoader,
+  );
+
+  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
+  const isLoading = useMemo(() => {
+    const isWorkspaceTab = selectedTab === MarketplaceTabs.MY_WORKSPACE;
+    const isAgentsLoading = isWorkspaceTab
+      ? isModelsLoading || !isInstalledModelsInitialized
+      : isModelsLoading;
+
+    const isToolsetsLoading = isWorkspaceTab
+      ? isToolsetsEntitiesLoading || !isInstalledToolsetsInitialized
+      : isToolsetsEntitiesLoading;
+    const showLoader = isAgentsTab ? isAgentsLoading : isToolsetsLoading;
+    return showLoader || isMarketplaceLoading;
+  }, [
+    isAgentsTab,
+    isInstalledModelsInitialized,
+    isInstalledToolsetsInitialized,
+    isMarketplaceLoading,
+    isModelsLoading,
+    isToolsetsEntitiesLoading,
+    selectedTab,
+  ]);
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
@@ -60,8 +102,8 @@ export const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer />
-          {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
+          <TabHeader isBannerVisible={isBannerVisible} />
+          {isAgentsTab ? <AgentsTabRenderer /> : <ToolsTabRenderer />}
         </>
       )}
     </div>

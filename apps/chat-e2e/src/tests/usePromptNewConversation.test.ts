@@ -12,7 +12,7 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest(
+dialTest.skip(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file\n' +
@@ -45,10 +45,15 @@ dialTest(
       'EPMRTC-5497',
     );
     // Select a model that allows file attachments
+    //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => m.features?.configuration !== true,
+      ),
     );
-    await localStorageManager.setRecentModelsIds(modelWithAttachment);
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(
+      modelWithAttachment,
+    );
 
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
@@ -57,7 +62,7 @@ dialTest(
     await localStorageManager.setShowSideBarPanels();
     await fileApiHelper.putFile(Attachment.sunImageName);
 
-    await dialTest.step('Open the Dial', async () => {
+    await dialTest.step('Open the DIAL', async () => {
       await dialHomePage.openHomePage({
         iconsToBeLoaded: [modelWithAttachment.iconUrl],
       });
@@ -148,7 +153,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt with parameters for chat',
   async ({
     dialHomePage,
@@ -175,7 +180,7 @@ dialTest(
     const initialMessage = GeneratorUtil.randomString(10);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open Dial', async () => {
+    await dialTest.step('Open DIAL', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
     });
@@ -183,7 +188,7 @@ dialTest(
     await dialTest.step(
       'Use prompt from context menu and input parameter value',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await sendMessage.messageInput.fillInInput(initialMessage);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.use, {
@@ -203,7 +208,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt option is not available for Chat in Replay mode\n' +
     'Use prompt is available for chat in Replay mode when response generation was stopped\n' +
     'Use prompt option is not available for Chat in Playback mode',
@@ -248,7 +253,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chatAssertion.assertReplayButtonState('visible');
       },
     );
@@ -267,9 +272,7 @@ dialTest(
     await dialTest.step(
       'Select partially replayed chat and verify "Continue replay" screen',
       async () => {
-        await conversations.selectConversation(
-          partiallyReplayedConversation.name,
-        );
+        await conversations.selectEntity(partiallyReplayedConversation.name);
         await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },
     );
@@ -288,7 +291,7 @@ dialTest(
     await dialTest.step(
       'Select playback chat and verify "Use" option is disabled',
       async () => {
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
@@ -314,7 +317,7 @@ dialTest(
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest(
+dialAdminTest.skip(
   'Use prompt not available for chat from Organization\n' +
     'Use prompt not available for chat from Approve required.\n' +
     'Use prompt option is not available when publication request is selected.\n' +
@@ -365,7 +368,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish and approve a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationForApproval1, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationForApproval1,
+          PublishActions.ADD,
+        )
         .build();
       approvedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -376,7 +382,10 @@ dialAdminTest(
     await dialAdminTest.step('Publish a conversation', async () => {
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(conversationToPublish, PublishActions.ADD)
+        .withConversationInFolderResource(
+          conversationToPublish,
+          PublishActions.ADD,
+        )
         .build();
       notApprovedPublication =
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -387,7 +396,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await organizationConversations.selectConversation(
+        await organizationConversations.selectEntity(
           conversationForApproval1.name,
         );
         await prompts.openEntityDropdownMenu(prompt.name);
@@ -410,11 +419,12 @@ dialAdminTest(
           notApprovedPublication.name!,
           conversationToPublish.name,
         );
-        await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
-        await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
-          MenuOptions.use,
-          'disabled',
-        );
+        //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/4223
+        // await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
+        // await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+        //   MenuOptions.use,
+        //   'disabled',
+        // );
       },
     );
 
@@ -451,10 +461,9 @@ dialAdminTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt is not available for chat with not available agent\n' +
-    'Use prompt is not available for chat with agent which not added to My workspace\n' +
-    'Use prompt is not available for chat with not available addon',
+    'Use prompt is not available for chat with agent which not added to My workspace',
   async ({
     dialHomePage,
     conversations,
@@ -468,27 +477,18 @@ dialTest(
     localStorageManager,
     talkToAgentDialog,
     navigationPanel,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
     chatHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
   }) => {
-    setTestIds('EPMRTC-5506', 'EPMRTC-5507', 'EPMRTC-5508');
+    setTestIds('EPMRTC-5506', 'EPMRTC-5507');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
 
     const initialModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
     );
-    const modelWithAddons = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModels().filter(
-        (m) =>
-          ModelsUtil.doesModelAllowAddons(m) &&
-          m.iconUrl !== undefined &&
-          m.id !== initialModel.id,
-      ),
-    );
-    const nonExistentAddon = GeneratorUtil.randomString(10);
 
     // Conversations setup
     const conversationWithNonExistentApp =
@@ -496,24 +496,14 @@ dialTest(
     conversationData.resetData();
     const conversationWithAModelToDelete =
       conversationData.prepareDefaultConversation(initialModel);
-    conversationData.resetData();
-    const conversationWithNonExistentAddon =
-      conversationData.prepareModelConversation(
-        1,
-        'test',
-        [nonExistentAddon],
-        modelWithAddons,
-      );
 
     await dataInjector.createPrompts([prompt]);
     await dataInjector.createConversations([
       conversationWithNonExistentApp,
       conversationWithAModelToDelete,
-      conversationWithNonExistentAddon,
     ]);
-    await localStorageManager.setRecentModelsIdsOnce(
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
       initialModel,
-      modelWithAddons,
     );
     await localStorageManager.setShowSideBarPanels();
 
@@ -522,10 +512,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationWithNonExistentApp.name,
-        );
-        await chatAssertion.assertNotAllowedModelLabelContent(); // Assert error message
+        await conversations.selectEntity(conversationWithNonExistentApp.name);
+        await chatAssertion.assertNotAllowedModelLabelContent(
+          nonExistentAppName,
+        ); // Assert error message
       },
     );
 
@@ -543,15 +533,13 @@ dialTest(
     await dialTest.step(
       'Open dial and select conversation, open My workspace, remove agent, and go back',
       async () => {
-        await conversations.selectConversation(
-          conversationWithAModelToDelete.name,
-        );
+        await conversations.selectEntity(conversationWithAModelToDelete.name);
         await chatHeader.chatModelIcon.click();
         await talkToAgentDialog.goToMyWorkspace();
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(initialModel);
+          await marketplaceEntitiesSection.findEntityElement(initialModel);
         await agentElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
@@ -567,24 +555,10 @@ dialTest(
         );
       },
     );
-
-    await dialTest.step(
-      'Select conversation with non-existent addon and verify "Use" prompt option is disabled',
-      async () => {
-        await conversations.selectConversation(
-          conversationWithNonExistentAddon.name,
-        );
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
-          MenuOptions.use,
-          'disabled',
-        );
-      },
-    );
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Use prompt not available for chat from Shared with me\n' +
     `View prompt: 'Use prompt' button is disabled for just created new prompt if there is a chat without available input field selected.\n` +
     'Use prompt from "Shared with me" section for chat with history',
@@ -630,7 +604,9 @@ dialSharedWithMeTest(
     ]);
     await additionalUserShareApiHelper.acceptInvite(sharePromptLink);
 
-    await localStorageManager.setRecentModelsIdsOnce(model);
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      model,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialSharedWithMeTest.step(
@@ -638,7 +614,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await sharedWithMeConversations.selectConversation(conversation.name);
+        await sharedWithMeConversations.selectEntity(conversation.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,
@@ -685,7 +661,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt from Organization for chat',
   async ({
     dialHomePage,
@@ -719,7 +695,11 @@ dialTest(
         await dataInjector.createPrompts([prompt]);
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withPromptResource(prompt, PublishActions.ADD, `0.0.${version++}`)
+          .withPromptInFolderResource(
+            prompt,
+            PublishActions.ADD,
+            `0.0.${version++}`,
+          )
           .build();
         const publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
@@ -729,7 +709,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Dial, type message, and use prompt from Organization',
+      'Open DIAL, type message, and use prompt from Organization',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();

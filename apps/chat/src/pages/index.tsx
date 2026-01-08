@@ -1,25 +1,21 @@
-import { FloatingOverlay } from '@floating-ui/react';
-
-import { useScreenState } from '@/src/hooks/useScreenState';
-
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ScreenState } from '@/src/types/common';
-
 import { useAppSelector } from '@/src/store/hooks';
-import { MigrationSelectors } from '@/src/store/migration/migration.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  MigrationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
-import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
-import Header from '@/src/components/Header/Header';
+import { ImportExportLoader } from '@/src/components/Chatbar/ImportExportLoader';
+import { AnnouncementsBanner } from '@/src/components/Common/AnnouncementBanner';
+import { Header } from '@/src/components/Header/Header';
 
 import { useCustomizations } from '@/src/customizations';
 import { Feature } from '@epam/ai-dial-shared';
@@ -36,13 +32,16 @@ function Home() {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+
   const { conversationsToMigrateCount, migratedConversationsCount } =
     useAppSelector(
       MigrationSelectors.selectConversationsToMigrateAndMigratedCount,
     );
+
   const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
     MigrationSelectors.selectPromptsToMigrateAndMigratedCount,
   );
+
   const failedMigratedConversations = useAppSelector(
     MigrationSelectors.selectFailedMigratedConversations,
   );
@@ -52,10 +51,6 @@ function Home() {
   const showSelectToMigrateWindow = useAppSelector(
     UISelectors.selectShowSelectToMigrateWindow,
   );
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-
-  const screenState = useScreenState();
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
     if (
@@ -65,9 +60,6 @@ function Home() {
       return window.location.reload();
     }
   }
-
-  const showFloatingOverlay =
-    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
 
   return (
     <>
@@ -90,9 +82,6 @@ function Home() {
           {enabledFeatures.has(Feature.Header) && <Header />}
           <div className="flex w-full grow overflow-auto">
             <div className="flex min-w-0 grow flex-col">
-              {showFloatingOverlay && (
-                <FloatingOverlay className="z-30 bg-blackout" />
-              )}
               <AnnouncementsBanner />
               <Chat />
               <ImportExportLoader />

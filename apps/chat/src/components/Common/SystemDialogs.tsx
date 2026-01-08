@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useUrlHash } from '@/src/hooks/useUrlHash';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { reportAnIssueHash, requestApiKeyHash } from '@/src/constants/footer';
 

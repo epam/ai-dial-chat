@@ -22,7 +22,7 @@ let responseImageAttachmentPath: string;
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -40,11 +40,15 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1980');
     let cancelExportConversation: Conversation;
+    const filename = `${GeneratorUtil.randomString(8)}.jpg`;
 
     await dialTest.step(
       'Upload image to root folder and prepare conversation containing this image',
       async () => {
-        const imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+        const imageUrl = await fileApiHelper.putFileWithCustomName(
+          filename,
+          Attachment.sunImageName,
+        );
         cancelExportConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl,
@@ -60,7 +64,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(cancelExportConversation.name);
+        await conversations.selectEntity(cancelExportConversation.name);
         await dialHomePage.throttleAPIResponse('**/*');
         await conversations.openEntityDropdownMenu(
           cancelExportConversation.name,
@@ -74,14 +78,21 @@ dialTest(
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
         const exportedFiles = FileUtil.getExportedFiles();
-        expect
-          .soft(
-            exportedFiles?.find((f) =>
-              f.includes(Import.importAttachmentExtension),
-            ),
-            ExpectedMessages.dataIsNotExported,
-          )
-          .toBeUndefined();
+        //verify there is no .dial archive with compressed image inside export folder
+        exportedFiles
+          ?.filter((f) => f.includes(Import.importAttachmentExtension))
+          .forEach((path) => {
+            const archive = FileUtil.readArchive(path);
+            const entries = FileUtil.getArchiveEntries(archive);
+            const imageEntry = entries.find((e) =>
+              e.entryName.includes(
+                `${ExpectedConstants.exportedArchiveImageRootFolder}/${filename}`,
+              ),
+            );
+            expect
+              .soft(imageEntry, ExpectedMessages.dataIsNotExported)
+              .toBeUndefined();
+          });
       },
     );
   },
@@ -141,10 +152,11 @@ dialTest(
     chatBar,
     confirmationDialog,
     chatMessages,
+    chatMessagesAssertion,
+    toast,
     chat,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     setTestIds,
     localStorageManager,
   }) => {
@@ -166,7 +178,7 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -182,6 +194,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -199,7 +212,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(historyConversation.name);
+        await conversations.selectEntity(historyConversation.name);
         await conversations.openEntityDropdownMenu(historyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(() =>
@@ -348,16 +361,13 @@ dialTest(
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
           await chatHeader.chatAgent.click();
-          await talkToAgentDialog.selectAgent(
-            simpleRequestModel,
-            marketplacePage,
+          await talkToAgentDialog.selectAgent(simpleRequestModel);
+          await toast.closeToast();
+          await dialHomePage.mockChatTextResponse(
+            MockedChatApiResponseBodies.simpleTextBody,
           );
           await chat.sendRequestWithButton('1+2=');
-          const messagesCount =
-            await chatMessages.chatMessages.getElementsCount();
-          expect
-            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-            .toBe(6);
+          await chatMessagesAssertion.assertMessagesCount(6);
         }
       },
     );
@@ -399,7 +409,7 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -415,6 +425,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -439,7 +450,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(playbackConversation.name);
+        await conversations.selectEntity(playbackConversation.name);
         await conversations.openEntityDropdownMenu(playbackConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -466,7 +477,7 @@ dialTest(
           { name: playbackConversation.name },
           'visible',
         );
-        await conversationAssertion.assertSelectedConversation(
+        await conversationAssertion.assertSelectedEntity(
           playbackConversation.name,
         );
         await agentInfoAssertion.assertElementState(agentInfo, 'visible');
@@ -539,11 +550,13 @@ dialTest(
     fileApiHelper,
     dataInjector,
     dialHomePage,
+    toastAssertion,
     conversations,
     conversationDropdownMenu,
     chatBar,
     confirmationDialog,
     chat,
+    page,
     chatMessages,
     chatAssertion,
     agentInfo,
@@ -578,6 +591,7 @@ dialTest(
               attachmentUrl: [requestDocUrl],
             },
           });
+        conversationData.resetData();
         replayConversation =
           conversationData.prepareDefaultReplayConversation(
             historyConversation,
@@ -595,7 +609,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -617,6 +631,7 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
+        await toastAssertion.assertToastIsVisible();
         await conversationAssertion.assertEntityState(
           { name: replayConversation.name },
           'visible',
@@ -635,7 +650,11 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
+        const respPromise = page.waitForResponse((resp) =>
+          resp.url().includes(API.moveHost),
+        );
         const replayRequests = await chat.startReplayForDifferentModels();
+        await respPromise;
         apiAssertion.verifyRequestAttachments(
           replayRequests[0],
           requestImageUrl,
@@ -703,11 +722,11 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         secondResponseImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         historyConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInResponse({
@@ -735,13 +754,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
           () =>
             conversationDropdownMenu.selectMenuOption(
               MenuOptions.withAttachments,
+              { triggeredHttpMethod: 'GET', apiHost: API.fileHost() },
             ),
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
@@ -754,12 +774,16 @@ dialTest(
         await fileApiHelper.deleteAllFiles();
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
         await conversationAssertion.assertEntityState(
           { name: replayConversation.name },
           'visible',
+        );
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
         );
         await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },

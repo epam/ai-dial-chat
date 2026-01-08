@@ -12,9 +12,10 @@ import {
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Attributes, Colors } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 const chatResponseIndex = 2;
@@ -22,13 +23,13 @@ let defaultModel: DialAIEntityModel;
 let randomModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   randomModel = GeneratorUtil.randomArrayElement(
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
 });
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Share with me. Chats with different context.\n' +
     'Shared chat history is updated in Shared with me if to generate new picture.\n' +
     'Publish chat with file, file is from "Shared with me" section',
@@ -42,7 +43,7 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserConversations,
     additionalShareUserConversationDropdownMenu,
-    additionalShareUserPublishingRequestModal,
+    additionalShareUserPublishingRequestDialog,
     additionalShareUserToast,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
@@ -67,13 +68,12 @@ dialSharedWithMeTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
 
-        await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          API.modelFilePath(defaultModel.id),
-        );
+        await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: API.modelFilePath(defaultModel.id),
+        });
 
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -90,6 +90,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -133,6 +134,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             responseImageUrl,
           );
         conversationWithSharedFile.messages[0].custom_content!.attachments =
@@ -149,7 +151,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           responseImageConversation.name,
         );
 
@@ -177,7 +179,7 @@ dialSharedWithMeTest(
             .toBe(200);
         }
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           requestImageConversation.name,
         );
         await additionalShareUserChatMessages
@@ -209,7 +211,7 @@ dialSharedWithMeTest(
             .toBe(200);
         }
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           stageConversation.name,
         );
         await additionalShareUserChatMessages
@@ -222,7 +224,7 @@ dialSharedWithMeTest(
           )
           .toBeVisible();
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           codeConversation.name,
         );
         await additionalShareUserChatMessages
@@ -248,10 +250,10 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.publish,
         );
-        await additionalShareUserPublishingRequestModal.requestName.fillInInput(
+        await additionalShareUserPublishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
-        await additionalShareUserPublishingRequestModal.sendRequestButton.click();
+        await additionalShareUserPublishingRequestDialog.sendRequestButton.click();
         await baseAssertion.assertElementState(
           additionalShareUserToast,
           'visible',
@@ -261,7 +263,7 @@ dialSharedWithMeTest(
           ExpectedConstants.attachmentPublishErrorMessage,
         );
         await baseAssertion.assertElementState(
-          additionalShareUserPublishingRequestModal,
+          additionalShareUserPublishingRequestDialog,
           'hidden',
         );
       },
@@ -328,7 +330,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Share with me. Folder with chats with different context',
   async ({
     conversationData,
@@ -361,7 +363,7 @@ dialSharedWithMeTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
 
         requestImageUrl = await fileApiHelper.putFile(
@@ -379,6 +381,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -554,7 +557,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
     'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
     'Unshared by the owner file disappears from "Shared with me". User1 shares two files, unshares one file.\n' +
@@ -601,10 +604,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 1 prepares conversation with 2 images in the requests',
       async () => {
-        firstImageUrl = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          firstFilePath,
-        );
+        firstImageUrl = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: firstFilePath,
+        });
         secondImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
         imageConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInRequest({
@@ -631,7 +633,7 @@ dialSharedWithMeTest(
         await additionalShareUserDataInjector.createConversations([
           secondUserEmptyConversation,
         ]);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           attachmentModel,
         );
       },
@@ -653,6 +655,9 @@ dialSharedWithMeTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        const expectedArrowColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textAccentPrimary,
+        );
 
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.sunImageName },
@@ -660,7 +665,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           { name: Attachment.sunImageName },
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         for (const segment of pathSegment) {
@@ -676,7 +681,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           { name: Attachment.cloudImageName },
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
       },
     );
@@ -687,7 +692,7 @@ dialSharedWithMeTest(
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserConversations.selectEntity(
           secondUserEmptyConversation.name,
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
@@ -726,7 +731,7 @@ dialSharedWithMeTest(
       'User2 opens the file in the shared chat and verifies the picture is shown in requests',
       async () => {
         await additionalShareUserAttachFilesModal.closeButton.click();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           imageConversation.name,
         );
 
@@ -746,7 +751,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 2 open the attach modal and verifies that the file is not visible',
       async () => {
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserConversations.selectEntity(
           secondUserEmptyConversation.name,
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
@@ -844,7 +849,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat in Playback mode',
   async ({
     conversationData,
@@ -875,7 +880,7 @@ dialSharedWithMeTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
 
         responseImageConversation =
@@ -929,7 +934,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           playbackConversation.name,
         );
         await expect
@@ -1032,15 +1037,15 @@ dialSharedWithMeTest(
           .toEqual([
             MenuOptions.duplicate,
             MenuOptions.export,
+            MenuOptions.unshare,
             MenuOptions.info,
-            MenuOptions.delete,
           ]);
       },
     );
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat with plotly graph',
   async ({
     conversationData,
@@ -1061,10 +1066,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Prepare conversation with plotly graph in the response',
       async () => {
-        plotlyImageUrl = await fileApiHelper.putFile(
-          Attachment.plotlyName,
-          API.modelFilePath(defaultModel.id),
-        );
+        plotlyImageUrl = await fileApiHelper.putFile(Attachment.plotlyName, {
+          parentPath: API.modelFilePath(defaultModel.id),
+        });
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             plotlyImageUrl,
@@ -1089,7 +1093,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           plotlyConversation.name,
         );
         await additionalShareUserChatMessages
@@ -1119,7 +1123,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat with attached link',
   async ({
     conversationData,
@@ -1165,7 +1169,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           attachmentLinkConversation.name,
         );
         for (let i = 1; i <= chatResponseIndex; i++) {

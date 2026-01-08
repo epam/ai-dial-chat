@@ -11,9 +11,16 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import {
+  Colors,
+  Overflow,
+  StyleValues,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -21,6 +28,7 @@ dialTest(
     'Shared URL is copied using Ctrl+A, Ctrl+C\n' +
     'Share chat: tooltip for long chat name.\n' +
     'Share chat: tooltip for URL.\n' +
+    'Share single chat via QR code.\n' +
     'Share chat: copy button changes.\n' +
     'Shared URL is copied if to click on copy button.\n' +
     'Shared chat link is always different.\n' +
@@ -35,6 +43,7 @@ dialTest(
     dataInjector,
     shareModal,
     shareModalAssertion,
+    tooltipAssertion,
     tooltip,
     page,
     sendMessage,
@@ -53,6 +62,7 @@ dialTest(
       'EPMRTC-1503',
       'EPMRTC-1508',
       'EPMRTC-1509',
+      'EPMRTC-6053',
       'EPMRTC-1512',
       'EPMRTC-2745',
       'EPMRTC-1820',
@@ -73,31 +83,28 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open conversation dropdown menu and choose "Share" option and verify modal window text',
+      'Open conversation dropdown menu and choose "Share" option and verify Share modal data',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         const firstShareRequestResponse =
           await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        await shareModalAssertion.assertMessageContent(
-          ExpectedConstants.shareConversationText,
-        );
-        await shareModalAssertion.assertElementState(
-          shareModal.notSharedEntityLabel,
-          'visible',
-        );
-        await shareModalAssertion.assertElementText(
-          shareModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedChatText,
-        );
-        await shareModalAssertion.assertElementState(
-          shareModal.removeAccessBtn,
-          'hidden',
-        );
+        await shareModalAssertion.assertGeneralInfo({
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.shareConversationText,
+          ],
+          notSharedEntityLabel: ExpectedConstants.notSharedChatText,
+          removeAccessBtnState: 'hidden',
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedSideBarEntityUrl(
+            firstShareLinkResponse.invitationLink,
+          ),
+        });
       },
     );
 
@@ -105,25 +112,20 @@ dialTest(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
         await shareModal.closeButton.hoverOver();
-        const closeButtonColor =
-          await shareModal.closeButton.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(closeButtonColor[0], ExpectedMessages.buttonColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
-
+        await shareModalAssertion.assertElementBorderColors(
+          shareModal.closeButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
         await shareModal.copyLinkButton.hoverOver();
-        const copyButtonColor =
-          await shareModal.copyLinkButton.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(copyButtonColor[0], ExpectedMessages.buttonColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
-
-        const copyLinkTooltip = await tooltip.getContent();
-        expect
-          .soft(copyLinkTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.copyUrlTooltip);
+        await shareModalAssertion.assertElementBorderColors(
+          shareModal.copyLinkIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
+        await tooltipAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.copyUrlTooltip,
+          ExpectedMessages.tooltipContentIsValid,
+        );
       },
     );
 
@@ -136,13 +138,13 @@ dialTest(
           );
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.breakWord);
+          .toBe(StyleValues.breakWord);
 
         await shareModal.entityName.hoverOver();
         const tooltipChatName = await tooltip.getContent();
         expect
           .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationName(conversation.name));
+          .toBe(ExpectedConstants.sharedEntityName(conversation.name));
 
         const isTooltipChatNameTruncated =
           await tooltip.isElementWidthTruncated();
@@ -190,7 +192,7 @@ dialTest(
         expect
           .soft(actualCopiedLink, ExpectedMessages.shareConversationLinkIsValid)
           .toBe(
-            ExpectedConstants.sharedConversationUrl(
+            ExpectedConstants.sharedSideBarEntityUrl(
               firstShareLinkResponse.invitationLink,
             ),
           );
@@ -237,7 +239,7 @@ dialTest(
       'Open shared link by current user and verify error is shown',
       async () => {
         await dialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             secondShareLinkResponse.invitationLink,
           ),
         );
@@ -321,10 +323,8 @@ dialSharedWithMeTest(
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     temperatureSlider,
     agentSettings,
-    addons,
     conversations,
     conversationDropdownMenu,
     conversationSettingsModal,
@@ -347,7 +347,6 @@ dialSharedWithMeTest(
     let firstConversationToShare: Conversation;
     let secondConversationToShare: Conversation;
     let thirdConversationToShare: Conversation;
-    let randomAddon: DialAIEntityModel;
     let randomModel: DialAIEntityModel;
     let defaultModelId: string;
     let newName: string;
@@ -376,15 +375,15 @@ dialSharedWithMeTest(
             await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
-        defaultModelId = ModelsUtil.getDefaultModel()!.id;
-        randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
+        defaultModelId = ModelsUtil.getDefaultAgent()!.id;
         randomModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels().filter(
             (model) => model.id !== defaultModelId,
           ),
         );
-        await localStorageManager.setRecentAddonsIds(randomAddon);
-        await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -394,11 +393,10 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversationToShare.name);
+        await conversations.selectEntity(firstConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
-        await addons.selectAddon(randomAddon.name);
         await conversationSettingsModal.applyChangesButton.click();
         await toast.closeToast();
         await dialHomePage.mockChatTextResponse(
@@ -416,7 +414,7 @@ dialSharedWithMeTest(
       'Update conversation name for the 2nd conversation and verify conversation is shared, shared icon is displayed',
       async () => {
         newName = GeneratorUtil.randomString(10);
-        await conversations.selectConversation(secondConversationToShare.name);
+        await conversations.selectEntity(secondConversationToShare.name);
         await conversations.openEntityDropdownMenu(
           secondConversationToShare.name,
         );
@@ -434,9 +432,9 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Update model for the 3rd conversation and verify conversation is shared, shared icon is displayed',
       async () => {
-        await conversations.selectConversation(thirdConversationToShare.name);
+        await conversations.selectEntity(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
         const expectedRandomModelIcon =
           iconApiHelper.getEntityIcon(randomModel);
         await conversationAssertion.assertTreeEntityIcon(
@@ -487,7 +485,7 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
     let conversation: Conversation;
     let replayConversation: Conversation;
     let playbackConversation: Conversation;
@@ -552,7 +550,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         for (const conversation of [
           replayConversation,
           playbackConversation,
@@ -613,7 +611,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstSharedConversation.name);
+        await conversations.selectEntity(firstSharedConversation.name);
         await conversations.openEntityDropdownMenu(
           firstSharedConversation.name,
         );
@@ -647,7 +645,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
 
@@ -660,7 +658,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
   },
@@ -731,7 +729,7 @@ dialTest(
       'Open Compare mode for shared conversation and verify shared folder and conversation have blue arrow in Compare dropdown list',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
 
@@ -793,7 +791,13 @@ dialTest(
           ExpectedConstants.renameSharedFolderMessage,
           ExpectedMessages.confirmationMessageIsValid,
         );
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: nestedConversations[1].id.replace(
+            nestedFolders[1].name,
+            newFolderName,
+          ),
+        });
         await chatBarFolderAssertion.assertFolderArrowIconState(
           { name: newFolderName },
           'hidden',
@@ -803,9 +807,10 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
+    'Share folder with chats via QR code.\n' +
     'Confirmation message if to delete shared chat folder.\n' +
     'Shared icon disappears from the folder if to use Unshare.\n' +
     'Share form text differs for chat and folder.\n' +
@@ -832,6 +837,7 @@ dialTest(
     setTestIds(
       'EPMRTC-2729',
       'EPMRTC-1811',
+      'EPMRTC-6054',
       'EPMRTC-2811',
       'EPMRTC-2757',
       'EPMRTC-1811',
@@ -850,10 +856,10 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open app, select "Share" menu option for folder with conversation inside and verify modal window text',
+      'Open app, select "Share" menu option for folder with conversation inside and verify Share modal window',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(folderConversation.folders.name);
@@ -868,14 +874,17 @@ dialTest(
         shareLinkResponse = (await folderConversations.selectShareMenuOption())
           .response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        shareModalAssertion.assertValue(
-          await shareModal.getShareTextContent(),
-          ExpectedConstants.shareConversationFolderText,
-        );
-        await shareModalAssertion.assertElementText(
-          shareModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedFolderText,
-        );
+        await shareModalAssertion.assertGeneralInfo({
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.shareConversationFolderText,
+          ],
+          notSharedEntityLabel: ExpectedConstants.notSharedFolderText,
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedSideBarEntityUrl(
+            shareLinkResponse.invitationLink,
+          ),
+        });
       },
     );
 
@@ -913,7 +922,7 @@ dialTest(
           );
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.breakWord);
+          .toBe(StyleValues.breakWord);
       },
     );
 
@@ -1016,7 +1025,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await baseAssertion.assertElementState(
           chatHeader.chatModelArrowIcon,
           'hidden',

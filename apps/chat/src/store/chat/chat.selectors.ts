@@ -3,29 +3,54 @@ import { createSelector } from '@reduxjs/toolkit';
 import { ModalState } from '@/src/types/modal';
 import { RootState } from '@/src/types/store';
 
-import { ChatState } from './chat.types';
-
 import { DialSchemaProperties } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): ChatState => state.chat;
+const rootSelector = (state: RootState) => state.chat;
 
 const selectInputContent = (state: RootState) =>
   rootSelector(state).inputContent;
 
 const selectChatFormValue = (state: RootState) => rootSelector(state).formValue;
 
-const selectConfigurationSchema = (state: RootState) =>
-  rootSelector(state).configurationSchema;
+const selectUploadedConfigurationSchemas = (state: RootState) =>
+  rootSelector(state).configurationSchemas;
 
-const selectIsConfigurationSchemaLoading = (state: RootState) =>
-  rootSelector(state).isConfigurationSchemaLoading;
+const selectConfigurationSchemaByModelId = createSelector(
+  [selectUploadedConfigurationSchemas, (_state, modelId: string) => modelId],
+  (configurationSchemas, modelId) =>
+    configurationSchemas.find((schema) => schema.modelId === modelId)?.schema,
+);
+
+const selectConfigurationSchemaByModelIds = createSelector(
+  [
+    selectUploadedConfigurationSchemas,
+    (_state, modelIds: string[]) => modelIds,
+  ],
+  (configurationSchemas, modelIds) =>
+    configurationSchemas
+      .filter((schema) => modelIds.includes(schema.modelId))
+      .map((schema) => schema.schema),
+);
+
+const selectLoadingConfigurationSchemas = (state: RootState) =>
+  rootSelector(state).configurationSchemasLoadingIds;
+
+const selectIsConfigurationSchemaLoading = createSelector(
+  [selectLoadingConfigurationSchemas, (_state, modelId: string) => modelId],
+  (configurationSchemasLoadingIds, modelId) =>
+    configurationSchemasLoadingIds.includes(modelId),
+);
 
 const selectIsConfigurationBlocksInput = createSelector(
-  [rootSelector],
-  (state) =>
-    state.configurationSchema?.[
-      DialSchemaProperties.DialChatMessageInputDisabled
-    ] ?? false,
+  [
+    (_state, modelId: string[]) =>
+      selectConfigurationSchemaByModelIds(_state, modelId),
+  ],
+  (configurationSchemas) =>
+    configurationSchemas.some(
+      (schema) =>
+        schema?.[DialSchemaProperties.DialChatMessageInputDisabled] ?? false,
+    ),
 );
 
 const selectShouldFocusAndScroll = (state: RootState) =>
@@ -46,12 +71,15 @@ const selectSelectedEntityInfo = (state: RootState) =>
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
-  selectConfigurationSchema,
+  selectUploadedConfigurationSchemas,
+  selectConfigurationSchemaByModelId,
+  selectConfigurationSchemaByModelIds,
+  selectLoadingConfigurationSchemas,
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,
   selectShouldFocusAndScroll,
-  selectNotAvailableEntityType,
   selectInfoModalState,
+  selectNotAvailableEntityType,
   selectInfoModalOpened,
   selectSelectedEntityInfo,
 };

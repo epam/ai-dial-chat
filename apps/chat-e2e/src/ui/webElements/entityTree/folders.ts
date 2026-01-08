@@ -1,7 +1,8 @@
 import {
-  ChatBarSelectors,
+  ChatSelectors,
   EntitySelectors,
   MenuSelectors,
+  PublishingApprovalModalSelectors,
   SideBarSelectors,
 } from '../../selectors';
 import { BaseElement, elementIndexExceptionError } from '../baseElement';
@@ -14,6 +15,7 @@ import { FolderSelectors } from '@/src/ui/selectors/folderSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
@@ -94,7 +96,24 @@ export class Folders extends BaseElement {
     return this.getFolderByName(name, index).locator(MenuSelectors.dotsMenu);
   };
 
-  public getFolderByName(name: string, index?: number) {
+  getFolderByName(name: string, index?: number) {
+    return this.getFolderByNameInDisplayMode(name, index).or(
+      this.getFolderByNameInEditMode(name, index),
+    );
+  }
+
+  protected getFolderByNameInEditMode(name: string, index?: number) {
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .getElementLocator()
+      .filter({
+        has: this.page.locator(
+          `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(name)}`,
+        ),
+      })
+      .nth(index ? index - 1 : 0);
+  }
+
+  protected getFolderByNameInDisplayMode(name: string, index?: number) {
     return this.getChildElementBySelector(
       FolderSelectors.folder,
     ).getElementLocatorByText(name, index);
@@ -112,6 +131,12 @@ export class Folders extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
+  public getFolderByExactNameInDisplayMode(name: string) {
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+  }
+
   public getFolderBackgroundColor(name: string, index?: number) {
     return this.createElementFromLocator(
       this.getFolderByName(name, index),
@@ -119,8 +144,15 @@ export class Folders extends BaseElement {
   }
 
   public getFolderName(name: string, index?: number) {
+    const folderNameLocator = this.getFolderByName(name, index);
+    const folderNameWithContentLocator = folderNameLocator.locator(
+      FolderSelectors.folderNameWithContent(),
+    );
+    const emptyFolderNameLocator = folderNameLocator.locator(
+      FolderSelectors.emptyFolderName(),
+    );
     return this.createElementFromLocator(
-      this.getFolderByName(name, index).locator(FolderSelectors.folderName),
+      folderNameWithContentLocator.or(emptyFolderNameLocator),
     );
   }
 
@@ -139,15 +171,16 @@ export class Folders extends BaseElement {
   }
 
   public getFolderExpandIcon(name: string, index?: number) {
-    return this.getFolderByName(name, index).locator(
-      `${Tags.span}[class='${Attributes.visible}']`,
-    );
+    return this.getFolderByName(name, index)
+      .locator(`${Tags.span}[class='${Attributes.visible}']`)
+      .locator(Tags.svg)
+      .first();
   }
 
   public async isFolderCaretExpanded(name: string, index?: number) {
-    return this.getFolderExpandIcon(name, index)
-      .locator(`.${Attributes.rotated90}`)
-      .isVisible();
+    const icon = this.getFolderExpandIcon(name, index);
+    const classAttribute = await icon.getAttribute('class');
+    return classAttribute?.includes(Attributes.rotated90) ?? false;
   }
 
   public foldersGroup = (parentFolderName: string) => {
@@ -186,6 +219,7 @@ export class Folders extends BaseElement {
 
   public async getFolderDropdownMenu(name: string, index?: number) {
     const folderToEdit = this.getFolderByName(name, index);
+    await folderToEdit.scrollIntoViewIfNeeded();
     await folderToEdit.hover();
     return this.folderDotsMenu(name, index);
   }
@@ -391,6 +425,15 @@ export class Folders extends BaseElement {
     );
   };
 
+  public folderEntityDotsMenuSpinner = (
+    folderName: string,
+    entityName: string,
+  ) => {
+    return this.folderEntityDotsMenu(folderName, entityName).locator(
+      ChatSelectors.entitySpinner,
+    );
+  };
+
   public getFolderEntitiesCount(folderName: string) {
     return this.getFolderEntities(folderName).count();
   }
@@ -410,7 +453,22 @@ export class Folders extends BaseElement {
       entityName,
       folderIndex,
       entityIndex,
-    ).locator(ChatBarSelectors.selectedEntity);
+    ).locator(SideBarSelectors.selectedEntity);
+  }
+
+  public async selectFolder(
+    folderName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    const folderElement = this.getFolderByName(folderName);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await folderElement.click();
+      return respPromise;
+    }
+    await folderElement.click();
   }
 
   public async selectFolderEntity(
@@ -442,6 +500,9 @@ export class Folders extends BaseElement {
     });
     await folderEntity.hover();
     await this.folderEntityDotsMenu(folderName, entityName).click();
+    await this.folderEntityDotsMenuSpinner(folderName, entityName).waitFor({
+      state: 'hidden',
+    });
     await this.getDropdownMenu().waitForState();
   }
 
@@ -456,6 +517,13 @@ export class Folders extends BaseElement {
       this.getFolderArrowIcon(name, index).locator(Tags.svg),
     );
     return iconElement.getComputedStyleProperty(Styles.color);
+  }
+
+  public getFolderIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index)
+      .locator(FolderSelectors.iconContainer)
+      .locator(Tags.svg)
+      .first();
   }
 
   public getFolderEntityArrowIcon(

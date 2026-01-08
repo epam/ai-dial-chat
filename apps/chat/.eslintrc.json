@@ -28,8 +28,15 @@
         "import/no-duplicates": "error",
         "import/no-cycle": ["error", { "maxDepth": 5 }],
         "tailwindcss/no-custom-classname": "error",
+        // "tailwindcss/no-multiple-whitespace": "error", // waiting https://github.com/francoismassart/eslint-plugin-tailwindcss/pull/370
         "tailwindcss/no-contradicting-classname": "error",
-        "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": ["react-i18next"],
+            "patterns": ["../../**", "../../*", "../**", "!../*"]
+          }
+        ],
         "no-restricted-globals": [
           "error",
           {
@@ -41,7 +48,18 @@
             "message": "Use DataService instead."
           }
         ],
-        "@typescript-eslint/no-non-null-assertion": "off"
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "VariableDeclarator[init.callee.name='useFormContext'] > ObjectPattern > Property[key.name='watch']",
+            "message": "Do not destructure 'watch' from useFormContext. Use useWatch() hook instead for React Compiler compatibility."
+          },
+          {
+            "selector": "VariableDeclarator[init.callee.name='useFormContext'] > ObjectPattern > Property[key.name='formState']",
+            "message": "Do not destructure 'formState' from useFormContext. Use useFormState() hook instead for React Compiler compatibility."
+          }
+        ]
       }
     },
     {

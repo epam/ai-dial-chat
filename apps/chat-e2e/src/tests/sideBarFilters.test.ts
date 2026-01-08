@@ -64,12 +64,12 @@ dialTest(
         conversationData.resetData();
         sharedSingleConversationWithTerm =
           conversationData.prepareDefaultConversation(
-            ModelsUtil.getDefaultModel(),
+            ModelsUtil.getDefaultAgent(),
             GeneratorUtil.randomString(3) + searchTerm,
           );
         conversationData.resetData();
         singleConversation = conversationData.prepareDefaultConversation(
-          ModelsUtil.getDefaultModel(),
+          ModelsUtil.getDefaultAgent(),
           searchTerm,
         );
         await dataInjector.createConversations(

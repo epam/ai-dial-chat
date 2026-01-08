@@ -6,14 +6,16 @@ import {
 } from '@/src/types/applications';
 import { EntityType, ScreenState } from '@/src/types/common';
 
-import Loader from '../components/Common/Loader';
+import { Loader } from '@/src/components/Common/Loader';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
+  toolset = 'toolset',
   tab = 'tab',
+  entitiesTab = 'entitiesTab',
   types = 'types',
   topics = 'topics',
   search = 'search',
@@ -35,39 +37,30 @@ export enum MarketplaceTabs {
   MY_WORKSPACE = 'workspace',
 }
 
-export const ChangeAgentTabs = {
-  [MarketplaceTabs.MY_WORKSPACE]: 'My agents',
-  [MarketplaceTabs.HOME]: 'All agents',
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
+
+export const ChangeMarketplaceTabs = {
+  [MarketplaceTabs.MY_WORKSPACE]: 'My workspace',
+  [MarketplaceTabs.HOME]: 'Marketplace',
 };
 
 export enum DeleteType {
-  DELETE,
-  REMOVE,
+  DELETE = 'Delete',
+  REMOVE = 'Remove',
 }
 
-export const ENTITY_TYPES = [
-  EntityType.Application,
-  EntityType.Assistant,
-  EntityType.Model,
-];
+export const ENTITY_TYPES = [EntityType.Application, EntityType.Model];
 
 export enum SourceType {
   Public = 'Public',
   SharedWithMe = 'Shared with me',
   MyCustomApps = 'My Custom apps',
-  MyQuickApps = 'My Quick apps',
   MyCodeApps = 'My Code apps',
-  MyMindMaps = 'My Mindmaps',
+  MyToolsets = 'My Toolsets',
 }
-
-export const SourceTypeFilterOrder = {
-  [SourceType.MyCodeApps]: 1,
-  [SourceType.MyCustomApps]: 2,
-  [SourceType.MyMindMaps]: 3,
-  [SourceType.MyQuickApps]: 4,
-  [SourceType.Public]: 5,
-  [SourceType.SharedWithMe]: 6,
-};
 
 export const ApplicationTypeToSourceType = {
   [ApplicationType.CODE_APP]: SourceType.MyCodeApps,

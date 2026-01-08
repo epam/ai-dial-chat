@@ -2,32 +2,36 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { Tiktoken, get_encoding } from 'tiktoken';
+interface TokenizerInstance {
+  encode(text: string): { length: number };
+  free(): void;
+}
 
 export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
-  const encodingRef = useRef<Tiktoken | null>(null);
+  const encodingRef = useRef<TokenizerInstance | null>(null);
 
   useEffect(() => {
-    // clean up if tokenizer changed
-    if (encodingRef.current) {
-      encodingRef.current.free();
-      encodingRef.current = null;
-    }
+    let cancelled = false;
 
-    // use macrotask to not block the thread
-    const timerId = setTimeout(() => {
-      if (tokenizer?.encoding) {
-        encodingRef.current = get_encoding(tokenizer.encoding);
+    // Use macrotask to not block the thread
+    const timerId = setTimeout(async () => {
+      if (!cancelled && tokenizer?.encoding) {
+        // Dynamic import is required to keep this hook HMR-safe.
+        // Static import of tiktoken (WebAssembly) would break React Fast Refresh.
+        const { getOrCreateEncoding } = await import(
+          '@/src/utils/app/tokenizer'
+        );
+
+        if (!cancelled) {
+          encodingRef.current = getOrCreateEncoding(tokenizer.encoding);
+        }
       }
     }, 0);
 
     return () => {
-      if (encodingRef.current) {
-        encodingRef.current.free();
-        encodingRef.current = null;
-      }
-
+      cancelled = true;
       clearTimeout(timerId);
+      encodingRef.current = null;
     };
   }, [tokenizer]);
 

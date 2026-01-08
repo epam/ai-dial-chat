@@ -5,8 +5,9 @@ import { FolderInterface } from '@/src/types/folder';
 import { OnItemEvent } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 
-import Folder from '../../Folder/Folder';
-import { PromptsRow } from './Components';
+import { Folder } from '@/src/components/Folder/Folder';
+
+import { PromptsRow } from './ReplacePromptRow';
 
 interface Props {
   folders: FolderInterface[];
@@ -14,7 +15,7 @@ interface Props {
   openedFoldersIds: string[];
   promptsToReplace: Prompt[];
   handleToggleFolder?: (folderId: string) => void;
-  onItemEvent?: OnItemEvent;
+  onItemEvent: OnItemEvent;
 }
 export const PromptsList = ({
   folders,

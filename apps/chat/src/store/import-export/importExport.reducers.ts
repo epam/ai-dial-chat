@@ -3,16 +3,16 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import {
-  Operation,
-  PromptsHistory,
-  SupportedExportFormats,
-} from '@/src/types/import-export';
+import { Operation } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
 import { ImportExportState } from './importExport.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import {
+  ExportPromptsFormat,
+  SupportedExportFormats,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export type UploadedAttachment = Partial<DialFile> & {
   oldRelativePath: string;
@@ -69,7 +69,6 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{ data: SupportedExportFormats }>,
     ) => {
-      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
       state.isShowReplaceDialog = false;
     },
@@ -135,12 +134,13 @@ export const importExportSlice = createSlice({
       _action: PayloadAction<{
         itemsToUpload: Conversation[];
       }>,
-    ) => state,
-    importPrompts: (
-      state,
-      _action: PayloadAction<{ promptsHistory: PromptsHistory }>,
     ) => {
       state.status = UploadStatus.LOADING;
+    },
+    importPrompts: (
+      state,
+      _action: PayloadAction<{ promptsHistory: ExportPromptsFormat }>,
+    ) => {
       state.operation = Operation.Importing;
     },
     importPromptsFail: (state) => state,
@@ -149,7 +149,9 @@ export const importExportSlice = createSlice({
       _action: PayloadAction<{
         itemsToUpload: Prompt[];
       }>,
-    ) => state,
+    ) => {
+      state.status = UploadStatus.LOADING;
+    },
     showReplaceDialog: (
       state,
       {
@@ -219,6 +221,22 @@ export const importExportSlice = createSlice({
     ) => {
       state.isShowReplaceDialog = false;
       state.mappedActions = payload.mappedActions;
+    },
+    handleImportStop: (
+      state,
+      _action: PayloadAction<
+        | {
+            itemsToUpload: Conversation[];
+            featureType: FeatureType.Chat;
+          }
+        | {
+            itemsToUpload: Prompt[];
+            featureType: FeatureType.Prompt;
+          }
+      >,
+    ) => state,
+    finishImport: (state) => {
+      state.status = UploadStatus.ALL_LOADED;
     },
   },
 });

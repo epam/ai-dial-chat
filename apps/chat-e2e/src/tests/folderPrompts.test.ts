@@ -8,7 +8,7 @@ import {
   FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -37,39 +37,67 @@ dialTest(
 );
 
 dialTest(
-  'Prompt folder can expand and collapse',
+  'Prompt folder can expand and collapse.\n' +
+    '[View prompt] View prompt modal is opened on click',
   async ({
     dialHomePage,
     promptData,
-    folderPrompts,
+    promptPreviewModal,
+    promptBarFolderAssertion,
+    promptPreviewModalAssertion,
     dataInjector,
     setTestIds,
     localStorageManager,
+    folderPrompts,
   }) => {
-    setTestIds('EPMRTC-946');
-    const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await dataInjector.createPrompts(
-      promptInFolder.prompts,
-      promptInFolder.folders,
-    );
-    const folderName = promptInFolder.folders.name;
-    await localStorageManager.setShowSideBarPanels();
+    setTestIds('EPMRTC-946', 'EPMRTC-6144');
+    let promptInFolder: FolderPrompt;
+    let folderName: string;
+    let promptName: string;
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await folderPrompts.expandFolder(folderName);
-    let isPromptVisible = await folderPrompts.isFolderEntityVisible(
-      folderName,
-      promptInFolder.prompts[0].name,
-    );
-    expect.soft(isPromptVisible, ExpectedMessages.folderExpanded).toBeTruthy();
+    await dialTest.step('Prepare a prompt inside folder', async () => {
+      promptInFolder = promptData.prepareDefaultPromptInFolder();
+      await dataInjector.createPrompts(
+        promptInFolder.prompts,
+        promptInFolder.folders,
+      );
+      folderName = promptInFolder.folders.name;
+      promptName = promptInFolder.prompts[0].name;
+      await localStorageManager.setShowSideBarPanels();
+    });
 
-    await folderPrompts.expandCollapseFolder(folderName);
-    isPromptVisible = await folderPrompts.isFolderEntityVisible(
-      folderName,
-      promptInFolder.prompts[0].name,
+    await dialTest.step('Verify prompt folder can be expanded', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await folderPrompts.expandFolder(folderName);
+      await promptBarFolderAssertion.assertFolderEntityState(
+        { name: folderName },
+        { name: promptName },
+        'visible',
+      );
+    });
+
+    await dialTest.step(
+      'Select the prompt and verify "Prompt View" modal is opened',
+      async () => {
+        await folderPrompts.selectFolderEntity(folderName, promptName, {
+          isHttpMethodTriggered: true,
+        });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await promptPreviewModal.closeButton.click();
+      },
     );
-    expect.soft(isPromptVisible, ExpectedMessages.folderCollapsed).toBeFalsy();
+
+    await dialTest.step('Verify prompt folder can be collapsed', async () => {
+      await folderPrompts.expandCollapseFolder(folderName);
+      await promptBarFolderAssertion.assertFolderEntityState(
+        { name: folderName },
+        { name: promptName },
+        'hidden',
+      );
+    });
   },
 );
 
@@ -229,11 +257,16 @@ dialTest(
     promptDropdownMenu,
     promptData,
     dataInjector,
-    folderPrompts,
     setTestIds,
     localStorageManager,
+    selectFolderModal,
+    selectFolders,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-962');
+    const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -242,18 +275,30 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
-
-    await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
-    await expect
-      .soft(
-        folderPrompts.getFolderEntity(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          prompt.name,
-        ),
-        ExpectedMessages.newFolderCreated,
-      )
-      .toBeVisible();
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'visible',
+    );
+    await selectFolderModal.newFolderButton.click();
+    await selectFolders.getEditFolderInputActions().clickTickButton();
+    await selectFoldersAssertion.assertFolderState(
+      { name: newFolderName },
+      'visible',
+    );
+    await selectFolderModal.clickSelectFolderButton({
+      triggeredApiHost: ItemUtil.getEncodedItemId(
+        `${newFolderName}/${prompt.name}`,
+      ),
+    });
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'hidden',
+    );
+    await promptBarFolderAssertion.assertFolderEntityState(
+      { name: newFolderName },
+      { name: prompt.name },
+      'visible',
+    );
   },
 );
 
@@ -265,10 +310,13 @@ dialTest(
     promptDropdownMenu,
     promptData,
     dataInjector,
-    folderPrompts,
     promptBar,
     setTestIds,
     localStorageManager,
+    selectFolderModal,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-963');
     const prompt = promptData.prepareDefaultPrompt();
@@ -281,19 +329,31 @@ dialTest(
 
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-    await prompts.selectMoveToMenuOption(
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'visible',
+    );
+    await selectFoldersAssertion.assertFolderState(
+      { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+      'visible',
+    );
+    await selectFolderModal.selectFolder(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
-    await folderPrompts.expandFolder(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await selectFolderModal.clickSelectFolderButton({
+      triggeredApiHost: ItemUtil.getEncodedItemId(
+        `${ExpectedConstants.newFolderWithIndexTitle(1)}/${prompt.name}`,
+      ),
+    });
+    await selectFolderModalAssertion.assertElementState(
+      selectFolderModal,
+      'hidden',
     );
-    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-      ExpectedConstants.newFolderWithIndexTitle(1),
-      prompt.name,
+    await promptBarFolderAssertion.assertFolderEntityState(
+      { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+      { name: prompt.name },
+      'visible',
     );
-    expect
-      .soft(isFolderPromptVisible, ExpectedMessages.promptMovedToFolder)
-      .toBeTruthy();
   },
 );
 

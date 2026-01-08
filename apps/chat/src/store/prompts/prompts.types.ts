@@ -21,4 +21,7 @@ export interface PromptsState {
   chosenPromptIds: string[];
   chosenEmptyFoldersIds: string[];
   promptWithVariablesForApply?: Prompt;
+
+  deletingPromptId: string | undefined;
+  moveToPromptId: string | undefined;
 }

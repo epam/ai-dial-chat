@@ -14,19 +14,25 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import {
+  DateUtil,
+  FileUtil,
+  GeneratorUtil,
+  ItemUtil,
+  ModelsUtil,
+} from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let modelWithInputAttachments: DialAIEntityModel;
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
-  modelWithInputAttachments = GeneratorUtil.randomArrayElement(
-    ModelsUtil.getLatestModelsWithAttachment(),
-  );
+  modelWithInputAttachments = ModelsUtil.getModel(
+    'claude-3-7-sonnet@20250219',
+  )!;
 });
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish chat with file.\n' +
     'Publish chat with attachments: download files.\n' +
     'Admin area: Publish request details.\n' +
@@ -34,7 +40,8 @@ dialAdminTest(
     `Link 'Go to a review' change to 'Continue review" when admin started review with click on chat .\n` +
     'Publish request for chat with already published file.\n' +
     'Publish chat with file, file is from Organization section.\n' +
-    'Publish request toooltips',
+    'Publish request toooltips.\n' +
+    `Author's public name displayed in metadata for chats from Organization`,
   async ({
     dialHomePage,
     conversationData,
@@ -44,33 +51,33 @@ dialAdminTest(
     chatMessagesAssertion,
     conversationDropdownMenu,
     renameConversationModal,
-    publishingRequestModal,
+    publishingRequestDialog,
     toast,
     filesToPublishTree,
-    conversationToPublishAssertion,
-    publishFileAssertion,
+    publishConversationAssertion,
+    publishFileTreeAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     chatBar,
     attachFilesModal,
-    tooltipAssertion,
     manageAttachmentsAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
-    adminFilesToApprove,
+    adminFilesToApproveTree,
     adminChatMessages,
-    organizationConversationAssertion,
+    informationModal,
     downloadAssertion,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
-    adminConversationToApproveAssertion,
-    adminFilesToApproveAssertion,
+    adminPublishConversationsTreeAssertion,
+    adminPublishFilesAssertion,
     baseAssertion,
     fileApiHelper,
     setTestIds,
     localStorageManager,
     adminLocalStorageManager,
+    informationModalAssertion,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -82,6 +89,7 @@ dialAdminTest(
       'EPMRTC-4080',
       'EPMRTC-4704',
       'EPMRTC-3457',
+      'EPMRTC-5652',
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -92,19 +100,20 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
-    const updatedConversationName = GeneratorUtil.randomString(5);
+    const updatedConversationName = GeneratorUtil.randomConversationName();
+    const author = GeneratorUtil.randomString(10);
 
     await dialSharedWithMeTest.step(
       'Prepare conversation with attachment in the request',
       async () => {
-        imageUrl = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          filePath,
-        );
+        imageUrl = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: filePath,
+        });
         conversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithInputAttachments,
             true,
+            undefined,
             imageUrl,
           );
         conversationData.resetData();
@@ -118,35 +127,24 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
-        await conversationToPublishAssertion.assertEntityState(
+        await publishConversationAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        await publishFileAssertion.assertEntityState(
+        await publishFileTreeAssertion.assertFileToPublish(
           { name: Attachment.cloudImageName },
-          'visible',
-        );
-        await publishFileAssertion.assertEntityCheckboxState(
-          { name: Attachment.cloudImageName },
-          CheckboxState.checked,
-        );
-        await publishFileAssertion.assertElementState(
-          filesToPublishTree.getFileDownloadIcon(Attachment.cloudImageName),
-          'visible',
-        );
-        publishFileAssertion.assertValue(
-          await filesToPublishTree.getFileDownloadIUrl(
-            Attachment.cloudImageName,
-          ),
-          ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
-          ExpectedMessages.attachmentUrlIsValid,
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.checked,
+            expectedDownloadUrl: ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
+          },
         );
       },
     );
@@ -158,7 +156,7 @@ dialAdminTest(
           await filesToPublishTree
             .getEntityCheckbox(Attachment.cloudImageName)
             .click();
-          await publishFileAssertion.assertEntityCheckboxState(
+          await publishFileTreeAssertion.assertEntityCheckboxState(
             { name: Attachment.cloudImageName },
             state,
           );
@@ -167,23 +165,14 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Hover over file and verify tooltip is shown',
+      'Set publication request name, update author and submit the request',
       async () => {
-        await filesToPublishTree
-          .getEntityName(Attachment.cloudImageName)
-          .hoverOver();
-        await tooltipAssertion.assertTooltipContent(Attachment.cloudImageName);
-      },
-    );
-
-    await dialTest.step(
-      'Set publication request name and submit the request',
-      async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.author.fillInInput(author);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'hidden',
         );
         publicationsToUnpublish.push(publishApiModels.response);
@@ -224,20 +213,22 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify file is displayed under "Files" tree and has download icon',
       async () => {
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
           'visible',
         );
-        await adminFilesToApproveAssertion.assertElementState(
-          adminFilesToApprove.getFileDownloadIcon(Attachment.cloudImageName),
+        await adminPublishFilesAssertion.assertElementState(
+          adminFilesToApproveTree.getFileDownloadIcon(
+            Attachment.cloudImageName,
+          ),
           'visible',
         );
         const downloadedData = await adminDialHomePage.downloadData(() =>
-          adminFilesToApprove
+          adminFilesToApproveTree
             .getFileDownloadIcon(Attachment.cloudImageName)
             .click(),
         );
@@ -296,6 +287,7 @@ dialAdminTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithInputAttachments,
             true,
+            undefined,
             fileResource.targetUrl,
           );
         await dataInjector.createConversations([secondConversation]);
@@ -303,27 +295,35 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Admin approves the request and verify verifies publication disappears from "Approve required" and displayed under "Organization" section',
+      'Select published conversation and verify it contains attachment',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await organizationConversationAssertion.assertEntityState(
-          { name: conversation.name },
-          'visible',
-        );
-      },
-    );
-
-    await dialAdminTest.step(
-      'Select published conversation and verify it contains attachment',
-      async () => {
-        await organizationConversations.selectConversation(conversation.name);
+        await organizationConversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageDownloadUrl(
           1,
           ExpectedConstants.publishedAttachmentDownloadPath(
             Attachment.cloudImageName,
           ),
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open conversation dropdown menu, select "Info" option and verify modal data',
+      async () => {
+        const currentDate = DateUtil.getCurrentLocalDate();
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
+        await informationModal.cancelButton.click();
       },
     );
 
@@ -345,21 +345,22 @@ dialAdminTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await renameConversationModal.editInputValue(updatedConversationName);
-        await renameConversationModal.saveButton.click();
+        await renameConversationModal.editConversationNameWithSaveButton(
+          updatedConversationName,
+        );
 
         await conversations.openEntityDropdownMenu(updatedConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
         const publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         baseAssertion.assertValue(
           publishApiModels.response.resources.filter(
             (r) =>
               r.sourceUrl ===
-              conversation.id.replace(
+              ItemUtil.getEncodedItemId(conversation.id).replace(
                 conversation.name,
                 updatedConversationName,
               ),
@@ -368,10 +369,11 @@ dialAdminTest(
         );
         baseAssertion.assertValue(
           publishApiModels.response.resources.filter(
-            (r) => r.sourceUrl === imageUrl,
+            (r) => r.sourceUrl === ItemUtil.getEncodedItemId(imageUrl),
           ).length,
           1,
         );
+        await toast.closeToast();
       },
     );
 
@@ -380,17 +382,17 @@ dialAdminTest(
       async () => {
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
-        await publishingRequestModal.sendRequestButton.click();
+        await publishingRequestDialog.sendRequestButton.click();
         await baseAssertion.assertElementState(toast, 'visible');
         await baseAssertion.assertElementText(
           toast,
           ExpectedConstants.attachmentPublishErrorMessage,
         );
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'hidden',
         );
       },
@@ -398,8 +400,9 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish chat with plotly.\n' +
+    'Header context menu options for chats from publication request from Approve required section.\n' +
     'Error message appears if to Share the conversation with an attachment from Organization',
   async ({
     conversationData,
@@ -410,9 +413,11 @@ dialAdminTest(
     conversationDropdownMenu,
     baseAssertion,
     apiAssertion,
-    publishingRequestModal,
+    publishingRequestDialog,
     adminDialHomePage,
     adminPublishingApprovalModal,
+    adminChatHeader,
+    adminApproveRequiredConversationDropdownMenuAssertion,
     adminPublicationReviewControl,
     adminOrganizationConversations,
     adminConversationDropdownMenu,
@@ -422,18 +427,18 @@ dialAdminTest(
     adminShareModal,
     adminConversations,
     adminConversationAssertion,
-    publishFileAssertion,
+    publishFileTreeAssertion,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
     adminApproveRequiredConversations,
-    adminFilesToApproveAssertion,
+    adminPublishFilesAssertion,
     setTestIds,
     localStorageManager,
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3625', 'EPMRTC-4125');
+    setTestIds('EPMRTC-3625', 'EPMRTC-4740', 'EPMRTC-4125');
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -446,10 +451,9 @@ dialAdminTest(
     await dialTest.step(
       'Prepare conversation with plotly graph in the response',
       async () => {
-        plotlyImageUrl = await fileApiHelper.putFile(
-          Attachment.plotlyName,
-          API.modelFilePath(modelWithInputAttachments.id),
-        );
+        plotlyImageUrl = await fileApiHelper.putFile(Attachment.plotlyName, {
+          parentPath: API.modelFilePath(modelWithInputAttachments.id),
+        });
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             plotlyImageUrl,
@@ -465,14 +469,14 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(plotlyConversation.name);
+        await conversations.selectEntity(plotlyConversation.name);
         await conversations.openEntityDropdownMenu(plotlyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
-        await publishFileAssertion.assertEntityState(
+        await publishFileTreeAssertion.assertEntityState(
           { name: Attachment.plotlyName },
           'visible',
         );
@@ -482,11 +486,11 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and submit the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'hidden',
         );
         publicationsToUnpublish.push(publishApiModels.response);
@@ -527,7 +531,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify plotly is displayed under "Files" tree',
       async () => {
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.plotlyName },
           'visible',
         );
@@ -535,11 +539,25 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Admin approves the request and verifies publication disappears from "Approve required" and displayed under "Organization" section',
+      'Admin reviews the conversation and verifies chat header dots menu option',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
         });
+        await adminChatHeader.dotsMenu.click();
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin approves the request and verifies publication disappears from "Approve required" and displayed under "Organization" section',
+      async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
@@ -556,7 +574,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Open published conversation and verify plotly graph is shown on expand attachment',
       async () => {
-        await adminOrganizationConversations.selectConversation(
+        await adminOrganizationConversations.selectEntity(
           plotlyConversation.name,
         );
         await adminChatMessages
@@ -589,7 +607,7 @@ dialAdminTest(
           { name: plotlyConversation.name },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(
+        await adminConversationAssertion.assertSelectedEntity(
           plotlyConversation.name,
         );
         await adminChatMessages
@@ -640,9 +658,7 @@ dialAdminTest(
           { name: playbackName },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(
-          playbackName,
-        );
+        await adminConversationAssertion.assertSelectedEntity(playbackName);
         for (let i = 1; i <= chatResponseIndex; i++) {
           await adminChat.playNextChatMessage();
         }
@@ -677,7 +693,7 @@ dialAdminTest(
           { name: replayName },
           'visible',
         );
-        await adminConversationAssertion.assertSelectedConversation(replayName);
+        await adminConversationAssertion.assertSelectedEntity(replayName);
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

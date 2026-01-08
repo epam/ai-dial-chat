@@ -5,8 +5,9 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { OnItemEvent } from '@/src/types/modal';
 
-import Folder from '../../Folder/Folder';
-import { FilesRow } from './Components';
+import { Folder } from '@/src/components/Folder/Folder';
+
+import { FilesRow } from './ReplaceFileRow';
 
 interface Props {
   folders: FolderInterface[];

@@ -1,4 +1,5 @@
-import { Conversation } from '@/chat/types/chat';
+import { ChatBody, Conversation } from '@/chat/types/chat';
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -11,9 +12,11 @@ import {
   Rate,
   Side,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Message, Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let allModels: DialAIEntityModel[];
@@ -23,17 +26,24 @@ let bModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
+  //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) =>
         m.id !== defaultModel.id &&
         ModelsUtil.doesModelAllowSystemPrompt(m) &&
-        ModelsUtil.doesModelAllowTemperature(m),
+        ModelsUtil.doesModelAllowTemperature(m) &&
+        m.features?.configuration !== true,
     ),
   );
   bModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
+    allModels.filter(
+      (m) =>
+        m.id !== defaultModel.id &&
+        m.id !== aModel.id &&
+        m.features?.configuration !== true,
+    ),
   );
 });
 
@@ -160,47 +170,47 @@ dialTest(
           modelConversationInFolder.folders.name,
           thirdModelConversation.name,
         );
-        // await conversations.selectConversation(thirdModelConversation.name);
+        await folderConversations
+          .getSelectedFolderEntity(
+            modelConversationInFolder.folders.name,
+            thirdModelConversation.name,
+          )
+          .waitFor();
         await folderConversations.openFolderEntityDropdownMenu(
           modelConversationInFolder.folders.name,
           thirdModelConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
-        const chatsCount = await compare.getChatMessagesCount();
-        expect.soft(chatsCount, ExpectedMessages.compareModeOpened).toBe(1);
+        await conversationToCompareAssertion.assertElementsCount(
+          compare.getChatMessages(),
+          1,
+          ExpectedMessages.compareModeOpened,
+        );
+        await conversationToCompareAssertion.assertElementState(
+          compare.getConversationToCompare(),
+          'visible',
+          ExpectedMessages.conversationToCompareVisible,
+        );
 
-        const isConversationToCompareVisible =
-          await compare.isConversationToCompareVisible();
-        expect
-          .soft(
-            isConversationToCompareVisible,
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeTruthy();
-
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([
-            firstModelConversation.name,
-            secondModelConversation.name,
-            modelConversationInFolder.conversations[0].name,
-          ]);
+        for (const conversation of [
+          firstModelConversation.name,
+          secondModelConversation.name,
+          modelConversationInFolder.conversations[0].name,
+        ]) {
+          await conversationToCompareAssertion.assertElementContainsText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+          );
+        }
 
         const compareOptionsIcons =
           await compareConversation.getCompareConversationIcons();
         const expectedModels = [defaultModel, aModel, bModel];
-        expect
-          .soft(
-            compareOptionsIcons.length,
-            ExpectedMessages.entitiesIconsCountIsValid,
-          )
-          .toBe(expectedModels.length);
+        conversationToCompareAssertion.assertValue(
+          compareOptionsIcons.length,
+          expectedModels.length,
+        );
 
         for (const expectedModel of expectedModels) {
           const actualOptionIcon = compareOptionsIcons.find(
@@ -270,7 +280,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           modelConversation.name,
           { isHttpMethodTriggered: false },
           {
@@ -283,22 +293,23 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
 
-        const conversationNames =
-          await compareConversation.getCompareConversationNames();
-
         // Assert that the list doesn't contain the names of the replay and playback conversations
-        baseAssertion.assertArrayExcludesAll(
-          conversationNames,
-          [replayConversation.name, playbackConversation.name],
-          ExpectedMessages.conversationToCompareIsHidden,
-        );
+        for (const conversation of [
+          replayConversation.name,
+          playbackConversation.name,
+        ]) {
+          await baseAssertion.assertElementDoesNotContainText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+          );
+        }
       },
     );
 
     await dialTest.step(
       'Open another conversation and verify compare mode is closed',
       async () => {
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
@@ -312,6 +323,7 @@ dialTest(
     'Compare mode is closed on "x" button in chat2',
   async ({
     dialHomePage,
+    agentInfo,
     setTestIds,
     conversationData,
     dataInjector,
@@ -347,6 +359,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await agentInfo.waitForState();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await expect
@@ -460,7 +473,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
@@ -488,6 +501,7 @@ dialTest(
     dialHomePage,
     chat,
     chatMessages,
+    chatMessagesAssertion,
     setTestIds,
     conversationData,
     dataInjector,
@@ -495,6 +509,8 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    conversationToCompareAssertion,
+    apiAssertion,
     conversationAssertion,
     localStorageManager,
   }) => {
@@ -512,14 +528,12 @@ dialTest(
       firstConversation = conversationData.prepareModelConversation(
         firstTemp,
         firstPrompt,
-        [],
         defaultModel,
       );
       conversationData.resetData();
       secondConversation = conversationData.prepareModelConversation(
         secondTemp,
         secondPrompt,
-        [],
         aModel,
       );
       await dataInjector.createConversations([
@@ -536,12 +550,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            compareConversation.getElementLocator(),
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeVisible();
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+          ExpectedMessages.conversationToCompareVisible,
+        );
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           secondConversation.name,
@@ -553,62 +565,39 @@ dialTest(
         const requestsData = await chat.sendRequestInCompareMode(
           'how are you?',
           {
-            rightEntity: firstConversation.model.id,
-            leftEntity: secondConversation.model.id,
+            rightEntity: firstConversation.id,
+            leftEntity: secondConversation.id,
           },
           true,
         );
+        await conversationToCompareAssertion.assertElementsCount(
+          chatMessages.compareChatMessages,
+          firstConversation.messages.length +
+            secondConversation.messages.length +
+            4,
+          ExpectedMessages.responseReceivedForComparedConversations,
+        );
 
-        const messagesCount = await chatMessages.getCompareMessagesCount();
-        expect
-          .soft(
-            messagesCount,
-            ExpectedMessages.responseReceivedForComparedConversations,
-          )
-          .toBe(
-            firstConversation.messages.length +
-              secondConversation.messages.length +
-              4,
-          );
+        const rightRequest = requestsData.rightRequest as ChatBody;
+        const isNotApplication = defaultModel.type !== EntityType.Application;
+        apiAssertion.assertRequestModelId(rightRequest, defaultModel);
+        apiAssertion.assertRequestPrompt(
+          rightRequest,
+          isNotApplication && defaultModel?.features?.systemPrompt
+            ? firstPrompt
+            : undefined,
+        );
+        apiAssertion.assertRequestTemperature(
+          rightRequest,
+          isNotApplication && defaultModel?.features?.temperature
+            ? firstTemp
+            : undefined,
+        );
 
-        expect
-          .soft(
-            requestsData.rightRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(defaultModel.id);
-        expect
-          .soft(
-            requestsData.rightRequest.prompt,
-            ExpectedMessages.requestPromptIsValid,
-          )
-          .toBe(firstPrompt);
-        expect
-          .soft(
-            requestsData.rightRequest.temperature,
-            ExpectedMessages.requestTempIsValid,
-          )
-          .toBe(firstTemp);
-
-        expect
-          .soft(
-            requestsData.leftRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(aModel.id);
-        expect
-          .soft(
-            requestsData.leftRequest.prompt,
-            ExpectedMessages.requestPromptIsValid,
-          )
-          .toBe(secondPrompt);
-        expect
-          .soft(
-            requestsData.leftRequest.temperature,
-            ExpectedMessages.requestTempIsValid,
-          )
-          .toBe(secondTemp);
-
+        const leftRequest = requestsData.leftRequest as ChatBody;
+        apiAssertion.assertRequestModelId(leftRequest, aModel);
+        apiAssertion.assertRequestPrompt(leftRequest, secondPrompt);
+        apiAssertion.assertRequestTemperature(leftRequest, secondTemp);
         await conversationAssertion.assertEntityState(
           { name: firstConversation.name },
           'visible',
@@ -624,15 +613,55 @@ dialTest(
       'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textAccentPrimary,
+        );
         await chatMessages.rateCompareRowMessage(Side.left, rate, 2);
-        const isComparedMessageRated =
-          await chatMessages.isComparedRowMessageRated(Side.left, rate, 2);
-        expect
-          .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
-          .toBeTruthy();
-
-        await conversations.selectConversation(firstConversation.name);
-        await chatMessages.getChatMessageRate(2, rate).waitFor();
+        const messageRateIcon = chatMessages.getCompareRowMessageRate(
+          Side.left,
+          rate,
+          2,
+        );
+        const hiddenMessageRateIcon = chatMessages.getCompareRowMessageRate(
+          Side.left,
+          rate === Rate.like ? Rate.dislike : Rate.like,
+          2,
+        );
+        await chatMessagesAssertion.assertElementState(
+          messageRateIcon,
+          'visible',
+          ExpectedMessages.chatMessageIsRated,
+        );
+        await chatMessagesAssertion.assertElementColor(
+          messageRateIcon,
+          expectedColor,
+        );
+        await chatMessagesAssertion.assertElementActionabilityState(
+          messageRateIcon,
+          'disabled',
+        );
+        await chatMessagesAssertion.assertElementState(
+          hiddenMessageRateIcon,
+          'hidden',
+        );
+        await conversations.selectEntity(firstConversation.name);
+        const singleChatMessageRateIcon = chatMessages.getChatMessageRate(
+          2,
+          rate,
+        );
+        await chatMessagesAssertion.assertElementState(
+          singleChatMessageRateIcon,
+          'visible',
+          ExpectedMessages.chatMessageIsRated,
+        );
+        await chatMessagesAssertion.assertElementColor(
+          singleChatMessageRateIcon,
+          expectedColor,
+        );
+        await chatMessagesAssertion.assertElementActionabilityState(
+          singleChatMessageRateIcon,
+          'disabled',
+        );
       },
     );
   },
@@ -731,7 +760,8 @@ dialTest(
 );
 
 dialTest(
-  'Apply changes with new settings for both chats in compare mode and check chat headers',
+  'Apply changes with new settings for both chats in compare mode and check chat headers.\n' +
+    'Header context menu options for chats in Compare mode',
   async ({
     dialHomePage,
     setTestIds,
@@ -739,12 +769,14 @@ dialTest(
     dataInjector,
     localStorageManager,
     leftChatHeader,
+    conversationDropdownMenuAssertion,
     conversationSettingsModal,
     rightChatHeader,
     talkToAgentDialog,
-    marketplacePage,
     modelInfoTooltip,
+    conversationInfoTooltipAssertion,
     chatSettingsTooltip,
+    tooltipAssertion,
     errorPopup,
     iconApiHelper,
     rightChatHeaderAssertion,
@@ -753,10 +785,11 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    conversationToCompareAssertion,
     compare,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1021');
+    setTestIds('EPMRTC-1021', 'EPMRTC-4737');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     const models = ModelsUtil.getLatestModels();
@@ -784,7 +817,6 @@ dialTest(
         firstConversation = conversationData.prepareModelConversation(
           1,
           'prompt',
-          [],
           initRandomModel,
         );
         conversationData.resetData();
@@ -794,7 +826,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           initRandomModel,
           firstUpdatedRandomModel,
           secondUpdatedRandomModel,
@@ -811,30 +843,23 @@ dialTest(
             ? [initRandomModel.iconUrl]
             : undefined,
         });
+        await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            compareConversation.getElementLocator(),
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeVisible();
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+        );
+
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
         await compare.waitForComparedConversationsLoaded();
         await leftChatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(
-          firstUpdatedRandomModel,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(firstUpdatedRandomModel);
         await compare.waitForComparedConversationsLoaded();
         await rightChatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(
-          secondUpdatedRandomModel,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(secondUpdatedRandomModel);
         await compare.waitForComparedConversationsLoaded();
 
         await leftChatHeader.openConversationSettingsPopup();
@@ -866,7 +891,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify chat icons are updated with new model and addons in the header and chat bar',
+      'Verify chat icons are updated with new model in the header and chat bar',
       async () => {
         await rightChatHeaderAssertion.assertHeaderIcon(
           expectedSecondUpdatedRandomModelIcon,
@@ -891,53 +916,85 @@ dialTest(
       async () => {
         await errorPopup.cancelPopup();
         await rightChatHeader.hoverOverChatModel();
-        const rightModelInfo = await modelInfoTooltip.getModelInfo();
-        expect
-          .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(secondUpdatedRandomModel.name);
+        await conversationInfoTooltipAssertion.assertElementText(
+          modelInfoTooltip.modelInfo,
+          secondUpdatedRandomModel.name,
+          ExpectedMessages.chatInfoModelIsValid,
+        );
         const rightModelVersionInfo = await modelInfoTooltip.getVersionInfo();
-        expect
-          .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
-          .toBe(secondUpdatedRandomModel.version);
+        conversationInfoTooltipAssertion.assertValue(
+          rightModelVersionInfo,
+          secondUpdatedRandomModel.version,
+          ExpectedMessages.agentVersionIsValid,
+        );
 
         await rightChatHeader.hoverOverChatSettings();
         if (ModelsUtil.doesModelAllowSystemPrompt(secondUpdatedRandomModel)) {
-          const rightPromptInfo = await chatSettingsTooltip.getPromptInfo();
-          expect
-            .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-            .toBe(secondUpdatedPrompt);
+          await tooltipAssertion.assertElementText(
+            chatSettingsTooltip.promptInfo,
+            secondUpdatedPrompt,
+            ExpectedMessages.chatInfoPromptIsValid,
+          );
         }
         if (ModelsUtil.doesModelAllowTemperature(secondUpdatedRandomModel)) {
-          const rightTempInfo = await chatSettingsTooltip.getTemperatureInfo();
-          expect
-            .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-            .toBe(secondUpdatedTemp.toString());
+          await tooltipAssertion.assertElementText(
+            chatSettingsTooltip.temperatureInfo,
+            secondUpdatedTemp,
+            ExpectedMessages.chatInfoTemperatureIsValid,
+          );
         }
 
         await errorPopup.cancelPopup();
         await leftChatHeader.hoverOverChatModel();
-        const leftModelInfo = await modelInfoTooltip.getModelInfo();
-        expect
-          .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(firstUpdatedRandomModel.name);
+
+        await conversationInfoTooltipAssertion.assertElementText(
+          modelInfoTooltip.modelInfo,
+          firstUpdatedRandomModel.name,
+          ExpectedMessages.chatInfoModelIsValid,
+        );
 
         const leftModelVersionInfo = await modelInfoTooltip.getVersionInfo();
-        expect
-          .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
-          .toBe(firstUpdatedRandomModel.version);
+        conversationInfoTooltipAssertion.assertValue(
+          leftModelVersionInfo,
+          firstUpdatedRandomModel.version,
+          ExpectedMessages.agentVersionIsValid,
+        );
 
         await leftChatHeader.hoverOverChatSettings();
         if (ModelsUtil.doesModelAllowSystemPrompt(firstUpdatedRandomModel)) {
-          const leftPromptInfo = await chatSettingsTooltip.getPromptInfo();
-          expect
-            .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-            .toBe(firstUpdatedPrompt);
+          await tooltipAssertion.assertElementText(
+            chatSettingsTooltip.promptInfo,
+            firstUpdatedPrompt,
+            ExpectedMessages.chatInfoPromptIsValid,
+          );
         }
         if (ModelsUtil.doesModelAllowTemperature(firstUpdatedRandomModel)) {
-          const leftTempInfo = await chatSettingsTooltip.getTemperatureInfo();
-          expect
-            .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-            .toBe(firstUpdatedTemp.toString());
+          await tooltipAssertion.assertElementText(
+            chatSettingsTooltip.temperatureInfo,
+            firstUpdatedTemp,
+            ExpectedMessages.chatInfoTemperatureIsValid,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Verify the options in the header dots menu of th compared conversations',
+      async () => {
+        for (const chatHeader of [leftChatHeader, rightChatHeader]) {
+          await chatHeader.dotsMenu.click();
+          await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+            MenuOptions.rename,
+            MenuOptions.compare,
+            MenuOptions.duplicate,
+            MenuOptions.replay,
+            MenuOptions.playback,
+            MenuOptions.export,
+            MenuOptions.moveTo,
+            MenuOptions.share,
+            MenuOptions.publish,
+            MenuOptions.delete,
+          );
         }
       },
     );
@@ -1008,11 +1065,9 @@ dialTest(
         });
 
         for (const side of sides) {
-          const jumpingIcon =
-            await chatMessages.getCompareMessageJumpingIcon(side);
+          const jumpingIcon = chatMessages.getCompareMessageJumpingIcon(side);
           await jumpingIcon.waitFor();
         }
-
         await sendMessage.stopGenerating.click();
       },
     );
@@ -1034,7 +1089,7 @@ dialTest(
         const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
         for (const side of sides) {
           await chatMessagesAssertion.assertEntityIcon(
-            await chatMessages.getIconAttributesForCompareMessage(side),
+            chatMessages.getIconAttributesForCompareMessage(side),
             expectedModelIcon,
           );
         }
@@ -1053,9 +1108,10 @@ dialTest(
     conversations,
     conversationData,
     dataInjector,
-    rightChatHeader,
+    rightChatHeaderAssertion,
     compareConversation,
-    baseAssertion,
+    conversationToCompareAssertion,
+    compare,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-536', 'EPMRTC-1168');
@@ -1124,18 +1180,25 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
+        await conversations.selectedEntity(firstConversation.name).waitFor();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await compareConversation.checkShowAllConversations();
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
-
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
-          matchedConversations,
-          ExpectedMessages.conversationsToCompareOptionsValid,
+        await conversationToCompareAssertion.assertElementState(
+          compare,
+          'visible',
         );
+        await conversationToCompareAssertion.assertElementState(
+          compareConversation.loader,
+          'hidden',
+        );
+        await compareConversation.checkShowAllConversations();
+        for (const conversation of matchedConversations) {
+          await conversationToCompareAssertion.assertElementContainsText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+          );
+        }
       },
     );
 
@@ -1146,13 +1209,13 @@ dialTest(
           await compareConversation.searchCompareConversationInput.fillInInput(
             term,
           );
-          const conversationsList =
-            await compareConversation.getCompareConversationNames();
-          baseAssertion.assertArrayIncludesAll(
-            conversationsList,
-            matchedConversations,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          );
+          for (const conversation of matchedConversations) {
+            await conversationToCompareAssertion.assertElementContainsText(
+              compareConversation.compareConversationRowNames,
+              [conversation],
+              ExpectedMessages.conversationsToCompareOptionsValid,
+            );
+          }
         }
       },
     );
@@ -1163,20 +1226,28 @@ dialTest(
         await compareConversation.searchCompareConversationInput.fillInInput(
           secondSearchTerm,
         );
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
-          [thirdConversation.name, fourthConversation.name],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const conversation of [
+          thirdConversation.name,
+          fourthConversation.name,
+        ]) {
+          await conversationToCompareAssertion.assertElementContainsText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          );
+        }
 
-        baseAssertion.assertArrayExcludesAll(
-          conversationsList,
-          [firstConversation.name, secondConversation.name],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const conversation of [
+          firstConversation.name,
+          secondConversation.name,
+        ]) {
+          await conversationToCompareAssertion.assertElementDoesNotContainText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          );
+        }
       },
     );
 
@@ -1186,24 +1257,24 @@ dialTest(
         await compareConversation.searchCompareConversationInput.fillInInput(
           thirdSearchTerm,
         );
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
+        await conversationToCompareAssertion.assertElementContainsText(
+          compareConversation.compareConversationRowNames,
           [secondConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid,
         );
 
-        baseAssertion.assertArrayExcludesAll(
-          conversationsList,
-          [
-            firstConversation.name,
-            thirdConversation.name,
-            fourthConversation.name,
-          ],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const conversation of [
+          firstConversation.name,
+          thirdConversation.name,
+          fourthConversation.name,
+        ]) {
+          await conversationToCompareAssertion.assertElementDoesNotContainText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          );
+        }
       },
     );
 
@@ -1213,23 +1284,24 @@ dialTest(
         await compareConversation.searchCompareConversationInput.fillInInput(
           underscoreSearchTerm,
         );
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
+        await conversationToCompareAssertion.assertElementContainsText(
+          compareConversation.compareConversationRowNames,
           [fourthConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid,
         );
-        baseAssertion.assertArrayExcludesAll(
-          conversationsList,
-          [
-            firstConversation.name,
-            secondConversation.name,
-            thirdConversation.name,
-          ],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+
+        for (const conversation of [
+          firstConversation.name,
+          secondConversation.name,
+          thirdConversation.name,
+        ]) {
+          await conversationToCompareAssertion.assertElementDoesNotContainText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          );
+        }
       },
     );
 
@@ -1239,19 +1311,19 @@ dialTest(
         await compareConversation.searchCompareConversationInput.fillInInput(
           noResultSearchTerm,
         );
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertArrayExcludesAll(
-          conversationsList,
-          [
-            firstConversation.name,
-            secondConversation.name,
-            thirdConversation.name,
-            fourthConversation.name,
-          ],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const conversation of [
+          firstConversation.name,
+          secondConversation.name,
+          thirdConversation.name,
+          fourthConversation.name,
+        ]) {
+          await conversationToCompareAssertion.assertElementDoesNotContainText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          );
+        }
       },
     );
 
@@ -1261,14 +1333,14 @@ dialTest(
         await compareConversation.searchCompareConversationInput.fillInInput(
           '',
         );
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
-          matchedConversations,
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const conversation of matchedConversations) {
+          await conversationToCompareAssertion.assertElementContainsText(
+            compareConversation.compareConversationRowNames,
+            [conversation],
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          );
+        }
       },
     );
 
@@ -1281,11 +1353,7 @@ dialTest(
         await compareConversation.waitForState({
           state: 'hidden',
         });
-        const rightHeaderTitle =
-          await rightChatHeader.chatTitle.getElementContent();
-        expect
-          .soft(rightHeaderTitle, ExpectedMessages.headerTitleCorrespondRequest)
-          .toBe(chatToSelect);
+        await rightChatHeaderAssertion.assertHeaderTitle(chatToSelect);
       },
     );
   },
@@ -1395,19 +1463,18 @@ dialTest(
           ExpectedMessages.closeChatIconIsNotVisible,
         );
         await compareConversation.checkShowAllConversations();
-        const overflowProp = await compareConversation
-          .compareConversationRowName(secondConversation.name)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(overflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationToCompareAssertion.assertElementTextIsTruncated(
+          compareConversation.compareConversationRowName(
+            secondConversation.name,
+          ),
+        );
       },
     );
 
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversationToCompareAssertion.assertElementState(
           compare,
           'hidden',
@@ -1429,12 +1496,12 @@ dialTest(
     dataInjector,
     compare,
     compareConversation,
+    conversationToCompareAssertion,
     chat,
     localStorageManager,
-    setIssueIds,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-557');
-    setIssueIds('3436');
     let firstFolderConversation: FolderConversation;
     let secondFolderConversation: FolderConversation;
     const conversationName = GeneratorUtil.randomString(7);
@@ -1479,42 +1546,40 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compare.waitForState();
-        const conversationsList =
-          await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([secondFolderConversation.conversations[0].name]);
+        await conversationToCompareAssertion.assertElementContainsText(
+          compareConversation.compareConversationRowNames,
+          [secondFolderConversation.conversations[0].name],
+        );
       },
     );
 
     await dialTest.step(
       'Select folder conversation for comparison, send new request and verify response generated for both chats',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await compareConversation.selectCompareConversation(
           secondFolderConversation.conversations[0].name,
         );
+        await compare.waitForComparedConversationsLoaded();
         const requestsData = await chat.sendRequestInCompareMode(
           'repeat the same response',
           {
-            rightEntity: firstFolderConversation.conversations[0].model.id,
-            leftEntity: secondFolderConversation.conversations[0].model.id,
+            rightEntity: firstFolderConversation.conversations[0].id,
+            leftEntity: secondFolderConversation.conversations[0].id,
           },
         );
-        expect
-          .soft(
-            requestsData.rightRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(firstFolderConversation.conversations[0].model.id);
-        expect
-          .soft(
-            requestsData.leftRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(secondFolderConversation.conversations[0].model.id);
+        baseAssertion.assertValue(
+          requestsData.rightRequest.model.id,
+          firstFolderConversation.conversations[0].model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
+        baseAssertion.assertValue(
+          requestsData.leftRequest.model.id,
+          secondFolderConversation.conversations[0].model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
       },
     );
   },
@@ -1542,6 +1607,7 @@ dialTest(
     compare,
     compareConversation,
     renameConversationModal,
+    renameConversationModalAssertion,
     localStorageManager,
     conversationAssertion,
   }) => {
@@ -1557,7 +1623,8 @@ dialTest(
     const firstConversationRequests = ['1+2', '2+3', '3+4'];
     const secondConversationRequests = ['1+2', '4+5', '5+6'];
     let updatedRequestContent: string;
-    let copiedValue: string;
+    const expectedChatId = (modelId: string, name: string) =>
+      `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(name)}`;
 
     await dialTest.step(
       'Prepare two conversations for compare mode',
@@ -1599,7 +1666,22 @@ dialTest(
         );
         await compare.waitForComparedConversationsLoaded();
         await chatMessages.openDeleteCompareRowMessageDialog(Side.left, 1);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await dialHomePage.waitForExpectedResponses(
+          () => confirmationDialog.confirm(),
+          [
+            {
+              apiMethod: 'PUT',
+              urlPattern: expectedChatId(
+                defaultModel.id,
+                firstConversation.name,
+              ),
+            },
+            {
+              apiMethod: 'PUT',
+              urlPattern: expectedChatId(aModel.id, secondConversation.name),
+            },
+          ],
+        );
         await baseAssertion.assertElementState(
           chatMessages.compareChatMessageRows.getNthElement(
             firstConversationRequests.length + 2,
@@ -1612,7 +1694,7 @@ dialTest(
           (firstConversationRequests.length - 1) * 4,
         );
 
-        const firstComparedMessage = await chatMessages.getCompareRowMessage(
+        const firstComparedMessage = chatMessages.getCompareRowMessage(
           Side.left,
           1,
         );
@@ -1638,19 +1720,27 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await page.keyboard.press(keys.ctrlPlusV);
-        copiedValue = await dialHomePage.readFromClipboard();
-        const expectedChatId = (modelId: string) =>
-          `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(copiedValue)}`;
+        const copiedResponse = await dialHomePage.readTextFromClipboard();
+        const expectedMessage: Message = {
+          role: Role.User,
+          content: copiedResponse,
+        };
+        const expectedBody = JSON.stringify(expectedMessage).replace(/}/g, '');
         await dialHomePage.waitForExpectedResponses(
           () => chatMessages.saveAndSubmit.click(),
           [
             {
               apiMethod: 'PUT',
-              urlPattern: expectedChatId(defaultModel.id),
+              urlPattern: expectedChatId(
+                defaultModel.id,
+                firstConversation.name,
+              ),
+              requestBodyPattern: expectedBody,
             },
             {
               apiMethod: 'PUT',
-              urlPattern: expectedChatId(aModel.id),
+              urlPattern: expectedChatId(aModel.id, secondConversation.name),
+              requestBodyPattern: expectedBody,
             },
           ],
         );
@@ -1663,11 +1753,11 @@ dialTest(
       async () => {
         await baseAssertion.assertElementText(
           leftChatHeader.chatTitle,
-          copiedValue,
+          firstConversation.name,
         );
         await baseAssertion.assertElementText(
           rightChatHeader.chatTitle,
-          copiedValue + ' 1',
+          secondConversation.name,
         );
         await baseAssertion.assertElementsCount(
           chatMessages.compareChatMessages,
@@ -1675,7 +1765,7 @@ dialTest(
         );
 
         for (const side of Object.values(Side)) {
-          const firstComparedMessage = await chatMessages.getCompareRowMessage(
+          const firstComparedMessage = chatMessages.getCompareRowMessage(
             side,
             1,
           );
@@ -1690,11 +1780,21 @@ dialTest(
     await dialTest.step(
       'Edit left chat title and verify it is updated in the header',
       async () => {
-        const newLeftChatName = GeneratorUtil.randomString(7);
-        await conversations.openEntityDropdownMenu(updatedRequestContent, {
-          exactMatch: true,
-        });
+        const newLeftChatName = GeneratorUtil.randomConversationName();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await renameConversationModalAssertion.assertElementAttribute(
+          renameConversationModal.nameInput,
+          Attributes.value,
+          firstConversation.name,
+        );
+        await renameConversationModalAssertion.assertElementActionabilityState(
+          renameConversationModal.saveButton,
+          'disabled',
+        );
+        await renameConversationModalAssertion.assertElementTextIsSelected(
+          renameConversationModal.nameInput,
+        );
         await renameConversationModal.editConversationNameWithSaveButton(
           newLeftChatName,
         );
@@ -1708,11 +1808,11 @@ dialTest(
     await dialTest.step(
       'Delete right chat and compare mode closed, left chat is active',
       async () => {
-        await conversations.openEntityDropdownMenu(updatedRequestContent, 1);
+        await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await conversationAssertion.assertEntityState(
-          { name: updatedRequestContent, index: 1 },
+          { name: secondConversation.name },
           'hidden',
         );
         await baseAssertion.assertElementState(compare, 'hidden');

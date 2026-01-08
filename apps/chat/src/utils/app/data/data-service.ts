@@ -1,15 +1,14 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
-import { LastConversationSettings } from '@/src/types/settings';
+import { EnterType, LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
-import { Theme } from '@/src/types/themes';
+import { ThemesConfig } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import { ApiUtils } from '../../server/api';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
 
@@ -53,19 +52,6 @@ export class DataService {
     );
   }
 
-  public static getRecentAddonsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.RecentAddonsIds, []);
-  }
-
-  public static setRecentAddonsIds(
-    recentAddonsIds: string[],
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.RecentAddonsIds,
-      recentAddonsIds,
-    );
-  }
-
   public static getTheme(): Observable<string> {
     return BrowserStorage.getData(UIStorageKeys.Settings, { theme: '' }).pipe(
       map((settings) => settings.theme),
@@ -76,7 +62,15 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
   }
 
-  public static getAvailableThemes(): Observable<Theme[]> {
+  public static getEnterType(): Observable<EnterType> {
+    return BrowserStorage.getData(UIStorageKeys.EnterType, EnterType.Enter);
+  }
+
+  public static setEnterType(enterType: EnterType): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.EnterType, enterType);
+  }
+
+  public static getThemesConfig(): Observable<ThemesConfig> {
     return ApiUtils.request('/api/themes/listing');
   }
 
@@ -129,10 +123,12 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static getShowMarketplaceFilterbar(): Observable<boolean> {
+  public static getShowMarketplaceFilterbar(
+    defaultValue: boolean,
+  ): Observable<boolean> {
     return BrowserStorage.getData(
       UIStorageKeys.ShowMarketplaceFilterbar,
-      !isTabletScreenOrMobile(),
+      defaultValue,
     );
   }
 

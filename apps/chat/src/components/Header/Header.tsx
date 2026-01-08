@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
 import {
@@ -14,8 +15,9 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
-import { SettingDialog } from '../Settings/SettingDialog';
+import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
+import { SettingDialog } from '@/src/components/Settings/SettingDialog';
+
 import { BaseHeader } from './BaseHeader';
 import { CreateNewConversation } from './CreateNewEntity';
 import { User } from './User/User';
@@ -23,7 +25,7 @@ import { User } from './User/User';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
-const Header = Inversify.register('Header', () => {
+export const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
@@ -112,13 +114,10 @@ const Header = Inversify.register('Header', () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
   }, []);
+  useWindowResizeEvent(handleResize);
 
   return (
     <BaseHeader
@@ -144,9 +143,11 @@ const Header = Inversify.register('Header', () => {
       }
       RightItems={
         <>
-          <div className="flex w-[48px] items-center justify-center md:w-auto">
-            <User />
-          </div>
+          {!enabledFeatures.has(Feature.HideUserMenu) && (
+            <div className="overflow-hidden">
+              <User />
+            </div>
+          )}
           {enabledFeatures.has(Feature.PromptsSection) && (
             <ToggleSidebarButton
               iconSize={headerIconSize}
@@ -158,10 +159,11 @@ const Header = Inversify.register('Header', () => {
               isOverlay={isOverlay}
             />
           )}
-          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+          {!enabledFeatures.has(Feature.HideUserMenu) && (
+            <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+          )}
         </>
       }
     />
   );
 });
-export default Header;

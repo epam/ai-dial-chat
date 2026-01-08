@@ -3,7 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { Settings } from '@/chat/types/settings';
-import { CollapsedSections } from '@/src/testData';
+import { CollapsedSections, DefaultModelReference } from '@/src/testData';
 import { Page } from '@playwright/test';
 
 export class LocalStorageManager {
@@ -43,10 +43,6 @@ export class LocalStorageManager {
 
   setRecentModelsIdsKey = () => (modelIds: string) => {
     window.localStorage.setItem('recentModelsIds', modelIds);
-  };
-
-  setRecentAddonsIdsKey = () => (addonIds: string) => {
-    window.localStorage.setItem('recentAddonsIds', addonIds);
   };
 
   setChatbarWidthKey = () => (width: string) => {
@@ -122,12 +118,6 @@ export class LocalStorageManager {
     await this.page.evaluate(this.setPromptsKey(), JSON.stringify(prompt));
   }
 
-  async getRecentAddons() {
-    return this.page.evaluate(
-      () => window.localStorage.getItem('recentAddonsIds') ?? undefined,
-    );
-  }
-
   async removeFromLocalStorage(key: string) {
     await this.page.evaluate((storageKey) => {
       window.localStorage.removeItem(storageKey);
@@ -148,24 +138,20 @@ export class LocalStorageManager {
     );
   }
 
-  async setRecentModelsIds(...models: DialAIEntityModel[]) {
+  //agent's reference should be set not id
+  async setRecentModelsIds(...models: (DialAIEntityModel | string)[]) {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
-      JSON.stringify(models.map((m) => m.id)),
+      JSON.stringify(
+        models.map((m) => (typeof m === 'string' ? m : m.reference)),
+      ),
     );
   }
 
-  async seLastConversationSettingsOnce(temp?: number) {
+  async useLastConversationSettingsOnce(temp?: number) {
     await this.setLocalStorageItemOnce('lastConversationSettings', {
       temperature: temp ?? 1,
     });
-  }
-
-  async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
-    await this.setLocalStorageItemOnce(
-      'recentModelsIds',
-      models.map((m) => m.id),
-    );
   }
 
   async setLocalStorageItemOnce<T>(
@@ -200,13 +186,6 @@ export class LocalStorageManager {
         storageKey: 'lastConversationSettings',
         storageValue: storageValue,
       },
-    );
-  }
-
-  async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
-    await this.page.addInitScript(
-      this.setRecentAddonsIdsKey(),
-      JSON.stringify(addons.map((a) => a.id)),
     );
   }
 
@@ -245,11 +224,59 @@ export class LocalStorageManager {
     return recentModelsIds ? JSON.parse(recentModelsIds) : '';
   }
 
+  async getSettings(originHost?: string) {
+    const settings = await this.getKey('settings', originHost);
+    return settings ? JSON.parse(settings) : '';
+  }
+
   private async getKey(key: string, originHost?: string) {
     const storage = await this.page.context().storageState();
     const origin = originHost
       ? storage.origins.find((o) => o.origin === originHost)
       : storage.origins[0];
     return origin?.localStorage.find((s) => s.name === key)?.value;
+  }
+
+  setDefaultModelReferenceKey = () => (defaultModelReference: string) => {
+    window.localStorage.setItem('defaultModelReference', defaultModelReference);
+  };
+
+  async setDefaultModelReference(option: DefaultModelReference) {
+    await this.page.addInitScript(this.setDefaultModelReferenceKey(), option);
+  }
+
+  async setRecentModelsIdsAndUseLastModel(
+    ...models: (DialAIEntityModel | string)[]
+  ) {
+    await this.setRecentModelsIds(...models);
+    await this.setDefaultModelReference(DefaultModelReference.lastUsedModel);
+  }
+
+  async setRecentModelsIdsOnceWithTemporaryLastUsedModel(
+    ...models: DialAIEntityModel[]
+  ) {
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+
+    await this.setLocalStorageItemOnce(
+      'defaultModelReference',
+      '"last-used-agent"',
+    );
+  }
+
+  async setRecentModelsIdsOnceWithPermanentLastUsedModel(
+    ...models: DialAIEntityModel[]
+  ) {
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+
+    await this.page.addInitScript(
+      this.setDefaultModelReferenceKey(),
+      DefaultModelReference.lastUsedModel,
+    );
   }
 }

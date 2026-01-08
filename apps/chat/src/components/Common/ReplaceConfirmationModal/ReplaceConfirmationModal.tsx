@@ -17,18 +17,21 @@ import {
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ImportExportSelectors } from '@/src/store/import-export/importExport.selectors';
+import { ImportExportSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
-import { Modal } from '../Modal';
-import { withRenderWhen } from '../RenderWhen';
-import { ReplaceSelector } from './Components';
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
+import { ReplaceSelector } from './ReplaceSelector';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
@@ -184,7 +187,10 @@ export function ReplaceConfirmationModalView() {
             'Add a postfix, ignore or replace existing items with importing ones.',
           )}
         </p>
-        <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b border-tertiary pl-3">
+        <div
+          className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b border-tertiary pl-3"
+          data-qa="all-items-selector"
+        >
           <span>{t('All items')}</span>
           <ReplaceSelector
             selectedOption={actionForAllItems}
@@ -192,7 +198,10 @@ export function ReplaceConfirmationModalView() {
           />
         </div>
       </div>
-      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
+      <div
+        className="flex shrink flex-col overflow-y-scroll px-3 md:px-6"
+        data-qa="main-folder-tree"
+      >
         {conversations && (
           <ConversationsList
             conversationsToReplace={conversations}
@@ -217,18 +226,18 @@ export function ReplaceConfirmationModalView() {
       </div>
 
       <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6 md:pb-4">
-        <button
+        <DialButton
           onClick={handleCancel}
-          className="button button-secondary h-[38px] rounded px-3 py-0"
-        >
-          {t('Cancel')}
-        </button>
-        <button
+          variant={ButtonVariant.Secondary}
+          label={t('Cancel')}
+          data-qa="cancel-import"
+        />
+        <DialButton
           onClick={handleContinueImport}
-          className="button button-primary h-[38px] rounded px-3 py-0"
-        >
-          {t('Continue')}
-        </button>
+          variant={ButtonVariant.Primary}
+          label={t('Continue')}
+          data-qa="continue-import"
+        />
       </div>
     </Modal>
   );

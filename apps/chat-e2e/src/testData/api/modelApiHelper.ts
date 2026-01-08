@@ -24,7 +24,7 @@ export class ModelApiHelper extends BaseApiHelper {
         a.name === agentProps.name &&
         (agentProps.version !== undefined
           ? a.version === agentProps.version
-          : a.version === ExpectedConstants.defaultAppVersion),
-    );
+          : a.version === ExpectedConstants.defaultEntityVersion),
+    )!;
   }
 }

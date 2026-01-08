@@ -1,6 +1,8 @@
 import { EntityTreeAssertion } from '@/src/assertions/base/entityTreeAssertion';
 import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class SideBarEntityAssertion<
@@ -74,5 +76,31 @@ export class SideBarEntityAssertion<
         ExpectedMessages.elementsCountIsValid,
       );
     }
+  }
+
+  public async assertSelectedEntity(name: string) {
+    const selectedEntity = this.sideBarEntitiesTree.selectedEntity(name);
+
+    await this.assertElementState(selectedEntity, 'visible');
+    await this.assertEntityBackgroundColor(
+      { name: name },
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentSecondaryAlpha),
+    );
+  }
+
+  public async assertEntityCursor(name: string, expectedCursor: Cursors) {
+    await this.sideBarEntitiesTree.getEntityByName(name).hover();
+    await super.assertElementCursor(
+      this.sideBarEntitiesTree.getEntityName(name),
+      expectedCursor,
+    );
+  }
+
+  public async assertNoEntityIsSelected() {
+    const selectedEntities =
+      await this.sideBarEntitiesTree.getSelectedEntities();
+    expect
+      .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
+      .toBe(0);
   }
 }

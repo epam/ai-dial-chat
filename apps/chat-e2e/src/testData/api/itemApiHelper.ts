@@ -5,7 +5,7 @@ import {
   BackendEntity,
 } from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
-import { API } from '@/src/testData';
+import { API, ExpectedMessages } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil, applicationNamePrefix } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
@@ -23,7 +23,9 @@ export class ItemApiHelper extends BaseApiHelper {
     await this.deleteBackendItem(
       ...conversations,
       ...prompts,
-      ...apps.filter((a) => a.name.includes(applicationNamePrefix)),
+      ...apps.filter((a) =>
+        a.name.toLowerCase().includes(applicationNamePrefix.toLowerCase()),
+      ),
     );
   }
 
@@ -46,38 +48,42 @@ export class ItemApiHelper extends BaseApiHelper {
     const statusCode = response.status();
     expect(
       statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
     return (await response.json()) as BackendChatEntity[];
   }
 
-  public async getItem(id: string) {
-    const response = await this.request.get(this.getHost(`/api/${id}`));
+  public async getItem<T>(id: string) {
+    const response = await this.request.get(this.getHost(`${API.api}/${id}`));
     const statusCode = response.status();
-    expect(
-      statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
-    ).toBe(200);
-    return (await response.json()) as Conversation;
+    expect
+      .soft(
+        statusCode,
+        ExpectedMessages.apiItemReceived(statusCode, await response.text()),
+      )
+      .toBe(200);
+    return (await response.json()) as T;
   }
 
   public async deleteBackendItem(...items: BackendEntity[]) {
     for (const item of items) {
-      const path = `/api/${item.url}`;
+      const path = `${API.api}/${item.url}`;
       const response = await this.request.delete(this.getHost(path));
       expect(
         response.status(),
-        `Backend item with id: ${item.name} was successfully deleted`,
+        ExpectedMessages.apiItemDeleted(item.name),
       ).toBe(200);
     }
   }
 
-  public async deleteEntity(entity: Entity) {
-    const url = `/api/${entity.id}`;
+  public async deleteEntity(entity: Entity | string) {
+    const url = `${API.api}/${typeof entity === 'string' ? entity : entity.id}`;
     const response = await this.request.delete(this.getHost(url));
     expect(
       response.status(),
-      `Entity with id: ${entity.name} was successfully deleted`,
+      ExpectedMessages.apiItemDeleted(
+        typeof entity === 'string' ? entity : entity.name,
+      ),
     ).toBe(200);
   }
 
@@ -109,13 +115,13 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   public async createItem(item: Prompt | Conversation) {
-    const url = `/api/${ItemUtil.getEncodedItemId(item.id)}`;
+    const url = `${API.api}/${ItemUtil.getEncodedItemId(item.id)}`;
     const response = await this.request.put(this.getHost(url), {
       data: item,
     });
     expect(
       response.status(),
-      `Item created with data: ${JSON.stringify(item)}`,
+      ExpectedMessages.apiItemCreated(JSON.stringify(item)),
     ).toBe(200);
   }
 }

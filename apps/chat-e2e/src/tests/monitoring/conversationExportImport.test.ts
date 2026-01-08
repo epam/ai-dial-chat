@@ -30,7 +30,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationOutsideFolder.name);
+        await conversations.selectEntity(conversationOutsideFolder.name);
         await conversations.openEntityDropdownMenu(
           conversationOutsideFolder.name,
         );

@@ -2,13 +2,14 @@ import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanPrompt } from '@/src/utils/app/clean';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
-import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
+import { getPromptInfoFromId } from '@/src/utils/app/prompts';
+import { getPromptApiKey, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApiKeys } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { RootState } from '@/src/types/store';
 
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -28,7 +29,7 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
     return getPromptApiKey(info);
   }
   parseEntityKey(key: string): Omit<PromptInfo, 'folderId' | 'id'> {
-    return parsePromptApiKey(key);
+    return parseEntityApiKey(key);
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Prompts;
@@ -43,7 +44,11 @@ export const getOrUploadPrompt = <T extends { id: string }>(
   payload: T;
   wasUploaded: boolean;
 }> => {
-  const prompt = PromptsSelectors.selectPrompt(state, payload.id);
+  let prompt = PromptsSelectors.selectPrompt(state, payload.id);
+
+  if (!prompt) {
+    prompt = getPromptInfoFromId(payload.id);
+  }
 
   if (prompt && prompt?.status !== UploadStatus.LOADED) {
     return forkJoin({

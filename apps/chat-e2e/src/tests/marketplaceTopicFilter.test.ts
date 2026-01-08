@@ -32,7 +32,7 @@ dialTest(
     marketplacePage,
     marketplaceFilter,
     navigationPanel,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-4498', 'EPMRTC-4494', 'EPMRTC-4490');
@@ -102,12 +102,14 @@ dialTest(
             a.name === secondAppName ||
             a.name === fourthAppName,
         );
-        await localStorageManager.setRecentModelsIdsOnce(...addedApps);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...addedApps,
+        );
       },
     );
 
     await dialTest.step(
-      'Open Dial Marketplace and verify Topics filter with added options are displayed, topics are sorted alphabetically',
+      'Open DIAL Marketplace and verify Topics filter with added options are displayed, topics are sorted alphabetically',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
@@ -138,7 +140,7 @@ dialTest(
             firstTopic,
           )
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           2,
@@ -146,7 +148,7 @@ dialTest(
         );
         baseAssertion.assertArrayIncludesAll(
           actualAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [firstAppName, secondAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
@@ -163,7 +165,7 @@ dialTest(
             secondTopic,
           )
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           3,
@@ -171,7 +173,7 @@ dialTest(
         );
         baseAssertion.assertArrayIncludesAll(
           actualAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [firstAppName, secondAppName, thirdAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
@@ -183,9 +185,9 @@ dialTest(
       'Switch to "My Workspace" tab and verify only first and second apps are displayed, third app stay under "Suggested results"',
       async () => {
         await navigationPanel.goToMyWorkspace();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = actualAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertValue(
           filteredAgents.length,
@@ -229,8 +231,8 @@ dialTest(
     marketplacePage,
     marketplaceFilter,
     marketplace,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     toast,
     baseAssertion,
   }) => {
@@ -272,7 +274,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           marketplace.noWorkspaceResultsFound,
-          ExpectedConstants.noWorkspaceAgentsFoundMessage,
+          ExpectedConstants.noWorkspaceEntitiesFoundMessage,
         );
         await baseAssertion.assertElementState(
           marketplace.noWorkspaceResultsFoundIcon,
@@ -284,7 +286,7 @@ dialTest(
           'visible',
         );
         const actualSuggestedAgents =
-          await marketplaceAgentsSection.getAllAgents();
+          await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualSuggestedAgents.length,
           1,
@@ -304,12 +306,15 @@ dialTest(
       'Bookmark suggested app and verify it is moved to the workspace results, no apps are suggested',
       async () => {
         const marketplaceAppElement =
-          await marketplaceAgentsSection.findAgentElement(marketplaceAppName);
-        await marketplaceAgents.addAgentToWorkspace(marketplaceAppElement);
+          await marketplaceEntitiesSection.findEntityElement(
+            marketplaceAppName,
+          );
+        await marketplaceEntities.addEntityToWorkspace(marketplaceAppElement);
         await toast.closeToast();
-        const filteredAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredAgents =
+          await marketplaceEntitiesSection.getAllEntities();
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             marketplaceAppElement,
           ),
           'visible',
@@ -321,7 +326,7 @@ dialTest(
         );
         baseAssertion.assertArrayIncludesAll(
           filteredAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [marketplaceAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
@@ -343,7 +348,7 @@ dialTest(
           )
           .click();
         await baseAssertion.assertElementState(
-          marketplaceAgentsSection,
+          marketplaceEntitiesSection,
           'hidden',
         );
         await baseAssertion.assertElementState(
@@ -356,7 +361,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           marketplace.noResultsFoundDescription,
-          ExpectedConstants.noMarketplaceAgentsFoundMessage,
+          ExpectedConstants.noMarketplaceEntitiesFoundMessage,
         );
         await baseAssertion.assertElementState(
           marketplace.noResultsFoundIcon,
@@ -374,8 +379,8 @@ dialTest(
     applicationApiHelper,
     marketplacePage,
     marketplaceFilter,
-    marketplaceAgents,
-    marketplaceAgentsSection,
+    marketplaceEntities,
+    marketplaceEntitiesSection,
     confirmationDialog,
     setTestIds,
     baseAssertion,
@@ -413,7 +418,8 @@ dialTest(
           appTopic,
         );
         await appTopicCheckbox.click();
-        const filteredAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredAgents =
+          await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           filteredAgents.length,
           2,
@@ -421,7 +427,7 @@ dialTest(
         );
         baseAssertion.assertArrayIncludesAll(
           filteredAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [firstAppName, secondAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
@@ -433,17 +439,18 @@ dialTest(
       'Delete the first app and verify it disappears immediately, topic stays checked',
       async () => {
         const firstAppElement =
-          await marketplaceAgentsSection.findAgentElement(firstAppName);
+          await marketplaceEntitiesSection.findEntityElement(firstAppName);
         await firstAppElement.hoverOver();
-        await marketplaceAgents
-          .getAgentElementDotsMenu(firstAppElement)
+        await marketplaceEntities
+          .getEntityElementDotsMenu(firstAppElement)
           .click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const filteredAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredAgents =
+          await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           filteredAgents.length,
           1,
@@ -451,7 +458,7 @@ dialTest(
         );
         baseAssertion.assertArrayIncludesAll(
           filteredAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [secondAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
@@ -467,20 +474,21 @@ dialTest(
       'Delete the second app and verify it and its topic disappear from the result and filter',
       async () => {
         const secondAppElement =
-          await marketplaceAgentsSection.findAgentElement(secondAppName);
+          await marketplaceEntitiesSection.findEntityElement(secondAppName);
         await secondAppElement.hoverOver();
-        await marketplaceAgents
-          .getAgentElementDotsMenu(secondAppElement)
+        await marketplaceEntities
+          .getEntityElementDotsMenu(secondAppElement)
           .click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const filteredAgents = await marketplaceAgentsSection.getAllAgents();
+        const filteredAgents =
+          await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayExcludesAll(
           filteredAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [secondAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
@@ -503,15 +511,15 @@ dialTest(
     marketplacePage,
     navigationPanel,
     marketplaceFilter,
-    marketplaceAgentsSection,
-    agentDetailsModal,
-    agentVersionsDropdownMenuAssertion,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    entityVersionsDropdownMenuAssertion,
+    marketplaceEntities,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-4475', 'EPMRTC-4671');
     const appName = GeneratorUtil.randomApplicationName();
-    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const firstVersion = ExpectedConstants.defaultEntityVersion;
     const secondVersion = '0.0.2';
     const firstAppTopic = GeneratorUtil.randomString(7);
     const secondAppTopic = GeneratorUtil.randomString(10);
@@ -559,7 +567,7 @@ dialTest(
           firstAppTopic,
         );
         await topicFilter.click();
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           allAgents.length,
           1,
@@ -567,19 +575,20 @@ dialTest(
         );
         baseAssertion.assertArrayIncludesAll(
           allAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [appName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
 
-        agentElement = await marketplaceAgentsSection.findAgentElement(appName);
+        agentElement =
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(agentElement),
+          marketplaceEntities.getEntityVersion(agentElement),
           firstVersion,
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceEntities.getEntityTopicsContainer(agentElement),
           [firstAppTopic],
         );
       },
@@ -590,19 +599,19 @@ dialTest(
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           firstVersion,
         );
         await baseAssertion.assertElementInnerText(
-          agentDetailsModal.agentTopics,
+          entityDetailsModal.entityTopics,
           [firstAppTopic],
         );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
           firstVersion,
           secondVersion,
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -615,20 +624,20 @@ dialTest(
           CheckboxState.unchecked,
         );
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementWithVersion(
+          marketplaceEntities.getEntityElementWithVersion(
             agentElement,
             secondVersion,
           ),
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceEntities.getEntityTopicsContainer(agentElement),
           [secondAppTopic],
         );
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementWithVersion(
+          marketplaceEntities.getEntityElementWithVersion(
             agentElement,
             firstVersion,
           ),
@@ -642,19 +651,19 @@ dialTest(
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           secondVersion,
         );
         await baseAssertion.assertElementInnerText(
-          agentDetailsModal.agentTopics,
+          entityDetailsModal.entityTopics,
           [secondAppTopic],
         );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
           firstVersion,
           secondVersion,
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -663,7 +672,7 @@ dialTest(
       async () => {
         await navigationPanel.goToMyWorkspace();
         await topicFilter.click();
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           allAgents.length,
           1,
@@ -678,16 +687,16 @@ dialTest(
         );
 
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementWithVersion(
+          marketplaceEntities.getEntityElementWithVersion(
             agentElement,
             firstVersion,
           ),
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceEntities.getEntityTopicsContainer(agentElement),
           [firstAppTopic],
         );
       },
@@ -702,7 +711,7 @@ dialTest(
             secondAppTopic,
           )
           .click();
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           allAgents.length,
           1,
@@ -716,20 +725,20 @@ dialTest(
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementWithVersion(
+          marketplaceEntities.getEntityElementWithVersion(
             agentElement,
             secondVersion,
           ),
           'visible',
         );
         await baseAssertion.assertElementInnerText(
-          marketplaceAgents.getAgentElementTopics(agentElement),
+          marketplaceEntities.getEntityTopicsContainer(agentElement),
           [secondAppTopic],
         );
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementWithVersion(
+          marketplaceEntities.getEntityElementWithVersion(
             agentElement,
             firstVersion,
           ),

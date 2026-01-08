@@ -71,7 +71,7 @@ export class BaseElement {
     text: string,
     options?: { delay?: number; noWaitAfter?: boolean; timeout?: number },
   ) {
-    await this.rootLocator.type(text, options);
+    await this.rootLocator.pressSequentially(text, options);
   }
 
   async fillInInput(
@@ -132,12 +132,16 @@ export class BaseElement {
     return this.rootLocator.boundingBox();
   }
 
-  async isElementEnabled() {
-    return this.rootLocator.isEnabled();
+  async isElementEnabled(options?: { timeout?: number }) {
+    return this.rootLocator.isEnabled(options);
   }
 
   async scrollIntoElementView() {
     await this.rootLocator.scrollIntoViewIfNeeded();
+  }
+
+  async getElementInputValue() {
+    return this.rootLocator.inputValue();
   }
 
   async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
@@ -228,10 +232,16 @@ export class BaseElement {
     return allIcons;
   }
 
-  public getElementIcon(elementLocator: Locator) {
-    const iconLocator = elementLocator
+  public getElementIcon(elementLocator: Locator | BaseElement) {
+    const iconLocator = BaseElement.getElementLocator(elementLocator)
       .locator(ChatSelectors.iconSelector)
       .first();
     return iconLocator.locator(`${Tags.img}:visible`);
+  }
+
+  public static getElementLocator(element: BaseElement | Locator): Locator {
+    return element instanceof BaseElement
+      ? element.getElementLocator()
+      : (element as Locator);
   }
 }

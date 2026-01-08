@@ -17,6 +17,7 @@ import {
   CreateConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
+  Message,
   OverlayConversation,
   PublishActions,
   SelectConversationResponse,
@@ -25,6 +26,18 @@ import {
 import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
+
+const removeSelectedAddons = (message: Message): Message => {
+  if (message.settings) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { selectedAddons, ...restSettings } = message.settings;
+    return {
+      ...message,
+      settings: restSettings,
+    };
+  }
+  return message;
+};
 
 dialOverlayTest(
   `[Overlay. Events in sandbox] Send 'Hello' to Chat.\n` +
@@ -59,7 +72,7 @@ dialOverlayTest(
     const secondRequestContent = 'test';
     const systemPrompt = `End each word with string "!?!?!"`;
     let secondRequest: Conversation;
-    const configuredModelId = 'stability.stable-diffusion-xl';
+    const configuredModelId = 'imagegeneration@005';
 
     await overlayHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
@@ -101,17 +114,17 @@ dialOverlayTest(
       async () => {
         await overlayActions.getMessagesButton.click();
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
-        const actualMessages =
+        const actualMessagesString =
           await overlayDialog.content.getElementInnerContent();
-        const expectedItem = await overlayItemApiHelper.getItem(
+        const expectedItem = await overlayItemApiHelper.getItem<Conversation>(
           secondRequest.id,
         );
-        const expectedMessages: GetMessagesResponse = {
-          messages: expectedItem.messages,
-        };
+        const { messages } = JSON.parse(
+          actualMessagesString,
+        ) as GetMessagesResponse;
         expect
-          .soft(JSON.parse(actualMessages) as GetMessagesResponse)
-          .toStrictEqual(expectedMessages);
+          .soft(messages)
+          .toStrictEqual(expectedItem.messages.map(removeSelectedAddons));
         await overlayDialog.closeButton.click();
       },
     );
@@ -158,15 +171,19 @@ dialOverlayTest(
     await dialOverlayTest.step(
       `Click on "Set light theme and new model" button and verify theme is changed to light, model is added to the recent models`,
       async () => {
-        await overlayConfiguration.setConfiguration();
+        await overlayConfiguration.clickSetConfigurationButton();
         await overlayAssertion.assertOverlayTheme(
           overlayHomePage,
           ThemeId.light,
         );
         await overlayBaseAssertion.assertElementText(
           overlayAgentInfo.agentName,
-          ModelsUtil.getDefaultModel()!.name,
+          ModelsUtil.getDefaultAgent()!.name,
         );
+        const settings = await localStorageManager.getSettings(
+          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+        );
+        overlayBaseAssertion.assertValue(settings.theme, ThemeId.light);
         const recentModels = await localStorageManager.getRecentModelsIds(
           process.env.NEXT_PUBLIC_OVERLAY_HOST,
         );
@@ -184,6 +201,14 @@ dialOverlayTest(
             ? API.themeUrl.concat(`/${expectedModelIcon}`)
             : undefined,
         });
+        const selectedConversationIds =
+          await localStorageManager.getSelectedConversationIds(
+            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          );
+        overlayBaseAssertion.assertValue(
+          selectedConversationIds[0],
+          `conversations/local/${expectedModel.reference}__${ExpectedConstants.newConversationWithIndexTitle(3)}`,
+        );
         await overlayAgentInfoAssertion.assertElementText(
           overlayAgentInfo.agentName,
           expectedModel.name,
@@ -248,7 +273,10 @@ dialOverlayTest(
         //publish conversation by admin
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(publishedConversation, PublishActions.ADD)
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD,
+          )
           .build();
         const publication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);
@@ -290,6 +318,7 @@ dialOverlayTest(
         //     await overlayPublicationApiHelper.getPublishedConversation(
         //       actualPublishedConversation.url,
         //     );
+        //   const permissions = conversation.permissions;
         //   const isPlayback = conversation.playback?.isPlayback;
         //   const isReplay = conversation.replay?.isReplay;
         //   const parentPath = actualPublishedConversation.parentPath;
@@ -315,6 +344,7 @@ dialOverlayTest(
         //     updatedAt: actualPublishedConversation.updatedAt,
         //     bucket: actualPublishedConversation.bucket,
         //     ...(parentPath && { parentPath }),
+        //    ...(permissions && { permissions }),
         //   });
         // }
 
@@ -329,13 +359,15 @@ dialOverlayTest(
           );
         for (let i = 0; i < actualConversationsList.length; i++) {
           let expectedConversation: OverlayConversation | Conversation;
-          const conversation = await overlayItemApiHelper.getItem(
+          const conversation = await overlayItemApiHelper.getItem<Conversation>(
             actualConversationsList[i].url,
           );
           const actualConversation = actualConversationsList[i];
           const parentPath = actualConversation.parentPath;
+          const permissions = actualConversation.permissions;
           const isPlayback = conversation.playback?.isPlayback;
           const isReplay = conversation.replay?.isReplay;
+          const bucket = actualConversation.bucket;
           const shortConversation: ConversationInfo = {
             model: isPlayback
               ? { id: PseudoModel.playback }
@@ -352,8 +384,14 @@ dialOverlayTest(
 
           //save expectedSelectedConversation for the next test step if it is not last listed one
           if (shortConversation.id === todayConversation.id) {
+            const expectedSelectedOverlayConversation = {
+              ...shortConversation,
+              ...(permissions && { permissions }),
+              ...(bucket && { bucket }),
+            };
             expectedSelectedConversation = {
-              conversation: shortConversation as OverlayConversation,
+              conversation:
+                expectedSelectedOverlayConversation as OverlayConversation,
             };
           }
 
@@ -366,7 +404,7 @@ dialOverlayTest(
               prompt: conversation.prompt,
               temperature: conversation.temperature,
               replay: conversation.replay,
-              selectedAddons: conversation.selectedAddons,
+              selectedAddons: [],
               status: UploadStatus.LOADED,
               isMessageStreaming: false,
             };
@@ -374,13 +412,13 @@ dialOverlayTest(
               ...fullConversation,
               bucket: actualConversation.bucket,
               ...(parentPath && { parentPath }),
+              ...(permissions && { permissions }),
             };
 
             //save expectedSelectedConversation for the next test step if it is the last listed one
             if (expectedConversation.id === todayConversation.id) {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { bucket, parentPath, ...conversationInfo } =
-                expectedConversation;
+              const { parentPath, ...conversationInfo } = expectedConversation;
               expectedSelectedConversation = {
                 conversation: conversationInfo as OverlayConversation,
               };
@@ -390,6 +428,7 @@ dialOverlayTest(
               ...shortConversation,
               bucket: actualConversation.bucket,
               ...(parentPath && { parentPath }),
+              ...(permissions && { permissions }),
             };
           }
           expectedConversationsArray.push(expectedConversation);
@@ -399,9 +438,10 @@ dialOverlayTest(
         const actualSharedConversationsList =
           await overlayShareApiHelper.listSharedWithMeConversations();
         for (const actualSharedConversation of actualSharedConversationsList.resources) {
-          const conversation = await overlayItemApiHelper.getItem(
+          const conversation = await overlayItemApiHelper.getItem<Conversation>(
             actualSharedConversation.url,
           );
+          const permissions = conversation.permissions;
           const isPlayback = conversation.playback?.isPlayback;
           const isReplay = conversation.replay?.isReplay;
           expectedConversationsArray.push({
@@ -417,6 +457,7 @@ dialOverlayTest(
             folderId: conversation.folderId,
             sharedWithMe: true,
             bucket: actualSharedConversation.bucket,
+            ...(permissions && { permissions }),
           });
         }
 
@@ -476,6 +517,181 @@ dialOverlayTest(
         overlayBaseAssertion.assertValue(
           selectedConversationIds[0],
           todayConversation.id,
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  `[Overlay. Events in sandbox] New conversation is created in new folder if to click on 'Create conversation in inner folder' event. Folders are expanded.\n` +
+    `[Overlay. Events in sandbox] DIAL auto-scrolls to new conversation on 'Create conversation in inner folder'`,
+  async ({
+    overlayHomePage,
+    overlayHeader,
+    overlayBaseAssertion,
+    overlayActions,
+    overlayDialog,
+    overlayChatBarFolderAssertion,
+    conversationData,
+    overlayDataInjector,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4840', 'EPMRTC-6177');
+    const expectedFoldersPath =
+      'test-inner-folder-root/test-inner-folder-child';
+
+    await dialOverlayTest.step(
+      'Create set of conversations in folders',
+      async () => {
+        for (let i = 1; i <= 15; i++) {
+          const conversationInFolder =
+            conversationData.prepareDefaultConversationInFolder();
+          await overlayDataInjector.createConversations(
+            conversationInFolder.conversations,
+            conversationInFolder.folders,
+          );
+          conversationData.resetData();
+        }
+      },
+    );
+
+    await dialOverlayTest.step(
+      `Click on "Create conversation in inner folder" and verify modal with conversation json is opened`,
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enabledHeaderSandboxUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        const newConversationData =
+          await overlayActions.clickCreateConversationInInnerFolder(
+            expectedFoldersPath,
+          );
+        await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
+        const actualMessages =
+          await overlayDialog.content.getElementInnerContent();
+        const expectedConversation: CreateConversationResponse = {
+          conversation: {
+            model: newConversationData.request.model,
+            name: newConversationData.request.name,
+            isPlayback: newConversationData.request.isPlayback ?? false,
+            isReplay: newConversationData.request.isReplay ?? false,
+            id: newConversationData.request.id,
+            updatedAt: newConversationData.response.updatedAt,
+            folderId: newConversationData.request.folderId,
+            bucket: newConversationData.response.bucket,
+            parentPath: newConversationData.response.parentPath,
+          },
+        };
+        expect
+          .soft(
+            expectedConversation.conversation.id.includes(expectedFoldersPath),
+          )
+          .toBeTruthy();
+        expect
+          .soft(
+            expectedConversation.conversation.folderId.endsWith(
+              expectedFoldersPath,
+            ),
+          )
+          .toBeTruthy();
+        expect
+          .soft(expectedConversation.conversation.parentPath)
+          .toBe(expectedFoldersPath);
+        expect
+          .soft(JSON.parse(actualMessages) as CreateConversationResponse)
+          .toStrictEqual(expectedConversation);
+        await overlayDialog.closeButton.click();
+      },
+    );
+
+    await dialOverlayTest.step(
+      `Open chat panel and verify created conversation is selected and focused`,
+      async () => {
+        await overlayHeader.leftPanelToggle.click();
+        await overlayChatBarFolderAssertion.assertRootFolderState(
+          { name: expectedFoldersPath.split('/')[0] },
+          'visible',
+        );
+        await overlayChatBarFolderAssertion.assertFolderEntitySelectedState(
+          { name: expectedFoldersPath.split('/')[1] },
+          { name: ExpectedConstants.newConversationWithIndexTitle(1) },
+          true,
+        );
+        await overlayChatBarFolderAssertion.assertFolderEntityIsInViewport(
+          { name: expectedFoldersPath.split('/')[1] },
+          { name: ExpectedConstants.newConversationWithIndexTitle(1) },
+          1,
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay. Events in sandbox] Chat1 is created into new folder. Chat2 is created into the same folder. Event: newConversationsFolderIdSetOverlay',
+  async ({
+    overlayHomePage,
+    overlayHeader,
+    overlayChatBar,
+    overlayTalkToAgentDialog,
+    overlaySendMessage,
+    overlayChatBarFolderAssertion,
+    overlayFolderConversations,
+    overlayBaseAssertion,
+    overlayChat,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-5695');
+    const expectedFolderPath = 'test-folder';
+    const firstConversationName = 'first';
+    const secondConversationName = 'second';
+
+    await overlayHomePage.mockChatTextResponse(
+      MockedChatApiResponseBodies.simpleTextBody,
+      { isOverlay: true },
+    );
+
+    await dialOverlayTest.step('Send a request to the chat', async () => {
+      await overlayHomePage.navigateToUrl(
+        OverlaySandboxUrls.newConversationsFolderIdSetUrl,
+      );
+      await overlayHomePage.waitForPageLoaded();
+      await overlayChat.sendRequestWithButton(firstConversationName);
+    });
+
+    await dialOverlayTest.step(
+      'Open chat panel and verify conversation is created inside configured folder',
+      async () => {
+        await overlayHeader.leftPanelToggle.click();
+        //TODO: remove page reload and folder expand when the issue is fixed https://github.com/epam/ai-dial-chat/issues/3776
+        await overlayHomePage.reloadPage();
+        await overlayHomePage.waitForPageLoaded();
+        await overlayBaseAssertion.assertElementState(
+          overlaySendMessage,
+          'visible',
+        );
+        await overlayHeader.leftPanelToggle.click();
+        await overlayFolderConversations.expandFolder(expectedFolderPath);
+        await overlayChatBarFolderAssertion.assertFolderEntityState(
+          { name: expectedFolderPath },
+          { name: firstConversationName },
+          'visible',
+        );
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Create one more new conversation and verify it is created inside configured folder',
+      async () => {
+        await overlayChatBar.createNewEntity();
+        await overlayTalkToAgentDialog.cancelButton.click();
+        await overlayChat.sendRequestWithButton(secondConversationName);
+        await overlayHeader.leftPanelToggle.click();
+        await overlayChatBarFolderAssertion.assertFolderEntityState(
+          { name: expectedFolderPath },
+          { name: secondConversationName },
+          'visible',
         );
       },
     );

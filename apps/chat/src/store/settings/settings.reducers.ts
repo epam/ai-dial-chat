@@ -3,28 +3,25 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { PageType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
-
 import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const initialState: SettingsState = {
-  appName: 'AI Dial',
+  appName: 'DIAL',
   isOverlay: false,
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  enabledFeaturesData: {},
   publicationFilters: [],
   codeWarning: '',
   announcement: '',
-  defaultModelId: undefined,
+  defaultModelReference: undefined,
   defaultRecentModelsIds: [],
-  defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
-  defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
   codeEditorPythonVersions: [],
   providerId: null,
@@ -35,6 +32,7 @@ export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
+    preInitApp: (state) => state,
     initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setEnabledFeatures: (
       state,
@@ -42,17 +40,25 @@ export const settingsSlice = createSlice({
     ) => {
       state.enabledFeatures = payload;
     },
-    setDefaultModelId: (
+    setEnabledFeaturesData: (
       state,
-      { payload }: PayloadAction<{ defaultModelId: string }>,
+      { payload }: PayloadAction<SettingsState['enabledFeaturesData']>,
     ) => {
-      state.defaultModelId = payload.defaultModelId;
+      state.enabledFeaturesData = payload;
     },
-    setOverlayDefaultModelId: (
+    setDefaultModeReference: (
       state,
-      { payload }: PayloadAction<{ overlayDefaultModelId: string | undefined }>,
+      { payload }: PayloadAction<{ defaultModeReference: string }>,
     ) => {
-      state.overlayDefaultModelId = payload.overlayDefaultModelId;
+      state.defaultModelReference = payload.defaultModeReference;
+    },
+    setOverlayDefaultModelReference: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ overlayDefaultModelReference: string | undefined }>,
+    ) => {
+      state.overlayDefaultModelReference = payload.overlayDefaultModelReference;
     },
     setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
       state.overlayConversationId = payload;
@@ -65,6 +71,15 @@ export const settingsSlice = createSlice({
     },
     initComplete: (state) => {
       state.initialDataStatus = UploadStatus.LOADED;
+    },
+    setDefaultRecentModelsIds: (
+      state,
+      { payload }: PayloadAction<string[]>,
+    ) => {
+      state.defaultRecentModelsIds = payload;
+    },
+    setThemesHostDefined: (state, { payload }: PayloadAction<boolean>) => {
+      state.themesHostDefined = payload;
     },
   },
 });

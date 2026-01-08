@@ -1,8 +1,8 @@
 import { BaseElement } from './baseElement';
 
-import { Tags } from '@/src/ui/domData';
+import { AttributeValues, Tags } from '@/src/ui/domData';
 import { ChatSelectors, ShareModalSelectors } from '@/src/ui/selectors';
-import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
+import { Button } from '@/src/ui/webElements/common/button';
 import { Locator, Page } from '@playwright/test';
 
 export class ShareModal extends BaseElement {
@@ -10,19 +10,32 @@ export class ShareModal extends BaseElement {
     super(page, ShareModalSelectors.modalContainer, parentLocator);
   }
 
-  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
-  public copyLinkButton = this.getChildElementBySelector(
-    `${ShareModalSelectors.copyLink} > ${Tags.svg}`,
+  public closeButton = new Button(
+    this.page,
+    AttributeValues.close,
+    this.rootLocator,
   );
+  public copyLinkButton = new Button(
+    this.page,
+    AttributeValues.copyLink,
+    this.rootLocator,
+  );
+  public copyLinkIcon = this.copyLinkButton.getChildElementBySelector(Tags.svg);
   public shareLinkInput = this.getChildElementBySelector(
     ShareModalSelectors.shareLink,
   );
   public entityName = this.getChildElementBySelector(
     ShareModalSelectors.entityName,
   );
+  public shareQrCodeContainer = this.getChildElementBySelector(
+    ShareModalSelectors.qrCode,
+  );
+  public shareQrCodeImage = this.shareQrCodeContainer.getChildElementBySelector(
+    Tags.svg,
+  );
 
   public linkInputLoader = this.getChildElementBySelector(
-    ChatSelectors.messageSpinner,
+    ChatSelectors.entitySpinner,
   );
 
   public shareText = this.getChildElementBySelector(
@@ -36,9 +49,4 @@ export class ShareModal extends BaseElement {
   public notSharedEntityLabel = this.getChildElementBySelector(
     ShareModalSelectors.notSharedEntityLabel,
   );
-
-  public async getShareTextContent() {
-    const allContent = await this.shareText.getElementsInnerContent();
-    return allContent.join(' ').replaceAll(/\u00a0/g, ' ');
-  }
 }

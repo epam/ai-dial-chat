@@ -23,6 +23,7 @@ export const SideBarSelectors = {
   noData: '[data-qa="no-data-placeholder"]',
   noDataIcon: '[data-qa="no-data-icon"]',
   closeSidebar: '[data-qa="close-sidebar"]',
+  selectedEntity: '[data-qa="selected-entity"]',
 };
 
 export const ChatBarSelectors = {
@@ -30,7 +31,6 @@ export const ChatBarSelectors = {
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',
   conversations: '[data-qa="conversations"]',
-  selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',
@@ -60,19 +60,6 @@ export const PromptBarSelectors = {
   organizationPrompts: () =>
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.organizationContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
-};
-
-export const EntitySelectors = {
-  entityName: '[data-qa="entity-name"]',
-  conversation: '[data-qa="conversation"]',
-  prompt: '[data-qa="prompt"]',
-  file: '[data-qa="file"]',
-  application: '[data-qa="agent"]',
-  version: '[data-qa="version"]',
-};
-
-export const PublishEntitySelectors = {
-  version: '[data-qa="version"]',
 };
 
 export const NavigationPanelSelectors = {

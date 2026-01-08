@@ -5,18 +5,7 @@ import { isUserAdmin } from '@/src/utils/session';
 
 import { RootState } from '@/src/types/store';
 
-import { SettingsState } from '@/src/store/settings/settings.types';
-
-import { AuthState } from './auth.types';
-
-// settings
-const settingsSelector = (state: RootState): SettingsState => state.settings;
-
-const selectIsAuthDisabled = (state: RootState) =>
-  settingsSelector(state).isAuthDisabled;
-
-// auth
-const rootSelector = (state: RootState): AuthState => state.auth;
+const rootSelector = (state: RootState) => state.auth;
 
 const selectSession = (state: RootState) => rootSelector(state)?.session;
 
@@ -26,12 +15,35 @@ const selectStatus = (state: RootState) =>
   selectSession(state)?.status ?? 'loading';
 
 const selectIsShouldLogin = createSelector(
-  [selectSession, selectStatus, selectIsAuthDisabled],
+  [
+    selectSession,
+    selectStatus,
+    (state: RootState) => state.settings.isAuthDisabled,
+  ],
   (session, sessionStatus, isAuthDisabled) => {
     return (
       !isAuthDisabled &&
       (sessionStatus === 'unauthenticated' ||
         (sessionStatus === 'authenticated' && !isClientSessionValid(session)))
+    );
+  },
+);
+
+const selectIsShouldLogout = createSelector(
+  [
+    selectSession,
+    selectStatus,
+    (state: RootState) => state.settings.isAuthDisabled,
+    (state: RootState) => state.auth.session?.data?.user.email,
+    (state: RootState, userEmail?: string | null) => userEmail,
+  ],
+  (session, sessionStatus, isAuthDisabled, stateUserEmail, userEmail) => {
+    return (
+      !isAuthDisabled &&
+      sessionStatus === 'authenticated' &&
+      isClientSessionValid(session) &&
+      userEmail &&
+      userEmail !== stateUserEmail
     );
   },
 );
@@ -41,10 +53,15 @@ const selectIsAdmin = (state: RootState) =>
 const selectUserName = (state: RootState) =>
   selectSessionData(state)?.user?.name ?? '';
 
+const selectUserEmail = (state: RootState) =>
+  selectSessionData(state)?.user?.email ?? '';
+
 export const AuthSelectors = {
   selectIsShouldLogin,
   selectSessionData,
   selectUserName,
   selectStatus,
   selectIsAdmin,
+  selectUserEmail,
+  selectIsShouldLogout,
 };

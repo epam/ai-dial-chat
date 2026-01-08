@@ -1,4 +1,4 @@
-import { EMPTY, catchError, concat, map, of, switchMap, takeUntil } from 'rxjs';
+import { EMPTY, catchError, concat, map, mergeMap, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -13,14 +13,18 @@ import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ChatActions,
+  ConversationsActions,
+  FilesActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+} from '@/src/store/selectors';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
@@ -37,9 +41,11 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
       const formValue = ChatSelectors.selectChatFormValue(state$.value);
-      const configurationSchema = ChatSelectors.selectConfigurationSchema(
-        state$.value,
-      );
+      const configurationSchema =
+        ChatSelectors.selectConfigurationSchemaByModelId(
+          state$.value,
+          payload.modelId,
+        );
       const content = ChatSelectors.selectInputContent(state$.value);
 
       const isFirstMessage = !selectedConversations[0].messages.length;
@@ -80,29 +86,72 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
 const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatActions.getConfigurationSchema.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
+      const uploadedConfigurationSchema =
+        ChatSelectors.selectConfigurationSchemaByModelId(
+          state$.value,
+          payload.modelId,
+        );
+      const loadingConfigurationSchemas =
+        ChatSelectors.selectLoadingConfigurationSchemas(state$.value);
+
+      if (
+        uploadedConfigurationSchema ||
+        loadingConfigurationSchemas.includes(payload.modelId)
+      ) {
+        return EMPTY;
+      }
+
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
-      const savedConfigurationSchema =
-        selectedConversations[0]?.messages?.[0]?.custom_content
-          ?.configuration_schema;
+      const savedConfigurationSchemas = selectedConversations
+        .map(
+          (conversation) =>
+            conversation.messages?.[0]?.custom_content?.configuration_schema,
+        )
+        .filter((schema) => schema !== undefined);
 
-      if (savedConfigurationSchema) {
-        return of(
-          ChatActions.getConfigurationSchemaSuccess(savedConfigurationSchema),
+      if (savedConfigurationSchemas.length) {
+        return concat(
+          ...savedConfigurationSchemas.map((schema) =>
+            of(
+              ChatActions.getConfigurationSchemaSuccess({
+                modelId: payload.modelId,
+                schema,
+              }),
+            ),
+          ),
         );
       }
 
+      return of(
+        ChatActions.startConfigurationSchemaUploading({
+          modelId: payload.modelId,
+        }),
+      );
+    }),
+  );
+
+const startConfigurationSchemaUploadingEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ChatActions.startConfigurationSchemaUploading.type),
+    mergeMap(({ payload }) => {
       return ApplicationService.getConfigurationSchema(payload.modelId).pipe(
         switchMap((schema) => {
-          return of(ChatActions.getConfigurationSchemaSuccess(schema));
+          return of(
+            ChatActions.getConfigurationSchemaSuccess({
+              modelId: payload.modelId,
+              schema,
+            }),
+          );
         }),
         catchError(() => {
-          return of(ChatActions.getConfigurationSchemaFailed());
+          return of(
+            ChatActions.getConfigurationSchemaFailed({
+              modelId: payload.modelId,
+            }),
+          );
         }),
-        takeUntil(
-          action$.pipe(ofType(ConversationsActions.selectConversations.type)),
-        ),
       );
     }),
   );
@@ -147,6 +196,7 @@ const getEntityInfoEpic: AppEpic = (action$) =>
         return of(
           ConversationsActions.getConversationMetadata({
             conversationId: payload.entityInfo.id,
+            withModal: true,
           }),
         );
       }
@@ -180,6 +230,7 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
 export const ChatEpics = combineEpics(
   setFormValueEpic,
   getConfigurationSchemaEpic,
+  startConfigurationSchemaUploadingEpic,
   getConfigurationSchemaFailedEpic,
   appendInputContentEpic,
   getEntityInfoEpic,

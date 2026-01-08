@@ -2,21 +2,21 @@ import { useCallback } from 'react';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
   DEFAULT_HEADER_ICON_SIZE,
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
+import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
+import { BaseHeader } from '@/src/components/Header/BaseHeader';
+import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import { ToggleSidebarButton } from '../Common/Buttons/ToggleSidebarButtor';
-import { BaseHeader } from '../Header/BaseHeader';
-import { User } from '../Header/User/User';
+import { Feature } from '@epam/ai-dial-shared';
 
 export const MarketplaceHeader = () => {
   const showFilterbar = useAppSelector(
@@ -26,6 +26,9 @@ export const MarketplaceHeader = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isUserMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
+  );
 
   const dispatch = useAppDispatch();
 
@@ -36,9 +39,9 @@ export const MarketplaceHeader = () => {
     dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
   }, [dispatch, showFilterbar]);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
+  }, [dispatch]);
 
   const headerIconSize = isOverlay
     ? OVERLAY_HEADER_ICON_SIZE
@@ -57,13 +60,15 @@ export const MarketplaceHeader = () => {
         />
       }
       RightItems={
-        <>
-          <div className="w-[48px] md:w-auto">
-            <User />
-          </div>
+        !isUserMenuHidden && (
+          <>
+            <div className="w-[48px] overflow-hidden md:w-auto">
+              <User />
+            </div>
 
-          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-        </>
+            <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+          </>
+        )
       }
     />
   );

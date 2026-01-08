@@ -1,4 +1,4 @@
-import { IconPlus, IconTrashX } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import {
   FieldArray,
@@ -22,8 +22,9 @@ import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import Tooltip from '../Tooltip';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;
@@ -102,65 +103,61 @@ export const DynamicFormFields = <
       <div className="flex flex-col gap-2">
         {fields.map((field, i) => (
           <div
-            key={field.label}
-            className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
+            key={field.label + i}
+            className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:py-[7px]"
           >
-            {!field.editableKey ? (
-              <div className="w-[127px] px-2 py-1 text-sm text-primary">
-                {field.visibleName ?? field.label}
-              </div>
-            ) : (
-              <div className="w-[127px]">
+            <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">
+              {!field.editableKey ? (
+                <div className="w-full px-2 py-[5px] text-sm text-primary md:w-[127px] md:shrink-0 md:py-1">
+                  {field.visibleName ?? field.label}
+                </div>
+              ) : (
+                <div className="w-full md:w-[127px] md:shrink-0">
+                  <input
+                    {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
+                    disabled={disabled}
+                    className={classNames(
+                      'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none md:py-1',
+                      errors?.[i]?.label && '!border-error',
+                      disabled
+                        ? 'cursor-not-allowed'
+                        : 'hover:border-accent-primary',
+                    )}
+                    placeholder={`Enter ${keyLabel?.toLowerCase()}`}
+                  />
+                  <FieldErrorMessage
+                    className="!mb-0"
+                    error={errors?.[i]?.label?.message}
+                  />
+                </div>
+              )}
+
+              <div className="w-full grow">
                 <input
-                  {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
+                  {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
                   disabled={disabled}
                   className={classNames(
-                    'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
-                    errors?.[i]?.label && '!border-error',
+                    'w-full border-b border-primary bg-transparent px-2 pb-[4px] pt-[5px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none md:py-1',
+                    errors?.[i]?.value && '!border-error',
                     disabled
                       ? 'cursor-not-allowed'
                       : 'hover:border-accent-primary',
                   )}
-                  placeholder={`Enter ${keyLabel?.toLowerCase()}`}
+                  placeholder={`Enter ${valueLabel?.toLowerCase()}`}
                 />
                 <FieldErrorMessage
                   className="!mb-0"
-                  error={errors?.[i]?.label?.message}
+                  error={errors?.[i]?.value?.message}
                 />
               </div>
-            )}
-
-            <div className="grow">
-              <input
-                {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
-                disabled={disabled}
-                className={classNames(
-                  'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
-                  errors?.[i]?.value && '!border-error',
-                  disabled
-                    ? 'cursor-not-allowed'
-                    : 'hover:border-accent-primary',
-                )}
-                placeholder={`Enter ${valueLabel?.toLowerCase()}`}
-              />
-              <FieldErrorMessage
-                className="!mb-0"
-                error={errors?.[i]?.value?.message}
-              />
             </div>
 
-            <button
-              type="button"
+            <DialCloseButton
               disabled={field.static || disabled}
-              className={classNames(
-                'flex items-start rounded border border-transparent pt-1 text-secondary outline-none',
-                field.static && 'invisible',
-                disabled ? 'cursor-not-allowed' : 'hover:text-accent-primary',
-              )}
-              onClick={() => remove(i)}
-            >
-              <IconTrashX size={18} />
-            </button>
+              className={classNames(field.static && 'invisible')}
+              onClose={() => remove(i)}
+              size={18}
+            />
           </div>
         ))}
 
@@ -169,22 +166,16 @@ export const DynamicFormFields = <
             isTriggerEnabled={!disabled}
             className="max-w-[150px]"
             trigger={
-              <button
-                type="button"
-                className={classNames(
-                  'flex items-center gap-2 rounded text-accent-primary',
-                  disabled && 'cursor-not-allowed',
-                )}
+              <DialButton
+                className={classNames('flex items-center text-accent-primary')}
                 onClick={
                   !filteredOptions.length && creatable
                     ? () => handleAdd()
                     : undefined
                 }
-              >
-                <IconPlus size={18} />
-
-                {t(addLabel ?? 'Add')}
-              </button>
+                iconBefore={<IconPlus size={18} />}
+                label={t(addLabel ?? 'Add')}
+              />
             }
           >
             <div className="w-full bg-layer-3">

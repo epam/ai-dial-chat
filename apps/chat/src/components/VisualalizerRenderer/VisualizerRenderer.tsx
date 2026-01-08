@@ -6,17 +6,20 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
   AttachmentData,
@@ -26,6 +29,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
@@ -51,6 +55,8 @@ export const VisualizerRenderer = ({
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
   );
+
+  const themeId = useAppSelector(UISelectors.selectThemeState);
 
   const customAttachmentData = useAppSelector((state) =>
     ConversationsSelectors.selectCustomAttachmentData(state, attachmentUrl),
@@ -86,8 +92,9 @@ export const VisualizerRenderer = ({
           DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
         customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+      themeId,
     };
-  }, [customAttachmentData?.layout, scrollWidth]);
+  }, [customAttachmentData?.layout, scrollWidth, themeId]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
@@ -192,13 +199,12 @@ export const VisualizerRenderer = ({
       <div className="mb-2 flex flex-row justify-between">
         <h2>{visualizerTitle}</h2>
 
-        <button
-          className="flex gap-2 text-accent-primary"
+        <DialButton
+          className="flex text-accent-primary"
           onClick={() => visualizer.current && sendMessage(visualizer.current)}
-        >
-          <IconRefresh size={18} />
-          <span>{t('Refresh')}</span>
-        </button>
+          iconBefore={<IconRefresh size={18} />}
+          label={t('Refresh')}
+        />
       </div>
       <div
         ref={iframeContainerRef}

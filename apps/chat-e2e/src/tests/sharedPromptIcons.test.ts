@@ -8,6 +8,7 @@ import { GeneratorUtil } from '@/src/utils';
 dialTest(
   'Shared icon does not appear in prompt icon if to click on copy icon.\n' +
     'Share form text differs for prompt and folder.\n' +
+    'Share single prompt via QR code.\n' +
     'Shared icon does not appear in prompt icon if to close the pop-up on X button.\n' +
     'Shared icon does not appear in prompt icon if to close the pop-up on click out of it.\n' +
     'Shared icon does not appears in prompt icon if to copy using Ctrl+A, Ctrl+C.\n' +
@@ -32,6 +33,7 @@ dialTest(
     setTestIds(
       'EPMRTC-1517',
       'EPMRTC-1817',
+      'EPMRTC-6055',
       'EPMRTC-1520',
       'EPMRTC-1521',
       'EPMRTC-1518',
@@ -49,19 +51,24 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open prompt dropdown menu, choose "Share" option and verify modal window text',
+      'Open prompt dropdown menu, choose "Share" option and verify Share modal data',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectShareMenuOption();
-        await shareModalAssertion.assertMessageContent(
-          ExpectedConstants.sharePromptText,
-        );
-        await shareModalAssertion.assertElementText(
-          shareModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedPromptText,
-        );
+        const shareRequestResponse =
+          await promptDropdownMenu.selectShareMenuOption();
+        await shareModalAssertion.assertGeneralInfo({
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.sharePromptText,
+          ],
+          notSharedEntityLabel: ExpectedConstants.notSharedPromptText,
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedSideBarEntityUrl(
+            shareRequestResponse!.response.invitationLink,
+          ),
+        });
       },
     );
 

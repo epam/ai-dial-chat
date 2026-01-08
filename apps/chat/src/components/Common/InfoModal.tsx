@@ -7,9 +7,9 @@ import { isEntityIdExternal } from '@/src/utils/app/id';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
+import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ChatSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
@@ -26,10 +26,16 @@ interface infoRowProps {
 function InfoRow({ dataQa, infoLabel, children }: infoRowProps) {
   return (
     <div className="grid grid-cols-3 gap-4" data-qa={dataQa}>
-      <span className="col-span-1 whitespace-pre-wrap break-words text-secondary">
+      <span
+        className="col-span-1 whitespace-pre-wrap break-words text-secondary"
+        data-qa={dataQa.concat('-label')}
+      >
         {infoLabel}:
       </span>
-      <span className="col-span-2 whitespace-pre-wrap break-words">
+      <span
+        className="col-span-2 whitespace-pre-wrap break-words"
+        data-qa={dataQa.concat('-value')}
+      >
         {children}
       </span>
     </div>

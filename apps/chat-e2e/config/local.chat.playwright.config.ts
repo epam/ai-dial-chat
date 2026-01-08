@@ -2,7 +2,7 @@ import config from './chat.playwright.config';
 
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
-import { ReporterDescription } from '@playwright/test';
+import { ReporterDescription, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -16,10 +16,12 @@ dotenv.config({ path: './.env.local' });
  * Config used for a local run
  */
 config.retries = 0;
-config.timeout = 300000;
-config.use!.headless = true;
-config.use!.video = 'on';
-config.use!.trace = 'on';
+config.timeout = 3000000;
+if (config.use) {
+  config.use.headless = false;
+  config.use.video = 'on';
+  config.use.trace = 'on';
+}
 (config.reporter as ReporterDescription[]).push([
   'html',
   { outputFolder: `../${ResultFolder.chatHtmlReport}`, open: 'never' },
@@ -36,4 +38,28 @@ if (!process.env.E2E_HOST) {
   };
 }
 
+const isDesktopAuth = process.env.IS_DESKTOP_AUTH === 'true';
+
+config.projects = [
+  {
+    name: isDesktopAuth ? 'auth' : 'debug_auth',
+    fullyParallel: true,
+    testMatch: isDesktopAuth ? /desktopAuth\.ts/ : /debugAuth\.ts/,
+  },
+  {
+    name: 'cleanup',
+    testMatch: /cleanup\.ts/,
+    dependencies: isDesktopAuth ? ['auth'] : ['debug_auth'],
+  },
+  {
+    name: 'chat e2e',
+    testIgnore:
+      /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
+    use: {
+      ...devices['Desktop Chrome'],
+      viewport: { width: 1536, height: 864 },
+    },
+    dependencies: ['cleanup'],
+  },
+];
 export default config;

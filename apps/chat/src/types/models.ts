@@ -6,7 +6,6 @@ import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
-export type AddonsMap = Partial<Record<string, DialAIEntityAddon>>;
 
 export enum TokenizerModel {
   GPT_35_TURBO_0301 = 'gpt-3.5-turbo-0301',
@@ -29,7 +28,6 @@ export interface CoreAIEntity<T = EntityType.Model> {
     embeddings: boolean;
     chat_completion: boolean;
   };
-  addons?: string[];
   input_attachment_types?: string[];
   max_input_attachments?: number;
 
@@ -42,11 +40,11 @@ export interface CoreAIEntity<T = EntityType.Model> {
     truncate_prompt?: boolean;
     system_prompt?: boolean;
     temperature?: boolean;
-    addons?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
     allow_resume?: boolean;
     configuration?: boolean;
+    tools?: boolean;
   };
   application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
@@ -55,17 +53,20 @@ export interface CoreAIEntity<T = EntityType.Model> {
   function?: {
     status: ApplicationStatus;
   };
+  viewer_url?: string;
+  editor_url?: string;
 }
 
 export interface DialAIEntityFeatures {
-  truncatePrompt?: boolean;
+  truncatePrompt: boolean;
   systemPrompt: boolean;
   temperature: boolean;
-  addons: boolean;
-  urlAttachments?: boolean;
-  folderAttachments?: boolean;
-  allowResume?: boolean;
-  configuration?: boolean;
+  urlAttachments: boolean;
+  folderAttachments: boolean;
+  allowResume: boolean;
+  configuration: boolean;
+  tools: boolean;
+  assistantAttachmentsInRequest: boolean;
 }
 
 export interface DialAIEntity {
@@ -77,7 +78,6 @@ export interface DialAIEntity {
   updatedAt?: number;
   owner?: string;
   type: EntityType;
-  selectedAddons?: string[];
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
   version?: string;
@@ -86,6 +86,7 @@ export interface DialAIEntity {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;
   };
+  applicationTypeSchemaId?: string;
 }
 
 export interface DialAIEntityModel
@@ -104,10 +105,9 @@ export interface DialAIEntityModel
 
   functionStatus?: ApplicationStatus;
   applicationTypeSchemaId?: string;
-}
 
-export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
-  type: EntityType.Addon;
+  viewerUrl?: string;
+  editorUrl?: string;
 }
 
 export interface InstalledModel {
@@ -118,9 +118,4 @@ export interface InstalledModel {
 export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;
-}
-
-export interface ModelsGroup {
-  groupName: string;
-  entities: DialAIEntityModel[];
 }

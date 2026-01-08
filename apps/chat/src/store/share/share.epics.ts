@@ -38,7 +38,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { hasWritePermission } from '@/src/utils/app/share';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
@@ -54,30 +54,36 @@ import {
 } from '@/src/types/share';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
-import { ModelsActions } from '@/src/store/models/models.reducers';
+import {
+  ApplicationActions,
+  CodeEditorActions,
+  ConversationsActions,
+  FilesActions,
+  MarketplaceActions,
+  ModelsActions,
+  PromptsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { ModelUpdatedValues } from '@/src/store/models/models.types';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+  ModelsSelectors,
+  PromptsSelectors,
+  SettingsSelectors,
+  ShareSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
-
-import { ApplicationActions } from '../application/application.reducers';
-import { ApplicationSelectors } from '../application/application.selectors';
-import { ApplicationTypesSchemasSelectors } from '../applicationTypeSchemas/applicationTypeSchemas.selectors';
-import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
-import { FilesActions } from '../files/files.reducers';
-import { MarketplaceActions } from '../marketplace/marketplace.reducers';
-import { ModelsSelectors } from '../models/models.selectors';
-import { ShareActions } from './share.reducers';
-import { ShareSelectors } from './share.selectors';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 
@@ -134,9 +140,12 @@ const shareConversationEpic: AppEpic = (action$) =>
       const { apiKey, bucket, parentPath, name } = splitEntityId(
         payload.resourceId,
       );
+      const { modelInfo } = parseEntityApiKey(payload.resourceId, {
+        parseModel: true,
+      });
 
       return ConversationService.getConversation({
-        ...parseConversationApiKey(payload.resourceId),
+        ...modelInfo,
         id: payload.resourceId,
         name,
         folderId: constructPath(apiKey, bucket, parentPath),
@@ -580,12 +589,14 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.me,
+            includeUserInfo: true,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.others,
+            includeUserInfo: true,
           }),
         ),
       );
@@ -635,6 +646,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
           EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
         ],
         with: payload.sharedWith,
+        includeUserInfo: payload.includeUserInfo,
       }).pipe(
         switchMap((entities) => {
           return of(
@@ -980,13 +992,14 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               state$.value,
             );
 
-            const acceptedApplicationReference =
-              acceptedId && modelsMap[acceptedId]?.reference;
+            const acceptedApplication =
+              (acceptedId && modelsMap[acceptedId]) || undefined;
 
-            if (acceptedApplicationReference) {
+            if (acceptedApplication) {
               updateSharedActions.push(
-                MarketplaceActions.setDetailsModel({
-                  reference: acceptedApplicationReference,
+                MarketplaceActions.setDetailsEntity({
+                  reference: acceptedApplication.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
                   isSuggested: false,
                 }),
               );
@@ -1130,7 +1143,7 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
 const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.discardSharedWithMe.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const resourceUrls = payload.isFolder
         ? payload.resourceIds.map(
             (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
@@ -1140,10 +1153,7 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           );
 
       return ShareService.shareDiscard(resourceUrls).pipe(
-        switchMap(() => {
-          if (!payload.isFolder && payload.featureType === FeatureType.File) {
-            return EMPTY;
-          }
+        mergeMap(() => {
           const actions: Observable<AppAction>[] = payload.resourceIds.map(
             (resourceId) =>
               of(
@@ -1290,7 +1300,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             EMPTY,
           ),
 
-          of(MarketplaceActions.setDetailsModel()),
+          of(MarketplaceActions.setDetailsEntity()),
         );
       }
 

@@ -10,59 +10,78 @@ import {
 } from '@/src/testData';
 import { PublicationProps } from '@/src/testData/api';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Unpublish single chat without attachments.\n' +
     'Unpublish request name can not be blank.\n' +
+    'Metadata for chat inside unpublish request in Approve required section.\n' +
+    'Header context menu options for chats from unpublish request from Approve required section.\n' +
     'Unpublish request for conversation which was already unpublished',
-  async ({
-    dialHomePage,
-    conversationData,
-    publishRequestBuilder,
-    publicationApiHelper,
-    adminPublicationApiHelper,
-    dataInjector,
-    organizationConversations,
-    conversationDropdownMenu,
-    publishingRequestModal,
-    iconApiHelper,
-    conversationToPublishAssertion,
-    baseAssertion,
-    organizationConversationAssertion,
-    publishingRequestModalAssertion,
-    tooltipAssertion,
-    adminDialHomePage,
-    adminApproveRequiredConversations,
-    adminPublishingApprovalModal,
-    adminChatMessagesAssertion,
-    adminPublicationReviewControl,
-    adminChatHeader,
-    adminApproveRequiredConversationsAssertion,
-    adminOrganizationConversationAssertion,
-    adminPublishingApprovalModalAssertion,
-    adminConversationToApproveAssertion,
-    adminChatHeaderAssertion,
-    setTestIds,
-    adminLocalStorageManager,
-    localStorageManager,
-  }) => {
-    setTestIds('EPMRTC-3383', 'EPMRTC-3579', 'EPMRTC-3433');
+  async (
+    {
+      dialHomePage,
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      adminPublicationApiHelper,
+      dataInjector,
+      organizationConversations,
+      conversationDropdownMenu,
+      publishingRequestDialog,
+      iconApiHelper,
+      publishConversationAssertion,
+      baseAssertion,
+      publishingRulesAssertion,
+      organizationConversationAssertion,
+      publishingRequestDialogAssertion,
+      tooltipAssertion,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminApproveRequiredConversationDropdownMenu,
+      adminInformationModal,
+      adminInformationModalAssertion,
+      adminPublishingApprovalModal,
+      adminChatMessagesAssertion,
+      adminPublicationReviewControl,
+      adminChatHeader,
+      adminApproveRequiredConversationsAssertion,
+      adminOrganizationConversationAssertion,
+      adminPublishingApprovalModalAssertion,
+      adminPublishConversationsTreeAssertion,
+      adminChatHeaderAssertion,
+      setTestIds,
+      adminLocalStorageManager,
+      localStorageManager,
+      adminApproveRequiredConversationDropdownMenuAssertion,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-3383',
+      'EPMRTC-3579',
+      'EPMRTC-5559',
+      'EPMRTC-5226',
+      'EPMRTC-3433',
+    );
     let publishedConversation: Conversation;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let publishApiModels: {
       request: PublicationRequestModel;
       response: Publication;
     };
+    const secondRequestName = GeneratorUtil.randomUnpublishRequestName();
     let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
-      ModelsUtil.getDefaultModel()!,
+      ModelsUtil.getDefaultAgent()!,
     );
     const expectedErrorColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textError,
     );
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const author = UserUtil.getE2EUsername(testInfo.parallelIndex);
 
     await dialTest.step(
       'Create and approve single conversation publishing',
@@ -72,7 +91,11 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(publishedConversation, PublishActions.ADD)
+          .withDisplayAuthor(author)
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD,
+          )
           .build();
         const publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
@@ -90,48 +113,44 @@ dialAdminTest(
           publishedConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.unpublishFromLabel,
-          ExpectedConstants.unpublishFrom,
+          publishingRequestDialog.publishPathLabel,
+          ExpectedConstants.unpublishFromLabel,
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
+          publishingRequestDialog.publishPath,
           PublishPath.Organization,
         );
-        await baseAssertion.assertElementText(
-          publishingRequestModal.allowAccessLabel,
-          ExpectedConstants.allowAccessLabel,
-        );
-        await baseAssertion.assertElementState(
-          publishingRequestModal.availabilityLabel,
-          'visible',
-        );
-        await conversationToPublishAssertion.assertEntityState(
+        await publishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+        });
+        await publishConversationAssertion.assertEntityState(
           { name: publishedConversation.name },
           'visible',
         );
-        await conversationToPublishAssertion.assertEntityColor(
+        await publishConversationAssertion.assertEntityColor(
           { name: publishedConversation.name },
           expectedErrorColor,
         );
-        await conversationToPublishAssertion.assertEntityCheckboxState(
+        await publishConversationAssertion.assertEntityCheckboxState(
           { name: publishedConversation.name },
           CheckboxState.checked,
         );
 
-        await conversationToPublishAssertion.assertEntityVersion(
+        await publishConversationAssertion.assertEntityVersion(
           { name: publishedConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
-        await conversationToPublishAssertion.assertEntityVersionColor(
+        await publishConversationAssertion.assertEntityVersionColor(
           { name: publishedConversation.name },
           expectedErrorColor,
         );
-        await conversationToPublishAssertion.assertTreeEntityIcon(
+        await publishConversationAssertion.assertTreeEntityIcon(
           { name: publishedConversation.name },
           expectedConversationIcon,
         );
@@ -142,9 +161,9 @@ dialAdminTest(
       'Set empty or spaces as request name and verify "Send request" button is disabled',
       async () => {
         for (const name of ['', ' '.repeat(3)]) {
-          await publishingRequestModal.requestName.fillInInput(name);
-          await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
-          await publishingRequestModal.sendRequestButton.hoverOver();
+          await publishingRequestDialog.requestName.fillInInput(name);
+          await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
+          await publishingRequestDialog.sendRequestButton.hoverOver();
           await tooltipAssertion.assertTooltipContent(
             ExpectedConstants.noPublishNameTooltip,
           );
@@ -153,10 +172,10 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
-      publishApiModels = await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+      await publishingRequestDialog.requestName.fillInInput(requestName);
+      publishApiModels = await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -164,6 +183,7 @@ dialAdminTest(
     await dialTest.step(
       'Create duplicated unpublish request for the same conversation',
       async () => {
+        publishApiModels.response.name = secondRequestName;
         secondUnpublishResponse =
           await publicationApiHelper.createUnpublishRequest(
             publishApiModels.response,
@@ -203,32 +223,51 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Select "Info" option from dropdown menu and verify modal data',
+      async () => {
+        await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
+          requestName,
+          publishedConversation.name,
+        );
+        await adminApproveRequiredConversationDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+          { triggeredHttpMethod: 'GET' },
+        );
+        await adminInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: author,
+        });
+        await adminInformationModal.cancelButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
       'Verify labels and controls on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           PublishPath.Organization,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
         );
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: publishedConversation.name },
           'visible',
         );
-        await adminConversationToApproveAssertion.assertEntityColor(
+        await adminPublishConversationsTreeAssertion.assertEntityColor(
           { name: publishedConversation.name },
           expectedErrorColor,
         );
-        await adminConversationToApproveAssertion.assertEntityVersion(
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: publishedConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
-        await adminConversationToApproveAssertion.assertEntityVersionColor(
+        await adminPublishConversationsTreeAssertion.assertEntityVersionColor(
           { name: publishedConversation.name },
           expectedErrorColor,
         );
-        await adminConversationToApproveAssertion.assertTreeEntityIcon(
+        await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: publishedConversation.name },
           expectedConversationIcon,
         );
@@ -258,7 +297,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click on "Go to a review" button and verify conversation details are displayed',
       async () => {
-        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
         await adminChatHeaderAssertion.assertHeaderTitle(
           publishedConversation.name,
         );
@@ -268,7 +309,7 @@ dialAdminTest(
         );
         await adminChatHeaderAssertion.assertElementText(
           adminChatHeader.version,
-          `v. ${ExpectedConstants.defaultAppVersion}`,
+          `v. ${ExpectedConstants.defaultEntityVersion}`,
         );
         await adminChatHeaderAssertion.assertElementColor(
           adminChatHeader.version,
@@ -288,6 +329,20 @@ dialAdminTest(
         await baseAssertion.assertElementActionabilityState(
           adminPublicationReviewControl.backToPublicationRequestButton,
           'enabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify chat header dots menu options',
+      async () => {
+        await adminChatHeader.dotsMenu.click();
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
         );
       },
     );

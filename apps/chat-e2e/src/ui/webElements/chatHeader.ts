@@ -1,8 +1,4 @@
-import {
-  ChatHeaderSelectors,
-  MenuSelectors,
-  SideBarSelectors,
-} from '../selectors';
+import { ChatHeaderSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
@@ -30,9 +26,6 @@ export class ChatHeader extends BaseElement {
   public chatModelArrowIcon = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAgent} >> ${SideBarSelectors.arrowAdditionalIcon}`,
   );
-  public chatAddonIcons = this.getChildElementBySelector(
-    `${ChatHeaderSelectors.chatAddons} > ${Tags.span}`,
-  );
   public deleteConversationFromComparison = this.getChildElementBySelector(
     ChatHeaderSelectors.deleteFromCompareIcon,
   );
@@ -46,7 +39,9 @@ export class ChatHeader extends BaseElement {
     ChatHeaderSelectors.leavePlayback,
   );
   public version = this.getChildElementBySelector(ChatHeaderSelectors.version);
-  public dotsMenu = this.getChildElementBySelector(MenuSelectors.dotsMenu);
+  public dotsMenu = this.getChildElementBySelector(
+    ChatHeaderSelectors.dotsMenu,
+  );
 
   public async isArrowIconVisible() {
     return this.chatAgent
@@ -56,10 +51,6 @@ export class ChatHeader extends BaseElement {
 
   async getHeaderModelIcon() {
     return this.getElementIcon(this.rootLocator);
-  }
-
-  async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons);
   }
 
   async openConversationSettingsPopup() {

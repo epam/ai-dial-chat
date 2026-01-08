@@ -11,7 +11,7 @@ import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-const expectedModelId = 'gpt-4';
+const expectedModelId = 'gpt-4o';
 
 dialOverlayTest(
   `[Overlay] Defaults set in the code: modelID is used for new conversation.\n` +
@@ -33,7 +33,6 @@ dialOverlayTest(
     overlayTalkToAgentDialog,
     overlayHeader,
     overlayConversations,
-    overlayMarketplacePage,
     overlayIconApiHelper,
     overlayBaseAssertion,
     overlayApiAssertion,
@@ -89,10 +88,9 @@ dialOverlayTest(
       'Change conversation model and send the request',
       async () => {
         await overlayChat.changeAgentButton.click();
-        await overlayTalkToAgentDialog.selectAgent(
-          randomModel,
-          overlayMarketplacePage,
-        );
+        await overlayTalkToAgentDialog.selectAgent(randomModel, {
+          isHttpMethodTriggered: false,
+        });
         const request =
           await overlayChat.sendRequestWithButton(randomAgentRequest);
         overlayApiAssertion.assertRequestModelId(request, randomModel);
@@ -156,7 +154,7 @@ dialOverlayTest(
         );
         const agents = await overlayTalkToAgentDialog
           .getAgents()
-          .getAgentNames();
+          .getEntityNames();
         expect
           .soft(agents[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(expectedModel.name);
@@ -200,7 +198,7 @@ dialOverlayTest(
       'Open "Select an agent" modal for the previous conversation and verify random model is selected',
       async () => {
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(randomAgentRequest);
+        await overlayConversations.selectEntity(randomAgentRequest);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertAgentIsSelected(
           randomModel.name,

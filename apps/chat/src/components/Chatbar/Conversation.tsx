@@ -1,9 +1,9 @@
-import { IconCheck } from '@tabler/icons-react';
-import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
+import { DragEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -21,23 +21,29 @@ import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareIcon from '@/src/components/Common/ShareIcon';
+import { Checkbox } from '@/src/components/Common/Checkbox';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { ReviewDot } from '../Chat/Publish/ReviewDot';
-import Tooltip from '../Common/Tooltip';
 import { ModelIcon } from './ModelIcon';
 
 import {
@@ -111,19 +117,10 @@ export function ConversationView({
           isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
         )}
       >
-        <input
-          className={classNames(
-            'checkbox peer size-[18px] bg-layer-3',
-            additionalItemData?.isSidePanelItem && 'mr-0',
-          )}
-          type="checkbox"
+        <Checkbox
+          className={additionalItemData?.isSidePanelItem && 'mr-0'}
           checked={isChosen}
           onChange={handleToggle}
-          data-qa={isChosen ? 'checked' : 'unchecked'}
-        />
-        <IconCheck
-          size={18}
-          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
       <ShareIcon
@@ -194,167 +191,177 @@ interface Props {
   additionalItemData?: AdditionalItemData;
 }
 
-export const ConversationComponent = ({
-  item: conversation,
-  level,
-  additionalItemData,
-}: Props) => {
-  const dispatch = useAppDispatch();
+export const ConversationComponent = memo(
+  ({ item: conversation, level, additionalItemData }: Props) => {
+    const dispatch = useAppDispatch();
 
-  const selectedConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const isSelectMode = useAppSelector(
-    ConversationsSelectors.selectIsSelectMode,
-  );
-  const isConversationsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const chosenConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedItems,
-  );
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
-  );
+    const selectedConversationIds = useAppSelector(
+      ConversationsSelectors.selectSelectedConversationsIds,
+    );
+    const messageIsStreaming = useAppSelector(
+      ConversationsSelectors.selectIsConversationsStreaming,
+    );
+    const isSelectMode = useAppSelector(
+      ConversationsSelectors.selectIsSelectMode,
+    );
+    const isConversationsStreaming = useAppSelector(
+      ConversationsSelectors.selectIsConversationsStreaming,
+    );
+    const chosenConversationIds = useAppSelector(
+      ConversationsSelectors.selectSelectedItems,
+    );
+    const selectedPublicationUrl = useAppSelector(
+      PublicationSelectors.selectSelectedPublicationUrl,
+    );
 
-  const [isContextMenu, setIsContextMenu] = useState(false);
+    const [isContextMenu, setIsContextMenu] = useState(false);
 
-  const conversationRef = useRef<HTMLDivElement>(null);
+    const screenState = useScreenState();
+    const isMobileOrTablet =
+      screenState === ScreenState.SM || screenState === ScreenState.MD;
 
-  const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    setIsContextMenu(true);
-  }, []);
+    const shouldShowPadding = isMobileOrTablet
+      ? isContextMenu && conversation.status !== UploadStatus.LOADED
+      : isContextMenu;
 
-  useScrollToEntity({
-    entityId: conversation.id,
-    elementRef: conversationRef,
-  });
+    const conversationRef = useRef<HTMLDivElement>(null);
 
-  useContextMenuTrigger(handleContextMenuOpen, conversationRef);
-
-  const isSelected = selectedConversationIds.includes(conversation.id);
-
-  const isChosen = useMemo(
-    () => chosenConversationIds.includes(conversation.id),
-    [chosenConversationIds, conversation.id],
-  );
-
-  const isExternal = isEntityIdExternal(conversation);
-
-  const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
-      if (
-        e.dataTransfer &&
-        !isExternal &&
-        !isSelectMode &&
-        !isConversationsStreaming
-      ) {
-        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
-        e.dataTransfer.setData(
-          MoveType.Conversation,
-          JSON.stringify(conversation),
-        );
+    const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
+      if (hasParentWithFloatingOverlay(e.target as Element)) {
+        return;
       }
-    },
-    [isConversationsStreaming, isExternal, isSelectMode],
-  );
+      setIsContextMenu(true);
+    }, []);
 
-  const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
-  const isPublicationUrlEqual =
-    selectedPublicationUrl === additionalItemData?.publicationUrl;
-  const isHighlighted = !isSelectMode
-    ? (isSelected && !isPublishedItemSelected && !selectedPublicationUrl) ||
-      (isSelected && isPublicationUrlEqual)
-    : isChosen;
-  const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
+    useScrollToEntity({
+      entityId: conversation.id,
+      elementRef: conversationRef,
+    });
 
-  return (
-    <div
-      className={classNames(
-        'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-        !isSelectMode && isHighlighted
-          ? 'border-l-accent-primary'
-          : 'border-l-transparent',
-        (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
-        isNameOrPathInvalid && 'text-secondary',
-        additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
-      )}
-      ref={conversationRef}
-      data-qa="conversation"
-    >
-      <button
-        className={classNames(
-          'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
-          !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
-          isContextMenu && 'pr-9',
-        )}
-        style={{
-          paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
-        }}
-        disabled={messageIsStreaming || (isSelectMode && isExternal)}
-        draggable={
+    useContextMenuTrigger(handleContextMenuOpen, conversationRef);
+
+    const isSelected = selectedConversationIds.includes(conversation.id);
+
+    const isChosen = useMemo(
+      () => chosenConversationIds.includes(conversation.id),
+      [chosenConversationIds, conversation.id],
+    );
+
+    const isExternal = isEntityIdExternal(conversation);
+
+    const handleDragStart = useCallback(
+      (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
+        if (
+          e.dataTransfer &&
           !isExternal &&
-          !isNameOrPathInvalid &&
           !isSelectMode &&
           !isConversationsStreaming
+        ) {
+          e.dataTransfer.setDragImage(getDragImage(), 0, 0);
+          e.dataTransfer.setData(
+            MoveType.Conversation,
+            JSON.stringify(conversation),
+          );
         }
-        onClick={() => {
-          if (!isSelectMode || !isExternal) {
-            dispatch(
-              !isSelectMode
-                ? ConversationsActions.selectConversations({
-                    conversationIds: [conversation.id],
-                  })
-                : ConversationsActions.setChosenConversations({
-                    ids: [conversation.id],
-                  }),
-            );
-            if (!isSelectMode) {
-              dispatch(
-                PublicationActions.selectPublication(
-                  additionalItemData?.publicationUrl ?? null,
-                ),
-              );
-            }
-          }
-        }}
-        onDragStart={(e) => handleDragStart(e, conversation)}
-        data-qa={isSelected ? 'selected' : null}
-      >
-        <ConversationView
-          conversation={conversation}
-          isHighlighted={isHighlighted || isContextMenu}
-          isChosen={isChosen}
-          isSelectMode={isSelectMode}
-          additionalItemData={additionalItemData}
-          isContextMenu={isContextMenu}
-        />
-      </button>
+      },
+      [isConversationsStreaming, isExternal, isSelectMode],
+    );
 
-      {!isSelectMode && !messageIsStreaming && (
-        <div
+    const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
+    const isPublicationUrlEqual =
+      selectedPublicationUrl === additionalItemData?.publicationUrl;
+    const isHighlighted = !isSelectMode
+      ? (isSelected && !isPublishedItemSelected && !selectedPublicationUrl) ||
+        (isSelected && isPublicationUrlEqual)
+      : isChosen;
+    const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
+
+    return (
+      <div
+        className={classNames(
+          'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          !isSelectMode && isHighlighted
+            ? 'border-l-accent-primary'
+            : 'border-l-transparent',
+          (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
+          isNameOrPathInvalid && 'text-secondary',
+          additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
+        )}
+        ref={conversationRef}
+        data-qa="conversation"
+      >
+        <button
           className={classNames(
-            'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
-            (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
-              'invisible',
-            isContextMenu && 'md:visible',
+            'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
+            !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
+            shouldShowPadding && 'pr-9',
           )}
+          style={{
+            paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+          }}
+          disabled={messageIsStreaming || (isSelectMode && isExternal)}
+          draggable={
+            !isExternal &&
+            !isNameOrPathInvalid &&
+            !isSelectMode &&
+            !isConversationsStreaming
+          }
+          onClick={() => {
+            if (!isSelectMode || !isExternal) {
+              dispatch(
+                !isSelectMode
+                  ? ConversationsActions.selectConversations({
+                      conversationIds: [conversation.id],
+                    })
+                  : ConversationsActions.setChosenConversations({
+                      ids: [conversation.id],
+                    }),
+              );
+              if (
+                !isSelectMode &&
+                (additionalItemData?.publicationUrl || selectedPublicationUrl)
+              ) {
+                dispatch(
+                  PublicationActions.selectPublication(
+                    additionalItemData?.publicationUrl ?? null,
+                  ),
+                );
+              }
+            }
+          }}
+          onDragStart={(e) => handleDragStart(e, conversation)}
+          data-qa={isSelected ? 'selected-entity' : undefined}
         >
-          <ConversationContextMenu
+          <ConversationView
             conversation={conversation}
-            isOpen={isContextMenu}
-            setIsOpen={setIsContextMenu}
-            publicationUrl={additionalItemData?.publicationUrl}
-            className="p-2"
+            isHighlighted={isHighlighted || isContextMenu}
+            isChosen={isChosen}
+            isSelectMode={isSelectMode}
+            additionalItemData={additionalItemData}
+            isContextMenu={isContextMenu}
           />
-        </div>
-      )}
-    </div>
-  );
-};
+        </button>
+
+        {!isSelectMode && !messageIsStreaming && (
+          <div
+            className={classNames(
+              'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
+              (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
+                'invisible',
+              isContextMenu && 'md:visible',
+            )}
+          >
+            <ConversationContextMenu
+              conversation={conversation}
+              isOpen={isContextMenu}
+              setIsOpen={setIsContextMenu}
+              publicationUrl={additionalItemData?.publicationUrl}
+              className="p-2"
+            />
+          </div>
+        )}
+      </div>
+    );
+  },
+);
+ConversationComponent.displayName = 'ConversationComponent';

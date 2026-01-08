@@ -4,13 +4,8 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
-import {
-  getIdWithoutRootPathSegments,
-  getPromptRootId,
-  isEntityIdExternal,
-  isRootId,
-} from '@/src/utils/app/id';
+import { sortByName } from '@/src/utils/app/folders';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -22,18 +17,17 @@ import {
   FolderInterface,
   FolderSectionProps,
 } from '@/src/types/folder';
-import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions, ShareActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  PromptsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
@@ -44,14 +38,11 @@ import {
 } from '@/src/constants/sections';
 
 import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
-import Folder from '@/src/components/Folder/Folder';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Folder } from '@/src/components/Folder/Folder';
 import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
 import { PromptComponent } from './Prompt';
-
-import { PublishActions } from '@epam/ai-dial-shared';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -61,7 +52,11 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
-const publicationFeatureTypes = [FeatureType.Prompt, FeatureType.Application];
+const publicationFeatureTypes = [
+  FeatureType.Prompt,
+  FeatureType.Application,
+  FeatureType.Toolset,
+];
 
 const PromptFolderTemplate = ({
   folder,
@@ -73,8 +68,6 @@ const PromptFolderTemplate = ({
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
-
-  const [publication, setPublication] = useState<PublicationFolderPayload>();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const highlightedFolders = useAppSelector(
@@ -271,10 +264,6 @@ const PromptFolderTemplate = ({
     ],
   );
 
-  const handlePublicationClose = useCallback(() => {
-    setPublication(undefined);
-  }, []);
-
   const isExternal = isEntityIdExternal(folder);
 
   return (
@@ -286,8 +275,6 @@ const PromptFolderTemplate = ({
         denyDrop={isExternal || isSelectMode}
       />
       <Folder
-        isUnpublishing={publication?.action === PublishActions.DELETE}
-        onPublication={setPublication}
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         searchTerm={searchTerm}
         currentFolder={folder}
@@ -317,28 +304,11 @@ const PromptFolderTemplate = ({
           denyDrop={isExternal || isSelectMode}
         />
       )}
-      {!!publication && (
-        <PublishModal
-          entity={publication.entity}
-          entities={publication.entities}
-          type={publication.type}
-          isOpen={!!publication}
-          onClose={handlePublicationClose}
-          publishAction={publication.action}
-          depth={getFoldersDepth(publication.entity, allFolders)}
-          defaultPath={
-            publication.action === PublishActions.DELETE &&
-            !isRootId(publication.entity.folderId)
-              ? getIdWithoutRootPathSegments(publication.entity.folderId)
-              : undefined
-          }
-        />
-      )}
     </>
   );
 };
 
-const _PromptSection = ({
+const PromptSectionView = ({
   name,
   filters,
   hideIfEmpty = true,
@@ -466,7 +436,7 @@ const _PromptSection = ({
   );
 };
 
-export const PromptSection = memo(_PromptSection);
+export const PromptSection = memo(PromptSectionView);
 
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
@@ -493,12 +463,15 @@ export function PromptFolders() {
 
   const publicationItems = useAppSelector(publicationItemsSelector);
 
-  const toApproveFolderItem = {
-    hidden: !publicationItems.length,
-    name: APPROVE_REQUIRED_SECTION_NAME,
-    displayRootFiles: true,
-    dataQa: 'approve-required',
-  };
+  const toApproveFolderItem = useMemo(
+    () => ({
+      hidden: !publicationItems.length,
+      name: APPROVE_REQUIRED_SECTION_NAME,
+      displayRootFiles: true,
+      dataQa: 'approve-required',
+    }),
+    [publicationItems.length],
+  );
 
   const folderItems: FolderSectionProps[] = useMemo(
     () =>

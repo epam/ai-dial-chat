@@ -1,4 +1,4 @@
-import { MouseEventHandler } from 'react';
+import { MouseEvent, MouseEventHandler } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -7,11 +7,13 @@ import classNames from 'classnames';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { Routes } from '@/src/constants/routes';
@@ -19,7 +21,11 @@ import { Routes } from '@/src/constants/routes';
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
 
-export const Logo = () => {
+interface LogoProps {
+  onLogoClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+}
+
+export const Logo = ({ onLogoClick }: LogoProps) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -56,11 +62,15 @@ export const Logo = () => {
   };
 
   const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
-    if (messageIsStreaming) return e.preventDefault();
-    if (router.route === Routes.Chat) {
-      e.preventDefault();
+    if (typeof onLogoClick === 'function') {
+      onLogoClick(e);
+    } else {
+      if (messageIsStreaming) return e.preventDefault();
+      if (router.route === Routes.Chat) {
+        e.preventDefault();
+      }
+      createNewConversation();
     }
-    createNewConversation();
   };
 
   return (

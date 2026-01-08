@@ -2,13 +2,20 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { ServerSlugs } from '@/chat/types/slugs-types';
+import { ItemUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
 
 export const ExpectedConstants = {
-  settingsTooltip: (entityType: EntityType) =>
+  settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
-      : 'Change conversation settings:\nTemperature:',
+      : `Change conversation settings:Temperature:${temperature}`,
+  settingsTooltipWithoutChanges: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Conversation settings:Temperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,
@@ -20,7 +27,6 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
-  promptViewModalTitle: 'View prompt',
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
@@ -35,6 +41,9 @@ export const ExpectedConstants = {
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel: 'Try again',
+  conversationSettings: 'Conversation settings:',
+  noConversationSettings: 'There are no conversation settings for this agent',
+  changeConversationSettings: 'Change conversation settings:',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -63,11 +72,16 @@ export const ExpectedConstants = {
     'Deleting will stop sharing and other users will no longer see this prompt.',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
+  unsharePromptConfirmationModalTitle: 'Confirm unshare prompt',
+  unsharePromptConfirmationModalMessage:
+    'Are you sure that you want to unshare a prompt?',
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
-  removeFolderAccessMessage: (name: string) =>
+  removeAccessForAllMessage: (name: string) =>
     `Are you sure you want to remove access for all users to ${name}?`,
+  removeYourAccessMessage: (name: string) =>
+    `Are you sure you want to remove your access to ${name}?`,
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -77,6 +91,9 @@ export const ExpectedConstants = {
   noResults: 'No results found',
   notAllowedModelError:
     'Not available agent selected. Please, change the agent to proceed',
+  agentIsNotAvailableLabel: 'Agent is not available',
+  notAllowedAgentError: (agent: string) =>
+    `Agent is not available. Please, change the agent "${agent}" to proceed.`,
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -84,16 +101,19 @@ export const ExpectedConstants = {
   regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
   regenerateResponseTooltip: 'Regenerate response',
-  sharedConversationTooltip: 'Shared',
-  sharedConversationName: (name: string) => `Share: ${name}`,
+  sharedEntityTooltip: 'Shared',
+  sharedEntityName: (name: string) => `Share: ${name}`,
   sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
     const startIndex =
       invitationLink.indexOf(invitationPath) + invitationPath.length;
     return invitationLink.slice(startIndex);
   },
-  sharedConversationUrl: (invitationLink: string) => {
+  sharedSideBarEntityUrl: (invitationLink: string) => {
     return `${config.use!.baseURL}/share/${ExpectedConstants.sharedLink(invitationLink)}`;
+  },
+  sharedAppUrl: (invitationLink: string) => {
+    return `${config.use!.baseURL}/marketplace/share/${ExpectedConstants.sharedLink(invitationLink)}`;
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
@@ -103,25 +123,32 @@ export const ExpectedConstants = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
   removeAccessTitle: 'Confirm removing access',
+  unshareFileTitle: 'Confirm unsharing file',
+  unshareFileMessage: 'Are you sure that you want to unshare this file?',
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
+  shareLinkText: 'This link is temporary and will be active for 3 days.',
   shareConversationText:
-    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+    'This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+  shareAppText:
+    'This application and its updates will be visible to users with the link.',
   sharePromptText:
-    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+    'This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   shareApplicationText:
-    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
+    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
-    'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   notSharedFolderText: 'This folder has not been shared with anyone yet.',
   notSharedChatText: 'This chat has not been shared with anyone yet.',
   removeAccessText: 'Remove access for all users',
   notSharedPromptText: 'This prompt has not been shared with anyone yet.',
+  notSharedAppText: 'This app has not been shared with anyone yet.',
   sharePromptFolderText:
-    'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  allowEditingSharedEntityText: 'Allow editing by other users',
   chatNotFoundMessage:
     'Conversation not found.Please select another conversation.',
   requiredFieldErrorMessage: 'Please fill in all required fields',
@@ -153,12 +180,12 @@ export const ExpectedConstants = {
     `Test ${ExpectedConstants.allowedSpecialChars}`,
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
-    `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
   sameFilenamesError: (filename: string) =>
-    `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
-    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
+    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
   allFilesRoot: 'All files',
@@ -181,15 +208,20 @@ export const ExpectedConstants = {
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
-  requestCreationDateLabel: 'Request created:',
+  authorLabel: 'Author',
+  publicAuthorLabel: `Author's public name`,
+  requestCreationDateLabel: 'Request created',
   allowAccessLabel: 'Allow access if all match',
   noChangesLabel: 'No changes',
   availabilityLabel:
     'This publication will be available to all users in the organization',
-  unpublishFrom: 'Unpublish from',
+  seeChangesLabel: 'See changes',
+  unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
-  defaultAppVersion: '0.0.1',
+  defaultEntityVersion: '0.0.1',
+  defaultAppName: 'Untitled app',
+  defaultToolsetName: 'Untitled toolset',
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,
@@ -218,17 +250,28 @@ export const ExpectedConstants = {
   requestApiKeyLink: 'this form',
   reportAnIssueLink: 'report an issue',
   publishedAttachmentDownloadPath: (name: string) =>
-    `${API.fileHost}/public/${name}`,
+    `${API.fileHost()}/public/${name}`,
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   marketplacePath: '/marketplace',
-  workspacePath: () => `${ExpectedConstants.marketplacePath}?tab=workspace`,
-  createCustomAppPath: '/apps-editor/custom%20app',
-  noWorkspaceAgentsFoundMessage:
+  workspaceTab: 'tab=workspace',
+  workspacePath: () =>
+    `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
+  createCustomAppPath: '/apps-editor?step=General&schema=custom_app',
+  noWorkspaceEntitiesFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-  noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  noMarketplaceEntitiesFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  addAppButtonTitle: 'Add app',
+  addToolsetButtonTitle: 'Add toolset',
+  openInNewTabButtonTitle: 'Open in New Tab',
   versionPrefix: 'Version: ',
+  addToMyWorkspaceTooltip: 'Add to My workspace',
+  removeFromMyWorkspaceTooltip: 'Remove from My workspace',
   agentAddedToWorkspaceMessage: 'The agent added to my workspace',
+  removeAgentModalTitle: 'Confirm removing agent',
+  removeAgentModalMessage: (name: string) =>
+    `Are you sure you want to remove ${name} from My workspace?`,
+  addAgentToWorkspaceTitle: 'Add the agent to My workspace to continue',
   agentNotFoundError: 'Agent by this link not found',
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',
@@ -241,7 +284,86 @@ export const ExpectedConstants = {
     "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
+  agentNotFoundToastError: 'Not Found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
+  informationModalTitle: 'Information',
+  informationModalLastUpdatedLabel: 'Last updated:',
+  informationModalCreatedDateLabel: 'Creation date:',
+  informationModalAuthorLabel: 'Author:',
+  agentIconTooltip: (appName: string, appVersion: string) =>
+    `${appName}\nv. ${appVersion}`,
+  modelTooltip: (modelName: string, modelVersion?: string) =>
+    `Current agent:\nAgent: ${modelName}${modelVersion ? `\nVersion: ${modelVersion}` : ''}`,
+  pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
+  goToMyWorkspaceButtonLabel: 'Go to My workspace',
+  goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
+  publishRequestNameMaxLengthErrorMessage:
+    'Request name should be at most 160 characters long',
+  publishRequestNameMinLengthErrorMessage:
+    'Request name should be at least 2 characters long',
+  defaultAgentLabel: 'Default agent',
+  lastUsedAgentLabel: 'Last used agent',
+  publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
+  noAvailableItemsLabel: 'No available items',
+  defaultEntityUrl: 'http://test.example.com',
+  appRateEndpointDefaultFeature: 'http://application1/rate',
+  leadingDotErrorToast: 'Using a dot at the start of a name is not permitted.',
+  promptEditConfirmationDialogTitle: 'Unsaved changes',
+  promptEditConfirmationDialogMessage:
+    'There are unsaved changes. Do you want to save them before closing?',
+  publishingFilterDefaultValue: 'Select',
+  publishingFilterValuePlaceholder: 'Enter one or more options...',
+  dialRolesField: 'dial_roles',
+  fileUploadFolder: 'uploads',
+  fileUploadedToastMessage: (fileFolder: string) =>
+    `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
+  replacedRestrictedCharsName: (restrictedCharsName: string) =>
+    restrictedCharsName.replace(
+      new RegExp(
+        `[${ExpectedConstants.restrictedNameChars.replaceAll('//', '////')}]`,
+        'g',
+      ),
+      '_',
+    ),
+  dragFileTitle: 'Attach files',
+  dragFileDescription: 'Drop files here to attach them to the message',
+  dragFileNotAllowedTitle: 'No attachments allowed',
+  dragFileNotAllowedDescription: `Attachments can't be added to the message`,
+  exportedArchiveHistoryConversationPath:
+    'conversations/conversations_history.json',
+  exportedArchiveImageRootFolder: 'res',
+  replayConversationById: (conversationId: string) =>
+    `${conversationId.substring(0, conversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversationId.substring(conversationId.indexOf(ItemUtil.entityIdSeparator) + ItemUtil.entityIdSeparator.length)}`,
+  externalAppTooltip: 'External application',
+  addToolsetHeaderTitle: 'Add toolset',
+  noToolsetsHeader: 'No toolsets',
+  noToolsetsLabel: `You don't have any toolsets.`,
+  definitionLabel: 'Definition',
+  endpointLabel: 'Endpoint',
+  endpointPlaceholder: 'Enter endpoint',
+  transportProtocol: 'Transport protocol',
+  authenticationLabel: 'Authentication',
+  authenticationLabelSubtitle:
+    'Select one of the methods below that will be used to authenticate',
+  oAuthLabel: 'OAuth',
+  apiKeyLabel: 'API Key',
+  withoutAuthLabel: 'Without authentication',
+  allowedToolsLabel: 'Allowed tools',
+  allowedToolsLabelSubtitle:
+    'The list of tools will be available after filling in the definition and authentication section',
+  oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
+  mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
+  mixedImportOption: 'Mixed',
+  logOutDialogTitle: 'Logging out',
+  logOutDialogMessage: 'Are you sure you want to log out?',
+  logOutDialogButtonLabel: 'Log out',
+  filesManagerPath: '/files-manager',
+  deleteItemToastMessage: (filename: string, path: string) =>
+    `Item deleted successfully.\n“${filename}” deleted from ${path}`,
+  replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
+  replaceAttachmentConfirmationMessage: (filename: string) =>
+    `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
+  failedToMoveFileMessage: 'Failed to move files. Please try again later.',
 };
 
 export enum Types {
@@ -267,7 +389,6 @@ export enum MenuOptions {
   update = 'Update',
   unpublish = 'Unpublish',
   delete = 'Delete',
-  newFolder = 'New folder',
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
@@ -281,6 +402,7 @@ export enum MenuOptions {
   info = 'Info',
   copyLink = 'Copy link',
   removeAccess = 'Remove access',
+  loginWithMyCreds = 'Login with my creds',
 }
 
 export enum FilterMenuOptions {
@@ -296,6 +418,7 @@ export enum AccountMenuOptions {
 export enum UploadMenuOptions {
   attachUploadedFiles = 'Attach uploaded files',
   uploadFromDevice = 'Upload from device',
+  uploadFiles = 'Upload files',
 }
 
 export enum ExampleURLs {
@@ -305,10 +428,10 @@ export enum ExampleURLs {
 export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
-  quickApp = 'Quick app',
+  externalApp = 'External app',
 }
 
-export enum AppEditorGeneralFormFields {
+export enum EntityEditorGeneralFormFields {
   name = 'Name',
   version = 'Version',
   icon = 'Icon',
@@ -316,11 +439,12 @@ export enum AppEditorGeneralFormFields {
   topics = 'Topics',
 }
 
-export enum AppEditorViewFormFields {
+export enum EntityEditorViewFormFields {
   featuresData = 'Features data',
   attachmentTypes = 'Attachment types',
   maxAttachmentsNumber = 'Max. attachments number',
   chatCompletionUrl = 'Chat completion URL',
+  externalUrl = 'External URL',
 }
 
 export enum EditPromptFormFields {
@@ -329,9 +453,15 @@ export enum EditPromptFormFields {
   promptContent = 'Prompt',
 }
 
-export const AppMenuActions = {
-  add: (app: AddAppMenuOptions) => `Add ${app.toLowerCase()}`,
-  edit: (app: AddAppMenuOptions) => `Edit ${app.toLowerCase()}`,
+export enum EntityEditorToolsetTypes {
+  Toolset = 'toolset',
+}
+
+export const EntityMenuActions = {
+  addApp: (app: AddAppMenuOptions) => `Add ${app}`,
+  editApp: (app: AddAppMenuOptions) => `Edit ${app}`,
+  addToolset: `Add ${EntityEditorToolsetTypes.Toolset}`,
+  editToolset: `Edit ${EntityEditorToolsetTypes.Toolset}`,
 };
 
 export const Chronology = {
@@ -344,25 +474,33 @@ export const Chronology = {
 };
 
 export const API = {
+  api: '/api',
+  public: 'public',
   modelsHost: '/api/models',
-  addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: '/api/themes/image',
-  defaultModelIconHost: () => `${API.themeUrl}/default-model`,
-  defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
+  defaultModelIconHost: () =>
+    `${API.themeUrl}/${ThemesUtil.getImages()['default-model']}`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
+  conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
-  filesListingHost: () => `${API.listingHost}/files`,
-  fileHost: '/api/files',
+  toolsetsHost: () => `${API.api}/toolsets-listing`,
+  filePropsHost: '/files-manager.json',
+  filesHostSegment: 'files',
+  filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
+  fileHost: () => `/api/${API.filesHostSegment}`,
+  downloadFilesHost: () => `${API.fileHost()}/download`,
+  deleteFileHost: () => `${API.fileHost()}/delete`,
+  folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
-  importFileRootPath: (bucket: string) => `files/${bucket}`,
+  importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
@@ -370,25 +508,43 @@ export const API = {
   shareEntityHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
-  installedDeploymentsFolder: 'clientdata',
+  installedEntityFolder: 'clientdata',
   installedDeploymentsFile: 'installed_deployments.json',
+  installedToolsetsFile: 'installed_toolsets.json',
   installedDeploymentsHost: () =>
-    `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
+    `${API.installedEntityFolder}/${API.installedDeploymentsFile}`,
+  installedToolsetsHost: () =>
+    `${API.installedEntityFolder}/${API.installedToolsetsFile}`,
   configurationHost: '/configuration',
   marketplaceHost: 'marketplace.json',
-  publicationRequestHost: '/api/publication/create',
-  publicationRequestCreate: '/api/publication/create',
-  publicationRequestRejection: '/api/publication/reject',
-  publicationRequestApproval: '/api/publication/approve',
-  publicationRequestDetails: '/api/publication/details',
-  publicationRulesList: '/api/publication/rulesList',
+  publicationRequestHost: '/api/ops/publication/create',
+  publicationRequestCreate: '/api/ops/publication/create',
+  publicationUpdate: '/api/ops/publication/update',
+  publicationRequestRejection: '/api/ops/publication/reject',
+  publicationRequestApproval: '/api/ops/publication/approve',
+  publicationRequestDetails: '/api/ops/publication/get',
+  publicationRulesList: '/api/ops/publication/rule/list',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
-  pendingPublicationsListing: '/api/publication/listing',
+  pendingPublicationsListing: '/api/ops/publication/list',
   publishedConversations: '/api/publication/conversations/public',
+  publishedPrompts: '/api/publication/prompts/public',
+  publishedApplications: '/api/publication/applications/public',
+  publishedFiles: () => `/api/publication/${API.filesHostSegment}/public`,
   applicationCreateHost: '/api/applications',
-  publishedApplicationsHost:
-    'api/publication/applications/public?recursive=true',
-  pagePropsHost: 'development/en.json',
+  publishedConversationsHost: () =>
+    `${API.publishedConversations}?recursive=true`,
+  publishedPromptsHost: () => `${API.publishedPrompts}?recursive=true`,
+  publishedApplicationsHost: () =>
+    `${API.publishedApplications}?recursive=true`,
+  pagePropsHost: '/en.json',
+  appSchemasHost: '/api/application-type-schemas/schemas',
+  themeStylesHost: '/api/themes/styles',
+  publicFilesHost: () => `${API.api}/${API.filesHostSegment}/${API.public}`,
+  toolsetEditorHost: '/en/toolset-editor.json',
+  toolsetCreateHost: () => `${API.api}/toolsets`,
+  authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
+  tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
+  toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
 };
 
 export const Import = {
@@ -414,6 +570,7 @@ export const Attachment = {
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
+  fileToCopyName: 'image.png',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
   textName: 'text.txt',
@@ -426,9 +583,11 @@ export const Attachment = {
   dotExtensionImageName: 'testdot..JPg',
   restrictedSemicolonCharFilename: 'restricted;char.jpg',
   restrictedEqualCharFilename: 'restricted=char.jpg',
+  restrictedCharsFilename: 'restricted=,;{}%&.JPG',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
+  appIconSvg: 'appIcon.svg',
 };
 
 export enum Side {
@@ -438,7 +597,7 @@ export enum Side {
 
 export enum ImportedModelIds {
   GPT_3_5_TURBO = 'gpt-35-turbo',
-  GPT_4 = 'gpt-4',
+  GPT_4_O = 'gpt-4o',
   CHAT_BISON = 'chat-bison',
 }
 
@@ -489,11 +648,11 @@ export enum ToggleState {
 
 export enum AuthProvider {
   auth0 = 'auth0',
-  azureAD = 'azureAD',
+  azureAD = 'azure-ad',
   gitlab = 'gitlab',
   google = 'google',
   keycloak = 'keycloak',
-  pingID = 'pingID',
+  pingID = 'pingid',
   cognito = 'cognito',
   okta = 'okta',
 }
@@ -507,3 +666,86 @@ export enum PseudoModel {
   replay = 'replay',
   playback = 'playback',
 }
+
+export const ExpectedPromptModalConst = {
+  promptViewModalTitle: 'View prompt',
+  createPromptModalTitle: 'Create prompt',
+  editButtonTooltip: 'Edit',
+  duplicateButtonTooltip: 'Duplicate',
+  exportButtonTooltip: 'Export',
+  moveToButtonTooltip: 'Move to',
+  shareButtonTooltip: 'Share',
+  publishButtonTooltip: 'Publish',
+  unpublishButtonTooltip: 'Unpublish',
+  infoButtonTooltip: 'Info',
+  deleteButtonTooltip: 'Delete',
+};
+
+export enum DefaultModelReference {
+  defaultAgent = '"default-agent"',
+  lastUsedModel = '"last-used-agent"',
+}
+
+export enum PublishingRulesFilterTarget {
+  title = 'Title',
+  jobTitle = 'Job Title',
+  role = 'Role',
+  dialRoles = 'Dial Roles',
+}
+
+export enum BooleanOperator {
+  or = 'or',
+}
+
+export enum E2EUserRole {
+  qa = 'QA',
+  developer = 'Developer',
+  manager = 'Manager',
+}
+
+export enum EntityEditorAppTypes {
+  CustomApp = 'Custom app',
+  ExternalApp = 'External app',
+  QuickApp = 'Quick app',
+  QuickApp2 = 'Quick app2',
+  CodeApp = 'Code App',
+}
+
+export enum MarketplaceTabs {
+  WORKSPACE = 'workspace',
+}
+
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
+
+export enum OAuthQueryParams {
+  responseType = 'response_type',
+  codeChallengeMethod = 'code_challenge_method',
+  clientId = 'client_id',
+  redirectUri = 'redirect_uri',
+  scope = 'scope',
+  state = 'state',
+  code = 'code',
+}
+
+export enum Creds {
+  myCreds = 'MY CREDS',
+  orgCreds = 'ORG CREDS',
+  loggedOut = 'LOGGED OUT',
+}
+
+export enum SignInButtonTitles {
+  logIn = 'Log in',
+  logOut = 'Log out',
+}
+
+export const ExpectedConfirmationPopupData = {
+  deleteItemHeader: 'Confirm Deleting Item',
+  deleteItemsHeader: 'Confirm Deleting Items',
+  deleteItemContent: (item: string) =>
+    `Are you sure you want to delete “${item}”?`,
+  deleteItemsContent: (count: number) =>
+    `Do you want to delete the following ${count} items?`,
+};

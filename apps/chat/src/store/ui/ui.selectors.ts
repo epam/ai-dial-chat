@@ -3,18 +3,37 @@ import { createSelector } from '@reduxjs/toolkit';
 import { FeatureType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
+import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { UIState } from './ui.types';
+import { Routes } from '@/src/constants/routes';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): UIState => state.ui;
+const rootSelector = (state: RootState) => state.ui;
 
 const selectThemeState = (state: RootState) => rootSelector(state).theme;
 
+const selectEnterType = (state: RootState) => rootSelector(state).enterType;
+
 const selectAvailableThemes = (state: RootState) =>
   rootSelector(state).availableThemes;
+
+const selectThemesImages = (state: RootState) =>
+  rootSelector(state).themesImages;
+
+const selectCodeEditorTheme = createSelector(
+  [selectThemeState, selectAvailableThemes],
+  (theme, availableThemes) => {
+    const selectedTheme = theme
+      ? availableThemes.find(({ id }) => id === theme)
+      : undefined;
+    return (
+      selectedTheme?.['code-editor-theme'] ??
+      (theme === 'dark' ? 'vs-dark' : 'vs')
+    );
+  },
+);
 
 const selectShowChatbar = (state: RootState) => rootSelector(state).showChatbar;
 
@@ -58,11 +77,20 @@ const selectShowSelectToMigrateWindow = (state: RootState) =>
   rootSelector(state).showSelectToMigrateWindow;
 
 const selectIsAnyMenuOpen = createSelector(
-  [rootSelector, SettingsSelectors.selectEnabledFeatures],
-  (state, enabledFeatures) =>
-    (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
-    (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
-    state.isProfileOpen,
+  [rootSelector, (_state, route: string) => route],
+  (state, route) => {
+    const isChatRoute = route === Routes.Chat;
+    const isChatPanelsOpened = isChatRoute
+      ? state.showPromptbar || state.showChatbar
+      : false;
+    const isMarketplaceRoute = route === Routes.Marketplace;
+    const isMarketplacePanelOpened = isMarketplaceRoute
+      ? state.showMarketplaceFilterbar
+      : false;
+    return (
+      isChatPanelsOpened || isMarketplacePanelOpened || state.isProfileOpen
+    );
+  },
 );
 
 const selectCollapsedSections = //TODO: review later how it is used
@@ -77,8 +105,28 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectScrollToEntityId = (state: RootState) =>
   rootSelector(state).scrollToEntityId;
 
+const selectIsNavigationVisible = createSelector(
+  [WidgetsSelectors.selectIsAnyWidget, SettingsSelectors.selectEnabledFeatures],
+  (isAnyWidget, enabledFeatures) => {
+    return isAnyWidget || enabledFeatures.has(Feature.Marketplace);
+  },
+);
+
+const selectVisibleSidebarItems = createSelector(
+  [
+    rootSelector,
+    (_state: RootState, featureType: FeatureType.Chat | FeatureType.Prompt) =>
+      featureType,
+  ],
+  (state, featureType) => state.visibleSidebarItems[featureType],
+);
+
+const selectIsEditorLoader = (state: RootState) =>
+  rootSelector(state).isEditorLoader;
+
 export const UISelectors = {
   selectThemeState,
+  selectEnterType,
   selectShowChatbar,
   selectShowPromptbar,
   selectShowMarketplaceFilterbar,
@@ -89,6 +137,7 @@ export const UISelectors = {
   selectOpenedFoldersIds,
   selectTextOfClosedAnnouncement,
   selectAvailableThemes,
+  selectThemesImages,
   selectChatbarWidth,
   selectPromptbarWidth,
   selectIsChatFullWidth,
@@ -99,4 +148,8 @@ export const UISelectors = {
   selectPreviousRoute,
   selectInitialized,
   selectScrollToEntityId,
+  selectIsNavigationVisible,
+  selectCodeEditorTheme,
+  selectVisibleSidebarItems,
+  selectIsEditorLoader,
 };

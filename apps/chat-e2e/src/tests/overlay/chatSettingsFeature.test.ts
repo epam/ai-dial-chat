@@ -51,6 +51,7 @@ dialOverlayTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithAttachment,
             true,
+            undefined,
             imageUrl,
           );
         await overlayDataInjector.createConversations([attachmentConversation]);
@@ -65,9 +66,7 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(
-          attachmentConversation.name,
-        );
+        await overlayConversations.selectEntity(attachmentConversation.name);
         await overlayChat.addModelToWorkspace();
         await overlayToast.closeToast();
         await overlayBaseAssertion.assertElementState(
@@ -147,6 +146,7 @@ dialOverlayTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithAttachment,
             true,
+            undefined,
           );
         await overlayDataInjector.createConversations([attachmentConversation]);
       },
@@ -160,9 +160,7 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();
-        await overlayConversations.selectConversation(
-          attachmentConversation.name,
-        );
+        await overlayConversations.selectEntity(attachmentConversation.name);
         await overlayChat.addModelToWorkspace();
         await overlayBaseAssertion.assertElementState(
           overlaySendMessage.attachmentMenuTrigger,

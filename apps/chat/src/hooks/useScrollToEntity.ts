@@ -1,13 +1,13 @@
 import { RefObject, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { UISelectors } from '@/src/store/selectors';
 
 interface ScrollToEntityProps {
   entityId: string;
-  elementRef: RefObject<HTMLElement>;
+  elementRef: RefObject<HTMLElement | null>;
 }
 
 export const useScrollToEntity = ({

@@ -5,11 +5,18 @@ on:
 
 jobs:
   e2e-tests:
+    runs-on: ubuntu-latest
     if: ${{ github.event.registry_package.package_version.container_metadata.tag.name == 'development' }}
-    uses: epam/ai-dial-ci/.github/workflows/e2e-test.yml@2.0.1
-    with:
-      gitlab-project-id: "1843"
-    secrets:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-      DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+    steps:
+      - name: E2E tests
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: epam/ai-dial-ci
+          event-type: e2e-tests-workflow
+          client-payload: |-
+            {
+              "github-app": "${{github.event.repository.name}}",
+              "github-sha": "${{github.sha}}",
+              "gitlab-project-id": "1843"
+            }

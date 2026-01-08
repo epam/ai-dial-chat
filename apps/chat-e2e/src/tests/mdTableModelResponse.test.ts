@@ -3,8 +3,9 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator, expect } from '@playwright/test';
 
 const expectedChatMessageIndex = 2;
@@ -77,7 +78,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(tableConversation.name);
+        await conversations.selectEntity(tableConversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageTable(expectedChatMessageIndex),
@@ -137,9 +138,10 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === ThemeId.dark
-              ? Colors.backgroundLayer4Dark
-              : Colors.backgroundLayer4Light,
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgLayer4,
+              theme as ThemeId,
+            ),
           );
 
         const tableRowBackgroundColor =
@@ -152,9 +154,10 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === ThemeId.dark
-              ? Colors.backgroundLayer3Dark
-              : Colors.backgroundLayer3Light,
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgLayer3,
+              theme as ThemeId,
+            ),
           );
       },
     );
@@ -223,7 +226,7 @@ dialTest.fixme(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(tableConversation.name);
+        await conversations.selectEntity(tableConversation.name);
         await chat.sendRequestWithButton(
           'Create md table with european countries, its capitals and population',
           false,

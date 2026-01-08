@@ -15,10 +15,26 @@ export enum Attributes {
   rotated180 = 'rotate-180',
   download = 'download',
   href = 'href',
+  target = 'target',
   dataQA = 'data-qa',
   ariaSelected = 'aria-selected',
+  ariaChecked = 'aria-checked',
   id = 'id',
   ariaExpanded = 'aria-expanded',
   ariaDetails = 'aria-details',
   ariaColcount = 'aria-colcount',
+  blank = '_blank',
+  checked = 'checked',
+}
+
+export enum AttributeValues {
+  login = 'Log in',
+  logout = 'Log out',
+  cancelAllRules = 'cancel-all-rules',
+  sendRequest = 'Send request',
+  change = 'Change',
+  copyLink = 'copy-link',
+  close = 'close',
+  removeFile = 'remove-file',
+  mixed = 'mixed',
 }

@@ -1,7 +1,7 @@
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/chat/constants/chat';
 import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
 
@@ -52,9 +52,9 @@ dialTest(
     setTestIds,
     appContainer,
     chatBar,
+    chatBarAssertion,
     promptBar,
     header,
-    tooltip,
     conversationData,
     dataInjector,
     localStorageManager,
@@ -105,28 +105,16 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify Attachment icon is visible at the panel bottom menu',
+      'Verify Attachment icon is not visible at the panel bottom menu',
       async () => {
-        await chatBar.attachments.waitForState();
-        await expect
-          .soft(
-            chatBar.bottomDotsMenuIcon.getElementLocator(),
-            ExpectedMessages.dotsMenuIsHidden,
-          )
-          .toBeHidden();
-
-        await chatBar.attachments.hoverOver();
-        const iconTooltip = await tooltip.getContent();
-        expect
-          .soft(iconTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.attachments);
-
-        const iconColor = await chatBar.attachments.getComputedStyleProperty(
-          Styles.color,
+        await chatBarAssertion.assertElementState(
+          chatBar.attachments,
+          'hidden',
         );
-        expect
-          .soft(iconColor[0], ExpectedMessages.iconColorIsValid)
-          .toBe(Colors.textAccentSecondary);
+        await chatBarAssertion.assertElementState(
+          chatBar.bottomDotsMenuIcon,
+          'hidden',
+        );
       },
     );
 

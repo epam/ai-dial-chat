@@ -10,13 +10,14 @@ import {
   ScrollState,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
+import { Properties } from '@/src/ui/domData/properties';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -50,7 +51,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -137,9 +138,11 @@ dialTest(
   async ({
     dialHomePage,
     chat,
+    chatAssertion,
     setTestIds,
     conversationData,
     conversations,
+    chatMessages,
     dataInjector,
     sendMessage,
     localStorageManager,
@@ -160,21 +163,25 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+        await chatMessages.waitForState();
         await chat.goToContentPosition(ScrollState.top);
+        await chatAssertion.assertScrollPosition(
+          chat.scrollableArea,
+          Properties.scrollTop,
+          0,
+        );
         await sendMessage.scrollDownButton.click();
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsNotVisible,
-          )
-          .toBeHidden();
-        expect
-          .soft(
-            await chat.scrollableArea.getVerticalScrollPosition(),
-            ExpectedMessages.scrollPositionIsCorrect,
-          )
-          .toBe(ScrollState.bottom);
+        await chatAssertion.assertElementState(
+          sendMessage.scrollDownButton,
+          'hidden',
+        );
+        chatAssertion.assertValue(
+          (await chat.scrollableArea.getVerticalScrollPosition()).toString(),
+          ScrollState.bottom,
+          ExpectedMessages.scrollPositionIsCorrect,
+        );
       },
     );
   },
@@ -188,6 +195,7 @@ dialTest(
   async ({
     dialHomePage,
     chat,
+    chatAssertion,
     setTestIds,
     conversationData,
     dataInjector,
@@ -227,9 +235,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await chat.goToContentPosition(ScrollState.top);
-        await conversations.selectConversation(secondConversation.name);
+        await chatAssertion.assertScrollPosition(
+          chat.scrollableArea,
+          Properties.scrollTop,
+          0,
+        );
+        await conversations.selectEntity(secondConversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -242,7 +255,7 @@ dialTest(
     await dialTest.step(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await chatBar.createNewEntity();
         await expect
           .soft(
@@ -256,7 +269,7 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
@@ -360,7 +373,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           firstConversation.name,
           { isHttpMethodTriggered: false },
           {
@@ -415,7 +428,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(stageConversation.name);
+        await conversations.selectEntity(stageConversation.name);
         await chatMessages.openMessageStage(2, 1);
         await expect
           .soft(
@@ -477,7 +490,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(imageConversation.name);
+        await conversations.selectEntity(imageConversation.name);
         await chatMessages.getCollapsedChatMessageAttachment(2).waitFor();
         await chatMessages.expandChatMessageAttachment(
           2,
@@ -538,7 +551,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
 
         const lastChatMessage = chatMessages.getChatMessage(
           userRequests.length * 2,

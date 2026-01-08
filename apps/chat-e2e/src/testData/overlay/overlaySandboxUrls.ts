@@ -27,4 +27,6 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/overlay-conversation-id-set-sandbox', //sandbox to test 'EPMRTC-4835'
   enableHideUserSettingsUrl:
     '/cases/overlay/enabled-hide-user-settings-sandbox', //sandbox to test 'EPMRTC-5692'
+  newConversationsFolderIdSetUrl:
+    '/cases/overlay/new-conversations-folder-id-set-sandbox',
 };

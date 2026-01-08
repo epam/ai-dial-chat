@@ -11,8 +11,13 @@ import {
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { MarketplaceAgentProperties } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
+import { BaseElement, MarketplaceEntityProperties } from '@/src/ui/webElements';
+import {
+  GeneratorUtil,
+  ModelsUtil,
+  SortingUtil,
+  applicationNamePrefix,
+} from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -30,7 +35,7 @@ dialTest(
     page,
     marketplaceHeader,
     marketplace,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     navigationPanel,
     localStorageManager,
     setTestIds,
@@ -66,7 +71,7 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        installedAppVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
@@ -76,7 +81,7 @@ dialTest(
           .withDisplayVersion(installedAppVersion)
           .build();
 
-        nonInstalledAppVersion = GeneratorUtil.randomApplicationVersion([
+        nonInstalledAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppVersion,
@@ -115,7 +120,7 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(
           leadingSpacesSearchTerm,
         );
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           2,
@@ -135,7 +140,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Switch to "My Workspace" tab, and verify search term is preserved, search results are updated',
+      'Switch to "My Workspace" tab and verify search term is preserved, search results are updated',
       async () => {
         await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertElementAttribute(
@@ -144,9 +149,9 @@ dialTest(
           leadingSpacesSearchTerm,
         );
 
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = allAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertValue(
           filteredAgents.length,
@@ -186,7 +191,7 @@ dialTest(
         await marketplaceHeader.searchInput.click();
         await page.keyboard.press(keys.end);
         await marketplaceHeader.searchInput.typeInInput(endSpaces);
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           2,
@@ -220,7 +225,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           marketplace.noResultsFoundDescription,
-          ExpectedConstants.noMarketplaceAgentsFoundMessage,
+          ExpectedConstants.noMarketplaceEntitiesFoundMessage,
         );
         await baseAssertion.assertElementState(
           marketplace.noResultsFoundIcon,
@@ -290,9 +295,9 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
-    agentDetailsModal,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    entityDetailsModal,
     marketplace,
     localStorageManager,
     setTestIds,
@@ -303,8 +308,8 @@ dialTest(
     publicationApiHelper,
     adminPublicationApiHelper,
     publishRequestBuilder,
-    agentDetailsModalAssertion,
-    agentVersionsDropdownMenuAssertion,
+    entityDetailsModalAssertion,
+    entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-4510');
     let appCommonVersion: string;
@@ -312,7 +317,7 @@ dialTest(
     let secondAppThirdVersion: string;
     let firstAppName: string;
     let secondAppName: string;
-    let expectedAgents: MarketplaceAgentProperties[];
+    let expectedAgents: MarketplaceEntityProperties[];
 
     await dialTest.step(
       'Prepare one application with v2, another app with v1, v2, v3 available in the "Marketplace". Second app is added to the "My Workspace"',
@@ -322,16 +327,16 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        appCommonVersion = GeneratorUtil.randomApplicationVersion([
+        appCommonVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
-        secondAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+        secondAppFirstVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           appCommonVersion,
         ]);
-        secondAppThirdVersion = GeneratorUtil.randomApplicationVersion([
+        secondAppThirdVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           appCommonVersion,
@@ -384,25 +389,25 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(secondAppFirstVersion);
         const secondAgentElement =
-          await marketplaceAgentsSection.findAgentElement(secondAppName, {
-            isWorkspaceAgent: false,
+          await marketplaceEntitiesSection.findEntityElement(secondAppName, {
+            isWorkspaceEntity: false,
           });
-        await marketplaceAgents.addAgentToWorkspace(secondAgentElement);
+        await marketplaceEntities.addEntityToWorkspace(secondAgentElement);
         await toast.closeToast();
       },
     );
 
     await dialTest.step(
-      'Search agents by the common version and verify 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
+      'Search agents by the common version and verify at least 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appCommonVersion);
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         expectedAgents = allAgents.filter(
           (a) =>
             (a.name === firstAppName || a.name === secondAppName) &&
             a.version === appCommonVersion,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           expectedAgents.length,
           4,
           ExpectedMessages.elementsCountIsValid,
@@ -419,7 +424,7 @@ dialTest(
               (agent) =>
                 agent.name === criteria.name &&
                 agent.isEditable === criteria.isEditable &&
-                agent.isWorkspaceAgent &&
+                agent.isWorkspaceEntity &&
                 agent.version === appCommonVersion,
             ).length,
             1,
@@ -428,12 +433,12 @@ dialTest(
         }
 
         const bookmarkedSecondAgent =
-          await marketplaceAgentsSection.findAgentElement(secondAppName, {
-            isWorkspaceAgent: true,
+          await marketplaceEntitiesSection.findEntityElement(secondAppName, {
+            isWorkspaceEntity: true,
             isEditable: false,
           });
         await baseAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             bookmarkedSecondAgent,
           ),
           'visible',
@@ -451,7 +456,7 @@ dialTest(
         const suggestedAgent = expectedAgents.filter(
           (agent) => agent.isSuggested,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           suggestedAgent.length,
           1,
           ExpectedMessages.elementsCountIsValid,
@@ -474,16 +479,14 @@ dialTest(
       'Open bookmarked second agent card and verify versions available in the menu',
       async () => {
         const bookmarkedSecondAgentElement =
-          await marketplaceAgentsSection.findAgentElement(secondAppName, {
-            isWorkspaceAgent: true,
+          await marketplaceEntitiesSection.findEntityElement(secondAppName, {
+            isWorkspaceEntity: true,
             isEditable: false,
           });
         await bookmarkedSecondAgentElement.click();
-        await agentDetailsModalAssertion.assertApplicationVersion(
-          appCommonVersion,
-        );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        await entityDetailsModalAssertion.assertEntityVersion(appCommonVersion);
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([
             secondAppFirstVersion,
             appCommonVersion,
@@ -492,7 +495,7 @@ dialTest(
         );
 
         await baseAssertion.assertElementBackgroundColors(
-          agentDetailsModal
+          entityDetailsModal
             .getVersionDropdownMenu()
             .menuOption(appCommonVersion),
           ThemesUtil.getRgbColorByKey(
@@ -505,22 +508,28 @@ dialTest(
 );
 
 dialTest(
-  'Search in DIAL Marketplace: Search word and other filters work together type and topics',
+  'Search in DIAL Marketplace: Search word and other filters work together type and topics.\n' +
+    '[Card view] Not published my custom application does not have bookmark icon.\n' +
+    '[Detailed card view] Not published my custom application does not have bookmark icon',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
     marketplacePage,
     marketplaceFilter,
     marketplaceHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
     setTestIds,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4425');
+    setTestIds('EPMRTC-4425', 'EPMRTC-4610', 'EPMRTC-4609');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const thirdAppName = GeneratorUtil.randomApplicationName();
-    const appTopic = GeneratorUtil.randomString(5);
+    const appTopic = GeneratorUtil.randomString(10);
+    let actualAgent: BaseElement;
 
     await dialTest.step(
       'Prepare three custom applications, two of them have a common topic',
@@ -547,7 +556,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Dial Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
+      'Open "DIAL Marketplace", check Type="Applications", Source="My Custom app" filter options and verify three apps are filtered',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
@@ -563,7 +572,7 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           )
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [firstAppName, secondAppName, thirdAppName],
@@ -578,7 +587,7 @@ dialTest(
         await marketplaceFilter
           .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, appTopic)
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           2,
@@ -593,19 +602,243 @@ dialTest(
     );
 
     await dialTest.step(
-      'Set first app name in the search field and verify only one app is filtered',
+      'Set first app name in the search field and verify at least one app is filtered',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(firstAppName);
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertValue(
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           actualAgents.length,
           1,
           ExpectedMessages.elementsCountIsValid,
         );
+        const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
-          actualAgents.map((agent) => agent.name),
+          actualAgentNames,
           [firstAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+        baseAssertion.assertArrayExcludesAll(
+          actualAgentNames,
+          [secondAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify custom app does not have bookmark icon',
+      async () => {
+        actualAgent =
+          await marketplaceEntitiesSection.findEntityElement(firstAppName);
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementAddBookmarkIcon(actualAgent),
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(actualAgent),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open app card and verify it does not have bookmark icon',
+      async () => {
+        await actualAgent.click();
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.addBookmarkIcon,
+          'hidden',
+        );
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace: multiple spaces between sub-strings are treated as one space , not as sub-string.\n' +
+    'Search in DIAL Marketplace: more than 2 special symbols starting with ! are treated as sub-string',
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    setTestIds,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-6426', 'EPMRTC-6427');
+    const middleSpaceAppName = GeneratorUtil.randomApplicationName()
+      .concat(' ')
+      .concat(GeneratorUtil.randomString(5));
+    const specialCharsPart = '!@#$*()';
+    const standardPart = GeneratorUtil.randomApplicationName();
+    const specialCharsAppName = standardPart.concat(specialCharsPart);
+    const searchTermResultMap = new Map<string, string>();
+    searchTermResultMap.set(middleSpaceAppName, middleSpaceAppName);
+    searchTermResultMap.set(
+      middleSpaceAppName.replace(' ', ' '.repeat(5)),
+      middleSpaceAppName,
+    );
+    searchTermResultMap.set(
+      standardPart.replace(applicationNamePrefix, '').concat('!@#$%'),
+      specialCharsAppName,
+    );
+
+    await dialTest.step('Prepare two custom applications', async () => {
+      const firstApplicationModel = customApplicationBuilder
+        .withDisplayName(middleSpaceAppName)
+        .build();
+      const secondApplicationModel = customApplicationBuilder
+        .withDisplayName(specialCharsAppName)
+        .build();
+      for (const app of [firstApplicationModel, secondApplicationModel]) {
+        await applicationApiHelper.createApplication(app);
+      }
+    });
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify it is found',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents =
+            await marketplaceEntitiesSection.getAllEntities();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceEntity,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            1,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            [searchTermResultMap.get(searchTerm)!],
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  'Search in DIAL Marketplace. New extended search by name and version',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplace,
+    marketplaceEntitiesSection,
+    localStorageManager,
+    setTestIds,
+    baseAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+  }) => {
+    setTestIds('EPMRTC-6448');
+    const firstTerm = '71234.71234.9';
+    const secondTerm = '36789.30123.4';
+    const thirdTerm = '71234.71234.0';
+    const firstAppName = `${GeneratorUtil.randomApplicationName()} ${firstTerm}`;
+    const secondAppName = `${GeneratorUtil.randomApplicationName()} ${secondTerm}`;
+    const thirdAppName = GeneratorUtil.randomApplicationName();
+    const fourthAppName = GeneratorUtil.randomApplicationName();
+    const searchTermResultMap = new Map<string, string[]>();
+    searchTermResultMap.set(firstTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+    ]);
+    searchTermResultMap.set(secondTerm.concat(' '.repeat(3)), [
+      firstAppName,
+      secondAppName,
+    ]);
+    searchTermResultMap.set(thirdTerm, [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+      fourthAppName,
+    ]);
+    searchTermResultMap.set(firstTerm.concat('189'), [
+      firstAppName,
+      secondAppName,
+      thirdAppName,
+    ]);
+    searchTermResultMap.set(firstTerm.concat('1567'), [thirdAppName]);
+
+    await dialTest.step(
+      'Prepare the set of custom applications with mixture of terms in the name and version',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        const firstAppModel = customApplicationBuilder
+          .withDisplayName(firstAppName)
+          .withDisplayVersion(secondTerm)
+          .build();
+        const secondAppModel = customApplicationBuilder
+          .withDisplayName(secondAppName)
+          .withDisplayVersion(firstTerm)
+          .build();
+        const thirdAppModel = customApplicationBuilder
+          .withDisplayName(thirdAppName)
+          .withDisplayVersion(firstTerm.concat('1'))
+          .build();
+        const fourthAppModel = customApplicationBuilder
+          .withDisplayName(fourthAppName)
+          .withDisplayVersion(thirdTerm)
+          .build();
+        for (const appModel of [
+          firstAppModel,
+          secondAppModel,
+          thirdAppModel,
+          fourthAppModel,
+        ]) {
+          await applicationApiHelper.createApplication(appModel);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "DIAL Marketplace", type search term in the search field and verify correct apps are found',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const searchTerm of searchTermResultMap.keys()) {
+          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          const actualAgents =
+            await marketplaceEntitiesSection.getAllEntities();
+          const filteredAgents = actualAgents.filter(
+            (agent) => agent.isWorkspaceEntity,
+          );
+          baseAssertion.assertValue(
+            filteredAgents.length,
+            searchTermResultMap.get(searchTerm)!.length,
+            ExpectedMessages.elementsCountIsValid,
+          );
+          baseAssertion.assertArrayIncludesAll(
+            filteredAgents.map((agent) => agent.name),
+            searchTermResultMap.get(searchTerm)!,
+            ExpectedMessages.searchResultsAreCorrect,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Type "71234.71234.915555" in the search field and verify no results are found',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(
+          firstTerm.concat('15555'),
+        );
+        await baseAssertion.assertElementState(
+          marketplace.noResultsFound,
+          'visible',
         );
       },
     );

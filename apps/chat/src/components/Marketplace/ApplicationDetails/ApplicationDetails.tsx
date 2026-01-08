@@ -1,40 +1,51 @@
-import { useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ModelsSelectors, WidgetsSelectors } from '@/src/store/selectors';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import { Modal } from '../../Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
+
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
+export interface ApplicationDetailsFooterProps {
+  entity: DialAIEntityModel;
+  allVersions: DialAIEntityModel[];
+  onChangeVersion: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onUseEntity?: () => void;
+  onRemove?: (entity: DialAIEntityModel) => void;
+}
+
 interface Props {
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
-  isMyAppsTab: boolean;
+  isMyAppsTab?: boolean;
   isSuggested?: boolean;
   onClose: () => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
-  onBookmarkClick: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onRemove?: (entity: DialAIEntityModel) => void;
+  FooterComponent?: FC<ApplicationDetailsFooterProps>;
+  isPreview?: boolean;
 }
 
-export const ApplicationDetails = ({
+export function ApplicationDetails({
   entity,
   allEntities,
   isMyAppsTab,
@@ -42,7 +53,10 @@ export const ApplicationDetails = ({
   onClose,
   onChangeVersion,
   onBookmarkClick,
-}: Props) => {
+  onRemove,
+  FooterComponent = ApplicationDetailsFooter,
+  isPreview,
+}: Props) {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
@@ -53,13 +67,14 @@ export const ApplicationDetails = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const widgetsSchemaIds = useAppSelector(
-    SettingsSelectors.selectWidgetsSchemaIds,
+    WidgetsSelectors.selectWidgetsSchemaIds,
   );
 
   const filteredEntities = useMemo(() => {
     const filtered = allEntities.filter(
       (e) =>
-        getGroupModelKey(entity) === getGroupModelKey(e) &&
+        getGroupMarketplaceEntityKey(entity) ===
+          getGroupMarketplaceEntityKey(e) &&
         (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
 
@@ -104,20 +119,21 @@ export const ApplicationDetails = ({
     <Modal
       portalId="chat"
       state={ModalState.OPENED}
-      dataQa="marketplace-agent-details"
+      dataQa="marketplace-entity-details"
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader entity={entity} />
+      <ApplicationDetailsHeader entity={entity} isPreview={isPreview} />
       <ApplicationDetailsContent entity={entity} />
-      <ApplicationDetailsFooter
+      <FooterComponent
         onUseEntity={handleUseEntity}
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
         onBookmarkClick={onBookmarkClick}
+        onRemove={onRemove}
       />
     </Modal>
   );
-};
+}

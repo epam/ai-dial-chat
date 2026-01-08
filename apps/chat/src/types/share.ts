@@ -9,6 +9,7 @@ export enum SharingType {
   PromptFolder = 'prompts_folder',
   File = 'file',
   Application = 'application',
+  Toolset = 'toolset',
 }
 
 export interface UserGroup {
@@ -70,4 +71,5 @@ export interface ShareListingRequestModel {
   resourceTypes: BackendResourceType[];
   with: ShareRelations;
   order: 'popular_asc';
+  includeUserInfo?: boolean;
 }

@@ -1,5 +1,10 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementCaretState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { TreeEntity } from '@/src/testData/types';
 import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
@@ -14,12 +19,12 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   }
 
   public async assertFolderState(
-    folder: TreeEntity,
+    folder: TreeEntity | string,
     expectedState: ElementState,
   ) {
     const folderLocator = this.folder.getFolderByName(
-      folder.name,
-      folder.index,
+      typeof folder === 'string' ? folder : folder.name,
+      typeof folder === 'string' ? undefined : folder.index,
     );
     await this.assertElementState(folderLocator, expectedState);
   }
@@ -116,6 +121,16 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   ) {
     await super.assertElementBackgroundColors(
       this.folder.getFolderByName(folder.name, folder.index),
+      expectedColor,
+    );
+  }
+
+  public async assertFolderNameColor(
+    folder: TreeEntity,
+    expectedColor: string,
+  ) {
+    await super.assertElementColor(
+      this.folder.getFolderName(folder.name, folder.index),
       expectedColor,
     );
   }
@@ -268,19 +283,16 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   }
 
   public async assertFolderEditInputState(expectedState: ElementState) {
-    const editInputLocator = this.folder
-      .getEditFolderInput()
-      .getElementLocator();
+    const editInputLocator = this.folder.getEditFolderInput();
     await this.assertElementState(editInputLocator, expectedState);
   }
 
-  public async assertFolderEditInputValue(expectedValue: string) {
-    const inputValue = await this.folder
-      .getEditFolderInput()
-      .getEditInputValue();
-    expect
-      .soft(inputValue, ExpectedMessages.charactersAreNotDisplayed)
-      .toBe(expectedValue);
+  public async assertFolderEditInputValue(
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    const editInput = this.folder.getEditFolderInput().editInput;
+    await this.assertInputValue(editInput, expectedValue, expectedMessage);
   }
 
   public async assertRootFolderState(
@@ -382,6 +394,20 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
           .toBeHidden();
   }
 
+  public async assertFolderEntityIsInViewport(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    ratio?: number,
+  ) {
+    const folderEntityElement = this.folder.getFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await this.assertElementIsInViewport(folderEntityElement, ratio);
+  }
+
   //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure
   public async assertSearchResultRepresentation(searchFolderPath: string) {
     //extract folder path elements to an array
@@ -398,5 +424,38 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
         ExpectedMessages.searchResultsAreCorrect,
       )
       .toBeTruthy();
+  }
+
+  public async assertFolderEntitiesCount(
+    folder: TreeEntity,
+    expectedCount: number,
+    expectedMessage?: string,
+  ) {
+    const folderEntitiesLocator = this.folder.getFolderEntities(
+      folder.name,
+      folder.index,
+    );
+    await this.assertElementsCount(
+      folderEntitiesLocator,
+      expectedCount,
+      expectedMessage,
+    );
+  }
+
+  public async assertFolderCaretState(
+    folder: TreeEntity,
+    expectedState: ElementCaretState,
+  ) {
+    const isExpanded = await this.folder.isFolderCaretExpanded(
+      folder.name,
+      folder.index,
+    );
+
+    const expectedExpanded = expectedState === 'expanded';
+    const message = expectedExpanded
+      ? ExpectedMessages.caretIsExpanded
+      : ExpectedMessages.caretIsCollapsed;
+
+    this.assertBooleanCondition(isExpanded, expectedExpanded, message);
   }
 }

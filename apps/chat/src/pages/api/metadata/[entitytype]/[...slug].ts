@@ -31,12 +31,14 @@ const getEntityUrlFromSlugs = (
     throw new DialAIError(`No ${entityType} path provided`, 400, req);
   }
 
-  return constructPath(
-    dialApiHost,
-    'v1',
-    'metadata',
-    entityType,
-    ServerUtils.encodeSlugs(slugs),
+  return (
+    constructPath(
+      dialApiHost,
+      'v1',
+      'metadata',
+      entityType,
+      ServerUtils.encodeSlugs(slugs),
+    ) + `?permissions=true`
   );
 };
 

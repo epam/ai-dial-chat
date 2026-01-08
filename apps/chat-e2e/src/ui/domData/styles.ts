@@ -1,3 +1,4 @@
+// CSS Properties: Defines the names of CSS style properties.
 export enum Styles {
   borderBottomColor = 'border-bottom-color',
   borderTopColor = 'border-top-color',
@@ -12,23 +13,38 @@ export enum Styles {
   overflow_wrap = 'overflow-wrap',
   width = 'width',
   maxWidth = 'max-width',
-  none = 'none',
+  wordBreak = 'word-break',
+  textWrapMode = 'text-wrap-mode',
+  display = 'display',
+}
+
+// CSS Class Names: Defines utility class names, likely from a framework like Tailwind CSS.
+export enum CssClasses {
   truncate = 'truncate',
   whitespacePre = 'whitespace-pre',
   whitespacePreWrap = 'whitespace-pre-wrap',
   fontBold = 'font-bold',
   italic = 'italic',
   breakAll = 'break-all',
-  wordBreak = 'word-break',
 }
 
+// General CSS Values: Defines common, reusable CSS property values.
+export enum StyleValues {
+  none = 'none',
+  wrap = 'wrap',
+  breakWord = 'break-word',
+  block = 'block',
+}
+
+// Cursor-specific CSS Values: Defines values for the 'cursor' property.
 export enum Cursors {
   pointer = 'pointer',
   notAllowed = 'not-allowed',
+  default = 'default',
 }
 
+// Overflow-related CSS Values: Defines values for overflow properties.
 export enum Overflow {
   auto = 'auto',
   ellipsis = 'ellipsis',
-  breakWord = 'break-word',
 }

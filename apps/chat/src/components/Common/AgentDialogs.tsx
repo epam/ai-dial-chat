@@ -1,11 +1,7 @@
-import { ApplicationLogs } from '../Marketplace/ApplicationLogs';
-import { ConfirmAgentDeleteDialog } from './ConfirmAgentDeleteDialog';
-import { PublishAgentDialog } from './PublishAgentDialog';
+import { ApplicationLogs } from './ApplicationLogs';
 
 export const AgentDialogs = () => (
   <>
-    <ConfirmAgentDeleteDialog />
-    <PublishAgentDialog />
     <ApplicationLogs />
   </>
 );

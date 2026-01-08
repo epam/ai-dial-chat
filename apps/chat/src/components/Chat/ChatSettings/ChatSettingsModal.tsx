@@ -4,7 +4,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -13,16 +12,16 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ConversationSettings } from './ConversationSettings';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface ChatSettingsViewProps {
   conversation: Conversation;
@@ -32,8 +31,6 @@ interface ChatSettingsViewProps {
       modelId: string;
       prompt: string;
       temperature: number;
-      currentAssistantModelId: string | undefined;
-      addonsIds: string[];
       isShared: boolean;
     },
   ) => void;
@@ -47,44 +44,17 @@ const ChatSettingsView = ({
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
-  const [currentAssistantModelId, setCurrentAssistantModelId] = useState(
-    conversation.assistantModelId ??
-      DefaultsService.get('assistantSubmodelId') ??
-      FALLBACK_ASSISTANT_SUBMODEL_ID,
-  );
-  const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
-    conversation.selectedAddons || [],
-  );
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
-  const handleOnChangeAddon = useCallback((addonId: string) => {
-    setCurrentSelectedAddonsIds((addons) => {
-      if (addons.includes(addonId)) {
-        return addons.filter((id) => id !== addonId);
-      }
-
-      return [...addons, addonId];
-    });
-  }, []);
-
   const handleChangeSettings = useCallback(() => {
     onChangeSettings(conversation, {
-      currentAssistantModelId,
       modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
-      addonsIds: currentSelectedAddonsIds,
       isShared: !!conversation.isShared,
     });
-  }, [
-    conversation,
-    currentAssistantModelId,
-    currentPrompt,
-    currentSelectedAddonsIds,
-    currentTemperature,
-    onChangeSettings,
-  ]);
+  }, [conversation, currentPrompt, currentTemperature, onChangeSettings]);
 
   useEffect(() => {
     handleChangeSettings();
@@ -94,15 +64,10 @@ const ChatSettingsView = ({
     <ConversationSettings
       conversation={conversation}
       prompts={prompts}
-      assistantModelId={currentAssistantModelId}
       prompt={currentPrompt}
-      selectedAddons={currentSelectedAddonsIds}
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
-      onSelectAssistantSubModel={setCurrentAssistantModelId}
-      onChangeAddon={handleOnChangeAddon}
-      onApplyAddons={setCurrentSelectedAddonsIds}
     />
   );
 };
@@ -118,8 +83,6 @@ interface Props {
       modelId: string;
       prompt: string;
       temperature: number;
-      currentAssistantModelId: string | undefined;
-      addonsIds: string[];
       isShared: boolean;
     },
   ) => void;
@@ -203,7 +166,7 @@ export const ChatSettings = ({
                         'shrink truncate text-base font-semibold leading-[19px] text-primary',
                         !model ? 'text-secondary' : 'text-primary',
                       )}
-                      data-qa="agent-name"
+                      data-qa="entity-name"
                     >
                       {model?.name ?? conversation.model.id}
                     </div>
@@ -235,13 +198,12 @@ export const ChatSettings = ({
       </div>
       {isSomethingConfigurable && (
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
-          <button
-            className="button button-primary"
-            data-qa="apply-changes"
+          <DialButton
+            label={t('Apply changes')}
+            variant={ButtonVariant.Primary}
             onClick={handleOnApplySettings}
-          >
-            {t('Apply changes')}
-          </button>
+            data-qa="apply-changes"
+          />
         </div>
       )}
     </Modal>

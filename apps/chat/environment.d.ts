@@ -10,11 +10,14 @@ declare global {
       QUICK_APPS_MODEL?: string;
       QUICK_APPS_SCHEMA_ID?: string;
 
+      EXTERNAL_APPS_SCHEMA_ID?: string;
+
       DIAL_API_VERSION?: string;
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
       IS_IFRAME?: string;
+      ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME?: string;
       ALLOWED_IFRAME_SOURCES?: string;
       CUSTOM_VISUALIZERS?: string;
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
@@ -27,15 +30,14 @@ declare global {
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
       DEFAULT_MODEL?: string;
-      NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL?: string;
       RECENT_MODELS_IDS?: string;
-      RECENT_ADDONS_IDS?: string;
       E2E_HOST?: string;
       E2E_USERNAME?: string;
       E2E_PASSWORD?: string;
       TMS_URL?: string;
       ISSUE_URL?: string;
       THEMES_CONFIG_HOST?: string;
+      THEME_DEFAULT_ID?: string;
       FOOTER_HTML_MESSAGE?: string;
       ANNOUNCEMENT_HTML_MESSAGE?: string;
       AZURE_FUNCTIONS_API_HOST?: string;
@@ -49,6 +51,7 @@ declare global {
       TOPICS?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
       WIDGETS_SCHEMA_IDS?: string;
+      NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;

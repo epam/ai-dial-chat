@@ -10,24 +10,29 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { BucketUtil, ModelsUtil } from '@/src/utils';
+import { BucketUtil, DateUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialSharedWithMeTest(
   'Shared with me. Duplicate chat from chat menu.\n' +
-    'Shared with me. Duplicated chat can be moved to new folder, renamed, model changed',
+    'Shared with me. Duplicated chat can be moved to new folder, renamed, model changed.\n' +
+    'Metadata for chat duplicated from chat from Shared with me',
   async ({
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
+    additionalShareUserConversations,
+    additionalShareUserConversationDropdownMenu,
+    additionalShareUserInformationModal,
+    additionalShareUserInformationModalAssertion,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserChatMessages,
@@ -37,9 +42,10 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1845', 'EPMRTC-2768');
+    setTestIds('EPMRTC-1845', 'EPMRTC-2768', 'EPMRTC-6102');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
@@ -69,6 +75,23 @@ dialSharedWithMeTest(
           { name: conversation.name },
           'visible',
         );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Select "Info" option for duplicated conversation from dropdown menu and verify modal data',
+      async () => {
+        await additionalShareUserConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserConversationDropdownMenu.selectMenuOption(
+          MenuOptions.info,
+        );
+        await additionalShareUserInformationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
+        await additionalShareUserInformationModal.cancelButton.click();
       },
     );
 
@@ -163,7 +186,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click once again "Duplicate the conversation to be able to edit it" button and verify conversation with index 1 is duplicated in Today section',
       async () => {
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversationName,
         );
         await additionalShareUserChat.duplicateConversation();
@@ -186,6 +209,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserAppContainer,
     additionalShareUserChatAssertion,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalUserItemApiHelper,
@@ -246,9 +270,16 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           firstComparedConversation.name,
+          { isHttpMethodTriggered: true },
         );
+        await additionalShareUserSharedWithMeConversations
+          .selectedEntity(firstComparedConversation.name)
+          .waitFor();
+        await additionalShareUserAppContainer
+          .getChatLoader()
+          .waitForState({ state: 'hidden' });
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );
@@ -262,13 +293,15 @@ dialSharedWithMeTest(
       'Check "Show all conversations" check-box, expand the list and verify three conversations are displayed',
       async () => {
         await additionalShareUserCompareConversation.checkShowAllConversations();
-        const conversationsList =
-          await additionalShareUserCompareConversation.getCompareConversationNames();
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
-          [secondComparedConversation.name, thirdComparedConversation.name],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const sharedConversation of [
+          secondComparedConversation,
+          thirdComparedConversation,
+        ]) {
+          await baseAssertion.assertElementContainsText(
+            additionalShareUserCompareConversation.compareConversationRowNames,
+            [sharedConversation.name],
+          );
+        }
       },
     );
 
@@ -277,8 +310,10 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserCompareConversation.selectCompareConversation(
           secondComparedConversation.name,
+          { isHttpMethodTriggered: true },
         );
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
+        await additionalShareUserCompare.duplicateButton.waitForState();
       },
     );
 
@@ -292,11 +327,13 @@ dialSharedWithMeTest(
         );
 
         for (const conversation of conversationsToShare) {
-          await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
-            { name: conversation.name },
-            Colors.backgroundAccentSecondary,
+          await additionalShareUserConversationAssertion.assertSelectedEntity(
+            conversation.name,
           );
         }
+        await additionalShareUserAppContainer
+          .getChatLoader()
+          .waitForState({ state: 'hidden' });
       },
     );
 
@@ -309,6 +346,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.compare,
         );
+        await additionalShareUserSharedWithMeConversations
+          .selectedEntity(firstComparedConversation.name)
+          .waitFor();
         await additionalShareUserCompareConversation.checkShowAllConversations();
         await additionalShareUserCompareConversation.selectCompareConversation(
           thirdComparedConversation.name,

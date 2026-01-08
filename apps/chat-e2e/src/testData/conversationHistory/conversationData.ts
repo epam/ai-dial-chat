@@ -42,13 +42,14 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.conversationBuilder.getConversation();
-    const modelToUse = model
-      ? { id: typeof model === 'string' ? model : model.id }
-      : conversation.model;
+    const modelToUse =
+      model || model != undefined
+        ? { id: typeof model === 'string' ? model : model.reference }
+        : conversation.model;
     const settings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -70,7 +71,7 @@ export class ConversationData extends FolderData {
       conversationName = name;
       conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
     } else {
-      conversationName = GeneratorUtil.randomString(10);
+      conversationName = GeneratorUtil.randomConversationName();
       conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${conversationName}`;
     }
     return this.conversationBuilder
@@ -85,14 +86,13 @@ export class ConversationData extends FolderData {
   public prepareModelConversation(
     temp: number,
     sysPrompt: string,
-    addons: string[],
     model?: DialAIEntityModel | string,
   ) {
     const basicConversation = this.prepareDefaultConversation(model);
     const messageSettings: MessageSettings = {
       prompt: sysPrompt,
       temperature: temp,
-      selectedAddons: addons,
+      selectedAddons: [],
     };
     basicConversation.messages.forEach(
       (message) => (message.settings = messageSettings),
@@ -101,7 +101,6 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder
       .withTemperature(temp)
       .withPrompt(sysPrompt)
-      .withAddons(addons)
       .build();
   }
 
@@ -118,7 +117,7 @@ export class ConversationData extends FolderData {
     const settings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     requests.forEach((r) => {
       basicConversation.messages.push(
@@ -261,58 +260,6 @@ export class ConversationData extends FolderData {
     return defaultReplayConversation;
   }
 
-  public prepareAddonsConversation(
-    model: DialAIEntityModel | string,
-    addons: string[],
-    request?: string,
-  ) {
-    const conversation = this.prepareDefaultConversation(model);
-    conversation.selectedAddons = addons;
-    conversation.assistantModelId = conversation.model.id;
-    const messageSettings: MessageSettings = {
-      prompt: conversation.prompt,
-      temperature: conversation.temperature,
-      selectedAddons: addons,
-    };
-    const userMessage: Message = {
-      role: Role.User,
-      content: request ?? 'what is the temperature in Spain Malaga',
-      model: conversation.model,
-      settings: messageSettings,
-    };
-    const assistantMessage: Message = {
-      role: Role.Assistant,
-      content: 'The temperature is 16.5 degrees Celsius.',
-      model: conversation.model,
-      custom_content: {
-        stages: [
-          {
-            index: 0,
-            name: `addon-xweather({"query": "/weather/summary/Spain, Malaga"})`,
-            content:
-              '```javascript\nget_summary_weather_summary__location__get({"location": "Spain, Malaga"})\n```\n```json\n{"alerts": [], "conditions": {"dateTimeISO": "2024-03-20T10:30:00+01:00", "tempC": 16.5, "tempF": 61.7, "feelsLikeC": 16.5, "feelsLikeF": 61.7, "windDir": "ESE", "windSpeedMPH": 2.19, "windSpeedKPH": 3.53, "windGustMPH": 11.77, "windGustKPH": 18.94, "precipRateMM": 0.0, "precipRateIN": 0.0, "weather": "Partly Cloudy", "uvi": 2, "aqi": 76, "aqiCategory": "moderate", "aqiDominantPollutant": "pm10"}}\n```\nAs of 10:30 AM on March 20, 2024, the weather in Malaga, Spain is partly cloudy. The temperature is 16.5 degrees Celsius. The wind is coming from the ESE at 3.53 km/h with gusts up to 18.94 km/h. There is no precipitation expected. The UV index is 2. The air quality index (AQI) is 76, which is considered moderate, with PM10 being the dominant pollutant. he average weather in Spain varies depending on the region and the time of year. Overall, Spain has a Mediterranean climate with hot, dry summers and mild, rainy winters. Here is a breakdown of the average weather in different parts of the country',
-            status: 'completed',
-          },
-        ],
-        state: {
-          invocations: [
-            {
-              index: 0,
-              request:
-                '{"commands": [{"command": "XWeather", "arguments": {"query": "/weather/summary/Spain, Malaga"}}]}',
-              response:
-                '{"responses": [{"status": "SUCCESS", "response": "As of 10:30 AM on March 20, 2024, the weather in Malaga, Spain is partly cloudy. The temperature is 16.5 degrees Celsius. The wind is coming from the ESE at 3.53 km/h with gusts up to 18.94 km/h. There is no precipitation expected. The UV index is 2. The air quality index (AQI) is 76, which is considered moderate, with PM10 being the dominant pollutant."}]}',
-            },
-          ],
-        },
-      },
-      settings: messageSettings,
-      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
-    };
-    conversation.messages = [userMessage, assistantMessage];
-    return this.conversationBuilder.build();
-  }
-
   public prepareConversationWithTextContent(
     responseContent: string,
     model?: string | DialAIEntityModel,
@@ -321,7 +268,7 @@ export class ConversationData extends FolderData {
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -354,26 +301,6 @@ export class ConversationData extends FolderData {
     const responseContent =
       '| Country        | Capital    |\n| ------------- |-------------|\n| Canada      | Ottawa |\n| United States      | Washington, D.C. |\n';
     return this.prepareConversationWithTextContent(responseContent, model);
-  }
-
-  public prepareAssistantConversation(
-    assistant: DialAIEntityModel | string,
-    addons: string[],
-    assistantModel: DialAIEntityModel | string,
-    request?: string,
-  ) {
-    const conversation = this.prepareAddonsConversation(
-      assistant,
-      addons,
-      request,
-    );
-    conversation.assistantModelId =
-      typeof assistantModel === 'string' ? assistantModel : assistantModel.id;
-    conversation.messages.forEach(
-      (message) =>
-        (message.settings!.assistantModelId = conversation.assistantModelId),
-    );
-    return conversation;
   }
 
   public prepareNestedFolder(
@@ -458,7 +385,7 @@ export class ConversationData extends FolderData {
 
   public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.updatedAt = DateUtil.getLastWeekDate();
+    conversation.updatedAt = DateUtil.getLastSevenDaysDate();
     return conversation;
   }
 
@@ -467,7 +394,7 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
-    conversation.updatedAt = DateUtil.getLastMonthDate();
+    conversation.updatedAt = DateUtil.getLastThirtyDaysDate();
     return conversation;
   }
 
@@ -515,6 +442,7 @@ export class ConversationData extends FolderData {
       const conversation = this.prepareConversationWithAttachmentsInRequest(
         conversationData.model,
         conversationData.hasRequest,
+        undefined,
         ...conversationData.attachmentUrl,
       );
       historyConversations.push(conversation);
@@ -526,6 +454,7 @@ export class ConversationData extends FolderData {
   public prepareConversationWithAttachmentsInRequest(
     model: DialAIEntityModel | string,
     hasRequest?: boolean | string,
+    folderName?: string,
     ...attachmentUrl: string[]
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
@@ -534,7 +463,7 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -556,14 +485,22 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
-    return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
+    const name = GeneratorUtil.randomConversationName();
+
+    this.conversationBuilder
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
-      .withModel(modelToUse)
-      .build();
+      .withModel(modelToUse);
+
+    let conversationId = `${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`;
+
+    if (folderName !== undefined) {
+      const folder = this.prepareFolder(folderName);
+      conversationId = `${folder.id}/${conversationId}`;
+      this.conversationBuilder.withFolderId(folder.id);
+    }
+    return this.conversationBuilder.withId(conversationId).build();
   }
 
   public prepareHistoryConversationWithAttachmentsInResponse(
@@ -599,7 +536,7 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -617,9 +554,9 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    name = name ?? GeneratorUtil.randomString(10);
+    name = name ?? GeneratorUtil.randomConversationName();
 
-    let conversationBuilder = this.conversationBuilder
+    this.conversationBuilder
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -630,9 +567,9 @@ export class ConversationData extends FolderData {
     if (folderName !== undefined) {
       const folder = this.prepareFolder(folderName);
       conversationId = `${folder.id}/${conversationId}`;
-      conversationBuilder = conversationBuilder.withFolderId(folder.id);
+      this.conversationBuilder.withFolderId(folder.id);
     }
-    return conversationBuilder.withId(conversationId).build();
+    return this.conversationBuilder.withId(conversationId).build();
   }
 
   public prepareConversationWithAttachmentLinkInRequest(
@@ -647,7 +584,7 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -675,7 +612,7 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
+    const name = GeneratorUtil.randomConversationName();
     return this.conversationBuilder
       .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
@@ -694,7 +631,7 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
+      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -724,7 +661,7 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
+    const name = GeneratorUtil.randomConversationName();
     return this.conversationBuilder
       .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)

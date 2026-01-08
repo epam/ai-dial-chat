@@ -1,15 +1,16 @@
-import { FC, useMemo } from 'react';
+import { FC, memo, useMemo } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
-
-import { getPromptRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 
 import { PromptComponent } from './Prompt';
 
@@ -17,7 +18,11 @@ interface Props {
   prompts: PromptInfo[];
 }
 
-export const Prompts: FC<Props> = ({ prompts }) => {
+export const PromptsView: FC<Props> = ({ prompts }) => {
+  const visibleSidebarItemsCount = useAppSelector((state) =>
+    UISelectors.selectVisibleSidebarItems(state, FeatureType.Prompt),
+  );
+
   const { handleToggle, isExpanded } = useSectionToggle(
     RECENT_PROMPTS_SECTION_NAME,
     FeatureType.Prompt,
@@ -31,11 +36,8 @@ export const Prompts: FC<Props> = ({ prompts }) => {
   );
 
   const promptsToDisplay = useMemo(() => {
-    const promptRootId = getPromptRootId();
-    return prompts
-      .filter((prompt) => prompt.folderId === promptRootId) // only my root prompts
-      .reverse();
-  }, [prompts]);
+    return [...prompts].reverse().slice(0, visibleSidebarItemsCount);
+  }, [prompts, visibleSidebarItemsCount]);
 
   if (!promptsToDisplay.length) {
     return null;
@@ -64,3 +66,5 @@ export const Prompts: FC<Props> = ({ prompts }) => {
     </CollapsibleSection>
   );
 };
+
+export const Prompts = memo(PromptsView);

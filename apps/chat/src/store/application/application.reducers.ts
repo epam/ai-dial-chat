@@ -12,6 +12,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
@@ -25,11 +26,10 @@ const initialState: ApplicationState = {
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
   appLogs: undefined,
-  shouldSaveApplication: false,
-  exitAfterSave: false,
   publicFolders: [],
-  hasUnsavedChanges: false,
   logsEntityId: undefined,
+  editorStep: MarketplaceEditorSteps.General,
+  shouldTriggerEditorAutoUpdate: false,
 };
 
 export const applicationSlice = createSlice({
@@ -44,7 +44,6 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
-        slug?: string;
         schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
@@ -67,7 +66,7 @@ export const applicationSlice = createSlice({
     delete: (state, _action: PayloadAction<DialAIEntityModel>) => {
       state.appLoading = UploadStatus.LOADING;
     },
-    deleteSuccess: (state, _action: PayloadAction<void>) => {
+    deleteSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
     deleteFail: (state) => {
@@ -105,8 +104,12 @@ export const applicationSlice = createSlice({
       }: PayloadAction<{
         oldApplication: CustomApplicationModel;
         applicationData: CustomApplicationModel;
-        redirectUrl?: string;
+        redirectUrl?: URL | string;
         schema?: ApiDetailedApplicationTypeSchema;
+        publicationUrl?: string;
+        tabToOpen?: MarketplaceEditorSteps;
+        isSaveAndExit?: boolean;
+        shouldSelectApplication?: boolean;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -118,6 +121,12 @@ export const applicationSlice = createSlice({
     ) => {
       state.appDetails = payload.oldApplication;
       state.appLoading = UploadStatus.FAILED;
+    },
+    setShouldTriggerEditorAutoUpdate: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.shouldTriggerEditorAutoUpdate = payload;
     },
     get: (
       state,
@@ -157,6 +166,7 @@ export const applicationSlice = createSlice({
     ) => {
       if (state.appDetails?.id === payload.id && state.appDetails?.function) {
         state.appDetails.function.status = payload.status;
+        state.appDetails.functionStatus = payload.status;
       }
     },
     updateFunctionStatusFail: (
@@ -186,14 +196,23 @@ export const applicationSlice = createSlice({
     updateComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
-    updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
-      state.appDetails = action.payload;
+    updateSuccess: (
+      state,
+      action: PayloadAction<{
+        appDetails: CustomApplicationModel;
+        isExitingAfterSave?: boolean;
+      }>,
+    ) => {
+      state.appDetails = action.payload.appDetails;
     },
-    setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
-      state.shouldSaveApplication = action.payload;
-    },
-    setExitAfterSave: (state, action: PayloadAction<boolean>) => {
-      state.exitAfterSave = action.payload;
+    setAppDetails: (
+      state,
+      { payload }: PayloadAction<CustomApplicationModel | undefined>,
+    ) => {
+      state.appDetails = payload;
+      if (!payload) {
+        state.appLoading = UploadStatus.UNINITIALIZED;
+      }
     },
     enterEditMode: (
       state,
@@ -201,6 +220,7 @@ export const applicationSlice = createSlice({
         entity: { id: string; reference: string };
         applicationType: string;
         detailedApplicationTypeSchemaId?: string;
+        publicationUrl?: string;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -208,7 +228,8 @@ export const applicationSlice = createSlice({
     exitEditor: (
       state,
       _action: PayloadAction<{
-        redirectUrl?: string;
+        redirectUrl?: URL | string;
+        shouldSelectApplication?: boolean;
       }>,
     ) => state,
     enterEditModeComplete: (state) => {
@@ -229,15 +250,16 @@ export const applicationSlice = createSlice({
     ) {
       state.returnConversationIds = payload;
     },
-    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
-      state.hasUnsavedChanges = action.payload;
-    },
     setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;
     },
     setLogsEntityId(state, { payload }: PayloadAction<string | undefined>) {
       state.logsEntityId = payload;
     },
+    setEditorStep(state, { payload }: PayloadAction<MarketplaceEditorSteps>) {
+      state.editorStep = payload;
+    },
+    initQueryParams: (state) => state,
   },
 });
 

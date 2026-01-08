@@ -13,27 +13,29 @@ import {
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
-import { Spinner } from '../Common/Spinner';
-import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+
 import { ModelVersionSelect } from './ModelVersionSelect';
 import { PlaybackIcon } from './Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
@@ -87,10 +89,11 @@ const EmptyChatDescriptionView = ({
     () =>
       model
         ? models.filter(
-            (m) =>
+            (m: DialAIEntityModel) =>
               (installedModelIds.has(m.reference) ||
                 model.reference === m.reference) &&
-              getGroupModelKey(m) === getGroupModelKey(model),
+              getGroupMarketplaceEntityKey(m) ===
+                getGroupMarketplaceEntityKey(model),
           )
         : [],
     [installedModelIds, model, models],
@@ -135,6 +138,7 @@ const EmptyChatDescriptionView = ({
     Feature.EmptyChatSettings,
   );
   const incorrectModel = !model;
+  const isReadOnly = isEntityReadOnly(conversation);
   const isExternal = isEntityIdExternal(conversation);
   const modelIconSize = screenState === ScreenState.SM ? 36 : 50;
   const isOldReplay = isOldConversationReplay(conversation.replay);
@@ -147,16 +151,15 @@ const EmptyChatDescriptionView = ({
   return (
     <div className="flex size-full flex-col items-center gap-5 rounded-t px-3 py-4 md:px-0 lg:max-w-3xl">
       <div
-        data-qa="agent-name"
         className={classNames(
           'flex size-full justify-center whitespace-pre text-center',
           incorrectModel ? 'text-[40px]' : 'text-sm',
         )}
       >
-        <div className="flex flex-col gap-3" data-qa="agent-info-container">
+        <div className="flex flex-col gap-3" data-qa="entity-info-container">
           <div
             className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
-            data-qa="agent-info"
+            data-qa="entity-info"
           >
             {PseudoIcon ? (
               <PseudoIcon size={modelIconSize} />
@@ -170,7 +173,7 @@ const EmptyChatDescriptionView = ({
             )}
             <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
-                data-qa="agent-name"
+                data-qa="entity-name"
                 className={classNames(
                   'break-words',
                   incorrectModel &&
@@ -239,25 +242,23 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {!isExternal && (
+      {(!isReadOnly || !isExternal) && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           {!isEmptyChatChangeAgentHidden && (
-            <button
-              className="text-left text-accent-primary"
+            <DialButton
+              textClassName="text-accent-primary font-normal"
               data-qa="change-agent"
               onClick={handleOpenChangeModel}
-            >
-              {t('Change agent')}
-            </button>
+              label={t('Change agent')}
+            />
           )}
           {!isReplayAsIs && !isPlayback && isEmptyChatSettingsEnabled && (
-            <button
-              className="pl-3 text-left text-accent-primary"
+            <DialButton
+              textClassName="pl-3 text-accent-primary font-normal"
               data-qa="configure-settings"
               onClick={handleOpenSettings}
-            >
-              {t('Configure settings')}
-            </button>
+              label={t('Configure settings')}
+            />
           )}
         </div>
       )}

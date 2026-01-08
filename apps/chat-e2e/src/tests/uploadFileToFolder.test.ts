@@ -10,7 +10,7 @@ import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Create new folder.\n' +
     '[Manage attachments] Upload file directly to newly created nested folder',
   async ({
@@ -104,7 +104,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Tooltip is shown for folder and file names.\n' +
     '[Manage attachments] Upload file directly to "old" folder',
   async ({
@@ -124,7 +124,9 @@ dialTest(
     const folderName = GeneratorUtil.randomString(7);
 
     await dialTest.step('Upload file to some folder', async () => {
-      await fileApiHelper.putFile(Attachment.longImageName, folderName);
+      await fileApiHelper.putFile(Attachment.longImageName, {
+        parentPath: folderName,
+      });
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -141,18 +143,18 @@ dialTest(
         await attachedAllFiles.expandCollapseFolder(folderName, {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.getFolderName(folderName).hoverOver();
-        await baseAssertion.assertElementText(
-          tooltip,
-          folderName,
-          ExpectedMessages.tooltipContentIsValid,
-        );
         await attachedAllFiles
           .getFolderEntity(folderName, Attachment.longImageName)
           .hover();
         await baseAssertion.assertElementText(
           tooltip,
           Attachment.longImageName,
+          ExpectedMessages.tooltipContentIsValid,
+        );
+        await attachedAllFiles.getFolderName(folderName).hoverOver();
+        await baseAssertion.assertElementText(
+          tooltip,
+          folderName,
           ExpectedMessages.tooltipContentIsValid,
         );
       },

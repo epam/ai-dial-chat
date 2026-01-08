@@ -4,7 +4,7 @@ import {
   BaseDialEntity,
 } from '@/src/types/common';
 
-import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '../constants/folders';
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { FolderInterface } from './folder';
 
@@ -24,7 +24,6 @@ export type DialFile = Omit<
   BaseDialEntity & {
     percent?: number;
     fileContent?: File;
-    isPublicationFile?: boolean;
   } & ShareEntity;
 
 // For file folders folderId is relative path and id is relative path + '/' + name
@@ -46,6 +45,7 @@ export interface DialLink {
 
 export enum FileSourceType {
   MY_FILES = 'MY_FILES',
+  REVIEW_FILES = 'REVIEW_FILES',
   SHARED_WITH_ME = 'SHARED_WITH_ME',
   PUBLIC = 'PUBLIC',
 }
@@ -54,4 +54,22 @@ export enum FileValidationErrors {
   IncorrectSize = 'incorrectSize',
   IncorrectType = 'incorrectType',
   IncorrectName = 'incorrectName',
+}
+
+export interface OperationData<T> {
+  index: number;
+  data: T;
+}
+
+export interface OperationDataError<T> extends OperationData<T> {
+  error: string;
+}
+
+export interface FileOperationsResult<T> {
+  success: boolean;
+  succeeded: number;
+  failed: number;
+  total: number;
+  results: OperationData<T>[];
+  errors?: OperationDataError<T>[];
 }

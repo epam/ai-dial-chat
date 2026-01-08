@@ -14,10 +14,9 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 
+import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import Tooltip from '@/src/components/Common/Tooltip';
-
-import { DisableOverlay } from '../../Common/DisableOverlay';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -82,7 +81,6 @@ export const TemperatureSlider: FC<Props> = ({
           <div className="flex items-center gap-2">
             <label className="text-left">{label}</label>
             <Tooltip
-              contentClassName="max-w-[220px]"
               triggerClassName="text-secondary"
               tooltip={
                 <EntityMarkdownDescription>

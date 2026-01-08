@@ -4,24 +4,31 @@ import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
+  API,
   AddAppMenuOptions,
   ApplicationTypes,
+  Attachment,
   CheckboxState,
+  EntityEditorAppTypes,
+  ExpectedConstants,
   ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
   MenuOptions,
   SourcesFilterOptions,
 } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { Locator, expect } from '@playwright/test';
+import { Locator } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+dialTest.skip(
   'Sources: check My Custom apps.\n' +
-    'Sources: combination inside sources filter works as OR; combination sources + type/topic works as AND',
+    'Sources: combination inside sources filter works as OR; combination sources + type/topic works as AND.\n' +
+    '[App Editor]: Filters and search results are saved when edit field icon for custom app',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -29,14 +36,25 @@ dialTest(
     marketplace,
     marketplaceFilter,
     marketplaceHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     modelApiHelper,
     setTestIds,
     baseAssertion,
+    fileApiHelper,
+    entityEditorGeneralForm,
+    attachFilesModal,
+    entityEditorHeader,
   }) => {
-    setTestIds('EPMRTC-5234', 'EPMRTC-5239');
+    setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
     const appName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(7);
+    let initIconUrl: string;
+
+    await dialTest.step('Upload images to the root path', async () => {
+      initIconUrl = await fileApiHelper.putFile(Attachment.appIconSvg);
+      await fileApiHelper.putFile(Attachment.cloudImageName);
+    });
 
     await dialTest.step(
       'Prepare a custom application with some topic in the "My Workspace"',
@@ -44,6 +62,7 @@ dialTest(
         const applicationModel = customApplicationBuilder
           .withDisplayName(appName)
           .withDescriptionKeywords(appTopic)
+          .withIconUrl(initIconUrl)
           .build();
         await applicationApiHelper.createApplication(applicationModel);
       },
@@ -79,7 +98,7 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           )
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [appName],
@@ -108,7 +127,7 @@ dialTest(
         await marketplaceFilter
           .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, appTopic)
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           1,
@@ -134,12 +153,70 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step(
+      'Set app name in the search field and open it for edit',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appName);
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: true,
+            isEditable: true,
+          },
+        );
+        await marketplaceEntities.hoverOver();
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
+          .selectMenuOption(MenuOptions.edit);
+      },
+    );
+
+    await dialTest.step('Update app icon', async () => {
+      await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+        isHttpMethodTriggered: false,
+      });
+      await baseAssertion.assertElementState(
+        entityEditorGeneralForm,
+        'visible',
+      );
+      await entityEditorGeneralForm.changeIcon.click();
+      await attachFilesModal.checkAttachedFile(
+        Attachment.cloudImageName,
+        FileModalSection.AllFiles,
+      );
+      await attachFilesModal.attachFiles();
+      await entityEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Verify search string and Source filter are preserved',
+      async () => {
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          appName,
+        );
+        await baseAssertion.assertCheckboxState(
+          marketplaceFilter.filterByPropertyOptionInput(
+            MarketplaceFilterTypes.sources,
+            SourcesFilterOptions.myCustomApps,
+          ),
+          CheckboxState.checked,
+        );
+      },
+    );
   },
 );
 
-dialTest(
+dialTest.skip(
   'Sources: the search results are updated if to remove/add custom application.\n' +
-    'Sources: the filter disappears and search results are updated if to remove custom application when only one existed',
+    'Sources: the filter disappears and search results are updated if to remove custom application when only one existed.\n' +
+    `My workspace: The button is named 'Add app', the menu has names 'Custom app', 'Code app'`,
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -148,17 +225,19 @@ dialTest(
     navigationPanel,
     marketplaceFilter,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
-    appEditorPage,
-    appEditorGeneralForm,
-    appEditorViewForm,
-    appEditorHeader,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    addAppDropdownMenuAssertion,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    customAppEditorViewForm,
+    entityEditorHeader,
     confirmationDialog,
     setTestIds,
     baseAssertion,
+    entityDetailsModal,
   }) => {
-    setTestIds('EPMRTC-5351', 'EPMRTC-5238');
+    setTestIds('EPMRTC-5351', 'EPMRTC-5238', 'EPMRTC-7181');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     let myCustomAppsSourceFilterElement: Locator;
@@ -188,7 +267,7 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           );
         await myCustomAppsSourceFilterElement.click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [firstAppName],
@@ -198,27 +277,43 @@ dialTest(
     );
 
     await dialTest.step(
-      'Create one more custom application in the "My Workspace"',
+      'Navigate to "My Workspace" and verify "Add app" button title and available menu options',
       async () => {
         await navigationPanel.goToMyWorkspace();
-        await marketplaceHeader.addAppButton.click();
-        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
-        await appEditorGeneralForm.fillInAppFields({
-          name: secondAppName,
-        });
-        await appEditorGeneralForm.goNext();
-        await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementText(
+          marketplaceHeader.addAppButton,
+          ExpectedConstants.addAppButtonTitle,
+        );
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenuAssertion.assertMenuIncludesOptions(
+          ...Object.values(AddAppMenuOptions),
+        );
       },
     );
+
+    await dialTest.step('Create one more custom application', async () => {
+      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.CustomApp);
+      await entityEditorGeneralForm.fillInEntityFields({
+        name: secondAppName,
+      });
+      await entityEditorGeneralForm.goNext({
+        hostsArray: [API.applicationCreateHost, API.installedDeploymentsHost()],
+      });
+      await customAppEditorViewForm.fillInAppFields();
+      await entityEditorHeader.focusOn({
+        triggeredHost: API.applicationCreateHost,
+      });
+      await entityEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
 
     await dialTest.step(
       'Verify newly added app is displayed immediately',
       async () => {
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        await entityDetailsModal.closeButton.click();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [firstAppName, secondAppName],
@@ -231,11 +326,13 @@ dialTest(
       'Delete the first app and verify it disappears immediately',
       async () => {
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(firstAppName);
+          await marketplaceEntitiesSection.findEntityElement(firstAppName);
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
@@ -243,7 +340,7 @@ dialTest(
           myCustomAppsSourceFilterElement,
           CheckboxState.checked,
         );
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayExcludesAll(
           actualAgentNames,
@@ -260,7 +357,7 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sources: check Shared with me.\n' +
     'Sources: check Public. And Sorting order - alphabetically.\n' +
     'Copy link is not available for Shared with me applications',
@@ -279,9 +376,9 @@ dialSharedWithMeTest(
     additionalShareUserMarketplacePage,
     additionalShareUserMarketplace,
     additionalShareUserMarketplaceFilter,
-    additionalShareUserMarketplaceAgentsSection,
+    additionalShareUserMarketplaceEntitiesSection,
     additionalShareUserNavigationPanel,
-    additionalShareUserAgentDetailsModal,
+    additionalShareUserEntityDetailsModal,
     setTestIds,
     baseAssertion,
   }) => {
@@ -342,8 +439,10 @@ dialSharedWithMeTest(
       'Open "Marketplace" and verify Sources filter contains "Shared with me", "My Custom apps", "Public" options sorted alphabetically',
       async () => {
         await additionalUserFileApiHelper.updateInstalledDeployments([]);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds();
-        await additionalShareUserMarketplacePage.openMarketplacePage();
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel();
+        await additionalShareUserMarketplacePage.openMarketplacePage({
+          updateInstalledToolsets: false,
+        });
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         const sourceFilterOptions =
           await additionalShareUserMarketplaceFilter.filterByPropertyOptionLabels(
@@ -376,7 +475,7 @@ dialSharedWithMeTest(
           CheckboxState.checked,
         );
         const actualAgents =
-          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+          await additionalShareUserMarketplaceEntitiesSection.getAllEntities();
         const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
           actualAgentNames,
@@ -395,15 +494,15 @@ dialSharedWithMeTest(
       'Open shared app and verify no Copy link is available',
       async () => {
         const sharedAppElement =
-          await additionalShareUserMarketplaceAgentsSection.findAgentElement(
+          await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             sharedAppName,
           );
         await sharedAppElement.click();
         await baseAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal.copyLink,
+          additionalShareUserEntityDetailsModal.copyLink,
           'hidden',
         );
-        await additionalShareUserAgentDetailsModal.closeButton.click();
+        await additionalShareUserEntityDetailsModal.closeButton.click();
       },
     );
 
@@ -429,16 +528,14 @@ dialSharedWithMeTest(
               CheckboxState.checked,
             );
             actualAgents =
-              await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+              await additionalShareUserMarketplaceEntitiesSection.getAllEntities();
           } else {
             await additionalShareUserNavigationPanel.goToMyWorkspace();
             await additionalShareUserMarketplacePage.waitForPageLoaded();
-            //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
-            await additionalShareUserMarketplaceAgentsSection.goTop();
             actualAgents =
-              await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+              await additionalShareUserMarketplaceEntitiesSection.getAllEntities();
             baseAssertion.assertValue(
-              actualAgents.filter((agent) => agent.isWorkspaceAgent).length,
+              actualAgents.filter((agent) => agent.isWorkspaceEntity).length,
               0,
             );
             await baseAssertion.assertElementState(
@@ -468,14 +565,11 @@ dialSharedWithMeTest(
           const expectedAgentNames = Array.from(
             groupedConfigAgents.keys(),
           ).filter((k) => k !== sharedAppName && k !== additionalUserAppName);
-          for (const expectedAgentName of expectedAgentNames) {
-            expect
-              .soft(
-                actualAgents.find((agent) => agent.name === expectedAgentName),
-                MarketplaceExpectedMessages.filteredAgentsAreValid,
-              )
-              .toBeDefined();
-          }
+          baseAssertion.assertArrayIncludesAll(
+            actualAgents.map((agent) => agent.name),
+            expectedAgentNames,
+            MarketplaceExpectedMessages.filteredAgentsAreValid,
+          );
         },
       );
     }

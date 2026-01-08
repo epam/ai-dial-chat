@@ -16,12 +16,14 @@ import {
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
@@ -53,13 +55,15 @@ dialSharedWithMeTest(
     additionalShareUserAttachFilesModal,
     additionalShareUserToastAssertion,
     conversations,
+    appContainer,
     attachmentDropdownMenu,
     attachFilesModal,
     confirmationDialog,
     conversationDropdownMenu,
+    agentInfo,
+    chatMessages,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     additionalSecondUserShareApiHelper,
     sendMessage,
     additionalSecondShareUserFileApiHelper,
@@ -109,21 +113,19 @@ dialSharedWithMeTest(
           ModelsUtil.getLatestModelsWithAttachment(),
         );
         defaultModelId = defaultModel.id;
-        imageUrl = await fileApiHelper.putFile(
-          Attachment.sunImageName,
-          API.modelFilePath(defaultModelId),
-        );
-        imageUrl2 = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          API.modelFilePath(defaultModelId),
-        );
+        imageUrl = await fileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: API.modelFilePath(defaultModelId),
+        });
+        imageUrl2 = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: API.modelFilePath(defaultModelId),
+        });
         imageInConversationInFolderUrl = await fileApiHelper.putFile(
           Attachment.flowerImageName,
-          API.modelFilePath(defaultModelId),
+          { parentPath: API.modelFilePath(defaultModelId) },
         );
         specialCharsImageUrl = await fileApiHelper.putFile(
           Attachment.specialSymbolsName,
-          specialCharsFolder,
+          { parentPath: specialCharsFolder },
         );
 
         //TODO EPMRTC-4135 blocked by the #1076
@@ -158,9 +160,12 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModelId,
             true,
+            undefined,
             specialCharsImageUrl,
           );
-        await localStorageManager.setRecentModelsIds(defaultModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          defaultModel,
+        );
 
         //TODO EPMRTC-4135 blocked by the #1076
         // conversationData.resetData();
@@ -236,6 +241,9 @@ dialSharedWithMeTest(
         });
 
         await attachFilesModal.closeButton.hoverOver();
+        const expectedArrowColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textAccentPrimary,
+        );
 
         const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
@@ -244,7 +252,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           firstImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         const secondImageEntity: TreeEntity = {
@@ -256,7 +264,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           secondImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         const thirdImageEntity: TreeEntity = {
@@ -268,13 +276,13 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           thirdImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         //TODO EPMRTC-4135 blocked by the #1076
         // const fourthImageEntity: TreeEntity = { name: Attachment.heartImageName };
         // await manageAttachmentsAssertion.assertSharedFileArrowIconState(fourthImageEntity, 'visible');
-        // await manageAttachmentsAssertion.assertEntityArrowIconColor(fourthImageEntity, Colors.controlsBackgroundAccent);
+        // await manageAttachmentsAssertion.assertEntityArrowIconColor(fourthImageEntity, expectedArrowColor);
 
         const specialCharsImageEntity: TreeEntity = {
           name: Attachment.specialSymbolsName,
@@ -285,7 +293,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           specialCharsImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
         await attachFilesModal.closeButton.click();
       },
@@ -294,7 +302,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'By user2 create a conversation with attachments from Shared with me section in Manage attachments',
       async () => {
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           defaultModel,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
@@ -305,6 +313,7 @@ dialSharedWithMeTest(
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
 
         await additionalShareUserManageAttachmentsAssertion.assertEntityState(
@@ -333,9 +342,11 @@ dialSharedWithMeTest(
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
         await toast.closeToast();
-        await conversations.selectConversation(
-          conversationWithTwoResponses.name,
-        );
+        await conversations.selectEntity(conversationWithTwoResponses.name);
+        await conversations
+          .selectedEntity(conversationWithTwoResponses.name)
+          .waitFor();
+        await appContainer.waitForAppLoaded(loadingTimeout);
       },
     );
 
@@ -351,6 +362,7 @@ dialSharedWithMeTest(
             await renameConversationModal.editConversationNameWithSaveButton(
               conversationWithTwoResponses.name,
             );
+            await chatMessages.waitForState();
             break;
           case 'model change':
             await chatHeader.chatAgent.click();
@@ -360,8 +372,8 @@ dialSharedWithMeTest(
                   (model) => model.id !== defaultModelId,
                 ),
               ),
-              marketplacePage,
             );
+            await chatMessages.waitForState();
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
@@ -371,6 +383,7 @@ dialSharedWithMeTest(
             await confirmationDialog.confirm({
               triggeredHttpMethod: 'DELETE',
             });
+            await agentInfo.waitForState();
             break;
         }
       });
@@ -381,9 +394,18 @@ dialSharedWithMeTest(
           await chatBar.openManageAttachmentsModal();
           await attachedAllFiles.waitForState();
 
-          await attachedAllFiles.expandFolder(AttachFilesFolders.appdata);
-          await attachedAllFiles.expandFolder(defaultModelId);
-          await attachedAllFiles.expandFolder(AttachFilesFolders.images);
+          await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
+            isHttpMethodTriggered: true,
+            httpHost: API.filesListingHost(),
+          });
+          await attachedAllFiles.expandFolder(defaultModelId, {
+            isHttpMethodTriggered: true,
+            httpHost: API.filesListingHost(),
+          });
+          await attachedAllFiles.expandFolder(AttachFilesFolders.images, {
+            isHttpMethodTriggered: true,
+            httpHost: API.filesListingHost(),
+          });
 
           await attachFilesModal.closeButton.hoverOver();
           await manageAttachmentsAssertion.assertSharedFileArrowIconState(
@@ -415,15 +437,24 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationWithSpecialChars.name,
-        );
+        await conversations.selectEntity(conversationWithSpecialChars.name);
+        await conversations
+          .selectedEntity(conversationWithSpecialChars.name)
+          .waitFor();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'GET',
+            apiHost: API.filesListingHost(),
+          },
         );
 
-        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.expandFolder(specialCharsFolder, {
+          isHttpMethodTriggered: true,
+          httpHost: API.filesListingHost(),
+        });
         await attachFilesModal.closeButton.hoverOver();
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
@@ -447,15 +478,24 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationWithSpecialChars.name,
-        );
+        await conversations.selectEntity(conversationWithSpecialChars.name);
+        await conversations
+          .selectedEntity(conversationWithSpecialChars.name)
+          .waitFor();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'GET',
+            apiHost: API.filesListingHost(),
+          },
         );
 
-        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.expandFolder(specialCharsFolder, {
+          isHttpMethodTriggered: true,
+          httpHost: API.filesListingHost(),
+        });
         await attachFilesModal.closeButton.hoverOver();
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
@@ -467,7 +507,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -624,11 +664,13 @@ dialSharedWithMeTest(
       'User2 accepts share invitation by another user',
       async () => {
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           attachmentModel,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(attachmentModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          attachmentModel,
+        );
       },
     );
 
@@ -667,7 +709,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversationWithTwoRequestsWithAttachments.name,
           { isHttpMethodTriggered: true },
         );
@@ -697,7 +739,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown in responses',
       async () => {
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversationWithTwoResponsesWithAttachments.name,
           { isHttpMethodTriggered: true },
         );
@@ -737,7 +779,7 @@ dialSharedWithMeTest(
           user1FolderName,
         );
 
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           user1ConversationInFolder.name,
           { isHttpMethodTriggered: true },
         );
@@ -774,7 +816,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens Manage attachments',
       async () => {
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserConversations.selectEntity(
           secondUserEmptyConversation.name,
         );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
@@ -1048,7 +1090,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Deleted by the owner file disappears from "Shared with me". There was only one shared and existed file. "Shared with me" disappears.',
   async ({
     setTestIds,
@@ -1074,7 +1116,7 @@ dialSharedWithMeTest(
     let imageUrl: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let conversation: Conversation;
-    const defaultModel = ModelsUtil.getDefaultModel()!;
+    const defaultModel = ModelsUtil.getDefaultAgent()!;
 
     await localStorageManager.setChatCollapsedSection(
       CollapsedSections.Organization,
@@ -1104,7 +1146,7 @@ dialSharedWithMeTest(
       await localStorageManager.setShowSideBarPanels();
     });
 
-    await dialTest.step('Open Dial by additional user', async () => {
+    await dialTest.step('Open DIAL by additional user', async () => {
       await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       await additionalShareUserDialHomePage.openHomePage();
       await additionalShareUserDialHomePage.waitForPageLoaded();

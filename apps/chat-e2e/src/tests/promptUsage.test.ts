@@ -8,9 +8,9 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { Colors, CssClasses, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'The list of prompts is updated if to type /name.\n' +
@@ -497,7 +497,7 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(promptName);
         await tooltipAssertion.assertTooltipStyle(
           Styles.wordBreak,
-          Styles.breakAll,
+          CssClasses.breakAll,
         );
       },
     );
@@ -549,6 +549,18 @@ dialTest(
       await dataInjector.createPrompts([prompt]);
       await localStorageManager.setShowSideBarPanels();
     });
+
+    await dialTest.step(
+      'Set the agent with allowed systemPrompt to the recent',
+      async () => {
+        const recentModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels().filter((m) => m.features?.systemPrompt),
+        );
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          recentModel,
+        );
+      },
+    );
 
     await dialTest.step(
       `Type / in system prompt field, select created prompt and verify variable modal with default values is displayed`,
@@ -665,6 +677,18 @@ dialSharedWithMeTest(
       },
     );
 
+    await dialSharedWithMeTest.step(
+      'Set the agent with allowed systemPrompt to the recent',
+      async () => {
+        const recentModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels().filter((m) => m.features?.systemPrompt),
+        );
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
+          recentModel,
+        );
+      },
+    );
+
     await dialTest.step(
       `Type / in system prompt field, select shared prompt with parameters and verify variable modal with default values is displayed`,
       async () => {
@@ -731,7 +755,8 @@ dialSharedWithMeTest(
 );
 
 dialTest(
-  `View prompt: on 'Use prompt' button click the prompt parameters modal is opened. Prompt contains parameters.`,
+  `View prompt: on 'Use prompt' button click the prompt parameters modal is opened. Prompt contains parameters.\n` +
+    '[View prompt] View prompt modal is opened via context menu',
   async ({
     dialHomePage,
     promptData,
@@ -742,10 +767,11 @@ dialTest(
     prompts,
     promptDropdownMenu,
     promptPreviewModal,
+    promptPreviewModalAssertion,
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-6108');
+    setTestIds('EPMRTC-6108', 'EPMRTC-6146');
     let prompt: Prompt;
     const aVar = 'a';
     const aVarDefaultValue = '5';
@@ -772,6 +798,9 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.view, {
           triggeredHttpMethod: 'GET',
         });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
         await promptPreviewModal.usePromptButton.click();
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalAssertion.assertPromptVariableValue(

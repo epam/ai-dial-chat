@@ -17,6 +17,7 @@ import {
 } from '@floating-ui/react';
 import {
   HTMLProps,
+  ReactElement,
   ReactNode,
   Ref,
   cloneElement,
@@ -139,16 +140,17 @@ export const TooltipTrigger = forwardRef<
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
   const context = useTooltipContext();
 
-  const typedChildren = children as ReactNode;
-
+  // In React 19, ref is now a regular prop, so we check children.props.ref
   const isRefInChildren =
-    typedChildren &&
-    typeof typedChildren === 'object' &&
-    'ref' in typedChildren &&
-    typedChildren.ref !== undefined;
-
+    children &&
+    isValidElement(children) &&
+    children.props &&
+    typeof children.props === 'object' &&
+    'ref' in children.props &&
+    children.props.ref !== undefined &&
+    children.props.ref !== null;
   const childrenRef = isRefInChildren
-    ? (typedChildren.ref as Ref<unknown>)
+    ? (children as ReactElement<{ ref: Ref<unknown> }>).props.ref
     : undefined;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
@@ -159,9 +161,11 @@ export const TooltipTrigger = forwardRef<
       context.getReferenceProps({
         ref,
         ...props,
-        ...children.props,
+        ...(typeof children.props === 'object' &&
+          children.props !== null &&
+          children.props),
         'data-state': context.open ? 'open' : 'closed',
-      }),
+      } as HTMLProps<HTMLElement>),
     );
   }
 
@@ -197,7 +201,7 @@ export const TooltipContent = forwardRef<
         }}
         {...context.getFloatingProps(props)}
         className={classNames(
-          'z-50 whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+          'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
           context.getFloatingProps(props).className as string,
         )}
         data-qa="tooltip"
@@ -215,22 +219,24 @@ export const TooltipContent = forwardRef<
   );
 });
 
-interface TooltipOptions extends TooltipContainerOptions {
+export interface TooltipOptions extends TooltipContainerOptions {
   hideTooltip?: boolean;
   tooltip: ReactNode;
   children: ReactNode;
   triggerClassName?: string;
   contentClassName?: string;
   dataQa?: string;
+  asChild?: boolean;
 }
 
-export default function Tooltip({
+export function Tooltip({
   hideTooltip,
   tooltip,
   children,
   triggerClassName,
   contentClassName,
   dataQa,
+  asChild,
   ...tooltipProps
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
@@ -241,10 +247,21 @@ export default function Tooltip({
     );
   return (
     <TooltipContainer {...tooltipProps}>
-      <TooltipTrigger className={triggerClassName} data-qa={dataQa}>
+      <TooltipTrigger
+        className={triggerClassName}
+        data-qa={dataQa}
+        asChild={asChild}
+      >
         {children}
       </TooltipTrigger>
-      <TooltipContent className={contentClassName}>{tooltip}</TooltipContent>
+      <TooltipContent
+        className={classNames(
+          'max-w-[250px] break-words sm:max-w-[400px]',
+          contentClassName,
+        )}
+      >
+        {tooltip}
+      </TooltipContent>
     </TooltipContainer>
   );
 }

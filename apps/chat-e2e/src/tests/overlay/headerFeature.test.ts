@@ -132,7 +132,7 @@ dialOverlayTest(
     overlayPromptBar,
     overlayConversations,
     overlayConversationDropdownMenu,
-    overlayPublishingRequestModal,
+    overlayPublishingRequestDialog,
     overlayPrompts,
     overlayPromptDropdownMenu,
     overlaySettingsModal,
@@ -142,7 +142,6 @@ dialOverlayTest(
     overlayProfilePanel,
     overlayRequestApiKeyModal,
     overlayReportAnIssueModal,
-    overlayAttachFilesModal,
     overlayChatMessages,
     overlayBaseAssertion,
     overlayConversationAssertion,
@@ -227,18 +226,12 @@ dialOverlayTest(
     );
 
     await dialTest.step(
-      'Verify "Manage attachments" modal is opened on click "Clip" in the bottom menu',
+      'Verify "Clip" icon is not visible at the bottom menu',
       async () => {
         await overlayBaseAssertion.assertElementState(
           overlayChatBar.attachments,
-          'visible',
+          'hidden',
         );
-        await overlayChatBar.openManageAttachmentsModal();
-        await overlayBaseAssertion.assertElementState(
-          overlayAttachFilesModal,
-          'visible',
-        );
-        await overlayAttachFilesModal.closeButton.click();
       },
     );
 
@@ -268,17 +261,17 @@ dialOverlayTest(
           MenuOptions.publish,
         );
         await overlayBaseAssertion.assertElementState(
-          overlayPublishingRequestModal,
+          overlayPublishingRequestDialog,
           'visible',
         );
-        await overlayPublishingRequestModal.cancelButton.click();
+        await overlayPublishingRequestDialog.cancelButton.click();
       },
     );
 
     await dialTest.step(
       'Verify new conversation is not create if to click on app logo',
       async () => {
-        await overlayConversations.selectConversation(
+        await overlayConversations.selectEntity(
           conversation.name,
           { isHttpMethodTriggered: false },
           { exactMatch: true },
@@ -335,10 +328,10 @@ dialOverlayTest(
         await overlayPrompts.entityDotsMenu(prompt.name).click();
         await overlayPromptDropdownMenu.selectMenuOption(MenuOptions.publish);
         await overlayBaseAssertion.assertElementState(
-          overlayPublishingRequestModal,
+          overlayPublishingRequestDialog,
           'visible',
         );
-        await overlayPublishingRequestModal.cancelButton.click();
+        await overlayPublishingRequestDialog.cancelButton.click();
         await overlayPromptBar.closeButton.click();
       },
     );
@@ -364,27 +357,19 @@ dialOverlayTest(
       await overlayProfilePanel
         .getFooter()
         .openFooterLink(ExpectedConstants.requestApiKeyLink);
-      //TODO: remove when fixed https://github.com/epam/ai-dial-chat/issues/2878
-      const overlayRequestApiKeyModalFirst =
-        overlayRequestApiKeyModal.getNthElement(0);
       await overlayBaseAssertion.assertElementState(
-        overlayRequestApiKeyModalFirst,
+        overlayRequestApiKeyModal,
         'visible',
       );
-      for (let i = 1; i <= 2; i++) {
-        await page.keyboard.press(keys.escape);
-      }
+      await page.keyboard.press(keys.escape);
     });
 
     await dialTest.step('Verify a new issue can be reported', async () => {
       await overlayProfilePanel
         .getFooter()
         .openFooterLink(ExpectedConstants.reportAnIssueLink);
-      //TODO: remove when fixed https://github.com/epam/ai-dial-chat/issues/2878
-      const overlayRequestApiKeyModalFirst =
-        overlayReportAnIssueModal.getNthElement(0);
       await overlayBaseAssertion.assertElementState(
-        overlayRequestApiKeyModalFirst,
+        overlayReportAnIssueModal,
         'visible',
       );
     });
@@ -449,7 +434,7 @@ dialOverlayTest(
         const allConversations = await overlayItemApiHelper.listItems(
           API.conversationsHost(),
         );
-        const conversationWithContent = `${ModelsUtil.getDefaultModel()!.id}${ItemUtil.entityIdSeparator}${requestContent}`;
+        const conversationWithContent = `${ModelsUtil.getDefaultAgent()!.id}${ItemUtil.entityIdSeparator}${requestContent}`;
         expect
           .soft(
             allConversations.find((c) => c.name === conversationWithContent),

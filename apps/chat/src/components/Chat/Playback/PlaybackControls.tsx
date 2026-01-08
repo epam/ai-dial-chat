@@ -20,17 +20,25 @@ import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ChatActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PlaybackAttachments } from './PlaybackAttachments';
 
-import { Attachment, MessageFormValueType } from '@epam/ai-dial-shared';
+import {
+  Attachment,
+  Feature,
+  MessageFormValueType,
+} from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -68,6 +76,15 @@ export const PlaybackControls = ({
   );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const isDisabledPlaybackControls = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisabledPlaybackControls),
+  );
+  const disabledPlaybackControlsData = useAppSelector((state) =>
+    SettingsSelectors.selectFeatureData(
+      state,
+      Feature.DisabledPlaybackControls,
+    ),
+  );
 
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
   const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
@@ -115,8 +132,16 @@ export const PlaybackControls = ({
       getMessageFormValue(currentMessage) ??
       getConfigurationValue(currentMessage);
     const message = attachments.length
-      ? { content, custom_content: { attachments, form_value } }
-      : { content, custom_content: { form_value } };
+      ? {
+          content,
+          custom_content: { attachments, form_value },
+          modelId: currentMessage?.model?.id,
+        }
+      : {
+          content,
+          custom_content: { form_value },
+          modelId: currentMessage?.model?.id,
+        };
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
@@ -128,7 +153,11 @@ export const PlaybackControls = ({
   );
 
   const handlePlayNextMessage = useCallback(() => {
-    if (isMessageStreaming || !isNextMessageInStack) {
+    if (
+      isDisabledPlaybackControls ||
+      isMessageStreaming ||
+      !isNextMessageInStack
+    ) {
       return;
     }
     if (phase === PlaybackPhases.EMPTY) {
@@ -138,10 +167,19 @@ export const PlaybackControls = ({
     setPhase(PlaybackPhases.EMPTY);
 
     dispatch(ConversationsActions.playbackNextMessageStart());
-  }, [dispatch, isMessageStreaming, isNextMessageInStack, phase]);
+  }, [
+    dispatch,
+    isDisabledPlaybackControls,
+    isMessageStreaming,
+    isNextMessageInStack,
+    phase,
+  ]);
 
   const handlePrevMessage = useCallback(() => {
-    if (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE) {
+    if (
+      isDisabledPlaybackControls ||
+      (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
+    ) {
       return;
     }
     if (phase === PlaybackPhases.EMPTY) {
@@ -157,7 +195,13 @@ export const PlaybackControls = ({
     }
 
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch, isPrevMessageInStack, phase, activeIndex]);
+  }, [
+    isDisabledPlaybackControls,
+    activeIndex,
+    phase,
+    isPrevMessageInStack,
+    dispatch,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -230,6 +274,7 @@ export const PlaybackControls = ({
             ChatActions.setFormValue({
               property,
               value: value as MessageFormValueType,
+              modelId: activeMessage?.modelId ?? '',
             }),
           );
         },
@@ -237,25 +282,38 @@ export const PlaybackControls = ({
     } else if (phase === PlaybackPhases.EMPTY) {
       dispatch(ChatActions.resetFormValue());
     }
-  }, [activeMessage?.custom_content?.form_value, dispatch, phase]);
+  }, [
+    activeMessage?.custom_content.form_value,
+    activeMessage?.modelId,
+    dispatch,
+    phase,
+  ]);
 
   return (
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
         className={classNames(
-          'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
+          'relative mx-2 mb-2 flex flex-row md:mx-4 md:mb-0 md:last:mb-6',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
         )}
         data-qa="playback-control"
       >
-        <button
-          data-qa="playback-prev"
-          onClick={handlePrevMessage}
-          disabled={activeIndex === 0 && phase !== PlaybackPhases.MESSAGE}
-          className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+        <Tooltip
+          tooltip={disabledPlaybackControlsData?.description}
+          asChild
+          isTriggerClickable
         >
-          <IconPlayerPlay size={20} className="rotate-180" />
-        </button>
+          <DialButton
+            data-qa="playback-prev"
+            onClick={handlePrevMessage}
+            disabled={
+              isDisabledPlaybackControls ||
+              (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
+            }
+            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+            iconBefore={<IconPlayerPlay size={20} className="rotate-180" />}
+          />
+        </Tooltip>
         <div
           ref={nextMessageBoxRef}
           className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
@@ -289,14 +347,23 @@ export const PlaybackControls = ({
                       }
                     />
                   )}
-                  <button
-                    data-qa="playback-next"
-                    onClick={handlePlayNextMessage}
-                    className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                    disabled={isMessageStreaming || !isNextMessageInStack}
+                  <Tooltip
+                    tooltip={disabledPlaybackControlsData?.description}
+                    isTriggerClickable
+                    asChild
                   >
-                    <IconPlayerPlay size={20} className="shrink-0" />
-                  </button>
+                    <DialButton
+                      data-qa="playback-next"
+                      onClick={handlePlayNextMessage}
+                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+                      disabled={
+                        isDisabledPlaybackControls ||
+                        isMessageStreaming ||
+                        !isNextMessageInStack
+                      }
+                      iconBefore={<IconPlayerPlay size={20} />}
+                    />
+                  </Tooltip>
                 </>
               )}
             </>

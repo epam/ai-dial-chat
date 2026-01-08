@@ -1,84 +1,51 @@
 import { useRouter } from 'next/router';
 
+import { BehaviorSubject, switchMap } from 'rxjs';
+
 import {
   Action,
   Store,
   combineReducers,
   configureStore,
 } from '@reduxjs/toolkit';
-import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
 
-import {
-  Epic,
-  EpicMiddleware,
-  combineEpics,
-  createEpicMiddleware,
-} from 'redux-observable';
+import { Epic, EpicMiddleware, createEpicMiddleware } from 'redux-observable';
 
-import { ChatEpics } from '@/src/store/chat/chat.epics';
-import { SettingsState } from '@/src/store/settings/settings.types';
-
-import { AddonsEpics } from './addons/addons.epics';
-import { addonsSlice } from './addons/addons.reducers';
-import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
-import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epics';
 import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { authSlice } from './auth/auth.reducers';
 import { chatSlice } from './chat/chat.reducer';
-import { CodeEditorEpics } from './codeEditor/codeEditor.epics';
 import { codeEditorSlice } from './codeEditor/codeEditor.reducer';
-import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
-import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
-import { ImportExportEpics } from './import-export/importExport.epics';
+import { foldersSlice } from './folders/folders.reducers';
 import { importExportSlice } from './import-export/importExport.reducers';
-import { MarketplaceEpics } from './marketplace/marketplace.epics';
 import { marketplaceSlice } from './marketplace/marketplace.reducers';
-import { MigrationEpics } from './migration/migration.epics';
 import { migrationSlice } from './migration/migration.reducers';
-import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
-import { OverlayEpics } from './overlay/overlay.epics';
 import { overlaySlice } from './overlay/overlay.reducers';
-import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
-import { PublicationEpics } from './publication/publication.epics';
 import { publicationSlice } from './publication/publication.reducers';
-import { ServiceEpics } from './service/service.epics';
+import { rootEpic } from './rootEpic';
 import { serviceSlice } from './service/service.reducer';
-import { SettingsEpics } from './settings/settings.epics';
 import { settingsSlice } from './settings/settings.reducers';
-import { ShareEpics } from './share/share.epics';
+import { SettingsState } from './settings/settings.types';
 import { shareSlice } from './share/share.reducers';
-import UIEpics from './ui/ui.epics';
+import { toolsetSlice } from './toolset/toolset.reducer';
 import { uiSlice } from './ui/ui.reducers';
 
-export const rootEpic = combineEpics(
-  ModelsEpics,
-  AddonsEpics,
-  UIEpics,
-  ShareEpics,
-  PromptsEpics,
-  ConversationsEpics,
-  OverlayEpics,
-  SettingsEpics,
-  FilesEpics,
-  ImportExportEpics,
-  ServiceEpics,
-  MigrationEpics,
-  PublicationEpics,
-  ApplicationEpics,
-  CodeEditorEpics,
-  ApplicationTypesSchemasEpics,
-  ChatEpics,
-  MarketplaceEpics,
-);
+interface NodeModuleWithHot extends NodeJS.Module {
+  hot: {
+    accept: (path: string | string[], callback: () => void) => void;
+  };
+}
+
+const epic$ = new BehaviorSubject(rootEpic);
+const hotReloadingEpic = (...args: Parameters<Epic>) =>
+  epic$.pipe(switchMap((epic: Epic) => epic(...args)));
 
 export const rootReducer = combineReducers({
   models: modelsSlice.reducer,
-  addons: addonsSlice.reducer,
   ui: uiSlice.reducer,
   conversations: conversationsSlice.reducer,
   prompts: promptsSlice.reducer,
@@ -96,13 +63,16 @@ export const rootReducer = combineReducers({
   codeEditor: codeEditorSlice.reducer,
   applicationTypesSchemas: applicationTypesSchemasSlice.reducer,
   chat: chatSlice.reducer,
+  folders: foldersSlice.reducer,
+  toolset: toolsetSlice.reducer,
 });
 
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
 ) => {
-  return (getDefaultMiddleware: CurriedGetDefaultMiddleware) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (getDefaultMiddleware: any) => {
     return getDefaultMiddleware({
       thunk: false,
       serializableCheck: false,
@@ -126,7 +96,7 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
       preloadedState,
       middleware,
     });
-    epicMiddleware.run(rootEpic as unknown as Epic);
+    epicMiddleware.run(rootEpic as Epic);
 
     return localStore;
   }
@@ -143,7 +113,14 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
       preloadedState,
       middleware,
     });
-    epicMiddleware.run(rootEpic as unknown as Epic);
+    epicMiddleware.run(hotReloadingEpic);
+
+    if ((module as NodeModuleWithHot).hot) {
+      (module as NodeModuleWithHot).hot.accept('./rootEpic', async () => {
+        const next = await import('./rootEpic');
+        epic$.next(next.rootEpic);
+      });
+    }
   }
 
   return store;

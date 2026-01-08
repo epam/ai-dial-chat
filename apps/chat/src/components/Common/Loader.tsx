@@ -9,7 +9,7 @@ interface Props {
   dataQa?: string;
 }
 
-export default function Loader({
+export function Loader({
   size = 45,
   containerClassName,
   loaderClassName,

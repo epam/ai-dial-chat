@@ -1,5 +1,3 @@
-import { translate } from '@/src/utils/app/translation';
-
 import {
   CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
@@ -102,7 +100,7 @@ def get_env(name: str) -> str:
 
 DIAL_URL = get_env("DIAL_URL")
 EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL", "text-embedding-ada-002")
-CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4")
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o")
 API_VERSION = os.getenv("API_VERSION", "2024-02-01")
 LANGCHAIN_DEBUG = os.getenv("LANGCHAIN_DEBUG", "false").lower() == "true"
 
@@ -313,7 +311,3 @@ export const CODE_APPS_ENDPOINTS = [
       FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.configuration],
   },
 ];
-
-export const PUBLIC_APP_TOOLTIP = translate(
-  'This application is public and cannot be edited',
-);

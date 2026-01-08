@@ -8,8 +8,9 @@ export const errorsMessages = {
   403: 'Forbidden',
   400: 'Invalid request',
   404: 'Not found',
-  noAssistantModelSelected:
-    'No assistant model selected. Please select an assistant model and try again.',
+  bodyExeededLimit: 'Conversation is too large to process.',
+  ModelDeprecated:
+    'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
   unsupportedConversationsDataFormat:
@@ -66,11 +67,28 @@ export const errorsMessages = {
   publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
   rulesUploadingFailed: 'Rules uploading failed.',
   createFailed:
-    'Failed to create application. Please check your input and try again.',
+    'Failed to create {{entity}}. Please check your input and try again.',
   fetchDetailsFailed:
     'Fetching application details failed. Please try again later.',
   fetchSchemasFailed:
     'Fetching application schemas failed. Please try again later.',
   fetchSchemaFailed:
     'Fetching application schema failed. Please try again later.',
+  removeFromMarketplaceFailed: (entityType: string) =>
+    `Failed to remove ${entityType} from my workspace`,
+  addToMarketplaceFailed: (entityType: string) =>
+    `Failed to add ${entityType} to my workspace`,
+
+  // Toolsets
+  // params: {{name}}
+  toolsetGetFailed: 'Failed to get toolset: {{name}}',
+  toolsetsGetFailed: 'Failed to get toolsets',
+  toolsetUpdateFailed: 'Failed to update toolset',
+  toolsetOAuthNotSupported: 'MCP server does not support OAuth authentication',
+  toolsetAlreadyExists:
+    'A toolset with this name and this version already exists',
+  toolsetMoveFailed: 'Failed to move toolset',
+  toolsetDeleteFailed: 'Failed to delete toolset',
+  toolsetSignInFailed: 'Failed to sign in toolset',
+  toolsetSignOutFailed: 'Failed to sign out toolset',
 };

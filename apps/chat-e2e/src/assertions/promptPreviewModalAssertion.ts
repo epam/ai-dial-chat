@@ -53,4 +53,39 @@ export class PromptPreviewModalAssertion extends BaseAssertion {
       ExpectedMessages.promptContentValid,
     );
   }
+
+  public async assertPromptVersion(expectedValue: string) {
+    await super.assertElementText(
+      this.promptPreviewModal.version,
+      `v. ${expectedValue}`,
+      ExpectedMessages.promptVersionValid,
+    );
+  }
+
+  public async assertPromptFields(fieldsToVerify: {
+    name?: string;
+    description?: string;
+    content?: string;
+    version?: string;
+    versionColor?: string;
+  }) {
+    if (fieldsToVerify.name) {
+      await this.assertPromptName(fieldsToVerify.name);
+    }
+    if (fieldsToVerify.description) {
+      await this.assertPromptDescription(fieldsToVerify.description);
+    }
+    if (fieldsToVerify.content) {
+      await this.assertPromptContent(fieldsToVerify.content);
+    }
+    if (fieldsToVerify.version) {
+      await this.assertPromptVersion(fieldsToVerify.version);
+    }
+    if (fieldsToVerify.versionColor) {
+      await this.assertElementColor(
+        this.promptPreviewModal.version,
+        fieldsToVerify.versionColor,
+      );
+    }
+  }
 }

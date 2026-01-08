@@ -1,19 +1,21 @@
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { SchemaCompareWarning } from '@/src/components/Chat/ChatInput/SchemaCompareWarning';
+import { StartReplayButton } from '@/src/components/Chat/StartReplayButton';
 
-import { StartReplayButton } from '../StartReplayButton';
 import { AddModelsControl } from './AddModelsControl';
-import ChatExternalControls from './ChatExternalControls';
+import { ChatExternalControls } from './ChatExternalControls';
 
 interface Props {
   isNotEmptyConversations: boolean;
   showReplayControls: boolean;
-  areModelsInstalled: boolean;
-  isConversationWithSchema: boolean;
+  isChatReadyForInput: boolean;
+  isSomeConversationWithSchema: boolean;
   showScrollDownButton: boolean;
   isWideLayout?: boolean;
   onScrollDown: () => void;
@@ -22,8 +24,8 @@ interface Props {
 export const ChatInputControls = ({
   isNotEmptyConversations,
   showReplayControls,
-  areModelsInstalled,
-  isConversationWithSchema,
+  isChatReadyForInput,
+  isSomeConversationWithSchema,
   showScrollDownButton,
   isWideLayout,
   onScrollDown,
@@ -31,44 +33,50 @@ export const ChatInputControls = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
-  if (isConversationWithSchema && selectedConversations.length > 1) {
+  const isPublic =
+    selectedConversations.length > 0 &&
+    isEntityIdPublic(selectedConversations[0]);
+
+  if (isSomeConversationWithSchema && selectedConversations.length > 1) {
     return <SchemaCompareWarning />;
   }
 
   if (showReplayControls && !isNotEmptyConversations) {
     return (
-      <div
-        className={classNames({
-          'mt-10': isWideLayout,
-        })}
-      >
+      <div className={classNames({ 'mt-10': isWideLayout })}>
         <StartReplayButton />
       </div>
     );
   }
 
-  if (isExternal) {
-    return (
-      <ChatExternalControls
-        conversations={selectedConversations}
-        showScrollDownButton={showScrollDownButton}
-        onScrollDownClick={onScrollDown}
-      />
-    );
+  const shouldShowExternalControls = isPublic || isReadOnly;
+  const shouldShowModelsControl =
+    !isChatReadyForInput && (!isReadOnly || (isPublic && !isReadOnly));
+
+  if (!shouldShowExternalControls && !shouldShowModelsControl) {
+    return null;
   }
 
-  if (!areModelsInstalled) {
-    return (
-      <AddModelsControl
-        showScrollDownButton={showScrollDownButton}
-        onScrollDown={onScrollDown}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <>
+      {shouldShowExternalControls && (
+        <ChatExternalControls
+          conversations={selectedConversations}
+          showScrollDownButton={showScrollDownButton}
+          onScrollDownClick={onScrollDown}
+          {...(isPublic ? { isChatReadyForInput } : {})}
+        />
+      )}
+      {shouldShowModelsControl && (
+        <AddModelsControl
+          showScrollDownButton={showScrollDownButton}
+          onScrollDown={onScrollDown}
+        />
+      )}
+    </>
+  );
 };

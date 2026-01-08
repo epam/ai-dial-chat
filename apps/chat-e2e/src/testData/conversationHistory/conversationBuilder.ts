@@ -4,24 +4,24 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/chat/constants/default-ui-settings';
 import { defaultReplay } from '@/chat/constants/replay';
-import { Conversation, Replay } from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import { ItemUtil, ModelsUtil } from '@/src/utils';
-import { ConversationEntityModel, Message } from '@epam/ai-dial-shared';
+import { ConversationEntityModel, Message, Replay } from '@epam/ai-dial-shared';
 
 export class ConversationBuilder {
   private conversation: Conversation;
 
   constructor() {
-    const model = ModelsUtil.getDefaultModel()!;
+    const model = ModelsUtil.getDefaultAgent()!;
     this.conversation = {
-      id: `${model.id}${ItemUtil.entityIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
+      id: `${model.reference}${ItemUtil.entityIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
-      model: { id: model.id },
+      model: { id: model.reference },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
-      selectedAddons: model.selectedAddons ?? [],
+      selectedAddons: [],
       updatedAt: Date.now(),
       folderId: '',
     };
@@ -73,11 +73,6 @@ export class ConversationBuilder {
 
   withReplay(replay: Replay): ConversationBuilder {
     this.conversation.replay = replay;
-    return this;
-  }
-
-  withAddons(addons: string[]): ConversationBuilder {
-    this.conversation.selectedAddons = addons;
     return this;
   }
 

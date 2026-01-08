@@ -1,6 +1,8 @@
-import { Editor, EditorProps } from '@monaco-editor/react';
+import { EditorProps } from '@monaco-editor/react';
 import { IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
+
+import dynamic from 'next/dynamic';
 
 import classNames from 'classnames';
 
@@ -11,11 +13,21 @@ import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { UISelectors } from '@/src/store/selectors';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { TabOption, Tabs } from './Tabs';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import omit from 'lodash-es/omit';
+
+// Use dynamic import to prevent SSR issues with Monaco Editor
+const MonacoEditorNoSSR = dynamic(
+  () => import('@monaco-editor/react').then((mod) => mod.Editor),
+  { ssr: false },
+);
+const Editor = MonacoEditorNoSSR;
 
 const editorOptions: EditorProps['options'] = {
   minimap: {
@@ -32,8 +44,19 @@ const editorOptions: EditorProps['options'] = {
   automaticLayout: true,
 };
 
-interface MonacoEditorProps extends EditorProps {
+interface MonacoFile<T extends string = string> {
+  id: T;
+  label: string;
+  value: string;
+  language?: string;
+}
+
+interface MonacoEditorProps<T extends string = string> extends EditorProps {
   allowFullScreen?: boolean;
+  files?: MonacoFile<T>[];
+  onChangeFile?: (fileId: T, newValue: string) => void;
+  activeFileId?: T;
+  onTabChange?: (fileId: T) => void;
 }
 
 export const MonacoEditor = memo(function MonacoEditor(
@@ -41,9 +64,14 @@ export const MonacoEditor = memo(function MonacoEditor(
 ) {
   const { t } = useTranslation(Translation.Common);
 
-  const theme = useAppSelector(UISelectors.selectThemeState);
+  const editorTheme = useAppSelector(UISelectors.selectCodeEditorTheme);
 
   const [isFullScreen, setIsFullScreen] = useState(false);
+
+  const activeFileId = props.activeFileId ?? props.files?.[0]?.id ?? '';
+  const activeFile = useMemo(() => {
+    return props.files?.find((f) => f.id === activeFileId);
+  }, [props.files, activeFileId]);
 
   const wrapperStyles = useMemo(
     () =>
@@ -61,6 +89,28 @@ export const MonacoEditor = memo(function MonacoEditor(
     [isFullScreen],
   );
 
+  const tabs = useMemo<TabOption[]>(
+    () =>
+      props.files?.map((f) => ({
+        id: f.id,
+        label: f.label,
+        content: null,
+      })) ?? [],
+    [props.files],
+  );
+
+  const editorProps = useMemo(() => {
+    if (!activeFile) return {};
+
+    return {
+      value: activeFile.value ?? '',
+      language: activeFile.language ?? 'json',
+      onChange: (v: string | undefined) => {
+        props.onChangeFile?.(activeFileId, v ?? '');
+      },
+    };
+  }, [activeFile, activeFileId, props]);
+
   return (
     <div
       style={wrapperStyles}
@@ -70,18 +120,28 @@ export const MonacoEditor = memo(function MonacoEditor(
       })}
     >
       {props.allowFullScreen && (
-        <div className="flex justify-end divide-y border-b border-tertiary">
+        <div className="flex items-center justify-between  border-tertiary bg-layer-2">
+          <div className="flex">
+            {props.files && props.files.length > 1 && (
+              <Tabs
+                tabs={tabs}
+                defaultTabId={activeFileId}
+                onTabChange={props.onTabChange}
+                tabListClassName="flex bg-transparent"
+                tabButtonBaseClassName="border-r border-tertiary bg-layer-2 text-sm font-medium focus:outline-none px-4 h-[35px] hover:bg-accent-primary-alpha"
+                activeTabButtonClassName="bg-layer-3 text-white"
+              />
+            )}
+          </div>
           <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
-            <button
-              type="button"
+            <DialButton
               className="p-2 text-secondary hover:text-accent-primary"
               onClick={(e) => {
                 setIsFullScreen(!isFullScreen);
                 dispatchMouseLeaveEvent(e);
               }}
-            >
-              <FullScreenIcon size={18} />
-            </button>
+              iconBefore={<FullScreenIcon size={18} />}
+            />
           </Tooltip>
         </div>
       )}
@@ -92,8 +152,9 @@ export const MonacoEditor = memo(function MonacoEditor(
         })}
       >
         <Editor
+          {...editorProps}
           options={{ ...editorOptions, ...props.options }}
-          theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+          theme={editorTheme}
           {...omit(props, ['options', 'width', 'height'])}
           width="100%"
           height="100%"

@@ -44,10 +44,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await baseAssertion.assertElementInnerText(
+        await baseAssertion.assertElementContainsText(
           banner.bannerMessage,
           [
-            'Welcome to AI Dial! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
+            'Welcome to DIAL! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
           ],
           ExpectedMessages.bannerMessageIsValid,
         );
@@ -77,7 +77,7 @@ dialTest(
     await dialTest.step(
       'Select conversation in chat panel and verify announcement banner is shown between side panels',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const bannerBounding = await banner.getElementBoundingBox();
         baseAssertion.assertValue(
           bannerBounding!.x,

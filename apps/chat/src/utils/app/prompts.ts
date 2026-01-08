@@ -1,11 +1,11 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { getPromptApiKey, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
-import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
 
 import { TemplateMapping } from '@epam/ai-dial-shared';
@@ -25,12 +25,28 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   return prompt as Prompt;
 };
 
-export const getPromptInfoFromId = (id: string): PromptInfo => {
+export const getPromptInfoFromId = (
+  id: string,
+  options?: Partial<{ parseVersion: boolean }>,
+): PromptInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
-  return regeneratePromptId({
-    ...parsePromptApiKey(name),
-    folderId: constructPath(apiKey, bucket, parentPath),
+
+  const { name: parsedName, version } = parseEntityApiKey(name, {
+    parseVersion: options?.parseVersion,
   });
+
+  const regeneratePayload: Omit<PromptInfo, 'id'> = {
+    name: parsedName,
+    folderId: constructPath(apiKey, bucket, parentPath),
+  };
+
+  if (version) {
+    regeneratePayload.publicationInfo = {
+      version,
+    };
+  }
+
+  return regeneratePromptId(regeneratePayload);
 };
 
 /**
@@ -125,7 +141,7 @@ export const replaceTemplates = (
     .join(value.trim());
 };
 
-export const arePromptsFieldsTheSame = (
+export const areSomePromptsFieldsChanged = (
   firstPrompt: Pick<Prompt, 'name' | 'content' | 'description'>,
   secondPrompt: Pick<Prompt, 'name' | 'content' | 'description'>,
 ) => {

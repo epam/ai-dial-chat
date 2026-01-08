@@ -9,7 +9,6 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
-  modelId: 'gpt-4',
   enabledFeatures: [
     Feature.ConversationsSection,
     Feature.Header,
@@ -17,7 +16,6 @@ const overlayOptions = {
     Feature.TopChatInfo,
     Feature.Marketplace,
     Feature.CodeApps,
-    Feature.QuickApps,
     Feature.CustomApplications,
   ],
 };

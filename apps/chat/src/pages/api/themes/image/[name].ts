@@ -33,18 +33,13 @@ const getImage = async (
   const contentType = response.headers.get('content-type');
 
   if (!response.ok) {
-    if (name === 'default-model' || name === 'default-addon') {
-      return res.redirect(
-        307,
-        `//${req.headers.origin}/images/icons/message-square-lines-alt.svg`,
-      );
-    }
     return res.status(404).send('Image not found');
   }
 
   return res
     .status(200)
     .setHeader('Content-Type', contentType || 'image/png')
+    .setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400')
     .send(Buffer.from(await response.arrayBuffer()));
 };
 

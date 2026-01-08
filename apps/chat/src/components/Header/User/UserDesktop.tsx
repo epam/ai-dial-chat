@@ -7,9 +7,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -18,6 +18,7 @@ import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
@@ -40,7 +41,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 pr-3"
             data-qa="account-settings"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
               {session?.user?.image ? (
                 <img
                   className="rounded"
@@ -53,9 +54,14 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                 <UserIcon width={18} height={18} />
               )}
 
-              <span className="grow" data-qa="username">
-                {session?.user?.name || t('User')}
-              </span>
+              <DialEllipsisTooltip
+                contentClassName="grow"
+                text={
+                  <span data-qa="username">
+                    {session?.user?.name || t('User')}
+                  </span>
+                }
+              />
             </div>
             <ChevronDownIcon
               className={`shrink-0 text-primary transition-all ${

@@ -1,8 +1,14 @@
-import { BackendEntity } from '@/chat/types/common';
+import { Conversation } from '@/chat/types/chat';
+import { BackendEntity, BackendResourceType } from '@/chat/types/common';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
+import { Attachment } from '@/src/testData';
 import {
   BucketUtil,
+  ItemUtil,
   applicationNamePrefix,
+  conversationNamePrefix,
+  promptNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
@@ -16,78 +22,130 @@ dialTest(
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
-    for (const publicationRequest of publicationRequests.publications) {
-      //if the request is pending un-publication
-      if (publicationRequest.name?.trim()?.startsWith(unpublishRequestPrefix)) {
-        const publicationDetails =
-          await adminPublicationApiHelper.getPublicationRequestDetails(
-            publicationRequest.url,
-          );
-        //reject if the request has already been unpublished
-        if (
-          publicationDetails.resources.every(
-            (resource) => resource.sourceUrl === null,
-          )
-        ) {
-          await adminPublicationApiHelper.rejectRequest(publicationRequest);
-        } else {
-          await adminPublicationApiHelper.approveRequest(publicationRequest);
-        }
-      }
-      //if the request is pending publication
-      else if (
-        publicationRequest.name?.trim().startsWith(publicationRequestPrefix)
-      ) {
-        await adminPublicationApiHelper.rejectRequest(publicationRequest);
-      }
+    const e2ePublicationRequests = publicationRequests.publications.filter(
+      (p) =>
+        p.name?.trim().includes(unpublishRequestPrefix) ||
+        p.name?.trim().includes(publicationRequestPrefix),
+    );
+
+    for (const publicationRequest of e2ePublicationRequests) {
+      await adminPublicationApiHelper.rejectRequest(publicationRequest);
     }
   },
 );
 
 dialTest(
-  'Cleanup published E2E apps',
+  'Cleanup published E2E entities (apps, conversations, files)',
   async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
-    const publishedApps = await adminPublicationApiHelper.listPublishedApps();
-    const publishedE2EApps = publishedApps.items?.filter((a) =>
-      a.name.includes(applicationNamePrefix),
+    // Cleanup published E2E apps
+    const publishedApps =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.APPLICATION,
+      );
+    const publishedE2EApps = publishedApps.items?.filter((app) =>
+      app.name.includes(applicationNamePrefix),
     );
 
-    for (const app of publishedE2EApps!) {
-      const pathParts = app.url.split('/');
-      let relativePath = '';
-      const publicSegmentIndex = pathParts.indexOf('public');
+    for (const app of publishedE2EApps || []) {
+      const relativePath = ItemUtil.extractRelativePath(app.url);
 
-      if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex < pathParts.length - 2
-      ) {
-        relativePath =
-          pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
-      } else if (
-        publicSegmentIndex !== -1 &&
-        publicSegmentIndex === pathParts.length - 2
-      ) {
-        relativePath = '';
-      }
+      await adminPublicationApiHelper.unpublishEntity(
+        app.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withApplicationResource(
+            {
+              url: app.url,
+              name: app.name,
+              bucket: app.bucket,
+            } as BackendEntity,
+            PublishActions.DELETE,
+          );
+        },
+      );
+    }
 
-      const unpublishRequest = publishRequestBuilder
-        .withName(unpublishRequestPrefix + app.name)
-        .withTargetFolder(relativePath)
-        .withApplicationResource(
-          {
-            url: app.url,
-            name: app.name,
-            bucket: app.bucket,
-          } as BackendEntity,
-          PublishActions.DELETE,
-        )
-        .build();
+    // Cleanup published E2E conversations
+    const publishedConversations =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.CONVERSATION,
+      );
+    const publishedE2EConversations = publishedConversations.items?.filter(
+      (conversation) => conversation.name.includes(conversationNamePrefix),
+    );
 
-      const unpublishResponse =
-        await adminPublicationApiHelper.createUnpublishRequest(
-          unpublishRequest,
-        );
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    for (const conversation of publishedE2EConversations || []) {
+      const relativePath = ItemUtil.extractRelativePath(conversation.url);
+
+      await adminPublicationApiHelper.unpublishEntity(
+        conversation.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          const nameIndex = conversation.url.lastIndexOf(
+            ItemUtil.entityIdSeparator,
+          );
+          return request.withConversationWithoutFolderResource(
+            {
+              id: conversation.url.substring(0, nameIndex),
+            } as Conversation,
+            PublishActions.DELETE,
+            conversation.url.substring(
+              nameIndex + ItemUtil.entityIdSeparator.length,
+            ),
+          );
+        },
+      );
+    }
+
+    //Cleanup published E2E prompts
+    const publishedPrompts =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.PROMPT,
+      );
+    const publishedE2EPrompts = publishedPrompts.items?.filter((prompt) =>
+      prompt.name.includes(promptNamePrefix),
+    );
+
+    for (const prompt of publishedE2EPrompts || []) {
+      const relativePath = ItemUtil.extractRelativePath(prompt.url);
+
+      await adminPublicationApiHelper.unpublishEntity(
+        prompt.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          const nameIndex = prompt.url.lastIndexOf(ItemUtil.entityIdSeparator);
+          return request.withPromptWithoutFolderResource(
+            {
+              id: prompt.url.substring(0, nameIndex),
+            } as Prompt,
+            PublishActions.DELETE,
+            prompt.url.substring(nameIndex + ItemUtil.entityIdSeparator.length),
+          );
+        },
+      );
+    }
+
+    // Cleanup published E2E files
+    const publishedFiles =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.FILE,
+      );
+    const publishedE2EFiles = publishedFiles.items?.filter((item) =>
+      Object.values(Attachment).includes(item.name),
+    );
+    for (const file of publishedE2EFiles || []) {
+      const relativePath = ItemUtil.extractRelativePath(file.url);
+      await adminPublicationApiHelper.unpublishEntity(
+        file.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withFileResource(file.url, PublishActions.DELETE);
+        },
+      );
     }
   },
 );

@@ -1,5 +1,7 @@
 import { Observable, catchError, map, of } from 'rxjs';
 
+import { ApiUtils } from '@/src/utils/server/api';
+
 import {
   ApiApplicationTypeSchema,
   ApiDetailedApplicationTypeSchema,
@@ -7,7 +9,6 @@ import {
 } from '@/src/types/application-type-schema';
 import { HTTPMethod } from '@/src/types/http';
 
-import { ApiUtils } from '../../server/api';
 import { convertApplicationTypeSchemaFromApi } from '../application-type-schema';
 
 export class ApplicationTypesSchemasService {

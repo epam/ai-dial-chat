@@ -8,7 +8,7 @@ import {
 import { Feature } from '@epam/ai-dial-shared';
 
 // Use your bucket for testing
-const bucket = '';
+const bucket = process.env.NEXT_PUBLIC_OVERLAY_USER_BUCKET;
 const overlayOptions = {
   ...commonOverlayProps,
   newConversationsFolderId: `conversations/${bucket}/test-folder`,

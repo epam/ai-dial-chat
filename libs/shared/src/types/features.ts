@@ -19,12 +19,32 @@ export enum Feature {
 
   // Conversation functions
   Likes = 'likes', // Display likes
+  DislikeComment = 'dislike-comment', // Enable adding comment when disliking a message
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
 
+  // Edit assistant message
+  EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
+  EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
+
+  // Edit user message
+  HideEditUserMessage = 'hide-edit-user-message', // Hide editing button of user message
+
+  // Regenerate assistant message
+  HideRegenerateAssistantMessage = 'hide-regenerate-assistant-message', // Hide regenerate button of assistant message
+
+  // Delete user message
+  HideDeleteUserMessage = 'hide-delete-user-message', // Hide delete button of user message
+
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
+
+  // Send button
+  DisabledSend = 'disabled-send', // Disable input
+
+  // Playback change
+  DisabledPlaybackControls = 'disabled-playback-controls', // Disable changing playback current message
 
   // Conversation First Screen
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
@@ -34,6 +54,7 @@ export enum Feature {
   ConversationsSharing = 'conversations-sharing', // Display conversation sharing
   PromptsSharing = 'prompts-sharing', // Display prompts sharing
   ApplicationsSharing = 'applications-sharing', // Display applications sharing
+  ToolsetsSharing = 'toolsets-sharing', // Display toolsets sharing
 
   // Publishing
   ConversationsPublishing = 'conversations-publishing',
@@ -46,13 +67,23 @@ export enum Feature {
   // User settings
   HideUserSettings = 'hide-user-settings', // Hide user settings
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
+  HideUserMenu = 'hide-user-menu', // Hide user menu button from top header
 
   // Applications
-  CustomApplications = 'custom-applications', // custom applications
-  QuickApps = 'quick-apps', // Enable Quick apps
-  CodeApps = 'code-apps', // Enable Code apps
+  CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
+  CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
+  CodeInterpreter = 'code-interpreter', // Enable Code Interpreter feature
 
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+
+  //Toolsets
+  Toolsets = 'toolsets', //Enable toolsets
+}
+
+export interface FeatureData {
+  // Field for adding some description for feature
+  // Can be used in tooltips or other places
+  description?: string;
 }

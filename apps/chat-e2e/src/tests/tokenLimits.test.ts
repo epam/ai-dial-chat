@@ -47,7 +47,9 @@ dialTest(
       async () => {
         conversation = conversationData.prepareEmptyConversation(randomModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -57,7 +59,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.promptLimitExceededTitle,

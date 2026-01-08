@@ -1,6 +1,5 @@
-import { memo } from 'react';
-import { Components } from 'react-markdown';
-import { PluggableList } from 'react-markdown/lib/react-markdown';
+import { Children, ReactNode, memo } from 'react';
+import { Components, Options } from 'react-markdown';
 
 import classnames from 'classnames';
 
@@ -12,22 +11,27 @@ import { preprocessLaTeX } from '@/src/utils/app/latex';
 import { ScreenState } from '@/src/types/common';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
 } from '@/src/constants/chat';
 
-import BlinkingCursor from '@/src/components/Chat/BlinkingCursor';
+import { BlinkingCursor } from '@/src/components/Chat/BlinkingCursor';
 import { Table } from '@/src/components/Markdown/Table';
 
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
+import isObject from 'lodash-es/isObject';
+import partition from 'lodash-es/partition';
+import rehypeExternalLinks from 'rehype-external-links';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 
@@ -49,32 +53,37 @@ const getMDComponents = (
   isInner: boolean,
 ): Components => {
   return {
-    code({ inline, className, children, ...props }) {
-      if (children.length) {
-        if (children[0] == modelCursorSign) {
+    code({ className, children, node, ...props }) {
+      let childrenAsString = String(children);
+
+      if (childrenAsString?.length) {
+        if (childrenAsString[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
 
-        children[0] = (children[0] as string).replace(
+        childrenAsString = `${childrenAsString[0].replace(
           modelCursorSignWithBackquote,
           modelCursorSign,
-        );
+        )}${childrenAsString.slice(1)}`;
       }
 
       const match = /language-(\w+)/.exec(className || '');
+      const isPlaintextCodeBlock =
+        node?.tagName === 'code' &&
+        node.position?.end.line !== node.position?.start.line;
 
-      return !inline ? (
+      return (match && match[1]) || isPlaintextCodeBlock ? (
         <CodeBlock
           key={Math.random()}
           language={(match && match[1]) || ''}
-          value={String(children).replace(/\n$/, '')}
+          value={childrenAsString.replace(/\n$/, '')}
           isInner={isInner}
           isLastMessageStreaming={isShowResponseLoader}
           {...props}
         />
       ) : (
         <code className={className} {...props}>
-          {children}
+          {childrenAsString}
         </code>
       );
     },
@@ -98,32 +107,90 @@ const getMDComponents = (
       );
     },
     p({ children, className }) {
-      if (children.length) {
+      if (typeof children === 'string' && children?.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
+        if (children?.[0] == modelCursorSignWithBackquote) {
+          children = `${replaceCursor(children[0])}${children.slice(1)}`;
+        }
       }
-      if (children[0] == modelCursorSignWithBackquote) {
-        children[0] = replaceCursor(children[0] as string);
-      }
+
       return (
         <p className={classnames(className, { 'text-sm': isInner })}>
           {children}
         </p>
       );
     },
+    details({ children, ...props }) {
+      // In order to style the contents paddings correctly, we need to wrap them into container
+      // Contents of <details> element follow the summary element unwrapped by default,
+      // so styling them otherwise would be hacky.
+      const [summary, content] = partition(
+        Children.toArray(children),
+        (child: ReactNode) =>
+          isObject(child) &&
+          'type' in child &&
+          isObject(child.type) &&
+          'name' in child.type &&
+          child.type.name === 'summary',
+      );
+
+      return (
+        <details
+          className={classnames(
+            'rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
+            ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
+          )}
+          {...props}
+        >
+          {summary}
+          <div className="p-3">{content}</div>
+        </details>
+      );
+    },
+    summary({ children, ...props }) {
+      return (
+        <summary
+          className={classnames(
+            'flex items-center justify-between gap-3 p-3 text-sm',
+            'cursor-pointer [&::marker]:hidden',
+          )}
+          {...props}
+        >
+          <span className="truncate">{children}</span>
+          <ChevronDown height={18} width={18} className="shrink-0 transition" />
+        </summary>
+      );
+    },
   };
 };
 
-const remarkPlugins: PluggableList = [
+const remarkPlugins: Options['remarkPlugins'] = [
   remarkGfm,
   [remarkMath, { singleDollarTextMath: true }],
 ];
-const rehypePlugins = [
+const rehypePlugins: Options['rehypePlugins'] = [
+  rehypeRaw,
   [rehypeKatex, { output: 'mathml', strict: false }],
-] as PluggableList;
+  [
+    rehypeSanitize,
+    {
+      ...defaultSchema,
+      attributes: {
+        ...defaultSchema.attributes,
+        code: [
+          ...(defaultSchema.attributes?.code || []),
+          // Preserve className for syntax highlighting
+          ['className'],
+        ],
+      },
+    },
+  ],
+  [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+];
 
-const ChatMDComponent = memo(
+export const ChatMDComponent = memo(
   ({
     isShowResponseLoader,
     content,
@@ -148,10 +215,8 @@ const ChatMDComponent = memo(
         className={mdClassNames}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
-        transformImageUri={transformUri}
-        transformLinkUri={transformUri}
+        urlTransform={transformUri}
       >
         {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
       </MemoizedReactMarkdown>
@@ -159,5 +224,3 @@ const ChatMDComponent = memo(
   },
 );
 ChatMDComponent.displayName = 'ChatMDComponent';
-
-export default ChatMDComponent;

@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Logo } from './Logo';
 
@@ -21,12 +21,15 @@ export const BaseHeader: React.FC<Props> = ({ LeftItems, RightItems }) => {
       )}
       data-qa="header"
     >
-      {LeftItems && LeftItems}
-      <div className="grow"></div>
+      <div className="flex w-1/2 items-center pr-20">
+        {LeftItems && LeftItems}
+      </div>
       <div className="absolute left-1/2 top-0 flex h-full -translate-x-1/2 justify-center">
         <Logo />
       </div>
-      {RightItems && RightItems}
+      <div className="flex w-1/2 items-center justify-end pl-20">
+        {RightItems && RightItems}
+      </div>
     </div>
   );
 };

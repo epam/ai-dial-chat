@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -20,20 +19,26 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { arePromptsFieldsTheSame } from '@/src/utils/app/prompts';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
+import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
-import EmptyRequiredInputMessage from '@/src/components/Common/EmptyRequiredInputMessage';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
+import {
+  ButtonVariant,
+  DialButton,
+  DialCloseButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -138,15 +143,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const saveDisabled =
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey && !saveDisabled) {
+      if (!saveDisabled && allowEnterClick(e, enterType)) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);
       }
     },
-    [handleEdit, prompt, saveDisabled],
+    [enterType, handleEdit, prompt, saveDisabled],
   );
 
   const handleConfirmClose = useCallback(
@@ -163,7 +170,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   );
 
   const handleEditClose = useCallback(() => {
-    if (arePromptsFieldsTheSame(prompt, { name, description, content })) {
+    if (areSomePromptsFieldsChanged(prompt, { name, description, content })) {
       setConfirmClose(true);
     } else {
       onClose();
@@ -180,14 +187,11 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   return (
     <>
-      <button
-        type="button"
-        role="button"
-        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-        onClick={handleEditClose}
-      >
-        <IconX height={24} width={24} />
-      </button>
+      <DialCloseButton
+        className="absolute right-2 top-2"
+        onClose={handleEditClose}
+      />
+
       <div className="flex flex-col gap-4 overflow-y-auto px-3 md:px-6">
         <div>
           <label
@@ -269,15 +273,14 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           tooltip={t('Please fill in all required fields')}
           hideTooltip={!saveDisabled}
         >
-          <button
+          <DialButton
             type="submit"
-            className="button button-primary"
             data-qa="save-prompt"
             onClick={(e) => handleSubmit(e, prompt)}
             disabled={saveDisabled}
-          >
-            {t('Save')}
-          </button>
+            label={t('Save')}
+            variant={ButtonVariant.Primary}
+          />
         </Tooltip>
       </div>
       {confirmClose && (

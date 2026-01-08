@@ -1,25 +1,32 @@
+import { JSX } from 'react';
+
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { EnterType } from '@/src/types/settings';
+import { ThemesConfig } from '@/src/types/themes';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import { DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT } from '@/src/constants/sidebars';
 
 import { UIState } from './ui.types';
 
 import uniq from 'lodash-es/uniq';
 
-export const openFoldersInitialState = {
+const openFoldersInitialState = {
   [FeatureType.Chat]: [],
   [FeatureType.Prompt]: [],
   [FeatureType.File]: [],
   [FeatureType.Application]: [],
+  [FeatureType.Toolset]: [],
 };
 
 const initialState: UIState = {
   initialized: false,
   theme: '',
   availableThemes: [],
+  themesImages: {},
   showChatbar: false,
   showPromptbar: false,
   showMarketplaceFilterbar: false,
@@ -35,6 +42,11 @@ const initialState: UIState = {
   showSelectToMigrateWindow: false,
   customLogo: '',
   collapsedSections: openFoldersInitialState,
+  visibleSidebarItems: {
+    [FeatureType.Chat]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
+    [FeatureType.Prompt]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
+  },
+  enterType: EnterType.Enter,
 };
 
 export const uiSlice = createSlice({
@@ -45,14 +57,16 @@ export const uiSlice = createSlice({
     initFinish: (state) => {
       state.initialized = true;
     },
+    initTheme: (state) => state,
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
-    setAvailableThemes: (
-      state,
-      { payload }: PayloadAction<UIState['availableThemes']>,
-    ) => {
-      state.availableThemes = payload;
+    setEnterType: (state, { payload }: PayloadAction<EnterType>) => {
+      state.enterType = payload;
+    },
+    setAvailableThemes: (state, { payload }: PayloadAction<ThemesConfig>) => {
+      state.availableThemes = payload.themes;
+      state.themesImages = payload.images;
     },
     setChatbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.chatbarWidth = payload;
@@ -90,6 +104,13 @@ export const uiSlice = createSlice({
     ) => {
       state.isProfileOpen = payload;
     },
+    closeAllPanels: (state) => {
+      state.showChatbar = false;
+      state.showPromptbar = false;
+      state.showMarketplaceFilterbar = false;
+      state.isUserSettingsOpen = false;
+      state.isProfileOpen = false;
+    },
     setIsCompareMode: (
       state,
       { payload }: PayloadAction<UIState['isCompareMode']>,
@@ -109,6 +130,7 @@ export const uiSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string | null;
+        title?: string;
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;
@@ -123,13 +145,13 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ openedFolderIds: string[]; folderType: FeatureType }>,
+      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.folderType]: uniq([
+        [payload.featureType]: uniq([
           ...payload.openedFolderIds,
-          ...state.openedFoldersIds[payload.folderType],
+          ...state.openedFoldersIds[payload.featureType],
         ]),
       };
     },
@@ -195,6 +217,20 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<string | undefined>,
     ) => {
       state.scrollToEntityId = payload;
+    },
+    setVisibleSidebarItems: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        featureType: FeatureType.Chat | FeatureType.Prompt;
+        visibleItems: number;
+      }>,
+    ) => {
+      state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
+    },
+    setEditorLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditorLoader = payload;
     },
   },
 });

@@ -4,11 +4,13 @@ import classNames from 'classnames';
 
 import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 
@@ -20,9 +22,10 @@ import {
 
 interface ChatStartersViewProps {
   schema: MessageFormSchema;
+  modelId: string;
 }
 
-const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
+const ChatStartersView = ({ schema, modelId }: ChatStartersViewProps) => {
   const dispatch = useAppDispatch();
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -40,10 +43,11 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
           content: populateText,
           value,
           submit,
+          modelId,
         }),
       );
     },
-    [dispatch, schema],
+    [dispatch, schema, modelId],
   );
 
   const schemaWithoutDescription = useMemo(
@@ -75,9 +79,17 @@ export const ChatStarters = memo(function ChatStarters() {
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const schema = useAppSelector(ChatSelectors.selectConfigurationSchema);
-  const isSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
+  const schema = useAppSelector((state) =>
+    ChatSelectors.selectConfigurationSchemaByModelId(
+      state,
+      selectedConversations[0]?.model.id,
+    ),
+  );
+  const isSchemaLoading = useAppSelector((state) =>
+    ChatSelectors.selectIsConfigurationSchemaLoading(
+      state,
+      selectedConversations[0]?.model.id,
+    ),
   );
 
   if (
@@ -90,5 +102,10 @@ export const ChatStarters = memo(function ChatStarters() {
     return null;
   }
 
-  return <ChatStartersView schema={schema} />;
+  return (
+    <ChatStartersView
+      schema={schema}
+      modelId={selectedConversations[0].model.id}
+    />
+  );
 });

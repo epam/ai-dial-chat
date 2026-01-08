@@ -33,7 +33,7 @@ dialAdminTest(
     dataInjector,
     folderConversations,
     folderDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     publishingRequestFolderConversationAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -42,7 +42,7 @@ dialAdminTest(
     adminTooltip,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
-    adminFolderToApproveAssertion,
+    adminFolderConversationsToApproveAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
     adminOrganizationFolderConversations,
@@ -127,7 +127,7 @@ dialAdminTest(
         await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
         for (const conversation of allConversations) {
@@ -146,9 +146,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -196,7 +196,7 @@ dialAdminTest(
       'Verify folders hierarchy with non empty conversations is displayed on "Publication approval" modal, "Approve" button is disabled',
       async () => {
         for (const conversation of allConversations) {
-          await adminFolderToApproveAssertion.assertFolderEntityState(
+          await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
             { name: nestedFolders[0].name },
             { name: conversation.name },
             conversation.name === emptyConversation.name ||
@@ -388,7 +388,7 @@ dialAdminTest(
     'Publish chat: Change path: context menu for existing folders.\n' +
     'Publish folder into nested folder structure with depth 4.\n' +
     'Publish folder: update path in publish request.\n' +
-    'Publish request toooltips.\n' +
+    'Publish request tooltips.\n' +
     'admin view: create publication request when open request from Approve required',
   async ({
     dialHomePage,
@@ -396,8 +396,7 @@ dialAdminTest(
     dataInjector,
     folderConversations,
     folderDropdownMenu,
-    publishingRequestModal,
-    folderConversationsToPublish,
+    publishingRequestDialog,
     selectFolders,
     selectFoldersAssertion,
     publicationApiHelper,
@@ -406,7 +405,7 @@ dialAdminTest(
     selectFolderModal,
     toastAssertion,
     adminDialHomePage,
-    adminPublishingRequestModal,
+    adminPublishingRequestDialog,
     adminApproveRequiredConversationsAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
@@ -417,9 +416,9 @@ dialAdminTest(
     adminApproveRequiredConversations,
     adminConversations,
     adminConversationDropdownMenu,
-    adminConversationToPublishAssertion,
+    adminPublishConversationsTreeAssertion,
     adminPublishingApprovalModalAssertion,
-    adminFolderToApproveAssertion,
+    adminFolderConversationsToApproveAssertion,
     adminPublishingApprovalModal,
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
@@ -462,7 +461,7 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withConversationResource(
+          .withConversationInFolderResource(
             publishedFolderConversation.conversations[0],
             PublishActions.ADD,
           )
@@ -485,7 +484,7 @@ dialAdminTest(
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
       },
@@ -494,7 +493,7 @@ dialAdminTest(
     await dialTest.step(
       'Click on "Change path" and verify published folder is visible in the tree and selectable',
       async () => {
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFoldersAssertion.assertFolderState(
@@ -517,9 +516,8 @@ dialAdminTest(
         await selectFolders.openFolderDropdownMenu(
           publishedFolderConversation.folders.name,
         );
-        const actualOptions = await folderDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayIncludesAll(
-          actualOptions,
+        await baseAssertion.assertElementText(
+          folderDropdownMenu.menuOptions(),
           [MenuOptions.addNewFolder],
           ExpectedMessages.contextMenuOptionsValid,
         );
@@ -562,7 +560,7 @@ dialAdminTest(
           triggeredApiHost: API.publicationRulesList,
         });
         await baseAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+          publishingRequestDialog.getChangePublishToPath().path,
           publicationPath,
         );
       },
@@ -571,44 +569,17 @@ dialAdminTest(
     await dialTest.step(
       'Hover over "Publish to" path and verify tooltip is shown',
       async () => {
-        await publishingRequestModal.getChangePublishToPath().path.hoverOver();
+        await publishingRequestDialog.getChangePublishToPath().path.hoverOver();
         await tooltipAssertion.assertTooltipContent(publicationPath);
-      },
-    );
-
-    await dialTest.step(
-      'Hover over conversation and verify tooltip is shown',
-      async () => {
-        await folderConversationsToPublish
-          .getFolderEntityNameElement(
-            folderConversationToPublish.folders.name,
-            folderConversationToPublish.conversations[0].name,
-          )
-          .hoverOver();
-        await tooltipAssertion.assertTooltipContent(
-          folderConversationToPublish.conversations[0].name,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Hover over conversation folder and verify tooltip is shown',
-      async () => {
-        await folderConversationsToPublish
-          .getFolderName(folderConversationToPublish.folders.name)
-          .hoverOver();
-        await tooltipAssertion.assertTooltipContent(
-          folderConversationToPublish.folders.name,
-        );
       },
     );
 
     await dialTest.step(
       'Set publication request name and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         const publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -658,7 +629,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify folders hierarchy is displayed on "Publication approval" modal and "Publish to" path',
       async () => {
-        await adminFolderToApproveAssertion.assertFolderEntityState(
+        await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
           { name: folderConversationToPublish.folders.name },
           { name: folderConversationToPublish.conversations[0].name },
           'visible',
@@ -677,14 +648,14 @@ dialAdminTest(
           MenuOptions.publish,
         );
         await baseAssertion.assertElementState(
-          adminPublishingRequestModal,
+          adminPublishingRequestDialog,
           'visible',
         );
-        await adminConversationToPublishAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: adminConversation.name },
           'visible',
         );
-        await adminPublishingRequestModal.cancelButton.click();
+        await adminPublishingRequestDialog.cancelButton.click();
       },
     );
 

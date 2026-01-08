@@ -1,0 +1,175 @@
+import { useMemo } from 'react';
+
+import classNames from 'classnames';
+
+import { getEntityNameFromId } from '@/src/utils/app/id';
+import { getEntityStatus } from '@/src/utils/marketplace';
+import { getVersionFromId } from '@/src/utils/server/api';
+
+import { MarketplaceEntity } from '@/src/types/marketplace';
+
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { ChipTitle } from './ChipTitle';
+import { ChipTooltipContent } from './ChipTooltipContent';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+
+interface ChipWrapperProps {
+  isError: boolean;
+  children: React.ReactNode;
+}
+
+const ChipWrapper: React.FC<ChipWrapperProps> = ({ isError, children }) => (
+  <div
+    className={classNames(
+      'flex h-[34px] items-center rounded',
+      isError ? 'bg-error' : 'bg-accent-primary-alpha',
+    )}
+  >
+    {children}
+  </div>
+);
+
+interface ChipRemoveButtonProps {
+  id: string;
+  isError: boolean;
+  onRemove?: (id: string) => void;
+}
+
+const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
+  id,
+  isError,
+  onRemove,
+}) => (
+  <DialCloseButton
+    className={classNames(
+      'mr-1 p-1 text-secondary',
+      isError && 'hover:enabled:text-error',
+    )}
+    onClose={() => onRemove?.(id)}
+    aria-label="Remove item"
+    size={18}
+  />
+);
+
+interface ChipBodyProps {
+  id: string;
+  item?: MarketplaceEntity;
+  name: string;
+  version?: string;
+  isError: boolean;
+  isInvalid: boolean;
+  readonly?: boolean;
+  onClick?: (id: string) => void;
+}
+
+const ChipBody: React.FC<ChipBodyProps> = ({
+  id,
+  item,
+  name,
+  version,
+  isError,
+  isInvalid,
+  readonly,
+  onClick,
+}) => {
+  const handleClick = () => {
+    if (readonly || isInvalid) return;
+    onClick?.(id);
+  };
+
+  return (
+    <div
+      className={classNames(
+        'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
+        isError ? 'text-error' : 'text-primary',
+        readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
+        readonly && 'pr-2',
+      )}
+      onClick={handleClick}
+    >
+      <ModelIcon entityId={id} entity={item} size={18} isCustomTooltip />
+      <ChipTitle
+        name={name}
+        version={version}
+        isError={isError}
+        className="max-w-[220px]"
+      />
+    </div>
+  );
+};
+
+interface AgentAndToolsetChipProps {
+  id: string;
+  item?: MarketplaceEntity;
+  onRemove?: (id: string) => void;
+  readonly?: boolean;
+  onItemClick?: (id: string) => void;
+  isInSelectionList?: boolean;
+}
+
+export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
+  id,
+  item,
+  onRemove,
+  readonly,
+  onItemClick,
+  isInSelectionList,
+}) => {
+  const { isInvalid, isLoggedOut, isError, isUndeployed } =
+    getEntityStatus(item);
+
+  const name = !item
+    ? getEntityNameFromId(id, { removeVersion: true })
+    : item.name;
+  const version = !item ? getVersionFromId(id) : item.version;
+
+  const tooltipContent = useMemo(() => {
+    return (
+      <ChipTooltipContent
+        id={id}
+        item={item}
+        name={name}
+        version={version}
+        isInvalid={isInvalid}
+        isLoggedOut={isLoggedOut}
+        isUndeployed={isUndeployed}
+        isInSelectionList={isInSelectionList}
+        readonly={readonly}
+      />
+    );
+  }, [
+    id,
+    item,
+    name,
+    version,
+    isInvalid,
+    isLoggedOut,
+    isUndeployed,
+    isInSelectionList,
+    readonly,
+  ]);
+
+  return (
+    <ChipWrapper isError={isError}>
+      <Tooltip isTriggerClickable tooltip={tooltipContent}>
+        <ChipBody
+          id={id}
+          item={item}
+          name={name}
+          version={version}
+          isError={isError}
+          isInvalid={isInvalid}
+          readonly={readonly}
+          onClick={onItemClick}
+        />
+      </Tooltip>
+
+      {!readonly && (
+        <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />
+      )}
+    </ChipWrapper>
+  );
+};

@@ -8,19 +8,19 @@ import { FeatureType } from '@/src/types/common';
 import { MappedVisualizers } from '@/src/types/custom-visualizers';
 import { RootState } from '@/src/types/store';
 
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { AuthSelectors } from '../auth/auth.selectors';
-import { SettingsState } from './settings.types';
-
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, FeatureData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const rootSelector = (state: RootState): SettingsState => state.settings;
+const rootSelector = (state: RootState) => state.settings;
 
 const selectAppName = (state: RootState) => rootSelector(state).appName;
 
@@ -29,14 +29,35 @@ const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
-const selectEnabledFeatures = createSelector(
-  [rootSelector, AuthSelectors.selectSessionData],
-  (state, session) => {
-    return new Set(
-      state.enabledFeatures.filter((feature) =>
-        canUserUseFeature(session, feature),
+const _selectEnabledFeaturesData = (state: RootState) =>
+  rootSelector(state).enabledFeaturesData;
+
+const _selectFeatures = createSelector(
+  [rootSelector, AuthSelectors.selectSessionData, _selectEnabledFeaturesData],
+  (state, session, featuresData) =>
+    state.enabledFeatures
+      .filter((featureName) => canUserUseFeature(session, featureName))
+      .reduce(
+        (acc, curr) => {
+          const featureData = featuresData[curr];
+          acc[curr] = { ...featureData };
+
+          return acc;
+        },
+        {} as Record<Feature, FeatureData | undefined>,
       ),
+);
+
+const selectEnabledFeatures = createSelector(
+  [_selectFeatures],
+  (enabledFeaturesData) => {
+    const enabledFeatures = new Map<Feature, FeatureData | undefined>();
+
+    Object.entries(enabledFeaturesData).forEach(([featureName, featureData]) =>
+      enabledFeatures.set(featureName as Feature, featureData),
     );
+
+    return enabledFeatures;
   },
 );
 
@@ -46,8 +67,16 @@ const selectIsIsolatedView = (state: RootState) =>
 const selectIsolatedModelId = (state: RootState) =>
   rootSelector(state).isolatedModelId;
 
+const selectPreselectedConversationId = (state: RootState) =>
+  rootSelector(state).preselectedConversationId;
+
+const selectPreselectedAction = (state: RootState) =>
+  rootSelector(state).preselectedAction;
+
 const isFeatureEnabled = (state: RootState, featureName: Feature) =>
   selectEnabledFeatures(state).has(featureName);
+const selectFeatureData = (state: RootState, featureName: Feature) =>
+  selectEnabledFeatures(state).get(featureName);
 
 const selectIsPublishingEnabled = (
   state: RootState,
@@ -85,17 +114,11 @@ const isSharingEnabled = (state: RootState, featureType: FeatureType) => {
 
 const selectCodeWarning = (state: RootState) => rootSelector(state).codeWarning;
 
-const selectDefaultModelId = (state: RootState) =>
-  rootSelector(state).defaultModelId;
-
-const selectDefaultAssistantSubmodelId = (state: RootState) =>
-  rootSelector(state).defaultAssistantSubmodelId;
+const selectDefaultModelReference = (state: RootState) =>
+  rootSelector(state).defaultModelReference;
 
 const selectDefaultRecentModelsIds = (state: RootState) =>
   rootSelector(state).defaultRecentModelsIds;
-
-const selectDefaultRecentAddonsIds = (state: RootState) =>
-  rootSelector(state).defaultRecentAddonsIds;
 
 const selectStorageType = (state: RootState) => rootSelector(state).storageType;
 
@@ -159,8 +182,8 @@ const selectTopics = createSelector([_selectTopics], (topics) => {
 const selectCodeEditorPythonVersions = (state: RootState) =>
   rootSelector(state).codeEditorPythonVersions;
 
-const selectOverlayDefaultModelId = (state: RootState) =>
-  rootSelector(state).overlayDefaultModelId;
+const selectOverlayDefaultModelReference = (state: RootState) =>
+  rootSelector(state).overlayDefaultModelReference;
 
 const selectQuickAppsHost = (state: RootState) =>
   rootSelector(state).quickAppsHost ?? DEFAULT_QUICK_APPS_HOST;
@@ -170,6 +193,9 @@ const selectQuickAppsModel = (state: RootState) =>
 
 const selectQuickAppsSchemaId = (state: RootState) =>
   rootSelector(state).quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID;
+
+const selectExternalAppsSchemaId = (state: RootState) =>
+  rootSelector(state).externalAppsSchemaId ?? DEFAULT_EXTERNAL_APPS_SCHEMA_ID;
 
 const FALLBACK_STRING_VALUE = '';
 
@@ -181,26 +207,26 @@ const selectDefaultSystemPrompt = (state: RootState) =>
 
 const selectDefaults = createSelector(
   [
-    selectDefaultAssistantSubmodelId,
     selectQuickAppsHost,
     selectQuickAppsModel,
     selectQuickAppsSchemaId,
+    selectExternalAppsSchemaId,
     selectDialApiHost,
     selectDefaultSystemPrompt,
   ],
   (
-    assistantSubmodelId,
     quickAppsHost,
     quickAppsModel,
     quickAppsSchemaId,
+    externalAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
   ) =>
     ({
-      assistantSubmodelId,
       quickAppsHost,
       quickAppsModel,
       quickAppsSchemaId,
+      externalAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,
     }) as Defaults,
@@ -210,10 +236,11 @@ const selectInitialDataStatus = (state: RootState) =>
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
-const selectWidgetsSchemaIds = createSelector(
-  [rootSelector],
-  (state) => new Set(state.widgetsSchemaIds),
-);
+const selectWidgetsSchemaIds = (state: RootState) =>
+  rootSelector(state).widgetsSchemaIds;
+
+const selectIsAuthDisabled = (state: RootState) =>
+  rootSelector(state).isAuthDisabled;
 
 export const SettingsSelectors = {
   selectAppName,
@@ -221,17 +248,19 @@ export const SettingsSelectors = {
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
+  selectFeatureData,
   selectIsPublishingEnabled,
   isSharingEnabled,
   selectCodeWarning,
-  selectDefaultModelId,
+  selectDefaultModelReference,
   selectDefaultRecentModelsIds,
-  selectDefaultRecentAddonsIds,
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,
   selectIsIsolatedView,
   selectIsolatedModelId,
+  selectPreselectedConversationId,
+  selectPreselectedAction,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
   selectPublicationFilters,
@@ -240,9 +269,10 @@ export const SettingsSelectors = {
   selectAllowVisualizerSendMessages,
   selectTopics,
   selectCodeEditorPythonVersions,
-  selectOverlayDefaultModelId,
+  selectOverlayDefaultModelReference,
   selectDefaults,
   selectInitialDataStatus,
   selectProviderId,
   selectWidgetsSchemaIds,
+  selectIsAuthDisabled,
 };

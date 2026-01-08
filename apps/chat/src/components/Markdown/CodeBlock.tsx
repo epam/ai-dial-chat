@@ -15,15 +15,17 @@ import {
   languageFilenameMapping,
   languageNameMapping,
 } from '@/src/utils/app/codeblock';
+import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { UISelectors } from '@/src/store/selectors';
 
-import Tooltip from '../Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import Download from '@/public/images/icons/download.svg';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   language: string;
@@ -36,10 +38,6 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
 };
-
-function currentDate() {
-  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
-}
 
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
@@ -71,7 +69,7 @@ export const CodeBlock: FC<Props> = memo(
       // use the specific filename if it exists in languageFilenameMapping
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
-        `ai-chat-code-${currentDate()}${fileExtension}`;
+        `ai-chat-code-${getDownLoadCurrentDate()}${fileExtension}`;
       const fileName = window.prompt(t('Enter file name'), suggestedFileName);
 
       if (!fileName) {
@@ -113,28 +111,28 @@ export const CodeBlock: FC<Props> = memo(
               data-no-context-menu
               className="flex items-center gap-3 text-secondary"
             >
-              <button
+              <DialButton
                 className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
                 onClick={copyToClipboard}
                 disabled={isCopied}
-              >
-                {isCopied ? (
-                  <Tooltip tooltip={t('Copied!')}>
-                    <IconCheck size={18} />
-                  </Tooltip>
-                ) : (
-                  <Tooltip isTriggerClickable tooltip={t('Copy code')}>
-                    <IconCopy size={18} />
-                  </Tooltip>
-                )}
-              </button>
+                iconBefore={
+                  isCopied ? (
+                    <Tooltip tooltip={t('Copied!')}>
+                      <IconCheck size={18} />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip isTriggerClickable tooltip={t('Copy code')}>
+                      <IconCopy size={18} />
+                    </Tooltip>
+                  )
+                }
+              />
               <Tooltip isTriggerClickable tooltip={t('Download')}>
-                <button
+                <DialButton
                   className="flex items-center rounded bg-none hover:text-accent-primary"
                   onClick={downloadAsFile}
-                >
-                  <Download width={18} height={18} />
-                </button>
+                  iconBefore={<Download width={18} height={18} />}
+                />
               </Tooltip>
             </div>
           )}

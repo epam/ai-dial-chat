@@ -36,9 +36,9 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getLatestModels();
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   randomModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== ModelsUtil.getDefaultModel()!.id),
+    allModels.filter((m) => m.id !== ModelsUtil.getDefaultAgent()!.id),
   );
 });
 
@@ -101,7 +101,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
       },
@@ -219,7 +219,6 @@ dialTest(
     variableModalAssertion,
     variableModalDialog,
     talkToAgentDialog,
-    marketplacePage,
     conversations,
     conversationDropdownMenu,
     chatBar,
@@ -247,7 +246,9 @@ dialTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(randomModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -257,9 +258,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalDialog.closeButton.click();
@@ -267,7 +268,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Export conversation and then delete all Dial entities',
+      'Export conversation and then delete all DIAL entities',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name, {
           exactMatch: true,
@@ -372,7 +373,10 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying();
         await variableModalAssertion.assertVariableModalState('hidden');
       },
@@ -383,7 +387,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
@@ -428,6 +432,7 @@ dialTest(
     setTestIds,
     variableModalAssertion,
     variableModalDialog,
+    chatMessages,
     apiAssertion,
     localStorageManager,
   }) => {
@@ -511,7 +516,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -565,8 +570,14 @@ dialTest(
     await dialTest.step(
       'Press Submit and verify request with valid model is sent',
       async () => {
-        const thirdRequest = await variableModalDialog.submitReplayVariables();
+        const thirdRequest = await variableModalDialog.submitReplayVariables({
+          isMoveRequestTriggered: true,
+        });
         apiAssertion.assertRequestModelId(thirdRequest, randomModel);
+        await chatMessages.waitForResponseReceived();
+        await chatMessages.chatMessages
+          .getNthElement(historyConversation.messages.length)
+          .waitFor();
       },
     );
   },

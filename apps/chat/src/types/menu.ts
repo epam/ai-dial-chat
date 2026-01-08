@@ -1,7 +1,8 @@
 import { Placement } from '@floating-ui/react';
 import { Icon } from '@tabler/icons-react';
-import { FC, MouseEventHandler, ReactNode } from 'react';
+import { FC, JSX, MouseEventHandler, ReactNode } from 'react';
 
+import { ApplicationType } from './applications';
 import { FeatureType } from './common';
 
 export interface CustomTriggerMenuRendererProps extends MenuItemRendererProps {
@@ -49,9 +50,17 @@ export interface ContextMenuProps extends MenuProps {
   triggerIconSize?: number;
   triggerIconHighlight?: boolean;
   triggerIconClassName?: string;
+  hideTriggerIcon?: boolean;
   triggerTooltip?: string;
   TriggerCustomRenderer?: JSX.Element;
   isLoading?: boolean;
   placement?: Placement;
   onTriggerClick?: onClickMenuItemHandler;
+}
+
+export interface AddMarketplaceEntityMenuItem {
+  type: ApplicationType | string;
+  name: string;
+  dataQa: string;
+  display: boolean;
 }

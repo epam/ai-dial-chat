@@ -27,7 +27,7 @@ dialAdminTest(
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     selectFolders,
     selectFoldersAssertion,
@@ -78,7 +78,7 @@ dialAdminTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withTargetFolder(organizationFolderNames[i - 1])
-            .withConversationResource(
+            .withConversationInFolderResource(
               publishRequestConversations[i - 1],
               PublishActions.ADD,
             )
@@ -102,10 +102,10 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationToPublish.name);
+        await conversations.selectEntity(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         selectFoldersAssertion.assertStringsSorting(
@@ -138,9 +138,9 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -229,7 +229,7 @@ dialAdminTest(
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     baseAssertion,
     selectFolders,
@@ -268,7 +268,7 @@ dialAdminTest(
     const maxNestedLevel = 4;
     const maxNameLength = 160;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const newFolderName = GeneratorUtil.randomString(maxNameLength * 1.5);
+    const newFolderName = 'a' + GeneratorUtil.randomString(maxNameLength * 1.5);
     const cutNewFolderName = newFolderName.substring(0, maxNameLength);
     const defaultFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${defaultFolderName}/${defaultFolderName}`;
@@ -284,10 +284,10 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationToPublish.name);
+        await conversations.selectEntity(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -410,10 +410,6 @@ dialAdminTest(
           { name: defaultFolderName, index: 1 },
           true,
         );
-        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
-        await selectFolders.renameEmptyFolderWithTick(
-          GeneratorUtil.randomString(5),
-        );
         await selectFolders
           .getNestedFolder(defaultFolderName, defaultFolderName)
           .click();
@@ -431,15 +427,15 @@ dialAdminTest(
           triggeredApiHost: API.publicationRulesList,
         });
         await baseAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+          publishingRequestDialog.getChangePublishToPath().path,
           publicationPath,
         );
       },
     );
 
     await dialTest.step('Enter the name and submit the request', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
-      publishApiModels = await publishingRequestModal.sendPublicationRequest();
+      await publishingRequestDialog.requestName.fillInInput(requestName);
+      publishApiModels = await publishingRequestDialog.sendPublicationRequest();
       publicationsToUnpublish.push(publishApiModels.response);
     });
 

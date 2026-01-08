@@ -1,15 +1,16 @@
 import { BaseElement } from './baseElement';
 
 import {
-  AttachFilesModalSelectors,
+  ChatSelectors,
   EntitySelectors,
+  FilesManagerModalSelectors,
   IconSelectors,
   MenuSelectors,
   SelectFolderModalSelectors,
 } from '@/src/ui/selectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
-import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { FilesManagerModalHeader } from '@/src/ui/webElements/filesManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
@@ -19,18 +20,24 @@ export enum FileModalSection {
   SharedWithMe = 'Shared with me',
   Organization = 'Organization',
 }
+
+export const invalidSectionError = (section: FileModalSection) =>
+  `Unknown file modal section: ${section}`;
+
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
-    super(page, AttachFilesModalSelectors.modalContainer, parentLocator);
+    super(page, FilesManagerModalSelectors.modalContainer, parentLocator);
   }
 
   private fileDropdownMenu!: DropdownMenu;
-  private modalHeader!: FilesModalHeader;
+  private modalHeader!: FilesManagerModalHeader;
   //'All files' section entities
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
   private sharedWithMeTree!: AttachFilesTree;
+  private sharedWithMeFolderFiles!: Folders;
   private organizationTree!: AttachFilesTree;
+  private organizationFolderFiles!: Folders;
   private search!: Search;
   public modalError!: ModalError;
 
@@ -55,16 +62,19 @@ export class AttachFilesModal extends BaseElement {
     return this.fileDropdownMenu;
   }
 
-  getModalHeader(): FilesModalHeader {
+  getModalHeader(): FilesManagerModalHeader {
     if (!this.modalHeader) {
-      this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
+      this.modalHeader = new FilesManagerModalHeader(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.modalHeader;
   }
 
   public getSharedWithMeFilesContainer(): BaseElement {
     return this.getChildElementBySelector(
-      AttachFilesModalSelectors.sharedWithMeFilesContainer,
+      FilesManagerModalSelectors.sharedWithMeFilesContainer,
     );
   }
 
@@ -78,21 +88,22 @@ export class AttachFilesModal extends BaseElement {
       fileTree = this.getOrganizationTree();
     }
     await fileTree!
-      .getChildElementBySelector(AttachFilesModalSelectors.rootFolder)
+      .getChildElementBySelector(FilesManagerModalSelectors.rootFolder)
       .click();
   }
 
   public getAllFilesContainer(): BaseElement {
     return this.getChildElementBySelector(
-      AttachFilesModalSelectors.allFilesContainer,
+      FilesManagerModalSelectors.allFilesContainer,
     );
   }
+
   getAllFolderFiles(): Folders {
     if (!this.allFolderFiles) {
       this.allFolderFiles = new Folders(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.allFilesContainer,
+        FilesManagerModalSelectors.allFilesContainer,
         EntitySelectors.file,
       );
     }
@@ -104,10 +115,22 @@ export class AttachFilesModal extends BaseElement {
       this.organizationTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.organizationFilesContainer,
+        FilesManagerModalSelectors.organizationFilesContainer,
       );
     }
     return this.organizationTree;
+  }
+
+  getOrganizationFolderFiles(): Folders {
+    if (!this.organizationFolderFiles) {
+      this.organizationFolderFiles = new Folders(
+        this.page,
+        this.rootLocator,
+        FilesManagerModalSelectors.organizationFilesContainer,
+        EntitySelectors.file,
+      );
+    }
+    return this.organizationFolderFiles;
   }
 
   getAllFilesTree(): AttachFilesTree {
@@ -115,7 +138,7 @@ export class AttachFilesModal extends BaseElement {
       this.allFilesTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.allFilesContainer,
+        FilesManagerModalSelectors.allFilesContainer,
       );
     }
     return this.allFilesTree;
@@ -125,15 +148,15 @@ export class AttachFilesModal extends BaseElement {
     switch (section) {
       case FileModalSection.AllFiles:
         return this.getChildElementBySelector(
-          AttachFilesModalSelectors.allFilesContainer,
+          FilesManagerModalSelectors.allFilesContainer,
         );
       case FileModalSection.SharedWithMe:
         return this.getChildElementBySelector(
-          AttachFilesModalSelectors.sharedWithMeFilesContainer,
+          FilesManagerModalSelectors.sharedWithMeFilesContainer,
         );
       case FileModalSection.Organization:
         return this.getChildElementBySelector(
-          AttachFilesModalSelectors.organizationFilesContainer,
+          FilesManagerModalSelectors.organizationFilesContainer,
         );
       default:
         throw new Error(`Unknown section: ${section}`);
@@ -145,26 +168,38 @@ export class AttachFilesModal extends BaseElement {
       this.sharedWithMeTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.sharedWithMeFilesContainer,
+        FilesManagerModalSelectors.sharedWithMeFilesContainer,
       );
     }
     return this.sharedWithMeTree;
   }
 
+  getSharedWithMeFolderFiles(): Folders {
+    if (!this.sharedWithMeFolderFiles) {
+      this.sharedWithMeFolderFiles = new Folders(
+        this.page,
+        this.rootLocator,
+        FilesManagerModalSelectors.sharedWithMeFilesContainer,
+        EntitySelectors.file,
+      );
+    }
+    return this.sharedWithMeFolderFiles;
+  }
+
   public attachFilesButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.attachFilesButton,
+    FilesManagerModalSelectors.attachFilesButton,
   );
 
   public uploadFromDeviceButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.uploadFromDeviceButton,
+    FilesManagerModalSelectors.uploadFromDeviceButton,
   );
 
   public deleteFilesButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.deleteFilesButton,
+    FilesManagerModalSelectors.deleteFilesButton,
   );
 
   public downloadFilesButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.downloadFilesButton,
+    FilesManagerModalSelectors.downloadFilesButton,
   );
 
   public newFolderButton = this.getChildElementBySelector(
@@ -173,7 +208,7 @@ export class AttachFilesModal extends BaseElement {
 
   public getFilesSection = (sectionElement: BaseElement) =>
     sectionElement
-      .getChildElementBySelector(AttachFilesModalSelectors.fileSection)
+      .getChildElementBySelector(FilesManagerModalSelectors.fileSection)
       .getElementLocator();
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
@@ -187,7 +222,20 @@ export class AttachFilesModal extends BaseElement {
       case FileModalSection.SharedWithMe:
         return this.getSharedWithMeTree();
       default:
-        throw new Error(`Unknown file modal section: ${section}`);
+        throw new Error(invalidSectionError(section));
+    }
+  }
+
+  public getFolderTree(section: FileModalSection) {
+    switch (section) {
+      case FileModalSection.AllFiles:
+        return this.getAllFolderFiles();
+      case FileModalSection.SharedWithMe:
+        return this.getSharedWithMeFolderFiles();
+      case FileModalSection.Organization:
+        return this.getOrganizationFolderFiles();
+      default:
+        throw new Error(invalidSectionError(section));
     }
   }
 
@@ -216,7 +264,12 @@ export class AttachFilesModal extends BaseElement {
     }
     const file = fileTree!.getEntityByName(filename);
     await file.hover();
-    await file.locator(MenuSelectors.dotsMenu).click();
+    const fileDotsMenu = file.locator(MenuSelectors.dotsMenu);
+    const fileDotsMenuSpinner = fileDotsMenu.locator(
+      ChatSelectors.entitySpinner,
+    );
+    await fileDotsMenu.click();
+    await fileDotsMenuSpinner.waitFor({ state: 'hidden' });
     await this.getFileDropdownMenu().waitForState();
   }
 

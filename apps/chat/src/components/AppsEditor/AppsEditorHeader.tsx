@@ -1,312 +1,241 @@
-import {
-  IconCircleCheck,
-  IconCircleDot,
-  IconLogout,
-  IconMenu2,
-  IconX,
-} from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
 
-import Link from 'next/link';
 import { useRouter } from 'next/router';
-
-import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isApplicationType } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
+import { ApplicationType } from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  ModelsSelectors,
+} from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
+import { AppsEditorQuery } from '@/src/constants/applications';
 
-import { Logo } from '@/src/components/Header/Logo';
-import { User } from '@/src/components/Header/User/User';
-import { SettingDialog } from '@/src/components/Settings/SettingDialog';
+import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
-enum TabKeys {
-  GENERAL = 'general',
-  SETTINGS = 'settings',
-}
+import omit from 'lodash-es/omit';
+import capitalize from 'lodash/capitalize';
 
-const myWorkspaceHref = {
-  pathname: Routes.Marketplace,
-  query: { tab: MarketplaceTabs.MY_WORKSPACE },
+const tabKeysInfo = {
+  [MarketplaceEditorSteps.General]: {
+    label: 'General info',
+  },
+  [MarketplaceEditorSteps.Settings]: {
+    label: 'App settings',
+  },
 };
 
+const applicationTypeNames = {
+  [ApplicationType.CODE_APP]: 'Code app',
+  [ApplicationType.CUSTOM_APP]: 'Custom app',
+};
+
+const generalStepFields = ['name', 'version'];
+
 interface AppsEditorHeaderProps {
-  applicationTypeDisplayName: string;
-  isEditApplication?: boolean;
-  hasCustomEditor?: boolean;
+  onTabClick: (tab: MarketplaceEditorSteps) => void;
+  onSave: (saveDraft?: boolean, redirectToChat?: boolean) => void;
 }
 
-export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
-  applicationTypeDisplayName,
-  isEditApplication,
-  hasCustomEditor,
-}) => {
+export const AppsEditorHeader = ({
+  onTabClick,
+  onSave,
+}: AppsEditorHeaderProps) => {
+  const {
+    query: {
+      [AppsEditorQuery.Id]: id = '',
+      [AppsEditorQuery.Schema]: schemaId = '',
+      [AppsEditorQuery.IsCreating]: isCreating,
+    },
+  } = useRouter();
+
+  // 1 stands for true
+  const isCreatingApp =
+    !id || (typeof isCreating === 'string' && isCreating === '1');
+
+  const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
-  const {
-    query: { id = '', slug = '', add },
-    pathname,
-  } = useRouter();
-  const { t } = useTranslation(Translation.Chat);
+  const { control, trigger } = useFormContext<AppsEditorFormType>();
+  const { errors, isValid } = useFormState<AppsEditorFormType>({ control });
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [saveDraftDialog, setSaveDraftDialog] = useState(false);
+  const [redirectToChat, setRedirectToChat] = useState(false);
 
-  const isUserSettingsOpen = useAppSelector(
-    UISelectors.selectIsUserSettingsOpen,
+  const currentStep = useAppSelector(ApplicationSelectors.selectEditorStep);
+  const appDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
   );
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const returnConversationIds = useAppSelector(
-    ApplicationSelectors.selectReturnConversationIds,
-  );
-  const shouldSaveApplication = useAppSelector(
-    ApplicationSelectors.selectShouldSaveApplication,
-  );
-  const hasUnsavedChanges = useAppSelector(
-    ApplicationSelectors.selectHasUnsavedChanges,
+  const schema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const handleCloseUserSettings = useCallback(() => {
-    dispatch(UIActions.setIsUserSettingsOpen(false));
-  }, [dispatch]);
+  const isExistingApp = !!appDetails;
+  const isSchemaApplicationType = !isApplicationType(
+    decodeURIComponent(schemaId.toString()),
+  );
+  const applicationTypeDisplayName = isSchemaApplicationType
+    ? (schema?.[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ??
+      '')
+    : applicationTypeNames[
+        decodeURIComponent(schemaId.toString()) as ApplicationType
+      ];
+  const hasCustomEditor =
+    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
-  const handleTabClick = (isDisabled: boolean) => {
-    return (e: React.MouseEvent) => {
-      if (isDisabled) {
-        e.preventDefault();
-        return;
-      }
-
-      if (hasUnsavedChanges) {
-        dispatch(ApplicationActions.setShouldSaveApplication(true));
-        dispatch(ApplicationActions.setHasUnsavedChanges(false));
-      }
-    };
-  };
-
-  const handleSaveAndRedirect = () => {
-    if (!shouldSaveApplication) {
-      dispatch(ApplicationActions.setShouldSaveApplication(true));
-      dispatch(ApplicationActions.setExitAfterSave(true));
-    }
-
-    if (returnConversationIds?.length) {
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: returnConversationIds,
-        }),
-      );
-      dispatch(ApplicationActions.setReturnConversationIds(undefined));
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
-      );
-    }
-  };
+  const agent = id ? modelsMap[id.toString()] : undefined;
 
   const tabs = useMemo(
     () => [
       {
-        key: TabKeys.GENERAL,
-        label: t('General info'),
-        href: {
-          pathname: Routes.AppsEditorGeneralInfo,
-          query: {
-            id,
-            slug,
-            add,
-          },
-        },
+        key: MarketplaceEditorSteps.General,
+        label: t(tabKeysInfo[MarketplaceEditorSteps.General].label),
+        disabled: false,
       },
       {
-        key: TabKeys.SETTINGS,
-        label: t('App settings'),
-        href: {
-          pathname: Routes.AppsEditorSettings,
-          query: {
-            id,
-            slug,
-            add,
-          },
-        },
+        key: MarketplaceEditorSteps.Settings,
+        label: t(tabKeysInfo[MarketplaceEditorSteps.Settings].label),
+        disabled: !isExistingApp,
       },
     ],
-    [t, id, slug, add],
+    [isExistingApp, t],
   );
 
-  const agent = modelsMap[id as string];
+  const errorSteps = useMemo(() => {
+    const steps = new Set<MarketplaceEditorSteps>();
+    const errorKeys = Object.keys(errors);
+
+    if (generalStepFields.some((f) => errorKeys.includes(f)) && !isValid) {
+      steps.add(MarketplaceEditorSteps.General);
+    }
+    if (Object.keys(omit(errors, generalStepFields)).length > 0 && !isValid) {
+      steps.add(MarketplaceEditorSteps.Settings);
+    }
+
+    return steps;
+  }, [errors, isValid]);
+
+  const title = `${t(isCreatingApp ? 'Add' : 'Edit')} ${applicationTypeDisplayName}`;
+
+  const handleTabClick = useCallback(
+    (tab: { key: MarketplaceEditorSteps; disabled: boolean }) => {
+      if (tab.disabled) return;
+      onTabClick(tab.key);
+    },
+    [onTabClick],
+  );
+
+  const handleLogoClick = useCallback(
+    async (e: MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      if (isExistingApp) {
+        const isValid = await trigger();
+
+        if (!isValid) {
+          setSaveDraftDialog(true);
+          setRedirectToChat(true);
+          return;
+        }
+      }
+      onSave(false, true);
+    },
+    [isExistingApp, trigger, onSave],
+  );
+
+  const handleSaveAndRedirect = useCallback(async () => {
+    if (isExistingApp) {
+      const isValid = await trigger();
+
+      if (!isValid) {
+        setSaveDraftDialog(true);
+        return;
+      }
+    }
+    onSave();
+  }, [isExistingApp, onSave, trigger]);
+
+  const handleCloseConfirmDialog = useCallback(
+    (result: boolean) => {
+      setSaveDraftDialog(false);
+      if (result && redirectToChat) {
+        onSave(true, true);
+        return;
+      } else if (result) {
+        onSave(true);
+        return;
+      }
+      setRedirectToChat(false);
+      const invalidStep = Array.from(errorSteps)[0];
+
+      if (invalidStep) {
+        dispatch(ApplicationActions.setEditorStep(invalidStep));
+      }
+    },
+    [dispatch, errorSteps, onSave, redirectToChat],
+  );
+
+  const getMobileLabelText = useCallback(
+    (tabKey: MarketplaceEditorSteps) => {
+      const capitalizedAppType = capitalize(applicationTypeDisplayName);
+      let labelText = tabKeysInfo[tabKey].label.toLowerCase();
+      if (tabKey === MarketplaceEditorSteps.Settings) {
+        labelText = labelText.replace(/^app\s+/i, '');
+      }
+
+      return `${capitalizedAppType} ${labelText}`;
+    },
+    [applicationTypeDisplayName],
+  );
+
+  const saveLabel =
+    isExistingApp &&
+    !hasCustomEditor &&
+    (agent ? !isEntityIdPublic(agent) : false)
+      ? 'Save and exit'
+      : 'Exit';
 
   return (
-    <div
-      className={classNames(
-        'z-40 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
-      )}
-      data-qa="app-editor-header"
-    >
-      <div className="flex grow items-center justify-between">
-        <div className="flex h-full space-x-4">
-          <div className="flex items-center space-x-4">
-            <button
-              className="p-2 text-primary md:hidden"
-              onClick={() => setMenuOpen((prevState) => !prevState)}
-            >
-              {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
-            </button>
-          </div>
-          <Logo />
-          <div className="h-full border-l border-secondary"></div>
-          <span
-            className="hidden items-center text-primary md:flex"
-            data-qa="action-application-type-title"
-          >
-            {isEditApplication && !add ? t('Edit') : t('Add')}{' '}
-            {applicationTypeDisplayName}
-          </span>
-          <div
-            className="hidden items-center space-x-2 md:flex"
-            data-qa="steps-container"
-          >
-            {tabs.map((tab, index) => {
-              const isDisabled = tab.key === TabKeys.SETTINGS && !id;
-              return (
-                <div key={tab.key} className="flex items-center">
-                  <Link
-                    href={tab.href}
-                    className={isDisabled ? 'pointer-events-none' : ''}
-                    data-qa="single-step-link"
-                    aria-disabled={isDisabled}
-                    tabIndex={isDisabled ? -1 : undefined}
-                    passHref
-                  >
-                    <div
-                      className={classNames(
-                        'flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 hover:bg-accent-primary-alpha',
-                        isDisabled ? 'text-secondary' : 'text-primary',
-                      )}
-                      onClick={handleTabClick(isDisabled)}
-                    >
-                      {tab.href.pathname !== pathname && id ? (
-                        <IconCircleCheck
-                          className="text-accent-primary"
-                          data-qa="selected-step-icon"
-                          width={24}
-                          height={24}
-                        />
-                      ) : (
-                        <IconCircleDot
-                          className={
-                            isDisabled
-                              ? 'text-secondary'
-                              : 'text-accent-primary'
-                          }
-                          data-qa="not-selected-step-icon"
-                          width={24}
-                          height={24}
-                        />
-                      )}
-                      <span
-                        className="grow truncate"
-                        data-qa="single-step-title"
-                      >
-                        {tab.label}
-                      </span>
-                    </div>
-                  </Link>
-                  {index < tabs.length - 1 && (
-                    <div
-                      className="mx-2 h-0.5 w-5"
-                      style={{ backgroundColor: 'var(--text-secondary)' }}
-                    ></div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="flex h-full items-center space-x-2">
-          {isEditApplication &&
-          !hasCustomEditor &&
-          !isEntityIdPublic({ id: agent?.id as string }) ? (
-            <button
-              className="button flex items-center space-x-1 text-accent-primary md:flex"
-              onClick={handleSaveAndRedirect}
-              data-qa="save-and-exit"
-            >
-              <IconLogout size={14} />
-              <span>{t('Save and exit')}</span>
-            </button>
-          ) : (
-            <Link
-              className="hidden items-center space-x-1 px-3 text-accent-primary md:flex"
-              data-qa="exit-link"
-              href={myWorkspaceHref}
-            >
-              <IconLogout size={14} />
-              <span>{t('Exit')}</span>
-            </Link>
-          )}
-
-          <div className="h-full max-md:pr-2 md:border-l md:border-secondary md:pl-2">
-            <User />
-          </div>
-        </div>
-      </div>
-
-      {menuOpen && (
-        <div className="absolute left-0 top-[48px] w-full border-b border-secondary bg-layer-3 md:hidden">
-          {tabs.map((tab) => {
-            const isDisabled = tab.key === TabKeys.SETTINGS && !id;
-            const isActive = pathname === tab.href.pathname;
-            return (
-              <Link key={tab.key} href={tab.href} passHref>
-                <div
-                  className={classNames(
-                    'cursor-pointer border-b border-secondary px-4 py-2',
-                    isDisabled ? 'text-secondary' : 'text-primary',
-                    isActive && !isDisabled
-                      ? 'font-semibold text-accent-primary'
-                      : '',
-                  )}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {tab.label}
-                </div>
-              </Link>
-            );
-          })}
-          <Link
-            className="flex items-center px-4 py-2 hover:text-accent-primary"
-            href={myWorkspaceHref}
-          >
-            <IconLogout size={14} />
-            <span>{t('Go to marketplace')}</span>
-          </Link>
-        </div>
-      )}
-
-      <SettingDialog
-        open={isUserSettingsOpen}
-        onClose={handleCloseUserSettings}
+    <>
+      <EditorHeader
+        tabs={tabs}
+        activeTab={currentStep}
+        errorTabsSet={errorSteps}
+        isEditing={isExistingApp}
+        onTabClick={handleTabClick}
+        getMobileTabLabel={getMobileLabelText}
+        title={title}
+        saveLabel={saveLabel}
+        onSave={handleSaveAndRedirect}
+        onLogoClick={handleLogoClick}
+        dataQa="entity-editor-header"
       />
-    </div>
+
+      <ConfirmDialog
+        isOpen={saveDraftDialog}
+        heading={t('Only valid data will be saved')}
+        description={t(
+          'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
+        )}
+        confirmLabel={t('Save valid data')}
+        cancelLabel={t('Continue editing')}
+        onClose={handleCloseConfirmDialog}
+      />
+    </>
   );
 };

@@ -29,7 +29,8 @@
             "input": ".",
             "output": "."
           }
-        ]
+        ],
+        "useLegacyTypescriptPlugin": false
       }
     },
     "publish": {
@@ -54,5 +55,5 @@
     "format": {},
     "format:fix": {}
   },
-  "tags": []
+  "tags": ["publishable"]
 }

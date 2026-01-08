@@ -12,22 +12,18 @@ dialTest.beforeAll(async () => {
 });
 
 dialTest(
-  '[Select an agent for conversation] Agent ICONs are shown correctly. Set in config.\n' +
-    'Addon icons on See full addons screen',
+  '[Select an agent for conversation] Agent ICONs are shown correctly. Set in config',
   async ({
     dialHomePage,
     talkToAgentDialog,
-    addons,
-    addonsDialog,
     iconApiHelper,
-    addonsDialogAssertion,
-    marketplaceAgentsAssertion,
+    baseAssertion,
     chat,
     setTestIds,
     localStorageManager,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1036', 'EPMRTC-1038');
+    setTestIds('EPMRTC-1036');
 
     await dialTest.step(
       'Open "Select an agent for conversation" modal for new conversation',
@@ -41,37 +37,18 @@ dialTest(
     );
 
     await dialTest.step('Verify all agents have valid icons', async () => {
-      const actualIcons = await talkToAgentDialog.getAgents().getAgentsIcons();
+      const actualIcons = await talkToAgentDialog.getAgents().getEntityIcons();
       for (const actualIcon of actualIcons) {
         const expectedEntityIcon = iconApiHelper.getEntityIcon(
           ModelsUtil.getOpenAIEntity(actualIcon.entityId)!,
         );
-        await marketplaceAgentsAssertion.assertEntityIcon(
+        await baseAssertion.assertEntityIcon(
           actualIcon.iconLocator,
           expectedEntityIcon,
         );
       }
       await talkToAgentDialog.cancelButton.click();
     });
-
-    await dialTest.step(
-      'Click "See all addons" and verify all addons have valid icons',
-      async () => {
-        await chat.configureSettingsButton.click();
-        await addons.seeAllAddons();
-        const actualAddonsIcons = await addonsDialog.getAddonsIcons();
-        for (const actualIcon of actualAddonsIcons) {
-          const expectedAddonIcon = iconApiHelper.getEntityIcon(
-            ModelsUtil.getAddon(actualIcon.entityId)!,
-          );
-          await addonsDialogAssertion.assertEntityIcon(
-            actualIcon.iconLocator,
-            expectedAddonIcon,
-          );
-        }
-        await addonsDialog.closeDialog();
-      },
-    );
   },
 );
 
@@ -97,12 +74,14 @@ dialTest.skip(
         const conversation =
           conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },

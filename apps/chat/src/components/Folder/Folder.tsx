@@ -18,6 +18,7 @@ import {
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -27,13 +28,13 @@ import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
-import { isReplayConversation } from '@/src/utils/app/conversation';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
-  getParentFolderIdsFromFolderId,
+  isFolderPartialSelected,
+  isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
 import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
@@ -48,40 +49,46 @@ import {
   getFolderMoveType,
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
-import { getPublishFolderResources } from '@/src/utils/app/publications';
-import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import {
+  doesEntityContainSearchItem,
+  isHiddenEntity,
+} from '@/src/utils/app/search';
+import { isReplayConversation } from '@/src/utils/app/shared-utils';
 
-import { Conversation } from '@/src/types/chat';
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DraggedInterface, FolderInterface } from '@/src/types/folder';
-import { PublicationFolderPayload } from '@/src/types/modal';
 import { PromptInfo } from '@/src/types/prompt';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions } from '@/src/store/files/files.reducers';
+import {
+  ConversationsActions,
+  FilesActions,
+  PromptsActions,
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { PublicationSelectors } from '@/src/store/selectors';
 
-import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
-
-import { ReviewDot } from '../Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import { FolderContextMenu } from '../Common/FolderContextMenu';
-import ShareIcon from '../Common/ShareIcon';
-import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
+import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { Checkbox } from '@/src/components/Common/Checkbox';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
   ConversationInfo,
   PublishActions,
-  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
@@ -98,7 +105,7 @@ export interface FolderProps<T, P = unknown> {
   allFolders: FolderInterface[];
   level?: number;
   highlightedFolders?: string[];
-  searchTerm: string;
+  searchTerm?: string;
   openedFoldersIds: string[];
   isInitialRenameEnabled?: boolean;
   newAddedFolderId?: string;
@@ -129,20 +136,15 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   canSelectFolders?: boolean;
   isSelectAlwaysVisible?: boolean;
-  isUnpublishing?: boolean;
   showTooltip?: boolean;
+  canManageOnlyTemporaryFolders?: boolean;
   onShowError?: (error: string) => void;
-  onPublication?: ({
-    entity,
-    entities,
-    type,
-    action,
-  }: PublicationFolderPayload) => void;
+  showTechnicalFolders?: boolean;
 }
 
-const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
+export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
-  searchTerm,
+  searchTerm = '',
   itemComponent,
   allItems,
   allItemsWithoutFilters = undefined,
@@ -175,14 +177,18 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   canSelectFolders = false,
   isSelectAlwaysVisible = false,
-  isUnpublishing = false,
   showTooltip,
+  canManageOnlyTemporaryFolders = false,
   onShowError,
-  onPublication,
+  showTechnicalFolders = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const screenState = useScreenState();
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const checkboxRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -208,9 +214,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const dragDropElement = useRef<HTMLDivElement>(null);
 
-  const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
-  );
   const hasResourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectIsFolderContainsResourcesToReview(
       state,
@@ -220,9 +223,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
-  );
-  const publicVersionGroups = useAppSelector(
-    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const handleContextMenuOpen = useCallback(
@@ -256,22 +256,21 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
 
   useEffect(() => {
-    const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-
-    const isParentSelected = parentFolderIds.some((id) =>
-      (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
-    );
+    const isParentSelected = isParentFolderSelected({
+      currentFolderId: currentFolder.id,
+      selectedFolderIds: additionalItemData?.selectedFolderIds,
+    });
 
     setIsSelected(isParentSelected);
   }, [additionalItemData?.selectedFolderIds, currentFolder.id, dispatch]);
 
   useEffect(() => {
-    const currentId = `${currentFolder.id}/`;
     setIsPartialSelected(
-      !isSelected &&
-        (additionalItemData?.partialSelectedFolderIds ?? []).includes(
-          currentId,
-        ),
+      isFolderPartialSelected({
+        currentFolderId: currentFolder.id,
+        partialSelectedFolderIds: additionalItemData?.partialSelectedFolderIds,
+        isSelected,
+      }),
     );
   }, [
     additionalItemData?.partialSelectedFolderIds,
@@ -316,64 +315,21 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder, dispatch, featureType],
   );
 
-  const allChildItems = useMemo(
-    () =>
-      getPublishFolderResources(
-        currentFolder,
-        allItemsWithoutFilters as ShareEntity[],
-        publicVersionGroups,
-        isUnpublishing,
-      ),
-    [
-      allItemsWithoutFilters,
-      currentFolder,
-      isUnpublishing,
-      publicVersionGroups,
-    ],
-  );
+  const allConversationChildItems = useMemo(() => {
+    if (featureType !== FeatureType.Chat) {
+      return [];
+    }
+
+    return (
+      allItemsWithoutFilters?.filter((item) =>
+        item.id.startsWith(`${currentFolder.id}/`),
+      ) ?? []
+    );
+  }, [allItemsWithoutFilters, currentFolder, featureType]);
 
   const handleOpenPublishing: MouseEventHandler = useCallback(
     (e) => {
       e.stopPropagation();
-      if (!isPublishingEnabled) return;
-
-      if (
-        featureType === FeatureType.Chat &&
-        (!allChildItems.length ||
-          !allChildItems.every((item) => (item as Conversation).messages))
-      ) {
-        dispatch(
-          ConversationsActions.uploadConversationsWithContentRecursive({
-            path: currentFolder.id,
-          }),
-        );
-      }
-
-      onPublication?.({
-        entity: currentFolder,
-        entities: allChildItems as ShareEntity[],
-        type:
-          featureType === FeatureType.Prompt
-            ? SharingType.PromptFolder
-            : SharingType.ConversationFolder,
-        action: PublishActions.ADD,
-      });
-    },
-    [
-      allChildItems,
-      currentFolder,
-      dispatch,
-      featureType,
-      isPublishingEnabled,
-      onPublication,
-    ],
-  );
-
-  const handleOpenUnpublishing: MouseEventHandler = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (!isPublishingEnabled) return;
-
       if (featureType === FeatureType.Chat) {
         dispatch(
           ConversationsActions.uploadConversationsWithContentRecursive({
@@ -382,24 +338,29 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
       }
 
-      onPublication?.({
-        entity: currentFolder,
-        entities: allChildItems as ShareEntity[],
-        type:
-          featureType === FeatureType.Prompt
-            ? SharingType.PromptFolder
-            : SharingType.ConversationFolder,
-        action: PublishActions.DELETE,
-      });
+      dispatch(
+        PublicationActions.setPublishModel({
+          entity: currentFolder,
+          isFolder: true,
+          action: PublishActions.ADD,
+        }),
+      );
     },
-    [
-      allChildItems,
-      currentFolder,
-      dispatch,
-      featureType,
-      isPublishingEnabled,
-      onPublication,
-    ],
+    [currentFolder, dispatch, featureType],
+  );
+
+  const handleOpenUnpublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+      dispatch(
+        PublicationActions.setPublishModel({
+          entity: currentFolder,
+          isFolder: true,
+          action: PublishActions.DELETE,
+        }),
+      );
+    },
+    [currentFolder, dispatch],
   );
 
   const isFolderOpened = useMemo(() => {
@@ -407,9 +368,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, [openedFoldersIds, currentFolder.id]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
-      allFolders.filter((folder) => folder.folderId === currentFolder.id),
+      allFolders.filter(
+        (folder) =>
+          folder.folderId === currentFolder.id &&
+          (showTechnicalFolders || !isHiddenEntity(folder)),
+      ),
     );
-  }, [currentFolder, allFolders]);
+  }, [allFolders, currentFolder.id, showTechnicalFolders]);
   const filteredChildItems = useMemo(() => {
     return sortByName(
       allItems?.filter(
@@ -444,6 +409,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const handleNewFolderRename = useCallback(() => {
     if (newAddedFolderId === currentFolder.id) {
       dispatch(FilesActions.resetNewFolderId());
+      dispatch(PromptsActions.resetNewFolderId());
+      dispatch(ConversationsActions.resetNewFolderId());
     }
   }, [newAddedFolderId, dispatch, currentFolder]);
 
@@ -492,6 +459,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
         return;
       }
+
+      if (newName.startsWith('.')) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the start of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
     }
 
     if (currentFolder.isShared && newName && newName !== currentFolder.name) {
@@ -501,7 +477,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    if (newName && newName !== currentFolder.name) {
+    if (
+      newName &&
+      (newName !== currentFolder.name || newAddedFolderId === currentFolder.id)
+    ) {
       onRenameFolder(newName, currentFolder.id);
     }
 
@@ -516,6 +495,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     renameValue,
     skipFolderRenameValidation,
     currentFolder,
+    newAddedFolderId,
     handleNewFolderRename,
     allFoldersWithoutFilters,
     dispatch,
@@ -897,6 +877,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const isMobileCheckboxVisible =
     canSelectFolders && isContextMenu && isTabletScreen();
+  const isTemporaryFolder =
+    'temporary' in currentFolder && currentFolder.temporary;
 
   return (
     <div
@@ -904,7 +886,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       className={classNames(
         'select-none',
         isDraggingOver && 'bg-accent-primary-alpha',
-        currentFolder.temporary && 'text-primary',
+        isTemporaryFolder && 'text-primary',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -1015,15 +997,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
-                      <input
-                        className={classNames(
-                          'checkbox peer size-[18px] bg-layer-3',
-                          additionalItemData?.isSidePanelItem && 'mr-0',
-                        )}
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
                         onChange={handleToggleFolder}
+                        className={
+                          additionalItemData?.isSidePanelItem && 'mr-0'
+                        }
                       />
+
                       <IconCheck
                         size={18}
                         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
@@ -1090,23 +1071,16 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                       data-item-checkbox
                     >
-                      <input
-                        className={classNames(
-                          'checkbox peer size-[18px] bg-layer-3',
-                          additionalItemData?.isSidePanelItem && 'mr-0',
-                        )}
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
+                        isPartialChecked={isPartialSelected}
                         onChange={handleToggleFolder}
-                        ref={checkboxRef}
-                        data-qa={
-                          isSelected
-                            ? 'checked'
-                            : isPartialSelected
-                              ? 'partiallyChecked'
-                              : 'unchecked'
+                        className={
+                          additionalItemData?.isSidePanelItem && 'mr-0'
                         }
+                        ref={checkboxRef}
                       />
+
                       {isSelected && (
                         <IconCheck
                           size={18}
@@ -1159,7 +1133,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
-                isContextMenu && 'pr-5',
+                isContextMenu && !isMobileOrTablet && 'pr-5',
               )}
               data-qa="folder-name"
             >
@@ -1176,14 +1150,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         ),
                       )
                 }
-                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 isTriggerClickable
+                contentClassName="break-all"
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
-                    (currentFolder.temporary
-                      ? 'text-primary'
-                      : 'text-secondary'),
+                    (isTemporaryFolder ? 'text-primary' : 'text-secondary'),
                   isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
@@ -1219,16 +1191,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
+                        ((canManageOnlyTemporaryFolders && isTemporaryFolder) ||
+                          !canManageOnlyTemporaryFolders) &&
                         onRename) ||
                       undefined
                     }
-                    onDelete={onDeleteFolder && onDelete}
+                    onDelete={
+                      (onDeleteFolder &&
+                        ((canManageOnlyTemporaryFolders && isTemporaryFolder) ||
+                          !canManageOnlyTemporaryFolders) &&
+                        onDelete) ||
+                      undefined
+                    }
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
                     onPublish={
                       featureType !== FeatureType.Chat ||
-                      !allChildItems.every((item) =>
+                      !allConversationChildItems.every((item) =>
                         isReplayConversation(item as ConversationInfo),
                       )
                         ? handleOpenPublishing
@@ -1243,6 +1223,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onSelect={onSelectFolder && onSelect}
                     canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
+                    hideTriggerIcon={isMobileOrTablet}
                   />
                 </div>
               )}
@@ -1258,9 +1239,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 }
               }}
               dataQA="confirm-edit"
-            >
-              <IconCheck size={18} className="hover:text-accent-primary" />
-            </SidebarActionButton>
+              iconBefore={
+                <IconCheck size={18} className="hover:text-accent-primary" />
+              }
+            />
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -1268,9 +1250,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 handleNewFolderRename();
               }}
               dataQA="cancel-edit"
-            >
-              <IconX size={18} className="hover:text-accent-primary" />
-            </SidebarActionButton>
+              iconBefore={
+                <IconX size={18} className="hover:text-accent-primary" />
+              }
+            />
           </div>
         )}
       </div>
@@ -1282,7 +1265,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 <Fragment key={item.id}>
                   <div className="h-1"></div>
                   <Folder
-                    onPublication={onPublication}
                     folderClassName={folderClassName}
                     noCaretIcon={noCaretIcon}
                     readonly={readonly}
@@ -1317,6 +1299,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     showTooltip={showTooltip}
                     onSelectFolder={onSelectFolder}
                     onShowError={onShowError}
+                    canManageOnlyTemporaryFolders={
+                      canManageOnlyTemporaryFolders
+                    }
                   />
                 </Fragment>
               );
@@ -1417,5 +1402,3 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     </div>
   );
 };
-
-export default Folder;

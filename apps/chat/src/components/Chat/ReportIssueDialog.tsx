@@ -18,16 +18,14 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ServiceActions,
-  ServiceSelectors,
-} from '@/src/store/service/service.reducer';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ServiceSelectors } from '@/src/store/selectors';
 
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onClose: () => void;
@@ -158,10 +156,12 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
         ></textarea>
         <EmptyRequiredInputMessage />
       </div>
-      <div className="flex  justify-end">
-        <button type="submit" className="button button-primary">
-          {t('Report an issue')}
-        </button>
+      <div className="flex justify-end">
+        <DialButton
+          type="submit"
+          variant={ButtonVariant.Primary}
+          label={t('Report an issue')}
+        />
       </div>
     </Modal>
   );

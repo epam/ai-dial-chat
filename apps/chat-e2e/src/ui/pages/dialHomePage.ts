@@ -2,8 +2,8 @@ import { BasePage, UploadDownloadData, apiTimeout } from './basePage';
 
 import config from '@/config/chat.playwright.config';
 import { API } from '@/src/testData';
-import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { Request } from 'playwright-chromium';
 import { PageFunction } from 'playwright-core/types/structs';
 
@@ -24,6 +24,7 @@ export class DialHomePage extends BasePage {
     selectedSharedFolderName?: string;
     isPromptShared?: boolean;
     skipSidebars?: boolean;
+    waitForAgentInfo?: boolean;
   }) {
     const appContainer = this.getAppContainer();
     if (!options?.skipSidebars) {
@@ -39,15 +40,8 @@ export class DialHomePage extends BasePage {
         timeout: loadingTimeout,
       });
     }
-
-    //workaround for the issue https://github.com/epam/ai-dial-chat/issues/1596
-    try {
-      await appContainer.waitForAppLoaded(loadingTimeout);
-    } catch (error) {
-      await this.reloadPage();
-      await this.waitForPageLoaded(options);
-    }
-    const chat = appContainer.getChat();
+    await appContainer.waitForAppLoaded(loadingTimeout);
+    const chat = appContainer.getFileDropArea().getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
@@ -78,10 +72,10 @@ export class DialHomePage extends BasePage {
       await sharedFolderConversation.waitFor({ state: 'attached' });
       await chat.getChatHeader().waitForState();
     } else if (options?.isPromptShared) {
-      const promptPreviewModal = new SharedPromptPreviewModal(this.page);
+      const promptPreviewModal = new PromptPreviewModalWindow(this.page);
       await promptPreviewModal.waitForState();
       await promptPreviewModal.promptName.waitForState();
-    } else {
+    } else if (options?.waitForAgentInfo !== false) {
       await chat.getAgentInfo().waitForState({ state: 'attached' });
       await chat.configureSettingsButton.waitForState({
         state: 'attached',
@@ -105,17 +99,22 @@ export class DialHomePage extends BasePage {
   async importFile<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
+    isHttpMethodTriggered = true,
   ) {
-    const respPromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'POST',
-    );
-    await this.uploadData(uploadData, method);
-    await respPromise;
-    await this.getAppContainer()
-      .getImportExportLoader()
-      .waitForState({ state: 'hidden' });
-    await this.getAppContainer().waitForAppLoaded(loadingTimeout);
-    await this.page.waitForLoadState('domcontentloaded');
+    if (isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (r) => r.request().method() === 'POST',
+      );
+      await this.uploadData(uploadData, method);
+      await respPromise;
+      await this.getAppContainer()
+        .getImportExportLoader()
+        .waitForState({ state: 'hidden' });
+      await this.getAppContainer().waitForAppLoaded(loadingTimeout);
+      await this.page.waitForLoadState('domcontentloaded');
+    } else {
+      await this.uploadData(uploadData, method);
+    }
   }
 
   public async addInitScript<Arg>(

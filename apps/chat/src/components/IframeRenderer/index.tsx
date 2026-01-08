@@ -13,7 +13,7 @@ import { useRouter } from 'next/router';
 
 import { Routes } from '@/src/constants/routes';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
   AttachmentData,
@@ -55,7 +55,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     const router = useRouter();
 
     const isPreviewConversation = useMemo(() => {
-      return router.pathname === Routes.AppsEditorSettings;
+      return router.pathname === Routes.AppsEditor;
     }, [router.pathname]);
 
     const [loading, setLoading] = useState<boolean>(true);

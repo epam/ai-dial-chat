@@ -1,17 +1,11 @@
 import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 
+export { FeatureType } from '@epam/ai-dial-shared';
+
 export enum EntityType {
   Model = 'model',
   Application = 'application',
-  Assistant = 'assistant',
-  Addon = 'addon',
-}
-
-export enum FeatureType {
-  Chat = 'chat',
-  Prompt = 'prompt',
-  File = 'file',
-  Application = 'application',
+  Toolset = 'toolset',
 }
 
 export enum BackendDataNodeType {
@@ -24,6 +18,15 @@ export enum BackendResourceType {
   PROMPT = 'PROMPT',
   CONVERSATION = 'CONVERSATION',
   APPLICATION = 'APPLICATION',
+  TOOLSET = 'TOOL_SET',
+}
+
+export enum BackendResourceTypeName {
+  FILE = 'File',
+  PROMPT = 'Prompt',
+  CONVERSATION = 'Conversation',
+  APPLICATION = 'Application',
+  TOOLSET = 'Toolset',
 }
 
 export interface BackendDataEntity {
@@ -34,6 +37,8 @@ export interface BackendDataEntity {
   parentPath?: string | null;
   url: string;
   permissions?: SharePermission[];
+  updatedAt?: number;
+  author?: string;
 }
 
 export interface BackendEntity extends BackendDataEntity {
@@ -85,6 +90,7 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
   Applications = 'applications',
+  Toolsets = 'toolsets',
 }
 
 export enum CoreApiKeys {
@@ -135,8 +141,9 @@ export interface SelectOption<L, V> {
 export enum PageType {
   Chat = 'chat',
   Marketplace = 'marketplace',
-  AppsEditorSettings = 'application-settings',
-  AppsEditorGeneralInfo = 'application-general-info',
+  ToolsetEditor = 'toolset-editor',
+  AppsEditor = 'apps-editor',
+  FileManager = 'file-manager',
 }
 
 export enum ScreenState {

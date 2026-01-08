@@ -6,6 +6,7 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getConversationInfoFromId,
   getGeneratedConversationId,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -15,12 +16,13 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
+  getEntityBucket,
   isEntityIdLocal,
   isRootConversationsId,
 } from '@/src/utils/app/id';
 import {
   getConversationApiKey,
-  parseConversationApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -28,7 +30,10 @@ import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { RootState } from '@/src/types/store';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
@@ -54,7 +59,12 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 
   parseEntityKey(key: string): Omit<ConversationInfo, 'folderId' | 'id'> {
-    return parseConversationApiKey(key);
+    const { modelInfo, name } = parseEntityApiKey(key, { parseModel: true });
+
+    return {
+      name,
+      ...modelInfo,
+    };
   }
 
   getStorageKey(): ApiKeys {
@@ -70,10 +80,21 @@ export const getOrUploadConversation = <T extends { id: string }>(
   payload: T;
   wasUploaded: boolean;
 }> => {
-  const conversation = ConversationsSelectors.selectConversation(
+  let conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
   );
+  const entityBucket = getEntityBucket(payload);
+  const resourcesToReview = PublicationSelectors.selectResourcesToReview(state);
+  const isResourceOnReview = resourcesToReview?.some(
+    (r) => getEntityBucket({ id: r.reviewUrl }) === entityBucket,
+  );
+
+  if (!conversation) {
+    conversation = getConversationInfoFromId(payload.id, {
+      parseVersion: isResourceOnReview,
+    });
+  }
 
   if (
     conversation &&

@@ -1,6 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -26,15 +27,18 @@ dialTest(
     dataInjector,
     conversations,
     chatHeader,
+    selectFolders,
+    selectFoldersAssertion,
     chatMessages,
     conversationAssertion,
     setTestIds,
     compareConversation,
     confirmationDialog,
-    folderConversations,
     chatBarFolderAssertion,
     shareModal,
     conversationDropdownMenu,
+    selectFolderModal,
+    selectFolderModalAssertion,
     baseAssertion,
     downloadAssertion,
     renameConversationModal,
@@ -75,13 +79,11 @@ dialTest(
 
     await dialTest.step('Open start page', async () => {
       await dialHomePage.openHomePage({
-        iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl!],
+        iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl!],
       });
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(secondConversation.name);
-      await conversationAssertion.assertSelectedConversation(
-        secondConversation.name,
-      );
+      await conversations.selectEntity(secondConversation.name);
+      await conversationAssertion.assertSelectedEntity(secondConversation.name);
       await baseAssertion.assertElementState(chatHeader, 'visible');
       await baseAssertion.assertElementState(
         chatMessages.getChatMessage(1),
@@ -135,9 +137,7 @@ dialTest(
         { name: firstConversation.name },
         'visible',
       );
-      await conversationAssertion.assertSelectedConversation(
-        secondConversation.name,
-      );
+      await conversationAssertion.assertSelectedEntity(secondConversation.name);
     });
 
     await dialTest.step('Click on Compare', async () => {
@@ -153,9 +153,7 @@ dialTest(
         'visible',
         ExpectedMessages.conversationToCompareVisible,
       );
-      await conversationAssertion.assertSelectedConversation(
-        firstConversation.name,
-      );
+      await conversationAssertion.assertSelectedEntity(firstConversation.name);
     });
 
     await dialTest.step('Click on Replay', async () => {
@@ -167,9 +165,7 @@ dialTest(
         { name: replayConversation },
         'visible',
       );
-      await conversationAssertion.assertSelectedConversation(
-        replayConversation,
-      );
+      await conversationAssertion.assertSelectedEntity(replayConversation);
     });
 
     await dialTest.step('Click on Playback', async () => {
@@ -181,9 +177,7 @@ dialTest(
         { name: playbackConversation },
         'visible',
       );
-      await conversationAssertion.assertSelectedConversation(
-        playbackConversation,
-      );
+      await conversationAssertion.assertSelectedEntity(playbackConversation);
     });
 
     await dialTest.step('Click on Export', async () => {
@@ -198,9 +192,7 @@ dialTest(
         downloadedData,
         ExpectedConstants.exportedFileExtension,
       );
-      await conversationAssertion.assertSelectedConversation(
-        playbackConversation,
-      );
+      await conversationAssertion.assertSelectedEntity(playbackConversation);
     });
 
     await dialTest.step(
@@ -209,9 +201,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(replayConversation);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await conversationAssertion.assertSelectedConversation(
-          playbackConversation,
-        );
+        await conversationAssertion.assertSelectedEntity(playbackConversation);
         await conversationAssertion.assertEntityState(
           { name: replayConversation },
           'hidden',
@@ -222,15 +212,24 @@ dialTest(
     await dialTest.step('Click on "Move to -> New folder"', async () => {
       await conversations.openEntityDropdownMenu(secondConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-      await conversations
-        .getDropdownMenu()
-        .selectMenuOption(MenuOptions.newFolder);
-      await conversationAssertion.assertSelectedConversation(
-        playbackConversation,
+      await selectFolderModalAssertion.assertElementState(
+        selectFolderModal,
+        'visible',
       );
-      await folderConversations.expandFolder(
-        ExpectedConstants.newFolderWithIndexTitle(1),
+      await selectFolderModal.newFolderButton.click();
+      await selectFolders.getEditFolderInputActions().clickTickButton();
+      await selectFoldersAssertion.assertFolderState(
+        { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+        'visible',
       );
+      await selectFolderModal.clickSelectFolderButton({
+        triggeredApiHost: API.conversationHost,
+      });
+      await selectFolderModalAssertion.assertElementState(
+        selectFolderModal,
+        'hidden',
+      );
+      await conversationAssertion.assertSelectedEntity(playbackConversation);
       await chatBarFolderAssertion.assertFolderState(
         { name: ExpectedConstants.newFolderWithIndexTitle(1) },
         'visible',
@@ -253,9 +252,7 @@ dialTest(
         { name: clonedConversation },
         'visible',
       );
-      await conversationAssertion.assertSelectedConversation(
-        clonedConversation,
-      );
+      await conversationAssertion.assertSelectedEntity(clonedConversation);
     });
 
     await dialTest.step('Click on Share', async () => {
@@ -267,9 +264,7 @@ dialTest(
         ExpectedMessages.modalWindowIsOpened,
       );
       await shareModal.closeButton.click();
-      await conversationAssertion.assertSelectedConversation(
-        clonedConversation,
-      );
+      await conversationAssertion.assertSelectedEntity(clonedConversation);
     });
   },
 );

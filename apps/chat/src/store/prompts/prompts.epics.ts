@@ -45,16 +45,17 @@ import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { AppAction, AppEpic } from '@/src/types/store';
 
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ChatActions,
+  PromptsActions,
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
-
-import { ChatActions } from '../chat/chat.reducer';
-import { PublicationActions } from '../publication/publication.reducers';
-import { PromptsActions } from './prompts.reducers';
-import { PromptsSelectors } from './prompts.selectors';
+import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
@@ -122,7 +123,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
               UIActions.setCollapsedSections({
                 featureType: FeatureType.Prompt,
                 collapsedSections: collapsedSections.filter(
-                  (section) => section !== translate('Recent'),
+                  (section) => section !== RECENT_PROMPTS_SECTION_NAME,
                 ),
               }),
             ),
@@ -201,20 +202,32 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.savePrompt.type),
-    concatMap(({ payload: newPrompt }) =>
-      PromptService.updatePrompt(newPrompt),
+    concatMap(({ payload }) =>
+      PromptService.updatePrompt(payload.prompt).pipe(
+        switchMap(() => {
+          if (payload.selectSaved) {
+            return of(
+              PromptsActions.selectPrompt({
+                promptId: payload.prompt.id,
+                isApproveRequiredResource: !!payload.prompt.publicationInfo,
+              }),
+            );
+          }
+
+          return EMPTY;
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
+      ),
     ),
-    catchError((err) => {
-      console.error(err);
-      return of(
-        UIActions.showErrorToast(
-          translate(
-            'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
-          ),
-        ),
-      );
-    }),
-    ignoreElements(),
   );
 
 const movePromptFailEpic: AppEpic = (action$) =>
@@ -241,7 +254,7 @@ const movePromptEpic: AppEpic = (action$) =>
         overwrite: false,
       }).pipe(
         switchMap(() => {
-          return of(PromptsActions.savePrompt(payload.newPrompt));
+          return of(PromptsActions.savePrompt({ prompt: payload.newPrompt }));
         }),
         catchError(() => {
           return of(PromptsActions.movePromptFail(payload));
@@ -255,8 +268,6 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     ofType(PromptsActions.updatePrompt.type),
     mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     mergeMap(({ payload, prompt }) => {
-      const { values, id } = payload;
-
       if (!prompt) {
         return of(
           UIActions.showErrorToast(
@@ -267,18 +278,35 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const { values, id, publicationUrl } = payload;
       const newPrompt = regeneratePromptId({
         ...prompt,
         ...values,
         updatedAt: Date.now(),
       });
 
+      const areIdsEqual = prompt.id === newPrompt.id;
+      if (!areIdsEqual && publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndEntity({
+            resourceToUpdateUrl: id,
+            newEntity: newPrompt,
+            publicationUrl,
+          }),
+        );
+      }
+
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
         iif(
-          () => !!prompt && prompt.id !== newPrompt.id,
+          () => !areIdsEqual,
           of(PromptsActions.movePrompt({ oldPrompt: prompt, newPrompt })),
-          of(PromptsActions.savePrompt(newPrompt)),
+          of(
+            PromptsActions.savePrompt({
+              prompt: newPrompt,
+              selectSaved: payload.selectUpdated,
+            }),
+          ),
         ),
       );
     }),
@@ -380,6 +408,16 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      if (payload.publicationUrl) {
+        return of(
+          PublicationActions.updatePublicationRequestAndFolder({
+            folderIdToUpdate: payload.folderId,
+            newFolder,
+            publicationUrl: payload.publicationUrl,
+          }),
+        );
+      }
+
       const openedFolderIds = UISelectors.selectOpenedFoldersIds(
         FeatureType.Prompt,
       )(state);
@@ -420,7 +458,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.setOpenedFoldersIds({
             openedFolderIds: updatedOpenedFolderIds,
-            folderType: FeatureType.Prompt,
+            featureType: FeatureType.Prompt,
           }),
         ),
         of(
@@ -549,6 +587,15 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
           of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
           EMPTY,
         ),
+        iif(
+          () => isEntityIdExternal(prompt),
+          of(
+            PublicationActions.resetSelectedVersionForPublicVersionGroup({
+              versionGroupId: getVersionGroupFromId(prompt.id).versionGroupId,
+            }),
+          ),
+          EMPTY,
+        ),
       );
     }),
   );
@@ -589,7 +636,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    folderType: FeatureType.Prompt,
+                    featureType: FeatureType.Prompt,
                     openedFolderIds: [
                       ...openedFolders,
                       ...paths.filter(

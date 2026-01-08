@@ -2,9 +2,8 @@ import { ReactNode } from 'react';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import { FileDropArea } from '@/src/components/Files/FileDropArea';
 

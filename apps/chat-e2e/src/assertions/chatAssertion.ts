@@ -30,15 +30,12 @@ export class ChatAssertion extends BaseAssertion {
     await this.assertElementState(changeAgentButton, expectedState);
   }
 
-  public async assertNotAllowedModelLabelContent() {
-    const notAllowedModelError =
-      await this.chat.notAllowedModelLabel.getElementContent();
-    expect
-      .soft(
-        notAllowedModelError!.trim(),
-        ExpectedMessages.notAllowedModelErrorDisplayed,
-      )
-      .toBe(ExpectedConstants.notAllowedModelError);
+  public async assertNotAllowedModelLabelContent(model: string) {
+    await this.assertElementText(
+      this.chat.notAllowedModelLabel,
+      ExpectedConstants.notAllowedAgentError(model),
+      ExpectedMessages.notAllowedModelErrorDisplayed,
+    );
   }
 
   public async assertDuplicateButtonState(expectedState: ElementState) {

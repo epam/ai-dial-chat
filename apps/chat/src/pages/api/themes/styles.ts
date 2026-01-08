@@ -9,7 +9,7 @@ import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { inconsolata, inter } from '../../_app';
+import { inconsolata, inter } from '@/src/pages/_app';
 
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
@@ -103,6 +103,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       method: HTTPMethod.GET,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
       },
       signal: controller.signal,
     },
@@ -127,7 +128,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateColorsCssVariables(theme.topicColors),
+          generateColorsCssVariables(theme.authColors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateUrlsCssVariables(theme.banners),
           generateFontCssVariables({
             'theme-font': theme['font-family'],
             'codeblock-font':

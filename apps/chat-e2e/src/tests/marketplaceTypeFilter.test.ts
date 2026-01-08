@@ -2,8 +2,10 @@ import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
   CheckboxState,
+  EntityEditorAppTypes,
   ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
@@ -24,7 +26,7 @@ dialTest(
     marketplacePage,
     marketplaceFilter,
     marketplace,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     navigationPanel,
     baseAssertion,
   }) => {
@@ -35,7 +37,7 @@ dialTest(
     let randomModelNames: string[];
 
     await dialTest.step('Add some models to the users workspace', async () => {
-      allModels = ModelsUtil.getModels().filter((m) => m.type === 'model');
+      allModels = ModelsUtil.getModels(false).filter((m) => m.type === 'model');
       groupedModelNames = Array.from(
         ModelsUtil.groupEntitiesByName(allModels).keys(),
       );
@@ -47,11 +49,13 @@ dialTest(
         randomModelNames.includes(m.name),
       );
       await fileApiHelper.updateInstalledDeployments(randomModels);
-      await localStorageManager.setRecentModelsIdsOnce(...randomModels);
+      await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+        ...randomModels,
+      );
     });
 
     await dialTest.step(
-      'Open Dial Marketplace, check Types=Model filter and verify all available models are displayed',
+      'Open DIAL Marketplace, check Types=Model filter and verify all available models are displayed',
       async () => {
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
@@ -64,7 +68,7 @@ dialTest(
             EntityType.Model,
           )
           .click();
-        const actualModels = await marketplaceAgentsSection.getAllAgents();
+        const actualModels = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualModels.length,
           groupedModelNames.length,
@@ -81,12 +85,10 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab and verify only installed models are displayed, other models stay under "Suggested results"',
       async () => {
-        //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
-        await marketplaceAgentsSection.goTop();
         await navigationPanel.goToMyWorkspace();
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const actualWorkspaceModels = allAgents
-          .filter((agent) => agent.isWorkspaceAgent)
+          .filter((agent) => agent.isWorkspaceEntity)
           .map((agent) => agent.name);
         baseAssertion.assertValue(
           actualWorkspaceModels.length,
@@ -125,7 +127,7 @@ dialTest(
       'Remove all models from "My Workspace" and recent, reload the page and verify filter state is preserved',
       async () => {
         await fileApiHelper.updateInstalledDeployments([]);
-        await localStorageManager.setRecentModelsIds();
+        await localStorageManager.setRecentModelsIdsAndUseLastModel();
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
@@ -151,7 +153,8 @@ dialTest(
           marketplace.noWorkspaceResultsFound,
           'visible',
         );
-        const suggestedAgents = await marketplaceAgentsSection.getAllAgents();
+        const suggestedAgents =
+          await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           suggestedAgents.length,
           groupedModelNames.length,
@@ -178,16 +181,17 @@ dialTest(
     marketplaceHeader,
     navigationPanel,
     marketplaceFilter,
-    marketplaceAgents,
-    marketplaceAgentsSection,
+    marketplaceEntities,
+    marketplaceEntitiesSection,
     confirmationDialog,
     addAppDropdownMenu,
-    appEditorPage,
-    appEditorGeneralForm,
-    appEditorViewForm,
-    appEditorHeader,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    customAppEditorViewForm,
+    entityEditorHeader,
     setTestIds,
     baseAssertion,
+    entityDetailsModal,
   }) => {
     setTestIds('EPMRTC-4441', 'EPMRTC-5353');
     const appName = GeneratorUtil.randomApplicationName();
@@ -197,13 +201,13 @@ dialTest(
     await dialTest.step('Create a custom application', async () => {
       const applicationModel = customApplicationBuilder
         .withDisplayName(appName)
-        .withDisplayVersion(GeneratorUtil.randomApplicationVersion())
+        .withDisplayVersion(GeneratorUtil.randomEntityVersion())
         .build();
       await applicationApiHelper.createApplication(applicationModel);
     });
 
     await dialTest.step(
-      'Open Dial Marketplace, check Types=Applications filter and verify all available applications are displayed',
+      'Open DIAL Marketplace, check Types=Applications filter and verify all available applications are displayed',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
@@ -214,7 +218,7 @@ dialTest(
           )
           .click();
         const allAgents = await modelApiHelper.getModels();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         for (const actualAgent of actualAgents) {
           const actualAgentModel = allAgents.find(
             (app) => app.name === actualAgent.name,
@@ -223,6 +227,7 @@ dialTest(
             baseAssertion.assertValue(
               actualAgentModel.type,
               EntityType.Application,
+              `${actualAgentModel.name} is not an ${EntityType.Application}`,
             );
           }
         }
@@ -240,19 +245,29 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
-        await appEditorGeneralForm.fillInAppFields({
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.CustomApp,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({
           name: addedAppName,
         });
-        await appEditorGeneralForm.goNext();
-        await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
+        await entityEditorGeneralForm.goNext({
+          hostsArray: [
+            API.applicationCreateHost,
+            API.installedDeploymentsHost(),
+          ],
+        });
+        await customAppEditorViewForm.fillInAppFields();
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
+        });
+        await entityEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+        await entityDetailsModal.closeButton.click();
 
-        addedAppElement = await marketplaceAgentsSection.findAgentElement(
+        addedAppElement = await marketplaceEntitiesSection.findEntityElement(
           addedAppName,
-          { isWorkspaceAgent: true, isEditable: true },
+          { isWorkspaceEntity: true, isEditable: true },
         );
         await baseAssertion.assertElementState(addedAppElement, 'visible');
       },
@@ -262,18 +277,18 @@ dialTest(
       'Delete added custom app and verify it disappears immediately',
       async () => {
         await addedAppElement.hoverOver();
-        await marketplaceAgents
-          .getAgentElementDotsMenu(addedAppElement)
+        await marketplaceEntities
+          .getEntityElementDotsMenu(addedAppElement)
           .click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayExcludesAll(
           actualAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [addedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,

@@ -12,6 +12,7 @@ import {
   ControllerRenderProps,
   FieldValues,
   Path,
+  PathValue,
   RegisterOptions,
   UseFormStateReturn,
 } from 'react-hook-form';
@@ -32,6 +33,7 @@ interface ControlledFormFieldProps<T extends FieldValues, K extends Path<T>> {
     RegisterOptions<T, K>,
     'disabled' | 'valueAsNumber' | 'valueAsDate'
   >;
+  defaultValue?: PathValue<T, K>;
 }
 
 export const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
@@ -39,6 +41,7 @@ export const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
   name,
   children,
   rules,
+  defaultValue = '' as PathValue<T, K>,
 }: ControlledFormFieldProps<T, K>) => {
   const newRules = useMemo(() => omit(rules ?? {}, 'setValueAs'), [rules]);
 
@@ -66,6 +69,7 @@ export const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
       name={name}
       render={renderFn}
       rules={newRules}
+      defaultValue={defaultValue}
     />
   );
 };

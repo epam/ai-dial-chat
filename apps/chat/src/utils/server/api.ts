@@ -1,6 +1,7 @@
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { isConversationId } from '@/src/utils/app/id';
 import {
   constructPath,
   isPlaybackConversation,
@@ -12,11 +13,18 @@ import { ServerUtils } from '@/src/utils/server/server';
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
+import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
+import {
+  ParseEntityApiKeyOptions,
+  ParseEntityApiKeyResult,
+} from '@/src/types/parse-entity';
 import { PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
+import { ToolsetInfo } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/publication';
 import { validVersionRegEx } from '@/src/constants/versions';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
@@ -29,6 +37,9 @@ export enum PseudoModel {
   Playback = 'playback',
 }
 
+// encoding modelId if it has '__' as part of the modelId to avoid conflict with pathKeySeparator
+// conversation modelId: 'gpt-4o__2025-09-20' will be encoded to 'gpt-4o%5F%5F2025-09-20'
+// and conversation key will be 'gpt-4o%5F%5F2025-09-20__name__0.0.1' to then properly split apiKey by pathKeySeparator
 export const encodeModelId = (modelId: string): string =>
   modelId
     .split(pathKeySeparator)
@@ -58,6 +69,9 @@ export const getConversationApiKey = (
     return conversation.name;
   }
 
+  // encoding modelId if it has '__' as part of the modelId to avoid conflict with pathKeySeparator
+  // conversation modelId: 'gpt-4o__2025-09-20' will be encoded to 'gpt-4o%5F%5F2025-09-20'
+  // and conversation key will be 'gpt-4o%5F%5F2025-09-20__name__0.0.1' to then properly split apiKey by pathKeySeparator
   const keyParts = [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
@@ -73,38 +87,6 @@ export const getConversationApiKey = (
   return keyParts.join(pathKeySeparator);
 };
 
-// Format key: {modelId}__{name}
-export const parseConversationApiKey = (
-  apiKey: string,
-  options?: Partial<{ parseVersion: boolean }>,
-): Omit<ConversationInfo, 'folderId' | 'id'> => {
-  const parts = apiKey.split(pathKeySeparator);
-
-  const [modelId, name] =
-    parts.length < 2
-      ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
-      : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
-
-  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> = {
-    model: { id: modelId },
-    name,
-    isPlayback: modelId === PseudoModel.Playback,
-    isReplay: modelId === PseudoModel.Replay,
-  };
-
-  if (options?.parseVersion) {
-    const version = getVersionFromId(apiKey);
-
-    parsedApiKey.publicationInfo = { version };
-
-    if (version && version !== NA_VERSION) {
-      parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
-    }
-  }
-
-  return parsedApiKey;
-};
-
 // Format key: {name} or {name}__{version} if prompt is public
 export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
   if (
@@ -117,52 +99,58 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
   return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
 
-// Format key: {name}
-export const parsePromptApiKey = (
+export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
   apiKey: string,
-  options?: Partial<{ parseVersion: boolean }>,
-): Omit<PromptInfo, 'folderId' | 'id'> => {
-  const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
-    name: apiKey,
-  };
+  options?: T,
+): ParseEntityApiKeyResult<T> => {
+  const parts = apiKey.split(pathKeySeparator);
 
-  if (options?.parseVersion) {
-    const version = getVersionFromId(apiKey);
+  const result: ParseEntityApiKeyResult<T> = {} as ParseEntityApiKeyResult<T>;
 
-    parsedApiKey.publicationInfo = { version };
-    if (version !== NA_VERSION) {
-      parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
+  if (options?.parseModel) {
+    if (parts.length < 2) {
+      result.modelInfo = {
+        model: { id: EMPTY_MODEL_ID },
+        isPlayback: false,
+        isReplay: false,
+      };
+    } else {
+      // decoding modelId if it has '%5F%5F' as part of the modelId to avoid conflict with pathKeySeparator
+      // conversation key: 'gpt-4o%5F%5F2025-09-20__name__0.0.1' split by pathKeySeparator will be ['gpt-4o%5F%5F2025-09-20', 'name', '0.0.1']
+      // after decoding modelId: 'gpt-4o%5F%5F2025-09-20' will be decoded to 'gpt-4o__2025-09-20'
+      const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
+      result.modelInfo = {
+        model: { id: modelId },
+        isPlayback: modelId === PseudoModel.Playback,
+        isReplay: modelId === PseudoModel.Replay,
+      };
     }
   }
 
-  return parsedApiKey;
-};
+  if (options?.parseVersion) {
+    if (parts.length < 2) {
+      result.version = options?.defaultVersion ?? NA_VERSION;
+    } else {
+      result.version = parts.pop() ?? options?.defaultVersion ?? NA_VERSION;
+    }
+  }
 
-// Format key: {name}__{version}
-export const getApplicationApiKey = (
-  application: Omit<ApplicationInfo, 'folderId' | 'id'>,
-): string => {
-  return [application.name, application.version].join(pathKeySeparator);
-};
+  if (result.version?.startsWith('_')) {
+    result.version = result.version.replace(/^_/, '');
+    parts[parts.length - 1] = `${parts[parts.length - 1]}_`;
+  }
 
-// Format key: {name}__{version}
-export const parseApplicationApiKey = (
-  apiKey: string,
-): Omit<ApplicationInfo, 'folderId' | 'id'> => {
-  const parts = apiKey.split(pathKeySeparator);
-  const [name, version] =
-    parts.length < 2
-      ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
-      : [
-          decodeModelId(
-            parts.slice(0, parts.length - 1).join(pathKeySeparator),
-          ),
-          parts[parts.length - 1],
-        ]; // receive correct format {name}__{version}
   return {
-    name,
-    version,
+    ...result,
+    name: parts.join(pathKeySeparator),
   };
+};
+
+// Format key: {name}__{version}
+export const getMarketplaceEntityApiKey = (
+  entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
+): string => {
+  return [entity.name, entity.version].join(pathKeySeparator);
 };
 
 export class ApiUtils {
@@ -189,9 +177,11 @@ export class ApiUtils {
         if (!response.ok) {
           return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
             switchMap((errorMessage) => {
-              return throwError(
-                () => new Error(errorMessage || response.status + ''),
+              const error: HttpErrorStatus = new Error(
+                errorMessage || response.status + '',
               );
+              error.status = response.status;
+              return throwError(() => error);
             }),
           );
         }
@@ -227,21 +217,24 @@ export class ApiUtils {
     method,
     async,
     body,
+    signal,
   }: {
     url: string | URL;
     method: HTTPMethod;
     async: boolean;
     body: XMLHttpRequestBodyInit | Document | null | undefined;
+    signal?: AbortSignal | null;
   }): Observable<{ percent?: number; result?: unknown }> {
     return new Observable((observer) => {
       const xhr = new XMLHttpRequest();
+      let aborted = false;
 
       xhr.open(method, url, async);
       xhr.responseType = 'json';
 
       // Track upload progress
       xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
+        if (!aborted && event.lengthComputable) {
           const percentComplete = (event.loaded / event.total) * 100;
           observer.next({ percent: Math.round(percentComplete) });
         }
@@ -249,6 +242,7 @@ export class ApiUtils {
 
       // Handle response
       xhr.onload = () => {
+        if (aborted) return;
         if (xhr.status === 200) {
           observer.next({ result: xhr.response });
           observer.complete();
@@ -258,21 +252,44 @@ export class ApiUtils {
       };
 
       xhr.onerror = () => {
-        observer.error('Request failed');
+        if (!aborted) {
+          observer.error('Request failed');
+        }
       };
+
+      // attach abort signal
+      const abortHandler = () => {
+        aborted = true;
+        xhr.abort();
+        observer.complete();
+      };
+
+      if (signal) {
+        signal.addEventListener('abort', abortHandler);
+      }
 
       xhr.send(body);
 
       // Return cleanup function
       return () => {
+        aborted = true;
         xhr.abort();
+        if (signal) {
+          signal.removeEventListener('abort', abortHandler);
+        }
       };
     });
   }
 }
 
-export const getModelIdWithoutVersion = (id: string) =>
-  id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+export const getModelIdWithoutVersion = (id: string) => {
+  const parts = id.split(pathKeySeparator);
+  const name = parts.slice(0, -1).join(pathKeySeparator);
+  if (parts.at(-1)?.startsWith('_')) {
+    return `${name}_`;
+  }
+  return name;
+};
 
 export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
   if (version === NA_VERSION) {
@@ -292,26 +309,18 @@ export const isValidEntityApiType = (apiKey: string): boolean => {
   );
 };
 
-export const getIdWithoutVersionFromApiKey = (
-  id: string,
-  parseMethod:
-    | typeof parseApplicationApiKey
-    | typeof parseConversationApiKey
-    | typeof parsePromptApiKey,
-) => {
-  const parsedApiKey = parseMethod(splitEntityId(id).name, {
+export const getIdWithoutVersionFromApiKey = (id: string) => {
+  const { version } = parseEntityApiKey(splitEntityId(id).name, {
     parseVersion: true,
+    parseModel: isConversationId(id),
   });
 
-  return getPublicItemIdWithoutVersion(
-    parsedApiKey.publicationInfo?.version ?? NA_VERSION,
-    id,
-  );
+  return getPublicItemIdWithoutVersion(version, id);
 };
 
 export const getVersionFromId = (id: string) => {
   const parts = id.split(pathKeySeparator);
-  const version = parts.at(-1);
+  const version = parts.at(-1)?.replace(/^_/, '');
 
   // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
   if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
@@ -320,3 +329,6 @@ export const getVersionFromId = (id: string) => {
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };
+
+export const getOpsApiUrl = (slug: ServerSlugs, ...params: string[]): string =>
+  constructPath('/api/ops', slug, ...params);

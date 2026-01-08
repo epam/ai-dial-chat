@@ -13,17 +13,11 @@ export class ChatSettingsTooltip extends BaseElement {
   public assistantInfo = this.getChildElementBySelector(
     SettingsTooltip.assistantInfo,
   );
-  public assistantModelInfo = this.getChildElementBySelector(
-    SettingsTooltip.assistantModelInfo,
-  );
   public promptInfo = this.getChildElementBySelector(
     SettingsTooltip.promptInfo,
   );
   public temperatureInfo = this.getChildElementBySelector(
     SettingsTooltip.tempInfo,
-  );
-  public addonsInfo = this.getChildElementBySelector(
-    SettingsTooltip.addonsInfo,
   );
 
   public async getApplicationInfo() {
@@ -32,10 +26,6 @@ export class ChatSettingsTooltip extends BaseElement {
 
   public async getAssistantInfo() {
     return this.assistantInfo.getElementInnerContent();
-  }
-
-  public async getAssistantModelInfo() {
-    return this.assistantModelInfo.getElementInnerContent();
   }
 
   public async getPromptInfo(isPromptExpected = true) {
@@ -48,13 +38,5 @@ export class ChatSettingsTooltip extends BaseElement {
 
   public async getTemperatureInfo() {
     return this.temperatureInfo.getElementInnerContent();
-  }
-
-  public async getAddonsInfo() {
-    return this.addonsInfo.getElementsInnerContent();
-  }
-
-  public async getAddonIcons() {
-    return this.getElementIcons(this.addonsInfo);
   }
 }

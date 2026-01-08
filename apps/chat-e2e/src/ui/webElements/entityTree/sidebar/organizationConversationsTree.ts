@@ -1,9 +1,9 @@
 import { ChatBarSelectors, EntitySelectors } from '../../../selectors';
 
-import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree/sidebar/baseSideBarConversationTree';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
-export class OrganizationConversationsTree extends BaseSideBarConversationTree {
+export class OrganizationConversationsTree extends SideBarEntitiesTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,

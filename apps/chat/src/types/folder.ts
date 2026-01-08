@@ -1,15 +1,9 @@
-import { FeatureType } from './common';
 import { PromptInfo } from './prompt';
 import { EntityFilters } from './search';
 
-import { ConversationInfo, ShareEntity } from '@epam/ai-dial-shared';
+import { ConversationInfo, FolderInterface } from '@epam/ai-dial-shared';
 
-export interface FolderInterface extends ShareEntity {
-  type: FeatureType;
-  temporary?: boolean;
-  serverSynced?: boolean;
-  isPublicationFolder?: boolean;
-}
+export type { FolderInterface };
 
 export interface FoldersAndEntities<T> {
   folders: FolderInterface[];
@@ -25,11 +19,6 @@ export interface FolderSectionProps {
   filters: EntityFilters;
   showEmptyFolders?: boolean;
   openByDefault?: boolean;
-}
-
-export interface MoveToFolderProps {
-  folderId?: string;
-  isNewFolder?: boolean;
 }
 
 export interface DraggedInterface {

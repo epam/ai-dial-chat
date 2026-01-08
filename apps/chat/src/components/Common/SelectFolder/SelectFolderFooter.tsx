@@ -2,41 +2,55 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
+
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
-  handleNewFolder: () => void;
+  onCreateNewFolder: () => void;
   onSelectFolderClick: () => void;
+  onToggleHiddenFolders?: () => void;
+  areHiddenFoldersVisible?: boolean;
   disableSelect?: boolean;
+  selectBtnText?: string;
 }
 
 export const SelectFolderFooter = ({
-  handleNewFolder,
+  onCreateNewFolder,
   onSelectFolderClick,
+  onToggleHiddenFolders,
+  areHiddenFoldersVisible = false,
   disableSelect,
+  selectBtnText = 'Select folder',
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6">
       <div className="flex items-center justify-center">
-        <button
-          onClick={() => handleNewFolder()}
+        <DialButton
+          onClick={() => onCreateNewFolder()}
           className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
           data-qa="new-folder"
-        >
-          <FolderPlus height={24} width={24} />
-        </button>
+          iconBefore={<FolderPlus height={24} width={24} />}
+        />
+
+        {!!onToggleHiddenFolders && (
+          <HiddenItemsToggler
+            onClick={onToggleHiddenFolders}
+            areItemsVisible={areHiddenFoldersVisible}
+          />
+        )}
       </div>
       <div>
-        <button
+        <DialButton
           onClick={onSelectFolderClick}
-          className="button button-primary"
-          data-qa="select-folder"
+          label={t(selectBtnText)}
+          variant={ButtonVariant.Primary}
           disabled={disableSelect}
-        >
-          {t('Select folder')}
-        </button>
+          data-qa="select-folder"
+        />
       </div>
     </div>
   );

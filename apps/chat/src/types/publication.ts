@@ -1,6 +1,13 @@
+import { FolderEditTree } from '@/src/store/publication/publication.types';
+
 import { BackendDataNodeType, BackendResourceType } from './common';
 
-import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  MIMEType,
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -17,16 +24,20 @@ export interface PublicationRule {
   targets: string[];
 }
 
-export interface PublicationRequestModel {
-  name: string;
-  displayAuthor: string;
+export interface BasePublicationRequestModel {
+  displayAuthor?: string;
   targetFolder: string;
+  rules?: PublicationRule[];
+}
+
+export interface PublicationRequestModel extends BasePublicationRequestModel {
+  name?: string;
   resources: {
     action: PublishActions;
-    sourceUrl?: string;
+    sourceUrl: string;
     targetUrl: string;
+    publishCredentials?: boolean;
   }[];
-  rules?: PublicationRule[];
 }
 
 export enum PublicationStatus {
@@ -41,6 +52,7 @@ export interface PublicationResource {
   targetUrl: string;
   reviewUrl: string;
   author?: string;
+  publishCredentials?: boolean;
 }
 
 export interface Publication {
@@ -117,8 +129,9 @@ export interface TargetAudienceFilter extends TargetAudienceFilterItem {
 
 export interface ResourceToReview {
   publicationUrl: string;
-  reviewed: boolean;
   reviewUrl: string;
+  sourceUrl: string;
+  reviewed: boolean;
 }
 
 export interface PublicVersionOption {
@@ -135,3 +148,18 @@ export type PublicVersionGroups = Record<
   string,
   PublicVersionGroup | undefined
 >;
+
+export interface PublicationHandlerState {
+  entities: Record<string, { name: string; version: string }>;
+  folders: FolderEditTree;
+  rules: PublicationRule[];
+  displayAuthor: string;
+  publishToUrl: string;
+}
+
+export interface PublicationModel {
+  entity: ShareEntity & { iconUrl?: string };
+  action: PublishActions;
+  isFolder?: boolean;
+  publishCredentials?: boolean;
+}

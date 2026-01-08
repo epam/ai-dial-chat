@@ -2,9 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '@/src/types/store';
 
-import { MigrationState } from './migration.types';
-
-const rootSelector = (state: RootState): MigrationState => state.migration;
+const rootSelector = (state: RootState) => state.migration;
 
 const selectConversationsToMigrateAndMigratedCount = createSelector(
   [rootSelector],

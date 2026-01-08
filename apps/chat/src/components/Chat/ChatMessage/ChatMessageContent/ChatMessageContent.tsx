@@ -8,39 +8,46 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation } from '@/src/types/chat';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { AssistantMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/AssistantMessage';
 import { UserMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/UserMessage';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
-import { LikeState, Message, Role } from '@epam/ai-dial-shared';
+import { Message, Role, onLikeMessageHandler } from '@epam/ai-dial-shared';
 
 interface Props {
   message: Message;
   messageIndex: number;
+  realMessageIndex: number;
   conversation: Conversation;
   allMessages: Message[];
   isLikesEnabled: boolean;
   isEditing: boolean;
   isLastMessage: boolean;
-  toggleEditing: (value: boolean) => void;
   isEditingTemplates: boolean;
-  toggleEditingTemplates: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
+  withButtons?: boolean;
+  onToggleEditing: (value: boolean) => void;
+  onToggleEditingTemplates: (value: boolean) => void;
   onRegenerate?: () => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onCopy?: () => void;
-  onLike?: (likeStatus: LikeState) => void;
+  onLike?: onLikeMessageHandler;
   onDelete?: () => void;
   onClick?: (
     e: MouseEvent<HTMLDivElement>,
     messageRef: RefObject<HTMLDivElement>,
   ) => void;
-  withButtons?: boolean;
 }
 
 const OVERLAY_ICON_SIZE = 18;
@@ -49,23 +56,24 @@ const DEFAULT_ICON_SIZE = 28;
 
 export function ChatMessageContent({
   messageIndex,
+  realMessageIndex,
   isLastMessage,
   message,
   allMessages,
   conversation,
-  onEdit,
   editDisabled,
-  onLike,
   isLikesEnabled,
+  messageCopied,
+  isEditing,
+  isEditingTemplates,
+  withButtons,
+  onToggleEditing,
+  onToggleEditingTemplates,
+  onLike,
   onDelete,
   onClick,
-  messageCopied,
   onCopy,
-  isEditing,
-  toggleEditing,
-  isEditingTemplates,
-  toggleEditingTemplates,
-  withButtons,
+  onEdit,
   onRegenerate,
 }: Props) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -96,8 +104,8 @@ export function ChatMessageContent({
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
-        if (!conversation.isMessageStreaming) {
-          onClick?.(e, messageRef);
+        if (!conversation.isMessageStreaming && !!messageRef.current) {
+          onClick?.(e, messageRef as RefObject<HTMLDivElement>);
         }
       }}
     >
@@ -138,28 +146,35 @@ export function ChatMessageContent({
           {isUser ? (
             <UserMessage
               message={message}
+              messageIndex={messageIndex}
+              realMessageIndex={realMessageIndex}
               allMessages={allMessages}
               conversation={conversation}
-              messageIndex={messageIndex}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
-              toggleEditing={toggleEditing}
-              toggleEditingTemplates={toggleEditingTemplates}
               withButtons={withButtons}
               editDisabled={editDisabled}
+              onToggleEditing={onToggleEditing}
+              onToggleEditingTemplates={onToggleEditingTemplates}
               onEdit={onEdit}
               onDelete={onDelete}
             />
           ) : (
             <AssistantMessage
+              messageIndex={messageIndex}
+              realMessageIndex={realMessageIndex}
               message={message}
+              allMessages={allMessages}
               conversation={conversation}
+              isEditing={isEditing}
               isLastMessage={isLastMessage}
               isLikesEnabled={isLikesEnabled}
               withButtons={withButtons}
               messageCopied={messageCopied}
               onCopy={onCopy}
               onLike={onLike}
+              onToggleEditing={onToggleEditing}
+              onEdit={onEdit}
               onRegenerate={onRegenerate}
             />
           )}

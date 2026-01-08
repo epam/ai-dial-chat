@@ -1,13 +1,15 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
 
 import {
   DeleteType,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
@@ -25,11 +27,12 @@ const DEFAULT_FILTERS = {
 };
 
 const initialState: MarketplaceState = {
-  selectedFilters: DEFAULT_FILTERS,
+  selectedAgentsFilters: DEFAULT_FILTERS,
+  selectedToolsetsFilters: DEFAULT_FILTERS,
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
+  selectedEntitiesTab: MarketplaceEntitiesTabs.AGENTS,
   applyModelStatus: UploadStatus.UNINITIALIZED,
-  detailsModel: undefined,
   selectedView: ViewTypes.CARD,
   tableSort: {
     column: TableColumnSortKeys.NAME,
@@ -37,7 +40,9 @@ const initialState: MarketplaceState = {
   },
   isBannerVisible: true,
 
-  deleteModel: undefined,
+  deleteEntity: undefined,
+  detailsEntity: undefined,
+  loginEntity: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -47,7 +52,9 @@ export const marketplaceSlice = createSlice({
     init: (state) => state,
     initSuccess: (
       state,
-      { payload }: PayloadAction<{ saveFilters: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{ saveFilters: boolean; selectedTab?: MarketplaceTabs }>,
     ) => {
       if (!payload.saveFilters) {
         return initialState;
@@ -56,9 +63,13 @@ export const marketplaceSlice = createSlice({
       return {
         ...initialState,
         searchTerm: state.searchTerm,
-        selectedFilters: state.selectedFilters,
+        selectedAgentsFilters: state.selectedAgentsFilters,
+        selectedToolsetsFilters: state.selectedToolsetsFilters,
         selectedView: state.selectedView,
         tableSort: state.tableSort,
+        selectedEntitiesTab: state.selectedEntitiesTab,
+        selectedTab: payload.selectedTab ?? state.selectedTab,
+        detailsEntity: state.detailsEntity,
       };
     },
     initQueryParams: (state) => state,
@@ -68,12 +79,21 @@ export const marketplaceSlice = createSlice({
     ) => {
       return { ...state, ...payload };
     },
-    setSelectedFilters: (
+    setSelectedAgentsFilters: (
       state,
       { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
     ) => {
-      state.selectedFilters[payload.filterType] = xor(
-        state.selectedFilters[payload.filterType],
+      state.selectedAgentsFilters[payload.filterType] = xor(
+        state.selectedAgentsFilters[payload.filterType],
+        [payload.value],
+      );
+    },
+    setSelectedToolsetsFilters: (
+      state,
+      { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
+    ) => {
+      state.selectedToolsetsFilters[payload.filterType] = xor(
+        state.selectedToolsetsFilters[payload.filterType],
         [payload.value],
       );
     },
@@ -83,16 +103,14 @@ export const marketplaceSlice = createSlice({
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
     },
+    setSelectedEntitiesTab: (
+      state,
+      { payload }: PayloadAction<MarketplaceEntitiesTabs>,
+    ) => {
+      state.selectedEntitiesTab = payload;
+    },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
-    },
-    setDetailsModel: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
-    ) => {
-      state.detailsModel = payload;
     },
     setSelectedView: (
       state,
@@ -121,15 +139,39 @@ export const marketplaceSlice = createSlice({
     ) => {
       state.isBannerVisible = payload.isVisible;
     },
-    setDeleteModel(
+    setDeleteEntity: (
       state,
       {
         payload,
       }: PayloadAction<
-        { entity: DialAIEntityModel; action: DeleteType } | undefined
+        { entity: MarketplaceEntity; action: DeleteType } | undefined
       >,
-    ) {
-      state.deleteModel = payload;
+    ) => {
+      state.deleteEntity = payload;
+    },
+    setDetailsEntity: (
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        | {
+            reference: string;
+            isSuggested: boolean;
+            type: MarketplaceEntitiesTabs;
+          }
+        | undefined
+      >,
+    ) => {
+      state.detailsEntity = payload;
+    },
+    setLoginEntity: (
+      state,
+      { payload }: PayloadAction<ToolsetModel | undefined>,
+    ) => {
+      state.loginEntity = payload;
+    },
+    setShowLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.showLoader = payload;
     },
   },
 });

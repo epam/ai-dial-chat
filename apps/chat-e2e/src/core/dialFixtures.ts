@@ -1,26 +1,58 @@
 import config from '../../config/chat.playwright.config';
-import { AppEditorPage, DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AgentDetailsModal,
+  DialHomePage,
+  EntityEditorPage,
+  FilesManagerPage,
+  MarketplacePage,
+} from '../ui/pages';
+import {
   AgentInfo,
-  AppEditorContainer,
-  AppEditorGeneralForm,
-  AppEditorGeneralInfoAgentPreview,
-  AppEditorHeader,
-  AppEditorViewForm,
   AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
   ChatMessages,
   ChatNotFound,
+  ConfirmationPopup,
   ConversationSettingsModal,
   ConversationToCompare,
+  CustomAppEditorAppSettingsPreview,
+  CustomAppEditorAppSettingsPreviewBody,
+  CustomAppEditorContainer,
+  CustomAppEditorViewForm,
+  DragFile,
+  Dropdown,
+  EntityDetailsModal,
+  EntityEditorEntitySettingsCardPreview,
+  EntityEditorEntitySettingsCardPreviewBody,
+  EntityEditorEntitySettingsPreviewChat,
+  EntityEditorGeneralForm,
+  EntityEditorGeneralInfoPreview,
+  EntityEditorHeader,
+  EntityEditorPreviewCard,
+  ExternalAppEditorContainer,
+  ExternalAppEditorViewForm,
+  FileDropArea,
+  FileModalSection,
+  FilesManager,
+  FilesManagerCollapsibleSidebar,
+  FilesManagerContainer,
+  FilesManagerGrid,
+  FilesManagerModal,
+  FilesManagerToolbar,
+  FoldersTree,
+  InformationModal,
+  ListboxMenu,
   MessageTemplateModal,
   PromptBar,
+  PublishingFilter,
   PublishingRules,
   SelectFolderModal,
   SendMessage,
+  ShareAppModal,
+  ToolsetEditorContainer,
+  ToolsetEditorViewForm,
+  TopicsTooltip,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
@@ -36,40 +68,51 @@ import {
   ConversationInfoTooltipAssertion,
   ConversationToCompareAssertion,
   DownloadAssertion,
+  EntityEditorPreviewCardAssertion,
+  EntityEditorPreviewToggleAssertion,
   EntityTreeAssertion,
+  FilesManagerGridAssertion,
   FolderAssertion,
   FooterAssertion,
-  MarketplaceAgentsAssertion,
   MenuAssertion,
   PlaybackAssertion,
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
   PublishEntityAssertion,
+  PublishFileAssertion,
   PublishFolderAssertion,
-  PublishingRequestModalAssertion,
+  PublishingRequestDialogAssertion,
+  ReplaceConfirmationModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
+  ShareAppModalAssertion,
   ShareModalAssertion,
   SideBarAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  ToolsetAuthAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
-import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
-import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
-import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
+import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
+import { ConfirmationPopupAssertion } from '@/src/assertions/common/confirmationPopupAssertion';
+import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
+import { EntityEditorHeaderAssertion } from '@/src/assertions/entityEditorHeaderAssertion';
+import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
+import { ManageAttachmentFoldersAssertion } from '@/src/assertions/manageAttachmentFoldersAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
+import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
+import { ToolsetEditorViewFormAssertion } from '@/src/assertions/toolsetEditorViewFormAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -78,6 +121,7 @@ import {
   FileApiHelper,
   IconApiHelper,
   ShareApiHelper,
+  ToolsetApiHelper,
 } from '@/src/testData/api';
 import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
 import { ModelApiHelper } from '@/src/testData/api/modelApiHelper';
@@ -85,13 +129,10 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
-import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
+import { DialErrorPage } from '@/src/ui/pages/dialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
-import { Addons } from '@/src/ui/webElements/addons';
-import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
-import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
@@ -99,20 +140,21 @@ import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu'
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   AttachFilesTree,
-  ConversationsToPublishTree,
   ConversationsTree,
-  FilesToPublishTree,
   FolderConversations,
-  FolderConversationsToPublish,
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
-  PromptsToPublishTree,
   PromptsTree,
+  PublishApplicationsTree,
+  PublishConversationsTree,
   PublishFolder,
+  PublishFolderConversations,
+  PublishPromptsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { Filter } from '@/src/ui/webElements/filter';
@@ -121,9 +163,9 @@ import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
-import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
-import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
+import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
+import { MarketplaceEntitiesSection } from '@/src/ui/webElements/marketplace/marketplaceEntitiesSection';
 import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
@@ -132,8 +174,11 @@ import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
-import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
+import { PublishingRequestDialog } from '@/src/ui/webElements/publishingRequestDialog';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
+import { ReplaceConfirmationModal } from '@/src/ui/webElements/replaceConfirmationModal';
+import { ReplaceConfirmationModalConversations } from '@/src/ui/webElements/replaceConfirmationModalConversations';
+import { ReplaceConfirmationModalFolders } from '@/src/ui/webElements/replaceConfirmationModalFolders';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -144,6 +189,7 @@ import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { BucketUtil } from '@/src/utils';
+import { CustomApplicationPublishingUtil } from '@/src/utils/customApplicationPublishingUtil';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
@@ -156,24 +202,38 @@ const dialTest = test.extend<{
   dialHomePage: DialHomePage;
   dialErrorPage: DialErrorPage;
   marketplacePage: MarketplacePage;
-  appEditorPage: AppEditorPage;
+  filesManagerPage: FilesManagerPage;
+  entityEditorPage: EntityEditorPage;
+  entityEditorHeader: EntityEditorHeader;
+  entityEditorGeneralForm: EntityEditorGeneralForm;
+  entityEditorGeneralInfoPreview: EntityEditorGeneralInfoPreview;
+  entityEditorGeneralInfoPreviewCard: EntityEditorPreviewCard;
   appContainer: AppContainer;
   marketplaceContainer: MarketplaceContainer;
-  appEditorContainer: AppEditorContainer;
+  customAppEditorContainer: CustomAppEditorContainer;
+  customAppEditorViewForm: CustomAppEditorViewForm;
+  customAppEditorAppSettingsPreview: CustomAppEditorAppSettingsPreview;
+  customAppEditorAppSettingsPreviewBody: CustomAppEditorAppSettingsPreviewBody;
+  customAppEditorAppSettingsPreviewChat: EntityEditorEntitySettingsPreviewChat;
+  externalAppEditorContainer: ExternalAppEditorContainer;
+  externalAppEditorViewForm: ExternalAppEditorViewForm;
+  externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
+  externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
+  externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
+  toolsetEditorContainer: ToolsetEditorContainer;
+  toolsetEditorViewForm: ToolsetEditorViewForm;
+  toolsetEditorSettingsPreview: EntityEditorEntitySettingsCardPreview;
+  toolsetEditorSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
+  toolsetEditorSettingsPreviewCard: EntityEditorPreviewCard;
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
-  marketplaceAgentsSection: MarketplaceAgentsSection;
-  marketplaceAgents: MarketplaceAgents;
-  agentDetailsModal: AgentDetailsModal;
+  marketplaceEntitiesSection: MarketplaceEntitiesSection;
+  marketplaceEntities: MarketplaceEntities;
+  entityDetailsModal: EntityDetailsModal;
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
-  appEditorHeader: AppEditorHeader;
-  appEditorHeaderAssertion: AppEditorHeaderAssertion;
-  appEditorGeneralForm: AppEditorGeneralForm;
-  appEditorGeneralInfoAgentPreview: AppEditorGeneralInfoAgentPreview;
-  appEditorAppSettingsAgentPreview: AppEditorAppSettingsAgentPreview;
-  appEditorViewForm: AppEditorViewForm;
+  entityEditorHeaderAssertion: EntityEditorHeaderAssertion;
   chatBar: ChatBar;
   navigationPanel: NavigationPanel;
   importExportLoader: ImportExportLoader;
@@ -182,6 +242,8 @@ const dialTest = test.extend<{
   accountDropdownMenu: DropdownMenu;
   banner: Banner;
   promptBar: PromptBar;
+  fileDropArea: FileDropArea;
+  dragFile: DragFile;
   chat: Chat;
   footer: Footer;
   chatMessages: ChatMessages;
@@ -190,6 +252,7 @@ const dialTest = test.extend<{
   attachmentDropdownMenu: DropdownMenu;
   sendMessageInputAttachments: InputAttachments;
   sendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
+  editMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   conversations: ConversationsTree;
   prompts: PromptsTree;
   folderConversations: FolderConversations;
@@ -200,21 +263,22 @@ const dialTest = test.extend<{
   organizationFolderConversations: Folders;
   conversationSettingsModal: ConversationSettingsModal;
   talkToAgentDialog: TalkToAgentDialog;
-  talkToAgents: MarketplaceAgents;
+  talkToAgents: MarketplaceEntities;
   agentSettings: AgentSettings;
   temperatureSlider: TemperatureSlider;
-  addons: Addons;
-  addonsDialog: AddonsDialog;
   agentInfo: AgentInfo;
   conversationDropdownMenu: DropdownMenu;
   folderDropdownMenu: DropdownMenu;
   promptDropdownMenu: DropdownMenu;
   confirmationDialog: ConfirmationDialog;
+  replaceConfirmationModal: ReplaceConfirmationModal;
   promptModalDialog: PromptModalDialog;
   renameConversationModal: RenameConversationModal;
   renameConversationModalAssertion: RenameConversationModalAssertion;
   variableModalDialog: VariableModalDialog;
   chatHeader: ChatHeader;
+  chatHeaderVersionDropdownMenu: DropdownMenu;
+  chatHeaderDropdownMenu: DropdownMenu;
   modelInfoTooltip: ModelInfoTooltip;
   chatSettingsTooltip: ChatSettingsTooltip;
   compare: Compare;
@@ -222,9 +286,11 @@ const dialTest = test.extend<{
   rightChatHeader: ChatHeader;
   leftChatHeader: ChatHeader;
   tooltip: Tooltip;
+  topicsTooltip: TopicsTooltip;
   errorPopup: ErrorPopup;
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
+  shareAppModal: ShareAppModal;
   chatBarSearch: Search;
   promptBarSearch: Search;
   chatFilter: Filter;
@@ -235,9 +301,11 @@ const dialTest = test.extend<{
   iconApiHelper: IconApiHelper;
   chatApiHelper: ChatApiHelper;
   fileApiHelper: FileApiHelper;
+  adminFileApiHelper: FileApiHelper;
   additionalSecondShareUserFileApiHelper: FileApiHelper;
   itemApiHelper: ItemApiHelper;
   applicationApiHelper: ApplicationApiHelper;
+  toolsetApiHelper: ToolsetApiHelper;
   browserStorageInjector: BrowserStorageInjector;
   apiInjector: ApiInjector;
   dataInjector: DataInjectorInterface;
@@ -266,20 +334,29 @@ const dialTest = test.extend<{
   selectFolderModal: SelectFolderModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
+  attachedOrganizationFiles: Folders;
   messageTemplateModal: MessageTemplateModal;
   manageAttachmentsAssertion: ManageAttachmentsAssertion;
   settingsModal: SettingsModal;
-  publishingRequestModal: PublishingRequestModal;
-  conversationsToPublishTree: ConversationsToPublishTree;
-  filesToPublishTree: FilesToPublishTree;
-  promptsToPublishTree: PromptsToPublishTree;
-  folderConversationsToPublish: FolderConversationsToPublish;
+  publishingRequestDialog: PublishingRequestDialog;
+  conversationsToPublishTree: PublishConversationsTree;
+  filesToPublishTree: PublishFilesTree;
+  promptsToPublishTree: PublishPromptsTree;
+  appsToPublishTree: PublishApplicationsTree;
+  folderConversationsToPublish: PublishFolderConversations;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
+  additionalShareUserPublicationApiHelper: PublicationApiHelper;
+  additionalSecondShareUserPublicationApiHelper: PublicationApiHelper;
   publishingRules: PublishingRules;
+  publishingFilter: PublishingFilter;
+  informationModal: InformationModal;
+  listboxMenu: ListboxMenu;
+  informationModalAssertion: InformationModalAssertion;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
-  allFilesFolderAssertion: FolderAssertion<Folders>;
+  allFilesFolderAssertion: ManageAttachmentFoldersAssertion;
+  organizationFoldersAssertion: ManageAttachmentFoldersAssertion;
   organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
@@ -311,50 +388,92 @@ const dialTest = test.extend<{
   agentSettingAssertion: AgentSettingAssertion;
   playbackAssertion: PlaybackAssertion;
   shareApiAssertion: ShareApiAssertion;
-  shareModalAssertion: ShareModalAssertion;
-  publishingRequestModalAssertion: PublishingRequestModalAssertion;
+  shareModalAssertion: ShareModalAssertion<ShareModal>;
+  shareAppModalAssertion: ShareAppModalAssertion;
+  publishingRequestDialogAssertion: PublishingRequestDialogAssertion;
   selectFoldersAssertion: FolderAssertion<Folders>;
   selectFolderModalAssertion: SelectFolderModalAssertion;
   conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
   agentInfoAssertion: AgentInfoAssertion;
-  addonsDialogAssertion: AddonsDialogAssertion;
-  marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
+  publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
-  conversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
-  publishFileAssertion: EntityTreeAssertion<FilesToPublishTree>;
-  promptToPublishAssertion: PublishEntityAssertion<PromptsToPublishTree>;
-  folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+  publishConversationAssertion: PublishEntityAssertion<PublishConversationsTree>;
+  publishFileTreeAssertion: PublishFileAssertion<PublishFilesTree>;
+  publishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
+  appToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
+  folderToPublishAssertion: PublishFolderAssertion<PublishFolderConversations>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
-  agentVersionsDropdownMenuAssertion: MenuAssertion;
+  entityVersionsDropdownMenuAssertion: MenuAssertion;
+  addAppDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
   promptPreviewModal: PromptPreviewModalWindow;
+  promptPreviewVersionDropdownMenu: DropdownMenu;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
-  agentDetailsModalAssertion: AgentDetailsModalAssertion;
+  entityDetailsModalAssertion: EntityDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
+  adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
+  customApplicationPublishingUtil: CustomApplicationPublishingUtil;
+  organizationFolderPromptAssertions: FolderAssertion<Folders>;
+  publishingRulesAssertion: PublishingRulesAssertion;
+  publicationApiAssertion: PublicationApiAssertion;
+  additionalShareUserPublicationApiAssertion: PublicationApiAssertion;
+  additionalSecondShareUserPublicationApiAssertion: PublicationApiAssertion;
+  entityEditorGeneralInfoPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
+  entityEditorGeneralInfoPreviewCardAssertion: EntityEditorPreviewCardAssertion;
+  toolsetEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
+  toolsetEditorSettingsPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
+  toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
+  externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
+  replaceConfirmationModalAssertion: ReplaceConfirmationModalAssertion;
+  replaceConfirmationModalFolders: ReplaceConfirmationModalFolders;
+  replaceConfirmationModalConversations: ReplaceConfirmationModalConversations;
+  replaceConfirmationModalFoldersAssertion: FolderAssertion<ReplaceConfirmationModalFolders>;
+  replaceConfirmationModalConversationsAssertion: EntityTreeAssertion<ReplaceConfirmationModalConversations>;
+  toolsetAuthAssertion: ToolsetAuthAssertion;
+  filesManagerContainer: FilesManagerContainer;
+  filesManager: FilesManager;
+  filesManagerToolbar: FilesManagerToolbar;
+  filesManagerGrid: FilesManagerGrid;
+  filesManagerCollapsibleSidebar: FilesManagerCollapsibleSidebar;
+  filesManagerFoldersTree: FoldersTree;
+  filesManagerGridRowDropdownMenu: Dropdown;
+  filesManagerDeleteItemConfirmationPopup: ConfirmationPopup;
+  filesManagerModal: FilesManagerModal;
+  filesManagerModalManager: FilesManager;
+  filesManagerModalGrid: FilesManagerGrid;
+  filesManagerModalToolbar: FilesManagerToolbar;
+  filesManagerModalCollapsibleSidebar: FilesManagerCollapsibleSidebar;
+  filesManagerModalFoldersTree: FoldersTree;
+  filesManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  filesManagerGridAssertion: FilesManagerGridAssertion;
+  filesManagerModalGridAssertion: FilesManagerGridAssertion;
+  fileConflictConfirmationPopup: ConfirmationPopup;
+  fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
 }>({
   beforeTestCleanup: [
-    async ({ dataInjector, fileApiHelper }, use) => {
+    async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
       await dataInjector.deleteAllData();
       await fileApiHelper.deleteAllFiles();
+      await toolsetApiHelper.deleteAllToolsets();
       await use('beforeTestCleanup');
     },
     { scope: 'test', auto: true },
   ],
-  agentDetailsModalAssertion: async ({ agentDetailsModal }, use) => {
-    const agentDetailsModalAssertion = new AgentDetailsModalAssertion(
-      agentDetailsModal,
+  entityDetailsModalAssertion: async ({ entityDetailsModal }, use) => {
+    const entityDetailsModalAssertion = new EntityDetailsModalAssertion(
+      entityDetailsModal,
     );
-    await use(agentDetailsModalAssertion);
+    await use(entityDetailsModalAssertion);
   },
-  appEditorHeaderAssertion: async ({ appEditorHeader }, use) => {
-    const appEditorHeaderAssertion = new AppEditorHeaderAssertion(
-      appEditorHeader,
+  entityEditorHeaderAssertion: async ({ entityEditorHeader }, use) => {
+    const entityEditorHeaderAssertion = new EntityEditorHeaderAssertion(
+      entityEditorHeader,
     );
-    await use(appEditorHeaderAssertion);
+    await use(entityEditorHeaderAssertion);
   },
   sendMessageInputAttachmentsAssertions: async (
     { sendMessageInputAttachments },
@@ -363,6 +482,14 @@ const dialTest = test.extend<{
     const sendMessageInputAttachmentsAssertions =
       new InputAttachmentsAssertions(sendMessageInputAttachments);
     await use(sendMessageInputAttachmentsAssertions);
+  },
+  editMessageInputAttachmentsAssertions: async (
+    { editMessageInputAttachments },
+    use,
+  ) => {
+    const editMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(editMessageInputAttachments);
+    await use(editMessageInputAttachmentsAssertions);
   },
   localStorageAssertion: async ({ localStorageManager }, use) => {
     const localStorageAssertion = new LocalStorageAssertion(
@@ -421,9 +548,13 @@ const dialTest = test.extend<{
     const marketplacePage = new MarketplacePage(page);
     await use(marketplacePage);
   },
-  appEditorPage: async ({ page }, use) => {
-    const appEditorPage = new AppEditorPage(page);
-    await use(appEditorPage);
+  filesManagerPage: async ({ page }, use) => {
+    const filesManagerPage = new FilesManagerPage(page);
+    await use(filesManagerPage);
+  },
+  entityEditorPage: async ({ page }, use) => {
+    const entityEditorPage = new EntityEditorPage(page);
+    await use(entityEditorPage);
   },
   appContainer: async ({ dialHomePage }, use) => {
     const appContainer = dialHomePage.getAppContainer();
@@ -433,9 +564,125 @@ const dialTest = test.extend<{
     const marketplaceContainer = marketplacePage.getMarketplaceContainer();
     await use(marketplaceContainer);
   },
-  appEditorContainer: async ({ appEditorPage }, use) => {
-    const appEditorContainer = appEditorPage.getAppEditorContainer();
-    await use(appEditorContainer);
+  customAppEditorContainer: async ({ entityEditorPage }, use) => {
+    const customAppEditorContainer =
+      entityEditorPage.getCustomAppEditorContainer();
+    await use(customAppEditorContainer);
+  },
+  entityEditorGeneralForm: async ({ entityEditorPage }, use) => {
+    const entityEditorGeneralForm =
+      entityEditorPage.getEntityEditorGeneralForm();
+    await use(entityEditorGeneralForm);
+  },
+  entityEditorHeader: async ({ entityEditorPage }, use) => {
+    const entityEditorHeader = entityEditorPage.getEntityEditorHeader();
+    await use(entityEditorHeader);
+  },
+  entityEditorGeneralInfoPreview: async ({ entityEditorPage }, use) => {
+    const entityEditorGeneralInfoPreview =
+      entityEditorPage.getEntityEditorGeneralInfoPreview();
+    await use(entityEditorGeneralInfoPreview);
+  },
+  entityEditorGeneralInfoPreviewCard: async (
+    { entityEditorGeneralInfoPreview },
+    use,
+  ) => {
+    const entityEditorGeneralInfoPreviewCard =
+      entityEditorGeneralInfoPreview.getEntityEditorPreviewCard();
+    await use(entityEditorGeneralInfoPreviewCard);
+  },
+  customAppEditorViewForm: async ({ customAppEditorContainer }, use) => {
+    const customAppEditorViewForm =
+      customAppEditorContainer.getEntityEditorViewForm();
+    await use(customAppEditorViewForm);
+  },
+  customAppEditorAppSettingsPreview: async (
+    { customAppEditorContainer },
+    use,
+  ) => {
+    const customAppEditorAppSettingsPreview =
+      customAppEditorContainer.getEntityEditorEntitySettingsPreview();
+    await use(customAppEditorAppSettingsPreview);
+  },
+  customAppEditorAppSettingsPreviewBody: async (
+    { customAppEditorAppSettingsPreview },
+    use,
+  ) => {
+    const customAppEditorAppSettingsPreviewBody =
+      customAppEditorAppSettingsPreview.getEntityEditorEntitySettingsPreviewBody();
+    await use(customAppEditorAppSettingsPreviewBody);
+  },
+  customAppEditorAppSettingsPreviewChat: async (
+    { customAppEditorAppSettingsPreviewBody },
+    use,
+  ) => {
+    const customAppEditorAppSettingsPreviewChat =
+      customAppEditorAppSettingsPreviewBody.getAppEditorAppSettingsPreviewChat();
+    await use(customAppEditorAppSettingsPreviewChat);
+  },
+  externalAppEditorContainer: async ({ entityEditorPage }, use) => {
+    const externalAppEditorContainer =
+      entityEditorPage.getExternalAppEditorContainer();
+    await use(externalAppEditorContainer);
+  },
+  externalAppEditorViewForm: async ({ externalAppEditorContainer }, use) => {
+    const externalAppEditorViewForm =
+      externalAppEditorContainer.getEntityEditorViewForm();
+    await use(externalAppEditorViewForm);
+  },
+  externalAppEditorAppSettingsPreview: async (
+    { externalAppEditorContainer },
+    use,
+  ) => {
+    const externalAppEditorAppSettingsPreview =
+      externalAppEditorContainer.getEntityEditorEntitySettingsPreview();
+    await use(externalAppEditorAppSettingsPreview);
+  },
+  externalAppEditorAppSettingsPreviewBody: async (
+    { externalAppEditorAppSettingsPreview },
+    use,
+  ) => {
+    const externalAppEditorAppSettingsPreviewBody =
+      externalAppEditorAppSettingsPreview.getEntityEditorEntitySettingsPreviewBody();
+    await use(externalAppEditorAppSettingsPreviewBody);
+  },
+  externalAppEditorAppSettingsPreviewCard: async (
+    { externalAppEditorAppSettingsPreviewBody },
+    use,
+  ) => {
+    const externalAppEditorAppSettingsPreviewCard =
+      externalAppEditorAppSettingsPreviewBody.getEntityEditorPreviewCard();
+    await use(externalAppEditorAppSettingsPreviewCard);
+  },
+  toolsetEditorContainer: async ({ entityEditorPage }, use) => {
+    const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
+    await use(toolsetEditorContainer);
+  },
+  toolsetEditorViewForm: async ({ toolsetEditorContainer }, use) => {
+    const toolsetEditorViewForm =
+      toolsetEditorContainer.getEntityEditorViewForm();
+    await use(toolsetEditorViewForm);
+  },
+  toolsetEditorSettingsPreview: async ({ toolsetEditorContainer }, use) => {
+    const toolsetEditorSettingsPreview =
+      toolsetEditorContainer.getEntityEditorEntitySettingsPreview();
+    await use(toolsetEditorSettingsPreview);
+  },
+  toolsetEditorSettingsPreviewBody: async (
+    { toolsetEditorSettingsPreview },
+    use,
+  ) => {
+    const toolsetEditorSettingsPreviewBody =
+      toolsetEditorSettingsPreview.getEntityEditorEntitySettingsPreviewBody();
+    await use(toolsetEditorSettingsPreviewBody);
+  },
+  toolsetEditorSettingsPreviewCard: async (
+    { toolsetEditorSettingsPreviewBody },
+    use,
+  ) => {
+    const toolsetEditorSettingsPreviewCard =
+      toolsetEditorSettingsPreviewBody.getEntityEditorPreviewCard();
+    await use(toolsetEditorSettingsPreviewCard);
   },
   marketplaceSidebar: async ({ marketplaceContainer }, use) => {
     const marketplaceSidebar = marketplaceContainer.getMarketplaceSidebar();
@@ -449,17 +696,18 @@ const dialTest = test.extend<{
     const marketplace = marketplaceContainer.getMarketplace();
     await use(marketplace);
   },
-  marketplaceAgentsSection: async ({ marketplace }, use) => {
-    const marketplaceAgentsSection = marketplace.getMarketplaceAgentsSection();
-    await use(marketplaceAgentsSection);
+  marketplaceEntitiesSection: async ({ marketplace }, use) => {
+    const marketplaceEntitiesSection =
+      marketplace.getMarketplaceEntitiesSection();
+    await use(marketplaceEntitiesSection);
   },
-  marketplaceAgents: async ({ marketplaceAgentsSection }, use) => {
-    const marketplaceAgents = marketplaceAgentsSection.getAgents();
-    await use(marketplaceAgents);
+  marketplaceEntities: async ({ marketplaceEntitiesSection }, use) => {
+    const marketplaceEntities = marketplaceEntitiesSection.getEntities();
+    await use(marketplaceEntities);
   },
-  agentDetailsModal: async ({ marketplaceAgents }, use) => {
-    const agentDetailsModal = marketplaceAgents.getAgentDetailsModal();
-    await use(agentDetailsModal);
+  entityDetailsModal: async ({ marketplaceEntities }, use) => {
+    const entityDetailsModal = marketplaceEntities.getEntityDetailsModal();
+    await use(entityDetailsModal);
   },
   marketplaceHeader: async ({ marketplace }, use) => {
     const marketplaceHeader = marketplace.getMarketplaceHeader();
@@ -468,28 +716,6 @@ const dialTest = test.extend<{
   addAppDropdownMenu: async ({ page }, use) => {
     const addAppDropdownMenu = new DropdownMenu(page);
     await use(addAppDropdownMenu);
-  },
-  appEditorHeader: async ({ appEditorContainer }, use) => {
-    const appEditorHeader = appEditorContainer.getAppEditorHeader();
-    await use(appEditorHeader);
-  },
-  appEditorGeneralForm: async ({ appEditorContainer }, use) => {
-    const appEditorGeneralForm = appEditorContainer.getAppEditorGeneralForm();
-    await use(appEditorGeneralForm);
-  },
-  appEditorGeneralInfoAgentPreview: async ({ appEditorContainer }, use) => {
-    const appEditorGeneralInfoPreview =
-      appEditorContainer.getAppEditorGeneralInfoPreview();
-    await use(appEditorGeneralInfoPreview);
-  },
-  appEditorAppSettingsAgentPreview: async ({ appEditorContainer }, use) => {
-    const appEditorAppSettingsPreview =
-      appEditorContainer.getAppEditorAppSettingsPreview();
-    await use(appEditorAppSettingsPreview);
-  },
-  appEditorViewForm: async ({ appEditorContainer }, use) => {
-    const appEditorViewForm = appEditorContainer.getAppEditorViewForm();
-    await use(appEditorViewForm);
   },
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
@@ -527,8 +753,16 @@ const dialTest = test.extend<{
     const promptBarSearch = promptBar.getSearch();
     await use(promptBarSearch);
   },
-  chat: async ({ appContainer }, use) => {
-    const chat = appContainer.getChat();
+  fileDropArea: async ({ appContainer }, use) => {
+    const fileDropArea = appContainer.getFileDropArea();
+    await use(fileDropArea);
+  },
+  dragFile: async ({ fileDropArea }, use) => {
+    const dragFile = fileDropArea.getDragFile();
+    await use(dragFile);
+  },
+  chat: async ({ fileDropArea }, use) => {
+    const chat = fileDropArea.getChat();
     await use(chat);
   },
   footer: async ({ appContainer }, use) => {
@@ -629,14 +863,6 @@ const dialTest = test.extend<{
     const temperatureSlider = agentSettings.getTemperatureSlider();
     await use(temperatureSlider);
   },
-  addons: async ({ agentSettings }, use) => {
-    const addons = agentSettings.getAddons();
-    await use(addons);
-  },
-  addonsDialog: async ({ addons }, use) => {
-    const addonsDialog = addons.getAddonsDialog();
-    await use(addonsDialog);
-  },
   agentInfo: async ({ chat }, use) => {
     const agentInfo = chat.getAgentInfo();
     await use(agentInfo);
@@ -656,6 +882,10 @@ const dialTest = test.extend<{
   confirmationDialog: async ({ page }, use) => {
     const confirmationDialog = new ConfirmationDialog(page);
     await use(confirmationDialog);
+  },
+  replaceConfirmationModal: async ({ page }, use) => {
+    const replaceConfirmationModal = new ReplaceConfirmationModal(page);
+    await use(replaceConfirmationModal);
   },
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
@@ -680,6 +910,14 @@ const dialTest = test.extend<{
   chatHeader: async ({ chat }, use) => {
     const chatHeader = chat.getChatHeader();
     await use(chatHeader);
+  },
+  chatHeaderVersionDropdownMenu: async ({ page }, use) => {
+    const chatHeaderVersionDropdownMenu = new DropdownMenu(page);
+    await use(chatHeaderVersionDropdownMenu);
+  },
+  chatHeaderDropdownMenu: async ({ page }, use) => {
+    const chatHeaderDropdownMenu = new DropdownMenu(page);
+    await use(chatHeaderDropdownMenu);
   },
   modelInfoTooltip: async ({ page }, use) => {
     const modelInfoTooltip = new ModelInfoTooltip(page);
@@ -709,6 +947,10 @@ const dialTest = test.extend<{
     const tooltip = new Tooltip(page);
     await use(tooltip);
   },
+  topicsTooltip: async ({ page }, use) => {
+    const topicsTooltip = new TopicsTooltip(page);
+    await use(topicsTooltip);
+  },
   errorPopup: async ({ page }, use) => {
     const errorPopup = new ErrorPopup(page);
     await use(errorPopup);
@@ -720,6 +962,10 @@ const dialTest = test.extend<{
   shareModal: async ({ page }, use) => {
     const shareModal = new ShareModal(page);
     await use(shareModal);
+  },
+  shareAppModal: async ({ page }, use) => {
+    const shareAppModal = new ShareAppModal(page);
+    await use(shareAppModal);
   },
   modelApiHelper: async ({ request }, use) => {
     const modelApiHelper = new ModelApiHelper(request);
@@ -736,6 +982,13 @@ const dialTest = test.extend<{
   fileApiHelper: async ({ request }, use) => {
     const fileApiHelper = new FileApiHelper(request);
     await use(fileApiHelper);
+  },
+  adminFileApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminFileApiHelper = new FileApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminFileApiHelper);
   },
   additionalSecondShareUserFileApiHelper: async (
     { additionalSecondShareUserRequestContext },
@@ -754,6 +1007,10 @@ const dialTest = test.extend<{
   applicationApiHelper: async ({ request }, use) => {
     const applicationApiHelper = new ApplicationApiHelper(request);
     await use(applicationApiHelper);
+  },
+  toolsetApiHelper: async ({ request }, use) => {
+    const toolsetApiHelper = new ToolsetApiHelper(request);
+    await use(toolsetApiHelper);
   },
   apiInjector: async ({ itemApiHelper }, use) => {
     const apiInjector = new ApiInjector(itemApiHelper);
@@ -918,6 +1175,11 @@ const dialTest = test.extend<{
     const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
+  attachedOrganizationFiles: async ({ attachFilesModal }, use) => {
+    const attachedOrganizationFiles =
+      attachFilesModal.getOrganizationFolderFiles();
+    await use(attachedOrganizationFiles);
+  },
   messageTemplateModal: async ({ page }, use) => {
     const messageTemplateModal = new MessageTemplateModal(page);
     await use(messageTemplateModal);
@@ -926,27 +1188,32 @@ const dialTest = test.extend<{
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
   },
-  publishingRequestModal: async ({ page }, use) => {
-    const publishingModal = new PublishingRequestModal(page);
-    await use(publishingModal);
+  publishingRequestDialog: async ({ page }, use) => {
+    const publishingRequestDialog = new PublishingRequestDialog(page);
+    await use(publishingRequestDialog);
   },
-  conversationsToPublishTree: async ({ publishingRequestModal }, use) => {
+  conversationsToPublishTree: async ({ publishingRequestDialog }, use) => {
     const conversationsToPublishTree =
-      publishingRequestModal.getConversationsToPublishTree();
+      publishingRequestDialog.getConversationsToPublishTree();
     await use(conversationsToPublishTree);
   },
-  filesToPublishTree: async ({ publishingRequestModal }, use) => {
-    const filesToPublishTree = publishingRequestModal.getFilesToPublishTree();
+  filesToPublishTree: async ({ publishingRequestDialog }, use) => {
+    const filesToPublishTree = publishingRequestDialog.getFilesToPublishTree();
     await use(filesToPublishTree);
   },
-  promptsToPublishTree: async ({ publishingRequestModal }, use) => {
+  promptsToPublishTree: async ({ publishingRequestDialog }, use) => {
     const promptsToPublishTree =
-      publishingRequestModal.getPromptsToPublishTree();
+      publishingRequestDialog.getPromptsToPublishTree();
     await use(promptsToPublishTree);
   },
-  folderConversationsToPublish: async ({ publishingRequestModal }, use) => {
+  appsToPublishTree: async ({ publishingRequestDialog }, use) => {
+    const appsToPublishTree =
+      publishingRequestDialog.getApplicationsToPublishTree();
+    await use(appsToPublishTree);
+  },
+  folderConversationsToPublish: async ({ publishingRequestDialog }, use) => {
     const folderConversationsToPublish =
-      publishingRequestModal.getFolderConversationsToPublish();
+      publishingRequestDialog.getFolderConversationsToPublish();
     await use(folderConversationsToPublish);
   },
   publicationApiHelper: async ({ request }, use) => {
@@ -960,9 +1227,48 @@ const dialTest = test.extend<{
     );
     await use(adminPublicationApiHelper);
   },
-  publishingRules: async ({ publishingRequestModal }, use) => {
-    const publishingRules = publishingRequestModal.getPublishingRules();
+  additionalShareUserPublicationApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserPublicationApiHelper = new PublicationApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    );
+    await use(additionalShareUserPublicationApiHelper);
+  },
+  additionalSecondShareUserPublicationApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondShareUserPublicationApiHelper =
+      new PublicationApiHelper(
+        additionalSecondShareUserRequestContext,
+        BucketUtil.getAdditionalSecondShareUserBucket(),
+      );
+    await use(additionalSecondShareUserPublicationApiHelper);
+  },
+  publishingRules: async ({ publishingRequestDialog }, use) => {
+    const publishingRules = publishingRequestDialog.getPublishingRules();
     await use(publishingRules);
+  },
+  publishingFilter: async ({ publishingRules }, use) => {
+    const publishingFilter = publishingRules.gePublishingFilter();
+    await use(publishingFilter);
+  },
+  informationModal: async ({ page }, use) => {
+    const informationModal = new InformationModal(page);
+    await use(informationModal);
+  },
+  listboxMenu: async ({ page }, use) => {
+    const listboxMenu = new ListboxMenu(page);
+    await use(listboxMenu);
+  },
+  informationModalAssertion: async ({ informationModal }, use) => {
+    const informationModalAssertion = new InformationModalAssertion(
+      informationModal,
+    );
+    await use(informationModalAssertion);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
@@ -995,11 +1301,19 @@ const dialTest = test.extend<{
     );
     await use(chatBarFolderAssertion);
   },
-  allFilesFolderAssertion: async ({ attachedAllFiles }, use) => {
-    const allFilesFolderAssertion = new FolderAssertion<Folders>(
-      attachedAllFiles,
+  allFilesFolderAssertion: async ({ attachFilesModal }, use) => {
+    const allFilesFolderAssertion = new ManageAttachmentFoldersAssertion(
+      attachFilesModal,
+      FileModalSection.AllFiles,
     );
     await use(allFilesFolderAssertion);
+  },
+  organizationFoldersAssertion: async ({ attachFilesModal }, use) => {
+    const organizationFoldersAssertion = new ManageAttachmentFoldersAssertion(
+      attachFilesModal,
+      FileModalSection.Organization,
+    );
+    await use(organizationFoldersAssertion);
   },
   toastAssertion: async ({ toast }, use) => {
     const toastAssertion = new ToastAssertion(toast);
@@ -1139,11 +1453,17 @@ const dialTest = test.extend<{
     const shareModalAssertion = new ShareModalAssertion(shareModal);
     await use(shareModalAssertion);
   },
-  publishingRequestModalAssertion: async ({ publishingRequestModal }, use) => {
-    const publishingRequestModalAssertion = new PublishingRequestModalAssertion(
-      publishingRequestModal,
-    );
-    await use(publishingRequestModalAssertion);
+  shareAppModalAssertion: async ({ shareAppModal }, use) => {
+    const shareAppModalAssertion = new ShareAppModalAssertion(shareAppModal);
+    await use(shareAppModalAssertion);
+  },
+  publishingRequestDialogAssertion: async (
+    { publishingRequestDialog },
+    use,
+  ) => {
+    const publishingRequestDialogAssertion =
+      new PublishingRequestDialogAssertion(publishingRequestDialog);
+    await use(publishingRequestDialogAssertion);
   },
   selectFoldersAssertion: async ({ selectFolders }, use) => {
     const selectFoldersAssertion = new FolderAssertion(selectFolders);
@@ -1164,16 +1484,6 @@ const dialTest = test.extend<{
     const agentInfoAssertion = new AgentInfoAssertion(agentInfo);
     await use(agentInfoAssertion);
   },
-  addonsDialogAssertion: async ({ addonsDialog }, use) => {
-    const addonsDialogAssertion = new AddonsDialogAssertion(addonsDialog);
-    await use(addonsDialogAssertion);
-  },
-  marketplaceAgentsAssertion: async ({ marketplaceAgents }, use) => {
-    const marketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
-      marketplaceAgents,
-    );
-    await use(marketplaceAgentsAssertion);
-  },
   conversationToCompareAssertion: async ({ compareConversation }, use) => {
     const conversationToCompareAssertion = new ConversationToCompareAssertion(
       compareConversation,
@@ -1181,13 +1491,22 @@ const dialTest = test.extend<{
     await use(conversationToCompareAssertion);
   },
   publishingRequestFolderConversationAssertion: async (
-    { publishingRequestModal },
+    { publishingRequestDialog },
     use,
   ) => {
     const publishingRequestFolderConversationAssertion = new FolderAssertion(
-      publishingRequestModal.getFolderConversationsToPublish(),
+      publishingRequestDialog.getFolderConversationsToPublish(),
     );
     await use(publishingRequestFolderConversationAssertion);
+  },
+  publishingRequestFolderPromptAssertion: async (
+    { publishingRequestDialog },
+    use,
+  ) => {
+    const publishingRequestFolderPromptAssertion = new PublishFolderAssertion(
+      publishingRequestDialog.getFolderPromptsToPublish(),
+    );
+    await use(publishingRequestFolderPromptAssertion);
   },
   talkToAgentDialogAssertion: async ({ talkToAgentDialog }, use) => {
     const talkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
@@ -1195,30 +1514,32 @@ const dialTest = test.extend<{
     );
     await use(talkToAgentDialogAssertion);
   },
-  conversationToPublishAssertion: async (
-    { conversationsToPublishTree },
-    use,
-  ) => {
-    const conversationToPublishAssertion =
-      new PublishEntityAssertion<ConversationsToPublishTree>(
+  publishConversationAssertion: async ({ conversationsToPublishTree }, use) => {
+    const publishConversationAssertion =
+      new PublishEntityAssertion<PublishConversationsTree>(
         conversationsToPublishTree,
       );
-    await use(conversationToPublishAssertion);
+    await use(publishConversationAssertion);
   },
-  publishFileAssertion: async ({ filesToPublishTree }, use) => {
-    const publishFileAssertion = new EntityTreeAssertion<FilesToPublishTree>(
+  publishFileTreeAssertion: async ({ filesToPublishTree }, use) => {
+    const publishFileTreeAssertion = new PublishFileAssertion(
       filesToPublishTree,
     );
-    await use(publishFileAssertion);
+    await use(publishFileTreeAssertion);
   },
-  promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
-    const promptToPublishAssertion =
-      new PublishEntityAssertion<PromptsToPublishTree>(promptsToPublishTree);
-    await use(promptToPublishAssertion);
+  publishPromptsTreeAssertion: async ({ promptsToPublishTree }, use) => {
+    const publishPromptsTreeAssertion =
+      new PublishEntityAssertion<PublishPromptsTree>(promptsToPublishTree);
+    await use(publishPromptsTreeAssertion);
   },
-  folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
+  appToPublishAssertion: async ({ appsToPublishTree }, use) => {
+    const appToPublishAssertion =
+      new PublishEntityAssertion<PublishApplicationsTree>(appsToPublishTree);
+    await use(appToPublishAssertion);
+  },
+  folderToPublishAssertion: async ({ publishingRequestDialog }, use) => {
     const folderToPublishAssertion = new PublishFolderAssertion(
-      publishingRequestModal.getFolderConversationsToPublish(),
+      publishingRequestDialog.getFolderConversationsToPublish(),
     );
     await use(folderToPublishAssertion);
   },
@@ -1242,15 +1563,23 @@ const dialTest = test.extend<{
     );
     await use(messageTemplateModalAssertion);
   },
-  agentVersionsDropdownMenuAssertion: async ({ agentDetailsModal }, use) => {
-    const agentVersionsDropdownMenuAssertion = new MenuAssertion(
-      agentDetailsModal.getVersionDropdownMenu(),
+  entityVersionsDropdownMenuAssertion: async ({ entityDetailsModal }, use) => {
+    const entityVersionsDropdownMenuAssertion = new MenuAssertion(
+      entityDetailsModal.getVersionDropdownMenu(),
     );
-    await use(agentVersionsDropdownMenuAssertion);
+    await use(entityVersionsDropdownMenuAssertion);
+  },
+  addAppDropdownMenuAssertion: async ({ addAppDropdownMenu }, use) => {
+    const addAppDropdownMenuAssertion = new MenuAssertion(addAppDropdownMenu);
+    await use(addAppDropdownMenuAssertion);
   },
   promptPreviewModal: async ({ page }, use) => {
     const promptPreviewModalWindow = new PromptPreviewModalWindow(page);
     await use(promptPreviewModalWindow);
+  },
+  promptPreviewVersionDropdownMenu: async ({ page }, use) => {
+    const promptPreviewVersionDropdownMenu = new DropdownMenu(page);
+    await use(promptPreviewVersionDropdownMenu);
   },
   promptPreviewModalAssertion: async ({ promptPreviewModal }, use) => {
     const promptPreviewModalAssertion = new PromptPreviewModalAssertion(
@@ -1264,6 +1593,289 @@ const dialTest = test.extend<{
         attachFilesModal.getAllFilesTree(),
       );
     await use(attachAllFilesTreeAssertion);
+  },
+  adminCustomApplicationPublishingUtil: async (
+    {
+      customApplicationBuilder,
+      publishRequestBuilder,
+      adminApplicationApiHelper,
+      adminPublicationApiHelper,
+      fileApiHelper,
+    },
+    use,
+  ) => {
+    const adminCustomApplicationPublishingUtil =
+      new CustomApplicationPublishingUtil(
+        customApplicationBuilder,
+        adminApplicationApiHelper,
+        fileApiHelper,
+        publishRequestBuilder,
+        adminPublicationApiHelper,
+      );
+    await use(adminCustomApplicationPublishingUtil);
+  },
+  customApplicationPublishingUtil: async (
+    { customApplicationBuilder, applicationApiHelper, fileApiHelper },
+    use,
+  ) => {
+    const customApplicationPublishingUtil = new CustomApplicationPublishingUtil(
+      customApplicationBuilder,
+      applicationApiHelper,
+      fileApiHelper,
+    );
+    await use(customApplicationPublishingUtil);
+  },
+  organizationFolderPromptAssertions: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const organizationFolderPromptAssertions = new FolderAssertion(
+      organizationFolderPrompts,
+    );
+    await use(organizationFolderPromptAssertions);
+  },
+  publishingRulesAssertion: async ({ publishingRules }, use) => {
+    const publishingRulesAssertion = new PublishingRulesAssertion(
+      publishingRules,
+    );
+    await use(publishingRulesAssertion);
+  },
+  publicationApiAssertion: async ({ publicationApiHelper }, use) => {
+    const publicationApiAssertion = new PublicationApiAssertion(
+      publicationApiHelper,
+    );
+    await use(publicationApiAssertion);
+  },
+  additionalShareUserPublicationApiAssertion: async (
+    { additionalShareUserPublicationApiHelper },
+    use,
+  ) => {
+    const additionalShareUserPublicationApiAssertion =
+      new PublicationApiAssertion(additionalShareUserPublicationApiHelper);
+    await use(additionalShareUserPublicationApiAssertion);
+  },
+  additionalSecondShareUserPublicationApiAssertion: async (
+    { additionalSecondShareUserPublicationApiHelper },
+    use,
+  ) => {
+    const additionalSecondShareUserPublicationApiAssertion =
+      new PublicationApiAssertion(
+        additionalSecondShareUserPublicationApiHelper,
+      );
+    await use(additionalSecondShareUserPublicationApiAssertion);
+  },
+  entityEditorGeneralInfoPreviewToggleAssertion: async (
+    { entityEditorGeneralInfoPreview },
+    use,
+  ) => {
+    const entityEditorGeneralInfoPreviewToggleAssertion =
+      new EntityEditorPreviewToggleAssertion(
+        entityEditorGeneralInfoPreview.getEntityEditorPreviewToggle(),
+      );
+    await use(entityEditorGeneralInfoPreviewToggleAssertion);
+  },
+  entityEditorGeneralInfoPreviewCardAssertion: async (
+    { entityEditorGeneralInfoPreviewCard },
+    use,
+  ) => {
+    const entityEditorGeneralInfoPreviewCardAssertion =
+      new EntityEditorPreviewCardAssertion(entityEditorGeneralInfoPreviewCard);
+    await use(entityEditorGeneralInfoPreviewCardAssertion);
+  },
+  toolsetEditorSettingsPreviewCardAssertion: async (
+    { toolsetEditorSettingsPreviewCard },
+    use,
+  ) => {
+    const toolsetEditorSettingsPreviewCardAssertion =
+      new EntityEditorPreviewCardAssertion(toolsetEditorSettingsPreviewCard);
+    await use(toolsetEditorSettingsPreviewCardAssertion);
+  },
+  toolsetEditorSettingsPreviewToggleAssertion: async (
+    { toolsetEditorSettingsPreviewBody },
+    use,
+  ) => {
+    const toolsetEditorSettingsPreviewToggleAssertion =
+      new EntityEditorPreviewToggleAssertion(
+        toolsetEditorSettingsPreviewBody.getEntityEditorPreviewToggle(),
+      );
+    await use(toolsetEditorSettingsPreviewToggleAssertion);
+  },
+  externalAppEditorSettingsPreviewCardAssertion: async (
+    { externalAppEditorAppSettingsPreviewCard },
+    use,
+  ) => {
+    const toolsetEditorSettingsPreviewCardAssertion =
+      new EntityEditorPreviewCardAssertion(
+        externalAppEditorAppSettingsPreviewCard,
+      );
+    await use(toolsetEditorSettingsPreviewCardAssertion);
+  },
+  toolsetEditorViewFormAssertion: async ({ toolsetEditorViewForm }, use) => {
+    const toolsetEditorViewFormAssertion = new ToolsetEditorViewFormAssertion(
+      toolsetEditorViewForm,
+    );
+    await use(toolsetEditorViewFormAssertion);
+  },
+  replaceConfirmationModalAssertion: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalAssertion =
+      new ReplaceConfirmationModalAssertion(replaceConfirmationModal);
+    await use(replaceConfirmationModalAssertion);
+  },
+  replaceConfirmationModalFolders: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalFolders =
+      replaceConfirmationModal.getFolders();
+    await use(replaceConfirmationModalFolders);
+  },
+  replaceConfirmationModalConversations: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalConversations =
+      replaceConfirmationModal.getConversations();
+    await use(replaceConfirmationModalConversations);
+  },
+  replaceConfirmationModalFoldersAssertion: async (
+    { replaceConfirmationModalFolders },
+    use,
+  ) => {
+    const replaceConfirmationModalFoldersAssertion =
+      new FolderAssertion<ReplaceConfirmationModalFolders>(
+        replaceConfirmationModalFolders,
+      );
+    await use(replaceConfirmationModalFoldersAssertion);
+  },
+  replaceConfirmationModalConversationsAssertion: async (
+    { replaceConfirmationModalConversations },
+    use,
+  ) => {
+    const replaceConfirmationModalConversationsAssertion =
+      new EntityTreeAssertion<ReplaceConfirmationModalConversations>(
+        replaceConfirmationModalConversations,
+      );
+    await use(replaceConfirmationModalConversationsAssertion);
+  },
+  toolsetAuthAssertion: async (
+    { toolsetEditorViewForm, toolsetEditorSettingsPreviewCard },
+    use,
+  ) => {
+    const toolsetOAuthAssertion = new ToolsetAuthAssertion(
+      toolsetEditorSettingsPreviewCard,
+      toolsetEditorViewForm,
+    );
+    await use(toolsetOAuthAssertion);
+  },
+  filesManagerContainer: async ({ filesManagerPage }, use) => {
+    const filesManagerContainer = filesManagerPage.getFilesManagerContainer();
+    await use(filesManagerContainer);
+  },
+  filesManager: async ({ filesManagerContainer }, use) => {
+    const filesManager = filesManagerContainer.getFilesManager();
+    await use(filesManager);
+  },
+  filesManagerToolbar: async ({ filesManager }, use) => {
+    const filesManagerToolbar = filesManager.getFilesManagerToolbar();
+    await use(filesManagerToolbar);
+  },
+  filesManagerGrid: async ({ filesManager }, use) => {
+    const filesManagerGrid = filesManager.getFilesManagerGrid();
+    await use(filesManagerGrid);
+  },
+  filesManagerGridRowDropdownMenu: async ({ filesManagerGrid }, use) => {
+    const filesManagerGridRowDropdownMenu =
+      filesManagerGrid.getRowDropdownMenu();
+    await use(filesManagerGridRowDropdownMenu);
+  },
+  filesManagerCollapsibleSidebar: async ({ filesManager }, use) => {
+    const filesManagerCollapsibleSidebar =
+      filesManager.getFilesManagerCollapsibleSidebar();
+    await use(filesManagerCollapsibleSidebar);
+  },
+  filesManagerFoldersTree: async ({ filesManagerCollapsibleSidebar }, use) => {
+    const filesManagerFoldersTree =
+      filesManagerCollapsibleSidebar.getFoldersTree();
+    await use(filesManagerFoldersTree);
+  },
+  filesManagerDeleteItemConfirmationPopup: async ({ page }, use) => {
+    const filesManagerDeleteItemConfirmationPopup = new ConfirmationPopup(
+      page,
+      'Delete',
+    );
+    await use(filesManagerDeleteItemConfirmationPopup);
+  },
+  filesManagerModal: async ({ page }, use) => {
+    const filesManagerModal = new FilesManagerModal(page);
+    await use(filesManagerModal);
+  },
+  filesManagerModalManager: async ({ filesManagerModal }, use) => {
+    const filesManagerModalManager = filesManagerModal.getFilesManager();
+    await use(filesManagerModalManager);
+  },
+  filesManagerModalGrid: async ({ filesManagerModalManager }, use) => {
+    const filesManagerModalGrid =
+      filesManagerModalManager.getFilesManagerGrid();
+    await use(filesManagerModalGrid);
+  },
+  filesManagerModalToolbar: async ({ filesManagerModalManager }, use) => {
+    const filesManagerModalToolbar =
+      filesManagerModalManager.getFilesManagerToolbar();
+    await use(filesManagerModalToolbar);
+  },
+  filesManagerModalCollapsibleSidebar: async (
+    { filesManagerModalManager },
+    use,
+  ) => {
+    const filesManagerModalCollapsibleSidebar =
+      filesManagerModalManager.getFilesManagerCollapsibleSidebar();
+    await use(filesManagerModalCollapsibleSidebar);
+  },
+  filesManagerModalFoldersTree: async (
+    { filesManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const filesManagerModalFoldersTree =
+      filesManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(filesManagerModalFoldersTree);
+  },
+  filesManagerDeleteItemConfirmationPopupAssertion: async (
+    { filesManagerDeleteItemConfirmationPopup },
+    use,
+  ) => {
+    const filesManagerDeleteItemConfirmationPopupAssertion =
+      new ConfirmationPopupAssertion(filesManagerDeleteItemConfirmationPopup);
+    await use(filesManagerDeleteItemConfirmationPopupAssertion);
+  },
+  filesManagerGridAssertion: async ({ filesManagerGrid }, use) => {
+    const filesManagerGridAssertion = new FilesManagerGridAssertion(
+      filesManagerGrid,
+    );
+    await use(filesManagerGridAssertion);
+  },
+  filesManagerModalGridAssertion: async ({ filesManagerModalGrid }, use) => {
+    const filesManagerModalGridAssertion = new FilesManagerGridAssertion(
+      filesManagerModalGrid,
+    );
+    await use(filesManagerModalGridAssertion);
+  },
+  fileConflictConfirmationPopup: async ({ page }, use) => {
+    const fileConflictConfirmationPopup = new ConfirmationPopup(
+      page,
+      'Confirm',
+    );
+    await use(fileConflictConfirmationPopup);
+  },
+  fileConflictConfirmationPopupAssertion: async (
+    { fileConflictConfirmationPopup },
+    use,
+  ) => {
+    const fileConflictConfirmationPopupAssertion =
+      new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
+    await use(fileConflictConfirmationPopupAssertion);
   },
 });
 

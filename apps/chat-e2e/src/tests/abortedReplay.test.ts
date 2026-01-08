@@ -8,6 +8,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -16,12 +17,13 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels().filter((m) => m.iconUrl != undefined);
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
+    'Header context menu options for chat in Replay mode.\n' +
     'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +
     'Publish item is not available in context menu for the chat in Replay mode',
   async ({
@@ -34,9 +36,9 @@ dialTest(
     chatMessages,
     conversations,
     chatHeader,
-    marketplacePage,
     iconApiHelper,
     conversationAssertion,
+    appContainer,
     chatMessagesAssertion,
     chatHeaderAssertion,
     conversationDropdownMenuAssertion,
@@ -49,6 +51,7 @@ dialTest(
     setTestIds(
       'EPMRTC-512',
       'EPMRTC-3451',
+      'EPMRTC-4735',
       'EPMRTC-1448',
       'EPMRTC-1132',
       'EPMRTC-3452',
@@ -98,7 +101,7 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           newRandomModel,
           firstRandomModel,
           secondRandomModel,
@@ -117,8 +120,11 @@ dialTest(
           iconsToBeLoaded: [secondRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
-        await conversations.getEntityByName(replayConversation.name).waitFor();
+        await conversations.selectEntity(replayConversation.name);
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
+        );
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,
@@ -126,6 +132,17 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step('Verify header dots menu options', async () => {
+      await chatHeader.dotsMenu.click();
+      await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        MenuOptions.rename,
+        MenuOptions.duplicate,
+        MenuOptions.export,
+        MenuOptions.moveTo,
+        MenuOptions.delete,
+      );
+    });
 
     await dialTest.step(
       'Verify no "Edit", "Delete", "Set message template" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
@@ -152,7 +169,7 @@ dialTest(
       'Open conversation settings, select new model and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(newRandomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(newRandomModel);
         await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
@@ -267,33 +284,19 @@ dialTest(
     setTestIds('EPMRTC-1132');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    let thirdConversation: Conversation;
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     const firstRandomModel = GeneratorUtil.randomArrayElement(models);
     const secondRandomModel = GeneratorUtil.randomArrayElement(
       models.filter((m) => m.id !== firstRandomModel.id),
     );
-    const thirdRandomModel = GeneratorUtil.randomArrayElement(
+    const newRandomModel = GeneratorUtil.randomArrayElement(
       models.filter(
         (m) => m.id !== firstRandomModel.id && m.id !== secondRandomModel.id,
       ),
     );
-    const randomAddon = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getAddons(),
-    );
-    const newRandomModel = GeneratorUtil.randomArrayElement(
-      models.filter(
-        (m) =>
-          m.id !== firstRandomModel.id &&
-          m.id !== secondRandomModel.id &&
-          m.id !== thirdRandomModel.id,
-      ),
-    );
     const expectedSecondModelIcon =
       iconApiHelper.getEntityIcon(secondRandomModel);
-    const expectedThirdModelIcon =
-      iconApiHelper.getEntityIcon(thirdRandomModel);
 
     await dialTest.step(
       'Prepare conversation with different models to replay',
@@ -304,15 +307,9 @@ dialTest(
         secondConversation =
           conversationData.prepareDefaultConversation(secondRandomModel);
         conversationData.resetData();
-        thirdConversation = conversationData.prepareAddonsConversation(
-          thirdRandomModel,
-          [randomAddon.id],
-        );
-        conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
           firstConversation,
           secondConversation,
-          thirdConversation,
         );
         replayConversation =
           conversationData.preparePartiallyReplayedConversation(
@@ -324,10 +321,9 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
           firstRandomModel,
           secondRandomModel,
-          thirdRandomModel,
           newRandomModel,
         );
         await localStorageManager.setChatCollapsedSection(
@@ -342,7 +338,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await chatHeader.chatAgent.click();
         await talkToAgentDialogAssertion.assertAgentIsSelected(newRandomModel);
@@ -360,10 +356,6 @@ dialTest(
         await chatMessagesAssertion.assertMessageIcon(
           4,
           expectedSecondModelIcon,
-        );
-        await chatMessagesAssertion.assertMessageIcon(
-          6,
-          expectedThirdModelIcon,
         );
       },
     );
@@ -412,7 +404,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
       },
     );
 
@@ -492,7 +484,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await context.setOffline(true);
         await chat.replay.click();
       },
@@ -515,6 +507,9 @@ dialTest(
       'Proceed replaying and verify response received',
       async () => {
         await context.setOffline(false);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying(true);
         const generatedContent = await chatMessages.getGeneratedChatContent(
           conversation.messages.length,
@@ -567,7 +562,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)

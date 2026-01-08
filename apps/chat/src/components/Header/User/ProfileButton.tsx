@@ -9,12 +9,12 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import UserIcon from '@/public/images/icons/user.svg';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -37,30 +37,31 @@ export const ProfileButton = () => {
   const iconSize = isOverlay ? 18 : 24;
 
   return (
-    <button
+    <DialButton
       className="flex items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
       data-qa="account-settings"
       aria-label={t('Account settings')}
-    >
-      {isProfileOpen ? (
-        <IconX
-          className="text-secondary"
-          width={iconSize}
-          height={iconSize}
-          id="close-icon"
-        />
-      ) : session?.user?.image ? (
-        <img
-          className="rounded"
-          src={session?.user?.image}
-          width={iconSize}
-          height={iconSize}
-          alt={t('User avatar')}
-        />
-      ) : (
-        <UserIcon width={iconSize} height={iconSize} />
-      )}
-    </button>
+      iconBefore={
+        isProfileOpen ? (
+          <IconX
+            className="text-secondary"
+            width={iconSize}
+            height={iconSize}
+            id="close-icon"
+          />
+        ) : session?.user?.image ? (
+          <img
+            className="rounded"
+            src={session?.user?.image}
+            width={iconSize}
+            height={iconSize}
+            alt={t('User avatar')}
+          />
+        ) : (
+          <UserIcon width={iconSize} height={iconSize} />
+        )
+      }
+    />
   );
 };

@@ -21,9 +21,9 @@ dialTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      agentDetailsModal,
-      marketplaceAgents,
+      marketplaceEntitiesSection,
+      entityDetailsModal,
+      marketplaceEntities,
       toast,
       errorPopup,
       setTestIds,
@@ -46,7 +46,7 @@ dialTest(
       'EPMRTC-5325',
     );
     dialTest.slow();
-    const appFirstVersion = ExpectedConstants.defaultAppVersion;
+    const appFirstVersion = ExpectedConstants.defaultEntityVersion;
     const appSecondVersion = '0.0.2';
     const appName = GeneratorUtil.randomApplicationName();
     const expectedColor = ThemesUtil.getRgbColorByKey(
@@ -89,15 +89,16 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Dial Marketplace", open created app card and select non-default version',
+      'Open "DIAL Marketplace", open created app card and select non-default version',
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        agentElement = await marketplaceAgentsSection.findAgentElement(appName);
+        agentElement =
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await agentElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(appFirstVersion);
       },
@@ -105,11 +106,11 @@ dialTest(
 
     await dialTest.step('Verify "Copy link" text and icon style', async () => {
       await baseAssertion.assertElementColor(
-        agentDetailsModal.copyLinkText,
+        entityDetailsModal.copyLinkText,
         expectedColor,
       );
       await baseAssertion.assertElementColor(
-        agentDetailsModal.copyLinkIcon,
+        entityDetailsModal.copyLinkIcon,
         expectedColor,
       );
     });
@@ -118,30 +119,30 @@ dialTest(
       'Click on "Copy link" text/icon and verify link text and icon are changed for the moment',
       async () => {
         for (const linkElement of [
-          agentDetailsModal.copyLinkText,
-          agentDetailsModal.copyLinkIcon,
+          entityDetailsModal.copyLinkText,
+          entityDetailsModal.copyLinkIcon,
         ]) {
           await linkElement.click();
           await baseAssertion.assertElementText(
-            agentDetailsModal.copiedLink,
+            entityDetailsModal.copiedLink,
             ExpectedConstants.copiedLinkText,
           );
           await baseAssertion.assertElementState(
-            agentDetailsModal.copiedLinkIcon,
+            entityDetailsModal.copiedLinkIcon,
             'visible',
           );
 
           await baseAssertion.assertElementText(
-            agentDetailsModal.copyLinkText,
+            entityDetailsModal.copyLinkText,
             ExpectedConstants.copyLinkText,
           );
           await baseAssertion.assertElementState(
-            agentDetailsModal.copyLinkIcon,
+            entityDetailsModal.copyLinkIcon,
             'visible',
           );
         }
-        await agentDetailsModal.closeButton.click();
-        cardCopiedLink = await marketplacePage.readFromClipboard();
+        await entityDetailsModal.closeButton.click();
+        cardCopiedLink = await marketplacePage.readTextFromClipboard();
       },
     );
 
@@ -149,9 +150,11 @@ dialTest(
       'Back to the cards list, open agent card dots menu, select "Copy link" option and verify toast is shown',
       async () => {
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.copyLink);
         await baseAssertion.assertElementState(toast, 'visible');
         await baseAssertion.assertElementText(
@@ -159,7 +162,7 @@ dialTest(
           ExpectedConstants.copiedToastMessage,
         );
         await toast.closeToast();
-        dotsMenuCopiedLink = await marketplacePage.readFromClipboard();
+        dotsMenuCopiedLink = await marketplacePage.readTextFromClipboard();
       },
     );
 
@@ -167,16 +170,16 @@ dialTest(
       'Navigate to copied link and verify the agent details modal is opened',
       async () => {
         await marketplacePage.navigateToUrl(cardCopiedLink);
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentName,
+          entityDetailsModal.entityName,
           appName,
         );
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           appFirstVersion,
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -192,13 +195,13 @@ dialTest(
           dotsMenuCopiedLink,
         );
         await marketplacePage.waitForPageLoaded();
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentName,
+          entityDetailsModal.entityName,
           appName,
         );
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           appSecondVersion,
         );
       },
@@ -214,9 +217,9 @@ dialTest(
           ExpectedConstants.agentNotFoundError,
         );
         await errorPopup.cancelPopup();
-        await baseAssertion.assertElementState(agentDetailsModal, 'hidden');
+        await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
         await baseAssertion.assertElementState(
-          marketplaceAgentsSection,
+          marketplaceEntitiesSection,
           'visible',
         );
       },
@@ -239,9 +242,9 @@ dialTest(
           ExpectedConstants.agentNotFoundError,
         );
         await errorPopup.cancelPopup();
-        await baseAssertion.assertElementState(agentDetailsModal, 'hidden');
+        await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
         await baseAssertion.assertElementState(
-          marketplaceAgentsSection,
+          marketplaceEntitiesSection,
           'visible',
         );
       },

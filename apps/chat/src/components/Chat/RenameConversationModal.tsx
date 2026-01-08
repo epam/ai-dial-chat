@@ -19,26 +19,31 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
-import { Modal } from '../Common/Modal';
-import { withRenderWhen } from '../Common/RenderWhen';
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
-function RenameConversationView() {
+import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
+interface RenameConversationViewProps {
+  renamingConversation: ConversationInfo;
+}
+
+function RenameConversationView({
+  renamingConversation,
+}: RenameConversationViewProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
-  );
-  const renamingConversation = useAppSelector(
-    ConversationsSelectors.selectRenamingConversation,
   );
 
   const [newConversationName, setNewConversationName] = useState('');
@@ -47,17 +52,12 @@ function RenameConversationView() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (renamingConversation) {
-      setNewConversationName(renamingConversation.name || '');
-      setOriginConversationName(renamingConversation.name || '');
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      });
-    } else {
-      setNewConversationName('');
-      setOriginConversationName('');
-    }
+    setNewConversationName(renamingConversation.name || '');
+    setOriginConversationName(renamingConversation.name || '');
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
   }, [renamingConversation]);
 
   const newName = useMemo(
@@ -66,8 +66,6 @@ function RenameConversationView() {
   );
 
   const handleRename = useCallback(() => {
-    if (!renamingConversation) return;
-
     if (
       !isEntityNameOnSameLevelUnique(
         newName,
@@ -103,12 +101,13 @@ function RenameConversationView() {
       dispatch(
         ConversationsActions.updateConversation({
           id: renamingConversation.id,
-          values: { name: newName, isNameChanged: true },
+          values: { name: newName },
+          publicationUrl: renamingConversation.publicationInfo?.publicationUrl,
         }),
       );
       dispatch(ConversationsActions.setRenamingConversationId(null));
     }
-  }, [newName, renamingConversation, allConversations, dispatch, t]);
+  }, [renamingConversation, newName, allConversations, dispatch, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -154,29 +153,29 @@ function RenameConversationView() {
         autoComplete="off"
       />
       <div className="relative flex justify-end gap-3">
-        <button
-          className="button button-secondary py-2"
+        <DialButton
           onClick={handleClose}
           data-qa="cancel"
-        >
-          {t('Cancel')}
-        </button>
-        <button
-          className="button button-primary py-2 disabled:cursor-not-allowed"
+          label={t('Cancel')}
+          variant={ButtonVariant.Secondary}
+        />
+
+        <DialButton
+          label={t('Save')}
+          variant={ButtonVariant.Primary}
           onClick={handleRename}
           data-qa="save"
           disabled={
             !newConversationName.trim() ||
             newConversationName === originConversationName
           }
-        >
-          {t('Save')}
-        </button>
+        />
       </div>
     </Modal>
   );
 }
 
-export const RenameConversationModal = withRenderWhen(
-  ConversationsSelectors.selectRenamingConversation,
-)(RenameConversationView);
+export const RenameConversationModal =
+  withRenderWhenEntities<RenameConversationViewProps>({
+    renamingConversation: ConversationsSelectors.selectRenamingConversation,
+  })(RenameConversationView);

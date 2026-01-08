@@ -2,12 +2,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { getApiHeaders } from '../../utils/server/get-headers';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { ApiUtils } from '@/src/utils/server/api';
+import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
-import { RateBody } from '../../types/chat';
+import { RateBody } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 
 import { DIAL_API_HOST } from '@/src/constants/default-server-settings';
@@ -25,7 +26,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { responseId, modelId, value, id, reference } = req.body as RateBody;
+    const { responseId, modelId, value, id, reference, comment } =
+      req.body as RateBody;
 
     if (!id || !responseId || !modelId) {
       return res.status(400).send(errorsMessages[400]);
@@ -34,11 +36,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const token = await getToken({ req });
 
     const entities = await getSortedEntities(token);
-    if (!entities.some((entity) => entity.id === modelId)) {
+    const model = entities.find(
+      (entity) => entity.id === modelId || entity.reference === modelId,
+    );
+    if (!model) {
       throw new Error(`Rated model not exists - ${modelId}`);
     }
 
-    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
+    const url = `${DIAL_API_HOST}/v1/${ApiUtils.encodeApiUrl(model.id)}/rate`;
 
     await fetch(url, {
       headers: getApiHeaders({
@@ -50,10 +55,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       body: JSON.stringify({
         rate: value,
         responseId,
+        ...(comment && { comment }),
       }),
     }).then((r) => r.status);
   } catch (error) {
-    logger.error(error);
+    logger.error('Failed to rate message:' + error);
+    return res.status(500).send(errorsMessages.generalServer);
   }
 
   return res.status(200).json({});

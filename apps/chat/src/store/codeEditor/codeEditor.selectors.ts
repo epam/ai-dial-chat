@@ -2,11 +2,9 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '@/src/types/store';
 
-import { CodeEditorState } from './codeEditor.types';
-
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): CodeEditorState => state.codeEditor;
+const rootSelector = (state: RootState) => state.codeEditor;
 
 const selectFilesContent = (state: RootState) =>
   rootSelector(state).filesContent;

@@ -2,7 +2,6 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { AgentInfo } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
 
 export class AgentInfoAssertion extends BaseAssertion {
   readonly agentInfo: AgentInfo;
@@ -19,11 +18,29 @@ export class AgentInfoAssertion extends BaseAssertion {
     );
   }
 
-  public async assertShortDescription(expectedModel: DialAIEntityModel) {
-    const description = await this.agentInfo.getAgentDescription();
-    expect
-      .soft(description, ExpectedMessages.agentDescriptionIsValid)
-      .toBe(expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0] ?? '');
+  public async assertShortDescription(
+    expectedModel: DialAIEntityModel | string,
+  ) {
+    if (typeof expectedModel === 'string') {
+      await this.assertElementText(
+        this.agentInfo.agentDescription,
+        expectedModel,
+        ExpectedMessages.agentDescriptionIsValid,
+      );
+    } else {
+      if (expectedModel.description) {
+        await this.assertElementText(
+          this.agentInfo.agentDescription,
+          expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '',
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+      } else {
+        await this.assertElementState(
+          this.agentInfo.agentDescription,
+          'hidden',
+        );
+      }
+    }
   }
 
   public async assertAgentName(expectedName: string) {
@@ -32,5 +49,16 @@ export class AgentInfoAssertion extends BaseAssertion {
       expectedName,
       ExpectedMessages.agentNameIsValid,
     );
+  }
+
+  public async assertAgentVersion(expectedVersion: string | undefined) {
+    const versionElement = this.agentInfo.agentVersion;
+    expectedVersion
+      ? await this.assertElementText(
+          this.agentInfo.agentVersion,
+          expectedVersion,
+          ExpectedMessages.agentVersionIsValid,
+        )
+      : await this.assertElementState(versionElement, 'hidden');
   }
 }

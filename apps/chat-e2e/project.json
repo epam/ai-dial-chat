@@ -67,5 +67,6 @@
     "format": {},
     "format:fix": {}
   },
+  "tags": ["e2e"],
   "implicitDependencies": ["chat"]
 }

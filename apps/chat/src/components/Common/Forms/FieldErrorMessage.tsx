@@ -19,7 +19,10 @@ export const FieldErrorMessage = ({ error, className }: Props) => {
   }
 
   return (
-    <div className={classNames('text-xxs text-error', className)}>
+    <div
+      className={classNames('text-xxs text-error', className)}
+      data-qa="error-message"
+    >
       {t(error)}
     </div>
   );
@@ -29,13 +32,19 @@ export function withErrorMessage<T extends object, R>(
   Component: ComponentType<T>,
 ) {
   const ErrorMessageWrapper = forwardRef<R, Omit<Props, 'className'> & T>(
-    (props, ref) => (
-      <div>
-        <Component {...props} ref={ref} />
+    (props, ref) => {
+      const { error, ...restProps } = props;
+      return (
+        <div>
+          <Component
+            {...(restProps as Omit<Props, 'className' | 'ref'> & T)}
+            ref={ref}
+          />
 
-        <FieldErrorMessage error={props.error} className="mt-1" />
-      </div>
-    ),
+          <FieldErrorMessage error={error} className="mt-1" />
+        </div>
+      );
+    },
   );
 
   ErrorMessageWrapper.displayName = 'ErrorMessageWrapper';

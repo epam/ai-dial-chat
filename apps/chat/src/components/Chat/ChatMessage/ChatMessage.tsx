@@ -1,15 +1,17 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { FC, memo, useCallback, useMemo, useState } from 'react';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent/ChatMessageContent';
 import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
@@ -17,8 +19,16 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
+import { DislikeCommentModal } from './DislikeCommentModal';
 
-import { Feature, LikeState, Message } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  LikeState,
+  Message,
+  PublishActions,
+  Role,
+  onLikeMessageHandler,
+} from '@epam/ai-dial-shared';
 
 export interface Props {
   message: Message;
@@ -27,10 +37,19 @@ export interface Props {
   conversation: Conversation;
   isLikesEnabled: boolean;
   editDisabled: boolean;
-  onLike: (likeStatus: LikeState) => void;
-  onDelete: () => void;
   messagesLength: number;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onLike: (
+    index: number,
+    conversation: Conversation,
+    likeStatus: LikeState,
+    comment?: string,
+  ) => void;
+  onDelete?: (messageIndex: number, conversation: Conversation) => void;
+  onEdit: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onRegenerate?: () => void;
 }
 
@@ -42,19 +61,19 @@ export const ChatMessage: FC<Props> = memo(
     message,
     conversation,
     filteredMessages,
-    onLike,
-    onDelete,
     editDisabled,
-    onRegenerate,
-    onEdit,
     messageIndex,
     messagesLength,
     isLikesEnabled,
+    onLike,
+    onDelete,
+    onRegenerate,
+    onEdit,
   }) => {
     const { t } = useTranslation(Translation.Chat);
 
     const [messageCopied, setMessageCopied] = useState(false);
-    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
     const [isDeleteConfirmationOpened, setIsDeleteConfirmationOpened] =
@@ -69,21 +88,44 @@ export const ChatMessage: FC<Props> = memo(
     const isMessageTemplatesEnabled = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
     );
+    const isFirstMessageSystem = useMemo(() => {
+      return conversation.messages[0]?.role === Role.System;
+    }, [conversation.messages]);
+    const realMessageIndex = useMemo(() => {
+      return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
+    }, [isFirstMessageSystem, messageIndex]);
 
-    const handleLike = useCallback(
+    const isDislikeCommentEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DislikeComment),
+    );
+    const [isDislikeModalOpen, setDislikeModalOpen] = useState(false);
+
+    const handleLike: onLikeMessageHandler = useCallback(
       (likeStatus: LikeState) => {
         if (conversation && onLike) {
-          onLike(likeStatus);
+          if (!isDislikeCommentEnabled || likeStatus !== LikeState.Disliked) {
+            onLike(messageIndex, conversation, likeStatus);
+          } else {
+            setDislikeModalOpen(true);
+          }
         }
       },
-      [conversation, onLike],
+      [conversation, onLike, isDislikeCommentEnabled, messageIndex],
     );
 
-    const toggleEditing = useCallback((value: boolean) => {
+    const handleDislike = useCallback(
+      (comment?: string) => {
+        onLike(messageIndex, conversation, LikeState.Disliked, comment);
+        setDislikeModalOpen(false);
+      },
+      [conversation, onLike, messageIndex],
+    );
+
+    const handleToggleEditing = useCallback((value: boolean) => {
       setIsEditing(value);
     }, []);
 
-    const toggleEditingTemplates = useCallback(
+    const handleToggleEditingTemplates = useCallback(
       (value?: boolean) => {
         setIsTemplateModalOpened(value ?? !isTemplateModalOpened);
       },
@@ -102,29 +144,40 @@ export const ChatMessage: FC<Props> = memo(
     }, [message.content]);
 
     const handleDeleteMessage = useCallback(() => {
-      onDelete();
+      onDelete?.(messageIndex, conversation);
+    }, [onDelete, messageIndex, conversation]);
+
+    const handleDelete = useCallback(() => {
+      if (!onDelete) return;
+
+      setIsDeleteConfirmationOpened(true);
     }, [onDelete]);
 
-    useEffect(() => {
-      if (!onEdit) {
-        setIsEditing(false);
-      }
-    }, [onEdit]);
+    const screenState = useScreenState();
 
     return (
       <>
-        {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
+        {isDislikeModalOpen && (
+          <DislikeCommentModal
+            onClose={() => setDislikeModalOpen(false)}
+            onSubmit={(comment: string) => {
+              handleDislike(comment);
+              setDislikeModalOpen(false);
+            }}
+          />
+        )}
+        {(screenState !== ScreenState.SM || isOverlay) &&
+        !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}
+            realMessageIndex={realMessageIndex}
             onEdit={onEdit}
-            onDelete={() => {
-              setIsDeleteConfirmationOpened(true);
-            }}
-            toggleEditing={toggleEditing}
+            onDelete={onDelete && handleDelete}
+            onToggleEditing={handleToggleEditing}
             isEditing={isEditing}
             editDisabled={editDisabled}
-            toggleEditingTemplates={toggleEditingTemplates}
+            onToggleEditingTemplates={handleToggleEditingTemplates}
             isEditingTemplates={isTemplateModalOpened}
             messageCopied={messageCopied}
             conversation={conversation}
@@ -133,12 +186,17 @@ export const ChatMessage: FC<Props> = memo(
             onCopy={handleCopy}
             message={message}
             onRegenerate={onRegenerate}
-            withButtons
+            withButtons={
+              conversation.publicationInfo?.action !== PublishActions.DELETE
+            }
             isLikesEnabled={isLikesEnabled}
           />
         ) : (
           <Menu
-            isTriggerEnabled={!isEditing}
+            isTriggerEnabled={
+              !isEditing &&
+              conversation.publicationInfo?.action !== PublishActions.DELETE
+            }
             placement="top-start"
             listClassName="context-menu-chat bg-layer-3"
             shouldFlip={false}
@@ -155,12 +213,13 @@ export const ChatMessage: FC<Props> = memo(
               <ChatMessageContent
                 isLastMessage={isLastMessage}
                 messageIndex={messageIndex}
+                realMessageIndex={realMessageIndex}
                 conversation={conversation}
                 allMessages={filteredMessages}
                 editDisabled={editDisabled}
                 isEditing={isEditing}
-                toggleEditing={toggleEditing}
-                toggleEditingTemplates={toggleEditingTemplates}
+                onToggleEditing={handleToggleEditing}
+                onToggleEditingTemplates={handleToggleEditingTemplates}
                 isEditingTemplates={isTemplateModalOpened}
                 message={message}
                 onEdit={onEdit}
@@ -184,19 +243,20 @@ export const ChatMessage: FC<Props> = memo(
             <MessageMobileButtons
               isMessageStreaming={!!conversation.isMessageStreaming}
               isLastMessage={isLastMessage}
+              realMessageIndex={realMessageIndex}
               message={message}
               isLikesEnabled={isLikesEnabled}
               onCopy={handleCopy}
               messageCopied={messageCopied}
               editDisabled={editDisabled}
-              onLike={onLike}
-              onDelete={() => setIsDeleteConfirmationOpened(true)}
+              onLike={handleLike}
+              onDelete={onDelete && handleDelete}
               isEditing={isEditing}
-              onToggleEditing={toggleEditing}
+              onToggleEditing={handleToggleEditing}
               onRegenerate={onRegenerate}
               isConversationInvalid={isConversationInvalid}
               isEditTemplatesAvailable={isMessageTemplatesEnabled}
-              onToggleTemplatesEditing={toggleEditingTemplates}
+              onToggleTemplatesEditing={handleToggleEditingTemplates}
             />
           </Menu>
         )}

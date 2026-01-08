@@ -57,7 +57,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const receivedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
@@ -202,7 +202,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
@@ -293,7 +293,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openDeleteMessageDialog(userRequests[1]);
         await confirmationDialog.cancelDialog();
         const messagesCount =
@@ -335,7 +335,6 @@ dialTest.skip(
     chat,
     setTestIds,
     chatMessages,
-    marketplacePage,
     agentSettings,
     localStorageManager,
     conversationSettingsModal,
@@ -346,15 +345,14 @@ dialTest.skip(
     await dialTest.step(
       'Set system prompt for model and send request',
       async () => {
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(
-          simpleRequestModel!,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(simpleRequestModel!);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(promptContent);
         await conversationSettingsModal.applyChangesButton.click();
@@ -388,7 +386,6 @@ dialTest(
     tooltip,
     localStorageManager,
     iconApiHelper,
-    marketplacePage,
     talkToAgentDialog,
     chatMessagesAssertion,
   }) => {
@@ -399,7 +396,9 @@ dialTest(
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
-      await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        simpleRequestModel!,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -409,10 +408,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(
-          simpleRequestModel!,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(simpleRequestModel!, {
+          isHttpMethodTriggered: false,
+        });
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();
@@ -522,7 +520,9 @@ dialTest(
       async () => {
         const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
         await localStorageManager.setChatbarWidth(width.toFixed());
-        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -552,7 +552,7 @@ dialTest(
     chatHeader,
     systemPromptListAssertion,
     localStorageManager,
-    baseAssertion,
+    agentSettingAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -563,7 +563,9 @@ dialTest(
     await dialTest.step('Prepare prompt with content', async () => {
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
-      await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        simpleRequestModel!,
+      );
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -585,11 +587,7 @@ dialTest(
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          prompt.content!,
-          ExpectedMessages.systemPromptValid,
-        );
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
         await conversationSettingsModal.applyChangesButton.click();
       },
     );
@@ -609,11 +607,7 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await baseAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          prompt.content!,
-          ExpectedMessages.systemPromptValid,
-        );
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
       },
     );
   },

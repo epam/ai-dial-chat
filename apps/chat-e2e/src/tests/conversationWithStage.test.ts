@@ -1,7 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
   'Show more/less hides stages after 3rd',
@@ -24,7 +25,7 @@ dialTest(
       'Prepare conversation with 3+ stages in response',
       async () => {
         conversation = conversationData.prepareConversationWithStagesInResponse(
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           stagesCount,
         );
         await dataInjector.createConversations([conversation]);
@@ -37,7 +38,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageStagesCount(
           2,
           maxDisplayedStagesCount,
@@ -48,7 +49,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertShowMoreLessButtonColor(
           'more',
-          Colors.controlsBackgroundAccent,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
       },
     );
@@ -64,7 +65,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertShowMoreLessButtonColor(
           'less',
-          Colors.controlsBackgroundAccent,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
       },
     );

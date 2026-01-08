@@ -1,48 +1,82 @@
+import { BackendEntity } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Publication } from '@/chat/types/publication';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   AddAppMenuOptions,
-  AppEditorGeneralFormFields,
-  AppEditorViewFormFields,
-  AppMenuActions,
   Attachment,
+  EntityEditorAppTypes,
+  EntityEditorGeneralFormFields,
+  EntityEditorViewFormFields,
+  EntityMenuActions,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
+  UploadMenuOptions,
 } from '@/src/testData';
-import { AppEditSteps, BaseElement } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
+import { ItemApiHelper } from '@/src/testData/api';
+import { Cursors, StyleValues, Styles } from '@/src/ui/domData';
+import {
+  BaseElement,
+  EntityEditSteps,
+  FileModalSection,
+} from '@/src/ui/webElements';
+import {
+  DateUtil,
+  GeneratorUtil,
+  SortingUtil,
+  UserUtil,
+  applicationNamePrefix,
+} from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest(
+let appEntityForCleanup: BackendEntity | undefined;
+
+dialTest.skip(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
     'Delete custom app from context menu\n' + // EPMRTC-4094
-    'Custom app: Description field displayed in New conversation , card view, app view', //EPMRTC-4099
+    'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMRTC-4099
+    'App Editor open and Exit of first step - app is not saved\n' + // EPMRTC-5746
+    "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field\n" + // EPMRTC-6452
+    'Stepper icons change\n' + //EPMRTC-5757
+    'Add custom app: Name and version are predefined\n' + //EPMRTC-5759
+    'Side panel with widgets is not displayed for app editor\n' + // EPMRTC-6049
+    '[UI][AppEditor]: Logo should be in center of header', // EPMRTC-6262
   async ({
     marketplacePage,
     marketplaceHeader,
     addAppDropdownMenu,
-    appEditorPage,
-    appEditorGeneralForm,
-    appEditorViewForm,
-    appEditorHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
-    agentDetailsModal,
+    entityEditorPage,
+    entityEditorHeader,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    entityDetailsModal,
     setTestIds,
     baseAssertion,
-    appEditorHeaderAssertion,
+    entityEditorHeaderAssertion,
     dialHomePage,
     chat,
     chatMessagesAssertion,
     confirmationDialog,
     localStorageManager,
     agentInfoAssertion,
-    agentDetailsModalAssertion,
+    entityDetailsModalAssertion,
     marketplaceContainer,
+    marketplace,
+    customAppEditorAppSettingsPreview,
+    customAppEditorAppSettingsPreviewBody,
+    navigationPanel,
+    entityEditorGeneralForm,
+    entityEditorGeneralInfoPreviewCard,
+    customAppEditorViewForm,
+    customApplicationBuilder,
+    applicationApiHelper,
+    page,
   }) => {
     setTestIds(
       'EPMRTC-5130',
@@ -50,62 +84,243 @@ dialTest(
       'EPMRTC-4838',
       'EPMRTC-4094',
       'EPMRTC-4099',
+      'EPMRTC-5746',
+      'EPMRTC-6452',
+      'EPMRTC-5757',
+      'EPMRTC-5759',
+      'EPMRTC-6049',
+      'EPMRTC-6262',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
     const appEntity = {
       name: `${GeneratorUtil.randomApplicationName()}${ExpectedConstants.allowedSpecialChars}`,
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
       description: `${shortDescription}\n\n${longDescription}`,
     } as DialAIEntityModel;
     let agentElement: BaseElement;
+    let generalInfoStep: BaseElement;
+    let appSettingsStep: BaseElement;
     await localStorageManager.setShowSideBarPanels();
 
-    await dialTest.step('Open My workspace directly', async () => {
-      await marketplacePage.openMyWorkspacePage({
-        updateInstalledDeployments: false,
-      });
-      await marketplacePage.waitForPageLoaded();
-    });
+    await dialTest.step(
+      'Precondition: Create custom application via API to avoid inconsistent app naming. Issue 4236',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(ExpectedConstants.defaultAppName)
+          .withDisplayVersion(appEntity.version!)
+          .withDescriptionKeywords(appEntity.description!)
+          .build();
+        appEntityForCleanup =
+          await applicationApiHelper.createApplication(applicationModel);
+      },
+    );
 
     await dialTest.step(
-      'Click Add app and select Custom app in drop down',
+      'Open My workspace directly and verify navigation panel is displayed',
       async () => {
-        await marketplaceHeader.addAppButton.click();
-        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
-
-        await appEditorHeaderAssertion.assertActionTitle(
-          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        await marketplacePage.openMyWorkspacePage({
+          updateInstalledDeployments: false,
+          getStyles: true,
+        });
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'visible',
+          ExpectedMessages.navigationPanelShouldBeVisible,
         );
       },
     );
 
     await dialTest.step(
-      'App editor General Info step is opened, header features are valid, step titles in the header marked as not completed',
+      'Click Add app and select Custom app in drop down, verify side/navigation panels are hidden and App Editor logo is centered',
       async () => {
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
-
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
-        await baseAssertion.assertElementState(generalInfoStep);
-        await baseAssertion.assertElementState(appSettingsStep);
-        await baseAssertion.assertElementActionabilityState(
-          generalInfoStep,
-          'enabled',
-        );
-        await baseAssertion.assertElementActionabilityState(
-          appSettingsStep,
-          'disabled',
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.CustomApp,
         );
 
-        await appEditorHeaderAssertion.assertStepIsCompleted(
-          generalInfoStep,
-          false,
+        await entityEditorHeaderAssertion.assertActionTitle(
+          `${EntityMenuActions.addApp(AddAppMenuOptions.customApp)}`,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'hidden',
+          ExpectedMessages.navigationPanelShouldNotBeVisible,
+        );
+      },
+    );
+
+    // TODO blocked by the issue 4196
+    await dialTest.step.skip('logo is centered in the App Editor', async () => {
+      const logoBoundingBox =
+        await entityEditorHeader.logo.getElementBoundingBox();
+      const viewportWidth = page.viewportSize()!.width;
+      const expectedLogoCenterX = viewportWidth / 2;
+      const actualLogoCenterX = logoBoundingBox!.x + logoBoundingBox!.width / 2;
+      const logoPositionTolerance = 5;
+      baseAssertion.assertBooleanCondition(
+        Math.abs(actualLogoCenterX - expectedLogoCenterX) <
+          logoPositionTolerance,
+        true,
+        ExpectedMessages.LogoShouldBeCentered(
+          expectedLogoCenterX,
+          actualLogoCenterX,
+        ),
+      );
+    });
+
+    await dialTest.step(
+      'Verify default Name and Version are pre-filled in the form and preview',
+      async () => {
+        const defaultAppNamePattern = new RegExp(
+          `${ExpectedConstants.defaultAppName} \\d+`,
+        );
+
+        // First, wait for the preview panel to render the correct, indexed name.
+        // This acts as a reliable synchronization point.
+        await entityEditorGeneralInfoPreviewCard.previewName
+          .getElementLocatorByText(defaultAppNamePattern)
+          .waitFor();
+
+        await baseAssertion.assertInputValue(
+          entityEditorGeneralForm.name,
+          defaultAppNamePattern,
+          ExpectedMessages.defaultEntityNameShouldBeFilled,
+        );
+
+        await baseAssertion.assertInputValue(
+          entityEditorGeneralForm.version,
+          ExpectedConstants.defaultEntityVersion,
+          ExpectedMessages.defaultEntityVersionShouldBeFilled,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'App editor General Info step is opened, header features are valid, "General info" step in the header is selected',
+      async () => {
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        generalInfoStep = entityEditorHeader.getGeneralInfoStep();
+        appSettingsStep = entityEditorHeader.getAppSettingsStep();
+        await entityEditorHeaderAssertion.assertStepState(
+          generalInfoStep,
+          'visible',
+          Cursors.default,
+        );
+        await entityEditorHeaderAssertion.assertStepState(
+          appSettingsStep,
+          'visible',
+          Cursors.default,
+        );
+        await entityEditorHeaderAssertion.assertStepIsSelected(
+          generalInfoStep,
+          true,
+        );
+        await entityEditorHeaderAssertion.assertActiveStepIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           appSettingsStep,
           false,
+        );
+        await entityEditorHeaderAssertion.assertNotActiveStepIconState(
+          appSettingsStep,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input name, click Exit, verify no custom app is created and navigation panel is visible',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: appEntity.name,
+          version: appEntity.version,
+          description: appEntity.description,
+        });
+        await entityEditorHeader.exitLink.click();
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'hidden',
+        );
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await baseAssertion.assertElementText(
+          marketplace.noResultsFound,
+          ExpectedConstants.noResults,
+        );
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
+        baseAssertion.assertValue(
+          actualAgents.length,
+          0,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'visible',
+          ExpectedMessages.navigationPanelShouldBeVisible,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Add app and select Custom app in drop down again, verify side/navigation panels are hidden',
+      async () => {
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.CustomApp,
+        );
+
+        await entityEditorHeaderAssertion.assertActionTitle(
+          `${EntityMenuActions.addApp(AddAppMenuOptions.customApp)}`,
+        );
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'hidden',
+          ExpectedMessages.navigationPanelShouldNotBeVisible,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify App Editor page was opened, title "Add custom app", general info step is active',
+      async () => {
+        await entityEditorHeaderAssertion.assertActionTitle(
+          EntityMenuActions.addApp(AddAppMenuOptions.customApp),
+        );
+
+        await entityEditorHeaderAssertion.assertStepState(
+          generalInfoStep,
+          'visible',
+          Cursors.default,
+        );
+        await entityEditorHeaderAssertion.assertStepState(
+          appSettingsStep,
+          'visible',
+          Cursors.default,
+        );
+        await entityEditorHeaderAssertion.assertStepIsSelected(
+          generalInfoStep,
+          true,
+        );
+        await entityEditorHeaderAssertion.assertActiveStepIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await entityEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
+          false,
+        );
+        await entityEditorHeaderAssertion.assertNotActiveStepIconState(
+          appSettingsStep,
+          'visible',
         );
       },
     );
@@ -113,9 +328,10 @@ dialTest(
     await dialTest.step(
       'Check that the required fields of General Info step form are marked with asterisks',
       async () => {
-        const nameRequiredIndicator = appEditorGeneralForm.getRequiredIndicator(
-          AppEditorGeneralFormFields.name,
-        );
+        const nameRequiredIndicator =
+          entityEditorGeneralForm.getRequiredIndicator(
+            EntityEditorGeneralFormFields.name,
+          );
         await baseAssertion.assertElementState(
           nameRequiredIndicator,
           'visible',
@@ -123,8 +339,8 @@ dialTest(
         );
 
         const versionRequiredIndicator =
-          appEditorGeneralForm.getRequiredIndicator(
-            AppEditorGeneralFormFields.version,
+          entityEditorGeneralForm.getRequiredIndicator(
+            EntityEditorGeneralFormFields.version,
           );
         await baseAssertion.assertElementState(
           versionRequiredIndicator,
@@ -135,25 +351,42 @@ dialTest(
     );
 
     await dialTest.step(
-      'Fill in inputs of Name, Version and click Next',
+      'Fill in inputs of Name, Version and click Next, verify side/navigation panels are hidden',
       async () => {
-        await appEditorGeneralForm.fillInAppFields({
+        await entityEditorGeneralForm.fillInEntityFields({
           name: appEntity.name,
           version: appEntity.version,
           description: appEntity.description,
         });
-        await appEditorGeneralForm.goNext();
+        await entityEditorGeneralForm.goNext({
+          hostsArray: [
+            API.applicationCreateHost,
+            API.installedDeploymentsHost(),
+          ],
+        });
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'hidden',
+          ExpectedMessages.navigationPanelShouldNotBeVisible,
+        );
       },
     );
 
     await dialTest.step(
       'Wait for app settings step form to load and check the header changes',
       async () => {
-        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
-
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
-
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
         await baseAssertion.assertElementActionabilityState(
           generalInfoStep,
           'enabled',
@@ -163,13 +396,21 @@ dialTest(
           'enabled',
         );
 
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
+          false,
+        );
+        await entityEditorHeaderAssertion.assertCompletedStepIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await entityEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
           true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await entityEditorHeaderAssertion.assertActiveStepIconState(
           appSettingsStep,
-          false,
+          'visible',
         );
       },
     );
@@ -178,8 +419,8 @@ dialTest(
       'Verify app settings required fields are marked with asterisk',
       async () => {
         const chatCompletionUrlRequiredIndicator =
-          appEditorViewForm.getRequiredIndicator(
-            AppEditorViewFormFields.chatCompletionUrl,
+          customAppEditorViewForm.getRequiredIndicator(
+            EntityEditorViewFormFields.chatCompletionUrl,
           );
         await baseAssertion.assertElementState(
           chatCompletionUrlRequiredIndicator,
@@ -190,13 +431,41 @@ dialTest(
     );
 
     await dialTest.step(
-      'Input Chat completion URL, click Save and Exit link',
+      'Attempt to save with empty Chat Completion URL and verify confirmation dialog appears. Cancel button works correctly',
       async () => {
-        await appEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
-        await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
+        await entityEditorHeader.saveAndExitButton.click();
+        await confirmationDialog.cancelDialog();
+
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await agentInfoAssertion.assertAgentName(appEntity.name);
+        await agentInfoAssertion.assertAgentIcon(API.defaultModelIconHost());
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input Chat completion URL, click Save and Exit link, verify navigation panel is visible',
+      async () => {
+        await customAppEditorViewForm.fillInAppFields();
+        await entityEditorHeader.focusOn();
+        await entityEditorHeader.saveAndExitButton.click();
+        await entityDetailsModal.closeButton.click();
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'hidden',
+        );
         await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          navigationPanel,
+          'visible',
+          ExpectedMessages.navigationPanelShouldBeVisible,
+        );
       },
     );
 
@@ -205,7 +474,7 @@ dialTest(
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
       },
     );
@@ -214,8 +483,8 @@ dialTest(
       'Click on the found card again to open details',
       async () => {
         await agentElement.click();
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-        await agentDetailsModalAssertion.assertDescription(
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        await entityDetailsModalAssertion.assertDescription(
           appEntity.description!,
         );
       },
@@ -224,7 +493,7 @@ dialTest(
     await dialTest.step(
       'Click "Use application" button and perform assertions',
       async () => {
-        await agentDetailsModal.clickUseButton({
+        await entityDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: false,
         });
         await dialHomePage.waitForPageLoaded();
@@ -248,63 +517,72 @@ dialTest(
       async () => {
         await marketplacePage.openMyWorkspacePage({
           updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
 
         const actualDescription =
-          marketplaceAgents.getAgentDescription(agentElement);
+          marketplaceEntities.getEntityDescription(agentElement);
         await baseAssertion.assertElementText(
           actualDescription,
           shortDescription,
           `Short description on card for "${appEntity.name}" should be correct`,
         );
         await agentElement.click();
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
       },
     );
 
     await dialTest.step(
       'On card detailed pop-up form click on Edit icon',
       async () => {
-        await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
-        await appEditorPage.waitForPageLoadedForEdit();
+        await entityDetailsModal.clickEditButton({
+          triggeredHttpMethod: 'GET',
+        });
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.CustomApp,
+        );
       },
     );
 
     await dialTest.step(
       'Verify App Editor page was opened, title "Edit custom app", two steps are displayed in the header',
       async () => {
-        await appEditorHeaderAssertion.assertActionTitle(
-          `${AppMenuActions.edit(AddAppMenuOptions.customApp)}`,
+        await entityEditorHeaderAssertion.assertActionTitle(
+          `${EntityMenuActions.editApp(AddAppMenuOptions.customApp)}`,
         );
-
-        await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getGeneralInfoStep(),
+        await entityEditorHeaderAssertion.assertStepState(
+          generalInfoStep,
           'visible',
+          Cursors.pointer,
         );
-        await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getAppSettingsStep(),
+        await entityEditorHeaderAssertion.assertStepState(
+          appSettingsStep,
           'visible',
+          Cursors.default,
         );
       },
     );
 
     await dialTest.step('Close the application edit mode', async () => {
-      await appEditorHeader.saveAndExitButton.click();
+      await entityEditorHeader.saveAndExitButton.click();
+      await entityDetailsModal.closeButton.click();
     });
 
     await dialTest.step(
       'Delete an app, confirm and verify custom app card was deleted from My workspace',
       async () => {
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await baseAssertion.assertElementState(
@@ -320,7 +598,7 @@ dialTest(
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           0,
@@ -336,23 +614,32 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Edit custom application\n' + //EPMRTC-5131
-    'Edit version for custom app', //EPMRTC-4305
+    'Edit version for custom app\n' + //EPMRTC-4305
+    'DIAL logo click on second step in AppEditor saves app ( decided on daily to leave for now)', // EPMRTC-5747
   async ({
     marketplacePage,
-    marketplaceAgentsSection,
-    marketplaceAgents,
-    appEditorGeneralForm,
-    appEditorViewForm,
-    appEditorHeader,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    entityEditorGeneralForm,
+    customAppEditorViewForm,
+    entityEditorHeader,
     setTestIds,
     baseAssertion,
+    entityEditorGeneralInfoPreviewCard,
     customApplicationBuilder,
     applicationApiHelper,
-    appEditorHeaderAssertion,
+    entityEditorHeaderAssertion,
+    navigationPanel,
+    dialHomePage,
+    toastAssertion,
+    agentInfo,
+    localStorageManager,
+    entityEditorGeneralInfoPreview,
+    entityEditorPage,
   }) => {
-    setTestIds('EPMRTC-5131', 'EPMRTC-4305');
+    setTestIds('EPMRTC-5131', 'EPMRTC-4305', 'EPMRTC-5747');
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
     const appEntity = {
@@ -360,6 +647,7 @@ dialTest(
       version: '1.1.1',
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -377,20 +665,25 @@ dialTest(
       await marketplacePage.openMyWorkspacePage({
         updateInstalledDeployments: false,
       });
+      await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(
       'Hover over custom app card, click 3 dots and select Edit option',
       async () => {
-        const agentElement = await marketplaceAgentsSection.findAgentElement({
-          name: appEntity.name,
-          version: appEntity.version,
-        } as DialAIEntityModel);
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
+          {
+            name: appEntity.name,
+            version: appEntity.version,
+          } as DialAIEntityModel,
+        );
         await baseAssertion.assertElementState(agentElement, 'visible');
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.edit);
       },
     );
@@ -398,15 +691,18 @@ dialTest(
     await dialTest.step(
       'App Editor page was opened, title "Edit custom app", two available steps are displayed in the header:',
       async () => {
-        await baseAssertion.assertElementState(appEditorViewForm);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.CustomApp,
+        );
+        await baseAssertion.assertElementState(customAppEditorViewForm);
         await baseAssertion.assertElementText(
-          appEditorHeader.actionAndApplicationTypeTitle,
-          `${AppMenuActions.edit(AddAppMenuOptions.customApp)}`,
+          entityEditorHeader.actionAndEntityTypeTitle,
+          `${EntityMenuActions.editApp(AddAppMenuOptions.customApp)}`,
           ExpectedMessages.headerTitleIsValid,
         );
 
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
+        const generalInfoStep = entityEditorHeader.getGeneralInfoStep();
+        const appSettingsStep = entityEditorHeader.getAppSettingsStep();
 
         await baseAssertion.assertElementState(generalInfoStep, 'visible');
         await baseAssertion.assertElementState(appSettingsStep, 'visible');
@@ -416,37 +712,60 @@ dialTest(
     await dialTest.step(
       'Update any field on step "Application settings" with a valid value',
       async () => {
-        await baseAssertion.assertElementState(appEditorViewForm);
-        await appEditorViewForm.fillInAppFields({
+        await baseAssertion.assertElementState(customAppEditorViewForm);
+        await customAppEditorViewForm.fillInAppFields({
           chatCompletionUrl: updatedCompletionUrl,
         });
       },
     );
 
     await dialTest.step(
-      'Update any field on step "General info" and click Save and exit link',
+      'Update any field on step "General info", close the app editor by clicking on the header logo, then go back to the marketplace',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep();
-        await baseAssertion.assertElementState(appEditorGeneralForm);
-        await appEditorHeaderAssertion.assertStepIsCompleted(
-          AppEditSteps.appSettings,
-          true,
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper();
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
-          AppEditSteps.generalInfo,
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(entityEditorGeneralForm);
+        await entityEditorHeaderAssertion.assertStepIsSelected(
+          EntityEditSteps.appSettings,
           false,
         );
+        await entityEditorHeaderAssertion.assertCompletedStepIconState(
+          EntityEditSteps.appSettings,
+          'visible',
+        );
+        await entityEditorHeaderAssertion.assertStepIsSelected(
+          EntityEditSteps.generalInfo,
+          true,
+        );
+        await entityEditorHeaderAssertion.assertActiveStepIconState(
+          EntityEditSteps.generalInfo,
+          'visible',
+        );
         //need to explicitly click on the form to trigger autosave after fields update
-        await appEditorGeneralForm.version.click();
+        await entityEditorGeneralForm.version.click();
         appEntity.version = '2.2.2';
         appEntity.description = updatedDescription;
-        await appEditorGeneralForm.fillInAppFields({
+        await entityEditorGeneralForm.fillInEntityFields({
           version: appEntity.version,
           description: appEntity.description,
         });
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'hidden');
+        await entityEditorHeader.focusOn();
+        await entityEditorHeader.logo.click();
+        await dialHomePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(agentInfo, 'visible'); // Assert no validation error appeared
+        await toastAssertion.assertToastIsHidden();
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'hidden',
+        );
+        await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
       },
     );
@@ -454,42 +773,55 @@ dialTest(
     await dialTest.step(
       'Hover over custom app card, click 3 dots and select Edit option again',
       async () => {
-        const agentElement = await marketplaceAgentsSection.findAgentElement({
-          name: appEntity.name,
-          version: appEntity.version,
-        } as DialAIEntityModel);
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
+          {
+            name: appEntity.name,
+            version: appEntity.version,
+          } as DialAIEntityModel,
+        );
         await baseAssertion.assertElementState(agentElement, 'visible');
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(agentElement),
+          marketplaceEntities.getEntityVersion(agentElement),
           appEntity.version!,
         );
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.edit);
       },
     );
 
     await dialTest.step(
-      'Check that updated field values from steps 4, 5 are still displayed',
+      'Check that updated field values are still displayed',
       async () => {
-        await baseAssertion.assertElementState(appEditorViewForm);
+        await baseAssertion.assertElementState(customAppEditorViewForm);
 
-        const chatCompletionUrlValue = await appEditorViewForm.chatCompletionUrl
-          .getElementLocator()
-          .inputValue();
+        const chatCompletionUrlValue =
+          await customAppEditorViewForm.chatCompletionUrl
+            .getElementLocator()
+            .inputValue();
         baseAssertion.assertValue(
           chatCompletionUrlValue,
           updatedCompletionUrl,
           ExpectedMessages.FormFieldShouldRetainUpdatedValue,
         );
 
-        await appEditorHeader.goOnGeneralInfoStep({
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
-        await baseAssertion.assertElementState(appEditorGeneralForm);
-        const descriptionValue = await appEditorGeneralForm.description
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(entityEditorGeneralForm);
+        const descriptionValue = await entityEditorGeneralForm.description
           .getElementLocator()
           .inputValue();
         baseAssertion.assertValue(
@@ -499,17 +831,32 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step(
+      'On detailed view in section Information there is Release date field',
+      async () => {
+        const releaseDateElement =
+          entityEditorGeneralInfoPreviewCard.releaseDate;
+        await baseAssertion.assertElementState(releaseDateElement, 'visible');
+        await baseAssertion.assertElementText(
+          releaseDateElement,
+          DateUtil.getCurrentLocalDate(),
+          ExpectedMessages.releaseDateIsValid,
+        );
+      },
+    );
   },
 );
 
-dialTest(
+dialTest.skip(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
-    '[Custom app]: Delete specific not published version', // EPMRTC-4285
+    '[Custom app]: Delete specific not published version' + // EPMRTC-4285
+    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name\n', //EPMRTC-4279
   async ({
     marketplacePage,
-    marketplaceAgentsSection,
-    agentDetailsModal,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
     dialHomePage,
     chat,
     talkToAgentDialog,
@@ -522,17 +869,18 @@ dialTest(
     localStorageManager,
     marketplaceHeader,
     marketplaceContainer,
-    agentDetailsModalAssertion,
-    marketplaceAgents,
+    entityDetailsModalAssertion,
+    marketplaceEntities,
+    entityVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285');
+    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285', 'EPMRTC-4279');
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
 
     const appEntity1 = {
       name: GeneratorUtil.randomApplicationName(),
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
       description: GeneratorUtil.randomString(20),
     } as DialAIEntityModel;
 
@@ -572,7 +920,7 @@ dialTest(
           .build();
         await applicationApiHelper.createApplication(applicationModel2_v2);
 
-        await localStorageManager.setRecentModelsIdsOnce(
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
           appEntity1,
           appEntity2_v2,
         );
@@ -587,15 +935,15 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
         agentElement1 =
-          await marketplaceAgentsSection.findAgentElement(appEntity1);
+          await marketplaceEntitiesSection.findEntityElement(appEntity1);
         await baseAssertion.assertElementState(agentElement1, 'visible');
       },
     );
 
     await dialTest.step('Click "Use application"', async () => {
       await agentElement1.click();
-      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-      await agentDetailsModal.useButton.click();
+      await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+      await entityDetailsModal.useButton.click();
       await dialHomePage.waitForPageLoaded();
     });
 
@@ -610,10 +958,10 @@ dialTest(
         agentElementInDialog = talkToAgentDialog.getTalkToAgent(appEntity1);
         await agentElementInDialog.hoverOver();
         await talkToAgents
-          .getAgentElementDotsMenu(agentElementInDialog)
+          .getEntityElementDotsMenu(agentElementInDialog)
           .click();
         await talkToAgents
-          .getAgentDropdownMenu()
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
       },
@@ -638,7 +986,7 @@ dialTest(
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
         await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           0,
@@ -654,17 +1002,28 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "My workspace", find App 2 and click on the second app card',
+      'Open "My workspace", verify that the only one card for App2 is found, find App 2 and click on the second app card',
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity2_v2.name);
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
+        const workspaceAgentsWithName = allAgents.filter(
+          (agent) =>
+            agent.isWorkspaceEntity && agent.name === appEntity2_v2.name,
+        );
+        baseAssertion.assertValue(
+          workspaceAgentsWithName.length,
+          1,
+          ExpectedMessages.onlyOneEntityCardFoundInSearch('application'),
+        );
         agentElement2 =
-          await marketplaceAgentsSection.findAgentElement(appEntity2_v2);
+          await marketplaceEntitiesSection.findEntityElement(appEntity2_v2);
         await baseAssertion.assertElementState(agentElement2, 'visible');
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(agentElement2),
+          marketplaceEntities.getEntityVersion(agentElement2),
           appEntity2_v2.version!,
+          ExpectedMessages.cardShouldDisplayTheLatestVersion,
         );
       },
     );
@@ -673,15 +1032,23 @@ dialTest(
       'Click on App 2 card, verify versions, select older version',
       async () => {
         await agentElement2.click();
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        await entityDetailsModalAssertion.assertEntityName(appEntity2_v2.name);
+        await entityDetailsModalAssertion.assertEntityVersion(
           appEntity2_v2.version!,
         );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        const expectedVersionsInDropdown = SortingUtil.sortVersionsArray([
+          appEntity2_v1.version!,
+          appEntity2_v2.version!,
+        ]);
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
+          expectedVersionsInDropdown,
+        );
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(appEntity2_v1.version!);
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           appEntity2_v1.version!,
         );
       },
@@ -690,9 +1057,9 @@ dialTest(
     await dialTest.step(
       'Click on Delete icon in the modal and confirm deletion',
       async () => {
-        await agentDetailsModal.deleteButton.click();
+        await entityDetailsModal.deleteButton.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await agentDetailsModal.waitForState({ state: 'hidden' });
+        await entityDetailsModal.waitForState({ state: 'hidden' });
       },
     );
 
@@ -710,12 +1077,12 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(agentElement2, 'visible');
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(agentElement2),
+          marketplaceEntities.getEntityVersion(agentElement2),
           appEntity2_v2.version!,
         );
         await agentElement2.click();
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        await entityDetailsModalAssertion.assertEntityVersion(
           appEntity2_v2.version!,
         );
       },
@@ -723,31 +1090,87 @@ dialTest(
   },
 );
 
-dialTest(
-  'Custom app Topic dropdown select. +\n' + '[Custom app]: Hints on for fields',
-  async ({
-    marketplacePage,
-    appEditorPage,
-    appEditorGeneralForm,
-    setTestIds,
-    baseAssertion,
-    tooltipAssertion,
-    appEditorViewForm,
-  }) => {
-    setTestIds('EPMRTC-4374', 'EPMRTC-4278');
+dialTest.skip(
+  'Custom app Topic dropdown select.\n' + // EPMRTC-4374
+    '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
+    'Preview on step "General info"\n' + // EPMRTC-5749
+    'Preview on step "App settings"\n' + // EPMRTC-5750
+    'Chat created from preview form on step "App settings" is not available on DIAL home page\n' + // EPMRTC-5762
+    'Input on step "App settings" data saved when switch back to step "General info"\n' + // EPMRTC-5765
+    'Chat created from preview form on step "App settings" is not saved if switch to "General info" step and then back to "App settings".\n' + // EPMRTC-7868
+    'Input on step "General info" data saved when switch to step "App settings" using stepper (not Next button ).\n' + // EPMRTC-5928
+    'Custom app appears on the first screen (after the creation) if user types something in Preview', // EPMRTC-6671
+  async (
+    {
+      marketplacePage,
+      entityEditorPage,
+      entityEditorGeneralForm,
+      listboxMenu,
+      setTestIds,
+      baseAssertion,
+      entityEditorGeneralInfoPreviewCard,
+      tooltipAssertion,
+      customAppEditorViewForm,
+      attachFilesModal,
+      entityEditorGeneralInfoPreview,
+      fileApiHelper,
+      entityEditorHeader,
+      customAppEditorAppSettingsPreview,
+      customAppEditorAppSettingsPreviewBody,
+      customAppEditorAppSettingsPreviewChat,
+      dialHomePage,
+      chatMessagesAssertion,
+      agentInfoAssertion,
+      sendMessage,
+      chatMessages,
+      conversationAssertion,
+      entityDetailsModal,
+      navigationPanel,
+      entityDetailsModalAssertion,
+      localStorageManager,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-4374',
+      'EPMRTC-4278',
+      'EPMRTC-5749',
+      'EPMRTC-5750',
+      'EPMRTC-5762',
+      'EPMRTC-5765',
+      'EPMRTC-7868',
+      'EPMRTC-5928',
+      'EPMRTC-6671',
+    );
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
     let topicsToSelect: string[] = [];
 
+    const shortAppDescription = GeneratorUtil.randomShortDescription();
+    const longAppDescription = GeneratorUtil.randomLongDescription();
+    const appEntity = {
+      name: GeneratorUtil.randomApplicationName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      description: `${shortAppDescription}\n\n${longAppDescription}`,
+    } as DialAIEntityModel;
+    const expectedIconUrl = `/api/${await fileApiHelper.putFile(
+      Attachment.sunImageName,
+    )}`;
+    const previewChatMessage = 'Hello from preview';
+    const attachmentTypeToSet = 'image/png';
+    const updatedAppNameForStepperTest = `${appEntity.name}-stepper-update`; // New name for EPMRTC-5928
+    await localStorageManager.setShowSideBarPanels();
+    await localStorageManager.setRecentModelsIdsAndUseLastModel();
+
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
-      await appEditorPage.waitForPageLoaded();
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.CustomApp);
     });
 
     await dialTest.step(
       'Hover over question icon for Description field and verify hint',
       async () => {
-        await appEditorGeneralForm.descriptionHintIcon.hoverOver();
+        await entityEditorGeneralForm.descriptionHintIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.customApplicationDescriptionTooltip,
         );
@@ -757,13 +1180,13 @@ dialTest(
     await dialTest.step(
       'Click on Topics drop down and verify the list is expanded',
       async () => {
-        await appEditorGeneralForm.topicsDropdownToggle.click();
+        await entityEditorGeneralForm.topicsDropdownToggle.click();
         await baseAssertion.assertElementState(
-          appEditorGeneralForm.topicsDropdownMenuElement,
+          listboxMenu,
           'visible',
-          ExpectedMessages.dropdownMenuIsVisible,
+          ExpectedMessages.listboxMenuIsVisible,
         );
-        allTopics = await appEditorGeneralForm.getAllTopicsOptions();
+        allTopics = await listboxMenu.getAllOptions();
         numberOfTopicsToSelect = allTopics.length - 1;
         baseAssertion.assertNumberIsGreaterThan(allTopics.length, 0);
       },
@@ -775,20 +1198,20 @@ dialTest(
         .slice(0, numberOfTopicsToSelect);
 
       const topicsInputControlBox1 =
-        await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
+        await entityEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
       const initialHeight = topicsInputControlBox1!.height;
 
       for (let i = 0; i < numberOfTopicsToSelect; i++) {
-        await appEditorGeneralForm.selectTopicOption(topicsToSelect[i]);
+        await listboxMenu.selectOption(topicsToSelect[i]);
       }
       const topicsInputControlBoxAll =
-        await appEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
+        await entityEditorGeneralForm.topicsDropdownContainer.getElementBoundingBox();
       const topicsHeightAfterSelection = topicsInputControlBoxAll!.height;
 
       // Assertions for selected topics
-      const selectedTopics = await appEditorGeneralForm.getSelectedTopics();
+      const selectedTopics = await entityEditorGeneralForm.getSelectedTopics();
       await baseAssertion.assertElementsCount(
-        appEditorGeneralForm.selectedTopicPills,
+        entityEditorGeneralForm.selectedTopicPills,
         topicsToSelect.length,
         ExpectedMessages.elementsCountIsValid,
       );
@@ -811,17 +1234,17 @@ dialTest(
       async () => {
         // Delete random specific topic
         const topicToDelete = GeneratorUtil.randomArrayElement(topicsToSelect);
-        await appEditorGeneralForm.deleteSelectedTopic(topicToDelete);
+        await entityEditorGeneralForm.deleteSelectedTopic(topicToDelete);
 
         const remainingTopics = topicsToSelect.filter(
           (t) => t !== topicToDelete,
         );
         // Get current selected topics again
         const currentSelectedTopics =
-          await appEditorGeneralForm.getSelectedTopics();
+          await entityEditorGeneralForm.getSelectedTopics();
 
         await baseAssertion.assertElementsCount(
-          appEditorGeneralForm.selectedTopicPills,
+          entityEditorGeneralForm.selectedTopicPills,
           numberOfTopicsToSelect - 1,
           ExpectedMessages.elementsCountIsValid,
         );
@@ -843,67 +1266,466 @@ dialTest(
     await dialTest.step(
       'Click on the main X icon in the Topics row to clear all selections',
       async () => {
-        await appEditorGeneralForm.clearAllTopics();
+        await entityEditorGeneralForm.clearAllTopics();
         // Assert selected topics count
         await baseAssertion.assertElementsCount(
-          appEditorGeneralForm.selectedTopicPills,
+          entityEditorGeneralForm.selectedTopicPills,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
       },
     );
 
-    await dialTest.step('Click Next button to go to App Settings', async () => {
-      await appEditorGeneralForm.fillInAppFields({
-        name: GeneratorUtil.randomApplicationName(),
-        version: GeneratorUtil.randomApplicationVersion(),
+    await dialTest.step('Fill in the data for the App', async () => {
+      await entityEditorGeneralForm.fillInEntityFields({
+        name: appEntity.name,
+        version: appEntity.version,
+        description: appEntity.description,
       });
-      await appEditorGeneralForm.goNext({ waitForResponses: false });
-      await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      await entityEditorGeneralForm.topicsDropdownToggle.click();
+      topicsToSelect = allTopics
+        .sort((a, b) => a.length - b.length)
+        .slice(0, 2);
+      for (const topic of topicsToSelect) {
+        await listboxMenu.selectOption(topic);
+      }
+      await entityEditorGeneralForm.topicsDropdownToggle.click();
+      await entityEditorGeneralForm.addIconButton.click();
+      await attachFilesModal.checkAttachedFile(
+        Attachment.sunImageName,
+        FileModalSection.AllFiles,
+      );
+      await attachFilesModal.attachFiles();
     });
 
     await dialTest.step(
-      'Hover over question icons for Features data and Attachment types and verify hints',
+      "Verify preview of app's pop-up form on right side of General Info screen",
       async () => {
-        await appEditorViewForm.featuresDataHintIcon.hoverOver();
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+
+        await baseAssertion.assertElementText(
+          entityEditorGeneralInfoPreviewCard.previewName,
+          appEntity.name,
+          ExpectedMessages.agentNameIsValid,
+        );
+
+        const actualShortDescElement =
+          entityEditorGeneralInfoPreviewCard.getShortDescriptionDetailedViewElement();
+        const actualLongDescElement =
+          entityEditorGeneralInfoPreviewCard.getLongDescriptionDetailedViewElement();
+
+        await baseAssertion.assertElementText(
+          actualShortDescElement,
+          shortAppDescription,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+        await baseAssertion.assertElementText(
+          actualLongDescElement,
+          longAppDescription,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+
+        const displayedTopics =
+          await entityEditorGeneralInfoPreviewCard.topicElements.getElementsInnerContent();
+        baseAssertion.assertArrayIncludesAll(
+          displayedTopics,
+          topicsToSelect,
+          ExpectedMessages.selectedTopicsAreValid,
+        );
+        baseAssertion.assertValue(
+          displayedTopics.length,
+          topicsToSelect.length,
+          ExpectedMessages.numberOfTopicsIsCorrect,
+        );
+
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreviewCard.previewInformationSection,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreviewCard.previewAuthorContainer,
+          'visible',
+        );
+
+        const currentUsername = UserUtil.getE2EUsername(testInfo.parallelIndex);
+        await baseAssertion.assertElementText(
+          entityEditorGeneralInfoPreviewCard.previewAuthorValue,
+          currentUsername,
+          ExpectedMessages.authorIsValid,
+        );
+
+        const previewAppIcon = entityEditorGeneralInfoPreviewCard.previewIcon;
+        await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Turn off the detailed view and assert details on General Info screen',
+      async () => {
+        await entityEditorGeneralInfoPreview
+          .getEntityEditorPreviewToggle()
+          .detailedSwitch.click();
+        await baseAssertion.assertElementText(
+          entityEditorGeneralInfoPreviewCard.previewName,
+          appEntity.name,
+          ExpectedMessages.agentNameIsValid,
+        );
+
+        await baseAssertion.assertElementText(
+          entityEditorGeneralInfoPreviewCard.version,
+          appEntity.version!,
+          ExpectedMessages.agentVersionIsValid,
+        );
+
+        const actualShortDescElement =
+          entityEditorGeneralInfoPreviewCard.getShortDescriptionDetailedViewElement();
+
+        await baseAssertion.assertElementText(
+          actualShortDescElement,
+          shortAppDescription,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+
+        const displayedTopics =
+          await entityEditorGeneralInfoPreviewCard.topicElements.getElementsInnerContent();
+        baseAssertion.assertArrayIncludesAll(
+          displayedTopics,
+          topicsToSelect,
+          ExpectedMessages.selectedTopicsAreValid,
+        );
+        baseAssertion.assertValue(
+          displayedTopics.length,
+          topicsToSelect.length,
+          ExpectedMessages.numberOfTopicsIsCorrect,
+        );
+        const previewAppIcon = entityEditorGeneralInfoPreviewCard.previewIcon;
+        await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Click Next button to go to App Settings, hover over question icons for Features data and Attachment types and verify hints',
+      async () => {
+        await entityEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+        await customAppEditorViewForm.featuresDataHintIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.customApplicationFeaturesTooltip,
         );
-        await appEditorViewForm.attachmentTypesHintIcon.hoverOver();
+        await customAppEditorViewForm.attachmentTypesHintIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.customApplicationAttachmentsTypesTooltip,
         );
       },
     );
+
+    await dialTest.step(
+      'Input Chat completion URL on App Settings step',
+      async () => {
+        await customAppEditorViewForm.fillInAppFields({
+          chatCompletionUrl: 'http://testurl.com',
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Verify preview area on App Settings step shows a new conversation screen and message box is enabled',
+      async () => {
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewChat,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewChat.agentInfoContainer,
+          'visible',
+        );
+        const previewChatInput = sendMessage.messageInput;
+        await baseAssertion.assertElementState(previewChatInput, 'visible');
+        await baseAssertion.assertElementActionabilityState(
+          previewChatInput,
+          'enabled',
+        );
+        const previewChatIcon =
+          customAppEditorAppSettingsPreviewChat.previewChatIcon;
+        await baseAssertion.assertEntityIcon(previewChatIcon, expectedIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Input a message in preview chat, send it, and verify message and response appear',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.messageInput.fillInInput(previewChatMessage);
+        await sendMessage.sendMessageButton.click();
+        await chatMessages.getChatMessage(2).waitFor();
+
+        await chatMessagesAssertion.assertMessageContent(1, previewChatMessage);
+        await chatMessagesAssertion.assertMessageContent(2, 'Response');
+      },
+    );
+
+    await dialTest.step('Add attachment type (e.g., image/png)', async () => {
+      await customAppEditorViewForm.fillInAppFields({
+        attachmentTypes: [attachmentTypeToSet],
+      });
+    });
+
+    await dialTest.step(
+      'Verify clip icon appears in preview chat message box',
+      async () => {
+        await sendMessage.click();
+        const previewChatAttachmentButton = sendMessage.attachmentMenuTrigger;
+        await baseAssertion.assertElementState(
+          previewChatAttachmentButton,
+          'visible',
+          ExpectedMessages.attachmentClipIconShouldAppear,
+        );
+      },
+    );
+
+    await dialTest.step('Navigate back to General Info step', async () => {
+      await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+        isHttpMethodTriggered: false,
+      });
+      await baseAssertion.assertElementState(
+        entityEditorGeneralForm,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        customAppEditorAppSettingsPreview,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        customAppEditorAppSettingsPreviewBody.previewSpinner,
+        'hidden',
+      );
+    });
+
+    await dialTest.step('Navigate forward to App Settings step', async () => {
+      await entityEditorGeneralForm.goNext();
+      await baseAssertion.assertElementState(
+        customAppEditorViewForm,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        customAppEditorAppSettingsPreview,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        customAppEditorAppSettingsPreviewBody.previewSpinner,
+        'hidden',
+      );
+    });
+
+    await dialTest.step(
+      'Verify attachment types are preserved, preview chat is not saved',
+      async () => {
+        const actualAttachmentTypes =
+          await customAppEditorViewForm.attachmentTypes.getSelectedPillValues(
+            true,
+          );
+        baseAssertion.assertArrayIncludesAll(
+          actualAttachmentTypes,
+          [attachmentTypeToSet],
+          ExpectedMessages.fieldValueIsValid,
+        );
+
+        await chatMessagesAssertion.assertElementState(chatMessages, 'hidden');
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Navigate back to General Info step using header stepper',
+      async () => {
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step('Input new app name', async () => {
+      await entityEditorGeneralForm.fillInEntityFields({
+        name: updatedAppNameForStepperTest,
+      });
+    });
+
+    await dialTest.step(
+      'Navigate to App Settings step using header stepper',
+      async () => {
+        await entityEditorHeader.goToEntitySettingsStepWithHeaderStepper();
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Navigate back to General Info step using header stepper',
+      async () => {
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify the new name is preserved on General Info step',
+      async () => {
+        await baseAssertion.assertInputValue(
+          entityEditorGeneralForm.name,
+          updatedAppNameForStepperTest,
+          ExpectedMessages.fieldValueIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Navigate to App Settings step and create a preview chat',
+      async () => {
+        await entityEditorHeader.goToEntitySettingsStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await sendMessage.messageInput.fillInInput(previewChatMessage);
+        await sendMessage.sendMessageButton.click();
+        await chatMessages.getChatMessage(2).waitFor();
+      },
+    );
+
+    await dialTest.step('Click Save and Exit link', async () => {
+      await entityEditorHeader.saveAndExitButton.click();
+      await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+      await entityDetailsModalAssertion.assertEntityName(
+        updatedAppNameForStepperTest,
+      );
+      await entityDetailsModalAssertion.assertEntityVersion(appEntity.version!);
+      await entityDetailsModal.closeButton.click();
+    });
+
+    await dialTest.step(
+      'Click back to chat - created on preview form chat is not visible on DIAL main screen, created app is applied on a new conversation',
+      async () => {
+        await navigationPanel.backToChat();
+        await dialHomePage.waitForPageLoaded();
+        await conversationAssertion.assertEntityState(
+          { name: previewChatMessage },
+          'hidden',
+        );
+        await chatMessagesAssertion.assertElementState(chatMessages, 'hidden');
+        await agentInfoAssertion.assertAgentName(updatedAppNameForStepperTest);
+        await agentInfoAssertion.assertAgentVersion(appEntity.version);
+        await agentInfoAssertion.assertShortDescription(shortAppDescription);
+      },
+    );
   },
 );
 
-dialTest(
-  'Edit Custom app: Update icon of custom app',
+dialTest.skip(
+  'Edit Custom app: Update icon of custom app\n' + //EPMRTC-4109
+    '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars\n' + // EPMRTC-5538
+    '[App editor]: Release date displayed on detailed preview on "General info" step when edit custom app', //EPMRTC-5831
   async ({
     marketplacePage,
-    marketplaceAgentsSection,
-    agentDetailsModal,
-    appEditorPage,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    entityEditorPage,
     attachFilesModal,
-    appEditorHeader,
-    appEditorGeneralForm,
-    appEditorGeneralInfoAgentPreview,
-    appEditorAppSettingsAgentPreview,
+    entityEditorHeader,
+    entityEditorGeneralForm,
+    entityEditorGeneralInfoPreview,
+    entityEditorGeneralInfoPreviewCard,
+    customAppEditorAppSettingsPreview,
+    customAppEditorAppSettingsPreviewBody,
+    customAppEditorAppSettingsPreviewChat,
     customApplicationBuilder,
     applicationApiHelper,
-    uploadFromDeviceModal,
     baseAssertion,
     setTestIds,
+    fileApiHelper,
   }) => {
-    setTestIds('EPMRTC-4109');
+    setTestIds('EPMRTC-4109', 'EPMRTC-5538', 'EPMRTC-5831');
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
     } as DialAIEntityModel;
-    const newIconFileName = Attachment.sunImageName;
+    const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
-    let expectedNewIconUrl: string;
+    let expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
+      newIconFileName,
+      Attachment.appIconSvg,
+    );
+    const uploadedIconFilePath = `/api/${expectedNewIconUrl.substring(
+      0,
+      expectedNewIconUrl.lastIndexOf('/') + 1,
+    )}`;
+    const expectedEncodedIconUrl =
+      uploadedIconFilePath + encodeURIComponent(newIconFileName);
+
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialTest.step(
       'Precondition: Create custom application via API',
@@ -914,8 +1736,7 @@ dialTest(
           .build();
         const createdApp =
           await applicationApiHelper.createApplication(applicationModel);
-
-        expectedNewIconUrl = `${API.fileHost}/${createdApp.bucket}/${newIconFileName}`;
+        expectedNewIconUrl = `${API.fileHost()}/${createdApp.bucket}/${newIconFileName}`;
       },
     );
 
@@ -928,25 +1749,41 @@ dialTest(
       'Find the created app, click on its card, then click Edit',
       async () => {
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await agentElement.click();
-        await agentDetailsModal.waitForState();
-        await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
-        await appEditorPage.waitForPageLoadedForEdit();
+        await entityDetailsModal.waitForState();
+        await entityDetailsModal.clickEditButton({
+          triggeredHttpMethod: 'GET',
+        });
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.CustomApp,
+        );
       },
     );
 
     await dialTest.step(
       'Navigate to "General info" step and upload a new icon file',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep({
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
-        }); // Navigate back if needed
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
-        await appEditorGeneralForm.addIconButton.click();
-        await attachFilesModal.uploadFromDevice();
-        await uploadFromDeviceModal.addMoreFilesToUpload(newIconFileName);
-        await uploadFromDeviceModal.uploadFiles();
+        });
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+        await entityEditorGeneralForm.addIconButton.click();
+        await attachFilesModal.checkAttachedFile(
+          newIconFileName,
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
       },
     );
@@ -954,40 +1791,63 @@ dialTest(
     await dialTest.step(
       'Verify the updated icon is displayed in the preview on the "General info" step',
       async () => {
-        const previewIcon = appEditorGeneralInfoAgentPreview.previewIcon;
-        await baseAssertion.assertEntityIcon(previewIcon, expectedNewIconUrl);
+        const previewIcon =
+          entityEditorGeneralInfoPreview.getEntityEditorPreviewCard()
+            .previewIcon;
+        await baseAssertion.assertEntityIcon(
+          previewIcon,
+          expectedEncodedIconUrl,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify there is Release date field on the detailed view section',
+      async () => {
+        const releaseDate = entityEditorGeneralInfoPreviewCard.releaseDate;
+        await baseAssertion.assertElementState(releaseDate, 'visible');
+        await baseAssertion.assertElementText(releaseDate, currentDate);
       },
     );
 
     await dialTest.step(
       'Navigate to "App settings" step and verify the updated icon in the chat preview',
       async () => {
-        await appEditorGeneralForm.goNext({ waitForResponses: false });
+        await entityEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
+          'hidden',
+        );
         const previewChatIconAppSettings =
-          appEditorAppSettingsAgentPreview.previewChatIcon;
+          customAppEditorAppSettingsPreviewChat.previewChatIcon;
         await baseAssertion.assertEntityIcon(
           previewChatIconAppSettings,
-          expectedNewIconUrl,
+          expectedEncodedIconUrl,
         );
       },
     );
 
     await dialTest.step('Click "Save and exit"', async () => {
-      await appEditorHeader.saveAndExitButton.click();
+      await entityEditorHeader.saveAndExitButton.click();
       await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(
       'Verify the updated icon is displayed on the app card in My workspace',
       async () => {
+        await entityDetailsModal.closeButton.click();
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         const cardIconElement = agentElement.getElementIcon(
           agentElement.getElementLocator(),
         );
         await baseAssertion.assertEntityIcon(
           cardIconElement,
-          expectedNewIconUrl,
+          expectedEncodedIconUrl,
         );
       },
     );
@@ -996,12 +1856,714 @@ dialTest(
       'Click on the app card and verify the updated icon in the opened pop-up',
       async () => {
         await agentElement.click();
-        await agentDetailsModal.waitForState();
+        await entityDetailsModal.waitForState();
         await baseAssertion.assertEntityIcon(
-          agentDetailsModal.icon,
-          expectedNewIconUrl,
+          entityDetailsModal.icon,
+          expectedEncodedIconUrl,
         );
       },
     );
+  },
+);
+
+dialTest.skip(
+  '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMRTC-4131
+    '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMRTC-4290
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    customAppEditorViewForm,
+    entityEditorHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    setTestIds,
+    baseAssertion,
+    dialHomePage,
+    localStorageManager,
+    agentInfoAssertion,
+    sendMessage,
+    attachmentDropdownMenu,
+    attachFilesModal,
+    fileApiHelper,
+    sendMessageInputAttachmentsAssertions,
+    tooltipAssertion,
+    customAppEditorAppSettingsPreview,
+    customAppEditorAppSettingsPreviewBody,
+  }) => {
+    setTestIds('EPMRTC-4131', 'EPMRTC-4290');
+    const appName = GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomEntityVersion();
+    const completionUrl = `http://${GeneratorUtil.randomString(6)}.com`;
+    const appEntity = {
+      name: appName,
+      version: appVersion,
+      description: GeneratorUtil.randomShortDescription(),
+    } as DialAIEntityModel;
+    const attachmentType = 'application/pdf';
+    const pdfFilesToUpload = [
+      `${GeneratorUtil.randomString(5)}_${Attachment.pdfName}`,
+      `${GeneratorUtil.randomString(5)}_${Attachment.pdfName}`,
+      `${GeneratorUtil.randomString(5)}_${Attachment.pdfName}`,
+    ];
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step(
+      'Upload dummy PDF files to be available for selection',
+      async () => {
+        for (const pdfFile of pdfFilesToUpload) {
+          await fileApiHelper.putStringAsFile(
+            pdfFile,
+            `Dummy PDF content for ${pdfFile}`,
+          );
+        }
+      },
+    );
+
+    await dialTest.step('Open create custom app page', async () => {
+      await marketplacePage.openCreateCustomAppPage();
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.CustomApp);
+    });
+
+    await dialTest.step(
+      'Input all required fields on General Info step',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: appEntity.name,
+          version: appEntity.version,
+        });
+        await entityEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input Attachment type, leave Max Attachments empty, and save app',
+      async () => {
+        await customAppEditorViewForm.fillInAppFields({
+          chatCompletionUrl: completionUrl,
+        });
+        await customAppEditorViewForm.attachmentTypes.comboboxInput.fillInInput(
+          attachmentType,
+        );
+        await customAppEditorViewForm.maxAttachmentsInput.typeInInput('');
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
+        });
+        await entityEditorHeader.saveAndExitButton.click();
+        await marketplacePage.waitForPageLoaded();
+        await entityDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Find the created application and verify tooltips',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        const agentElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
+        await agentElement.click();
+
+        await entityDetailsModal.deleteButton.hoverOver();
+        await tooltipAssertion.assertTooltipContent(MenuOptions.delete);
+
+        await entityDetailsModal.editButton.hoverOver();
+        await tooltipAssertion.assertTooltipContent(MenuOptions.edit);
+
+        await entityDetailsModal.publishButton.hoverOver();
+        await tooltipAssertion.assertTooltipContent(MenuOptions.publish);
+      },
+    );
+
+    await dialTest.step('Use the created application', async () => {
+      await entityDetailsModal.clickUseButton({
+        isInstalledDeploymentsUpdated: false,
+      });
+      await dialHomePage.waitForPageLoaded();
+      await agentInfoAssertion.assertAgentName(appEntity.name);
+      await baseAssertion.assertElementState(
+        sendMessage.attachmentMenuTrigger,
+        'visible',
+      );
+    });
+
+    await dialTest.step(
+      'Click on clip icon and review file restrictions in header',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        const modalHeaderText = await attachFilesModal
+          .getModalHeader()
+          .getElementInnerContent();
+        baseAssertion.assertStringIncludes(
+          modalHeaderText,
+          attachmentType.substring(attachmentType.lastIndexOf('/') + 1),
+          ExpectedMessages.headerShouldContainDefinedAttachmentTypes,
+        );
+        baseAssertion.assertStringNotIncludes(
+          modalHeaderText,
+          'Up to ',
+          ExpectedMessages.headerMaxNumberOfAttacmentsNotMentioned,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select several files with correct type and click attach',
+      async () => {
+        for (const pdfFile of pdfFilesToUpload) {
+          await attachFilesModal.checkAttachedFile(
+            pdfFile,
+            FileModalSection.AllFiles,
+          );
+        }
+        await attachFilesModal.attachFiles();
+        for (const pdfFile of pdfFilesToUpload) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            pdfFile,
+            'visible',
+          );
+        }
+        const attachedCount = await sendMessage
+          .getInputAttachments()
+          .inputAttachments.getElementsCount();
+        baseAssertion.assertValue(
+          attachedCount,
+          pdfFilesToUpload.length,
+          ExpectedMessages.allowedNumberOfAttachedFiles,
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest.skip(
+  'Check icons of chats with published custom app.\n' + //EPMRTC-4303
+    'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
+    'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
+  async ({
+    dialHomePage,
+    adminDialHomePage,
+    adminPublishingApprovalModal,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    chat,
+    chatHeaderAssertion,
+    conversationAssertion,
+    customApplicationBuilder,
+    applicationApiHelper,
+    fileApiHelper,
+    publishRequestBuilder,
+    publicationApiHelper,
+    localStorageManager,
+    setTestIds,
+    itemApiHelper,
+    baseAssertion,
+    agentInfoAssertion,
+    adminLocalStorageManager,
+    adminApproveRequiredPrompts,
+    adminPublishedApplicationReviewModal,
+  }) => {
+    setTestIds('EPMRTC-4303', 'EPMRTC-6345', 'EPMRTC-4302');
+    const appName = GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomEntityVersion();
+    let appEntity: DialAIEntityModel;
+    let agentElement: BaseElement;
+    let createdAppBackendEntity: BackendEntity;
+    let appPublication: Publication;
+    let reviewIconUrl: string;
+    let targetIconUrl: string;
+
+    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
+      filename,
+      Attachment.appIconSvg,
+    );
+    const encodedFileUrl =
+      expectedNewIconUrl.substring(0, expectedNewIconUrl.lastIndexOf('/') + 1) +
+      encodeURIComponent(filename);
+
+    await dialTest.step(
+      'Precondition: Create a custom application with an icon, create a publish request for it, and delete the original app',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appName)
+          .withDisplayVersion(appVersion)
+          .withIconUrl(encodedFileUrl)
+          .build();
+
+        createdAppBackendEntity =
+          await applicationApiHelper.createApplication(applicationModel);
+
+        appEntity = {
+          name: appName,
+          version: appVersion,
+          iconUrl: encodedFileUrl,
+        } as DialAIEntityModel;
+
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withApplicationResource(createdAppBackendEntity, PublishActions.ADD)
+          .withFileResource(expectedNewIconUrl, PublishActions.ADD_IF_ABSENT)
+          .build();
+
+        appPublication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+
+        const fileResource = appPublication.resources.find((r) =>
+          r.sourceUrl?.startsWith(API.filesHostSegment),
+        )!;
+        reviewIconUrl = `${API.api}/${fileResource.reviewUrl}`;
+        targetIconUrl = `${API.api}/${fileResource.targetUrl}`;
+
+        await localStorageManager.setShowSideBarPanels();
+        await adminLocalStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Admin navigates to publication requests, selects the app request, and verifies icon in the modal list',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredPrompts.selectFolder(appPublication.name!);
+        await adminPublishingApprovalModal.waitForState();
+      },
+    );
+
+    await dialTest.step(
+      'Admin clicks "Go to a review", checks icon in the detailed view, then approves the request',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertEntityIcon(
+          adminPublishedApplicationReviewModal.getApplicationIcon(),
+          reviewIconUrl,
+        );
+
+        await adminPublishedApplicationReviewModal
+          .getPublicationReviewControl()
+          .click();
+        await adminPublishingApprovalModal.approveButton.click();
+        await itemApiHelper.deleteBackendItem(createdAppBackendEntity); //delete the original app
+      },
+    );
+
+    await dialTest.step(
+      'Open DIAL Marketplace and find custom app',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appName);
+        agentElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
+        await baseAssertion.assertElementState(agentElement, 'visible');
+      },
+    );
+
+    await dialTest.step("Click on app's card", async () => {
+      await agentElement.click();
+      await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+    });
+
+    await dialTest.step(
+      'Click "Use application" button - New conversation screen with custom app is displayed',
+      async () => {
+        await entityDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await dialHomePage.waitForPageLoaded();
+        await agentInfoAssertion.assertAgentIcon(targetIconUrl);
+      },
+    );
+
+    await dialTest.step(
+      'Send any message and get response, correct icons are displayed',
+      async () => {
+        const message = 'Hello';
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(message);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: message },
+          targetIconUrl,
+        );
+        await chatHeaderAssertion.assertHeaderIcon(targetIconUrl);
+      },
+    );
+  },
+);
+
+dialTest.skip(
+  'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
+    'Create two custom apps consecutively', // EPMRTC-6263
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    entityEditorHeader,
+    customAppEditorViewForm,
+    entityEditorGeneralInfoPreview,
+    customAppEditorAppSettingsPreview,
+    customAppEditorAppSettingsPreviewBody,
+    customAppEditorAppSettingsPreviewChat,
+    setTestIds,
+    baseAssertion,
+    entityEditorGeneralInfoPreviewCard,
+    entityEditorHeaderAssertion,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    dialHomePage,
+    agentInfo,
+    agentInfoAssertion,
+    addAppDropdownMenu,
+    toastAssertion,
+  }) => {
+    setTestIds('EPMRTC-5945', 'EPMRTC-6263');
+    const appEntity = {
+      name: `${applicationNamePrefix}${GeneratorUtil.randomString(
+        ExpectedConstants.maxEntityNameLength - 7,
+      )}`,
+      version: GeneratorUtil.randomEntityVersion(),
+    } as DialAIEntityModel;
+
+    await dialTest.step('Open create a custom app page', async () => {
+      await marketplacePage.openCreateCustomAppPage();
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.CustomApp);
+      await entityEditorHeaderAssertion.assertActionTitle(
+        EntityMenuActions.addApp(AddAppMenuOptions.customApp),
+      );
+    });
+
+    await dialTest.step(
+      "Input app's name (159 symbols, no spaces) and version on General Info step",
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: appEntity.name,
+          version: appEntity.version,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Check how name displayed on preview screen on General Info step',
+      async () => {
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+        // Verify name is truncated with ellipsis on the card preview
+        await baseAssertion.assertElementTextIsTruncated(
+          entityEditorGeneralInfoPreviewCard.previewName,
+          ExpectedMessages.entityNameIsTruncated,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Next to go to the App Settings step',
+      async () => {
+        await entityEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Check how name displayed on preview for New conversation on App Settings step',
+      async () => {
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        const previewAgentNameElement =
+          customAppEditorAppSettingsPreviewChat.agentName;
+        await baseAssertion.assertElementText(
+          previewAgentNameElement,
+          appEntity.name,
+          ExpectedMessages.agentNameIsValid,
+        );
+        // Verify name is wrapped (not truncated with ellipsis) on the new conversation preview
+        await baseAssertion.assertElementTextWrap(
+          previewAgentNameElement,
+          StyleValues.breakWord,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input Chat completion URL and click "Save and exit"',
+      async () => {
+        await customAppEditorViewForm.fillInAppFields({
+          chatCompletionUrl: 'http://testurl.com',
+        });
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
+        });
+        await entityEditorHeader.saveAndExitButton.click();
+        await marketplacePage.waitForPageLoaded();
+        await entityDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Click Add app/Custom app to start creation of the second app and verify no error toast',
+      async () => {
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.CustomApp,
+        );
+        await toastAssertion.assertToastIsHidden();
+        await entityEditorHeaderAssertion.assertActionTitle(
+          EntityMenuActions.addApp(AddAppMenuOptions.customApp),
+        );
+        await entityEditorHeader.exitLink.click();
+      },
+    );
+
+    await dialTest.step(
+      `On My Workspace page, click on app's card and then "Use application" button`,
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        const agentElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
+        await agentElement.click();
+        await entityDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+      },
+    );
+
+    await dialTest.step(
+      'Verify how name displayed on New conversation start screen',
+      async () => {
+        await agentInfoAssertion.assertAgentName(appEntity.name);
+        // Verify name is wrapped (not truncated with ellipsis) on the new conversation start screen
+        await baseAssertion.assertElementTextWrap(
+          agentInfo.agentName,
+          StyleValues.breakWord,
+        );
+      },
+    );
+  },
+);
+
+dialTest.skip(
+  "Tooltip for long app's name displayed in several lines\n" + // EPMRTC-5946
+    '[App editor]: Changes are saved if set focus to field and then move cursor to Save and exit or to step in header', // EPMRTC-6046
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    setTestIds,
+    baseAssertion,
+    tooltipAssertion,
+    entityDetailsModal,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    entityEditorHeader,
+    page,
+    customAppEditorViewForm,
+    customAppEditorAppSettingsPreview,
+    customAppEditorAppSettingsPreviewBody,
+    entityEditorGeneralInfoPreview,
+  }) => {
+    setTestIds('EPMRTC-5946', 'EPMRTC-6046');
+    const appNameWithSpaces = `${applicationNamePrefix}${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2 - 6)}`; // Ensure total length is 160 with spaces
+    const appVersion = GeneratorUtil.randomEntityVersion();
+    const appEntity = {
+      name: appNameWithSpaces,
+      version: appVersion,
+    } as DialAIEntityModel;
+    const descriptionTextToType = 'This is a test description update.';
+    let reusableAgentElement: BaseElement;
+
+    await dialTest.step(
+      'Create a custom app via API with a name of 160 symbols containing spaces',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appEntity.name)
+          .withDisplayVersion(appEntity.version!)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel);
+      },
+    );
+
+    await dialTest.step('Open DIAL Marketplace', async () => {
+      await marketplacePage.openMarketplacePage({
+        updateInstalledDeployments: false,
+      });
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step("Find app's card", async () => {
+      await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+      reusableAgentElement =
+        await marketplaceEntitiesSection.findEntityElement(appEntity);
+      await baseAssertion.assertElementState(
+        reusableAgentElement,
+        'visible',
+        ExpectedMessages.agentIsVisible,
+      );
+    });
+
+    await dialTest.step(
+      "Hover over app's icon - tooltip is displayed in several lines",
+      async () => {
+        const agentIcon =
+          await marketplaceEntities.getEntityIcon(reusableAgentElement);
+        await agentIcon.hover();
+        await tooltipAssertion.assertTooltipContent(
+          ExpectedConstants.agentIconTooltip(
+            appEntity.name,
+            appEntity.version!,
+          ),
+        );
+        await tooltipAssertion.assertTooltipStyle(
+          Styles.wordBreak,
+          StyleValues.breakWord,
+        );
+        await tooltipAssertion.assertTooltipStyle(
+          Styles.textWrapMode,
+          StyleValues.wrap,
+        );
+      },
+    );
+
+    await dialTest.step("Click on app's card", async () => {
+      const agentElement =
+        await marketplaceEntitiesSection.findEntityElement(appEntity);
+      await agentElement.click();
+      await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+    });
+
+    await dialTest.step('Click Edit icon', async () => {
+      await entityDetailsModal.editButton.click();
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.CustomApp,
+      );
+    });
+
+    await dialTest.step(
+      'Switch to General info step in App Editor',
+      async () => {
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Description field, move cursor to App settings step (without clicking) and type any text into the Description field',
+      async () => {
+        await entityEditorGeneralForm.description.click();
+        await entityEditorHeader.getAppSettingsStep().hoverOver();
+        await page.keyboard.type(descriptionTextToType);
+      },
+    );
+
+    await dialTest.step('Click on "App settings" link in header', async () => {
+      await entityEditorHeader.goToEntitySettingsStepWithHeaderStepper();
+      await baseAssertion.assertElementState(
+        customAppEditorViewForm,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        customAppEditorAppSettingsPreview,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        customAppEditorAppSettingsPreviewBody.previewSpinner,
+        'hidden',
+      );
+    });
+
+    await dialTest.step(
+      'Click back on "General info" link in the header',
+      async () => {
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          entityEditorGeneralInfoPreview.previewSpinner,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Check description field - The updated description is displayed',
+      async () => {
+        await baseAssertion.assertInputValue(
+          entityEditorGeneralForm.description,
+          descriptionTextToType,
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+      },
+    );
+  },
+);
+
+dialTest.afterEach(
+  'Teardown: Delete created application via API',
+  async ({ itemApiHelper }: { itemApiHelper: ItemApiHelper }) => {
+    if (appEntityForCleanup) {
+      await itemApiHelper.deleteBackendItem(appEntityForCleanup);
+      appEntityForCleanup = undefined;
+    }
   },
 );

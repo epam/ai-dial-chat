@@ -19,39 +19,43 @@ import {
   getConversationSchema,
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
-import { isMobile } from '@/src/utils/app/mobile';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ChatSelectors } from '@/src/store/chat/chat.selectors';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import {
+  ChatActions,
+  ConversationsActions,
+  FilesActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
+import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
+import { AttachButton } from '@/src/components/Files/AttachButton';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
-import { AttachButton } from '../../Files/AttachButton';
-import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Message, Role } from '@epam/ai-dial-shared';
+import { Feature, Message, Role } from '@epam/ai-dial-shared';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -79,11 +83,15 @@ export const ChatInputMessage = Inversify.register(
     showReplayControls,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
+
     const dispatch = useAppDispatch();
-    const [isTyping, setIsTyping] = useState<boolean>(false);
+
+    const [isTyping, setIsTyping] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
     const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
+
     const promptTemplateMappingRef = useRef(new Map<string, string>());
+
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
@@ -119,7 +127,6 @@ export const ChatInputMessage = Inversify.register(
     const isUploadingFilePresent = useAppSelector(
       FilesSelectors.selectIsUploadingFilePresent,
     );
-
     const isMessageError = useAppSelector(
       ConversationsSelectors.selectIsMessagesError,
     );
@@ -131,24 +138,32 @@ export const ChatInputMessage = Inversify.register(
     );
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
-
-    const shouldRegenerate =
-      isLastMessageError ||
-      (isLastAssistantMessageEmpty && !messageIsStreaming);
-
     const selectedModels = useAppSelector(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
-
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
-    const configurationSchema = useAppSelector(
-      ChatSelectors.selectConfigurationSchema,
+
+    const configurationSchema = useAppSelector((state) =>
+      ChatSelectors.selectConfigurationSchemaByModelId(
+        state,
+        selectedConversations[0]?.model.id,
+      ),
     );
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
+    const isDisabledInputFeature = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
+    );
+    const disabledInputFeatureData = useAppSelector((state) =>
+      SettingsSelectors.selectFeatureData(state, Feature.DisabledSend),
+    );
+
+    const shouldRegenerate =
+      isLastMessageError ||
+      (isLastAssistantMessageEmpty && !messageIsStreaming);
 
     useEffect(() => {
       if (shouldFocusAndScroll && textareaRef.current) {
@@ -157,6 +172,20 @@ export const ChatInputMessage = Inversify.register(
         dispatch(ChatActions.setShouldFocusAndScroll(false));
       }
     }, [dispatch, shouldFocusAndScroll, textareaRef]);
+
+    useEffect(() => {
+      if (!canAttachLinks) {
+        setSelectedDialLinks([]);
+      }
+      if (!canAttachFiles || !canAttachFolders) {
+        dispatch(
+          FilesActions.resetSelectedFiles({
+            keepFiles: canAttachFiles,
+            keepFolders: canAttachFolders,
+          }),
+        );
+      }
+    }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
@@ -214,6 +243,7 @@ export const ChatInputMessage = Inversify.register(
       selectedFolders.length,
     ]);
     const isSendDisabled =
+      isDisabledInputFeature ||
       isReplay ||
       isMessageError ||
       isInputEmpty ||
@@ -317,16 +347,13 @@ export const ChatInputMessage = Inversify.register(
       onRegenerate,
     ]);
 
+    const enterType = useAppSelector(UISelectors.selectEnterType);
+
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (showPromptList && filteredPrompts.length > 0) {
           handleKeyDownIfShown(e);
-        } else if (
-          e.key === 'Enter' &&
-          !isTyping &&
-          !isMobile() &&
-          !e.shiftKey
-        ) {
+        } else if (!isTyping && allowEnterClick(e, enterType)) {
           e.preventDefault();
           if (isReplay || messageIsStreaming) {
             return;
@@ -341,6 +368,7 @@ export const ChatInputMessage = Inversify.register(
         showPromptList,
         filteredPrompts.length,
         isTyping,
+        enterType,
         handleKeyDownIfShown,
         isReplay,
         messageIsStreaming,
@@ -398,16 +426,13 @@ export const ChatInputMessage = Inversify.register(
     );
 
     const handleSelectAlreadyUploaded = useCallback(
-      (result: unknown) => {
-        if (typeof result === 'object') {
-          const selectedFilesIds = result as string[];
-          dispatch(FilesActions.resetSelectedFiles());
-          dispatch(
-            FilesActions.selectFiles({
-              ids: selectedFilesIds,
-            }),
-          );
-        }
+      (result: string[]) => {
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: result,
+          }),
+        );
       },
       [dispatch],
     );
@@ -448,6 +473,9 @@ export const ChatInputMessage = Inversify.register(
     }, []);
 
     const tooltipContent = (): string => {
+      if (isDisabledInputFeature && disabledInputFeatureData?.description) {
+        return disabledInputFeatureData.description;
+      }
       if (messageIsStreaming) {
         return t('Stop generating');
       }
@@ -484,6 +512,11 @@ export const ChatInputMessage = Inversify.register(
       return t('Talk to your agent');
     }, [isChatInputDisabled, t]);
 
+    const isDisabled = useMemo(
+      () => isLoading || isChatInputDisabled,
+      [isLoading, isChatInputDisabled],
+    );
+
     const paddingLeftClass = canAttach
       ? isOverlay
         ? 'pl-11'
@@ -495,7 +528,7 @@ export const ChatInputMessage = Inversify.register(
     return (
       <div
         className={classNames(
-          'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
+          'mx-3 mb-3 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-5',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
         )}
       >
@@ -512,7 +545,7 @@ export const ChatInputMessage = Inversify.register(
             )}
             maxHeight={MAX_HEIGHT}
             placeholder={chatInputPlaceholder}
-            disabled={isLoading || isChatInputDisabled}
+            disabled={isDisabled}
             value={content}
             rows={1}
             onCompositionStart={() => setIsTyping(true)}
@@ -530,7 +563,7 @@ export const ChatInputMessage = Inversify.register(
           />
           {canAttach && (
             <>
-              <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
+              <div className="absolute bottom-3 left-4 cursor-pointer rounded disabled:cursor-not-allowed">
                 <AttachButton
                   selectedFilesIds={selectedFiles
                     .map((f) => f.id)
@@ -544,7 +577,7 @@ export const ChatInputMessage = Inversify.register(
                 selectedDialLinks.length > 0 ||
                 selectedFolders.length > 0) && (
                 <div
-                  className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3"
+                  className="mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto px-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]"
                   data-qa="attachment-container"
                 >
                   <ChatInputAttachments

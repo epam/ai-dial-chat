@@ -12,21 +12,20 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderForScreen } from '@/src/components/Common/ScreenRender';
 
-import UserIcon from '../../../../public/images/icons/user.svg';
-import { CloseSidebarButton } from '../../Buttons/CloseSidebarButton';
-import { withRenderWhen } from '../../Common/RenderWhen';
-import { withRenderForScreen } from '../../Common/ScreenRender';
-
+import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const UserInfo = () => {
   const { t } = useTranslation(Translation.Header);
@@ -48,9 +47,10 @@ const UserInfo = () => {
           <UserIcon className="mx-2 text-secondary" width={18} height={18} />
         )}
 
-        <span className="grow" data-qa="username">
-          {session?.user?.name ?? ''}
-        </span>
+        <DialEllipsisTooltip
+          contentClassName="grow"
+          text={<span data-qa="username">{session?.user?.name ?? ''}</span>}
+        />
       </div>
     </div>
   );

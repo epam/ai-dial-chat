@@ -3,28 +3,36 @@ import { IconCopy } from '@tabler/icons-react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversations: ConversationInfo[];
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
+  isChatReadyForInput?: boolean;
 }
 
-export default function ChatExternalControls({
+export function ChatExternalControls({
   conversations,
   showScrollDownButton,
   onScrollDownClick,
+  isChatReadyForInput,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -33,12 +41,20 @@ export default function ChatExternalControls({
   const approveRequiredResources = useAppSelector(
     PublicationSelectors.selectResourcesToReview,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
+  );
 
-  const conversationsToDuplicate = conversations.filter((conv) =>
-    isEntityIdExternal(conv),
+  const conversationsToDuplicate = conversations.filter(
+    (conv) =>
+      (isEntityIdPublic(conv) || isEntityReadOnly(conv)) &&
+      isEntityIdExternal(conv),
   );
 
   const handleDuplicate = () => {
@@ -50,7 +66,10 @@ export default function ChatExternalControls({
   if (
     isOverlayConversationId ||
     conversations.some((c) =>
-      approveRequiredResources.some((r) => r.reviewUrl === c.id),
+      approveRequiredResources.some(
+        (r) =>
+          r.reviewUrl === c.id && r.publicationUrl === selectedPublicationUrl,
+      ),
     )
   ) {
     return null;
@@ -59,18 +78,23 @@ export default function ChatExternalControls({
   return (
     <div className="flex justify-center">
       <div className="relative mx-2 mb-2 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
-        <button
-          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-2 border-primary bg-layer-2 p-3 hover:bg-layer-4"
+        <DialButton
+          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center border-primary bg-layer-2 p-3"
+          variant={ButtonVariant.Secondary}
           onClick={handleDuplicate}
           data-qa="duplicate"
-        >
-          <span className="text-secondary">
-            <IconCopy width={18} height={18} />
-          </span>
-          {t(
-            `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
-          )}
-        </button>
+          iconBefore={
+            <IconCopy className="text-secondary" width={18} height={18} />
+          }
+          label={
+            isChatReadyForInput && !isReadOnly
+              ? t('Duplicate')
+              : t(
+                  `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
+                )
+          }
+        />
+
         {showScrollDownButton && (
           <ScrollDownButton
             className="-top-16 right-0 md:-top-20"

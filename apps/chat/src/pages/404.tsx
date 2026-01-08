@@ -4,7 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { Title } from '../components/Title';
+import { Title } from '@/src/components/Title';
 
 function Custom404() {
   const { t } = useTranslation(Translation.Common);

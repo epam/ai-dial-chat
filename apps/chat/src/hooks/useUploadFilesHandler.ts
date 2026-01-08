@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { prepareEntityName } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
@@ -17,8 +18,8 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, UIActions } from '@/src/store/actions';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 const validateFiles = (
   files: File[],
@@ -26,12 +27,12 @@ const validateFiles = (
 ): { validFiles: File[]; errorMsg: string } => {
   const { validFiles: preUploadValidFiles, errorMsg: preUploadErrorMsg } =
     validatePreUploadFiles(files, allowedTypes);
-  const { validFiles, errorMsg: uploadErrorMsg } =
-    validateUploadFiles(preUploadValidFiles);
+
+  const { validFiles } = validateUploadFiles(preUploadValidFiles);
 
   return {
     validFiles,
-    errorMsg: [preUploadErrorMsg, uploadErrorMsg].join('\n').trim(),
+    errorMsg: preUploadErrorMsg.trim(),
   };
 };
 
@@ -41,6 +42,7 @@ export const useUploadFilesHandler = (
   maximumAttachmentsAmount = 0,
   allowedTypes: string[] = [],
   skipSelect?: boolean,
+  preUploadFiles?: boolean,
 ) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -58,10 +60,10 @@ export const useUploadFilesHandler = (
   const folderPath = getRelativePath(folderId);
 
   useEffect(() => {
-    if (folderId && !isRootId(folderId)) {
+    if (folderId && !isRootId(folderId) && preUploadFiles) {
       dispatch(FilesActions.getFiles({ id: folderId }));
     }
-  }, [dispatch, folderId]);
+  }, [dispatch, folderId, preUploadFiles]);
 
   const handleUpload = useCallback(
     (files: File[]) => {
@@ -81,21 +83,39 @@ export const useUploadFilesHandler = (
         return;
       }
 
-      const { validFiles, errorMsg } = validateFiles(files, allowedTypes);
+      const sanitizedFiles = files.map((file) => {
+        const cleanName = prepareEntityName(file.name);
+        return file.name === cleanName
+          ? file
+          : new File([file], cleanName, {
+              type: file.type,
+              lastModified: file.lastModified,
+            });
+      });
+
+      const { validFiles, errorMsg } = validateFiles(
+        sanitizedFiles,
+        allowedTypes,
+      );
 
       if (errorMsg) dispatch(UIActions.showErrorToast(errorMsg));
       if (!validFiles?.length) return;
 
-      const attachmentsSameLevelNames = allFiles
-        .filter((file) => file.folderId === folderId)
-        .map((file) => prepareFileName(file.name));
+      const sameLevelFiles = allFiles.filter(
+        (file) => file.folderId === folderId,
+      );
+      const sameLevelFileNames = new Set(
+        sameLevelFiles.map((file) => prepareFileName(file.name)),
+      );
 
       const preparedFiles = validFiles.map((file) => {
-        const name = prepareFileName(
-          attachmentsSameLevelNames.includes(prepareFileName(file.name))
-            ? getNextFileName(file.name, allFiles)
-            : file.name,
-        );
+        let name = prepareFileName(file.name);
+
+        if (sameLevelFileNames.has(name)) {
+          name = getNextFileName(name, sameLevelFiles, 0, true);
+          sameLevelFileNames.add(name);
+        }
+
         return {
           name,
           fileContent: file,
@@ -124,16 +144,16 @@ export const useUploadFilesHandler = (
       return Promise.resolve(preparedFiles);
     },
     [
-      allFiles,
-      allowedTypes,
       selectedAttachmentsAmount,
-      bucket,
-      dispatch,
-      folderId,
-      folderPath,
       maximumAttachmentsAmount,
-      t,
+      allowedTypes,
+      dispatch,
+      allFiles,
       skipSelect,
+      t,
+      folderId,
+      bucket,
+      folderPath,
     ],
   );
 

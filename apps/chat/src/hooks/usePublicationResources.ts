@@ -22,6 +22,7 @@ export const usePublicationResources = <
     () => resources.map((r) => r.reviewUrl),
     [resources],
   );
+
   const itemsToDisplay = useMemo(
     () =>
       items.filter(
@@ -29,6 +30,7 @@ export const usePublicationResources = <
       ),
     [items, resourceUrls],
   );
+
   const folderItemsToDisplay = useMemo(
     () =>
       items.filter(
@@ -36,7 +38,8 @@ export const usePublicationResources = <
       ),
     [items, resourceUrls],
   );
-  const rootFolders = useMemo(() => {
+
+  const rootPublicationFolders = useMemo(() => {
     return uniqBy(
       resourceUrls.map((url) =>
         minBy(
@@ -48,9 +51,18 @@ export const usePublicationResources = <
     ).filter(Boolean) as FolderInterface[];
   }, [allFolders, resourceUrls]);
 
+  const allPublicationFolders = useMemo(
+    () =>
+      allFolders.filter((f) =>
+        folderItemsToDisplay.some((item) => item.id.startsWith(`${f.id}/`)),
+      ),
+    [allFolders, folderItemsToDisplay],
+  );
+
   return {
     itemsToDisplay,
     folderItemsToDisplay,
-    rootFolders,
+    rootPublicationFolders,
+    allPublicationFolders,
   };
 };

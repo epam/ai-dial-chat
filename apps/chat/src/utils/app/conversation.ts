@@ -1,63 +1,51 @@
 import {
+  getLastPathSegment,
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getChosenFormButtons,
   getConfigurationSchema,
   getConfigurationValue,
-  getFormValueDefinitions,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  ApiUtils,
+  getConversationApiKey,
+  parseEntityApiKey,
+} from '@/src/utils/server/api';
 
-import { Conversation, Replay } from '@/src/types/chat';
-import { EntityType, PartialBy } from '@/src/types/common';
-import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import { ApiKeys, PartialBy } from '@/src/types/common';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { getConversationApiKey, parseConversationApiKey } from '../server/api';
-import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
-import { getConversationRootId, getFileRootId, isEntityIdLocal } from './id';
+import {
+  getConversationRootId,
+  getEntityBucket,
+  getFileRootId,
+  isEntityIdLocal,
+} from './id';
 
 import {
+  Conversation,
   ConversationInfo,
   Message,
   MessageSettings,
+  Replay,
   Role,
+  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
-import uniq from 'lodash-es/uniq';
-
-export const getValidEntitiesFromIds = <T>(
-  entitiesIds: string[],
-  addonsMap: Partial<Record<string, T>>,
-): T[] =>
-  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
-
-export const getSelectedAddons = (
-  selectedAddons: string[],
-  addonsMap: AddonsMap,
-  model?: DialAIEntityModel,
-) => {
-  if (model && model.type !== EntityType.Application) {
-    const preselectedAddons = model.selectedAddons ?? [];
-    const addons = uniq([...preselectedAddons, ...selectedAddons]);
-
-    return getValidEntitiesFromIds(addons, addonsMap);
-  }
-
-  return null;
-};
 
 export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,
 ): boolean => {
-  const isChanged = Object.keys(newSettings).some((key) => {
+  return Object.keys(newSettings).some((key) => {
     const convSetting = conversation[key as keyof Conversation];
     const newSetting = newSettings[key as keyof MessageSettings];
 
@@ -80,8 +68,6 @@ export const isSettingsChanged = (
       newSettings[key as keyof MessageSettings]
     );
   });
-
-  return isChanged;
 };
 
 export const getNewConversationName = (
@@ -101,7 +87,7 @@ export const getNewConversationName = (
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
   } else if (formValue && configurationSchema) {
-    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+    const definitions = getChosenFormButtons(formValue, configurationSchema);
 
     if (definitions.length) return prepareEntityName(definitions[0].title);
   }
@@ -110,7 +96,7 @@ export const getNewConversationName = (
 };
 
 export const getGeneratedConversationId = (
-  conversation: Omit<ConversationInfo, 'id'>,
+  conversation: PartialBy<ConversationInfo, 'id'>,
 ): string => {
   if (conversation.folderId) {
     return constructPath(
@@ -119,7 +105,9 @@ export const getGeneratedConversationId = (
     );
   }
   return constructPath(
-    getConversationRootId(),
+    getConversationRootId(
+      conversation.id ? getEntityBucket({ id: conversation.id }) : undefined,
+    ),
     getConversationApiKey(conversation),
   );
 };
@@ -137,12 +125,33 @@ export const regenerateConversationId = <T extends ConversationInfo>(
   return conversation as T;
 };
 
-export const getConversationInfoFromId = (id: string): ConversationInfo => {
+export const getConversationInfoFromId = (
+  id: string,
+  options?: Partial<{ parseVersion: boolean }>,
+): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
-  return regenerateConversationId({
-    ...parseConversationApiKey(name),
-    folderId: constructPath(apiKey, bucket, parentPath),
+  const {
+    modelInfo,
+    version,
+    name: parsedName,
+  } = parseEntityApiKey(name, {
+    parseVersion: options?.parseVersion,
+    parseModel: true,
   });
+
+  const regeneratePayload: Omit<ConversationInfo, 'id'> = {
+    ...modelInfo,
+    name: parsedName,
+    folderId: constructPath(apiKey, bucket, parentPath),
+  };
+
+  if (version) {
+    regeneratePayload.publicationInfo = {
+      version,
+    };
+  }
+
+  return regenerateConversationId(regeneratePayload);
 };
 
 export const sortByDateAndName = <T extends ConversationInfo>(
@@ -209,59 +218,51 @@ export const isChosenConversationValidForCompare = (
     (message) => message.role === Role.User,
   );
 
-  if (convUserMessages.length !== selectedConvUserMessages.length) {
-    return false;
-  }
-
-  return true;
+  return convUserMessages.length === selectedConvUserMessages.length;
 };
 
 export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
   model.name || model.id;
 
 export const addPausedError = (
-  conversation: Conversation,
+  _conversation: Conversation,
   models: DialAIEntityModel[],
   messages: Message[],
 ): Message[] => {
-  if (
-    models.every(
-      (m) => m.features?.allowResume && !conversation.selectedAddons.length,
-    )
-  ) {
+  if (models.every((m) => m.features?.allowResume)) {
     return messages;
   }
-  let assistentMessageIndex = -1;
+  let assistantMessageIndex = -1;
   messages.forEach((message, index) => {
     if (message.role === Role.Assistant) {
-      assistentMessageIndex = index;
+      assistantMessageIndex = index;
     }
   });
   if (
-    assistentMessageIndex === -1 ||
-    assistentMessageIndex !== messages.length - 1
+    assistantMessageIndex === -1 ||
+    assistantMessageIndex !== messages.length - 1
   ) {
     return messages;
   }
 
-  const assistentMessage = messages[assistentMessageIndex];
+  const assistantMessage = messages[assistantMessageIndex];
   const updatedMessage: Message = {
-    ...assistentMessage,
-    ...(assistentMessage.custom_content?.stages?.length && {
+    ...assistantMessage,
+    ...(assistantMessage.custom_content?.stages?.length && {
       custom_content: {
-        ...assistentMessage.custom_content,
-        stages: assistentMessage.custom_content.stages.filter(
+        ...assistantMessage.custom_content,
+        stages: assistantMessage.custom_content.stages.filter(
           (stage) => stage.status != null,
         ),
       },
     }),
     errorMessage:
-      assistentMessage.errorMessage ??
+      assistantMessage.errorMessage ??
       'Response generation was stopped. Please regenerate to continue working with conversation',
   };
 
   return messages.map((message, index) => {
-    if (index === assistentMessageIndex) {
+    if (index === assistantMessageIndex) {
       return updatedMessage;
     }
 
@@ -273,7 +274,6 @@ export const getConversationModelParams = (
   conversation: Conversation,
   modelId: string | undefined,
   modelsMap: ModelsMap,
-  addonsMap: AddonsMap,
 ): Partial<Conversation> => {
   if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
     return {
@@ -294,24 +294,10 @@ export const getConversationModelParams = (
         ...conversation.replay,
         replayAsIs: false,
       };
-  const updatedAddons =
-    isReplayConversation(conversation) &&
-    isReplayAsIsConversation(conversation) &&
-    !updatedReplay?.replayAsIs
-      ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
-      : conversation.selectedAddons;
 
   return {
     model: { id: newAiEntity.reference },
-    assistantModelId:
-      newAiEntity.type === EntityType.Assistant
-        ? DefaultsService.get(
-            'assistantSubmodelId',
-            FALLBACK_ASSISTANT_SUBMODEL_ID,
-          )
-        : undefined,
     replay: updatedReplay,
-    selectedAddons: updatedAddons,
   };
 };
 
@@ -328,21 +314,23 @@ export const getSystemMessageContent = (
 export const getDefaultModelReference = ({
   recentModelReferences,
   modelReferences,
-  defaultModelId,
+  defaultModelReference,
 }: {
   recentModelReferences: string[];
   modelReferences: string[];
-  defaultModelId: string;
+  defaultModelReference: string;
 }) => {
   return [
-    ...modelReferences.filter((reference) => reference === defaultModelId),
+    ...modelReferences.filter(
+      (reference) => reference === defaultModelReference,
+    ),
     ...recentModelReferences,
     ...modelReferences,
   ][0];
 };
 
 export const isOldConversationReplay = (replay: Replay | undefined) =>
-  replay &&
+  !!replay &&
   replay.isReplay &&
   replay.replayUserMessagesStack &&
   replay.replayUserMessagesStack.some((message) => !message.model);
@@ -365,3 +353,65 @@ export const getQuickAttachmentsSavingPath = () => {
 
   return `${getFileRootId()}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
+
+export const updateMessagesAttachmentsTitles = (
+  messages: Message[],
+  titlesToUpdate: string[],
+) => {
+  return messages.map((message) => ({
+    ...message,
+    custom_content: {
+      ...message.custom_content,
+      attachments: message.custom_content?.attachments?.map((attachment) => {
+        const title = ApiUtils.decodeApiUrl(
+          getLastPathSegment(attachment.url ?? ''),
+        );
+
+        return titlesToUpdate.includes(title)
+          ? {
+              ...attachment,
+              title: title ?? 'Attachment',
+            }
+          : attachment;
+      }),
+    },
+  }));
+};
+
+export const isConversationInfoEntity = (
+  entity: ShareEntity,
+): entity is ConversationInfo =>
+  entity.id.startsWith(`${ApiKeys.Conversations}/`);
+
+export const isLoadedConversationEntity = (
+  entity: ShareEntity,
+): entity is Conversation =>
+  isConversationInfoEntity(entity) && entity.status === UploadStatus.LOADED;
+
+export function getMessageCustomContent(
+  message: Message,
+  allowAssistantAttachments = false,
+): Partial<Message> | undefined {
+  return message.custom_content?.state ||
+    message.custom_content?.attachments?.length ||
+    message.custom_content?.form_value ||
+    message.custom_content?.form_schema
+    ? {
+        custom_content: {
+          ...((allowAssistantAttachments || message.role !== Role.Assistant) &&
+            message.custom_content?.attachments?.length && {
+              attachments: message.custom_content?.attachments,
+            }),
+          ...(message.custom_content?.state && {
+            state: message.custom_content.state,
+          }),
+          ...(message.custom_content?.form_value && {
+            form_value: message.custom_content?.form_value,
+          }),
+          ...(message.custom_content?.form_schema && {
+            form_schema: message.custom_content?.form_schema,
+          }),
+        },
+      }
+    : undefined;
+}

@@ -14,7 +14,6 @@ import {
 } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
-  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -22,8 +21,8 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
+  getPartialAndFullyChosenFolders,
   isFolderEmpty,
-  sortByName,
 } from '@/src/utils/app/folders';
 import {
   isConversationWithFormSchema,
@@ -35,9 +34,11 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
-  PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
   isSearchTermMatched,
@@ -45,20 +46,19 @@ import {
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, NotAllowedItem } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-
-import { ChatSelectors } from '../chat/chat.selectors';
-import { ConversationsState } from './conversations.types';
 
 import {
   ConversationInfo,
@@ -67,10 +67,10 @@ import {
   ShareEntity,
 } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
+import isNil from 'lodash-es/isNil';
 import uniqBy from 'lodash-es/uniqBy';
 
-const rootSelector = (state: RootState): ConversationsState =>
-  state.conversations;
+const rootSelector = (state: RootState) => state.conversations;
 
 const selectConversations = (state: RootState): ConversationInfo[] =>
   rootSelector(state).conversations;
@@ -94,6 +94,13 @@ const selectConversationsByFolderId = createSelector(
   },
 );
 
+const selectConversationById = createSelector(
+  [selectConversations, (_state, id: string) => id],
+  (conversations, id) => {
+    return conversations.find((conv) => conv.id === id);
+  },
+);
+
 const selectFilteredConversations = (
   filters: EntityFilters,
   searchTerm?: string,
@@ -103,10 +110,7 @@ const selectFilteredConversations = (
   }>,
 ) =>
   createSelector(
-    [
-      selectConversations,
-      (state) => PublicationSelectors.selectPublicVersionGroups(state),
-    ],
+    [selectConversations, PublicationSelectors.selectPublicVersionGroups],
     (conversations, versionGroups) => {
       return conversations.filter(
         (conversation) =>
@@ -127,7 +131,24 @@ const selectFilteredConversations = (
     },
   );
 
-const selectFolders = (state: RootState) => rootSelector(state).folders || [];
+const selectFolders = (state: RootState) => rootSelector(state).folders;
+
+const selectMyFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) =>
+    folder.id.startsWith(`${getConversationRootId()}/`),
+  );
+});
+
+const selectMyFoldersWithSearchTerm = createSelector(
+  [selectMyFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
 
 const selectFolderById = createSelector(
   [selectFolders, (_state, id: string) => id],
@@ -210,11 +231,17 @@ const selectSelectedConversations = createSelector(
   },
 );
 
-const selectLoadedCharts = createSelector([rootSelector], (state) => {
-  // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
-  // PlotReactState had some additional "state" properties that were never declared or updated.
-  return cloneDeep(state.loadedCharts);
-});
+const _selectLoadedCharts = (state: RootState) =>
+  rootSelector(state).loadedCharts;
+
+const selectLoadedCharts = createSelector(
+  [_selectLoadedCharts],
+  (loadedCharts) => {
+    // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
+    // PlotReactState had some additional "state" properties that were never declared or updated.
+    return cloneDeep(loadedCharts);
+  },
+);
 
 const selectChartLoading = (state: RootState) =>
   rootSelector(state).chartLoading;
@@ -324,10 +351,19 @@ const selectAreSelectedConversationsExternal = createSelector(
   },
 );
 
+const selectAreSelectedConversationsReadOnly = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some(
+      (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
+    );
+  },
+);
+
 const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
-    const conversationRootId = getConversationRootId();
+    const conversationRootId = `${getConversationRootId()}/`;
     return (
       conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
       folders.some((folder) => folder.id.startsWith(conversationRootId))
@@ -358,9 +394,7 @@ const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) =>
-      conv.messages.some(
-        (message) => typeof message.errorMessage !== 'undefined',
-      ),
+      conv.messages.some((message) => !isNil(message.errorMessage)),
     );
   },
 );
@@ -413,7 +447,7 @@ const selectAvailableAttachmentsTypes = createSelector(
     // Assume that we have only 2 selected models available
     const availableModelsAttachmentTypes = (
       modelsAttachmentsTypes[0] || []
-    ).filter((value) => (modelsAttachmentsTypes[1] || []).includes(value));
+    ).filter((value) => (modelsAttachmentsTypes[1] ?? []).includes(value));
 
     return availableModelsAttachmentTypes.length === 0
       ? undefined
@@ -478,40 +512,9 @@ const selectCanAttachFile = createSelector(
   },
 );
 
-const selectTemporaryFolders = (state: RootState) =>
-  rootSelector(state).temporaryFolders;
-
-const selectPublishedWithMeFolders = createSelector(
-  [selectFolders],
-  (folders) => {
-    return folders.filter(
-      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
-    );
-  },
-);
-
-const selectTemporaryAndPublishedFolders = createSelector(
-  [
-    selectFolders,
-    selectPublishedWithMeFolders,
-    selectTemporaryFolders,
-    (_state, searchTerm?: string) => searchTerm,
-  ],
-  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
-    const allPublishedFolders = publishedFolders.flatMap((folder) =>
-      getChildAndCurrentFoldersById(folder.id, allFolders),
-    );
-    const filteredFolders = [
-      ...sortByName(allPublishedFolders),
-      ...temporaryFolders,
-    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
-
-    return getParentAndChildFolders(
-      sortByName([...allFolders, ...temporaryFolders]),
-      filteredFolders,
-    );
-  },
-);
+const selectPublicFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
+});
 
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
@@ -665,36 +668,13 @@ const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
       selectChosenEmptyFolderIds,
     ],
     (selectedItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
-      const fullyChosenFolderIds = folders
-        .map((folder) => `${folder.id}/`)
-        .filter(
-          (folderId) =>
-            itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
-            chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
-        )
-        .filter(
-          (folderId) =>
-            itemsShouldBeChosen
-              .filter((item) => item.id.startsWith(folderId))
-              .every((item) => selectedItems.includes(item.id)) &&
-            emptyFolderIds
-              .filter((id) => id.startsWith(folderId))
-              .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
-        );
-
-      const partialChosenFolderIds = folders
-        .map((folder) => `${folder.id}/`)
-        .filter(
-          (folderId) =>
-            !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-            (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-              fullyChosenFolderIds.some((entityId) =>
-                entityId.startsWith(folderId),
-              )) &&
-            !fullyChosenFolderIds.includes(folderId),
-        );
-
-      return { fullyChosenFolderIds, partialChosenFolderIds };
+      return getPartialAndFullyChosenFolders(
+        folders,
+        itemsShouldBeChosen,
+        selectedItems,
+        emptyFolderIds,
+        chosenEmptyFolderIds,
+      );
     },
   );
 
@@ -715,27 +695,102 @@ const selectRenamingConversation = createSelector(
 const selectTalkToConversationId = (state: RootState) =>
   rootSelector(state).talkToConversationId;
 
+const selectIsNotAllowed = createSelector(
+  [
+    selectSelectedConversations,
+    ModelsSelectors.selectModelsMap,
+    ModelsSelectors.selectModels,
+    ModelsSelectors.selectAreModelsLoaded,
+  ],
+  (selectedConversations, modelsMap, models, areModelsLoaded) => {
+    if (!areModelsLoaded) {
+      return false;
+    }
+    if (models.length === 0 && selectedConversations.length > 0) {
+      return true;
+    }
+    if (
+      Object.keys(modelsMap).length === 0 &&
+      models.length > 0 &&
+      selectedConversations.length > 0
+    ) {
+      return true;
+    }
+    return selectedConversations.some((conv) =>
+      checkIsNotAllowedModelUtil(conv, modelsMap),
+    );
+  },
+);
+
+const selectNotAllowedItemsForDisplay = createSelector(
+  [
+    selectSelectedConversations,
+    ModelsSelectors.selectModelsMap,
+    ModelsSelectors.selectAreModelsLoaded,
+  ],
+  (selectedConversations, modelsMap, areModelsLoaded): NotAllowedItem[] => {
+    if (!areModelsLoaded || Object.keys(modelsMap).length === 0) {
+      return [];
+    }
+    return selectedConversations
+      .filter((conv) => checkIsNotAllowedModelUtil(conv, modelsMap))
+      .map((conv: Conversation): NotAllowedItem => {
+        const modelDetails = modelsMap[conv.model.id];
+        return {
+          conversationId: conv.id,
+          agentName: modelDetails?.name ?? conv.model.id,
+        };
+      });
+  },
+);
+
 const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
-    ChatSelectors.selectIsConfigurationBlocksInput,
-    ChatSelectors.selectNotAvailableEntityType,
+    PublicationSelectors.selectResourcesToReview,
+    selectIsNotAllowed,
+    selectAreSelectedConversationsReadOnly,
+    AuthSelectors.selectIsAdmin,
+    (state: RootState) => state,
   ],
-  (conversations, isConfigurationBlocksInput, notAvailableEntityType) =>
-    conversations.some(
+  (
+    conversations,
+    resourcesToReview,
+    isNotAllowedModels,
+    areReadOnly,
+    isAdmin,
+    state,
+  ) => {
+    const conversationsModelsIds = conversations.map(
+      (conversation) => conversation.model.id,
+    );
+    const isConfigurationBlocksInput =
+      ChatSelectors.selectIsConfigurationBlocksInput(
+        state,
+        conversationsModelsIds,
+      );
+    const isReviewEntity = conversations.some((conversation) =>
+      resourcesToReview.some(
+        (resource) => resource.reviewUrl === conversation.id,
+      ),
+    );
+
+    return conversations.some(
       (conversation) =>
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
-        notAvailableEntityType ||
+        isNotAllowedModels ||
         isPlaybackConversation(conversation) ||
-        isEntityIdExternal(conversation) ||
+        (areReadOnly && !isReviewEntity) ||
+        (isReviewEntity && !isAdmin) ||
         !conversation.messages ||
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
         ),
-    ),
+    );
+  },
 );
 
 const selectPreviewConversationId = (state: RootState) =>
@@ -746,11 +801,26 @@ const selectIsSelectedConversationsWithSchema = createSelector(
   (conversations) => conversations.some(isConversationWithFormSchema),
 );
 
+const selectAction = (state: RootState) =>
+  rootSelector(state).preselectedAction;
+
+const selectMoveToConversationId = (state: RootState) =>
+  rootSelector(state).moveToConversationId;
+
+const selectDeletingConversationId = (state: RootState) =>
+  rootSelector(state).deletingConversationId;
+
+const selectExportingConversationId = (state: RootState) =>
+  rootSelector(state).exportingConversationId;
+
 export const ConversationsSelectors = {
   selectConversations,
   selectConversationsByFolderId,
+  selectConversationById,
   selectFilteredConversations,
   selectFolders,
+  selectMyFolders,
+  selectMyFoldersWithSearchTerm,
   selectFolderById,
   selectFoldersByFolderId,
   selectEmptyFolderIds,
@@ -778,6 +848,7 @@ export const ConversationsSelectors = {
   selectIsReplaySelectedConversations,
   selectIsPlaybackSelectedConversations,
   selectAreSelectedConversationsExternal,
+  selectAreSelectedConversationsReadOnly,
   selectDoesAnyMyItemExist,
   selectPlaybackActiveIndex,
   selectIsErrorReplayConversations,
@@ -791,7 +862,7 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
-  selectTemporaryAndPublishedFolders,
+  selectPublicFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   selectIsCompareLoading,
@@ -816,4 +887,10 @@ export const ConversationsSelectors = {
   getAttachments,
   selectConversationSignal,
   getUniqueAttachments,
+  selectAction,
+  selectIsNotAllowed,
+  selectNotAllowedItemsForDisplay,
+  selectMoveToConversationId,
+  selectDeletingConversationId,
+  selectExportingConversationId,
 };

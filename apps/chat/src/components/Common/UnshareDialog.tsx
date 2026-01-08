@@ -2,12 +2,14 @@ import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { FeatureType } from '@/src/types/common';
+import { EnumMapper } from '@/src/utils/app/mappers';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { ShareSelectors } from '@/src/store/share/share.selectors';
+import { ShareSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from './ConfirmDialog';
 import { withRenderWhen } from './RenderWhen';
@@ -82,7 +84,9 @@ function UnshareDialogView() {
         dispatch(
           ShareActions.discardSharedWithMe({
             resourceIds: [unshareEntity.id],
-            featureType: FeatureType.Application,
+            featureType: EnumMapper.getFeatureTypeByApiKey(
+              splitEntityId(unshareEntity.id).apiKey,
+            ),
           }),
         );
         dispatch(ShareActions.setUnshareEntity(undefined));

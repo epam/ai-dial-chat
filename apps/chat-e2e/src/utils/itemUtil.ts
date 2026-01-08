@@ -26,14 +26,18 @@ export class ItemUtil {
 
   public static getApiPromptId(prompt: Prompt, bucket?: string) {
     const bucketPath = ItemUtil.getPromptBucketPath(bucket);
-    return `${bucketPath}/${prompt.id}`;
+    return prompt.id.includes(bucketPath)
+      ? prompt.id
+      : `${bucketPath}/${prompt.id}`;
   }
 
   public static getApiPromptFolderId(prompt: Prompt, bucket?: string) {
     const promptBucket = ItemUtil.getPromptBucketPath(bucket);
     return prompt.folderId?.length === 0
       ? promptBucket
-      : `${promptBucket}/${prompt.folderId}`;
+      : prompt.folderId.includes(promptBucket)
+        ? prompt.folderId
+        : `${promptBucket}/${prompt.folderId}`;
   }
 
   public static getApiConversationFolderId(
@@ -52,5 +56,26 @@ export class ItemUtil {
       .map((f) => encodeURIComponent(f))
       .join(ItemUtil.urlSeparator);
     return itemId.replace(itemId, encodedItemId);
+  }
+
+  // Helper function to extract relative path from URL
+  public static extractRelativePath(url: string): string {
+    const pathParts = url.split('/');
+    let relativePath = '';
+    const publicSegmentIndex = pathParts.indexOf('public');
+
+    if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex < pathParts.length - 2
+    ) {
+      relativePath =
+        pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+    } else if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex === pathParts.length - 2
+    ) {
+      relativePath = '';
+    }
+    return relativePath;
   }
 }

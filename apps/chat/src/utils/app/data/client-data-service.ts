@@ -1,14 +1,16 @@
 import { Observable, catchError, filter, map, of, throwError } from 'rxjs';
 
+import { ApiUtils } from '@/src/utils/server/api';
+
 import { HTTPMethod } from '@/src/types/http';
 import { InstalledModel } from '@/src/types/models';
 
 import {
   CLIENTDATA_PATH,
   INSTALLED_DEPLOYMENTS,
+  INSTALLED_TOOLSETS,
 } from '@/src/constants/client-data';
 
-import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 import { FileService } from './file-service';
@@ -87,5 +89,13 @@ export class ClientDataService {
 
   public static getInstalledDeployments() {
     return this.getData<InstalledModel[]>(INSTALLED_DEPLOYMENTS);
+  }
+
+  public static saveInstalledToolsets(installedToolsets: string[]) {
+    return this.saveData<string[]>(INSTALLED_TOOLSETS, installedToolsets);
+  }
+
+  public static getInstalledToolsets() {
+    return this.getData<string[]>(INSTALLED_TOOLSETS);
   }
 }

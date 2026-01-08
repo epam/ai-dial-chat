@@ -1,19 +1,29 @@
 import type { MouseEvent } from 'react';
 
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  constructPath,
+  notAllowedSpacesRegex,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  getPublicItemIdWithoutVersion,
+  pathKeySeparator,
+} from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
+import { ApiKeys } from '@/src/types/common';
 import {
   PublicVersionGroups,
   PublicVersionOption,
 } from '@/src/types/publication';
 import { EntityFilters } from '@/src/types/search';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
-import { NA_VERSION } from '@/src/constants/public';
-
-import { getPublicItemIdWithoutVersion } from '../server/api';
+import {
+  MAX_ENTITY_LENGTH,
+  MIN_ENTITY_LENGTH,
+} from '@/src/constants/default-ui-settings';
+import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
   Entity,
@@ -80,8 +90,19 @@ export const isImportEntityNameOnSameLevelUnique = ({
 
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
 
-export const isEntityNameInvalid = (name: string) =>
-  doesHaveDotsInTheEnd(name) || notAllowedSymbolsRegex.test(name);
+export const isEntityNameInvalid = (name: string, checkDotsInTheEnd = true) =>
+  notAllowedSymbolsRegex.test(name) ||
+  (checkDotsInTheEnd && doesHaveDotsInTheEnd(name));
+
+export const isEntityNameValid = (name: string, checkDotsInTheEnd = true) => {
+  const trimmedName = name.trim();
+
+  return (
+    !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
+    trimmedName.length <= MAX_ENTITY_LENGTH &&
+    trimmedName.length >= MIN_ENTITY_LENGTH
+  );
+};
 
 export const hasInvalidNameInPath = (path: string) =>
   path.split('/').some((part) => isEntityNameInvalid(part));
@@ -107,21 +128,21 @@ export const filterMigratedEntities = <T extends Entity>(
 
 export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
+export const replaceSpacesFromString = (valueToClean: string | undefined) =>
+  valueToClean?.replace(notAllowedSpacesRegex, ' ') ?? '';
+
 export const prepareEntityName = (
   name: string,
   options?: Partial<PrepareNameOptions>,
 ) => {
+  const replacementChar = options?.replaceWithSpacesForRenaming ? '_' : '';
+
   const clearName = options?.forRenaming
-    ? name
-        .replace(
-          notAllowedSymbolsRegex,
-          options?.replaceWithSpacesForRenaming ? ' ' : '',
-        )
-        .trim()
+    ? name.replace(notAllowedSymbolsRegex, replacementChar).trim()
     : (name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
-        .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
+        .map((s) => s.replace(notAllowedSymbolsRegex, '_').trim())
         .filter(Boolean)[0] ?? '');
 
   const maxEntityLength = options?.maxNameLength ?? MAX_ENTITY_LENGTH;
@@ -179,6 +200,39 @@ export const isVersionValid = (version: string | undefined) => {
   return (
     versionParts.length === 3 &&
     versionParts.every((part) => /^\d+$/.test(part))
+  );
+};
+
+export const isVersionPartSizeValid = (version: string | undefined) => {
+  if (!version) {
+    return false;
+  }
+
+  return version.split('.').every((part) => part.length <= 5);
+};
+
+export const isVersionExists = (
+  versionToTest: string,
+  entityId: string,
+  publicVersionGroups: PublicVersionGroups,
+  newName: string,
+  rootFolder = PUBLIC_URL_PREFIX,
+) => {
+  const { apiKey, parentPath, name: oldName } = splitEntityId(entityId);
+  const modelName = oldName.split(pathKeySeparator)[0];
+
+  let newApiKey: string;
+  if (apiKey === ApiKeys.Conversations) {
+    newApiKey = `${modelName}${pathKeySeparator}${newName}`;
+  } else {
+    newApiKey = newName;
+  }
+
+  const newEntityId = constructPath(apiKey, rootFolder, parentPath, newApiKey);
+  const allVersions = publicVersionGroups[newEntityId]?.allVersions;
+
+  return allVersions?.some(
+    (versionGroup) => versionToTest === versionGroup.version,
   );
 };
 
@@ -295,3 +349,42 @@ export const getDefaultConversationProps = (): ShareInterface &
   ...getDefaultEntityProps(),
   reference: nanoid(),
 });
+
+export const replaceStringRange = (
+  currentString: string,
+  value: string,
+  start: number,
+  end: number,
+) => {
+  return currentString.slice(0, start) + value + currentString.slice(end);
+};
+
+export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
+
+export const addTrailingSlashIfAbsent = (id: string) =>
+  id.endsWith('/') ? id : `${id}/`;
+
+export const getEntityBaseId = (id: string): string => {
+  const lastColonIndex = id.lastIndexOf(':');
+  if (lastColonIndex === -1) {
+    return id;
+  }
+  const protocolSeparatorIndex = id.indexOf('://');
+  if (
+    protocolSeparatorIndex !== -1 &&
+    lastColonIndex < protocolSeparatorIndex
+  ) {
+    return id;
+  }
+  return id.substring(0, lastColonIndex);
+};
+
+export const getSafeRedirectUrl = (url: string) => {
+  try {
+    const safeUrl = new URL(url, window.location.origin);
+    if (window.location.origin === safeUrl.origin) return safeUrl;
+  } catch {
+    console.error('Invalid url');
+  }
+  return undefined;
+};

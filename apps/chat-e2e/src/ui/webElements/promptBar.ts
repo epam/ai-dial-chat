@@ -3,11 +3,11 @@ import { SideBarSelectors } from '../selectors';
 import {
   ApproveRequiredPrompts,
   FolderPrompts,
+  OrganizationPromptsTree,
   PromptBarSection,
   PromptsTree,
   SharedWithMePromptsTree,
 } from '@/src/ui/webElements/entityTree';
-import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Locator, Page } from '@playwright/test';
 

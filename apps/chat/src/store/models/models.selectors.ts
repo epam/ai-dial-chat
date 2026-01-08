@@ -2,20 +2,20 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import {
-  getGroupModelKey,
-  groupModelsAndSaveOrder,
-} from '@/src/utils/app/models';
+  getGroupMarketplaceEntityKey,
+  groupMarketplaceEntityAndSaveOrder,
+} from '@/src/utils/app/marketplace';
 
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
-import { ModelsState } from './models.types';
+import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
-const rootSelector = (state: RootState): ModelsState => state.models;
+const rootSelector = (state: RootState) => state.models;
 
 const selectModelStatus = (state: RootState) => rootSelector(state).status;
 
@@ -34,25 +34,25 @@ const selectModelsError = (state: RootState) => rootSelector(state).error;
 const selectIsRecentModelsLoaded = (state: RootState) =>
   rootSelector(state).recentModelsStatus === UploadStatus.LOADED;
 
-const selectModels = createSelector([rootSelector], (state) => {
-  const sortedResponse = sortBy(state.models, (model) =>
-    model.name.toLowerCase(),
-  );
-  const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
-    ({ entities }) => {
-      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-        sortItemsVersions(entities);
-      }
+const _selectModels = (state: RootState) => rootSelector(state).models;
 
-      return entities;
-    },
-  );
+const selectModels = createSelector([_selectModels], (models) => {
+  const sortedResponse = sortBy(models, (model) => model.name.toLowerCase());
+  const sortedAgents = groupMarketplaceEntityAndSaveOrder(
+    sortedResponse,
+  ).flatMap(({ entities }) => {
+    if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+      sortItemsVersions(entities);
+    }
+
+    return entities;
+  });
   return sortedAgents;
 });
 
-const selectModelTopics = createSelector([rootSelector], (state) => {
+const selectModelTopics = createSelector([_selectModels], (models) => {
   return sortBy(
-    uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []),
+    uniq(models?.flatMap((model) => model.topics ?? []) ?? []),
     (topic) => topic.toLowerCase(),
   );
 });
@@ -62,7 +62,7 @@ const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectModelsOnly = createSelector([selectModels], (models) => {
+const selectModelTypeAgents = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
@@ -100,10 +100,30 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   return new Set(
     references
       .map((reference) => modelsMap[reference])
-      .filter(Boolean)
-      .map((model) => getGroupModelKey(model!)),
+      .filter((model) => !!model)
+      .map((model) => getGroupMarketplaceEntityKey(model)),
   );
 };
+
+const selectDefaultModel = createSelector([selectModels], (models) =>
+  models.find((model) => model.isDefault),
+);
+
+const selectDefaultModelOption = (state: RootState) =>
+  rootSelector(state).defaultModelReference;
+
+const selectDefaultModelReference = createSelector(
+  [selectDefaultModelOption, selectDefaultModel],
+  (defaultModelReference, defaultModel) => {
+    if (defaultModelReference === LAST_USED_AGENT) {
+      return undefined;
+    }
+    if (defaultModelReference === DEFAULT_AGENT) {
+      return defaultModel?.reference;
+    }
+    return defaultModelReference;
+  },
+);
 
 export const ModelsSelectors = {
   selectModels,
@@ -114,7 +134,7 @@ export const ModelsSelectors = {
   selectAreModelsLoaded,
   selectIsInstalledModelsInitialized,
   selectRecentModelsIds,
-  selectModelsOnly,
+  selectModelTypeAgents,
   selectPublishRequestModels,
   selectInstalledModels,
   selectInstalledModelIds,
@@ -123,4 +143,6 @@ export const ModelsSelectors = {
   selectInitialized,
   selectAllGroupModelKeySet,
   selectIsRecentModelsLoaded,
+  selectDefaultModelOption,
+  selectDefaultModelReference,
 };

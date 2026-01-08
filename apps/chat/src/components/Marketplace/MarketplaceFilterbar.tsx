@@ -1,5 +1,5 @@
-import { IconCheck, IconChevronUp } from '@tabler/icons-react';
-import { memo, useCallback, useState } from 'react';
+import { IconCheck, IconChevronUp, IconClipboardX } from '@tabler/icons-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -8,18 +8,27 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.selectors';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  MarketplaceSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+  ToolsetSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
-import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
+import {
+  ENTITY_TYPES,
+  FilterTypes,
+  MarketplaceEntitiesTabs,
+  SourceType,
+} from '@/src/constants/marketplace';
 
-import { CloseSidebarButton } from '../Buttons/CloseSidebarButton';
+import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
+import { Loader } from '@/src/components/Common/Loader';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -85,21 +94,22 @@ const FilterSection = ({
   }
   return (
     <div className="px-5 py-2.5" data-qa="marketplace-filter">
-      <button
+      <DialButton
         onClick={() => onToggleFilterSection(filterType)}
-        className="flex w-full justify-between font-semibold"
+        className="flex w-full justify-between"
         data-qa="filter-property"
         aria-expanded={openedSections[filterType]}
-      >
-        <h5 className="text-sm">{sectionName}</h5>
-        <IconChevronUp
-          className={classNames(
-            'duration-200',
-            !openedSections[filterType] && 'rotate-180',
-          )}
-          size={18}
-        />
-      </button>
+        label={sectionName}
+        iconAfter={
+          <IconChevronUp
+            className={classNames(
+              'duration-200',
+              !openedSections[filterType] && 'rotate-180',
+            )}
+            size={18}
+          />
+        }
+      />
       {openedSections[filterType] && (
         <div
           className="mt-3.5 flex flex-col gap-3.5"
@@ -121,6 +131,77 @@ const FilterSection = ({
   );
 };
 
+interface OpenedSections {
+  [FilterTypes.ENTITY_TYPE]: boolean;
+  // [FilterTypes.CAPABILITIES]: boolean;
+  // [FilterTypes.ENVIRONMENT]: boolean;
+  [FilterTypes.TOPICS]: boolean;
+  [FilterTypes.SOURCES]: boolean;
+}
+interface FiltersRendererProps {
+  showEntityTypesSection: boolean;
+  showLoader: boolean;
+  openedSections: OpenedSections;
+  selectedFilters: MarketplaceFilters;
+  topics: string[];
+  sourceTypes: SourceType[];
+  handleToggleFilterSection: (filterType: FilterTypes) => void;
+  handleApplyFilter: (type: FilterTypes, value: string) => void;
+}
+function FiltersRenderer({
+  showLoader,
+  showEntityTypesSection,
+  openedSections,
+  selectedFilters,
+  topics,
+  sourceTypes,
+  handleToggleFilterSection,
+  handleApplyFilter,
+}: FiltersRendererProps) {
+  const { t } = useTranslation(Translation.SideBar);
+
+  if (showLoader) {
+    return <Loader />;
+  }
+
+  return (
+    <>
+      {showEntityTypesSection && (
+        <FilterSection
+          sectionName={t('Type')}
+          filterValues={ENTITY_TYPES}
+          openedSections={openedSections}
+          selectedFilters={selectedFilters}
+          filterType={FilterTypes.ENTITY_TYPE}
+          onToggleFilterSection={handleToggleFilterSection}
+          onApplyFilter={handleApplyFilter}
+          getDisplayLabel={getTypeLabel}
+        />
+      )}
+      <FilterSection
+        sectionName={t('Topics')}
+        filterValues={topics}
+        openedSections={openedSections}
+        selectedFilters={selectedFilters}
+        filterType={FilterTypes.TOPICS}
+        onToggleFilterSection={handleToggleFilterSection}
+        onApplyFilter={handleApplyFilter}
+      />
+      {sourceTypes.length > 1 && (
+        <FilterSection
+          sectionName={t('Sources')}
+          filterValues={sourceTypes}
+          openedSections={openedSections}
+          selectedFilters={selectedFilters}
+          filterType={FilterTypes.SOURCES}
+          onToggleFilterSection={handleToggleFilterSection}
+          onApplyFilter={handleApplyFilter}
+        />
+      )}
+    </>
+  );
+}
+
 const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
 export const MarketplaceFilterbar = memo(() => {
@@ -128,17 +209,33 @@ export const MarketplaceFilterbar = memo(() => {
 
   const dispatch = useAppDispatch();
 
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+  const areModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
+  const areToolsetsLoaded = useAppSelector(
+    ToolsetSelectors.selectAreToolsetsLoaded,
+  );
+
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
-  const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
+
+  const selectedTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
   );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  const topics = useAppSelector(ModelsSelectors.selectModelTopics);
-  const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
+  const {
+    topicsFilters,
+    sourcesFilters,
+    selectedFilters,
+    showLoader,
+    setFilters,
+  } = useAppSelector(MarketplaceSelectors.selectFiltersContent);
 
-  const [openedSections, setOpenedSections] = useState({
+  const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
+
+  const [openedSections, setOpenedSections] = useState<OpenedSections>({
     [FilterTypes.ENTITY_TYPE]: true,
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
@@ -149,10 +246,13 @@ export const MarketplaceFilterbar = memo(() => {
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
       dispatch(
-        MarketplaceActions.setSelectedFilters({ filterType: type, value }),
+        setFilters({
+          filterType: type,
+          value,
+        }),
       );
     },
-    [dispatch],
+    [dispatch, setFilters],
   );
 
   const handleToggleFilterSection = useCallback(
@@ -169,7 +269,13 @@ export const MarketplaceFilterbar = memo(() => {
     dispatch(UIActions.setShowMarketplaceFilterbar(false));
   }, [dispatch]);
 
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const noEntities = useMemo(() => {
+    return (
+      !Object.values(isAgentsTab ? modelsMap : toolsetsMap).length &&
+      areModelsLoaded &&
+      areToolsetsLoaded
+    );
+  }, [areModelsLoaded, areToolsetsLoaded, isAgentsTab, modelsMap, toolsetsMap]);
 
   return (
     <nav
@@ -182,7 +288,7 @@ export const MarketplaceFilterbar = memo(() => {
     >
       <CloseSidebarButton isLeftSide onClose={handleClose} />
       {showFilterbar && (
-        <div className="h-full divide-y divide-tertiary overflow-y-auto">
+        <div className="flex h-full flex-col divide-y divide-tertiary overflow-y-auto">
           <div
             className={classNames(
               'flex items-center justify-between px-5',
@@ -191,34 +297,29 @@ export const MarketplaceFilterbar = memo(() => {
           >
             <p className="text-base font-semibold">{t('Filters')}</p>
           </div>
-          <FilterSection
-            sectionName={t('Type')}
-            filterValues={ENTITY_TYPES}
-            openedSections={openedSections}
-            selectedFilters={selectedFilters}
-            filterType={FilterTypes.ENTITY_TYPE}
-            onToggleFilterSection={handleToggleFilterSection}
-            onApplyFilter={handleApplyFilter}
-            getDisplayLabel={getTypeLabel}
-          />
-          <FilterSection
-            sectionName={t('Topics')}
-            filterValues={topics} // topics
-            openedSections={openedSections}
-            selectedFilters={selectedFilters}
-            filterType={FilterTypes.TOPICS}
-            onToggleFilterSection={handleToggleFilterSection}
-            onApplyFilter={handleApplyFilter}
-          />
-          {sourceTypes.length > 1 && (
-            <FilterSection
-              sectionName={t('Sources')}
-              filterValues={sourceTypes}
+          {noEntities ? (
+            <div className="flex grow flex-col items-center justify-center gap-3">
+              <IconClipboardX
+                size={60}
+                strokeWidth={0.5}
+                className="text-secondary"
+              />
+              <p className="text-center text-sm leading-[24px] text-primary">
+                {t(
+                  `No filters as you currently have no ${isAgentsTab ? 'agents' : 'toolsets'}`,
+                )}
+              </p>
+            </div>
+          ) : (
+            <FiltersRenderer
+              showEntityTypesSection={isAgentsTab}
+              showLoader={showLoader}
               openedSections={openedSections}
               selectedFilters={selectedFilters}
-              filterType={FilterTypes.SOURCES}
-              onToggleFilterSection={handleToggleFilterSection}
-              onApplyFilter={handleApplyFilter}
+              topics={topicsFilters}
+              sourceTypes={sourcesFilters}
+              handleToggleFilterSection={handleToggleFilterSection}
+              handleApplyFilter={handleApplyFilter}
             />
           )}
         </div>

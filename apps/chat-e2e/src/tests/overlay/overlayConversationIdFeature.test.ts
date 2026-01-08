@@ -15,7 +15,7 @@ import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 const conversationName = 'overlayConversationName';
-const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultAppVersion}`;
+const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultEntityVersion}`;
 
 dialOverlayTest(
   '[Overlay] Exact conversation is set in Overlay. Playback chat with Plotly graph',
@@ -43,10 +43,10 @@ dialOverlayTest(
     await dialOverlayTest.step(
       'Prepare playback conversation with plotly graph in the response',
       async () => {
-        const defaultModel = ModelsUtil.getDefaultModel()!;
+        const defaultModel = ModelsUtil.getDefaultAgent()!;
         plotlyImageUrl = await overlayFileApiHelper.putFile(
           Attachment.plotlyName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
@@ -76,7 +76,10 @@ dialOverlayTest(
       }
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
-        .withConversationResource(playbackConversation, PublishActions.ADD)
+        .withConversationInFolderResource(
+          playbackConversation,
+          PublishActions.ADD,
+        )
         .withFileResource(attachment!, PublishActions.ADD_IF_ABSENT)
         .build();
       const publication =
@@ -110,7 +113,7 @@ dialOverlayTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
         // await overlayHeader.leftPanelToggle.click();
         // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedConversation(
+        //   overlayOrganizationConversations.selectedEntity(
         //     ExpectedConstants.playbackConversation.concat(conversationName),
         //   ),
         //   'visible',
@@ -168,7 +171,7 @@ dialOverlayTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
         // await overlayHeader.leftPanelToggle.click();
         // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedConversation(
+        //   overlayOrganizationConversations.selectedEntity(
         //     ExpectedConstants.playbackConversation.concat(conversationName),
         //   ),
         //   'visible',

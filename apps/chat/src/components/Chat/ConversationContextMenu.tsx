@@ -1,58 +1,33 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import {
-  MouseEventHandler,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { MouseEventHandler, useCallback, useEffect, useMemo } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
-import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import {
   isPlaybackConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { constructPath } from '@/src/utils/app/file';
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  getIdWithoutRootPathSegments,
-  isRootId,
-} from '@/src/utils/app/id';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
-import { MoveToFolderProps } from '@/src/types/folder';
 import { ContextMenuProps } from '@/src/types/menu';
-import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
 
-import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
-import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ChatActions,
+  ConversationsActions,
+  ImportExportActions,
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.selectors';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ApplicationTypesSchemasSelectors,
+  ModelsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
-
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ExportModal } from '@/src/components/Chatbar/ExportModal';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderModal } from '@/src/components/Common/MoveToFolderModal';
+import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 
 import {
   ConversationInfo,
@@ -81,27 +56,11 @@ export const ConversationContextMenu = ({
   isHeaderMenu,
   disabledState,
 }: ConversationContextMenuProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
-  const selectFilteredFoldersSelector = useMemo(
-    () =>
-      ConversationsSelectors.selectFilteredFolders(
-        defaultMyItemsFilters,
-        '',
-        true,
-      ),
-    [],
-  );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-
-  const folders = useAppSelector(selectFilteredFoldersSelector);
-  const allConversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
   );
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(
@@ -109,24 +68,10 @@ export const ConversationContextMenu = ({
       conversation.id,
     ),
   );
-  const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
-  );
-
-  const collapsedSectionsSelector = useMemo(
-    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
-    [],
-  );
-
-  const collapsedSections = useAppSelector(collapsedSectionsSelector);
-
-  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isShowExportModal, setIsShowExportModal] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const screenState = useScreenState();
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -156,104 +101,42 @@ export const ConversationContextMenu = ({
   const { getFloatingProps } = useInteractions([dismiss]);
 
   const handleOpenExportModal = useCallback(() => {
-    setIsShowExportModal(true);
-  }, []);
+    dispatch(ConversationsActions.setExportingConversationId(conversation.id));
+  }, [conversation.id, dispatch]);
 
   const handleCloseExportModal = useCallback(() => {
-    setIsShowExportModal(false);
-  }, []);
-
-  useEffect(() => {
-    if (screenState !== ScreenState.SM) {
-      setIsShowMoveToModal(false);
-      handleCloseExportModal();
-    }
-  }, [handleCloseExportModal, screenState]);
+    dispatch(ConversationsActions.setExportingConversationId());
+  }, [dispatch]);
 
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
-    useCallback((e) => {
-      e.stopPropagation();
+    useCallback(
+      (e) => {
+        e.stopPropagation();
 
-      setIsDeleting(true);
-    }, []);
+        dispatch(
+          ConversationsActions.setDeletingConversationId(conversation.id),
+        );
+      },
+      [conversation.id, dispatch],
+    );
 
   const handleOpenPublishing = useCallback(() => {
-    setIsPublishing(true);
-  }, []);
+    dispatch(
+      PublicationActions.setPublishModel({
+        entity: conversation,
+        action: PublishActions.ADD,
+      }),
+    );
+  }, [conversation, dispatch]);
 
   const handleOpenUnpublishing = useCallback(() => {
-    setIsUnpublishing(true);
-  }, []);
-
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-    setIsUnpublishing(false);
-  }, []);
-
-  const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const conversationRootId = getConversationRootId();
-      const folderPath = (
-        isNewFolder
-          ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
-            )
-          : folderId
-      ) as string;
-
-      if (
-        !isEntityNameOnSameLevelUnique(
-          conversation.name,
-          { ...conversation, folderId: folderPath },
-          allConversations,
-        )
-      ) {
-        dispatch(
-          UIActions.showErrorToast(
-            t(
-              'Conversation with name "{{name}}" already exists in this folder.',
-              {
-                ns: Translation.Chat,
-                name: conversation.name,
-              },
-            ),
-          ),
-        );
-
-        return;
-      }
-
-      if (isNewFolder) {
-        dispatch(
-          ConversationsActions.createFolder({
-            name: folderPath,
-            parentId: getConversationRootId(),
-          }),
-        );
-      }
-
-      dispatch(
-        UIActions.setCollapsedSections({
-          featureType: FeatureType.Chat,
-          collapsedSections: collapsedSections.filter(
-            (section) => section !== PINNED_CONVERSATIONS_SECTION_NAME,
-          ),
-        }),
-      );
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            folderId: isNewFolder
-              ? constructPath(getConversationRootId(), folderPath)
-              : folderPath,
-          },
-        }),
-      );
-    },
-    [allConversations, collapsedSections, conversation, dispatch, folders, t],
-  );
+    dispatch(
+      PublicationActions.setPublishModel({
+        entity: conversation,
+        action: PublishActions.DELETE,
+      }),
+    );
+  }, [conversation, dispatch]);
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -319,6 +202,15 @@ export const ConversationContextMenu = ({
       setIsOpen(false);
     }, [conversation, dispatch, setIsOpen]);
 
+  const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
+    useCallback(
+      (e) => {
+        e.stopPropagation();
+        dispatch(ShareActions.setUnshareEntity(conversation));
+      },
+      [conversation, dispatch],
+    );
+
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
@@ -332,34 +224,38 @@ export const ConversationContextMenu = ({
     [conversation.id, dispatch, setIsOpen],
   );
 
-  const handleDelete = useCallback(() => {
-    if (conversation.sharedWithMe) {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [conversation.id],
-          featureType: FeatureType.Chat,
-        }),
-      );
-    } else {
-      dispatch(
-        ConversationsActions.deleteConversations({
-          conversationIds: [conversation.id],
-        }),
-      );
-    }
-    setIsDeleting(false);
-  }, [conversation.id, conversation.sharedWithMe, dispatch]);
+  const handleOpenMoveToModal = useCallback(() => {
+    dispatch(ConversationsActions.setMoveToConversationId(conversation.id));
+  }, [conversation, dispatch]);
 
   const handleOpenRenameModal = useCallback(() => {
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
-  const isCustomViewerApplication = useMemo(() => {
-    return !!applicationTypeSchemas.find(
-      (schema) =>
-        schema.id === modelsMap[conversation.model.id]?.applicationTypeSchemaId,
-    )?.viewerUrl;
-  }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+  const { isCustomViewerApplication, applicationTypePlaybackSupport } =
+    useMemo(() => {
+      const applicationTypeSchema = applicationTypeSchemas.find(
+        (schema) =>
+          schema.id ===
+          modelsMap[conversation.model.id]?.applicationTypeSchemaId,
+      );
+      return {
+        isCustomViewerApplication: !!applicationTypeSchema?.viewerUrl,
+        applicationTypePlaybackSupport:
+          !!applicationTypeSchema?.applicationTypePlaybackSupport,
+      };
+    }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+
+  const isPlaybackActionAvailable = useMemo(() => {
+    return isCustomViewerApplication
+      ? !isReplay && !isPlayback && applicationTypePlaybackSupport
+      : !isReplay && !isPlayback;
+  }, [
+    isReplay,
+    isPlayback,
+    isCustomViewerApplication,
+    applicationTypePlaybackSupport,
+  ]);
 
   const handleOpenInfoModal = useCallback(() => {
     const { id, updatedAt, createdAt, author } = conversation;
@@ -377,103 +273,50 @@ export const ConversationContextMenu = ({
   }, [conversation, dispatch]);
 
   return (
-    <>
-      <button
-        ref={refs.setFloating}
-        {...getFloatingProps()}
-        data-qa="dots-menu"
-        disabled={disabledState}
-        className="group"
-      >
-        <ItemContextMenu
-          TriggerIcon={TriggerIcon}
-          className={className}
-          entity={conversation}
-          isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
-          folders={folders}
-          featureType={FeatureType.Chat}
-          onOpenMoveToModal={() => setIsShowMoveToModal(true)}
-          onMoveToFolder={handleMoveToFolder}
-          onDelete={handleOpenDeleteModal}
-          onRename={handleOpenRenameModal}
-          onExport={handleExport}
-          onOpenExportModal={handleOpenExportModal}
-          onCompare={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleCompare
-              : undefined
-          }
-          onDuplicate={handleDuplicate}
-          onReplay={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleStartReplay
-              : undefined
-          }
-          onPlayback={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleCreatePlayback
-              : undefined
-          }
-          onShare={!isReplay ? handleOpenSharing : undefined}
-          onPublish={!isReplay ? handleOpenPublishing : undefined}
-          onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
-          onOpenChange={setIsOpen}
-          isOpen={isOpen}
-          isLoading={conversation.status !== UploadStatus.LOADED}
-          onSelect={isHeaderMenu ? undefined : handleSelect}
-          useStandardColor={isHeaderMenu}
-          onShowInfo={handleOpenInfoModal}
-        />
-      </button>
-
-      {isShowMoveToModal && (
-        <MoveToFolderModal
-          onClose={() => {
-            setIsShowMoveToModal(false);
-          }}
-          folders={folders}
-          onMoveToFolder={handleMoveToFolder}
-        />
-      )}
-
-      {isShowExportModal && (
-        <ExportModal onExport={handleExport} onClose={handleCloseExportModal} />
-      )}
-
-      {isPublishingEnabled && (isPublishing || isUnpublishing) && (
-        <PublishModal
-          entity={conversation}
-          type={SharingType.Conversation}
-          isOpen={isPublishing || isUnpublishing}
-          onClose={handleClosePublishModal}
-          publishAction={
-            isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
-          defaultPath={
-            isUnpublishing && !isRootId(conversation.folderId)
-              ? getIdWithoutRootPathSegments(conversation.folderId)
-              : undefined
-          }
-        />
-      )}
-
-      {isDeleting && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm deleting conversation')}
-          description={`${t('Are you sure that you want to delete a conversation?')}${t(
-            conversation.isShared
-              ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
-              : '',
-          )}`}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsDeleting(false);
-            if (result) handleDelete();
-          }}
-        />
-      )}
-    </>
+    <button
+      ref={refs.setFloating}
+      {...getFloatingProps()}
+      data-qa="dots-menu"
+      disabled={disabledState}
+      className="group"
+    >
+      <ItemContextMenu
+        TriggerIcon={TriggerIcon}
+        className={className}
+        entity={conversation}
+        isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
+        featureType={FeatureType.Chat}
+        onOpenMoveToModal={handleOpenMoveToModal}
+        onDelete={handleOpenDeleteModal}
+        onRename={handleOpenRenameModal}
+        onExport={handleExport}
+        onOpenExportModal={handleOpenExportModal}
+        onCompare={
+          !isReplay && !isPlayback && !isCustomViewerApplication
+            ? handleCompare
+            : undefined
+        }
+        onDuplicate={handleDuplicate}
+        onReplay={
+          !isReplay && !isPlayback && !isCustomViewerApplication
+            ? handleStartReplay
+            : undefined
+        }
+        onPlayback={
+          isPlaybackActionAvailable ? handleCreatePlayback : undefined
+        }
+        onShare={!isReplay ? handleOpenSharing : undefined}
+        onUnshare={!isReplay ? handleOpenUnshareModal : undefined}
+        onPublish={!isReplay ? handleOpenPublishing : undefined}
+        onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
+        onOpenChange={setIsOpen}
+        isOpen={isOpen}
+        isLoading={conversation.status !== UploadStatus.LOADED}
+        onSelect={isHeaderMenu ? undefined : handleSelect}
+        useStandardColor={isHeaderMenu}
+        onShowInfo={handleOpenInfoModal}
+        hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
+      />
+    </button>
   );
 };

@@ -9,7 +9,7 @@ import {
   ICON_TO_CONTAINER_RATIO_NUMERATOR,
 } from '@/src/constants/icons';
 
-import { IconNonModelWithTooltip } from '../IconNonModelWithTooltip';
+import { IconNonModelWithTooltip } from '@/src/components/Chat/IconNonModelWithTooltip';
 
 interface Props {
   isCustomTooltip?: boolean;

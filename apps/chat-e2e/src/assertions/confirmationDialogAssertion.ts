@@ -1,7 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { ConfirmationDialog } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
 
 export class ConfirmationDialogAssertion extends BaseAssertion {
   readonly confirmationDialog: ConfirmationDialog;
@@ -12,18 +11,18 @@ export class ConfirmationDialogAssertion extends BaseAssertion {
   }
 
   public async assertConfirmationDialogTitle(expectedTitle: string) {
-    expect
-      .soft(
-        await this.confirmationDialog.entityName.getElementInnerContent(),
-        ExpectedMessages.modalDialogTitleIsValid,
-      )
-      .toBe(expectedTitle);
+    await this.assertElementText(
+      this.confirmationDialog.entityName,
+      expectedTitle,
+      ExpectedMessages.modalDialogTitleIsValid,
+    );
   }
 
   public async assertConfirmationMessage(expectedMessage: string) {
     await this.assertElementText(
       this.confirmationDialog.confirmMessage,
       expectedMessage,
+      ExpectedMessages.confirmationMessageIsValid,
     );
   }
 }

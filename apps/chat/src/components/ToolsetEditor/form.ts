@@ -1,0 +1,177 @@
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+
+import { DEFAULT_TOOLSET_NAME } from '@/src/constants/default-ui-settings';
+import { formErrors, urlErrors } from '@/src/constants/form-errors';
+import { DEFAULT_VERSION } from '@/src/constants/publication';
+import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
+
+import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
+import { z as zodValidation } from 'zod';
+
+export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
+
+export enum WithLogin {
+  WithLogin = 'With login',
+  WithoutLogin = 'Without login',
+  WithConfig = 'With login & config',
+}
+
+export const ToolsetLoginFormSchema = zodValidation
+  .object({
+    withLogin: zodValidation.enum(WithLogin),
+    authenticationType: zodValidation.enum(ToolsetAuthTypes),
+    isLoggedIn: zodValidation.boolean(),
+    // API_KEY
+    keyHeader: zodValidation.string().optional(),
+    apiKey: zodValidation.string().optional(),
+    // OAuth
+    clientId: zodValidation.string().optional(),
+    clientSecret: zodValidation.string().optional(),
+    authorizationEndpoint: zodValidation.string().optional(),
+    tokenEndpoint: zodValidation.string().optional(),
+    scopes: zodValidation.array(zodValidation.string()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isLoggedIn) return;
+    if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
+      if (!data.keyHeader?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['keyHeader'],
+          message: 'Key name is required',
+        });
+      }
+      if (!data.apiKey?.trim() && data.withLogin === WithLogin.WithLogin) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['apiKey'],
+          message: 'API key is required',
+        });
+      }
+    }
+    if (
+      data.authenticationType === ToolsetAuthTypes.OAUTH &&
+      data.withLogin === WithLogin.WithConfig
+    ) {
+      if (!data.clientId) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['clientId'],
+          message: 'Client ID is required',
+        });
+      }
+      if (!data.clientSecret) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['clientSecret'],
+          message: 'Client secret is required',
+        });
+      }
+    }
+  }); // TODO: add login & password schema when ready
+export type ToolsetLoginFormType = zodValidation.infer<
+  typeof ToolsetLoginFormSchema
+>;
+
+export const ToolsetEditorFormSchema = zodValidation
+  .object({
+    endpoint: zodValidation
+      .string()
+      .trim()
+      .nonempty(formErrors.required)
+      .regex(/^(https?|sse):\/\//, {
+        error: urlErrors.notValidProtocol,
+      })
+      .refine(
+        (str) => !str.endsWith('.') && !str.endsWith('//'),
+        urlErrors.notValidEnding,
+      )
+      .refine((str) => {
+        try {
+          const url = new URL(str);
+          return !!url;
+        } catch {
+          return false;
+        }
+      }, urlErrors.notValidUrl)
+      .or(zodValidation.literal(ENDPOINT_PLACEHOLDER)),
+    protocol: zodValidation.enum(ToolsetTransportType),
+    allowedTools: zodValidation.array(zodValidation.string()),
+  })
+  .and(MarketplaceEntityBaseSchema)
+  .and(ToolsetLoginFormSchema);
+
+export type ToolsetEditorForm = zodValidation.infer<
+  typeof ToolsetEditorFormSchema
+>;
+
+export const getDefaultLoginFormData = (
+  authenticationType: ToolsetAuthTypes,
+  toolset?: ToolsetModel,
+  prevData?: Partial<ToolsetLoginFormType>,
+  authLevel?: ToolsetCredentialsLevel,
+): ToolsetLoginFormType => {
+  const isLoggedIn = toolset ? isToolsetSignedIn(toolset, authLevel) : false;
+  switch (authenticationType) {
+    case ToolsetAuthTypes.API_KEY:
+      return {
+        authenticationType,
+        isLoggedIn,
+        withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
+        keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
+        apiKey: prevData?.apiKey ?? '',
+      };
+    case ToolsetAuthTypes.OAUTH:
+      return {
+        authenticationType,
+        isLoggedIn,
+        clientId: toolset?.authSettings?.clientId ?? '',
+        clientSecret: toolset?.authSettings?.clientSecret ?? '',
+        authorizationEndpoint:
+          toolset?.authSettings?.authorizationEndpoint ?? '',
+        tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
+        withLogin:
+          !prevData &&
+          toolset?.authSettings?.clientSecret &&
+          toolset?.authSettings?.clientId
+            ? WithLogin.WithConfig
+            : (prevData?.withLogin ?? WithLogin.WithLogin),
+        scopes: toolset?.authSettings?.scopesSupported,
+      };
+    case ToolsetAuthTypes.NONE:
+    default:
+      return {
+        isLoggedIn,
+        withLogin: WithLogin.WithoutLogin,
+        authenticationType,
+      };
+  }
+};
+
+export const getDefaultFormData = (
+  toolset?: ToolsetModel,
+  toolsets?: ToolsetModel[],
+  prevData?: ToolsetEditorForm,
+): ToolsetEditorForm => {
+  return {
+    name:
+      toolset?.name ??
+      getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
+    endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
+    protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
+    description: toolset?.description ?? '',
+    allowedTools: toolset?.allowedTools ?? [],
+    iconUrl: toolset?.iconUrl ?? '',
+    version: toolset?.version ?? DEFAULT_VERSION,
+    topics: toolset?.topics ?? [],
+
+    ...getDefaultLoginFormData(
+      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
+      toolset,
+      prevData,
+    ),
+  };
+};

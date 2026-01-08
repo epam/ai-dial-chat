@@ -13,18 +13,20 @@ import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-
-import CaretIconComponent from '../../Common/CaretIconComponent';
-import CollapsibleSection from '../../Common/CollapsibleSection';
 import {
-  ConversationPublicationResources,
-  PromptPublicationResources,
-} from './PublicationResources';
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
+
+import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+
+import {
+  ConversationPublicationSidebarResources,
+  PromptPublicationSidebarResources,
+} from './PublicationSidebarResources';
 import { ReviewDot } from './ReviewDot';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -52,11 +54,18 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     ),
   );
 
+  const isMessageStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+
   const [isOpen, setIsOpen] = useState(
     selectedPublicationUrl === publication.url,
   );
 
   const handlePublicationSelect = useCallback(() => {
+    if (isMessageStreaming) {
+      return;
+    }
     setIsOpen((value) => !value);
 
     if (publication.uploadStatus !== UploadStatus.LOADED) {
@@ -70,7 +79,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         conversationIds: [],
       }),
     );
-  }, [dispatch, publication]);
+  }, [dispatch, publication, isMessageStreaming]);
 
   const showCaretIcon = featureTypesWithCaretIcon.some((type) =>
     publication.resourceTypes.includes(
@@ -84,9 +93,9 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   );
 
   const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
-    ? ConversationPublicationResources
+    ? ConversationPublicationSidebarResources
     : featureTypes.includes(FeatureType.Prompt)
-      ? PromptPublicationResources
+      ? PromptPublicationSidebarResources
       : null;
 
   return (
@@ -102,7 +111,15 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         )}
         data-qa="folder"
       >
-        <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
+        <div
+          className={classNames(
+            'group/button flex size-full items-center gap-1 py-2 pr-3',
+            {
+              'cursor-pointer': !isMessageStreaming,
+              'cursor-not-allowed': isMessageStreaming,
+            },
+          )}
+        >
           <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />
           <div className="relative">
             <IconClipboard
@@ -140,6 +157,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       {publication.resources && ResourcesComponent && (
         <ResourcesComponent
           resources={publication.resources}
+          publicationUrl={publication.url}
           isOpen={isOpen}
           additionalItemData={additionalItemData}
         />

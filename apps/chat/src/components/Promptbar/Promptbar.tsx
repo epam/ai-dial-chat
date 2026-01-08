@@ -6,24 +6,22 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
+import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
-
-import Sidebar from '../Sidebar';
+import { Sidebar } from '@/src/components/Sidebar/Sidebar';
 
 export const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);
@@ -56,6 +54,12 @@ export const Promptbar = () => {
 
   const filteredPrompts = useAppSelector(filteredPromptsSelector);
   const filteredFolders = useAppSelector(filteredFoldersSelector);
+
+  const rootFilteredPrompts = useMemo(
+    () =>
+      filteredPrompts.filter((prompt) => prompt.folderId === getPromptRootId()),
+    [filteredPrompts],
+  );
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
@@ -124,23 +128,21 @@ export const Promptbar = () => {
   );
 
   return (
-    <>
-      <Sidebar<PromptInfo>
-        featureType={FeatureType.Prompt}
-        side="right"
-        isOpen={showPromptbar}
-        itemComponent={<Prompts prompts={filteredPrompts} />}
-        folderComponent={<PromptFolders />}
-        filteredItems={filteredPrompts}
-        filteredFolders={filteredFolders}
-        searchTerm={searchTerm}
-        searchFilters={searchFilters}
-        onSearchTerm={handleSearchTerm}
-        onSearchFilters={handleSearchFilters}
-        onDrop={handleDrop}
-        footerComponent={<PromptbarSettings />}
-        areEntitiesUploaded={areEntitiesUploaded}
-      />
-    </>
+    <Sidebar<PromptInfo>
+      featureType={FeatureType.Prompt}
+      side={SidebarSide.Right}
+      isOpen={showPromptbar}
+      itemComponent={<Prompts prompts={rootFilteredPrompts} />}
+      folderComponent={<PromptFolders />}
+      filteredItems={rootFilteredPrompts}
+      filteredFolders={filteredFolders}
+      searchTerm={searchTerm}
+      searchFilters={searchFilters}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
+      footerComponent={<PromptbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
+    />
   );
 };

@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { loadingTimeout } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -90,7 +91,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModalAssertion.assertElementText(
           messageTemplateModal.title,
@@ -252,7 +253,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         for (const [key, value] of rowsMap.entries()) {
           const index = Array.from(rowsMap.keys()).indexOf(key);
@@ -353,6 +354,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    appContainer,
     messageTemplateModal,
     messageTemplateModalAssertion,
     chatMessages,
@@ -390,7 +392,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await chatMessages.openEditMessageMode(1);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -487,10 +491,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModal.getTemplateRowContent(1).click();
-        await dialHomePage.copyToClipboard(firstRowMismatchContent);
+        await dialHomePage.copyTextToClipboard(firstRowMismatchContent);
         await dialHomePage.pasteFromClipboard();
         for (let i = 1; i <= 2; i++) {
           await page.keyboard.press(keys.backspace);
@@ -804,7 +808,7 @@ dialTest(
     const fullRequest = `${firstPromptContent(aValue, bValue)} AND ${secondPromptContent(cValue, dValue)}`;
     const conversationName = fullRequest.replace(
       new RegExp(`[${ExpectedConstants.restrictedNameChars}]`, 'g'),
-      ' ',
+      '_',
     );
     let firstPrompt: Prompt;
     let secondPrompt: Prompt;
@@ -992,7 +996,10 @@ dialTest(
       'Create replay conversation based on imported',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'GET',
+        });
       },
     );
 
@@ -1001,7 +1008,7 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(replayName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
-          triggeredHttpMethod: 'POST',
+          triggeredHttpMethod: 'GET',
         });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -1021,7 +1028,7 @@ dialTest(
     await dialTest.step(
       'Start replaying the main conversation and verify modal variable is displayed for the second conversation request',
       async () => {
-        await conversations.selectConversation(
+        await conversations.selectEntity(
           replayName,
           { isHttpMethodTriggered: false },
           {
@@ -1083,7 +1090,9 @@ dialTest(
           secondRowSecondVar.replaceAll(varBracketsRegex, ''),
           secondUpdatedValue,
         );
-        const request = await variableModalDialog.submitReplayVariables();
+        const request = await variableModalDialog.submitReplayVariables({
+          isMoveRequestTriggered: true,
+        });
         apiAssertion.assertRequestMessage(
           request.messages[2],
           requestContent
@@ -1147,7 +1156,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
@@ -1229,7 +1238,7 @@ dialAdminTest(
       async () => {
         const publishRequest = publishRequestBuilder
           .withName(publicationRequestName)
-          .withConversationResource(conversation, PublishActions.ADD)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         publication =
           await publicationApiHelper.createPublishRequest(publishRequest);

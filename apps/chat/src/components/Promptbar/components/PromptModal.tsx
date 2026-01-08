@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
-  arePromptsFieldsTheSame,
+  areSomePromptsFieldsChanged,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 
@@ -13,14 +13,14 @@ import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { PromptsSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-import { withRenderWhen } from '../../Common/RenderWhen';
 import { EditPrompt } from './EditPrompt';
 import { ViewPrompt } from './ViewPrompt';
 
@@ -51,23 +51,23 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
 
       if (isNewPromptCreating) {
         dispatch(PromptsActions.createNewPrompt(regeneratePrompt));
+        dispatch(
+          PromptsActions.setSelectedPrompt({
+            promptId: regeneratePrompt.id,
+          }),
+        );
+        dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
       } else {
-        if (arePromptsFieldsTheSame(editedPrompt, prompt)) {
+        if (areSomePromptsFieldsChanged(editedPrompt, prompt)) {
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: editedPrompt,
+              publicationUrl: prompt.publicationInfo?.publicationUrl,
             }),
           );
         }
       }
-
-      dispatch(
-        PromptsActions.setSelectedPrompt({
-          promptId: regeneratePrompt.id,
-        }),
-      );
-      dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
 
       onToggleEditMode(true);
     },
@@ -79,13 +79,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
   }, [onToggleEditMode]);
 
   if (isViewMode && !isNewPromptCreating) {
-    return (
-      <ViewPrompt
-        prompt={prompt}
-        onEditMode={handleGoToEditMode}
-        onClose={onClose}
-      />
-    );
+    return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
   }
 
   return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;
@@ -102,10 +96,19 @@ const PromptModalView = () => {
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
   );
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const [isViewMode, setIsViewMode] = useState(
     !isNewPromptCreating && !isPromptInitModeEdit,
   );
+
+  const promptModalTitle = isViewMode
+    ? 'View prompt'
+    : isNewPromptCreating
+      ? 'Create prompt'
+      : 'Edit prompt';
 
   const dispatch = useAppDispatch();
 
@@ -130,10 +133,11 @@ const PromptModalView = () => {
         'px-3 md:px-6',
         prompt &&
           prompt.publicationInfo?.action === PublishActions.DELETE &&
+          isSelectedPromptApproveRequiredResource &&
           'text-error',
       )}
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
-      heading={t(isViewMode ? 'View prompt' : 'Edit prompt')}
+      heading={t(promptModalTitle)}
       hideClose={!isViewMode}
       onClose={handleClose}
     >

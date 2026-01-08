@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -7,9 +8,15 @@ import {
   PublicationsListModel,
   PublishedList,
 } from '@/chat/types/publication';
-import { API, ExpectedConstants } from '@/src/testData';
+import {
+  API,
+  ExpectedConstants,
+  ExpectedMessages,
+  PublishRequestBuilder,
+  PublishingExpectedMessages,
+} from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { GeneratorUtil, ItemUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil, unpublishRequestPrefix } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -28,36 +35,48 @@ export class PublicationApiHelper extends BaseApiHelper {
     const statusCode = response.status();
     expect(
       statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
     return (await response.json()) as PublicationsListModel;
   }
 
-  public async listPublishedConversations() {
-    const response = await this.request.get(
-      this.getHost(API.publishedConversations),
-      {
-        params: {
-          recursive: true,
-        },
+  public async listPublishedResources(resourceType: BackendResourceType) {
+    let host = '';
+    switch (resourceType) {
+      case BackendResourceType.CONVERSATION:
+        host = API.publishedConversations;
+        break;
+      case BackendResourceType.PROMPT:
+        host = API.publishedPrompts;
+        break;
+      case BackendResourceType.APPLICATION:
+        host = API.publishedApplications;
+        break;
+      case BackendResourceType.FILE:
+        host = API.publishedFiles();
+        break;
+    }
+    const response = await this.request.get(this.getHost(host), {
+      params: {
+        recursive: true,
       },
-    );
+    });
     const statusCode = response.status();
     expect(
       statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
     return (await response.json()) as PublishedList;
   }
 
   public async listPublishedApps() {
     const response = await this.request.get(
-      this.getHost(API.publishedApplicationsHost),
+      this.getHost(API.publishedApplicationsHost()),
     );
     const statusCode = response.status();
     expect(
       statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
     return (await response.json()) as PublishedList;
   }
@@ -72,7 +91,7 @@ export class PublicationApiHelper extends BaseApiHelper {
     const statusCode = response.status();
     expect(
       statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
     return (await response.json()) as Publication;
   }
@@ -84,7 +103,7 @@ export class PublicationApiHelper extends BaseApiHelper {
     const statusCode = response.status();
     expect(
       statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
     return (await response.json()) as Conversation;
   }
@@ -98,9 +117,10 @@ export class PublicationApiHelper extends BaseApiHelper {
         data: { url: publicationRequest.url },
       },
     );
-    expect(response.status(), `Successfully approved publication request`).toBe(
-      200,
-    );
+    expect(
+      response.status(),
+      PublishingExpectedMessages.publicationRequestApproved,
+    ).toBe(200);
   }
 
   public async rejectRequest(
@@ -112,9 +132,10 @@ export class PublicationApiHelper extends BaseApiHelper {
         data: { url: publicationRequest.url },
       },
     );
-    expect(response.status(), `Successfully rejected publication request`).toBe(
-      200,
-    );
+    expect(
+      response.status(),
+      PublishingExpectedMessages.publicationRequestRejected,
+    ).toBe(200);
   }
 
   public async createPublishRequest(requestModel: PublicationRequestModel) {
@@ -134,26 +155,41 @@ export class PublicationApiHelper extends BaseApiHelper {
         data: requestModel,
       },
     );
-    expect(response.status(), `Successfully created publication request`).toBe(
-      200,
-    );
+    expect
+      .soft(
+        response.status(),
+        PublishingExpectedMessages.publicationRequestCreated,
+      )
+      .toBe(200);
     const responseText = await response.text();
     return JSON.parse(responseText) as Publication;
+  }
+
+  public getPublicationBucket(publication: Publication) {
+    const reviewUrl = publication.resources[0].reviewUrl;
+    return reviewUrl.split('/')[1];
   }
 
   public async createUnpublishRequest(
     publicationRequest: Publication | PublicationRequestModel,
   ) {
-    const unpublishResources = [];
+    const unpublishResources: {
+      action: PublishActions;
+      sourceUrl: string;
+      targetUrl: string;
+      publishCredentials?: boolean;
+    }[] = [];
     for (const resource of publicationRequest.resources) {
       unpublishResources.push({
         action: PublishActions.DELETE,
+        sourceUrl: resource.targetUrl,
         targetUrl: resource.targetUrl,
       });
     }
     const data: PublicationRequestModel = {
-      displayAuthor: '',
-      name: GeneratorUtil.randomUnpublishRequestName(),
+      displayAuthor: publicationRequest.displayAuthor ?? '',
+      name:
+        publicationRequest.name || GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
       resources: unpublishResources,
       rules: publicationRequest.rules,
@@ -164,13 +200,31 @@ export class PublicationApiHelper extends BaseApiHelper {
         data: data,
       },
     );
-    expect(response.status(), `Successfully created unpublish request`).toBe(
-      200,
-    );
+    expect(
+      response.status(),
+      PublishingExpectedMessages.unpublishRequestCreated,
+    ).toBe(200);
     const responseText = await response.text();
     const responseJson = JSON.parse(responseText) as PublicationProps;
     expect(responseJson.url).toBeDefined();
     expect(responseJson.status).toBe(PublicationStatus.PENDING);
     return responseJson;
+  }
+
+  public async unpublishEntity(
+    name: string,
+    relativePath: string,
+    publishRequestBuilder: PublishRequestBuilder,
+    resourceBuilder: (request: PublishRequestBuilder) => PublishRequestBuilder,
+  ) {
+    const unpublishRequest = publishRequestBuilder
+      .withName(unpublishRequestPrefix + name)
+      .withTargetFolder(relativePath);
+
+    resourceBuilder(unpublishRequest);
+
+    const builtRequest = unpublishRequest.build();
+    const unpublishResponse = await this.createUnpublishRequest(builtRequest);
+    await this.approveRequest(unpublishResponse);
   }
 }

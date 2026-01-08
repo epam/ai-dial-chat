@@ -8,7 +8,7 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 interface Props {
-  handleSearch: (e: ChangeEvent<HTMLInputElement>) => void;
+  onSearch: (e: ChangeEvent<HTMLInputElement>) => void;
   searchQuery: string;
   children: ReactNode;
   showSpinner?: boolean;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const SelectFolderHeader = ({
-  handleSearch,
+  onSearch,
   searchQuery,
   children,
   showSpinner,
@@ -42,7 +42,7 @@ export const SelectFolderHeader = ({
         placeholder={t('Search folders')}
         type="text"
         data-qa="search-folder"
-        onChange={handleSearch}
+        onChange={onSearch}
         className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         value={searchQuery}
       />

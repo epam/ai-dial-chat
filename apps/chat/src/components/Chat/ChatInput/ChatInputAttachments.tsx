@@ -1,6 +1,7 @@
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 
-import Tooltip from '../../Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
 import { ChatInputFileAttachment } from './ChatInputFileAttachment';
 import { ChatInputFolderAttachment } from './ChatInputFolderAttachment';
 import { ChatInputLinkAttachment } from './ChatInputLinkAttachment';
@@ -32,7 +33,7 @@ export const ChatInputAttachments = ({
         <Tooltip
           key={folder.id}
           tooltip={folder.name}
-          triggerClassName={'truncate text-center'}
+          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
         >
           <ChatInputFolderAttachment
             folder={folder}
@@ -44,7 +45,7 @@ export const ChatInputAttachments = ({
         <Tooltip
           key={file.id}
           tooltip={file.name}
-          triggerClassName={'truncate text-center'}
+          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
         >
           <ChatInputFileAttachment
             file={file}
@@ -57,7 +58,7 @@ export const ChatInputAttachments = ({
         <Tooltip
           key={index}
           tooltip={link.title || link.href}
-          triggerClassName={'truncate text-center'}
+          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
         >
           <ChatInputLinkAttachment
             link={link}

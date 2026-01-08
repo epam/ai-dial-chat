@@ -1,32 +1,63 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import {
+  InputHTMLAttributes,
+  ReactNode,
+  forwardRef,
+  useCallback,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import Tooltip from '../Tooltip';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;
-  tooltip?: string;
+  tooltip?: ReactNode;
   dataQa?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ error, className, tooltip, dataQa, ...rest }, ref) => {
+  ({ error, className, tooltip, dataQa, type, ...rest }, ref) => {
+    const [isVisible, setIsVisible] = useState(false);
+
+    const inputType =
+      type === 'password' ? (isVisible ? 'text' : 'password') : type;
+
+    const handleTogglePassword = useCallback(() => {
+      setIsVisible((prev) => !prev);
+    }, []);
+
     return (
-      <Tooltip tooltip={tooltip}>
-        <input
-          {...rest}
-          ref={ref}
-          className={classNames(
-            'input-form input-invalid peer mx-0 disabled:cursor-not-allowed disabled:border-primary',
-            error && 'border-error hover:border-error focus:border-error',
-            className,
+      <Tooltip tooltip={tooltip} triggerClassName="grow">
+        <div className="relative">
+          <input
+            {...rest}
+            ref={ref}
+            className={classNames(
+              'input-form input-invalid peer mx-0 text-sm disabled:cursor-not-allowed disabled:border-primary',
+              error && 'border-error hover:border-error focus:border-error',
+              type === 'password' && 'pr-9',
+              className,
+            )}
+            data-qa={dataQa}
+            type={inputType}
+          />
+
+          {type === 'password' && (
+            <DialButton
+              className="absolute right-0 top-1/2 -translate-y-1/2 px-3 text-secondary"
+              onClick={handleTogglePassword}
+              iconBefore={
+                isVisible ? <IconEye size={18} /> : <IconEyeOff size={18} />
+              }
+            />
           )}
-          data-qa={dataQa}
-        />
+        </div>
       </Tooltip>
     );
   },

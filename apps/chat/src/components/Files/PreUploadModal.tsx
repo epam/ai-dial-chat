@@ -1,4 +1,4 @@
-import { IconFile, IconTrashX } from '@tabler/icons-react';
+import { IconFile } from '@tabler/icons-react';
 import {
   ChangeEvent,
   useCallback,
@@ -17,6 +17,7 @@ import {
   getFileNameWithoutExtension,
   getRelativePath,
   getShortExtensionsListFromMimeType,
+  notAllowedSymbolsRegex,
   prepareFileName,
   validatePreUploadFiles,
   validateUploadFiles,
@@ -28,17 +29,23 @@ import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ErrorMessage } from '../Common/ErrorMessage';
 import { SelectFolderModal } from './SelectFolderModal';
+
+import {
+  ButtonVariant,
+  DialButton,
+  DialRemoveButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   isOpen: boolean;
@@ -146,6 +153,7 @@ export const PreUploadDialog = ({
 
   const handleUpload = useCallback(() => {
     const errors = [];
+
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
         t(
@@ -159,16 +167,12 @@ export const PreUploadDialog = ({
       );
     }
 
-    const { errorMsg, validFiles, invalidFiles } =
-      validateUploadFiles(selectedFiles);
-
-    const filesToUpload = [...validFiles, ...invalidFiles];
-
-    if (errorMsg) errors.push(errorMsg);
+    const { validFiles: filesToUpload } = validateUploadFiles(selectedFiles);
 
     const attachmentsSameLevelNames = files
       .filter((file) => file.folderId === selectedFolderId)
       .map((file) => prepareFileName(file.name));
+
     const localIncorrectSameNameFiles = filesToUpload
       .filter((file) =>
         attachmentsSameLevelNames.includes(prepareFileName(file.name)),
@@ -178,7 +182,7 @@ export const PreUploadDialog = ({
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
         t(
-          `${errors.length ? '\n' : ''}Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}`,
+          `${errors.length ? '\n' : ''}The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}`,
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ),
       );
@@ -187,10 +191,11 @@ export const PreUploadDialog = ({
     const duplicateNames = filesToUpload
       .map((file) => file.name)
       .filter((value, index, self) => self.indexOf(value) !== index);
+
     if (duplicateNames.length) {
       errors.push(
         t(
-          `${errors.length ? '\n' : ''}Files which you trying to upload have same names. Please rename or delete them from uploading files list: {{fileNames}}`,
+          `${errors.length ? '\n' : ''}The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}`,
           {
             fileNames: duplicateNames.join(', '),
           },
@@ -204,7 +209,6 @@ export const PreUploadDialog = ({
     }
 
     onUploadFiles(filesToUpload, folderPath);
-
     onClose(true);
   }, [
     attachments.length,
@@ -220,24 +224,37 @@ export const PreUploadDialog = ({
 
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
-      return (e: ChangeEvent<HTMLInputElement>) =>
-        setSelectedFiles(
-          selectedFiles.map((file, index) => {
-            if (index === changedFileIndex) {
-              const indexDot = file.name.lastIndexOf('.');
-              const formatFile =
-                indexDot !== -1 ? file.name.slice(indexDot) : '';
-              const fileName = prepareFileName(e.target.value + formatFile);
-              return {
-                ...file,
-                name: fileName,
-                id: constructPath(getFileRootId(), folderPath, fileName),
-              };
-            }
+      return (e: ChangeEvent<HTMLInputElement>) => {
+        const input = e.target;
+        const rawValue = input.value;
+        const cursor = input.selectionStart ?? rawValue.length;
 
-            return file;
-          }),
+        const sanitized = rawValue.replace(notAllowedSymbolsRegex, '');
+        const diff = rawValue.length - sanitized.length;
+
+        const { name: oldName } = selectedFiles[changedFileIndex];
+        const ext = oldName.includes('.')
+          ? oldName.slice(oldName.lastIndexOf('.'))
+          : '';
+
+        const newName = prepareFileName(sanitized + ext);
+
+        setSelectedFiles((files) =>
+          files.map((file, i) =>
+            i === changedFileIndex
+              ? {
+                  ...file,
+                  name: newName,
+                  id: constructPath(getFileRootId(), folderPath, newName),
+                }
+              : file,
+          ),
         );
+
+        requestAnimationFrame(() => {
+          input.setSelectionRange(cursor - diff, cursor - diff);
+        });
+      };
     },
     [folderPath, selectedFiles],
   );
@@ -330,7 +347,7 @@ export const PreUploadDialog = ({
               <span className="text-xs text-secondary">{t('Upload to')}</span>
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
-            <button
+            <div
               className="flex grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="change-path-container"
             >
@@ -342,14 +359,13 @@ export const PreUploadDialog = ({
                       folderPath ?? rootFolderName,
                     )}
               </span>
-              <span
-                className="cursor-pointer text-accent-primary"
+              <DialButton
+                textClassName="text-accent-primary font-normal"
                 onClick={handleFolderChange}
                 data-qa="change-button"
-              >
-                {t('Change')}
-              </span>
-            </button>
+                label={t('Change')}
+              />
+            </div>
           </div>
 
           {selectedFiles.length !== 0 && (
@@ -373,9 +389,10 @@ export const PreUploadDialog = ({
                       <input
                         type="text"
                         value={getFileNameWithoutExtension(file.name)}
-                        className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                         onChange={handleRenameFile(index)}
+                        className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                       />
+
                       <span
                         className="absolute right-2"
                         data-qa="file-extension"
@@ -384,15 +401,11 @@ export const PreUploadDialog = ({
                       </span>
                     </div>
 
-                    <button
+                    <DialRemoveButton
                       onClick={handleUnselectFile(index)}
-                      data-qa="delete-file"
-                    >
-                      <IconTrashX
-                        size={24}
-                        className="shrink-0 text-secondary hover:text-accent-primary"
-                      />
-                    </button>
+                      aria-label="remove-file"
+                      iconClassName="size-6 shrink-0 text-secondary hover:text-accent-primary"
+                    />
                   </div>
                 ))}
               </div>
@@ -417,14 +430,15 @@ export const PreUploadDialog = ({
           />
         </label>
 
-        <button
-          className="button button-primary"
+        <DialButton
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
           data-qa="upload"
-        >
-          {customUploadButtonLabel ? customUploadButtonLabel : t('Upload')}
-        </button>
+          label={
+            customUploadButtonLabel ? customUploadButtonLabel : t('Upload')
+          }
+          variant={ButtonVariant.Primary}
+        />
       </div>
 
       <SelectFolderModal

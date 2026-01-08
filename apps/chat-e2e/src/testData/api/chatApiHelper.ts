@@ -22,23 +22,13 @@ export class ChatApiHelper extends BaseApiHelper {
           }
         : { role: 'user', content: message.content };
     //build common for all entities data
-    const commonData = {
+    return {
       id: `conversations/${BucketUtil.getBucket()}/` + conversation.id,
       messages: [userMessage],
       model: ModelsUtil.getOpenAIEntity(conversation.model.id),
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: conversation.selectedAddons,
     };
-
-    return conversation.assistantModelId
-      ? {
-          ...commonData,
-          assistantModel: ModelsUtil.getOpenAIEntity(
-            conversation.assistantModelId,
-          ),
-        }
-      : commonData;
   }
 
   public async postRequest(conversation: Conversation) {

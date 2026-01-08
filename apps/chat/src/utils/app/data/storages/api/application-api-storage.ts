@@ -1,10 +1,15 @@
 import { Observable, throwError } from 'rxjs';
 
+import {
+  convertApplicationFromApi,
+  convertApplicationToApi,
+} from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
-  getApplicationApiKey,
-  parseApplicationApiKey,
+  getMarketplaceEntityApiKey,
+  getOpsApiUrl,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -18,11 +23,10 @@ import {
 } from '@/src/types/applications';
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
+import { ServerSlugs } from '@/src/types/slugs-types';
 
-import {
-  convertApplicationFromApi,
-  convertApplicationToApi,
-} from '../../../application';
+import { DEFAULT_VERSION } from '@/src/constants/publication';
+
 import { ApiEntityStorage } from './api-entity-storage';
 
 import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';
@@ -49,10 +53,13 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     return convertApplicationToApi(application, schema);
   }
   getEntityKey(info: ApplicationInfo): string {
-    return getApplicationApiKey(info);
+    return getMarketplaceEntityApiKey(info);
   }
   parseEntityKey(key: string): Omit<ApplicationInfo, 'folderId' | 'id'> {
-    return parseApplicationApiKey(key);
+    return parseEntityApiKey(key, {
+      parseVersion: true,
+      defaultVersion: DEFAULT_VERSION,
+    });
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;
@@ -66,7 +73,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
       | SimpleApplicationStatus.REDEPLOY,
   ): Observable<void> {
     try {
-      return ApiUtils.request(constructPath('/api/ops/application', status), {
+      return ApiUtils.request(getOpsApiUrl(ServerSlugs.APPLICATION, status), {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(applicationId),
@@ -79,7 +86,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   getLogs(path: string): Observable<ApplicationLogsType> {
     try {
-      return ApiUtils.request('/api/ops/application/logs', {
+      return ApiUtils.request(getOpsApiUrl(ServerSlugs.APPLICATION_LOGS), {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(path),

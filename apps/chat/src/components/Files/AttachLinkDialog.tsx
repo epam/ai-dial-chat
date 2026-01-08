@@ -11,9 +11,10 @@ import { Translation } from '@/src/types/translation';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
+import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { FieldErrorMessage } from '../Common/Forms/FieldErrorMessage';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onClose: (link?: DialLink) => void;
@@ -29,12 +30,12 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
 
   const {
     register,
-    handleSubmit,
+    handleSubmit: submitWrapper,
     setFocus,
     formState: { errors, isValid, dirtyFields, touchedFields },
   } = useForm<Inputs>({ mode: 'all' });
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const handleSubmit: SubmitHandler<Inputs> = (data) => {
     if (isValid) {
       const link: DialLink = {
         title: data.title,
@@ -63,7 +64,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       heading={t('Attach link')}
       dismissProps={OUTSIDE_PRESS}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={submitWrapper(handleSubmit)}>
         <div className="mb-4">
           <label
             className="mb-1 flex text-xs text-secondary"
@@ -112,13 +113,13 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           ></input>
         </div>
         <div className="flex justify-end">
-          <button
-            type="submit"
-            className="button button-primary"
+          <DialButton
+            label={t('Attach')}
+            variant={ButtonVariant.Primary}
+            data-qa="attach"
             disabled={!isValid}
-          >
-            {t('Attach')}
-          </button>
+            type="submit"
+          />
         </div>
       </form>
     </Modal>

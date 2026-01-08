@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -16,6 +15,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -23,11 +23,20 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
-import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import Tooltip from '../../Common/Tooltip';
-import { TemplateRenderer } from '../ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import {
+  ButtonVariant,
+  DialButton,
+  DialCloseButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -108,16 +117,18 @@ export const PromptVariablesDialog: FC<Props> = ({
     [],
   );
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
         onClose();
       }
     },
-    [handleSubmit, onClose],
+    [enterType, handleSubmit, onClose],
   );
 
   useEffect(() => {
@@ -164,8 +175,8 @@ export const PromptVariablesDialog: FC<Props> = ({
       >
         <Tooltip
           tooltip={prompt.name}
-          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
           triggerClassName="mb-4 truncate whitespace-pre text-base font-bold block"
+          contentClassName="break-all"
           dataQa="variable-prompt-name"
         >
           {prompt.name}
@@ -180,12 +191,10 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
+        <DialCloseButton
+          className="absolute right-2 top-2 rounded"
+          onClose={onClose}
+        />
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key} data-qa="variable">
@@ -202,7 +211,9 @@ export const PromptVariablesDialog: FC<Props> = ({
             </div>
 
             <textarea
-              ref={(el) => (inputsRefs.current[index] = el)}
+              ref={(el) => {
+                inputsRefs.current[index] = el;
+              }}
               className={inputClassName}
               style={{ resize: 'none' }}
               required
@@ -224,13 +235,12 @@ export const PromptVariablesDialog: FC<Props> = ({
         ))}
 
         <div className="mt-1 flex justify-end">
-          <button
+          <DialButton
+            label={t('Submit')}
             type="submit"
-            className="button button-primary"
+            variant={ButtonVariant.Primary}
             data-qa="submit-variable"
-          >
-            {t('Submit')}
-          </button>
+          />
         </div>
       </form>
     </div>

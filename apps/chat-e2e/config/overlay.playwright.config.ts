@@ -21,10 +21,11 @@ config.reporter = [
     },
   ],
 ];
-config.use!.baseURL = overlayHost;
-config.use!.navigationTimeout = 60000;
-config.use!.actionTimeout = 60000;
-
+if (config.use) {
+  config.use.baseURL = overlayHost;
+  config.use.navigationTimeout = 60000;
+  config.use.actionTimeout = 60000;
+}
 config.webServer = {
   cwd: workspaceRoot,
   command: 'npx nx serve:sandbox:production overlay-sandbox',

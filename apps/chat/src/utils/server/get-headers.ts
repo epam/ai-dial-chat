@@ -1,4 +1,4 @@
-import { isAuthDisabled } from '../auth/auth-providers';
+import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 
 export const getApiHeaders = ({
   chatReference,

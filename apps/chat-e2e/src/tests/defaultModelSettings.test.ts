@@ -1,5 +1,6 @@
 import dialTest from '../core/dialFixtures';
 import {
+  DefaultModelReference,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
@@ -15,32 +16,25 @@ import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 let nonDefaultModel: DialAIEntityModel;
-let recentAddonIds: string[];
 let recentModelIds: string[];
-let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
   nonDefaultModel = GeneratorUtil.randomArrayElement(
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
-  recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
-  allEntities = ModelsUtil.getOpenAIEntities();
 });
 
 dialTest(
   'Create new conversation.\n' +
     'Default settings in new chat with cleared site data.\n' +
-    'Addon icon is set in recent and selected list on default screen for new chat.\n' +
-    'Addon icon is set in recent and selected list on default screen for new chat',
+    'Clip icon in message box does not exist if chat is based on model which does not work with attachments',
   async ({
     dialHomePage,
     conversations,
-    agentSettings,
     conversationSettingsModal,
     temperatureSlider,
-    addons,
     iconApiHelper,
     sendMessage,
     agentSettingAssertion,
@@ -50,22 +44,38 @@ dialTest(
     talkToAgents,
     baseAssertion,
     localStorageManager,
+    fileApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1030', 'EPMRTC-1890');
-    const expectedAddons = ModelsUtil.getAddons();
+    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
+    let modelWithoutAttachments: DialAIEntityModel;
 
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
-        await localStorageManager.seLastConversationSettingsOnce();
+        modelWithoutAttachments = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModelsWithoutAttachment().filter(
+            (m) =>
+              m.features?.temperature !== undefined &&
+              m.features.temperature === true &&
+              m.features.systemPrompt !== undefined &&
+              m.features.systemPrompt === true,
+          ),
+        );
+        await fileApiHelper.updateInstalledDeployments([
+          modelWithoutAttachments,
+        ]);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          modelWithoutAttachments,
+        );
+        await localStorageManager.useLastConversationSettingsOnce();
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(
-          defaultModel.name,
+          modelWithoutAttachments.name,
         );
       },
     );
@@ -73,37 +83,26 @@ dialTest(
     await dialTest.step(
       'Verify the list of recent entities and icons are displayed and valid',
       async () => {
-        const expectedDefaultRecentEntities = [];
-        for (const entity of recentModelIds) {
-          expectedDefaultRecentEntities.push(
-            allEntities.find((e) => e.id === entity)!.name,
-          );
-        }
-
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
-          .toEqual(expectedDefaultRecentEntities);
+          .toEqual([modelWithoutAttachments.name]);
 
-        const recentAgentsIcons = await talkToAgents.getAgentsIcons();
+        const recentAgentsIcons = await talkToAgents.getEntityIcons();
         expect
           .soft(
             recentAgentsIcons.length,
             ExpectedMessages.entitiesIconsCountIsValid,
           )
-          .toBe(recentModelIds.length);
+          .toBe(1);
 
-        for (const recentEntityId of recentModelIds) {
-          const entity = ModelsUtil.getOpenAIEntity(recentEntityId)!;
-          const actualRecentEntity = recentAgentsIcons.find(
-            (e) => e.entityId === entity.id,
-          )!;
-          const expectedEntityIcon = iconApiHelper.getEntityIcon(entity);
-          await baseAssertion.assertEntityIcon(
-            actualRecentEntity.iconLocator,
-            expectedEntityIcon,
-          );
-        }
+        const expectedEntityIcon = iconApiHelper.getEntityIcon(
+          modelWithoutAttachments,
+        );
+        await baseAssertion.assertEntityIcon(
+          recentAgentsIcons[0].iconLocator,
+          expectedEntityIcon,
+        );
         await talkToAgentDialog.cancelButton.click();
       },
     );
@@ -112,59 +111,14 @@ dialTest(
       'Verify default settings for default model',
       async () => {
         await chat.configureSettingsButton.click();
-        const defaultSystemPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(
-            defaultSystemPrompt,
-            ExpectedMessages.defaultSystemPromptIsEmpty,
-          )
-          .toBe(ExpectedConstants.emptyString);
+        await agentSettingAssertion.assertSystemPromptValue(
+          ExpectedConstants.emptyString,
+        );
 
         const defaultTemperature = await temperatureSlider.getTemperature();
         expect
           .soft(defaultTemperature, ExpectedMessages.defaultTemperatureIsOne)
           .toBe(ExpectedConstants.defaultTemperature);
-
-        const selectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-          .toEqual(defaultModel.selectedAddons ?? []);
-
-        const expectedDefaultRecentAddons = [];
-        for (const addonId of recentAddonIds) {
-          expectedDefaultRecentAddons.push(
-            expectedAddons.find((a) => a.id === addonId)?.name || addonId,
-          );
-        }
-        const recentAddons = await addons.getRecentAddons();
-        expect
-          .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
-          .toEqual(expectedDefaultRecentAddons);
-      },
-    );
-
-    await dialTest.step(
-      'Verify recent addon icons are displayed and valid',
-      async () => {
-        const recentAddonsIcons = await addons.getRecentAddonsIcons();
-        expect
-          .soft(
-            recentAddonsIcons.length,
-            ExpectedMessages.addonsIconsCountIsValid,
-          )
-          .toBe(recentAddonIds.length);
-
-        for (const addon of recentAddonIds) {
-          const addonEntity = ModelsUtil.getAddon(addon)!;
-          const actualRecentAddon = recentAddonsIcons.find(
-            (a) => a.entityId === addonEntity.id,
-          )!;
-          const expectedAddonIcon = iconApiHelper.getEntityIcon(addonEntity);
-          await agentSettingAssertion.assertEntityIcon(
-            actualRecentAddon.iconLocator,
-            expectedAddonIcon,
-          );
-        }
       },
     );
 
@@ -226,7 +180,9 @@ dialTest(
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
       async () => {
-        await localStorageManager.setRecentModelsIds(nonDefaultModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          nonDefaultModel,
+        );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -320,7 +276,7 @@ dialTest(
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(nonDefaultModel);
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(nonDefaultModel.name);
@@ -334,9 +290,9 @@ dialTest(
   async ({
     dialHomePage,
     agentSettings,
+    agentSettingAssertion,
     temperatureSlider,
     setTestIds,
-    addons,
     chat,
     conversationSettingsModal,
     talkToAgentDialog,
@@ -347,8 +303,8 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
-    await localStorageManager.setRecentModelsIds(randomModel);
-    await localStorageManager.seLastConversationSettingsOnce();
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(randomModel);
+    await localStorageManager.useLastConversationSettingsOnce();
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -372,8 +328,7 @@ dialTest(
     await chat.configureSettingsButton.click();
 
     if (isSysPromptAllowed) {
-      const systemPrompt = await agentSettings.systemPrompt.getElementContent();
-      expect.soft(systemPrompt, ExpectedMessages.systemPromptIsValid).toBe('');
+      await agentSettingAssertion.assertSystemPromptValue('');
     }
     if (isTemperatureAllowed) {
       const temperature = await temperatureSlider.getTemperature();
@@ -381,9 +336,6 @@ dialTest(
         .soft(temperature, ExpectedMessages.temperatureIsValid)
         .toBe(ExpectedConstants.defaultTemperature);
     }
-
-    const selectedAddons = await addons.getSelectedAddons();
-    expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);
     await conversationSettingsModal.cancelButton.click();
 
     await chat.changeAgentButton.click();
@@ -403,7 +355,6 @@ dialTest(
     chat,
     talkToAgentDialog,
     talkToAgents,
-    marketplacePage,
     agentInfoAssertion,
     agentInfo,
     talkToAgentDialogAssertion,
@@ -423,6 +374,9 @@ dialTest(
       const configModels = await modelApiHelper.getModels();
       configApp = configModels.find((m) => m.name === appName)!;
       await localStorageManager.setShowSideBarPanels();
+      await localStorageManager.setDefaultModelReference(
+        DefaultModelReference.lastUsedModel,
+      );
     });
 
     await dialTest.step(
@@ -433,7 +387,9 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(configApp, marketplacePage);
+        await talkToAgentDialog.selectAgent(configApp, {
+          isHttpMethodTriggered: false,
+        });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -453,11 +409,11 @@ dialTest(
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(configApp);
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         baseAssertion.assertValue(recentTalkTo[0], appName);
         baseAssertion.assertValue(
           recentTalkTo[1],
-          ModelsUtil.getModel(recentModelIds[0])!.name,
+          ModelsUtil.getOpenAIEntity(recentModelIds[0])!.name,
         );
       },
     );
@@ -471,7 +427,7 @@ dialTest.skip(
     dialHomePage,
     marketplaceContainer,
     marketplaceFilter,
-    marketplaceAgents,
+    marketplaceEntities,
     marketplaceHeader,
     talkToAgentDialog,
     chat,
@@ -486,7 +442,6 @@ dialTest.skip(
     const searchTerm = randomEntity.name.substring(0, 3);
     let expectedMatchedModelsCount: number;
     let expectedMatchedAppsCount: number;
-    let expectedMatchedAssistantsCount: number;
 
     await dialTest.step(
       'Create new conversation and click "Search on My workspace" link',
@@ -505,7 +460,7 @@ dialTest.skip(
       async () => {
         await marketplaceHeader.searchInput.fillInInput(searchTerm);
         const entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
 
         const configModels = await modelApiHelper.getModels();
         const matchedModels = configModels.filter(
@@ -520,26 +475,14 @@ dialTest.skip(
             (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
               a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
         );
-        const matchedAssistants = configModels.filter(
-          (a) =>
-            a.type === EntityType.Assistant &&
-            (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
-        );
         expectedMatchedModelsCount =
           ModelsUtil.groupEntitiesByName(matchedModels).size;
         expectedMatchedAppsCount =
           ModelsUtil.groupEntitiesByName(matchedApplications).size;
-        expectedMatchedAssistantsCount =
-          ModelsUtil.groupEntitiesByName(matchedAssistants).size;
 
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(
-            expectedMatchedModelsCount +
-              expectedMatchedAppsCount +
-              expectedMatchedAssistantsCount,
-          );
+          .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
       },
     );
 
@@ -548,26 +491,24 @@ dialTest.skip(
       async () => {
         await marketplaceFilter.checkTypeFilterOption(Types.models);
         let entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.assistants);
-        entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
+        entitiesCount =
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedModelsCount + expectedMatchedAssistantsCount);
+          .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.applications);
-        entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
+        entitiesCount =
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(
-            expectedMatchedModelsCount +
-              expectedMatchedAssistantsCount +
-              expectedMatchedAppsCount,
-          );
+          .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
       },
     );
 
@@ -576,7 +517,7 @@ dialTest.skip(
       async () => {
         await marketplaceHeader.searchInput.fillInInput('');
         const entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(

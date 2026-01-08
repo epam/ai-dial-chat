@@ -5,7 +5,9 @@ import { Translation } from '@/src/types/translation';
 
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import { Modal } from '../Common/Modal';
+import { Modal } from '@/src/components/Common/Modal';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onExport: (args?: { withAttachments?: boolean }) => void;
@@ -25,24 +27,24 @@ export const ExportModal = ({ onExport, onClose }: Props) => {
     >
       <h4 className="mb-3 text-base font-semibold">{t('Export')}</h4>
       <div className="flex flex-col items-start">
-        <button
+        <DialButton
           data-qa="with-attachments"
-          className="h-[34px] w-full rounded px-3 text-left hover:bg-accent-secondary-alpha"
+          className="w-full text-left text-primary hover:bg-accent-secondary-alpha"
+          variant={ButtonVariant.Tertiary}
           onClick={() => {
             onExport({ withAttachments: true });
           }}
-        >
-          {t('With attachments')}
-        </button>
-        <button
+          label={t('With attachments')}
+        />
+        <DialButton
           data-qa="without-attachments"
-          className="h-[34px] w-full rounded px-3 text-left hover:bg-accent-secondary-alpha"
+          className="w-full text-left text-primary hover:bg-accent-secondary-alpha"
+          variant={ButtonVariant.Tertiary}
           onClick={() => {
             onExport();
           }}
-        >
-          {t('Without attachments')}
-        </button>
+          label={t('Without attachments')}
+        />
       </div>
     </Modal>
   );

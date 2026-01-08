@@ -1,6 +1,11 @@
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
+import {
+  API,
+  ExpectedConstants,
+  FolderPrompt,
+  MenuOptions,
+} from '@/src/testData';
 
 dialSharedWithMeTest(
   'Shared with me. Duplicate prompt.\n' +
@@ -16,10 +21,13 @@ dialSharedWithMeTest(
     additionalShareUserPrompts,
     additionalShareUserPromptBarFolderAssertion,
     additionalShareUserPromptDropdownMenu,
-    additionalShareUserFolderPrompts,
     additionalShareUserPromptAssertion,
     setTestIds,
     additionalShareUserLocalStorageManager,
+    additionalShareUserSelectFolderModal,
+    additionalShareUserSelectFolders,
+    additionalShareUserSelectFoldersAssertion,
+    additionalShareUserSelectFolderModalAssertion,
   }) => {
     setTestIds('EPMRTC-1872', 'EPMRTC-2037');
     let folderPrompt: FolderPrompt;
@@ -99,12 +107,24 @@ dialSharedWithMeTest(
         await additionalShareUserPromptDropdownMenu.selectMenuOption(
           MenuOptions.moveTo,
         );
-        await additionalShareUserPromptDropdownMenu.selectMenuOption(
-          MenuOptions.newFolder,
-          { triggeredHttpMethod: 'POST' },
+        await additionalShareUserSelectFolderModalAssertion.assertElementState(
+          additionalShareUserSelectFolderModal,
+          'visible',
         );
-        await additionalShareUserFolderPrompts.expandFolder(
-          ExpectedConstants.newFolderWithIndexTitle(1),
+        await additionalShareUserSelectFolderModal.newFolderButton.click();
+        await additionalShareUserSelectFolders
+          .getEditFolderInputActions()
+          .clickTickButton();
+        await additionalShareUserSelectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+        await additionalShareUserSelectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.promptHost,
+        });
+        await additionalShareUserSelectFolderModalAssertion.assertElementState(
+          additionalShareUserSelectFolderModal,
+          'hidden',
         );
         await additionalShareUserPromptBarFolderAssertion.assertFolderEntityState(
           { name: ExpectedConstants.newFolderWithIndexTitle(1) },

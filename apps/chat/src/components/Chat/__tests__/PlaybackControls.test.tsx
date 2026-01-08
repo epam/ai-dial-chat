@@ -7,9 +7,8 @@ import { MutableRefObject } from 'react';
 
 import { AppAction } from '@/src/types/store';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import { ConversationsActions } from '@/src/store/actions';
+import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControls';
 
@@ -22,11 +21,10 @@ vi.mock('@/src/store/hooks', async () => {
     useAppDispatch: () => (action: AppAction) => action,
   };
 });
-vi.mock('@/src/store/conversations/conversations.reducers', async () => {
+
+vi.mock('@/src/store/actions', async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actual: any = await vi.importActual(
-    '@/src/store/conversations/conversations.reducers',
-  );
+  const actual: any = await vi.importActual('@/src/store/actions');
   return {
     ...actual,
     ConversationsActions: {
@@ -35,32 +33,22 @@ vi.mock('@/src/store/conversations/conversations.reducers', async () => {
     },
   };
 });
-vi.mock('@/src/store/conversations/conversations.selectors', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actual: any = await vi.importActual(
-    '@/src/store/conversations/conversations.selectors',
-  );
-  return {
-    ...actual,
-    ConversationsSelectors: {
-      selectIsPlaybackSelectedConversations: vi.fn(),
-      selectSelectedConversations: vi.fn(),
-      selectIsConversationsStreaming: vi.fn(),
-      selectPlaybackActiveIndex: vi.fn(),
-    },
-  };
-});
 
-vi.mock('@/src/store/ui/ui.selectors', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actual: any = await vi.importActual('@/src/store/ui/ui.selectors');
-  return {
-    ...actual,
-    UISelectors: {
-      selectIsChatFullWidth: vi.fn(),
-    },
-  };
-});
+vi.mock('@/src/store/selectors', () => ({
+  ConversationsSelectors: {
+    selectIsPlaybackSelectedConversations: vi.fn(),
+    selectSelectedConversations: vi.fn(),
+    selectIsConversationsStreaming: vi.fn(),
+    selectPlaybackActiveIndex: vi.fn(),
+  },
+  UISelectors: {
+    selectIsChatFullWidth: vi.fn(),
+  },
+  SettingsSelectors: {
+    isFeatureEnabled: vi.fn(),
+    selectFeatureData: vi.fn(),
+  },
+}));
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -79,6 +67,7 @@ describe('PlaybackControls', () => {
 
   // cleanup
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
     ).mockReturnValue(true);
@@ -114,7 +103,7 @@ describe('PlaybackControls', () => {
           activePlaybackIndex: 1,
         },
         model: {
-          id: 'gpt-4-0613',
+          id: 'gpt-4o',
         },
         messages: [],
         prompt: '',
@@ -125,7 +114,6 @@ describe('PlaybackControls', () => {
           activeReplayIndex: 0,
           replayAsIs: false,
         },
-        selectedAddons: [],
         isMessageStreaming: false,
       },
     ]);

@@ -1,5 +1,4 @@
 export { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
-export { AddonsActions } from '@/src/store/addons/addons.reducers';
 export { ApplicationActions } from '@/src/store/application/application.reducers';
 export { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 export { AuthActions } from '@/src/store/auth/auth.reducers';
@@ -17,3 +16,5 @@ export { ServiceActions } from '@/src/store/service/service.reducer';
 export { SettingsActions } from '@/src/store/settings/settings.reducers';
 export { ShareActions } from '@/src/store/share/share.reducers';
 export { UIActions } from '@/src/store/ui/ui.reducers';
+export { FoldersActions } from '@/src/store/folders/folders.reducers';
+export { ToolsetActions } from '@/src/store/toolset/toolset.reducer';

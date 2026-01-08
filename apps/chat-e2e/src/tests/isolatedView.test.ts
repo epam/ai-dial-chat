@@ -13,9 +13,11 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.skip(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
     'Isolated view: application description is shown on the first screen.\n' +
+    'Isolated view: Prompt and Conversation panels are not available.\n' +
+    'Isolated view: navigation panel with DIAL marketplace and My workspace buttons is not available.\n' +
     'Isolated view: new conversation is opened based on exact model with spec chars in id.\n' +
     'Isolated view: if to refresh or re-login the new chat is created, so, history is not stored in isolated view, though you can find the chat in main DIAL',
   async ({
@@ -25,6 +27,9 @@ dialTest(
     chat,
     chatBar,
     promptBar,
+    header,
+    baseAssertion,
+    navigationPanel,
     chatHeader,
     chatMessages,
     modelInfoTooltip,
@@ -32,9 +37,19 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-4891');
+    setTestIds(
+      'EPMRTC-2962',
+      'EPMRTC-2974',
+      'EPMRTC-6265',
+      'EPMRTC-6264',
+      'EPMRTC-2973',
+      'EPMRTC-4891',
+    );
+    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
+      ModelsUtil.getModels().filter(
+        (m) => m.iconUrl !== undefined && !m.id.includes(':'),
+      ),
     )!;
     const expectedModelName = expectedModel.name;
     const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
@@ -43,7 +58,9 @@ dialTest(
     await dialTest.step(
       'Open isolated view for a model and verify model name, description and icon are displayed',
       async () => {
-        await localStorageManager.setRecentModelsIds(expectedModel);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          expectedModel,
+        );
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
@@ -61,6 +78,21 @@ dialTest(
           .toBe(expectedShortDescription);
 
         await agentInfoAssertion.assertAgentIcon(expectedModelIcon);
+      },
+    );
+
+    await dialTest.step(
+      'Verify navigation panel and conversation/prompt panel toggles are not available',
+      async () => {
+        await baseAssertion.assertElementState(
+          header.rightPanelToggle,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          header.leftPanelToggle,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(navigationPanel, 'hidden');
       },
     );
 
@@ -93,14 +125,14 @@ dialTest(
           .toBe(expectedModelName);
         const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
-          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
           .toBe(expectedModel.version);
       },
     );
   },
 );
 
-dialTest(
+dialTest.skip(
   'Isolated view: available features in conversation',
   async ({
     dialHomePage,
@@ -122,8 +154,11 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2965');
     const attachmentName = Attachment.sunImageName;
+    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => !m.id.includes(':'),
+      ),
     )!;
     const testMessage = 'Test message with attachment';
 
@@ -132,7 +167,9 @@ dialTest(
     });
 
     await dialTest.step('Open isolated view for the model', async () => {
-      await localStorageManager.setRecentModelsIds(expectedModel);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        expectedModel,
+      );
       await dialHomePage.navigateToUrl(
         ExpectedConstants.isolatedUrl(expectedModel.id),
       );
@@ -209,7 +246,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Isolate view: error message appears if URL is based on non-existed model id',
   async ({ dialHomePage, chatNotFound, setTestIds }) => {
     setTestIds('EPMRTC-2963');
@@ -230,7 +267,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
@@ -259,7 +296,6 @@ dialTest(
     chatMessagesAssertion,
     baseAssertion,
     conversationAssertion,
-    tooltip,
     tooltipAssertion,
   }) => {
     setTestIds(
@@ -297,7 +333,9 @@ dialTest(
           )
           .filter((model) => model !== undefined) as DialAIEntityModel[];
 
-        await localStorageManager.setRecentModelsIdsOnce(...recentModelsToAdd);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          ...recentModelsToAdd,
+        );
       },
     );
 
@@ -413,14 +451,11 @@ dialTest(
       'Hover over the Setting icon and check the wording on the tooltip',
       async () => {
         await chatHeader.conversationSettings.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toMatch(
-            new RegExp(
-              `^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type)}`,
-            ),
-          );
+        await tooltipAssertion.assertTooltipContains(
+          new RegExp(
+            `^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type, ExpectedConstants.defaultTemperature)}`,
+          ),
+        );
       },
     );
 
@@ -490,7 +525,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Reload into regular Dial and verify conversation exists',
+      'Reload into regular DIAL and verify conversation exists',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();

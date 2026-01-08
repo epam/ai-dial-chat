@@ -6,6 +6,7 @@ import { Translation } from '@/src/types/translation';
 
 export const NoData = () => {
   const { t } = useTranslation(Translation.Common);
+
   return (
     <div
       className="flex flex-col items-center justify-center gap-3"

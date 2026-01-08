@@ -34,11 +34,11 @@ export class MarketplaceContainer extends BaseLayoutContainer<Header> {
   }
 
   getChatLoader(): BaseElement {
-    return this.getChildElementBySelector(ChatSelectors.messageSpinner);
+    return this.getChildElementBySelector(ChatSelectors.entitySpinner);
   }
 
   public async goToMarketplaceHome() {
     await this.getNavigationPanel().goToMarketplaceHome();
-    await this.getMarketplace().getMarketplaceAgentsSection().waitForState();
+    await this.getMarketplace().getMarketplaceEntitiesSection().waitForState();
   }
 }

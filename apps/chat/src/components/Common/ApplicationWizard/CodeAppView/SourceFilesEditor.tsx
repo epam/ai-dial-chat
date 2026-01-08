@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
@@ -13,14 +12,15 @@ import {
 import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
-import { ConfirmDialog } from '../../ConfirmDialog';
-import { FieldErrorMessage } from '../../Forms/FieldErrorMessage';
-import Tooltip from '../../Tooltip';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -31,7 +31,7 @@ interface SourceFilesEditorProps {
   confirmDialogValues?: ConfirmDialogValueTypes;
 }
 
-const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
+const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
   value,
   onChange,
   error,
@@ -109,7 +109,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
         <div className="flex w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
             tooltip={getIdWithoutRootPathSegments(value ?? '')}
-            contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+            contentClassName="break-all"
             triggerClassName={classNames(
               'truncate whitespace-pre',
               !value && 'text-secondary',
@@ -121,24 +121,20 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
           </Tooltip>
           <Tooltip tooltip={tooltip}>
             <div className="flex items-center gap-3">
-              <button
-                className="h-full cursor-pointer text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              <DialButton
+                className="text-accent-primary"
                 data-qa="change-button"
-                type="button"
+                textClassName="font-normal"
                 disabled={disabled}
                 onClick={handleToggleFileManager}
-              >
-                {value ? t('Change') : t('Add')}
-              </button>
+                label={value ? t('Change') : t('Add')}
+              />
               {value && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
+                <DialCloseButton
+                  onClose={handleDelete}
                   disabled={disabled}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                >
-                  <IconX size={18} />
-                </button>
+                  size={18}
+                />
               )}
             </div>
           </Tooltip>
@@ -173,4 +169,4 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   );
 };
 
-export const SourceFilesEditor = memo(_SourceFilesEditor);
+export const SourceFilesEditor = memo(SourceFilesEditorView);

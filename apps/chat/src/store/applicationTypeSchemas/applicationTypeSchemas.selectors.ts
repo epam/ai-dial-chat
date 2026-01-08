@@ -1,9 +1,6 @@
 import { RootState } from '@/src/types/store';
 
-import { ApplicationTypesSchemasState } from './applicationTypeSchemas.types';
-
-const rootSelector = (state: RootState): ApplicationTypesSchemasState =>
-  state.applicationTypesSchemas;
+const rootSelector = (state: RootState) => state.applicationTypesSchemas;
 
 const selectAllSchemas = (state: RootState) => rootSelector(state).schemas;
 
@@ -16,9 +13,13 @@ const selectSchemasLoading = (state: RootState) =>
 const selectSchemaById = (state: RootState, id: string) =>
   selectAllSchemas(state).find((schema) => schema.id === id);
 
+const selectDetailedApplicationTypeSchemaLoading = (state: RootState) =>
+  rootSelector(state).detailedApplicationTypeSchemaLoading;
+
 export const ApplicationTypesSchemasSelectors = {
   selectAllSchemas,
   selectDetailedApplicationTypeSchema,
   selectSchemasLoading,
   selectSchemaById,
+  selectDetailedApplicationTypeSchemaLoading,
 };

@@ -57,6 +57,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const searchParams = new URLSearchParams();
     searchParams.set('limit', limit);
     searchParams.set('recursive', recursive);
+    searchParams.set('permissions', 'true');
 
     const url = `${sanitizeUri(path)}/?${searchParams}`;
 

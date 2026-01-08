@@ -9,7 +9,7 @@ import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { Menu, MenuItem } from './DropdownMenu';
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 function ContextMenuItemRenderer({
   featureType,
@@ -37,7 +37,8 @@ function ContextMenuItemRenderer({
         <Icon
           className={classNames(
             'shrink-0',
-            disabled ? 'text-controls-disable' : iconClassName,
+            iconClassName,
+            disabled && '!text-controls-disable',
           )}
           size={18}
           height={18}
@@ -80,7 +81,7 @@ function ContextMenuItemRenderer({
   );
 }
 
-export default function ContextMenu({
+export function ContextMenu({
   menuItems,
   featureType,
   TriggerIcon = IconDotsVertical,
@@ -97,6 +98,7 @@ export default function ContextMenu({
   placement,
   useStandardColor,
   onTriggerClick,
+  hideTriggerIcon,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -105,17 +107,19 @@ export default function ContextMenu({
 
   if (!displayedMenuItems.length) return null;
 
-  const menuContent = TriggerCustomRenderer || (
-    <TriggerIcon
-      size={triggerIconSize}
-      width={triggerIconSize}
-      height={triggerIconSize}
-      strokeWidth={1.5}
-      onClick={(e) => {
-        e.stopPropagation();
-      }}
-    />
-  );
+  const menuContent =
+    TriggerCustomRenderer ||
+    (!hideTriggerIcon && (
+      <TriggerIcon
+        size={triggerIconSize}
+        width={triggerIconSize}
+        height={triggerIconSize}
+        strokeWidth={1.5}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      />
+    ));
 
   if (isLoading && isOpen)
     return (

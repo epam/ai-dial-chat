@@ -1,9 +1,14 @@
 import { SortOrder } from '@/src/types/common';
-import { MarketplaceFilters } from '@/src/types/marketplace';
-import { DialAIEntityModel } from '@/src/types/models';
+import {
+  DetailsEntity,
+  MarketplaceEntity,
+  MarketplaceFilters,
+} from '@/src/types/marketplace';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   DeleteType,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
@@ -11,19 +16,25 @@ import {
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
+export interface TableSort {
+  column: TableColumnSortKeys;
+  order: SortOrder;
+}
+
 export interface MarketplaceState {
-  selectedFilters: MarketplaceFilters;
+  selectedAgentsFilters: MarketplaceFilters;
+  selectedToolsetsFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
+  selectedEntitiesTab: MarketplaceEntitiesTabs;
   applyModelStatus: UploadStatus;
   selectedView: ViewTypes;
   applyModelId?: string;
-  detailsModel: { reference: string; isSuggested: boolean } | undefined;
-  tableSort: {
-    column: TableColumnSortKeys;
-    order: SortOrder;
-  };
+  tableSort: TableSort;
   isBannerVisible: boolean;
 
-  deleteModel: { entity: DialAIEntityModel; action: DeleteType } | undefined;
+  detailsEntity: DetailsEntity | undefined;
+  deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
+  loginEntity: ToolsetModel | undefined;
+  showLoader?: boolean;
 }

@@ -1,12 +1,22 @@
 import { Path, RegisterOptions } from 'react-hook-form';
 
-import { getNameReg } from '@/src/utils/app/forms';
+import { createFormValidationRules } from '@/src/utils/app/forms';
 
-import { formErrors } from '@/src/constants/form-errors';
+import { PublicationRule } from '@/src/types/publication';
 
+import '@/src/constants/default-ui-settings';
+
+export enum PublishRequestFieldsNames {
+  PUBLISH_REQUEST_NAME = 'publishRequestName',
+  PUBLICATION_AUTHOR = 'publicationAuthor',
+  RULES = 'rules',
+  PUBLISH_TO_URL = 'publishToUrl',
+}
 export interface PublicationRequestFormData {
-  publishRequestName: string;
-  publicationAuthor: string;
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
+  [PublishRequestFieldsNames.RULES]: PublicationRule[];
+  [PublishRequestFieldsNames.PUBLISH_TO_URL]: string;
 }
 
 type Options<T extends Path<PublicationRequestFormData>> = Omit<
@@ -18,21 +28,22 @@ export type Validators = {
   [K in keyof PublicationRequestFormData]?: Options<K>;
 };
 
-export const validators: Validators = {
-  publishRequestName: {
-    required: formErrors.required,
-    validate: (v) => {
-      return (
-        getNameReg().test(v.trim()) || formErrors.notValidString('Request name')
-      );
-    },
+export const publishRequestFields = {
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: {
+    name: PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+    label: 'Request name',
+    checkDotsInTheEnd: true,
   },
-  publicationAuthor: {
-    required: formErrors.required,
-    validate: (v) => {
-      return (
-        getNameReg(50).test(v.trim()) || formErrors.notValidString('Author', 50)
-      );
-    },
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: {
+    name: PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+    label: 'Author',
+  },
+  [PublishRequestFieldsNames.RULES]: {
+    name: PublishRequestFieldsNames.RULES,
+    label: 'Rules',
   },
 };
+
+export const validators: Validators = createFormValidationRules(
+  Object.values(publishRequestFields),
+);

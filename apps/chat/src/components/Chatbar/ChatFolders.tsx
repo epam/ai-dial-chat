@@ -4,14 +4,8 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  getIdWithoutRootPathSegments,
-  isEntityIdExternal,
-  isRootId,
-} from '@/src/utils/app/id';
-import { getPublishFolderResources } from '@/src/utils/app/publications';
+import { sortByName } from '@/src/utils/app/folders';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -23,18 +17,21 @@ import {
   FolderInterface,
   FolderSectionProps,
 } from '@/src/types/folder';
-import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
+import {
+  ConversationsActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
@@ -44,15 +41,12 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import Folder from '@/src/components/Folder/Folder';
+import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Folder } from '@/src/components/Folder/Folder';
+import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
-import { ApproveRequiredSection } from '../Chat/Publish/ApproveRequiredSection';
-import CollapsibleSection from '../Common/CollapsibleSection';
-import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
-
-import { PublishActions } from '@epam/ai-dial-shared';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -75,16 +69,11 @@ const ChatFolderTemplate = ({
 
   const dispatch = useAppDispatch();
 
-  const [publication, setPublication] = useState<PublicationFolderPayload>();
-
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const selectFilteredConversationsSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
     [filters, searchTerm],
-  );
-  const publicVersionGroups = useAppSelector(
-    PublicationSelectors.selectPublicVersionGroups,
   );
   const conversations = useAppSelector(selectFilteredConversationsSelector);
   const allConversations = useAppSelector(
@@ -289,23 +278,8 @@ const ChatFolderTemplate = ({
     ],
   );
 
-  const handlePublicationClose = useCallback(() => {
-    setPublication(undefined);
-  }, []);
-
   const shouldDenyDrop =
     isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
-
-  const publishConversations = useMemo(() => {
-    if (!publication) return [];
-
-    return getPublishFolderResources(
-      publication.entity,
-      publication.entities,
-      publicVersionGroups,
-      publication.action === PublishActions.DELETE,
-    );
-  }, [publication, publicVersionGroups]);
 
   return (
     <>
@@ -316,10 +290,8 @@ const ChatFolderTemplate = ({
         denyDrop={shouldDenyDrop}
       />
       <Folder
-        isUnpublishing={publication?.action === PublishActions.DELETE}
-        onPublication={setPublication}
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
-        readonly={readonly}
+        readonly={readonly || isConversationsStreaming}
         searchTerm={searchTerm}
         currentFolder={folder}
         itemComponent={ConversationComponent}
@@ -337,7 +309,7 @@ const ChatFolderTemplate = ({
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}
         onSelectFolder={handleFolderSelect}
-        canSelectFolders={isSelectMode}
+        canSelectFolders={!isConversationsStreaming && isSelectMode}
         additionalItemData={additionalFolderData}
       />
       {isLast && (
@@ -346,23 +318,6 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
           denyDrop={shouldDenyDrop}
-        />
-      )}
-      {!!publication && (
-        <PublishModal
-          entity={publication.entity}
-          entities={publishConversations}
-          type={publication.type}
-          isOpen={!!publication}
-          onClose={handlePublicationClose}
-          publishAction={publication.action}
-          depth={getFoldersDepth(publication.entity, allFolders)}
-          defaultPath={
-            publication.action === PublishActions.DELETE &&
-            !isRootId(publication.entity.folderId)
-              ? getIdWithoutRootPathSegments(publication.entity.folderId)
-              : undefined
-          }
         />
       )}
     </>
@@ -524,12 +479,15 @@ export function ChatFolders() {
 
   const publicationItems = useAppSelector(publicationItemsSelector);
 
-  const toApproveFolderItem = {
-    hidden: !publicationItems.length,
-    name: APPROVE_REQUIRED_SECTION_NAME,
-    displayRootFiles: true,
-    dataQa: 'approve-required',
-  };
+  const toApproveFolderItem = useMemo(
+    () => ({
+      hidden: !publicationItems.length,
+      name: APPROVE_REQUIRED_SECTION_NAME,
+      displayRootFiles: true,
+      dataQa: 'approve-required',
+    }),
+    [publicationItems.length],
+  );
 
   const folderItems: FolderSectionProps[] = useMemo(
     () =>

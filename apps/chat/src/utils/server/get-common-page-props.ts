@@ -2,6 +2,7 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -11,23 +12,29 @@ import { Translation } from '@/src/types/translation';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import { ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
 import {
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-  FALLBACK_MODEL_ID,
-} from '@/src/constants/default-ui-settings';
+  ACTION_QUERY_PARAM,
+  CONVERSATION_QUERY_PARAM,
+  ISOLATED_MODEL_QUERY_PARAM,
+} from '@/src/constants/chat';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+import { HeadersNames } from '@/src/constants/server';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import packageJSON from '../../../../../package.json';
-import { parseCommaSeparatedList } from '../app/common';
+import { safeParseJSON } from '../json';
+import {
+  cleanHeaderDirectives,
+  getFrameContentSecurityPolicyDirectives,
+} from './headers-helpers';
 
+import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
 
@@ -50,17 +57,15 @@ export const getCommonPageProps: GetServerSideProps = async ({
   res,
   resolvedUrl,
 }) => {
-  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
-    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-    : 'frame-ancestors none';
+  const requestCSPHeaders = req.headers[HeadersNames.CONTENT_SECURITY_POLICY];
 
-  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
-    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
-    : 'frame-src none';
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives(process.env.ALLOWED_IFRAME_ORIGINS, process.env.ALLOWED_IFRAME_SOURCES)}`;
+
+  const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
   res.setHeader(
-    'Content-Security-Policy',
-    ancestorsDirective + '; ' + frameSrcDirective,
+    HeadersNames.CONTENT_SECURITY_POLICY,
+    contentSecurityPolicyHeaderValue,
   );
 
   let params: URLSearchParams | undefined;
@@ -97,20 +102,23 @@ export const getCommonPageProps: GetServerSideProps = async ({
     JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
   const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
+  const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
+  const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
+  const enabledFeaturesData = process.env.ENABLED_FEATURES_DATA
+    ? safeParseJSON(
+        process.env.ENABLED_FEATURES_DATA?.replaceAll('\\"', '"'),
+        'Error when parsing ENABLED_FEATURES_DATA',
+        console,
+      )
+    : [];
 
   const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
+    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'DIAL',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
     defaultRecentModelsIds: parseCommaSeparatedList(
       process.env.RECENT_MODELS_IDS,
     ),
-    defaultRecentAddonsIds: parseCommaSeparatedList(
-      process.env.RECENT_ADDONS_IDS,
-    ),
-    defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
-    defaultAssistantSubmodelId:
-      process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
-      FALLBACK_ASSISTANT_SUBMODEL_ID,
+    defaultModelReference: DEFAULT_MODEL_ID,
     codeEditorPythonVersions: parseCommaSeparatedList(
       process.env.CODE_EDITOR_PYTHON_VERSIONS,
       ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
@@ -122,6 +130,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
+    enabledFeaturesData,
     widgetsSchemaIds: parseCommaSeparatedList(
       process.env.WIDGETS_SCHEMA_IDS,
       [],
@@ -153,6 +162,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
       process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
+    externalAppsSchemaId:
+      process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     providerId: session?.providerId ?? null,
@@ -160,6 +171,15 @@ export const getCommonPageProps: GetServerSideProps = async ({
 
   if (isIsolatedView) {
     settings.isolatedModelId = params?.get(ISOLATED_MODEL_QUERY_PARAM) || '';
+  }
+
+  if (isPreselectedConversation) {
+    settings.preselectedConversationId =
+      params?.get(CONVERSATION_QUERY_PARAM) || '';
+  }
+
+  if (isPreselectedAction) {
+    settings.preselectedAction = params?.get(ACTION_QUERY_PARAM) || '';
   }
 
   return {

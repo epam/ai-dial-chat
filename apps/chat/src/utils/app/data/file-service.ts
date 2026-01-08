@@ -1,9 +1,11 @@
 import { Observable, map } from 'rxjs';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApiKeys,
+  BackendChatEntity,
   BackendDataNodeType,
   FeatureType,
   MoveModel,
@@ -13,14 +15,22 @@ import {
   BackendFileFolder,
   DialFile,
   FileFolderInterface,
+  FileOperationsResult,
 } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 
-import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
+
+import {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialFileNodeType,
+  DialFile as UIKitDialFile,
+} from '@epam/ai-dial-ui-kit';
+import { saveAs } from 'file-saver';
 
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
@@ -36,6 +46,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     contentLength: file.contentLength,
     contentType: file.contentType,
     serverSynced: true,
+    updatedAt: file.updatedAt,
   };
 };
 
@@ -46,6 +57,7 @@ export class FileService {
     fileName: string,
     httpMethod?: HTTPMethod,
     bucket?: string,
+    options?: { signal?: AbortSignal | null },
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = ApiUtils.encodeApiUrl(
       constructPath(getFileRootId(bucket), relativePath, fileName),
@@ -56,6 +68,7 @@ export class FileService {
       method: httpMethod ? httpMethod : HTTPMethod.POST,
       async: true,
       body: formData,
+      signal: options?.signal,
     }).pipe(
       map(
         ({
@@ -112,6 +125,19 @@ export class FileService {
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
       constructPath('/api/listing', path || getFileRootId()),
+    );
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
+  };
+
+  private static getFullListingUrl = ({
+    path,
+    resultQuery,
+  }: {
+    path?: string;
+    resultQuery?: string;
+  }): string => {
+    const listingUrl = ApiUtils.encodeApiUrl(
+      constructPath('/api/file-manager', path || getFileRootId()),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
@@ -208,11 +234,147 @@ export class FileService {
     }).pipe(map((files) => files.map(mapFileToDial)));
   }
 
+  public static getFullListing(folderPath?: string): Observable<DialFile[]> {
+    const query = new URLSearchParams({
+      recursive: 'true',
+      filter: BackendDataNodeType.ITEM,
+      permissions: 'true',
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(
+      this.getFullListingUrl({ path: folderPath, resultQuery }),
+    ).pipe(
+      map((files: BackendFile[]) => {
+        return files.map(mapFileToDial);
+      }),
+    );
+  }
+
   public static getFileContent<T>(path: string): Observable<T> {
     return ApiUtils.request(path);
   }
 
+  public static getFileMetadata(
+    fileId: string,
+  ): Observable<UIKitDialFile | null> {
+    return ApiUtils.request(
+      `/api/metadata/${ApiUtils.encodeApiUrl(fileId)}`,
+    ).pipe(
+      map((metadata: BackendChatEntity) => {
+        const relativePath = metadata.parentPath
+          ? ApiUtils.decodeApiUrl(metadata.parentPath)
+          : undefined;
+
+        const decodedUrl = ApiUtils.decodeApiUrl(metadata.url);
+
+        const uiKitFile: UIKitDialFile = {
+          ...metadata,
+          nodeType: DialFileNodeType.ITEM,
+          resourceType:
+            metadata.resourceType as unknown as UIKitDialFile['resourceType'],
+          path: metadata.url,
+          folderId: constructPath(getFileRootId(metadata.bucket), relativePath),
+          id: decodedUrl,
+          permissions: metadata.permissions as UIKitDialFile['permissions'],
+          createdAt: metadata.createdAt
+            ? new Date(metadata.createdAt).toISOString()
+            : undefined,
+          updatedAt: metadata.updatedAt
+            ? new Date(metadata.updatedAt).toISOString()
+            : undefined,
+        };
+
+        return uiKitFile;
+      }),
+    );
+  }
+
   public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
     return DataService.getDataStorage().move(moveModel);
+  }
+
+  public static copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return DataService.getDataStorage().copyFiles(data, options);
+  }
+
+  public static moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return DataService.getDataStorage().moveFiles(data, options);
+  }
+
+  public static deleteFiles(data: {
+    files: DialDeletedItem[];
+  }): Observable<FileOperationsResult<string>> {
+    return DataService.getDataStorage().deleteFiles(data);
+  }
+
+  public static async downloadFilesAsArchive(
+    files: UIKitDialFile[],
+  ): Promise<void> {
+    try {
+      const archiveName = files.length === 1 ? files[0].name : 'files';
+
+      const response = await fetch('/api/files/download', {
+        method: HTTPMethod.POST,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ files }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download files');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const chunks: Uint8Array[] = [];
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+        }
+      }
+
+      const size = chunks.reduce((s, c) => s + c.byteLength, 0);
+      const merged = new Uint8Array(size);
+      let offset = 0;
+      for (const c of chunks) {
+        merged.set(c, offset);
+        offset += c.byteLength;
+      }
+
+      const contentType =
+        response.headers.get('content-type') ?? 'application/zip';
+
+      const blob = new Blob([merged.buffer as ArrayBuffer], {
+        type: contentType,
+      });
+      saveAs(blob, `${archiveName}.zip`);
+    } catch (error) {
+      throw new Error(`Error downloading files: ${error}`);
+    }
+  }
+
+  public static uploadArchive(data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    return DataService.getDataStorage().uploadArchive(data);
   }
 }

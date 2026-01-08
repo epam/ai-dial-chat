@@ -8,9 +8,9 @@ import {
 } from '@/src/utils/app/folders';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
 import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
@@ -190,25 +190,23 @@ export const SelectFolderModal = ({
       title="Select folder"
     >
       <SelectFolderHeader
-        handleSearch={handleSearch}
+        onSearch={handleSearch}
         searchQuery={searchQuery}
         errorMessage={warningMessage || errorMessage}
         showSpinner={showSpinner}
         type={warningMessage ? 'warning' : 'error'}
       >
         <SelectFolderList
-          folderProps={{
-            searchTerm: searchQuery,
-            allFolders: folders,
-            isInitialRenameEnabled: true,
-            openedFoldersIds,
-            onClickFolder: handleFolderSelect,
-            onRenameFolder: handleRenameFolder,
-            onAddFolder: handleAddFolder,
-            newAddedFolderId: newFolderId,
-            loadingFolderIds: loadingFolderIds,
-          }}
-          handleFolderSelect={handleFolderSelect}
+          searchTerm={searchQuery}
+          allFolders={folders}
+          isInitialRenameEnabled
+          openedFoldersIds={openedFoldersIds}
+          onClickFolder={handleFolderSelect}
+          onRenameFolder={handleRenameFolder}
+          onAddFolder={handleAddFolder}
+          newAddedFolderId={newFolderId}
+          loadingFolderIds={loadingFolderIds}
+          onFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
           rootFolderName={rootFolderName}
@@ -217,7 +215,7 @@ export const SelectFolderModal = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={handleNewFolder}
+        onCreateNewFolder={handleNewFolder}
         onSelectFolderClick={handleSelectFolder}
         disableSelect={!selectedFolderId}
       />

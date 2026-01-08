@@ -1,11 +1,11 @@
 import { ScreenState } from '@/src/types/common';
 
-import { FooterMessage } from '../../Common/FooterMessage';
-import { withRenderForScreen } from '../../Common/ScreenRender';
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
+import { withRenderForScreen } from '@/src/components/Common/ScreenRender';
 
 function ChatInputFooterView() {
   return (
-    <div className="p-5 empty:hidden max-md:hidden">
+    <div className="px-5 pb-5 empty:hidden max-md:hidden">
       <FooterMessage />
     </div>
   );

@@ -43,7 +43,7 @@ dialTest(
       'Prepare 1 empty conversation, replay conversation and 2 default conversations',
       async () => {
         firstConversation = conversationData.prepareEmptyConversation(
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           `z${GeneratorUtil.randomString(10)}`,
         );
         conversationData.resetData();
@@ -87,15 +87,15 @@ dialTest(
           comparedConversation.name,
         );
 
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           firstConversation.name,
           Cursors.pointer,
         );
-        await conversationAssertion.assertSelectedConversation(
+        await conversationAssertion.assertSelectedEntity(
           comparedConversation.name,
         );
-        await conversations.selectConversation(firstConversation.name);
-        await conversationAssertion.assertSelectedConversation(
+        await conversations.selectEntity(firstConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           firstConversation.name,
         );
         await baseAssertion.assertElementState(
@@ -119,17 +119,16 @@ dialTest(
       );
       await dialHomePage.throttleAPIResponse(API.chatHost);
       await chat.sendRequestWithButton(request, false);
-      firstConversation.name = request;
     });
 
     await dialTest.step(
       'Verify any conversation cursor is "not-allowed" during text generation',
       async () => {
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           preReplayConversation.name,
           Cursors.notAllowed,
         );
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           firstConversation.name,
           Cursors.notAllowed,
         );
@@ -139,8 +138,8 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation',
       async () => {
-        await conversations.selectConversation(preReplayConversation.name);
-        await conversationAssertion.assertSelectedConversation(
+        await conversations.selectEntity(preReplayConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           firstConversation.name,
         );
       },
@@ -154,7 +153,7 @@ dialTest(
           'visible',
         );
         await sendMessage.stopGenerating.click();
-        await conversations.selectConversation(replayConversation.name);
+        await conversations.selectEntity(replayConversation.name);
         await chat.replay.click();
       },
     );
@@ -162,11 +161,11 @@ dialTest(
     await dialTest.step(
       'Verify conversation cursor is "not-allowed" during the chat replay',
       async () => {
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           preReplayConversation.name,
           Cursors.notAllowed,
         );
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           replayConversation.name,
           Cursors.notAllowed,
         );
@@ -176,8 +175,8 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation in Replay',
       async () => {
-        await conversations.selectConversation(preReplayConversation.name);
-        await conversationAssertion.assertSelectedConversation(
+        await conversations.selectEntity(preReplayConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           replayConversation.name,
         );
       },

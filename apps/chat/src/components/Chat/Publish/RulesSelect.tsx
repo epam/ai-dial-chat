@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 import { PublicationFunctions } from '@/src/types/publication';
 
-import { Menu, MenuItem } from '../../Common/DropdownMenu';
+import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';

@@ -4,6 +4,7 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
+  ExpectedPromptModalConst,
   MenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
@@ -25,7 +26,7 @@ dialSharedWithMeTest(
     additionalShareUserPromptPreviewModal,
     additionalUserShareApiHelper,
     additionalShareUserSharedWithMePromptAssertion,
-    additionalShareUserSharedPromptPreviewModalAssertion,
+    additionalShareUserPromptPreviewModalAssertion,
     downloadAssertion,
     additionalShareUserConfirmationDialogAssertion,
     setTestIds,
@@ -66,19 +67,19 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify prompt preview modal is opened, prompt parameters are valid',
       async () => {
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
-          ExpectedConstants.promptViewModalTitle,
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptName(
           prompt.name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptDescription(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptDescription(
           prompt.description,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptContent(
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptContent(
           prompt.content!,
         );
       },
@@ -88,7 +89,8 @@ dialSharedWithMeTest(
       'Hover over "Export" button and verify it is highlighted',
       async () => {
         await additionalShareUserPromptPreviewModal.promptExportButton.hoverOver();
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertExportButtonColors(
+        await additionalShareUserPromptPreviewModalAssertion.assertElementColor(
+          additionalShareUserPromptPreviewModal.promptExportButtonIcon,
           expectedColor,
         );
       },
@@ -110,30 +112,31 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Hover over "Delete" button and verify it is highlighted',
+      'Hover over "Unshare" button and verify it is highlighted',
       async () => {
-        await additionalShareUserPromptPreviewModal.promptDeleteButton.hoverOver();
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertDeleteButtonColors(
+        await additionalShareUserPromptPreviewModal.promptUnshareButton.hoverOver();
+        await additionalShareUserPromptPreviewModalAssertion.assertElementColor(
+          additionalShareUserPromptPreviewModal.promptUnshareButtonIcon,
           expectedColor,
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Click on "Delete" button and verify confirmation popup is shown',
+      'Click on "Unshare" button and verify confirmation popup is shown',
       async () => {
-        await additionalShareUserPromptPreviewModal.promptDeleteButton.click();
+        await additionalShareUserPromptPreviewModal.promptUnshareButton.click();
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.deletePromptConfirmationModalTitle,
+          ExpectedConstants.unsharePromptConfirmationModalTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.deletePromptConfirmationModalMessage,
+          ExpectedConstants.unsharePromptConfirmationModalMessage,
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Click on "Delete" button and verify prompt is removed from "Share with me" section',
+      'Click on "Unshare" button and verify prompt is removed from "Share with me" section',
       async () => {
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
@@ -159,7 +162,7 @@ dialSharedWithMeTest(
     additionalShareUserPromptAssertion,
     additionalShareUserPromptModalAssertion,
     additionalShareUserPromptModalDialog,
-    additionalShareUserSharedPromptPreviewModalAssertion,
+    additionalShareUserPromptPreviewModalAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -185,7 +188,7 @@ dialSharedWithMeTest(
       'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -237,17 +240,17 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify prompt params are updated',
       async () => {
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertElementText(
+        await additionalShareUserPromptPreviewModalAssertion.assertElementText(
           additionalShareUserPromptPreviewModal.promptName,
           updatedName,
           ExpectedMessages.promptNameUpdated,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertElementText(
+        await additionalShareUserPromptPreviewModalAssertion.assertElementText(
           additionalShareUserPromptPreviewModal.promptDescription,
           updatedDescription,
           ExpectedMessages.promptDescriptionUpdated,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertElementText(
+        await additionalShareUserPromptPreviewModalAssertion.assertElementText(
           additionalShareUserPromptPreviewModal.promptContent,
           updatedContent,
           ExpectedMessages.promptValueUpdated,
