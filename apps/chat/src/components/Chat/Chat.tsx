@@ -126,6 +126,9 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   const isEditUserMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
   );
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
   const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
       state,
@@ -585,6 +588,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   );
 
   const isChatReadyForInput =
+    !isMarketplaceEnabled ||
     areModelsInstalled ||
     isIsolatedView ||
     isAdminPreview ||
@@ -594,7 +598,11 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
       !isApproveRequiredEntity &&
-      (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+      (areModelsInstalled ||
+        isAdminPreview ||
+        isReplay ||
+        isIsolatedView ||
+        !isMarketplaceEnabled) &&
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
