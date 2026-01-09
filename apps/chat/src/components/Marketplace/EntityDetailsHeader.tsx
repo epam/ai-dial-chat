@@ -102,7 +102,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
                   counterMarginRight={screenState === ScreenState.SM ? 18 : 0}
                 />
               )}
-              <div className="flex items-center gap-[2px] whitespace-nowrap">
+              <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
                 <div
                   className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
                   data-qa="entity-name"
