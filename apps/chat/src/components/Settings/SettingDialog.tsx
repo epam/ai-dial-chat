@@ -24,6 +24,7 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 
 import { CustomLogoSelect } from './CustomLogoSelect';
@@ -36,15 +37,12 @@ import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const ToggleSwitchLabel = withLabel(ToggleSwitchLabeled);
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-}
-
 const getCustomLogoLocalStoreName = (customLogoId: string | undefined) =>
   customLogoId && splitEntityId(customLogoId).name;
 
-export const SettingDialog: FC<Props> = ({ open, onClose }) => {
+const SettingDialogView: FC = () => {
+  const dispatch = useAppDispatch();
+
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -64,6 +62,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const [enterType, setEnterType] = useState(savedEnterType);
 
   const screenState = useScreenState();
+
+  const handleCloseDialog = useCallback(() => {
+    dispatch(UIActions.setIsUserSettingsOpen(false));
+  }, [dispatch]);
 
   useEffect(() => {
     setDefaultModelReference(savedDefaultModelReference);
@@ -91,8 +93,6 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   const saveBtnRef = useRef<HTMLButtonElement>(null);
 
-  const dispatch = useAppDispatch();
-
   const { t } = useTranslation(Translation.Settings);
 
   const handleClose = useCallback(() => {
@@ -102,13 +102,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setDeleteLogo(false);
     setDefaultModelReference(savedDefaultModelReference);
     setEnterType(savedEnterType);
-    onClose();
+    handleCloseDialog();
   }, [
     theme,
     isChatFullWidth,
     savedDefaultModelReference,
     savedEnterType,
-    onClose,
+    handleCloseDialog,
   ]);
 
   useEffect(() => {
@@ -158,7 +158,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     dispatch(ModelsActions.setDefaultModelReference(defaultModelReference));
 
     setLocalLogoFile(undefined);
-    onClose();
+    handleCloseDialog();
   }, [
     dispatch,
     localTheme,
@@ -167,7 +167,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     localLogoFile,
     deleteLogo,
     defaultModelReference,
-    onClose,
+    handleCloseDialog,
   ]);
 
   if (!open) {
@@ -179,7 +179,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       portalId="theme-main"
       containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[509px] md:p-6"
       dataQa="settings-modal"
-      state={open ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
@@ -244,3 +244,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     </Modal>
   );
 };
+
+export const SettingDialog = withRenderWhen((state) => {
+  const isOpen = UISelectors.selectIsUserSettingsOpen(state);
+  const isUserMenuHidden = SettingsSelectors.isFeatureEnabled(
+    state,
+    Feature.HideUserMenu,
+  );
+
+  return isOpen && !isUserMenuHidden;
+})(SettingDialogView);
