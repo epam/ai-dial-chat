@@ -32,6 +32,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
 import { BucketService } from './bucket-service';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
@@ -49,7 +50,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     contentType: file.contentType,
     serverSynced: true,
     updatedAt: file.updatedAt,
-    sharedWithMe: file.bucket !== userBucket,
+    sharedWithMe: file.bucket !== userBucket && file.bucket !== PUBLIC_URL_PREFIX,
   };
 };
 
