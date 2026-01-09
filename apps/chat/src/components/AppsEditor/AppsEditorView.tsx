@@ -107,8 +107,8 @@ export const AppsEditorView = ({
   });
 
   const LeftContent = useMemo(
-    () => <EditorForm onNextClick={onNextClick} />,
-    [onNextClick],
+    () => <EditorForm onNextClick={onNextClick} onAutoSave={onAutoSave} />,
+    [onAutoSave, onNextClick],
   );
 
   const RightContent = useMemo(
