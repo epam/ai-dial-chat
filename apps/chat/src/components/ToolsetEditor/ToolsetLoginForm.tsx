@@ -109,6 +109,7 @@ export const ToolsetLoginForm = ({
               {...register('apiKey')}
               label={t('API Key')}
               mandatory
+              type="password"
               placeholder={t('Enter API Key')}
               id="apiKey"
               error={errors.apiKey?.message}

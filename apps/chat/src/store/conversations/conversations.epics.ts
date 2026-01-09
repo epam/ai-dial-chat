@@ -1691,7 +1691,8 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
             const bodyExeededError =
               cause?.status === 413 &&
-              cause?.statusText === 'Body exceeded 1mb limit' &&
+              (cause?.statusText === 'Body exceeded 1mb limit' ||
+                cause?.statusText === 'Content Too Large') &&
               translate(
                 `${errorsMessages.bodyExeededLimit} ${cause?.statusText}.`,
               );
