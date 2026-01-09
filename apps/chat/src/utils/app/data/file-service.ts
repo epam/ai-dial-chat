@@ -31,11 +31,13 @@ import {
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
+import { BucketService } from './bucket-service';
 
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
     ? ApiUtils.decodeApiUrl(file.parentPath)
     : undefined;
+  const userBucket = BucketService.getBucket();
 
   return {
     id: constructPath(ApiKeys.Files, file.bucket, relativePath, file.name),
@@ -47,6 +49,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     contentType: file.contentType,
     serverSynced: true,
     updatedAt: file.updatedAt,
+    sharedWithMe: file.bucket !== userBucket,
   };
 };
 
