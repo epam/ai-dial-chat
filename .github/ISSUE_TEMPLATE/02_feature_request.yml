@@ -2,6 +2,7 @@
 name: 🚀 Feature request
 description: Suggest an idea for DIAL chat
 labels: ["enhancement"]
+projects: ["epam/22"]
 body:
   - type: markdown
     attributes:
