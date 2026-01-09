@@ -2,7 +2,7 @@
 name: 🐞 Report an issue
 description: Problems and issues in DIAL chat
 labels: ["bug"]
-projects: ["AI DIAL"]
+projects: ["epam/22"]
 body:
   - type: markdown
     attributes:
