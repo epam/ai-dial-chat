@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import classNames from 'classnames';
 
 import { Tooltip } from '../Tooltip';
@@ -29,6 +31,7 @@ export function ToggleSwitch({
   disabled,
   handleSwitch,
 }: ToggleSwitchProps) {
+  const id = useId();
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
     'flex min-w-[50px] shrink-0 items-center gap-1 rounded-full p-1.5 transition-all duration-200',
@@ -43,11 +46,11 @@ export function ToggleSwitch({
           type="checkbox"
           disabled={disabled}
           onChange={handleSwitch}
-          id="toggle"
+          id={id}
           className="sr-only h-0"
           checked={isOn}
         />
-        <label htmlFor="toggle" className={switchClassName}>
+        <label htmlFor={id} className={switchClassName}>
           {switchText && (
             <SwitchStateText switchText={switchText} isOn={isOn} />
           )}

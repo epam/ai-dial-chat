@@ -16,11 +16,9 @@ import {
 } from '@/src/constants/default-ui-settings';
 
 import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
-import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { BaseHeader } from './BaseHeader';
 import { CreateNewConversation } from './CreateNewEntity';
-import { User } from './User/User';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
@@ -28,9 +26,7 @@ import { Feature } from '@epam/ai-dial-shared';
 export const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
-  const isUserSettingsOpen = useAppSelector(
-    UISelectors.selectIsUserSettingsOpen,
-  );
+
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
@@ -106,10 +102,6 @@ export const Header = Inversify.register('Header', () => {
     dispatch(UIActions.setShowPromptbar(!showPromptbar));
   }, [chatbarWidth, dispatch, promptbarWidth, showPromptbar, windowWidth]);
 
-  const onClose = () => {
-    dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
-
   const headerIconSize = isOverlay
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
@@ -142,27 +134,17 @@ export const Header = Inversify.register('Header', () => {
         </>
       }
       RightItems={
-        <>
-          {!enabledFeatures.has(Feature.HideUserMenu) && (
-            <div className="overflow-hidden">
-              <User />
-            </div>
-          )}
-          {enabledFeatures.has(Feature.PromptsSection) && (
-            <ToggleSidebarButton
-              iconSize={headerIconSize}
-              tooltip="Prompt list"
-              isOpened={showPromptbar}
-              onToggle={handleTogglePromtbar}
-              dataQa="right-panel-toggle"
-              rightSide
-              isOverlay={isOverlay}
-            />
-          )}
-          {!enabledFeatures.has(Feature.HideUserMenu) && (
-            <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-          )}
-        </>
+        enabledFeatures.has(Feature.PromptsSection) && (
+          <ToggleSidebarButton
+            iconSize={headerIconSize}
+            tooltip="Prompt list"
+            isOpened={showPromptbar}
+            onToggle={handleTogglePromtbar}
+            dataQa="right-panel-toggle"
+            rightSide
+            isOverlay={isOverlay}
+          />
+        )
       }
     />
   );
