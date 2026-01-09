@@ -16,7 +16,7 @@ import {
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, Cursors, StyleValues, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import {
   Toolset,
@@ -29,7 +29,7 @@ const defaultToolsetNamePattern = new RegExp(
   `${ExpectedConstants.defaultToolsetName} \\d+`,
 );
 
-dialTest.skip(
+dialTest(
   'Create toolset - basic scenario.\n' +
     '[Editor]: detailed card view is displayed by default on Preview side.\n' +
     `[Toolset]: toolset's card is open on My Workspace page when create toolset and click "save and exit" (without login).\n` +
@@ -53,7 +53,8 @@ dialTest.skip(
       entityEditorGeneralForm,
       toolsetEditorViewFormAssertion,
       listboxMenu,
-      attachFilesModal,
+      filesManagerModal,
+      filesManagerModalGrid,
       entityEditorGeneralInfoPreviewCardAssertion,
       toolsetEditorSettingsPreviewCardAssertion,
       entityEditorGeneralInfoPreviewCard,
@@ -241,11 +242,8 @@ dialTest.skip(
       await entityEditorGeneralForm.topicsDropdownToggle.click();
 
       await entityEditorGeneralForm.addIconButton.click();
-      await attachFilesModal.checkAttachedFile(
-        filename,
-        FileModalSection.AllFiles,
-      );
-      await attachFilesModal.attachFiles();
+      await filesManagerModalGrid.gridCheckboxByNameCell(filename).click();
+      await filesManagerModal.getSelectButton().click();
     });
 
     await dialTest.step(
@@ -443,7 +441,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Toolset]: toolset with default name and version is saved correctly.\n' +
     '[Toolset]: cards are not duplicated for each saved changes when edit toolset several times.\n' +
     '[App editor]: Release date displayed on detailed preview on "General info" step when edit toolset.\n' +
@@ -653,7 +651,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Toolset]: message on Toolsets tab if no any toolset is created',
   async ({
     marketplacePage,
@@ -690,7 +688,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Card detailed view is open when user redirected back to My workspace (where search and filters are applied) after creating toolset.\n' +
     '[Toolset]:Endpoint url is save after login failed.\n' +
     "Tooltip for long toolset's name displayed in several lines",

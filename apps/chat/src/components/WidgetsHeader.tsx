@@ -5,33 +5,19 @@ import { useRouter } from 'next/router';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { ApplicationActions, UIActions } from '@/src/store/actions';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
-import { User } from '@/src/components/Header/User/User';
-import { SettingDialog } from '@/src/components/Settings/SettingDialog';
-
-import { Feature } from '@epam/ai-dial-shared';
 
 export const WidgetsHeader = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const isUserSettingsOpen = useAppSelector(
-    UISelectors.selectIsUserSettingsOpen,
-  );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const isUserMenuHidden = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
-  );
-
-  const handleClose = useCallback(() => {
-    dispatch(UIActions.setIsUserSettingsOpen(false));
-  }, [dispatch]);
 
   const handleGoBack = useCallback(() => {
     router.push(Routes.Widgets).then(() => {
@@ -53,17 +39,6 @@ export const WidgetsHeader = () => {
             />
           </div>
         ) : undefined
-      }
-      RightItems={
-        !isUserMenuHidden && (
-          <>
-            <div className="w-[48px] overflow-hidden md:w-auto">
-              <User />
-            </div>
-
-            <SettingDialog open={isUserSettingsOpen} onClose={handleClose} />
-          </>
-        )
       }
     />
   );
