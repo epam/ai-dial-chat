@@ -91,7 +91,17 @@ const isWideScreen = () => !is4XLScreen();
 const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
   isWideScreen() && !messagesLength && !isCompareMode;
 
-const ChatView = memo(() => {
+interface CustomViewerType {
+  title: string;
+  viewerUrl: string;
+  applicationId: string;
+}
+
+interface ChatViewProps {
+  customViewer?: CustomViewerType;
+}
+
+const ChatView = memo(({ customViewer }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -172,9 +182,6 @@ const ChatView = memo(() => {
   );
   const isNotAllowed = useAppSelector(
     ConversationsSelectors.selectIsNotAllowed,
-  );
-  const applicationTypeSchemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
@@ -278,47 +285,11 @@ const ChatView = memo(() => {
     [autoScrollEnabled, setAutoScroll],
   );
 
-  const customViewer = useMemo(() => {
-    const model = modelsMap[selectedConversations[0]?.model?.id];
-
-    if (!model) return;
-
-    if (model.viewerUrl) {
-      return {
-        viewerUrl: model.viewerUrl,
-        title: model.name,
-        applicationId: model.id,
-      };
-    }
-
-    if (
-      model.applicationTypeSchemaId &&
-      applicationTypeSchemas.some(
-        (schema) => schema.id === model.applicationTypeSchemaId,
-      )
-    ) {
-      const schema = applicationTypeSchemas.find(
-        (schema) => schema.id === model.applicationTypeSchemaId,
-      );
-      if (schema?.viewerUrl) {
-        return {
-          viewerUrl: schema.viewerUrl,
-          title: schema.displayName,
-          applicationId: model.id,
-        };
-      }
-    }
-  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
-
   const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
 
   useEffect(() => {
-    if (customViewer) {
-      return;
-    }
-
     throttledScrollDown();
-  }, [conversations, throttledScrollDown, customViewer]);
+  }, [conversations, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
     scrollDown(true);
@@ -1006,11 +977,7 @@ const ChatView = memo(() => {
 
 interface CustomChatViewerProps {
   setShowSettings: (value: boolean) => void;
-  customViewer: {
-    title: string;
-    viewerUrl: string;
-    applicationId: string;
-  };
+  customViewer: CustomViewerType;
 }
 
 const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
@@ -1022,6 +989,9 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
 
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
   );
 
   const handleTalkToConversationId = useCallback(
@@ -1037,9 +1007,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
     return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
-  const isStartedCustomViewerConversation = useAppSelector(
-    ConversationsSelectors.selectIsStartedCustomViewerConversation,
-  );
   return (
     <>
       {selectedConversations[0].messages.length !== 0 ||
@@ -1078,16 +1045,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             </div>
           </div>
         ))}
-      {(isStartedCustomViewerConversation ||
-        isApplicationPreviewChat ||
-        selectedConversations[0].messages.length !== 0) && (
-        <CustomChatViewer
-          conversation={selectedConversations[0]}
-          id={customViewer.applicationId}
-          title={customViewer.title}
-          customViewerUrl={customViewer.viewerUrl}
-        />
-      )}
     </>
   );
 };
@@ -1102,6 +1059,8 @@ export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const router = useRouter();
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -1130,10 +1089,52 @@ export function Chat({ isPreview }: ChatProps) {
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
+  );
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditor;
+  }, [router.pathname]);
+
+  const customViewer = useMemo(() => {
+    const model = modelsMap[selectedConversations[0]?.model?.id];
+
+    if (!model) return;
+
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
+
+    if (
+      model.applicationTypeSchemaId &&
+      applicationTypeSchemas.some(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      )
+    ) {
+      const schema = applicationTypeSchemas.find(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      );
+      if (schema?.viewerUrl) {
+        return {
+          viewerUrl: schema.viewerUrl,
+          title: schema.displayName,
+          applicationId: model.id,
+        };
+      }
+    }
+  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
@@ -1195,9 +1196,25 @@ export function Chat({ isPreview }: ChatProps) {
     );
   }
 
+  if (
+    customViewer &&
+    (isStartedCustomViewerConversation ||
+      isApplicationPreviewChat ||
+      selectedConversations[0].messages.length !== 0)
+  ) {
+    return (
+      <CustomChatViewer
+        conversation={selectedConversations[0]}
+        id={customViewer.applicationId}
+        title={customViewer.title}
+        customViewerUrl={customViewer.viewerUrl}
+      />
+    );
+  }
+
   return (
     <>
-      <ChatView />
+      <ChatView customViewer={customViewer} />
       {!isPreview && <ChatInputFooter />}
     </>
   );
