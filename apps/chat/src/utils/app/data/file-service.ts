@@ -20,9 +20,11 @@ import {
 import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
+import { BucketService } from './bucket-service';
 
 import {
   DialCopiedItem,
@@ -31,8 +33,6 @@ import {
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
-import { BucketService } from './bucket-service';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
@@ -50,7 +50,8 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     contentType: file.contentType,
     serverSynced: true,
     updatedAt: file.updatedAt,
-    sharedWithMe: file.bucket !== userBucket && file.bucket !== PUBLIC_URL_PREFIX,
+    sharedWithMe:
+      file.bucket !== userBucket && file.bucket !== PUBLIC_URL_PREFIX,
   };
 };
 
