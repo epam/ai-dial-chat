@@ -263,8 +263,9 @@ const AgentAndToolsetModalView = ({
       setScopeTab(tab);
       setShouldResetSliderState(true);
       setActiveSlide(0);
+      setScrollToItemId(null);
     },
-    [],
+    [setScrollToItemId],
   );
 
   const handleSetSearchTerm = (searchTerm: string) => {
@@ -424,6 +425,12 @@ const AgentAndToolsetModalView = ({
     () => (shouldResetSliderState ? [isMyWorkspace, searchTerm] : undefined),
     [isMyWorkspace, searchTerm, shouldResetSliderState],
   );
+
+  useEffect(() => {
+    if (shouldResetSliderState) {
+      setShouldResetSliderState(false);
+    }
+  }, [shouldResetSliderState]);
 
   const handleConfirm = useCallback(() => {
     onConfirm(selectedIds);
