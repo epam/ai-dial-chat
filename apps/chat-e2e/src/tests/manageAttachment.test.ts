@@ -16,13 +16,7 @@ import {
   Attributes,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
-import {
-  BaseElement,
-  Button,
-  FileModalSection,
-  Tab,
-} from '@/src/ui/webElements';
-import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
+import { BaseElement, FileModalSection, Tab } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
@@ -237,13 +231,12 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Manage attachments] Delete file while it is being uploaded',
   async ({
     dialHomePage,
     setTestIds,
     filesManagerPage,
-    filesManagerGrid,
     filesManagerGridAssertion,
     uploadProgressDialog,
     localStorageManager,
@@ -263,7 +256,10 @@ dialTest.skip(
     await dialTest.step(
       'Start upload attachment from device with slow network',
       async () => {
-        await dialHomePage.emulateSlowNetworkConditions();
+        await dialHomePage.emulateSlowNetworkConditions({
+          downloadThroughput: 100,
+          uploadThroughput: 100,
+        });
         const filesManager = filesManagerPage
           .getFilesManagerContainer()
           .getFilesManager();
@@ -293,6 +289,18 @@ dialTest.skip(
     );
 
     await dialTest.step(
+      'Verify cancel button is highlighted on hover',
+      async () => {
+        const cancelButton = uploadProgressDialog.getCancelButton();
+        await cancelButton.hoverOver();
+        await baseAssertion.assertElementBackgroundColors(
+          cancelButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4),
+        );
+      },
+    );
+
+    await dialTest.step(
       'Click cancel button and verify upload is cancelled, file does not appear',
       async () => {
         await uploadProgressDialog.getCancelButton().click();
@@ -306,6 +314,9 @@ dialTest.skip(
   },
 );
 
+// TODO: Test skipped - file upload appears successful even when network is offline.
+// Despite network errors visible in DevTools, the file uploads successfully,
+// making it impossible to test error state handling (red text + error icon).
 dialTest.skip(
   '[Manage attachments] Delete file after there was internet connection error',
   async ({
@@ -389,6 +400,8 @@ dialTest.skip(
   },
 );
 
+// TODO: Test skipped - same issue as EPMRTC-3304 above.
+// File upload succeeds despite offline network conditions.
 dialTest.skip(
   '[Manage attachments] Reload file after there was internet connection error',
   async ({

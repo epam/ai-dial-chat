@@ -1,5 +1,4 @@
 export * from './chatSelectors';
-export * from './uploadProgressDialogSelectors';
 export * from './loginSelectors';
 export * from './sideBarSelectors';
 export * from './dialogSelectors';

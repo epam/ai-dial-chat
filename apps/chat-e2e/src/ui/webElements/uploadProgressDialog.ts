@@ -1,4 +1,4 @@
-import { UploadProgressDialogSelectors } from '@/src/ui/selectors/uploadProgressDialogSelectors';
+import { UploadProgressDialogSelectors } from '@/src/ui/selectors';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { Locator, Page } from '@playwright/test';
 
