@@ -745,7 +745,6 @@ const uploadFilesEpic: AppEpic = (action$) =>
             acc.lastAction = action;
             return acc;
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           { finished: 0, total: payload.files.length, lastAction: null as any },
         ),
         mergeMap(({ finished, total, lastAction }) => {
