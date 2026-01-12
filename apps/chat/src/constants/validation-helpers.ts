@@ -1,6 +1,14 @@
-import { isVersionPartSizeValid, isVersionValid } from '@/src/utils/app/common';
+import {
+  doesHaveDotsInTheEnd,
+  isVersionPartSizeValid,
+  isVersionValid,
+} from '@/src/utils/app/common';
 import { doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
 
+import {
+  MAX_ENTITY_LENGTH,
+  MIN_ENTITY_LENGTH,
+} from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import {
   formErrors,
@@ -10,17 +18,27 @@ import {
 
 import { z as zodValidation } from 'zod';
 
-export const MarketplaceEntityBaseSchema = zodValidation.object({
-  name: zodValidation
+export const getEntityNameSchema = (options: {
+  name: string;
+  checkDotsInTheEnd?: boolean;
+}) =>
+  zodValidation
     .string()
     .trim()
     .nonempty(formErrors.required)
-    .min(2, formErrors.tooShort('Name', 2))
-    .max(160, formErrors.tooLong('Name', 160))
+    .min(2, formErrors.tooShort('Name', MIN_ENTITY_LENGTH))
+    .max(160, formErrors.tooLong('Name', MAX_ENTITY_LENGTH))
     .refine(
       (str) => !doesHaveNotAllowedSymbols(str),
       formErrors.hasSpecialCharacters(),
-    ),
+    )
+    .refine(
+      (str) => !options.checkDotsInTheEnd || !doesHaveDotsInTheEnd(str),
+      formErrors.noDotInTheEnd(options.name),
+    );
+
+export const MarketplaceEntityBaseSchema = zodValidation.object({
+  name: getEntityNameSchema({ name: 'Name', checkDotsInTheEnd: true }),
   version: zodValidation
     .string()
     .nonempty(versionsErrors.required)
