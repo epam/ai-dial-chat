@@ -1,20 +1,47 @@
-import { FileManagerColumnKey, MenuOptions } from '@/src/testData';
+import {
+  API,
+  ExpectedConstants,
+  FileManagerColumnKey,
+  MenuOptions,
+} from '@/src/testData';
 import {
   GridSelectors,
   IconSelectors,
   InputSelectors,
 } from '@/src/ui/selectors';
-import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
+import { Breadcrumb, Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
 import { FileUtil } from '@/src/utils';
+import { Locator, Page } from '@playwright/test';
 
 export class FilesManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
+  private breadcrumb!: Breadcrumb;
+
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, parentLocator);
+  }
 
   getRowDropdownMenu() {
     if (!this.rowDropdownMenu) {
       this.rowDropdownMenu = new Dropdown(this.page);
     }
     return this.rowDropdownMenu;
+  }
+
+  getBreadcrumb() {
+    if (!this.breadcrumb) {
+      this.breadcrumb = new Breadcrumb(this.page, this.page.locator('body'));
+    }
+    return this.breadcrumb;
+  }
+
+  /**
+   * Returns breadcrumb root element (My Files) for navigation back to root
+   */
+  public breadcrumbsRoot() {
+    return this.getBreadcrumb().itemByName(
+      ExpectedConstants.myFilesBreadcrumbsRoot,
+    );
   }
 
   public gridHeaderCheckbox = new Checkbox(
@@ -43,6 +70,26 @@ export class FilesManagerGrid extends Grid {
 
   public gridNameCellValue = (name: string) =>
     this.gridNameCell(name).locator(GridSelectors.gridCellValue);
+
+  /**
+   * Opens a folder by clicking on its name cell
+   * @param folderName Name of the folder to open
+   * @param waitForRequest Whether to wait for GET request to load folder contents (default: true)
+   */
+  public async openFolder(folderName: string, waitForRequest = true) {
+    if (waitForRequest) {
+      const requestPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().endsWith(API.folderFilesListingHost(folderName)) &&
+          resp.request().method() === 'GET' &&
+          resp.ok(),
+      );
+      await this.gridNameCellValue(folderName).click();
+      await requestPromise;
+    } else {
+      await this.gridNameCellValue(folderName).click();
+    }
+  }
 
   public async renameFile(currentName: string, newName: string) {
     await this.gridDotsMenuByNameCell(currentName).click();
