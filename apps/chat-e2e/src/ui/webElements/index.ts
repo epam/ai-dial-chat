@@ -34,6 +34,7 @@ export * from './chatNotFound';
 export * from './attachFilesModal';
 export * from './inputAttachments';
 export * from './uploadFromDeviceModal';
+export * from './uploadProgressDialog';
 export * from './filesManagerModalHeader';
 export * from './selectFolderModal';
 export * from './editInputActions';

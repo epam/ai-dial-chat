@@ -44,7 +44,8 @@ export class FilesManagerPage extends BasePage {
     );
   }
 
-  async waitForPageLoaded() {
+  async waitForPageLoaded(options?: { waitForGrid?: boolean }) {
+    const waitForGrid = options?.waitForGrid ?? true;
     const filesManagerContainer = this.getFilesManagerContainer();
     const filesManager = filesManagerContainer.getFilesManager();
     await filesManager.waitForState();
@@ -54,8 +55,10 @@ export class FilesManagerPage extends BasePage {
     await filesManager.getFilesManagerToolbar().waitForState();
     await filesManager.getFilesManagerNavigationPanel().waitForState();
     await filesManager.getFilesManagerCollapsibleSidebar().waitForState();
-    const filesManagerGrid = filesManager.getFilesManagerGrid();
-    await filesManagerGrid.waitForState();
-    await filesManagerGrid.loader.waitForState({ state: 'hidden' });
+    if (waitForGrid) {
+      const filesManagerGrid = filesManager.getFilesManagerGrid();
+      await filesManagerGrid.waitForState();
+      await filesManagerGrid.loader.waitForState({ state: 'hidden' });
+    }
   }
 }

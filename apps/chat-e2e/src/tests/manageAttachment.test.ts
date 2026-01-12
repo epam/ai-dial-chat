@@ -242,75 +242,63 @@ dialTest.skip(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
-    uploadFromDeviceModal,
-    chatBar,
+    filesManagerPage,
+    filesManagerGrid,
+    filesManagerGridAssertion,
+    uploadProgressDialog,
     localStorageManager,
     baseAssertion,
-    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3302');
-    let removeAttachedFileIconElement: Button;
-    let attachedFileLoadingIndicatorElement: Locator;
-    let allFilesTreeElement: AttachFilesTree;
 
     await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
+      'Open Files manager page by direct URL navigation',
       async () => {
         await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
+        await filesManagerPage.openFilesManagerPage();
+        await filesManagerPage.waitForPageLoaded({ waitForGrid: false });
       },
     );
 
-    await dialTest.step('Start upload attachment from device', async () => {
-      await baseAssertion.assertElementState(attachFilesModal, 'visible');
-      await dialHomePage.emulateSlowNetworkConditions();
-      await dialHomePage.uploadData(
-        { path: Attachment.sunImageName, dataType: 'upload' },
-        () => attachFilesModal.uploadFromDevice(),
-      );
-      await baseAssertion.assertElementState(
-        uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
-        'visible',
-      );
-      await uploadFromDeviceModal.uploadButton.click();
-    });
+    await dialTest.step(
+      'Start upload attachment from device with slow network',
+      async () => {
+        await dialHomePage.emulateSlowNetworkConditions();
+        const filesManager = filesManagerPage
+          .getFilesManagerContainer()
+          .getFilesManager();
+        const toolbar = filesManager.getFilesManagerToolbar();
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await toolbar.getNewButton().click();
+            await toolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+      },
+    );
 
     await dialTest.step(
-      'Verify loading indicator is shown while file is uploading, cancel button is highlighted on hover',
+      'Verify upload progress dialog is shown with progress bar',
       async () => {
-        allFilesTreeElement = attachFilesModal.getAllFilesTree();
-        attachedFileLoadingIndicatorElement =
-          allFilesTreeElement.attachedFileLoadingIndicator(
+        await baseAssertion.assertElementState(uploadProgressDialog, 'visible');
+        const progressBarContainer =
+          uploadProgressDialog.getFileProgressBarContainer(
             Attachment.sunImageName,
           );
-        await baseAssertion.assertElementState(
-          attachedFileLoadingIndicatorElement,
-          'visible',
-        );
-        removeAttachedFileIconElement =
-          allFilesTreeElement.removeAttachedFileIcon(Attachment.sunImageName);
-        await removeAttachedFileIconElement.hoverOver();
-        await baseAssertion.assertElementColor(
-          removeAttachedFileIconElement,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
-        );
+        await baseAssertion.assertElementState(progressBarContainer, 'visible');
       },
     );
 
     await dialTest.step(
-      'Click on cancel button near loading indicator and verify uploading stops, file disappears from the list',
+      'Click cancel button and verify upload is cancelled, file does not appear',
       async () => {
-        await removeAttachedFileIconElement.click();
-        await baseAssertion.assertElementState(
-          attachedFileLoadingIndicatorElement,
-          'hidden',
-        );
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
+        await uploadProgressDialog.getCancelButton().click();
+        await baseAssertion.assertElementState(uploadProgressDialog, 'hidden');
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
           'hidden',
         );
       },
