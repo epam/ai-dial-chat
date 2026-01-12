@@ -131,7 +131,7 @@ export const MarketplaceEditorView = ({
 
               {!!closedPreviewLabel && (
                 <span
-                  className="select-none text-primary"
+                  className="select-none truncate text-primary"
                   style={{ writingMode: 'vertical-rl' }}
                 >
                   {closedPreviewLabel}

@@ -11,6 +11,7 @@ export class FilesManagerModal extends BaseElement {
   }
   private closeButton!: Button;
   private attachButton!: Button;
+  private selectButton!: Button;
   private header!: FilesManagerModalHeader;
   private filesManager!: FilesManager;
 
@@ -26,6 +27,17 @@ export class FilesManagerModal extends BaseElement {
       this.attachButton = new Button(this.page, 'Attach', this.rootLocator);
     }
     return this.attachButton;
+  }
+
+  getSelectButton(): Button {
+    if (!this.selectButton) {
+      this.selectButton = new Button(
+        this.page,
+        'Select file',
+        this.rootLocator,
+      );
+    }
+    return this.selectButton;
   }
 
   getHeader(): FilesManagerModalHeader {
