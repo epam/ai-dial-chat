@@ -142,13 +142,15 @@ const initThemeEpic: AppEpic = (action$, state$) =>
       const isThemesDefined = SettingsSelectors.selectThemeHostDefined(state);
 
       return forkJoin({
-        theme: DataService.getTheme(),
+        savedTheme: DataService.getTheme(),
         themesConfig: isThemesDefined
           ? DataService.getThemesConfig()
           : of(FALLBACK_THEME_CONFIG),
       }).pipe(
-        switchMap(({ theme, themesConfig }) => {
+        switchMap(({ savedTheme, themesConfig }) => {
           const actions: Observable<AppAction>[] = [];
+          // if no saved theme, take the first available theme (dark) - new users
+          const theme = savedTheme || themesConfig.themes[0]?.id;
 
           if (
             theme &&
@@ -157,8 +159,13 @@ const initThemeEpic: AppEpic = (action$, state$) =>
             )
           ) {
             actions.push(of(UIActions.setTheme(theme)));
-          } else if (typeof themesConfig.themes[0] !== 'undefined') {
-            actions.push(of(UIActions.setTheme(themesConfig.themes[0]?.id)));
+          } else {
+            // try to set the last theme (usually light) - fallback for old users
+            const lastTheme =
+              themesConfig.themes[themesConfig.themes.length - 1];
+            if (typeof lastTheme !== 'undefined') {
+              actions.push(of(UIActions.setTheme(lastTheme.id)));
+            }
           }
 
           return concat(
