@@ -55,7 +55,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Files manager" page and verify image is placed inside nested folders',
+      'Open "File manager" page and verify image is placed inside nested folders',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
@@ -68,7 +68,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Generate one more picture for the same conversation and verify it is visible on "Files manager"',
+      'Generate one more picture for the same conversation and verify it is visible on "File manager"',
       async () => {
         await navigationPanel.backToChat();
         await dialHomePage.mockChatImageResponse(
@@ -92,7 +92,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Change conversation model, generate one more picture and verify it is visible on "Files manager" under new model folder',
+      'Change conversation model, generate one more picture and verify it is visible on "File manager" under new model folder',
       async () => {
         await chatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(updatedModel);
