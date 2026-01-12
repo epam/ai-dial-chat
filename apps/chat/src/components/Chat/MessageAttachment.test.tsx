@@ -78,17 +78,11 @@ describe('MessageAttachment', () => {
 
   beforeEach(() => {
     // Mock ResizeObserver
-    global.ResizeObserver = class ResizeObserver {
-      observe() {
-        // do nothing
-      }
-      unobserve() {
-        // do nothing
-      }
-      disconnect() {
-        // do nothing
-      }
-    };
+    global.ResizeObserver = vi.fn().mockImplementation(() => ({
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    }));
   });
 
   it('Scenario A: Renders Custom Visualizer when URL is present', () => {
