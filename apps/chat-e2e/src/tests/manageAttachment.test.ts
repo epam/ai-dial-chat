@@ -50,7 +50,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open "Files manager" page through chat side bar icon',
+      'Open "File manager" page through chat side bar icon',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
@@ -165,7 +165,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Files manager" modal for created conversation and check attached files',
+      'Open "File manager" modal for created conversation and check attached files',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -492,7 +492,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Files manager" page through chat side bar icon',
+      'Open "File manager" page through chat side bar icon',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
@@ -534,7 +534,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open "Files manager" page and check attached files',
+      'Open "File manager" page and check attached files',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
@@ -727,7 +727,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open "Files manager" page and verify file row includes checkbox on hover over',
+      'Open "File manager" page and verify file row includes checkbox on hover over',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();

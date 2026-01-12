@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import {
   Controller,
   useFormContext,
@@ -56,7 +56,6 @@ import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/Toolset
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { isEqual } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -114,29 +113,21 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     name: 'model',
   });
 
-  const agentsAndToolsets = useWatch({
-    control,
-    name: 'agentsAndToolsets',
-  });
+  const handleAgentsAndToolsetsChange = useCallback(
+    (value: string[]) => {
+      const sortedValue = value.sort((a, b) =>
+        getEntityDisplayName(a, allEntitiesMap).localeCompare(
+          getEntityDisplayName(b, allEntitiesMap),
+        ),
+      );
 
-  const sortedAgentsAndToolsets = useMemo(() => {
-    if (!agentsAndToolsets || Object.keys(allEntitiesMap).length === 0) {
-      return agentsAndToolsets || [];
-    }
-    return [...agentsAndToolsets].sort((a, b) =>
-      getEntityDisplayName(a, allEntitiesMap).localeCompare(
-        getEntityDisplayName(b, allEntitiesMap),
-      ),
-    );
-  }, [agentsAndToolsets, allEntitiesMap]);
-
-  useEffect(() => {
-    if (!isEqual(sortedAgentsAndToolsets, agentsAndToolsets)) {
-      setValue('agentsAndToolsets', sortedAgentsAndToolsets, {
-        shouldDirty: false,
+      setValue('agentsAndToolsets', sortedValue, {
+        shouldTouch: true,
+        shouldDirty: true,
       });
-    }
-  }, [sortedAgentsAndToolsets, agentsAndToolsets, setValue]);
+    },
+    [allEntitiesMap, setValue],
+  );
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
@@ -262,7 +253,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             <>
               <AgentAndToolsetSelectorField
                 value={field.value}
-                onChange={field.onChange}
+                onChange={handleAgentsAndToolsetsChange}
                 allItemsMap={allEntitiesMap}
                 label={t('Agents & Toolsets')}
                 readonly={isAppPublic}

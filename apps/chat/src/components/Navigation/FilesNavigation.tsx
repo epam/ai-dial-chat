@@ -17,7 +17,7 @@ export const FilesNavigation = () => {
   const router = useRouter();
 
   const handleFilesClick = useCallback(() => {
-    return router.push(Routes.FilesManager);
+    return router.push(Routes.FileManager);
   }, [router]);
 
   return (
@@ -25,7 +25,7 @@ export const FilesNavigation = () => {
       onClick={handleFilesClick}
       tooltip={t('Files')}
       Icon={IconFolderOpen}
-      selected={router.route === Routes.FilesManager}
+      selected={router.route === Routes.FileManager}
       caption={t('Files')}
     />
   );

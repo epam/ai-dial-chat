@@ -20,7 +20,7 @@ export const getPageType = (route?: string) => {
       return PageType.ToolsetEditor;
     case Routes.AppsEditor:
       return PageType.AppsEditor;
-    case Routes.FilesManager:
+    case Routes.FileManager:
       return PageType.FileManager;
     default:
       return PageType.Chat;
