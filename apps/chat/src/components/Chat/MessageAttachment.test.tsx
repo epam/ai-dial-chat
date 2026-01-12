@@ -22,6 +22,7 @@ vi.mock('@/public/images/icons/chevron-down.svg', () => ({
 const mockDispatch = vi.fn();
 vi.mock('@/src/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useAppSelector: (selector: any) => {
     // Check if selector is a function, otherwise treat it as a mock return value or handle appropriately
     if (typeof selector === 'function') {
@@ -68,6 +69,7 @@ vi.mock('@/src/components/Plotly/PlotlyStringDataRenderer', () => ({
 
 // Mock ErrorBoundary
 vi.mock('@/src/components/Common/ErrorBoundary', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   withErrorBoundary: (Component: any) => Component,
 }));
 
@@ -76,11 +78,11 @@ describe('MessageAttachment', () => {
 
   beforeEach(() => {
     // Mock ResizeObserver
-    global.ResizeObserver = class ResizeObserver {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    };
+    global.ResizeObserver = vi.fn().mockImplementation(() => ({
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    }));
   });
 
   it('Scenario A: Renders Custom Visualizer when URL is present', () => {
