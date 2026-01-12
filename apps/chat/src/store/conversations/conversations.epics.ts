@@ -23,7 +23,6 @@ import {
   takeWhile,
   tap,
   throwError,
-  timeout,
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
@@ -1599,8 +1598,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
-        timeout(120000),
         mergeMap((resp) => {
           if (resp.done) {
             const publicationUrl =
