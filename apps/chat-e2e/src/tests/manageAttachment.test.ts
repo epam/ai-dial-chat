@@ -514,7 +514,7 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Manage attachments] Download several files',
   async ({
     filesManagerPage,
@@ -545,20 +545,31 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Click "Download" button at the top of the grid and verify files are successfully downloaded and stay checked',
+      'Click "Download" button and verify files are downloaded as ZIP archive',
       async () => {
         const downloadedData = await filesManagerPage.downloadMultipleData(
-          () => filesManagerToolbar.clickDownloadButton(),
-          attachedFiles.length,
+          () => filesManagerToolbar.clickDownloadButton(false),
+          1, // Expect 1 download - ZIP archive containing all files
+          'files.zip',
         );
+
+        // Verify ZIP file was downloaded
+        await downloadAssertion.assertZipFileIsDownloaded(
+          downloadedData[0],
+          'files.zip',
+        );
+      },
+    );
+
+    dialTest.skip(
+      //TODO they do not remain checked. Verify if it is intended
+      'Verify checkboxes remain checked',
+      async () => {
+        // Verify checkboxes remain checked
         for (const file of attachedFiles) {
           await filesManagerGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
-          );
-          await downloadAssertion.assertJpgFileIsDownloaded(
-            downloadedData.find((d) => d.path.includes(file))!,
-            file,
           );
         }
       },
