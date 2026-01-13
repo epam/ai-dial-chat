@@ -187,9 +187,37 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     ConversationsSelectors.selectIsNotAllowed,
   );
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const autoScrollEnabledRef = useRef(true);
+
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-  const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
+
+  const mergedMessages = useMemo(() => {
+    if (selectedConversations.length === 0) {
+      return [];
+    }
+    const mergedMessages: MergedMessages[] = [];
+    const userMessages = selectedConversations.map((conv) =>
+      excludeSystemMessages(conv.messages),
+    );
+    const messagesLength = userMessages[0]?.length ?? 0;
+
+    for (let i = 0; i < messagesLength; i++) {
+      mergedMessages.push(
+        selectedConversations.map((conv, convIndex) => [
+          conv,
+          userMessages[convIndex][i] || {
+            role: Role.Assistant,
+            content: '',
+          },
+          i,
+          userMessages[convIndex],
+        ]),
+      );
+    }
+
+    return mergedMessages;
+  }, [selectedConversations]);
+
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
@@ -272,27 +300,30 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       clearTimeout(disableAutoScrollTimeoutRef.current);
     }
 
-    setAutoScrollEnabled(true);
+    autoScrollEnabledRef.current = true;
     setShowScrollDownButton(false);
   }, []);
 
   const scrollDown = useCallback(
     (force = false) => {
-      if (autoScrollEnabled || force) {
+      if (autoScrollEnabledRef.current || force) {
         setAutoScroll();
         chatContainerRef.current?.scrollTo({
           top: chatContainerRef.current.scrollHeight,
         });
       }
     },
-    [autoScrollEnabled, setAutoScroll],
+    [setAutoScroll],
   );
 
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
+  const throttledScrollDown = useMemo(
+    () => throttle(scrollDown, scrollThrottlingTimeout),
+    [scrollDown],
+  );
 
   useEffect(() => {
     throttledScrollDown();
-  }, [conversations, throttledScrollDown]);
+  }, [conversations, mergedMessages, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
     scrollDown(true);
@@ -305,7 +336,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       const bottomTolerance = 25;
 
       if (lastScrollTop.current > scrollTop) {
-        setAutoScrollEnabled(false);
+        autoScrollEnabledRef.current = false;
         setShowScrollDownButton(true);
       } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
         if (disableAutoScrollTimeoutRef.current !== null) {
@@ -313,7 +344,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
         }
 
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
-          setAutoScrollEnabled(false);
+          autoScrollEnabledRef.current = false;
           setShowScrollDownButton(true);
         }, scrollThrottlingTimeout);
       } else {
@@ -355,30 +386,6 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   }, [mergedMessages]);
 
   useLayoutEffect(() => {
-    if (selectedConversations.length > 0) {
-      const mergedMessages: MergedMessages[] = [];
-      const userMessages = selectedConversations.map((conv) =>
-        excludeSystemMessages(conv.messages),
-      );
-      const messagesLength = userMessages[0].length;
-
-      for (let i = 0; i < messagesLength; i++) {
-        mergedMessages.push(
-          selectedConversations.map((conv, convIndex) => [
-            conv,
-            userMessages[convIndex][i] || {
-              role: Role.Assistant,
-              content: '',
-            },
-            i,
-            userMessages[convIndex],
-          ]),
-        );
-      }
-
-      setMergedMessages(mergedMessages);
-    }
-
     if (
       selectedConversations.every(
         (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
@@ -386,7 +393,9 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     ) {
       setShowScrollDownButton(false);
     } else {
-      handleScroll();
+      if (!autoScrollEnabledRef.current) {
+        handleScroll();
+      }
     }
   }, [handleScroll, selectedConversations]);
 
