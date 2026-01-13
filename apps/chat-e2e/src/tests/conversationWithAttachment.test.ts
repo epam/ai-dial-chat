@@ -80,7 +80,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Files Manager" modal and verify supported types label is "all", "Attach" button is disabled',
+      'Open "File Manager" modal and verify supported types label is "all", "Attach" button is disabled',
       async () => {
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
