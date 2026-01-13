@@ -64,7 +64,7 @@ const isDebugEnabled =
 
 export const authOptions: AuthOptions = {
   providers: authProviders,
-  cookies: defaultCookies(isSecure, isSecure ? 'strict' : 'lax'),
+  cookies: defaultCookies(isSecure),
   callbacks,
   debug: isDebugEnabled,
   session: {
