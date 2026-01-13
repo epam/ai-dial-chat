@@ -1,4 +1,4 @@
-import { Children, ReactNode, memo } from 'react';
+import { Children, ReactNode, memo, useMemo } from 'react';
 import { Components, Options } from 'react-markdown';
 
 import classnames from 'classnames';
@@ -74,7 +74,7 @@ const getMDComponents = (
 
       return (match && match[1]) || isPlaintextCodeBlock ? (
         <CodeBlock
-          key={Math.random()}
+          key={`${node?.position?.start.line}:${node?.position?.start.column}`}
           language={(match && match[1]) || ''}
           value={childrenAsString.replace(/\n$/, '')}
           isInner={isInner}
@@ -208,6 +208,11 @@ export const ChatMDComponent = memo(
       (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
     );
 
+    const components = useMemo(
+      () => getMDComponents(isShowResponseLoader, isInner),
+      [isShowResponseLoader, isInner],
+    );
+
     const processedContent = preprocessLaTeX(content);
 
     return (
@@ -215,7 +220,7 @@ export const ChatMDComponent = memo(
         className={mdClassNames}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        components={getMDComponents(isShowResponseLoader, isInner)}
+        components={components}
         urlTransform={transformUri}
       >
         {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
