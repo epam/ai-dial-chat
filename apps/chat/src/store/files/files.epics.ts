@@ -734,35 +734,60 @@ const uploadFilesEpic: AppEpic = (action$) =>
         ),
         scan(
           (acc, action) => {
-            if (
-              action.type === FilesActions.uploadFileSuccess.type ||
-              action.type === FilesActions.uploadFileFail.type
-            ) {
-              acc.finished++;
+            if (action.type === FilesActions.uploadFileSuccess.type) {
+              acc.finished += 1;
+              acc.successCount += 1;
+            } else if (action.type === FilesActions.uploadFileFail.type) {
+              acc.finished += 1;
+              acc.failCount += 1;
             }
 
-            acc.total = payload.files.length;
             acc.lastAction = action;
             return acc;
           },
-          { finished: 0, total: payload.files.length, lastAction: null as any },
+          {
+            finished: 0,
+            total: payload.files.length,
+            successCount: 0,
+            failCount: 0,
+            lastAction: null as any,
+          },
         ),
-        mergeMap(({ finished, total, lastAction }) => {
-          const action$ = of(lastAction);
 
-          if (!canceled && finished === total) {
-            return concat(
-              action$,
-              of(FilesActions.uploadFilesSuccess()),
-              of(
-                FilesActions.getFilesWithFolders({
-                  id: payload.destinationUrl,
-                }),
-              ),
-            );
+        mergeMap(({ finished, total, successCount, lastAction }) => {
+          const last$ = of(lastAction);
+
+          if (canceled || finished !== total) {
+            return last$;
           }
 
-          return action$;
+          const allFailed = successCount === 0;
+
+          return concat(
+            last$,
+
+            allFailed
+              ? of(
+                  UIActions.showToast({
+                    type: ToastType.Error,
+                    title: translate('Upload failed'),
+                    message: translate(
+                      'Please check your internet connection and try again.',
+                    ),
+                  }),
+                )
+              : EMPTY,
+
+            allFailed
+              ? of(FilesActions.uploadFilesFail())
+              : of(FilesActions.uploadFilesSuccess()),
+
+            of(
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationUrl,
+              }),
+            ),
+          );
         }),
         catchError(() =>
           canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
@@ -999,7 +1024,6 @@ export const FilesEpics = combineEpics(
   deleteFileFailEpic,
   unselectFilesEpic,
   setChosenFolderEpic,
-
   copyFilesEpic,
   moveFilesEpic,
   deleteFilesEpic,
