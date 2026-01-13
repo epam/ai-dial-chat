@@ -46,7 +46,7 @@ import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import throttle from 'lodash/throttle';
 
-const THROTTLE_TIMEOUT = 100;
+const SAFARI_THROTTLE_TIMEOUT = 100;
 
 interface AssistantMessageEditorProps {
   messageIndex: number;
@@ -293,7 +293,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     () =>
       throttle((content: string) => {
         setThrottledContent(content);
-      }, THROTTLE_TIMEOUT),
+      }, SAFARI_THROTTLE_TIMEOUT),
     [],
   );
 
