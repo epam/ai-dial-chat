@@ -13,7 +13,7 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest.skip(
+dialTest(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
     'Isolated view: application description is shown on the first screen.\n' +
     'Isolated view: Prompt and Conversation panels are not available.\n' +
@@ -132,7 +132,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Isolated view: available features in conversation',
   async ({
     dialHomePage,
@@ -145,7 +145,8 @@ dialTest.skip(
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessage,
-    attachFilesModal,
+    filesManagerModalGrid,
+    filesManagerModal,
     chatHeaderAssertion,
     chatMessagesAssertion,
     footerAssertion,
@@ -181,8 +182,10 @@ dialTest.skip(
       await attachmentDropdownMenu.selectMenuOption(
         UploadMenuOptions.attachUploadedFiles,
       );
-      await attachFilesModal.checkAttachedFile(attachmentName);
-      await attachFilesModal.attachFiles();
+      await filesManagerModalGrid
+        .gridCheckboxByNameCell(attachmentName)
+        .click();
+      await filesManagerModal.getAttachButton().click();
       await sendMessage.messageInput.typeInInput(testMessage);
       await dialHomePage.mockChatTextResponse(
         MockedChatApiResponseBodies.simpleTextBody,
@@ -246,7 +249,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Isolate view: error message appears if URL is based on non-existed model id',
   async ({ dialHomePage, chatNotFound, setTestIds }) => {
     setTestIds('EPMRTC-2963');
@@ -267,7 +270,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
