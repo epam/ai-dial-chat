@@ -31,7 +31,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Upload the same file again through Files manager',
+      'Upload the same file again through File manager',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
