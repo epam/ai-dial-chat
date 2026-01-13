@@ -65,14 +65,6 @@ export const PopupSelectors = {
   popupContent: '[aria-label="popup-description"]',
 };
 
-export const UploadProgressDialogSelectors = {
-  title: 'div:has-text("Uploading items")',
-  fileItem: '[data-qa="file-item"]',
-  fileName: '#name',
-  uploadingIndicator: '[data-qa="uploading-indicator"]',
-  uploadingItemsCount: '[data-qa="uploading-items-count"]',
-};
-
 export const LoaderSelectors = {
   loaderContainer: '[role="status"]',
 };

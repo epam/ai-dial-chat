@@ -249,7 +249,7 @@ dialTest(
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded({ waitForGrid: false });
+        await filesManagerPage.waitForPageLoaded({ isGridVisible: false });
       },
     );
 
@@ -280,10 +280,10 @@ dialTest(
       'Verify upload progress dialog is shown with progress bar',
       async () => {
         await baseAssertion.assertElementState(uploadProgressDialog, 'visible');
-        const progressBarContainer = uploadProgressDialog.progressBar(
-          Attachment.sunImageName,
+        await baseAssertion.assertElementState(
+          uploadProgressDialog.uploadingIndicator,
+          'visible',
         );
-        await baseAssertion.assertElementState(progressBarContainer, 'visible');
       },
     );
 
