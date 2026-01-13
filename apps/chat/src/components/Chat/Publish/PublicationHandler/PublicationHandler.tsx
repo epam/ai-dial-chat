@@ -77,6 +77,12 @@ import isEqual from 'lodash-es/isEqual';
 const AUTHOR_PUBLIC_NAME_TOOLTIP =
   "This name will be displayed instead of the author's name for this publication.";
 
+const entityNamePreprocessor = {
+  setValueAs: (name: string) => {
+    return replaceSpacesFromString(name.trim());
+  },
+};
+
 interface Props {
   publication: Publication;
   onSubmit: (
@@ -427,6 +433,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                 className="border-none p-0 text-base font-semibold"
                 {...formMethods.register(
                   PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+                  entityNamePreprocessor,
                 )}
                 placeholder={t(
                   `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
@@ -498,6 +505,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           )}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+                            entityNamePreprocessor,
                           )}
                           id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
                           error={
