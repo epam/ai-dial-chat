@@ -557,19 +557,16 @@ dialTest(
       },
     );
 
-    dialTest.skip(
-      //TODO they do not remain checked. Verify if it is intended
-      'Verify checkboxes remain checked',
-      async () => {
-        // Verify checkboxes remain checked
-        for (const file of attachedFiles) {
-          await filesManagerGridAssertion.assertGridCheckboxByNameState(
-            file,
-            CheckboxState.checked,
-          );
-        }
-      },
-    );
+    //TODO they do not remain checked. Verify if it is intended
+    await dialTest.step.skip('Verify checkboxes remain checked', async () => {
+      // Verify checkboxes remain checked
+      for (const file of attachedFiles) {
+        await filesManagerGridAssertion.assertGridCheckboxByNameState(
+          file,
+          CheckboxState.checked,
+        );
+      }
+    });
   },
 );
 
