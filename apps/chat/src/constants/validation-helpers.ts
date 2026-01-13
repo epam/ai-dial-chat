@@ -26,11 +26,14 @@ export const getEntityNameSchema = (options: {
     .string()
     .trim()
     .nonempty(formErrors.required)
-    .min(MIN_ENTITY_LENGTH, formErrors.tooShort('Name', MIN_ENTITY_LENGTH))
-    .max(MAX_ENTITY_LENGTH, formErrors.tooLong('Name', MAX_ENTITY_LENGTH))
+    .min(
+      MIN_ENTITY_LENGTH,
+      formErrors.tooShort(options.name, MIN_ENTITY_LENGTH),
+    )
+    .max(MAX_ENTITY_LENGTH, formErrors.tooLong(options.name, MAX_ENTITY_LENGTH))
     .refine(
       (str) => !doesHaveNotAllowedSymbols(str),
-      formErrors.hasSpecialCharacters(),
+      formErrors.hasSpecialCharacters(options.name),
     )
     .refine(
       (str) => !options.checkDotsInTheEnd || !doesHaveDotsInTheEnd(str),
