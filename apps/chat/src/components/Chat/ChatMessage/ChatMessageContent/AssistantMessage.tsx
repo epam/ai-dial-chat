@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { isSafari } from 'react-device-detect';
 
 import classNames from 'classnames';
 
@@ -43,6 +44,183 @@ import {
 } from '@epam/ai-dial-shared';
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
+import throttle from 'lodash/throttle';
+
+const SAFARI_THROTTLE_TIMEOUT = 100;
+
+interface AssistantMessageEditorProps {
+  messageIndex: number;
+  message: Message;
+  allMessages: Message[];
+  conversation: Conversation;
+  isLastMessage: boolean;
+  shouldScroll: boolean;
+  onToggleEditing: (value: boolean) => void;
+  onSetShouldScroll: (value: boolean) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
+}
+
+const AssistantMessageEditor = memo(function AssistantMessageEditor({
+  messageIndex,
+  message,
+  allMessages,
+  conversation,
+  isLastMessage,
+  shouldScroll,
+  onSetShouldScroll,
+  onToggleEditing,
+  onEdit,
+}: AssistantMessageEditorProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const currentFormValue = useMemo(
+    () => getMessageFormValue(message) ?? getConfigurationValue(message),
+    [message],
+  );
+
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [messageContent, setMessageContent] = useState(message.content);
+  const [formValue, setFormValue] = useState(currentFormValue);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+  const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
+  const isInputHidden = isInputDisabled && !message.content;
+
+  const handleInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setMessageContent(event.target.value);
+    },
+    [],
+  );
+
+  const handleEditMessage = useCallback(
+    (formValue?: MessageFormValue, newContent?: string) => {
+      if (!conversation || !onEdit) return;
+
+      const isFormValueChanged = !isEqual(
+        getMessageFormValue(message) ?? getConfigurationValue(message),
+        formValue,
+      );
+      const isContentChanged =
+        message.content !== (newContent ?? messageContent);
+
+      if (isContentChanged || isFormValueChanged) {
+        onEdit(
+          {
+            ...message,
+            content: newContent ?? messageContent,
+            templateMapping: getEntitiesFromTemplateMapping(
+              message.templateMapping,
+            ).filter(([key]) => messageContent.includes(key)),
+          },
+          messageIndex,
+          conversation.id,
+        );
+      }
+      onToggleEditing(false);
+    },
+    [
+      message,
+      messageContent,
+      onToggleEditing,
+      conversation,
+      onEdit,
+      messageIndex,
+    ],
+  );
+
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
+  const handlePressEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (!isTyping && allowEnterClick(e, enterType)) {
+        e.preventDefault();
+        handleEditMessage(formValue, messageContent);
+      }
+    },
+    [enterType, formValue, handleEditMessage, isTyping, messageContent],
+  );
+
+  const handleCancelEditing = useCallback(() => {
+    setMessageContent(message.content);
+    onToggleEditing(false);
+  }, [onToggleEditing, message.content]);
+
+  useEffect(() => {
+    setMessageContent(message.content);
+    setFormValue(currentFormValue);
+    onSetShouldScroll(true);
+  }, [currentFormValue, message.content, onSetShouldScroll]);
+
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      onSetShouldScroll(false);
+    }
+  }, [shouldScroll, onSetShouldScroll]);
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <AssistantSchema message={message} isLastMessage={isLastMessage} />
+
+      {!isInputHidden && (
+        <div
+          className={classNames(
+            'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+            !isOverlay && 'text-base',
+          )}
+        >
+          <AdjustedTextarea
+            ref={textareaRef}
+            className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+            value={messageContent}
+            onChange={handleInputChange}
+            onKeyDown={handlePressEnter}
+            disabled={isInputDisabled}
+            onCompositionStart={() => setIsTyping(true)}
+            onCompositionEnd={() => setIsTyping(false)}
+            style={{
+              fontFamily: 'inherit',
+              fontSize: 'inherit',
+              lineHeight: 'inherit',
+              margin: '0',
+              overflow: 'hidden',
+            }}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-end">
+        <div className="relative flex gap-3">
+          <DialButton
+            label={t('Cancel')}
+            variant={ButtonVariant.Secondary}
+            onClick={handleCancelEditing}
+            data-qa="cancel"
+          />
+
+          {!isInputHidden && (
+            <DialButton
+              label={t('Save & Submit')}
+              variant={ButtonVariant.Primary}
+              onClick={() => handleEditMessage(formValue, messageContent)}
+              disabled={!messageContent}
+              data-qa="save-and-submit"
+            />
+          )}
+          <div ref={anchorRef} className="absolute bottom-0"></div>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 interface AssistantMessageProps {
   messageIndex: number;
@@ -85,18 +263,6 @@ export const AssistantMessage = memo(function AssistantMessage({
 }: AssistantMessageProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const currentFormValue = useMemo(
-    () => getMessageFormValue(message) ?? getConfigurationValue(message),
-    [message],
-  );
-
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [messageContent, setMessageContent] = useState(message.content);
-  const [formValue, setFormValue] = useState(currentFormValue);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [shouldScroll, setShouldScroll] = useState(false);
-
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const resourcesToReview = useAppSelector(
     PublicationSelectors.selectResourcesToReview,
@@ -109,6 +275,8 @@ export const AssistantMessage = memo(function AssistantMessage({
     SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
   );
 
+  const [shouldScroll, setShouldScroll] = useState(false);
+
   const isShowResponseLoader =
     !!conversation.isMessageStreaming && isLastMessage;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
@@ -119,19 +287,30 @@ export const AssistantMessage = memo(function AssistantMessage({
     [conversation.id, resourcesToReview],
   );
 
+  const [throttledContent, setThrottledContent] = useState(message.content);
+
+  const updateContent = useMemo(
+    () =>
+      throttle((content: string) => {
+        setThrottledContent(content);
+      }, SAFARI_THROTTLE_TIMEOUT),
+    [],
+  );
+
+  useEffect(() => {
+    if (!isSafari) return;
+
+    if (isShowResponseLoader) {
+      updateContent(message.content);
+    } else {
+      updateContent.cancel();
+      setThrottledContent(message.content);
+    }
+  }, [isShowResponseLoader, message.content, updateContent]);
+
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
   const codeDetection = (content: string) => content.match(codeRegEx);
-
-  const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
-  const isInputHidden = isInputDisabled && !message.content;
-
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setMessageContent(event.target.value);
-    },
-    [],
-  );
 
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
@@ -141,135 +320,21 @@ export const AssistantMessage = memo(function AssistantMessage({
     [isEditing, onToggleEditing],
   );
 
-  const handleEditMessage = useCallback(
-    (formValue?: MessageFormValue, newContent?: string) => {
-      if (!conversation || !onEdit) return;
-
-      const isFormValueChanged = !isEqual(
-        getMessageFormValue(message) ?? getConfigurationValue(message),
-        formValue,
-      );
-      const isContentChanged =
-        message.content !== (newContent ?? messageContent);
-
-      if (isContentChanged || isFormValueChanged) {
-        onEdit(
-          {
-            ...message,
-            content: newContent ?? messageContent,
-            templateMapping: getEntitiesFromTemplateMapping(
-              message.templateMapping,
-            ).filter(([key]) => messageContent.includes(key)),
-          },
-          messageIndex,
-          conversation.id,
-        );
-      }
-      handleToggleEditing(false);
-    },
-    [
-      message,
-      messageContent,
-      handleToggleEditing,
-      conversation,
-      onEdit,
-      messageIndex,
-    ],
-  );
-
-  const enterType = useAppSelector(UISelectors.selectEnterType);
-
-  const handlePressEnter = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!isTyping && allowEnterClick(e, enterType)) {
-        e.preventDefault();
-        handleEditMessage(formValue, messageContent);
-      }
-    },
-    [enterType, formValue, handleEditMessage, isTyping, messageContent],
-  );
-
-  const handleCancelEditing = useCallback(() => {
-    setMessageContent(message.content);
-    handleToggleEditing(false);
-  }, [handleToggleEditing, message.content]);
-
-  useEffect(() => {
-    setMessageContent(message.content);
-  }, [message.content]);
-
-  useEffect(() => {
-    setFormValue(currentFormValue);
-  }, [currentFormValue, isEditing]);
-
-  useEffect(() => {
-    if (isEditing) {
-      setShouldScroll(true);
-    }
-  }, [isEditing]);
-
-  useEffect(() => {
-    if (shouldScroll) {
-      anchorRef.current?.scrollIntoView({ block: 'end' });
-      setShouldScroll(false);
-    }
-  }, [shouldScroll]);
-
-  if (isEditing)
+  if (isEditing) {
     return (
-      <div className="flex w-full flex-col gap-3">
-        <AssistantSchema message={message} isLastMessage={isLastMessage} />
-
-        {!isInputHidden && (
-          <div
-            className={classNames(
-              'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
-              !isOverlay && 'text-base',
-            )}
-          >
-            <AdjustedTextarea
-              ref={textareaRef}
-              className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
-              value={messageContent}
-              onChange={handleInputChange}
-              onKeyDown={handlePressEnter}
-              disabled={isInputDisabled}
-              onCompositionStart={() => setIsTyping(true)}
-              onCompositionEnd={() => setIsTyping(false)}
-              style={{
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-                lineHeight: 'inherit',
-                margin: '0',
-                overflow: 'hidden',
-              }}
-            />
-          </div>
-        )}
-
-        <div className="flex items-center justify-end">
-          <div className="relative flex gap-3">
-            <DialButton
-              label={t('Cancel')}
-              variant={ButtonVariant.Secondary}
-              onClick={handleCancelEditing}
-              data-qa="cancel"
-            />
-
-            {!isInputHidden && (
-              <DialButton
-                label={t('Save & Submit')}
-                variant={ButtonVariant.Primary}
-                onClick={() => handleEditMessage(formValue, messageContent)}
-                disabled={!messageContent}
-                data-qa="save-and-submit"
-              />
-            )}
-            <div ref={anchorRef} className="absolute bottom-0"></div>
-          </div>
-        </div>
-      </div>
+      <AssistantMessageEditor
+        shouldScroll={shouldScroll}
+        onSetShouldScroll={setShouldScroll}
+        messageIndex={messageIndex}
+        message={message}
+        allMessages={allMessages}
+        conversation={conversation}
+        isLastMessage={isLastMessage}
+        onToggleEditing={onToggleEditing}
+        onEdit={onEdit}
+      />
     );
+  }
 
   return (
     <>
@@ -288,7 +353,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         {!!(message.content || isShowResponseLoader) && (
           <ChatMDComponent
             isShowResponseLoader={isShowResponseLoader}
-            content={message.content}
+            content={isSafari ? throttledContent : message.content}
           />
         )}
         {codeWarning &&
