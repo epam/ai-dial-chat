@@ -224,7 +224,7 @@ export const ChatMessage: FC<Props> = memo(
                 message={message}
                 onEdit={onEdit}
                 onClick={(e, messageRef) => {
-                  const rect = messageRef.current!.getBoundingClientRect();
+                  const rect = messageRef.current.getBoundingClientRect();
                   setClientY(e.clientY - rect.y);
                   setClientX(
                     e.clientX -
