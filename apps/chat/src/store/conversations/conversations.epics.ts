@@ -23,7 +23,6 @@ import {
   takeWhile,
   tap,
   throwError,
-  timeout,
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
@@ -1599,8 +1598,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
-        timeout(120000),
         mergeMap((resp) => {
           if (resp.done) {
             const publicationUrl =
@@ -1689,15 +1686,13 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               | { status: number; statusText: string; message: string }
               | undefined;
 
-            const bodyExeededError =
+            const contentTooLargeError =
               cause?.status === 413 &&
-              (cause?.statusText === 'Body exceeded 1mb limit' ||
-                cause?.statusText === 'Content Too Large') &&
               translate(
                 `${errorsMessages.bodyExeededLimit} ${cause?.statusText}.`,
               );
             const message =
-              bodyExeededError ||
+              contentTooLargeError ||
               cause?.message ||
               translate(errorsMessages.generalServer);
 
