@@ -56,7 +56,7 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'absolute bottom-4 hover:text-accent-primary',
+            'absolute bottom-3 hover:text-accent-primary',
             isLastMessageError && 'text-error',
             isOverlay ? 'right-3' : 'right-4',
           )}
