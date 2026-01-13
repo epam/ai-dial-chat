@@ -553,11 +553,8 @@ dialTest(
           'files.zip',
         );
 
-        // Verify ZIP file was downloaded
-        await downloadAssertion.assertZipFileIsDownloaded(
-          downloadedData[0],
-          'files.zip',
-        );
+        // Verify ZIP file was downloaded (no content comparison - ZIP is dynamically generated)
+        await downloadAssertion.assertZipFileIsDownloaded(downloadedData[0]);
       },
     );
 
