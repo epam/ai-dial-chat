@@ -1,21 +1,15 @@
-import {
-  API,
-  ExpectedConstants,
-  FileManagerColumnKey,
-  MenuOptions,
-} from '@/src/testData';
-import {
+import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
+5import {
   GridSelectors,
   IconSelectors,
   InputSelectors,
 } from '@/src/ui/selectors';
-import { Breadcrumb, Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
+import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
 import { FileUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class FilesManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
-  private breadcrumb!: Breadcrumb;
 
   constructor(page: Page, parentLocator: Locator) {
     super(page, parentLocator);
@@ -26,22 +20,6 @@ export class FilesManagerGrid extends Grid {
       this.rowDropdownMenu = new Dropdown(this.page);
     }
     return this.rowDropdownMenu;
-  }
-
-  getBreadcrumb() {
-    if (!this.breadcrumb) {
-      this.breadcrumb = new Breadcrumb(this.page, this.page.locator('body'));
-    }
-    return this.breadcrumb;
-  }
-
-  /**
-   * Returns breadcrumb root element (My Files) for navigation back to root
-   */
-  public breadcrumbsRoot() {
-    return this.getBreadcrumb().itemByName(
-      ExpectedConstants.myFilesBreadcrumbsRoot,
-    );
   }
 
   public gridHeaderCheckbox = new Checkbox(

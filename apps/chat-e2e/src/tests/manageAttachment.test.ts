@@ -280,10 +280,9 @@ dialTest(
       'Verify upload progress dialog is shown with progress bar',
       async () => {
         await baseAssertion.assertElementState(uploadProgressDialog, 'visible');
-        const progressBarContainer =
-          uploadProgressDialog.getFileProgressBarContainer(
-            Attachment.sunImageName,
-          );
+        const progressBarContainer = uploadProgressDialog.progressBar(
+          Attachment.sunImageName,
+        );
         await baseAssertion.assertElementState(progressBarContainer, 'visible');
       },
     );
@@ -653,7 +652,15 @@ dialTest(
 
           // Navigate back if in folder
           if (file.folderName !== '') {
-            await filesManagerGrid.breadcrumbsRoot().click();
+            const filesManager = filesManagerPage
+              .getFilesManagerContainer()
+              .getFilesManager();
+            const navigationPanel =
+              filesManager.getFilesManagerNavigationPanel();
+            await navigationPanel
+              .getBreadcrumb()
+              .itemByName(ExpectedConstants.myFilesBreadcrumbsRoot)
+              .click();
           }
         }
       },
@@ -678,7 +685,15 @@ dialTest(
 
           // Navigate back if in folder
           if (file.folderName !== '') {
-            await filesManagerGrid.breadcrumbsRoot().click();
+            const filesManager = filesManagerPage
+              .getFilesManagerContainer()
+              .getFilesManager();
+            const navigationPanel =
+              filesManager.getFilesManagerNavigationPanel();
+            await navigationPanel
+              .getBreadcrumb()
+              .itemByName(ExpectedConstants.myFilesBreadcrumbsRoot)
+              .click();
           }
         },
       );

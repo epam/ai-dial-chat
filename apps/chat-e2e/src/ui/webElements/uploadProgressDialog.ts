@@ -20,26 +20,9 @@ export class UploadProgressDialog extends Popup {
     this.fileItem(fileName).locator(UploadProgressDialogSelectors.fileName);
 
   public progressBar = (fileName: string) =>
-    this.fileItem(fileName).locator(UploadProgressDialogSelectors.progressBar);
-
-  public progressBarContainer = (fileName: string) =>
     this.fileItem(fileName).locator(
-      UploadProgressDialogSelectors.progressBarContainer,
+      UploadProgressDialogSelectors.uploadingIndicator,
     );
-
-  /**
-   * Gets the progress bar element for a specific file
-   */
-  public getFileProgressBar(fileName: string): Locator {
-    return this.progressBar(fileName);
-  }
-
-  /**
-   * Gets the progress bar container for checking visibility
-   */
-  public getFileProgressBarContainer(fileName: string): Locator {
-    return this.progressBarContainer(fileName);
-  }
 
   /**
    * Gets the file item row for a specific file
