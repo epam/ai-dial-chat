@@ -1,9 +1,9 @@
 import {
   doesHaveDotsInTheEnd,
+  isEntityNameInvalid,
   isVersionPartSizeValid,
   isVersionValid,
 } from '@/src/utils/app/common';
-import { doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
 
 import {
   MAX_ENTITY_LENGTH,
@@ -32,7 +32,7 @@ export const getEntityNameSchema = (options: {
     )
     .max(MAX_ENTITY_LENGTH, formErrors.tooLong(options.name, MAX_ENTITY_LENGTH))
     .refine(
-      (str) => !doesHaveNotAllowedSymbols(str),
+      (str) => !isEntityNameInvalid(str, false),
       formErrors.hasSpecialCharacters(options.name),
     )
     .refine(
