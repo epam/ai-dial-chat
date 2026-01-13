@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   CheckboxState,
   ExpectedMessages,
@@ -320,6 +321,7 @@ dialTest(
       await chatMessages.getChatMessageClipIcon(1).click();
       await attachmentDropdownMenu.selectMenuOption(
         UploadMenuOptions.attachUploadedFiles,
+        { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
       );
     });
 

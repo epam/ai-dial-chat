@@ -16,6 +16,7 @@ import {
   Attributes,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
+import { IconSelectors } from '@/src/ui/selectors';
 import { BaseElement, FileModalSection, Tab } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -280,9 +281,24 @@ dialTest(
       'Verify upload progress dialog is shown with progress bar',
       async () => {
         await baseAssertion.assertElementState(uploadProgressDialog, 'visible');
+        await baseAssertion.assertElementText(
+          uploadProgressDialog.uploadingItemName,
+          Attachment.sunImageName,
+        );
+        const extension = Attachment.sunImageName.substring(
+          Attachment.sunImageName.lastIndexOf('.') + 1,
+        );
+        await baseAssertion.assertElementClass(
+          uploadProgressDialog.fileTypeIcon,
+          IconSelectors.fileTypeIcon(extension),
+        );
         await baseAssertion.assertElementState(
           uploadProgressDialog.uploadingIndicator,
           'visible',
+        );
+        await baseAssertion.assertElementText(
+          uploadProgressDialog.uploadingItemsCount,
+          ExpectedConstants.uploadingItemsMessage(1),
         );
       },
     );
@@ -294,7 +310,9 @@ dialTest(
         await cancelButton.hoverOver();
         await baseAssertion.assertElementBackgroundColors(
           cancelButton,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4),
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.controlsBgOutlinedNeutralHover,
+          ),
         );
       },
     );
