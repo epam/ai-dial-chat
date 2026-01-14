@@ -59,6 +59,7 @@ import {
   Feature,
   Message,
   MessageFormValue,
+  Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
@@ -136,6 +137,9 @@ export const UserMessage = memo(function UserMessage({
       state,
       conversation.id,
     ),
+  );
+  const isExternalChat = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -421,6 +425,22 @@ export const UserMessage = memo(function UserMessage({
     [isEditingTemplates, onToggleEditingTemplates],
   );
 
+  const deleteHandler = useMemo(() => {
+    if (!isExternalChat) {
+      return onDelete;
+    }
+
+    const userMessagesCount = allMessages.filter(
+      (m) => m.role === Role.User,
+    ).length;
+
+    if (userMessagesCount <= 1) {
+      return undefined;
+    }
+
+    return onDelete;
+  }, [allMessages, isExternalChat, onDelete]);
+
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
@@ -644,7 +664,7 @@ export const UserMessage = memo(function UserMessage({
           realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
           isEditAvailable={!!onEdit && !editDisabled}
-          onDelete={onDelete}
+          onDelete={deleteHandler}
           onToggleEditing={handleToggleEditing}
           isEditTemplatesAvailable={
             (!isReadOnly || isApproveRequiredEntitySelected) &&
