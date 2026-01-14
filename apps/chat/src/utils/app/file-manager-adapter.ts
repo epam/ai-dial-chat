@@ -178,7 +178,8 @@ export const buildFileTree = (
       const parentOriginalFolder = folderDataMap.get(parentFolderId);
 
       if (!folder.permissions || folder.permissions.length === 0) {
-        folder.permissions = parentOriginalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
+        folder.permissions =
+          parentOriginalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
       }
 
       parentFolder.items.push(folder);
@@ -190,7 +191,8 @@ export const buildFileTree = (
     if (folder.id && !placedFolderIds.has(folder.id)) {
       const originalFolder = folderDataMap.get(folder.id);
       if (!folder.permissions || folder.permissions.length === 0) {
-        folder.permissions = originalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
+        folder.permissions =
+          originalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
       }
       rootItems.push(folder);
     }
