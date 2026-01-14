@@ -113,20 +113,28 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     name: 'model',
   });
 
+  const agentsAndToolsetsIds = useWatch({
+    control,
+    name: 'agentsAndToolsets',
+  });
+
+  const sortedAgentsAndToolsets = useMemo(() => {
+    const ids = [...(agentsAndToolsetsIds || [])];
+    return ids.sort((a, b) =>
+      getEntityDisplayName(a, allEntitiesMap).localeCompare(
+        getEntityDisplayName(b, allEntitiesMap),
+      ),
+    );
+  }, [agentsAndToolsetsIds, allEntitiesMap]);
+
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
-      const sortedValue = value.sort((a, b) =>
-        getEntityDisplayName(a, allEntitiesMap).localeCompare(
-          getEntityDisplayName(b, allEntitiesMap),
-        ),
-      );
-
-      setValue('agentsAndToolsets', sortedValue, {
+      setValue('agentsAndToolsets', value, {
         shouldTouch: true,
         shouldDirty: true,
       });
     },
-    [allEntitiesMap, setValue],
+    [setValue],
   );
 
   const showTemperatureSlider = useMemo(() => {
@@ -248,11 +256,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       <Controller
         name="agentsAndToolsets"
         control={control}
-        render={({ field }) => {
+        render={() => {
           return (
             <>
               <AgentAndToolsetSelectorField
-                value={field.value}
+                value={sortedAgentsAndToolsets}
                 onChange={handleAgentsAndToolsetsChange}
                 allItemsMap={allEntitiesMap}
                 label={t('Agents & Toolsets')}
