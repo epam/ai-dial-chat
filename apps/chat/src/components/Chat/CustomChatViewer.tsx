@@ -27,7 +27,7 @@ interface Props {
   title: string;
 }
 
-const UPDATE_CONVERSATION_DEBOUNCE = 300;
+const CONVERSATION_EVENT_DEBOUNCE = 300;
 
 export const CustomChatViewer: React.FC<Props> = ({
   id,
@@ -79,7 +79,7 @@ export const CustomChatViewer: React.FC<Props> = ({
             }),
           );
         },
-        UPDATE_CONVERSATION_DEBOUNCE,
+        CONVERSATION_EVENT_DEBOUNCE,
         { leading: true },
       ),
     [dispatch],
@@ -110,7 +110,7 @@ export const CustomChatViewer: React.FC<Props> = ({
             );
           }
         },
-        UPDATE_CONVERSATION_DEBOUNCE,
+        CONVERSATION_EVENT_DEBOUNCE,
         { leading: true },
       ),
     [dispatch, isPreviewConversation],
