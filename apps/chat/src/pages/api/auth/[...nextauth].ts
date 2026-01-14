@@ -20,6 +20,10 @@ function defaultCookies(
     path: '/',
     secure: useSecureCookies,
   };
+  const strictOptions: Options = {
+    ...options,
+    sameSite: '',
+  };
   const optionsWithLongExpiry: Options = {
     ...options,
     maxAge: 60 * 15, // 15 minutes in seconds
@@ -28,7 +32,7 @@ function defaultCookies(
     // default cookie options
     sessionToken: {
       name: `${cookiePrefix}next-auth.session-token`,
-      options,
+      options: strictOptions,
     },
     callbackUrl: {
       name: `${cookiePrefix}next-auth.callback-url`,
@@ -38,7 +42,7 @@ function defaultCookies(
       // Default to __Host- for CSRF token for additional protection if using useSecureCookies
       // NB: The `__Host-` prefix is stricter than the `__Secure-` prefix.
       name: `${useSecureCookies ? '__Host-' : ''}next-auth.csrf-token`,
-      options,
+      options: strictOptions,
     },
     pkceCodeVerifier: {
       name: `${cookiePrefix}next-auth.pkce.code_verifier`,
@@ -64,7 +68,7 @@ const isDebugEnabled =
 
 export const authOptions: AuthOptions = {
   providers: authProviders,
-  cookies: defaultCookies(isSecure),
+  cookies: defaultCookies(isSecure, isSecure ? 'none' : 'lax'),
   callbacks,
   debug: isDebugEnabled,
   session: {
