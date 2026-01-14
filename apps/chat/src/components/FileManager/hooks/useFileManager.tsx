@@ -494,6 +494,8 @@ export const useFileManager = ({
       searchable: true,
     };
 
+    options.disabled = activeTab === DialFileManagerTabs.Shared && currentPath === rootFolder.path;
+
     if (
       activeTab === DialFileManagerTabs.Shared &&
       currentPath &&
