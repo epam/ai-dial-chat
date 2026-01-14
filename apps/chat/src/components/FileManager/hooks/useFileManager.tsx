@@ -492,6 +492,9 @@ export const useFileManager = ({
   const navigationPanelOptions = useMemo(() => {
     const options: NavigationPanelOptions = {
       searchable: true,
+      disabled:
+        activeTab === DialFileManagerTabs.Shared &&
+        currentPath === rootFolder.path,
     };
 
     if (
