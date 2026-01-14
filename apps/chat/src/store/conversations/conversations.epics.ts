@@ -1688,9 +1688,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
             const contentTooLargeError =
               cause?.status === 413 &&
-              translate(
-                `${errorsMessages.bodyExeededLimit} ${cause?.statusText}.`,
-              );
+              translate(errorsMessages.bodyExeededLimit);
             const message =
               contentTooLargeError ||
               cause?.message ||
