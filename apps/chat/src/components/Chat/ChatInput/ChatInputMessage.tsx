@@ -562,7 +562,14 @@ export const ChatInputMessage = Inversify.register(
           />
           {canAttach && (
             <>
-              <div className="absolute bottom-3 left-4 cursor-pointer rounded disabled:cursor-not-allowed">
+              <div
+                className={classNames(
+                  'absolute cursor-pointer rounded disabled:cursor-not-allowed',
+                  isOverlay
+                    ? 'bottom-2 left-3'
+                    : 'bottom-2.5 left-4 md:bottom-3',
+                )}
+              >
                 <AttachButton
                   selectedFilesIds={selectedFiles
                     .map((f) => f.id)
