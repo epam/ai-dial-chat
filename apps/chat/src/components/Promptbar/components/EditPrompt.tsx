@@ -19,7 +19,6 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -143,17 +142,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const saveDisabled =
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (!saveDisabled && allowEnterClick(e, enterType)) {
+      if (!saveDisabled && allowEnterClick(e)) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);
       }
     },
-    [enterType, handleEdit, prompt, saveDisabled],
+    [allowEnterClick, handleEdit, prompt, saveDisabled],
   );
 
   const handleConfirmClose = useCallback(
