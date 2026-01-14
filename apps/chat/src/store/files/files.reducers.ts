@@ -920,6 +920,7 @@ export const filesSlice = createSlice({
       state.isUploadingFiles = false;
     },
     uploadFilesFail: (state) => {
+      state.files = state.files.filter((f) => f.status !== UploadStatus.FAILED);
       state.isUploadingFiles = false;
     },
     cancelUploadFiles: (state, { payload }: PayloadAction<Set<string>>) => {
