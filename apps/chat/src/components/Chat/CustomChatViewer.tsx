@@ -85,18 +85,10 @@ export const CustomChatViewer: React.FC<Props> = ({
     [dispatch],
   );
 
-  const onMessage = useCallback(
-    (event: MessageEvent<VisualizerConnectorRequest>) => {
-      if (event.data?.type?.split('/')[0] !== title) return;
-      if (
-        event.data.type ===
-        `${title}/${VisualizerConnectorEvents.createdConversationSuccess}`
-      ) {
-        const { conversation } = event.data.payload as unknown as {
-          conversation?: Conversation;
-        };
-
-        if (conversation) {
+  const handleDebouncedCreatedConversation = useMemo(
+    () =>
+      debounce(
+        (conversation: Conversation) => {
           dispatch(
             ConversationsActions.addConversations({
               conversations: [conversation],
@@ -117,23 +109,40 @@ export const CustomChatViewer: React.FC<Props> = ({
               ConversationsActions.setPreviewConversationId(conversation.id),
             );
           }
-        }
-      }
+        },
+        UPDATE_CONVERSATION_DEBOUNCE,
+        { leading: true },
+      ),
+    [dispatch, isPreviewConversation],
+  );
 
-      if (
-        event.data.type ===
-        `${title}/${VisualizerConnectorEvents.updatedConversationSuccess}`
-      ) {
-        const { conversation } = event.data.payload as unknown as {
-          conversation?: Conversation;
-        };
+  const onMessage = useCallback(
+    (event: MessageEvent<VisualizerConnectorRequest>) => {
+      const eventData = event.data;
+      if (!eventData?.type) return;
 
-        if (conversation) {
+      const [eventTitle, eventType] = eventData.type.split('/');
+      if (eventTitle !== title) return;
+
+      const { conversation } = eventData.payload as {
+        conversation?: Conversation;
+      };
+      if (!conversation) return;
+
+      switch (eventType) {
+        case VisualizerConnectorEvents.createdConversationSuccess:
+          handleDebouncedCreatedConversation(conversation);
+          break;
+        case VisualizerConnectorEvents.updatedConversationSuccess:
           handleDebouncedUpdateConversation(conversation);
-        }
+          break;
       }
     },
-    [title, isPreviewConversation, dispatch, handleDebouncedUpdateConversation],
+    [
+      title,
+      handleDebouncedCreatedConversation,
+      handleDebouncedUpdateConversation,
+    ],
   );
 
   return (
