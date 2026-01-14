@@ -18,6 +18,7 @@ import {
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
 } from '@epam/ai-dial-shared';
+import debounce from 'lodash-es/debounce';
 
 interface Props {
   id: string;
@@ -25,6 +26,8 @@ interface Props {
   customViewerUrl: string;
   title: string;
 }
+
+const UPDATE_CONVERSATION_DEBOUNCE = 300;
 
 export const CustomChatViewer: React.FC<Props> = ({
   id,
@@ -59,6 +62,28 @@ export const CustomChatViewer: React.FC<Props> = ({
       console.error('Error generating target URL', error);
     }
   }, [customViewerUrl, id, providerId, theme, conversation?.id, isPlayback]);
+
+  const handleDebouncedUpdateConversation = useMemo(
+    () =>
+      debounce(
+        (conversation: Conversation) => {
+          dispatch(
+            ModelsActions.updateRecentModels({
+              modelId: conversation.model.id,
+            }),
+          );
+          dispatch(
+            ConversationsActions.updateConversationSuccess({
+              id: conversation.id,
+              conversation,
+            }),
+          );
+        },
+        UPDATE_CONVERSATION_DEBOUNCE,
+        { leading: true },
+      ),
+    [dispatch],
+  );
 
   const onMessage = useCallback(
     (event: MessageEvent<VisualizerConnectorRequest>) => {
@@ -104,21 +129,11 @@ export const CustomChatViewer: React.FC<Props> = ({
         };
 
         if (conversation) {
-          dispatch(
-            ModelsActions.updateRecentModels({
-              modelId: conversation.model.id,
-            }),
-          );
-          dispatch(
-            ConversationsActions.updateConversationSuccess({
-              id: conversation.id,
-              conversation,
-            }),
-          );
+          handleDebouncedUpdateConversation(conversation);
         }
       }
     },
-    [title, isPreviewConversation, dispatch],
+    [title, isPreviewConversation, dispatch, handleDebouncedUpdateConversation],
   );
 
   return (
