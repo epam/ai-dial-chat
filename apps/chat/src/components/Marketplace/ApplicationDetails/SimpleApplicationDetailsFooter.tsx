@@ -1,14 +1,16 @@
 import { IconPlayerPlay, IconPlaystationSquare } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
+  isExecutableApp,
 } from '@/src/utils/app/application';
 
 import { ApplicationStatus } from '@/src/types/applications';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/actions';
@@ -21,11 +23,11 @@ import { ApplicationDetailsFooterProps } from './ApplicationDetails';
 
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
-export const SimpleApplicationDetailsFooter = ({
-  entity,
-  onChangeVersion,
-  onRemove,
-}: ApplicationDetailsFooterProps) => {
+interface DeployButtonProps {
+  entity: DialAIEntityModel;
+}
+
+export const DeployButton = ({ entity }: DeployButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
@@ -51,46 +53,55 @@ export const SimpleApplicationDetailsFooter = ({
     );
   }, [dispatch, entity.id]);
 
-  const handleRemove = () => {
-    onRemove?.(entity);
-  };
+  if (!isExecutableApp(entity)) {
+    return null;
+  }
 
-  const deployButtonProps = useMemo(() => {
-    if (isAppDeploymentInProgress) {
-      return {
-        label: isDeploying ? t('Deploying') : t('Undeploying'),
-        iconBefore: <Spinner size={18} className="!text-controls-disable" />,
-        variant: ButtonVariant.Secondary,
-        'data-qa': 'deploy-pending',
-        disabled: true,
-      };
-    }
-    if (isAppDeployed) {
-      return {
-        label: t('Undeploy'),
-        iconBefore: <IconPlaystationSquare size={18} />,
-        variant: ButtonVariant.Secondary,
-        onClick: handleUndeploy,
-        'data-qa': 'undeploy-in-details',
-        disabled: false,
-      };
-    }
-    return {
-      label: t('Deploy'),
-      iconBefore: <IconPlayerPlay size={18} />,
-      variant: ButtonVariant.Primary,
-      onClick: handleDeploy,
-      'data-qa': 'deploy-in-details',
-      disabled: false,
-    };
-  }, [
-    isAppDeploymentInProgress,
-    isAppDeployed,
-    isDeploying,
-    t,
-    handleUndeploy,
-    handleDeploy,
-  ]);
+  if (isAppDeploymentInProgress) {
+    return (
+      <DialButton
+        label={isDeploying ? t('Deploying') : t('Undeploying')}
+        iconBefore={<Spinner size={18} className="!text-controls-disable" />}
+        variant={ButtonVariant.Secondary}
+        data-qa="deploy-pending"
+        disabled
+      />
+    );
+  }
+
+  if (isAppDeployed) {
+    return (
+      <DialButton
+        label={t('Undeploy')}
+        iconBefore={<IconPlaystationSquare size={18} />}
+        variant={ButtonVariant.Secondary}
+        onClick={handleUndeploy}
+        data-qa="undeploy-in-details"
+      />
+    );
+  }
+
+  return (
+    <DialButton
+      label={t('Deploy')}
+      iconBefore={<IconPlayerPlay size={18} />}
+      variant={ButtonVariant.Primary}
+      onClick={handleDeploy}
+      data-qa="deploy-in-details"
+    />
+  );
+};
+
+export const SimpleApplicationDetailsFooter = ({
+  entity,
+  onChangeVersion,
+  onRemove,
+}: ApplicationDetailsFooterProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  const handleRemove = useCallback(() => {
+    onRemove?.(entity);
+  }, [onRemove, entity]);
 
   return (
     <div className="flex items-center justify-end gap-4 p-4">
@@ -110,9 +121,7 @@ export const SimpleApplicationDetailsFooter = ({
         />
       </div>
 
-      <div className="flex items-center">
-        <DialButton {...deployButtonProps} />
-      </div>
+      <DeployButton entity={entity} />
     </div>
   );
 };
