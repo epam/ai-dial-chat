@@ -1,5 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { allowEnterClick } from '@/src/utils/app/keyboard';
+
 import { FeatureType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 
@@ -124,6 +126,11 @@ const selectVisibleSidebarItems = createSelector(
 const selectIsEditorLoader = (state: RootState) =>
   rootSelector(state).isEditorLoader;
 
+const selectAllowEnterToSend = createSelector(
+  [selectEnterType, SettingsSelectors.selectIsOverlay],
+  (enterType, isOverlay) => allowEnterClick(enterType, isOverlay),
+);
+
 export const UISelectors = {
   selectThemeState,
   selectEnterType,
@@ -152,4 +159,5 @@ export const UISelectors = {
   selectCodeEditorTheme,
   selectVisibleSidebarItems,
   selectIsEditorLoader,
+  selectAllowEnterToSend,
 };
