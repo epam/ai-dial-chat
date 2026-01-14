@@ -139,10 +139,7 @@ export const buildFileTree = (
     folderDataMap.set(folder.id, folder);
   });
 
-  const uikitFiles = files.map((file) => ({
-    ...convertToUIKitFile(file),
-    permissions: file.permissions?.map((p) => PermissionMap[p]) || [],
-  }));
+  const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
   const rootItems: UIKitDialFile[] = [];
