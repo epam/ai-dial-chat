@@ -25,7 +25,6 @@ import {
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -357,16 +356,16 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!isTyping && allowEnterClick(e, enterType)) {
+      if (!isTyping && allowEnterClick(e)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [enterType, formValue, handleEditMessage, isTyping, messageContent],
+    [allowEnterClick, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleUnselectFile = useCallback(

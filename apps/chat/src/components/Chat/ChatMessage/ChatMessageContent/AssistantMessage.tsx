@@ -12,7 +12,6 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
@@ -136,16 +135,16 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
     ],
   );
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!isTyping && allowEnterClick(e, enterType)) {
+      if (!isTyping && allowEnterClick(e)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [enterType, formValue, handleEditMessage, isTyping, messageContent],
+    [allowEnterClick, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleCancelEditing = useCallback(() => {
