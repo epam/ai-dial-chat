@@ -58,7 +58,7 @@ function defaultCookies(
 const isSecure =
   !!process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.startsWith('https:');
 
-const isIframe = process.env.IS_IFRAME === 'true';
+const isOverlay = process.env.IS_IFRAME === 'true';
 
 const isDebugEnabled =
   process.env.AUTH_DEBUG_ENABLED === 'true' ||
@@ -66,7 +66,7 @@ const isDebugEnabled =
 
 export const authOptions: AuthOptions = {
   providers: authProviders,
-  cookies: defaultCookies(isSecure, isSecure && isIframe ? 'none' : 'lax'),
+  cookies: defaultCookies(isSecure, isSecure && isOverlay ? 'none' : 'lax'),
   callbacks,
   debug: isDebugEnabled,
   session: {
