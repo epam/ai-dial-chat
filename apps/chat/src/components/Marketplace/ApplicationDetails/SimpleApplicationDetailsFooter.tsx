@@ -6,9 +6,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
+  isExecutableApp,
 } from '@/src/utils/app/application';
 
 import { ApplicationStatus } from '@/src/types/applications';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/actions';
@@ -21,11 +23,11 @@ import { ApplicationDetailsFooterProps } from './ApplicationDetails';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
-export const SimpleApplicationDetailsFooter = ({
-  entity,
-  onChangeVersion,
-  onRemove,
-}: ApplicationDetailsFooterProps) => {
+interface DeployButtonProps {
+  entity: DialAIEntityModel;
+}
+
+export const DeployButton = ({ entity }: DeployButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
@@ -51,11 +53,7 @@ export const SimpleApplicationDetailsFooter = ({
     );
   }, [dispatch, entity.id]);
 
-  const handleRemove = () => {
-    onRemove?.(entity);
-  };
-
-  const DeployButton = useMemo(() => {
+  const DialKitDeployButton = useMemo(() => {
     if (isAppDeploymentInProgress || isAppDeployed) return DialNeutralButton;
 
     return DialPrimaryButton;
@@ -94,6 +92,23 @@ export const SimpleApplicationDetailsFooter = ({
     handleUndeploy,
     handleDeploy,
   ]);
+  if (!isExecutableApp(entity)) {
+    return null;
+  }
+
+  return <DialKitDeployButton {...deployButtonProps} />;
+};
+
+export const SimpleApplicationDetailsFooter = ({
+  entity,
+  onChangeVersion,
+  onRemove,
+}: ApplicationDetailsFooterProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  const handleRemove = useCallback(() => {
+    onRemove?.(entity);
+  }, [onRemove, entity]);
 
   return (
     <div className="flex items-center justify-end gap-4 p-4">
@@ -112,9 +127,7 @@ export const SimpleApplicationDetailsFooter = ({
         />
       </div>
 
-      <div className="flex items-center">
-        <DeployButton {...deployButtonProps} />
-      </div>
+      <DeployButton entity={entity} />
     </div>
   );
 };

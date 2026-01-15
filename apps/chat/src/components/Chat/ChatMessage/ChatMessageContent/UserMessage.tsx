@@ -25,7 +25,6 @@ import {
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -60,6 +59,7 @@ import {
   Feature,
   Message,
   MessageFormValue,
+  Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
@@ -137,6 +137,9 @@ export const UserMessage = memo(function UserMessage({
       state,
       conversation.id,
     ),
+  );
+  const isExternalChat = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -357,16 +360,16 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!isTyping && allowEnterClick(e, enterType)) {
+      if (!isTyping && allowEnterClick(e)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [enterType, formValue, handleEditMessage, isTyping, messageContent],
+    [allowEnterClick, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleUnselectFile = useCallback(
@@ -421,6 +424,22 @@ export const UserMessage = memo(function UserMessage({
     },
     [isEditingTemplates, onToggleEditingTemplates],
   );
+
+  const deleteHandler = useMemo(() => {
+    if (!isExternalChat) {
+      return onDelete;
+    }
+
+    const userMessagesCount = allMessages.filter(
+      (m) => m.role === Role.User,
+    ).length;
+
+    if (userMessagesCount <= 1) {
+      return undefined;
+    }
+
+    return onDelete;
+  }, [allMessages, isExternalChat, onDelete]);
 
   useEffect(() => {
     setMessageContent(message.content);
@@ -643,7 +662,7 @@ export const UserMessage = memo(function UserMessage({
           realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
           isEditAvailable={!!onEdit && !editDisabled}
-          onDelete={onDelete}
+          onDelete={deleteHandler}
           onToggleEditing={handleToggleEditing}
           isEditTemplatesAvailable={
             (!isReadOnly || isApproveRequiredEntitySelected) &&

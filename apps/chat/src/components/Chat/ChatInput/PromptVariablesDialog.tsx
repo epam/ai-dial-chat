@@ -15,7 +15,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -113,18 +112,18 @@ export const PromptVariablesDialog: FC<Props> = ({
     [],
   );
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (allowEnterClick(e, enterType)) {
+      if (allowEnterClick(e)) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
         onClose();
       }
     },
-    [enterType, handleSubmit, onClose],
+    [allowEnterClick, handleSubmit, onClose],
   );
 
   useEffect(() => {

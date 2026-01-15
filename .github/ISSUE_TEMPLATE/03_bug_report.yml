@@ -2,6 +2,7 @@
 name: 🐛 Bug report
 description: Problems and issues with code in DIAL chat
 labels: ["bug"]
+projects: ["epam/22"]
 body:
   - type: markdown
     attributes:

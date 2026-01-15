@@ -300,7 +300,8 @@ export const ChatHeader = Inversify.register(
 
               {isShowClearConversation &&
                 !isConversationInvalid &&
-                !isCompareMode && (
+                !isCompareMode &&
+                !conversation.publishedWithMe && (
                   <Tooltip
                     isTriggerClickable={!isMessageStreaming}
                     tooltip={t('Clear conversation messages')}
