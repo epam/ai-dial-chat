@@ -468,12 +468,15 @@ export class BaseAssertion {
    * - text-overflow: ellipsis;
    * - white-space: nowrap;
    */
-  public async assertElementTextIsTruncated(element: BaseElement | Locator) {
+  public async assertElementTextIsTruncated(
+    element: BaseElement | Locator,
+    expectedMessage?: string,
+  ) {
     const elementLocator = BaseElement.getElementLocator(element);
     await this.assertElementClass(
       elementLocator,
       new RegExp(AttributeValues.truncate),
-      ExpectedMessages.elementTextIsTruncated,
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
     );
   }
 
@@ -483,12 +486,13 @@ export class BaseAssertion {
   public async assertElementMultilineTextIsTruncated(
     element: BaseElement | Locator,
     linesCount: number,
+    expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     await this.assertElementClass(
       elementLocator,
       new RegExp(AttributeValues.lineClamp + linesCount),
-      ExpectedMessages.elementTextIsTruncated,
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
     );
   }
 
