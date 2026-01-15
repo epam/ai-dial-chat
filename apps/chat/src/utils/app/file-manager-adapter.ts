@@ -129,6 +129,16 @@ export const buildFileTree = (
   loadedFoldersPaths: Set<string>;
   sharedByMePaths: Set<string>;
 } => {
+  const fileDataMap = new Map<string, DialFile>();
+  files.forEach((file) => {
+    fileDataMap.set(file.id, file);
+  });
+
+  const folderDataMap = new Map<string, FileFolderInterface>();
+  folders.forEach((folder) => {
+    folderDataMap.set(folder.id, folder);
+  });
+
   const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
@@ -165,6 +175,13 @@ export const buildFileTree = (
     const parentFolder = folderMap.get(parentFolderId);
 
     if (parentFolder && parentFolder.items && folder.id) {
+      const parentOriginalFolder = folderDataMap.get(parentFolderId);
+
+      if (!folder.permissions || folder.permissions.length === 0) {
+        folder.permissions =
+          parentOriginalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
+      }
+
       parentFolder.items.push(folder);
       placedFolderIds.add(folder.id);
     }
@@ -172,6 +189,11 @@ export const buildFileTree = (
 
   folderMap.forEach((folder) => {
     if (folder.id && !placedFolderIds.has(folder.id)) {
+      const originalFolder = folderDataMap.get(folder.id);
+      if (!folder.permissions || folder.permissions.length === 0) {
+        folder.permissions =
+          originalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
+      }
       rootItems.push(folder);
     }
   });
