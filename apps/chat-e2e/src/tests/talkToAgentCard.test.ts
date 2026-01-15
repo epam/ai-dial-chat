@@ -193,8 +193,9 @@ dialTest(
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualNameElement,
         );
-        await talkToAgentDialogAssertion.assertElementTextIsTruncated(
+        await talkToAgentDialogAssertion.assertElementMultilineTextIsTruncated(
           talkToAgents.getEntityDescriptionContainer(agentElement),
+          2,
         );
         actualVersionElement = talkToAgents.getEntityVersion(agentElement);
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(

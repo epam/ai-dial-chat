@@ -338,7 +338,7 @@ dialTest(
           .gridCheckboxByNameCell(Attachment.longImageName)
           .click();
         await filesManagerModalGridAssertion.assertElementTextIsTruncated(
-          filesManagerModalGrid.gridNameCell(Attachment.longImageName),
+          filesManagerModalGrid.gridNameCellValue(Attachment.longImageName),
         );
         await filesManagerModal.getAttachButton().click();
       },

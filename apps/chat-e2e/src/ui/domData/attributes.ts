@@ -37,4 +37,6 @@ export enum AttributeValues {
   close = 'close',
   removeFile = 'remove-file',
   mixed = 'mixed',
+  truncate = 'truncate',
+  lineClamp = 'line-clamp-',
 }
