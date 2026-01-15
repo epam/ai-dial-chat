@@ -7,7 +7,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 import range from 'lodash-es/range';
 
 const getDotSizeClass = (
@@ -143,9 +143,9 @@ export const SliderDots: React.FC<Props> = ({
                         onClick={() => onSetActiveSlide(slideNumber)}
                         className="flex min-w-2 items-center justify-center"
                       >
-                        <DialButton
+                        <DialLinkButton
                           className={classNames(
-                            'rounded-full bg-controls-disable transition-all duration-200',
+                            'min-w-1 rounded-full bg-controls-disable p-0 transition-all duration-200',
                             getDotSizeClass(
                               slideNumber,
                               activeSlide,

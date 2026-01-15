@@ -62,7 +62,7 @@ import {
   MessageFormValue,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -578,8 +578,7 @@ export const UserMessage = memo(function UserMessage({
           </div>
 
           <div className="relative flex gap-3">
-            <DialButton
-              variant={ButtonVariant.Secondary}
+            <DialNeutralButton
               label={t('Cancel')}
               onClick={() => {
                 setMessageContent(message.content);
@@ -589,8 +588,7 @@ export const UserMessage = memo(function UserMessage({
               data-qa="cancel"
             />
             {!isInputHidden && (
-              <DialButton
-                variant={ButtonVariant.Primary}
+              <DialPrimaryButton
                 label={t('Save & Submit')}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={

@@ -19,7 +19,7 @@ import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EditorHeaderTab<T extends string> {
   label: string;
@@ -161,14 +161,12 @@ export const EditorHeader = <T extends string>({
         </div>
 
         <div className="flex h-full grow items-center justify-end gap-2 overflow-hidden pr-3 md:pr-5 xl:pr-0">
-          <DialButton
-            className="shrink-0"
+          <DialLinkButton
             onClick={onSave}
             data-qa="save-and-exit"
             iconBefore={<IconLogout size={14} />}
             label={t(saveLabel ?? 'Save and exit')}
-            variant={ButtonVariant.Tertiary}
-          ></DialButton>
+          />
 
           {!isUserMenuHidden && (
             <div className="h-full overflow-hidden max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">

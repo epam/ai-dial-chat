@@ -19,7 +19,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ApplicationDetailsFooterProps } from './ApplicationDetails';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 export const SimpleApplicationDetailsFooter = ({
   entity,
@@ -55,12 +55,17 @@ export const SimpleApplicationDetailsFooter = ({
     onRemove?.(entity);
   };
 
+  const DeployButton = useMemo(() => {
+    if (isAppDeploymentInProgress || isAppDeployed) return DialNeutralButton;
+
+    return DialPrimaryButton;
+  }, [isAppDeployed, isAppDeploymentInProgress]);
+
   const deployButtonProps = useMemo(() => {
     if (isAppDeploymentInProgress) {
       return {
         label: isDeploying ? t('Deploying') : t('Undeploying'),
         iconBefore: <Spinner size={18} className="!text-controls-disable" />,
-        variant: ButtonVariant.Secondary,
         'data-qa': 'deploy-pending',
         disabled: true,
       };
@@ -69,7 +74,6 @@ export const SimpleApplicationDetailsFooter = ({
       return {
         label: t('Undeploy'),
         iconBefore: <IconPlaystationSquare size={18} />,
-        variant: ButtonVariant.Secondary,
         onClick: handleUndeploy,
         'data-qa': 'undeploy-in-details',
         disabled: false,
@@ -78,7 +82,6 @@ export const SimpleApplicationDetailsFooter = ({
     return {
       label: t('Deploy'),
       iconBefore: <IconPlayerPlay size={18} />,
-      variant: ButtonVariant.Primary,
       onClick: handleDeploy,
       'data-qa': 'deploy-in-details',
       disabled: false,
@@ -102,16 +105,15 @@ export const SimpleApplicationDetailsFooter = ({
           onSelect={onChangeVersion}
           currentEntity={entity}
         />
-        <DialButton
+        <DialNeutralButton
           onClick={handleRemove}
           data-qa="remove"
           label={t('Remove')}
-          variant={ButtonVariant.Secondary}
         />
       </div>
 
       <div className="flex items-center">
-        <DialButton {...deployButtonProps} />
+        <DeployButton {...deployButtonProps} />
       </div>
     </div>
   );

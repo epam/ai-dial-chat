@@ -1,8 +1,6 @@
 import { IconPlus } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useState } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ConfirmDialogValueTypes } from '@/src/types/common';
@@ -16,7 +14,7 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import { NoFiles } from './NoFiles';
 import { SelectedFile } from './SelectedFile';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   files: string[];
@@ -109,10 +107,8 @@ export const FilesSelector: React.FC<Props> = ({
         <div className="flex flex-col">
           <div className="absolute right-0 top-[-22px]">
             <Tooltip tooltip={addBtnTooltip}>
-              <DialButton
+              <DialLinkButton
                 disabled={readonly}
-                className={classNames('flex items-center text-accent-primary')}
-                textClassName="font-normal"
                 onClick={handleOpenFilesModal}
                 iconBefore={<IconPlus size={18} />}
                 label={t('Add')}

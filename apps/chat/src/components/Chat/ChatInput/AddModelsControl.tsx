@@ -10,7 +10,7 @@ import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -49,15 +49,14 @@ export const AddModelsControl = ({
   return (
     <div className="flex justify-center">
       <div className="relative mx-2 mb-2 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
-        <DialButton
+        <DialNeutralButton
           onClick={handleInstallModels}
-          className="inset-x-0 !-top-10 mx-auto w-fit bg-layer-2 py-3"
+          className="inset-x-0 !-top-10 mx-auto w-fit py-3"
           data-qa="add-model-to-workspace"
           iconBefore={<IconPlayerPlay size={18} />}
           label={t(
             `Add the agent${modelIdsToInstall.length > 1 ? 's' : ''} to My workspace to continue`,
           )}
-          variant={ButtonVariant.Secondary}
         />
         {showScrollDownButton && (
           <ScrollDownButton

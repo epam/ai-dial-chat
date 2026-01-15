@@ -34,11 +34,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  ButtonVariant,
-  DialButton,
-  DialCloseButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -273,13 +269,12 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           tooltip={t('Please fill in all required fields')}
           hideTooltip={!saveDisabled}
         >
-          <DialButton
+          <DialPrimaryButton
             type="submit"
             data-qa="save-prompt"
             onClick={(e) => handleSubmit(e, prompt)}
             disabled={saveDisabled}
             label={t('Save')}
-            variant={ButtonVariant.Primary}
           />
         </Tooltip>
       </div>

@@ -24,7 +24,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const getItemLabel = (item: unknown): string => item as string;
@@ -66,6 +66,8 @@ export const ToolsetLoginForm = ({
   const { t } = useTranslation(Translation.Common);
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
+
+  const DialKitLogInButton = isSignedIn ? DialNeutralButton : DialPrimaryButton;
 
   const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
@@ -185,17 +187,12 @@ export const ToolsetLoginForm = ({
         )}
 
       {withLogin !== WithLogin.WithoutLogin && (
-        <DialButton
+        <DialKitLogInButton
           className={classNames('flex w-fit items-center', buttonClassName)}
-          variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
           iconBefore={
-            isSignedIn ? (
-              <IconLogout className="text-secondary" size={18} />
-            ) : (
-              <IconLogin size={18} />
-            )
+            isSignedIn ? <IconLogout size={18} /> : <IconLogin size={18} />
           }
           label={t(isSignedIn ? 'Log out' : 'Log in')}
         />

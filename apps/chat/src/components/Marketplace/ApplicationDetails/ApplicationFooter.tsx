@@ -36,7 +36,7 @@ import { ApplicationDetailsFooterProps } from '@/src/components/Marketplace/Appl
 import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -156,9 +156,8 @@ export const ApplicationDetailsFooter = ({
             )}
           >
             {!isExternalApp(entity) ? (
-              <DialButton
+              <DialPrimaryButton
                 onClick={onUseEntity}
-                textClassName="font-theme text-sm"
                 data-qa="use-button"
                 disabled={
                   isExecutableApp(entity) &&
@@ -173,7 +172,6 @@ export const ApplicationDetailsFooter = ({
                         modelType: entity.type,
                       })
                 }
-                variant={ButtonVariant.Primary}
               />
             ) : (
               <Link

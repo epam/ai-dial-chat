@@ -1,10 +1,9 @@
 import { IconKey, IconLogin, IconLogout } from '@tabler/icons-react';
 import { FC, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
@@ -21,7 +20,7 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface LoginButtonProps {
   entity: ToolsetModel;
@@ -45,29 +44,29 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
     [authAction],
   );
 
+  const DialKitLogInButton = useMemo(() => {
+    if (authAction === ToolsetAuthAction.LogOut) return DialNeutralButton;
+
+    return DialPrimaryButton;
+  }, [authAction]);
+
   if (!withAuth) return null;
 
   if (isOrganizationView)
     return (
-      <DialButton
+      <DialPrimaryButton
         iconBefore={<IconKey size={18} />}
         onClick={handleLogin}
-        label={t('Manage creds') as string}
-        variant={ButtonVariant.Primary}
+        label={t('Manage creds')}
         data-qa="login-button"
       />
     );
 
   return (
-    <DialButton
+    <DialKitLogInButton
       onClick={handleLogin}
-      label={t(getToolsetAuthActionLabel(authAction, screenState)) as string}
+      label={t(getToolsetAuthActionLabel(authAction, screenState))}
       iconBefore={<LoginIcon size={18} />}
-      variant={
-        authAction === ToolsetAuthAction.LogOut
-          ? ButtonVariant.Secondary
-          : ButtonVariant.Primary
-      }
       data-qa="login-button"
     />
   );

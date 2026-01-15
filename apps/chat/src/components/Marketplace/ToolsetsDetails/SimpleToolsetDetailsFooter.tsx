@@ -6,7 +6,7 @@ import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { LoginButton } from '@/src/components/Marketplace/ToolsetsDetails/LoginButton';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 export const SimpleToolsetDetailsFooter: React.FC<
   ToolsetDetailsFooterProps
@@ -27,11 +27,10 @@ export const SimpleToolsetDetailsFooter: React.FC<
 
       <div className="flex items-center gap-2">
         {onRemove && (
-          <DialButton
+          <DialNeutralButton
             onClick={() => onRemove(entity)}
             data-qa="remove-from-details"
             label={t('Remove')}
-            variant={ButtonVariant.Secondary}
           />
         )}
 

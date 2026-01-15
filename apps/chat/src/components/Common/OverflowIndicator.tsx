@@ -6,7 +6,7 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface OverflowIndicatorProps {
   count: number;
@@ -52,9 +52,9 @@ export const OverflowIndicator = ({
       onOpenChange={setOpen}
       placement={placement}
     >
-      <DialButton
+      <DialLinkButton
         className={classNames(
-          'flex items-center rounded border border-accent-primary bg-transparent p-0 px-1.5 py-1',
+          'flex min-w-0 items-center rounded border border-accent-primary bg-transparent px-1.5 py-1',
           className,
         )}
         textClassName="font-normal leading-3 text-xs"
