@@ -26,6 +26,7 @@ import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import { extensions } from 'mime-types';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -512,4 +513,16 @@ export const getMyBucketAttachments = (
   return attachments.filter((attachment) =>
     isMyEntity({ id: attachment.url ?? '' }),
   );
+};
+
+export const getRootFolderPlaceholderName = (bucket: string): string => {
+  const userBucket = BucketService.getBucket();
+  if (userBucket === bucket) {
+    return translate('My Files');
+  }
+  if (bucket === PUBLIC_URL_PREFIX) {
+    return translate('Organization');
+  }
+
+  return translate('Shared with Me');
 };
