@@ -15,6 +15,7 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { customSortEntitiesByName } from '@/src/utils/marketplace';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import {
@@ -350,13 +351,12 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
       ?.flatMap((toolset) => toolset.tools) ?? [];
   const mcpToolsets = appProperties?.tool_sets?.filter(isMcpToolset) ?? [];
 
-  const allItems = [...agentToolsets, ...mcpToolsets];
+  const allItems = [...agentToolsets, ...mcpToolsets].map((item) => ({
+    ...item,
+    name: getQuickAppItemNameFromConfig(item),
+  }));
 
-  const sortedItems = allItems.sort((a, b) =>
-    getQuickAppItemNameFromConfig(a).localeCompare(
-      getQuickAppItemNameFromConfig(b),
-    ),
-  );
+  const sortedItems = allItems.sort(customSortEntitiesByName);
 
   const sortedIds = sortedItems.map((item) => {
     const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
