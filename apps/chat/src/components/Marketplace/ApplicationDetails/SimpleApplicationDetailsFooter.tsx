@@ -53,11 +53,7 @@ export const DeployButton = ({ entity }: DeployButtonProps) => {
     );
   }, [dispatch, entity.id]);
 
-  const DialKitDeployButton = useMemo(() => {
-    if (isAppDeploymentInProgress || isAppDeployed) return DialNeutralButton;
-
-    return DialPrimaryButton;
-  }, [isAppDeployed, isAppDeploymentInProgress]);
+  const DialKitDeployButton = isAppDeploymentInProgress || isAppDeployed ? DialNeutralButton : DialPrimaryButton;
 
   const deployButtonProps = useMemo(() => {
     if (isAppDeploymentInProgress) {
