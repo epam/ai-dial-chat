@@ -25,6 +25,7 @@ import { FileService } from '@/src/utils/app/data/file-service';
 import {
   constructPath,
   getDownloadPath,
+  getRootFolderPlaceholderName,
   triggerDownload,
 } from '@/src/utils/app/file';
 import {
@@ -848,7 +849,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       if (items.length > 0) {
         if (items.length === 1) {
           const destinationUrl = items[0].destinationUrl;
-          const { parentPath, name } = splitEntityId(destinationUrl);
+          const { parentPath, name, bucket } = splitEntityId(destinationUrl);
 
           return UIActions.showToast({
             type: ToastType.Success,
@@ -859,14 +860,14 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
             message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
               ns: Translation.Files,
               fileName: name,
-              folder: parentPath,
+              folder: parentPath ?? getRootFolderPlaceholderName(bucket),
               verb: verbPast,
             }),
           });
         }
 
         const destinationUrl = request.destinationFolder;
-        const { parentPath } = splitEntityId(destinationUrl);
+        const { parentPath, bucket } = splitEntityId(destinationUrl);
 
         return UIActions.showToast({
           type: ToastType.Success,
@@ -877,7 +878,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
           message: translate('{{count}} items {{verb}} to {{folder}}', {
             ns: Translation.Files,
             count: items.length,
-            folder: parentPath,
+            folder: parentPath ?? getRootFolderPlaceholderName(bucket),
             verb: verbPast,
           }),
         });
@@ -933,7 +934,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
 
       if (items.length > 0) {
         const path = items[0].sourceUrl;
-        const { parentPath, name } = splitEntityId(path);
+        const { parentPath, name, bucket } = splitEntityId(path);
 
         if (items.length === 1) {
           return UIActions.showToast({
@@ -945,7 +946,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
             message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
               ns: Translation.Files,
               fileName: name,
-              folder: parentPath,
+              folder: parentPath ?? getRootFolderPlaceholderName(bucket),
               verb: verbPast,
             }),
           });
@@ -960,7 +961,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           message: translate('{{count}} items {{verb}} from {{folder}}', {
             ns: Translation.Files,
             count: items.length,
-            folder: parentPath,
+            folder: getRootFolderPlaceholderName(bucket),
             verb: verbPast,
           }),
         });
