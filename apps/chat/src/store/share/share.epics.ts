@@ -19,6 +19,7 @@ import {
   getApplicationType,
   getQuickAppDocumentUrl,
 } from '@/src/utils/app/application';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import {
@@ -26,7 +27,9 @@ import {
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
+import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
 import {
+  getEntityBucket,
   isApplicationId,
   isConversationId,
   isEntityIdExternal,
@@ -69,6 +72,7 @@ import { ModelUpdatedValues } from '@/src/store/models/models.types';
 import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
+  CodeEditorSelectors,
   ConversationsSelectors,
   FilesSelectors,
   ModelsSelectors,
@@ -99,6 +103,14 @@ const getInternalResourcesUrls = (
     )
     .filter(Boolean)
     .flat() || []) as string[];
+};
+
+const getSharedParentFolder = (id?: string) => {
+  if (!id || getEntityBucket({ id }) === BucketService.getBucket())
+    return undefined;
+  if (id.split('/').length < 3) return id;
+
+  return getParentFolderIdsFromEntityId(id)[0];
 };
 
 const shareEpic: AppEpic = (action$) =>
@@ -915,6 +927,11 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
             state$.value,
           );
+          const selectedCodeEditorFileId =
+            CodeEditorSelectors.selectSelectedFile(state$.value);
+          const codeEditorFolderOnReview = getSharedParentFolder(
+            selectedCodeEditorFileId?.split('/')?.slice(0, -1)?.join('/'),
+          );
 
           actions.push(
             FilesActions.addSharedFiles({
@@ -925,6 +942,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   ...res,
                   sharedWithMe: true,
                 })) as DialFile[],
+              reviewFolder: codeEditorFolderOnReview,
             }),
           );
 
