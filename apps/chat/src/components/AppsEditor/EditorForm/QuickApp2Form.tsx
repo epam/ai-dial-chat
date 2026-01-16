@@ -18,6 +18,7 @@ import {
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
+import { customSortEntitiesByName } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -120,11 +121,15 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
   const sortedAgentsAndToolsets = useMemo(() => {
     const ids = [...(agentsAndToolsetsIds || [])];
-    return ids.sort((a, b) =>
-      getEntityDisplayName(a, allEntitiesMap).localeCompare(
-        getEntityDisplayName(b, allEntitiesMap),
-      ),
-    );
+
+    const itemsWithName = ids.map((id) => ({
+      id: id,
+      name: getEntityDisplayName(id, allEntitiesMap),
+    }));
+
+    itemsWithName.sort(customSortEntitiesByName);
+
+    return itemsWithName.map((item) => item.id);
   }, [agentsAndToolsetsIds, allEntitiesMap]);
 
   const handleAgentsAndToolsetsChange = useCallback(
