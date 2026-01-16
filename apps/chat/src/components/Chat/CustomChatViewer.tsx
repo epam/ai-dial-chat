@@ -122,7 +122,13 @@ export const CustomChatViewer: React.FC<Props> = ({
       if (!eventData?.type) return;
 
       const [eventTitle, eventType] = eventData.type.split('/');
-      if (eventTitle !== title) return;
+      if (
+        eventTitle !== title ||
+        (eventType !== VisualizerConnectorEvents.createdConversationSuccess &&
+          eventType !== VisualizerConnectorEvents.updatedConversationSuccess)
+      ) {
+        return;
+      }
 
       const { conversation } = eventData.payload as {
         conversation?: Conversation;

@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
@@ -148,6 +150,12 @@ export const ToolsetEditorHeader = ({
     [dispatch, errorSteps, onSave, redirectToChat],
   );
 
+  const saveLabel =
+    isExistingToolset &&
+    (currentToolset ? !isEntityIdPublic(currentToolset) : false)
+      ? 'Save and exit'
+      : 'Exit';
+
   return (
     <>
       <EditorHeader
@@ -157,7 +165,7 @@ export const ToolsetEditorHeader = ({
         isEditing={isExistingToolset}
         onTabClick={handleTabClick}
         title={t(isCreatingToolset ? 'Add toolset' : 'Edit toolset')}
-        saveLabel={isExistingToolset ? 'Save and exit' : 'Exit'}
+        saveLabel={saveLabel}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
         dataQa="entity-editor-header"

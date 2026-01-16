@@ -27,7 +27,10 @@ import {
   getStringFromSearchParams,
   updateQueryParams,
 } from '@/src/utils/app/url/query-params';
-import { isInstalledEntity } from '@/src/utils/marketplace';
+import {
+  customSortEntitiesByName,
+  isInstalledEntity,
+} from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
@@ -348,7 +351,7 @@ const AgentAndToolsetModalView = ({
     const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
       .map(getSelectedItemFromGroup)
       .filter((item): item is DisplayedMarketplaceEntity => !!item)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(customSortEntitiesByName);
 
     if (!isMyWorkspace) {
       return allGroupedItems;

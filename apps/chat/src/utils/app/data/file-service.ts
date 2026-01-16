@@ -50,6 +50,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     contentType: file.contentType,
     serverSynced: true,
     updatedAt: file.updatedAt,
+    permissions: file.permissions,
     sharedWithMe:
       file.bucket !== userBucket && file.bucket !== PUBLIC_URL_PREFIX,
   };

@@ -273,3 +273,23 @@ export const getLinkErrorMessage = (
     );
   }
 };
+
+const getSortPriority = (name: string): number => {
+  if (name.startsWith('[')) return 0;
+  if (name.startsWith('_')) return 1;
+  return 2;
+};
+
+export const customSortEntitiesByName = (
+  a: { name: string },
+  b: { name: string },
+): number => {
+  const priorityA = getSortPriority(a.name);
+  const priorityB = getSortPriority(b.name);
+
+  if (priorityA !== priorityB) {
+    return priorityA - priorityB;
+  }
+
+  return a.name.localeCompare(b.name);
+};
