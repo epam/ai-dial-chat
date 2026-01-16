@@ -30,7 +30,7 @@ export const StartReplayButton = () => {
 
   return (
     <DialNeutralButton
-      className="button button-chat"
+      className="mx-auto mb-3"
       onClick={handleReplayStart}
       data-qa="start-replay"
       data-replay-variables
