@@ -18,6 +18,7 @@ import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
 } from '@/src/constants/folders';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isFolderId } from './shared-utils';
@@ -26,7 +27,6 @@ import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import { extensions } from 'mime-types';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');

@@ -936,7 +936,6 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
         const path = items[0].sourceUrl;
         const { parentPath, name, bucket } = splitEntityId(path);
 
-
         if (items.length === 1) {
           return UIActions.showToast({
             type: ToastType.Success,
