@@ -67,7 +67,7 @@ export const ToolsetLoginForm = ({
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
-  const DialKitLogInButton = isSignedIn ? DialNeutralButton : DialPrimaryButton;
+  const [LogInButton, LoginIcon] = isSignedIn ? [DialNeutralButton, IconLogout] : [DialPrimaryButton, IconLogin];
 
   const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
