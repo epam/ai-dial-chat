@@ -151,7 +151,7 @@ export const useFileManager = ({
 
   const [treeCollapsedState, setTreeCollapsedState] = useState<
     boolean | undefined
-  >(true);
+  >(false);
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
     my_files: t('My Files'),
