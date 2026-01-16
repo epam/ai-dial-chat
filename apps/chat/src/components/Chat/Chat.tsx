@@ -795,105 +795,89 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                   Message[],
                                 ][],
                                 i: number,
-                              ) => {
-                                return (
-                                  <div
-                                    key={i}
-                                    className="flex w-full"
-                                    data-qa={
-                                      isCompareMode
-                                        ? 'compare-message-row'
-                                        : 'message-row'
-                                    }
-                                    itemID={i.toString()}
-                                    itemProp={
-                                      i === mergedMessages.length - 1
-                                        ? 'last-row'
-                                        : undefined
-                                    }
-                                  >
-                                    {mergedStr.map(
-                                      ([
-                                        conv,
-                                        message,
-                                        index,
-                                        filteredMessages,
-                                      ]: [
-                                        Conversation,
-                                        Message,
-                                        number,
-                                        Message[],
-                                      ]) => {
-                                        const isModelInWorkspace =
-                                          installedModelIds.has(conv.model.id);
-
-                                        return (
-                                          <div
-                                            key={conv.id}
-                                            className={classNames(
-                                              isCompareMode &&
-                                                selectedConversations.length > 1
-                                                ? 'w-1/2'
-                                                : 'w-full',
-                                            )}
-                                          >
-                                            <div className="size-full">
-                                              <MemoizedChatMessage
-                                                message={message}
-                                                messageIndex={index}
-                                                filteredMessages={
-                                                  filteredMessages
-                                                }
-                                                conversation={conv}
-                                                isLikesEnabled={
-                                                  enabledFeatures.has(
-                                                    Feature.Likes,
-                                                  ) &&
-                                                  ((!isReadOnly &&
-                                                    !isPlayback) ||
-                                                    isValidApproveRequiredConversation)
-                                                }
-                                                editDisabled={
-                                                  !isModelInWorkspace ||
-                                                  ((!!notAvailableEntityType ||
-                                                    isReadOnly ||
-                                                    isReplay ||
-                                                    isPlayback) &&
-                                                    (!isValidApproveRequiredConversation ||
-                                                      !!notAvailableEntityType)) ||
-                                                  (message.role === Role.User &&
-                                                    isEditUserMessageHided)
-                                                }
-                                                onEdit={handleEditMessage}
-                                                onLike={handleLike}
-                                                onDelete={
-                                                  !isDeleteMessageHided
-                                                    ? handleDeleteMessage
-                                                    : undefined
-                                                }
-                                                onRegenerate={
-                                                  isModelInWorkspace &&
-                                                  index ===
-                                                    mergedMessages.length - 1 &&
-                                                  showLastMessageRegenerate &&
-                                                  (!isRegenerateAssistantMessageHided ||
-                                                    message.role !==
-                                                      Role.Assistant)
-                                                    ? handleRegenerateMessage
-                                                    : undefined
-                                                }
-                                                messagesLength={
-                                                  mergedMessages.length
-                                                }
-                                              />
-                                            </div>
-                                          </div>
-                                        );
-                                      },
-                                    )}
-                                  </div>
-                                );
-                              },
+                              ) => (
+                                <div
+                                  key={i}
+                                  className="flex w-full"
+                                  data-qa={
+                                    isCompareMode
+                                      ? 'compare-message-row'
+                                      : 'message-row'
+                                  }
+                                  itemID={i.toString()}
+                                  itemProp={
+                                    i === mergedMessages.length - 1
+                                      ? 'last-row'
+                                      : undefined
+                                  }
+                                >
+                                  {mergedStr.map(
+                                    ([conv, message, index, filteredMessages]: [
+                                      Conversation,
+                                      Message,
+                                      number,
+                                      Message[],
+                                    ]) => (
+                                      <div
+                                        key={conv.id}
+                                        className={classNames(
+                                          isCompareMode &&
+                                            selectedConversations.length > 1
+                                            ? 'w-1/2'
+                                            : 'w-full',
+                                        )}
+                                      >
+                                        <div className="size-full">
+                                          <MemoizedChatMessage
+                                            message={message}
+                                            messageIndex={index}
+                                            filteredMessages={filteredMessages}
+                                            conversation={conv}
+                                            isLikesEnabled={
+                                              enabledFeatures.has(
+                                                Feature.Likes,
+                                              ) &&
+                                              ((!isReadOnly && !isPlayback) ||
+                                                isValidApproveRequiredConversation)
+                                            }
+                                            editDisabled={
+                                              !isChatReadyForInput ||
+                                              ((!!notAvailableEntityType ||
+                                                isReadOnly ||
+                                                isReplay ||
+                                                isPlayback) &&
+                                                (!isValidApproveRequiredConversation ||
+                                                  !!notAvailableEntityType)) ||
+                                              (message.role === Role.User &&
+                                                isEditUserMessageHided)
+                                            }
+                                            onEdit={handleEditMessage}
+                                            onLike={handleLike}
+                                            onDelete={
+                                              !isDeleteMessageHided
+                                                ? handleDeleteMessage
+                                                : undefined
+                                            }
+                                            onRegenerate={
+                                              isChatReadyForInput &&
+                                              index ===
+                                                mergedMessages.length - 1 &&
+                                              showLastMessageRegenerate &&
+                                              (!isRegenerateAssistantMessageHided ||
+                                                message.role !== Role.Assistant)
+                                                ? handleRegenerateMessage
+                                                : undefined
+                                            }
+                                            messagesLength={
+                                              mergedMessages.length
+                                            }
+                                          />
+                                        </div>
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+                              ),
                             )}
                           </div>
                         )}
