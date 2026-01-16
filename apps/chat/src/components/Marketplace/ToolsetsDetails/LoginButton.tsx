@@ -1,5 +1,5 @@
-import { IconKey, IconLogin, IconLogout } from '@tabler/icons-react';
-import { FC, useMemo } from 'react';
+import { IconLogin, IconLogout } from '@tabler/icons-react';
+import { FC } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
@@ -39,23 +39,17 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
 
   const isOrganizationView = isPublic && isAdmin;
 
-  const LoginIcon = useMemo(
-    () => (authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin),
-    [authAction],
-  );
-
-  const DialKitLogInButton = useMemo(() => {
-    if (authAction === ToolsetAuthAction.LogOut) return DialNeutralButton;
-
-    return DialPrimaryButton;
-  const [LogInButton, LoginIcon] = authAction === ToolsetAuthAction.LogOut ? [DialNeutralButton, IconLogout] : [DialPrimaryButton, IconLogin];
+  const [LogInButton, LoginIcon] =
+    authAction === ToolsetAuthAction.LogOut
+      ? [DialNeutralButton, IconLogout]
+      : [DialPrimaryButton, IconLogin];
 
   if (!withAuth) return null;
 
   if (isOrganizationView)
     return (
       <DialPrimaryButton
-        iconBefore={<IconKey size={18} />}
+        iconBefore={<LoginIcon size={18} />}
         onClick={handleLogin}
         label={t('Manage creds')}
         data-qa="login-button"
@@ -63,7 +57,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
     );
 
   return (
-    <DialKitLogInButton
+    <LogInButton
       onClick={handleLogin}
       label={t(getToolsetAuthActionLabel(authAction, screenState))}
       iconBefore={<LoginIcon size={18} />}

@@ -67,7 +67,9 @@ export const ToolsetLoginForm = ({
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
-  const [LogInButton, LoginIcon] = isSignedIn ? [DialNeutralButton, IconLogout] : [DialPrimaryButton, IconLogin];
+  const [LogInButton, LoginIcon] = isSignedIn
+    ? [DialNeutralButton, IconLogout]
+    : [DialPrimaryButton, IconLogin];
 
   const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
@@ -191,13 +193,11 @@ export const ToolsetLoginForm = ({
         )}
 
       {withLogin !== WithLogin.WithoutLogin && (
-        <DialKitLogInButton
+        <LogInButton
           className={classNames('flex w-fit items-center', buttonClassName)}
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
-          iconBefore={
-            <LoginIcon size={18} />
-          }
+          iconBefore={<LoginIcon size={18} />}
           label={t(isSignedIn ? 'Log out' : 'Log in')}
         />
       )}
