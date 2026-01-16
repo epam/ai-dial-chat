@@ -37,10 +37,10 @@ import {
   FilesManager,
   FilesManagerCollapsibleSidebar,
   FilesManagerContainer,
+  FilesManagerFoldersTree,
   FilesManagerGrid,
   FilesManagerModal,
   FilesManagerToolbar,
-  FoldersTree,
   InformationModal,
   ListboxMenu,
   MessageTemplateModal,
@@ -439,7 +439,7 @@ const dialTest = test.extend<{
   filesManagerToolbar: FilesManagerToolbar;
   filesManagerGrid: FilesManagerGrid;
   filesManagerCollapsibleSidebar: FilesManagerCollapsibleSidebar;
-  filesManagerFoldersTree: FoldersTree;
+  filesManagerFoldersTree: FilesManagerFoldersTree;
   filesManagerGridRowDropdownMenu: Dropdown;
   filesManagerDeleteItemConfirmationPopup: ConfirmationPopup;
   filesManagerModal: FilesManagerModal;
@@ -447,7 +447,7 @@ const dialTest = test.extend<{
   filesManagerModalGrid: FilesManagerGrid;
   filesManagerModalToolbar: FilesManagerToolbar;
   filesManagerModalCollapsibleSidebar: FilesManagerCollapsibleSidebar;
-  filesManagerModalFoldersTree: FoldersTree;
+  filesManagerModalFoldersTree: FilesManagerFoldersTree;
   filesManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   filesManagerGridAssertion: FilesManagerGridAssertion;
   filesManagerModalGridAssertion: FilesManagerGridAssertion;

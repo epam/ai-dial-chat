@@ -1,5 +1,7 @@
+import { FilesManagerFoldersTree } from './filesManagerFoldersTree';
+
 import { FilesManagerSidebarSelectors } from '@/src/ui/selectors';
-import { BaseElement, Button, FoldersTree } from '@/src/ui/webElements';
+import { BaseElement, Button } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export class FilesManagerCollapsibleSidebar extends BaseElement {
@@ -7,7 +9,7 @@ export class FilesManagerCollapsibleSidebar extends BaseElement {
     super(page, FilesManagerSidebarSelectors.container, parentLocator);
   }
 
-  private foldersTree!: FoldersTree;
+  private foldersTree!: FilesManagerFoldersTree;
   private collapseAllButton!: Button;
   private stateButton!: Button;
 
@@ -33,9 +35,33 @@ export class FilesManagerCollapsibleSidebar extends BaseElement {
     return this.stateButton;
   }
 
-  getFoldersTree(): FoldersTree {
+  /**
+   * Checks if the sidebar is collapsed.
+   * When collapsed, the footer panel has 'justify-center' class.
+   * When expanded, the footer panel has 'justify-end' class.
+   */
+  async isCollapsed(): Promise<boolean> {
+    const footerPanel = this.getStateButton().getElementLocator().locator('..');
+    const classAttribute = await footerPanel.getAttribute('class');
+    return classAttribute?.includes('justify-center') ?? false;
+  }
+
+  /**
+   * Expands the sidebar if it is currently collapsed.
+   */
+  async expandIfCollapsed(): Promise<void> {
+    if (await this.isCollapsed()) {
+      await this.getStateButton().click();
+    }
+  }
+
+  getFoldersTree(): FilesManagerFoldersTree {
     if (!this.foldersTree) {
-      this.foldersTree = new FoldersTree(this.page, this.rootLocator);
+      this.foldersTree = new FilesManagerFoldersTree(
+        this.page,
+        this.rootLocator,
+        this,
+      );
     }
     return this.foldersTree;
   }
