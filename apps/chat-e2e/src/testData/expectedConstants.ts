@@ -3,7 +3,6 @@ import config from '../../config/chat.playwright.config';
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
 import { ServerSlugs } from '@/chat/types/slugs-types';
-import { FilesManagerToolbarTabs } from '@/src/testData/types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
@@ -190,7 +189,6 @@ export const ExpectedConstants = {
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
   allFilesRoot: 'All files',
-  myFilesBreadcrumbsRoot: FilesManagerToolbarTabs.MyFiles,
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],

@@ -8,6 +8,7 @@ import {
   ExpectedConfirmationPopupData,
   ExpectedConstants,
   ExpectedMessages,
+  FilesManagerToolbarTabs,
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -241,6 +242,7 @@ dialTest(
     filesManagerGridAssertion,
     uploadProgressDialog,
     localStorageManager,
+    filesManagerToolbar,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3302');
@@ -261,15 +263,11 @@ dialTest(
           downloadThroughput: 100,
           uploadThroughput: 100,
         });
-        const filesManager = filesManagerPage
-          .getFilesManagerContainer()
-          .getFilesManager();
-        const toolbar = filesManager.getFilesManagerToolbar();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           async () => {
-            await toolbar.getNewButton().click();
-            await toolbar
+            await filesManagerToolbar.getNewButton().click();
+            await filesManagerToolbar
               .getNewButtonDropdownMenu()
               .selectItem(UploadMenuOptions.uploadFiles);
           },
@@ -599,6 +597,7 @@ dialTest(
     filesManagerGridAssertion,
     fileApiHelper,
     localStorageManager,
+    filesManager,
     navigationPanel,
   }) => {
     setTestIds('EPMRTC-5396', 'EPMRTC-5526');
@@ -665,16 +664,11 @@ dialTest(
             'visible',
           );
 
-          // Navigate back if in folder
           if (file.folderName !== '') {
-            const filesManager = filesManagerPage
-              .getFilesManagerContainer()
-              .getFilesManager();
-            const navigationPanel =
-              filesManager.getFilesManagerNavigationPanel();
-            await navigationPanel
+            await filesManager
+              .getFilesManagerNavigationPanel()
               .getBreadcrumb()
-              .itemByName(ExpectedConstants.myFilesBreadcrumbsRoot)
+              .itemByName(FilesManagerToolbarTabs.MyFiles)
               .click();
           }
         }
@@ -698,16 +692,11 @@ dialTest(
             'hidden',
           );
 
-          // Navigate back if in folder
           if (file.folderName !== '') {
-            const filesManager = filesManagerPage
-              .getFilesManagerContainer()
-              .getFilesManager();
-            const navigationPanel =
-              filesManager.getFilesManagerNavigationPanel();
-            await navigationPanel
+            await filesManager
+              .getFilesManagerNavigationPanel()
               .getBreadcrumb()
-              .itemByName(ExpectedConstants.myFilesBreadcrumbsRoot)
+              .itemByName(FilesManagerToolbarTabs.MyFiles)
               .click();
           }
         },
