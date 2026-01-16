@@ -48,7 +48,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
     if (authAction === ToolsetAuthAction.LogOut) return DialNeutralButton;
 
     return DialPrimaryButton;
-  }, [authAction]);
+  const [LogInButton, LoginIcon] = authAction === ToolsetAuthAction.LogOut ? [DialNeutralButton, IconLogout] : [DialPrimaryButton, IconLogin];
 
   if (!withAuth) return null;
 
