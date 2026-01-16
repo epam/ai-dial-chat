@@ -735,6 +735,10 @@ export const useFileManager = ({
     [t],
   );
 
+  const sharedWithMeIds = useAppSelector(
+    FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
+  );
+
   return {
     currentPath,
     setCurrentPath,
@@ -772,5 +776,6 @@ export const useFileManager = ({
     handleUploadArchive,
     handleUnshareFiles,
     handleRenameValidation,
+    sharedWithMeIds,
   };
 };

@@ -39,6 +39,7 @@ const initialState: ShareState = {
   shareFeatureType: undefined,
   shareIsFolder: undefined,
   isShared: false,
+
 };
 
 export const shareSlice = createSlice({

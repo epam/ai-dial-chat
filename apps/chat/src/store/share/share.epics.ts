@@ -915,6 +915,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
             state$.value,
           );
+          const sharedWithMeFileIds = payload.resources.entities
+            .map((res) => res.id);
+          const sharedWithMeFolderIds = payload.resources.folders
+            .map((res) => res.id);
+
+          actions.push(
+            FilesActions.setSharedWithMeFilesAndFoldersIds({
+              ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
+            }),
+          );
 
           actions.push(
             FilesActions.addSharedFiles({
