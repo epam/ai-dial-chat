@@ -1,9 +1,8 @@
+import { IconApps, IconUser } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
@@ -16,11 +15,11 @@ import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors, MarketplaceSelectors } from '@/src/store/selectors';
 
-import { TabButton } from '@/src/components/Buttons/TabButton';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
+import { AuthAccordion } from '@/src/components/ToolsetEditor/AuthAccordion';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
 import {
   ToolsetLoginFormSchema,
@@ -33,27 +32,17 @@ import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const credsTabs = [
-  { key: ToolsetCredentialsLevel.USER, label: 'Personal' },
-  { key: ToolsetCredentialsLevel.GLOBAL, label: 'Organizational' },
+  {
+    key: ToolsetCredentialsLevel.USER,
+    label: 'My credentials',
+    Icon: IconUser,
+  },
+  {
+    key: ToolsetCredentialsLevel.GLOBAL,
+    label: 'Entire organization credentials',
+    Icon: IconApps,
+  },
 ];
-
-const getAuthLevelDescriptions = (
-  level: ToolsetCredentialsLevel,
-  isSignedIn: boolean,
-) => {
-  switch (level) {
-    case ToolsetCredentialsLevel.USER:
-      return isSignedIn
-        ? 'Log out of the toolset using personal credentials.'
-        : 'Log in with personal credentials.';
-    case ToolsetCredentialsLevel.GLOBAL:
-      return isSignedIn
-        ? 'Log out of the toolset for all users in the organization using these credentials.'
-        : 'Log in with credentials that will be available to other users in the organization.';
-    default:
-      return '';
-  }
-};
 
 interface ToolsetLoginDialogProps {
   entity: ToolsetModel;
@@ -69,9 +58,9 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   const authType = entity.authSettings.authenticationType;
   const isPublic = isEntityIdPublic(entity);
 
-  const [authLevel, setAuthLevel] = useState(
-    !isPublic ? ToolsetCredentialsLevel.GLOBAL : ToolsetCredentialsLevel.USER,
-  );
+  const [authLevel, setAuthLevel] = useState<
+    ToolsetCredentialsLevel | undefined
+  >(undefined);
 
   const formMethods = useForm<ToolsetLoginFormType>({
     defaultValues: getDefaultLoginFormData(
@@ -88,7 +77,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   });
 
   const isOrganizationView = isAdmin && isPublic;
-  const isSignedIn = isToolsetSignedIn(entity, authLevel);
+  const isSignedIn = isToolsetSignedIn(entity, ToolsetCredentialsLevel.GLOBAL);
 
   const fieldsInfo = useMemo(
     () => ({
@@ -99,6 +88,30 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     [entity.authSettings.apiKeyHeader, t],
   );
 
+  const organizationFormTitle = useMemo(() => {
+    switch (authLevel) {
+      case ToolsetCredentialsLevel.USER:
+        return isToolsetSignedIn(entity, authLevel)
+          ? t('Log out of the toolset using personal credentials.')
+          : t('Log in with personal credentials.');
+      case ToolsetCredentialsLevel.GLOBAL:
+        return isToolsetSignedIn(entity, authLevel) ? (
+          <>
+            {t('Log out of the toolset ')}
+            <strong>{t('for all users in the organization ')}</strong>
+            {t('using these credentials.')}
+          </>
+        ) : (
+          <>
+            {t('Log in with credentials that will be available ')}
+            <strong>{t(' to other users in the organization.')}</strong>
+          </>
+        );
+      default:
+        return '';
+    }
+  }, [authLevel, entity, t]);
+
   const handleClose = useCallback(() => {
     dispatch(MarketplaceActions.setLoginEntity());
   }, [dispatch]);
@@ -107,7 +120,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     (data: ToolsetLoginFormType) => {
       dispatch(
         ToolsetActions.startSignInProcess({
-          authLevel,
+          authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
           apiKey: data.apiKey,
           toolset: entity,
         }),
@@ -120,7 +133,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   const handleLogout = useCallback(() => {
     dispatch(
       ToolsetActions.logOutToolset({
-        authLevel,
+        authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
         authType: entity.authSettings.authenticationType,
         toolsetId: entity.id,
       }),
@@ -204,38 +217,41 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 p-6">
-        {isOrganizationView && (
-          <div className="flex gap-3">
-            {credsTabs.map(({ label, key }) => (
-              <TabButton
-                className="text-sm"
+      <FormProvider {...formMethods}>
+        <div className="flex flex-col gap-2 p-6">
+          {isOrganizationView ? (
+            credsTabs.map(({ label, key, Icon }) => (
+              <AuthAccordion
+                className="!bg-layer-2"
                 key={key}
-                tabKey={key}
-                selected={authLevel === key}
-                dataQA={key.concat('-tab')}
-                onClick={handleCredsTabClick}
+                Icon={Icon}
+                title={t(label)}
+                isOpen={key === authLevel}
+                onClick={() => handleCredsTabClick(key)}
+                statusBadge={{
+                  label: t(
+                    isToolsetSignedIn(entity, key) ? 'LOGGED IN' : 'LOGGED OUT',
+                  ),
+                  type: isToolsetSignedIn(entity, key) ? 'success' : 'error',
+                }}
               >
-                {t(label)}
-              </TabButton>
-            ))}
-          </div>
-        )}
+                <p className="text-sm text-primary">{organizationFormTitle}</p>
 
-        <div
-          className={classNames('rounded', {
-            'bg-layer-2 p-4': isOrganizationView,
-          })}
-        >
-          {isOrganizationView && (
-            <p className="mb-3 text-sm text-primary">
-              {t(getAuthLevelDescriptions(authLevel, isSignedIn))}
-            </p>
-          )}
-
-          <FormProvider {...formMethods}>
+                <ToolsetLoginForm
+                  credentialsLevel={authLevel}
+                  type={entity.authSettings.authenticationType}
+                  toolset={entity}
+                  buttonClassName="ml-auto"
+                  onLogin={handleLogin}
+                  onLogout={handleLogout}
+                  hideConfigFields
+                  fieldsInfo={fieldsInfo}
+                />
+              </AuthAccordion>
+            ))
+          ) : (
             <ToolsetLoginForm
-              credentialsLevel={authLevel}
+              credentialsLevel={ToolsetCredentialsLevel.GLOBAL}
               type={entity.authSettings.authenticationType}
               toolset={entity}
               buttonClassName="ml-auto"
@@ -244,9 +260,9 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
               hideConfigFields
               fieldsInfo={fieldsInfo}
             />
-          </FormProvider>
+          )}
         </div>
-      </div>
+      </FormProvider>
     </Modal>
   );
 };
