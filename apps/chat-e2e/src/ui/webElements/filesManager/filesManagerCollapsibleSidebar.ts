@@ -1,6 +1,10 @@
 import { FilesManagerFoldersTree } from './filesManagerFoldersTree';
 
-import { FilesManagerSidebarSelectors } from '@/src/ui/selectors';
+import { Attributes, Tags } from '@/src/ui/domData';
+import {
+  FilesManagerSidebarSelectors,
+  IconSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement, Button } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -37,13 +41,19 @@ export class FilesManagerCollapsibleSidebar extends BaseElement {
 
   /**
    * Checks if the sidebar is collapsed.
-   * When collapsed, the footer panel has 'justify-center' class.
-   * When expanded, the footer panel has 'justify-end' class.
+   * When collapsed, the icon has 'tabler-icon-chevrons-right' class.
+   * When expanded, the icon has 'tabler-icon-chevrons-left' class.
    */
   async isCollapsed(): Promise<boolean> {
-    const footerPanel = this.getStateButton().getElementLocator().locator('..');
-    const classAttribute = await footerPanel.getAttribute('class');
-    return classAttribute?.includes('justify-center') ?? false;
+    const iconLocator = this.getStateButton()
+      .getElementLocator()
+      .locator(Tags.svg);
+    const classAttribute = await iconLocator.getAttribute(Attributes.class);
+    return (
+      classAttribute?.includes(
+        IconSelectors.chevronsRightIcon.replace('.', ''),
+      ) ?? false
+    );
   }
 
   /**
