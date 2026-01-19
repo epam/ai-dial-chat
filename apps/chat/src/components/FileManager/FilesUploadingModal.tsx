@@ -37,7 +37,10 @@ export const FilesUploadingModal = ({
     if (percent === undefined) return null;
 
     return (
-      <div className="h-1 w-full overflow-hidden rounded-full bg-layer-1">
+      <div
+        className="h-1 w-full overflow-hidden rounded-full bg-layer-1"
+        data-qa="uploading-indicator"
+      >
         <div
           className="h-full rounded-full bg-accent-primary transition-all duration-300"
           style={{ width: `${percent}%` }}
@@ -68,7 +71,12 @@ export const FilesUploadingModal = ({
       header={
         <div className="flex flex-col gap-2">
           <div>{title}</div>
-          <div className="text-sm text-secondary">{text}</div>
+          <div
+            className="text-sm text-secondary"
+            data-qa="uploading-items-count"
+          >
+            {text}
+          </div>
         </div>
       }
     >
