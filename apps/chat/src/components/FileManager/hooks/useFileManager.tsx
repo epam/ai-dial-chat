@@ -136,10 +136,11 @@ export const useFileManager = ({
 
   const searchResults = useAppSelector(
     useCallback(
-      (state) =>
-        currentPath
+      (state) => {
+        return currentPath
           ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
-          : [],
+          : [];
+      },
       [currentPath],
     ),
   );
@@ -385,9 +386,12 @@ export const useFileManager = ({
 
   const handleSearchFiles = useCallback(
     (folder: string) => {
+      if (folder !== currentPath) {
+        setCurrentPath(folder);
+      }
       dispatch(FilesActions.getFullListing({ folderPath: folder }));
     },
-    [dispatch],
+    [dispatch, setCurrentPath, currentPath],
   );
 
   const operationLoaderModalOptions = useMemo(() => {
