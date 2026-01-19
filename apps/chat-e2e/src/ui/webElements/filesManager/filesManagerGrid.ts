@@ -1,5 +1,4 @@
 import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
-import { FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import {
   GridSelectors,
@@ -9,7 +8,6 @@ import {
 import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
 import { FileUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
-import { Locator } from '@playwright/test';
 
 export const scrollingTimeout = 1000;
 
@@ -66,6 +64,8 @@ export class FilesManagerGrid extends Grid {
    * @param waitForRequest Whether to wait for GET request to load folder contents (default: true)
    */
   public async openFolder(folderName: string, waitForRequest = true) {
+    const gridRowByNameCellLocator =
+      await this.goToGridRowByNameCell(folderName);
     if (waitForRequest) {
       const requestPromise = this.page.waitForResponse(
         (resp) =>
@@ -73,10 +73,10 @@ export class FilesManagerGrid extends Grid {
           resp.request().method() === 'GET' &&
           resp.ok(),
       );
-      await this.gridNameCellValue(folderName).click();
+      await gridRowByNameCellLocator.click();
       await requestPromise;
     } else {
-      await this.gridNameCellValue(folderName).click();
+      await gridRowByNameCellLocator.click();
     }
   }
 

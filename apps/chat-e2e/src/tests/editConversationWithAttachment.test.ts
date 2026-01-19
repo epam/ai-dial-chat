@@ -184,9 +184,11 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await filesManagerModalGrid
-          .gridCheckboxByNameCell(updatedAttachedFiles[1])
-          .click();
+        const updatedAttachmentCheckbox =
+          await filesManagerModalGrid.gridCheckboxByNameCell(
+            updatedAttachedFiles[1],
+          );
+        await updatedAttachmentCheckbox.click();
         await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
           updatedAttachedFiles[1],
           CheckboxState.checked,
