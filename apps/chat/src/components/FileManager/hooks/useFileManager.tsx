@@ -547,31 +547,21 @@ export const useFileManager = ({
     [dateOptions, gridActionLabels, visibleColumns],
   );
 
-  const newActionLabels = useMemo(
-    () => ({
-      uploadFiles: t('Upload files'),
-      newFolder: t('New folder'),
-      uploadArchive: t('Upload archive'),
-    }),
-    [t],
-  );
-
-  const toolbarOptions = useMemo(
+  const toolbarOptions = useMemo<ToolbarOptions>(
     () => ({
       tabs: filteredTabs,
       activeTab: activeTab,
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
-      newActionLabels: newActionLabels,
+      newActions: {
+        uploadFiles: { label: t('Upload files') },
+        newFolder: { label: t('New folder') },
+        uploadArchive: { label: t('Upload archive') },
+      },
+      showHiddenFilesToggle: true,
       ...externalToolbarOptions,
     }),
-    [
-      filteredTabs,
-      activeTab,
-      handleTabChange,
-      newActionLabels,
-      externalToolbarOptions,
-    ],
+    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
   );
 
   const destinationFolderPopupOptions = useMemo(
