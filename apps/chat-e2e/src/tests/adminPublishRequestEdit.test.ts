@@ -447,7 +447,7 @@ dialAdminTest(
       },
     );
 
-    //TODO: blocked by issue
+    //TODO: blocked by issue https://github.com/epam/ai-dial-chat/issues/5526
     await dialAdminTest.step.skip(
       'Remove all messages, go back to publication request and verify Approve button is disabled',
       async () => {
