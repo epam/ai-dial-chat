@@ -9,6 +9,8 @@ import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
 import { FileUtil } from '@/src/utils';
 import { Locator } from '@playwright/test';
 
+export const scrollingTimeout = 1000;
+
 export class FilesManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
 
@@ -78,11 +80,13 @@ export class FilesManagerGrid extends Grid {
       .getElementLocator()
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
+    //try to scroll into grid record if it is visible on the page
     try {
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
-        timeout: 1000,
+        timeout: scrollingTimeout,
       });
     } catch (e) {
+      //scroll to the next page if the record is not visible
       if (pagesCount >= pageNumber) {
         const gridBodyBounding = await this.gridBody.getElementBoundingBox();
         await this.gridBody.hoverOver();
@@ -103,13 +107,15 @@ export class FilesManagerGrid extends Grid {
     const scrollTop = await this.gridViewPort
       .getElementLocator()
       .evaluate((p) => p.scrollTop);
+    //check the scroll is not on the top of the grid
     if (scrollTop !== 0) {
       await this.gridBody.click({
         position: { x: 0, y: 0 },
       });
       await this.page.keyboard.press(keys.home);
+      // wait until scrolling is finished
       // eslint-disable-next-line playwright/no-wait-for-timeout
-      await this.page.waitForTimeout(1000);
+      await this.page.waitForTimeout(scrollingTimeout);
     }
   }
 }

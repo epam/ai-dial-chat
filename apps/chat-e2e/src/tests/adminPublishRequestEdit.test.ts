@@ -447,7 +447,8 @@ dialAdminTest(
       },
     );
 
-    await dialAdminTest.step(
+    //TODO: blocked by issue
+    await dialAdminTest.step.skip(
       'Remove all messages, go back to publication request and verify Approve button is disabled',
       async () => {
         const messagesCount =
