@@ -1650,7 +1650,11 @@ dialTest(
           secondConversation,
         ]);
         await localStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(aModel, bModel);
+        await localStorageManager.setRecentModelsIds(
+          aModel,
+          bModel,
+          defaultModel,
+        );
       },
     );
 

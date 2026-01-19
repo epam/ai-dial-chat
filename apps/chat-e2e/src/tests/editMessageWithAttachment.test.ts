@@ -179,6 +179,7 @@ dialTest(
           );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
       },
     );
 
