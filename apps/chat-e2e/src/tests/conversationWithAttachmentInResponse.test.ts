@@ -15,11 +15,13 @@ dialTest(
     dataInjector,
     fileApiHelper,
     filesManagerFoldersTree,
+    filesManagerCollapsibleSidebar,
     filesManagerGridAssertion,
     chatHeader,
     chat,
     talkToAgentDialog,
     conversations,
+    appContainer,
   }) => {
     setTestIds('EPMRTC-3481');
     const defaultModel = ModelsUtil.getDefaultAgent()!;
@@ -58,6 +60,7 @@ dialTest(
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
+        await filesManagerCollapsibleSidebar.expandIfCollapsed();
         await filesManagerFoldersTree.expandFolders(...imagePathSegments);
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
@@ -75,12 +78,14 @@ dialTest(
           Attachment.cloudImageName,
         );
         await conversations.selectEntity(responseImageConversation.name);
+        await appContainer.getChatLoader().waitForState({ state: 'hidden' });
         await chat.sendRequestWithButton(requestContent);
         await fileApiHelper.putFile(Attachment.cloudImageName, {
           parentPath: imagePath,
         });
 
         await navigationPanel.goToFilesManager();
+        await filesManagerCollapsibleSidebar.expandIfCollapsed();
         await filesManagerFoldersTree.expandFolders(...imagePathSegments);
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.cloudImageName,
@@ -106,6 +111,7 @@ dialTest(
         });
 
         await navigationPanel.goToFilesManager();
+        await filesManagerCollapsibleSidebar.expandIfCollapsed();
         await filesManagerFoldersTree.expandFolders(...secondImagePathSegments);
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.flowerImageName,
