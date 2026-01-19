@@ -708,6 +708,7 @@ dialTest(
         secondConversation,
       ]);
       await localStorageManager.setShowSideBarPanels();
+      await localStorageManager.setRecentModelsIds(aModel, bModel);
     });
 
     await dialTest.step(
@@ -1649,6 +1650,7 @@ dialTest(
           secondConversation,
         ]);
         await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIds(aModel, bModel);
       },
     );
 
