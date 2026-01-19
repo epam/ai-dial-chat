@@ -6,6 +6,7 @@ import {
   FilesManagerNavigationPanel,
   FilesManagerToolbar,
   Loader,
+  NoDataContent,
 } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -19,6 +20,7 @@ export class FilesManager extends BaseElement {
   private filesManagerNavigationPanel!: FilesManagerNavigationPanel;
   private filesManagerGrid!: FilesManagerGrid;
   private filesManagerLoader!: Loader;
+  private noDataContent!: NoDataContent;
 
   getFilesManagerToolbar(): FilesManagerToolbar {
     if (!this.filesManagerToolbar) {
@@ -62,5 +64,12 @@ export class FilesManager extends BaseElement {
       this.filesManagerLoader = new Loader(this.page, this.rootLocator);
     }
     return this.filesManagerLoader;
+  }
+
+  getNoDataContent(): NoDataContent {
+    if (!this.noDataContent) {
+      this.noDataContent = new NoDataContent(this.page, this.rootLocator);
+    }
+    return this.noDataContent;
   }
 }
