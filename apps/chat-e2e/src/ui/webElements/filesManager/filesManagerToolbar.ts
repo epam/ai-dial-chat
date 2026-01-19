@@ -103,15 +103,19 @@ export class FilesManagerToolbar extends BaseElement {
     return this.selectedIconsButton;
   }
 
-  public async clickDownloadButton(): Promise<void> {
-    const respPromise = this.page.waitForResponse(
-      (resp) =>
-        resp.url().includes(API.downloadFilesHost()) &&
-        resp.request().method() === 'POST' &&
-        resp.ok(),
-    );
-    await this.downloadButton.click();
-    await respPromise;
+  public async clickDownloadButton(waitForResponse = true): Promise<void> {
+    if (waitForResponse) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().includes(API.downloadFilesHost()) &&
+          resp.request().method() === 'POST' &&
+          resp.ok(),
+      );
+      await this.getDownloadButton().click();
+      await respPromise;
+    } else {
+      await this.getDownloadButton().click();
+    }
   }
 
   public myFilesTab = this.getToolbarTabs().tabByName(

@@ -1,3 +1,4 @@
+import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import {
@@ -7,12 +8,17 @@ import {
 } from '@/src/ui/selectors';
 import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
 import { FileUtil } from '@/src/utils';
+import { Locator, Page } from '@playwright/test';
 import { Locator } from '@playwright/test';
 
 export const scrollingTimeout = 1000;
 
 export class FilesManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
+
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, parentLocator);
+  }
 
   getRowDropdownMenu() {
     if (!this.rowDropdownMenu) {
@@ -53,6 +59,26 @@ export class FilesManagerGrid extends Grid {
 
   public gridNameCellValue = (name: string) =>
     this.gridNameCell(name).locator(GridSelectors.gridCellValue);
+
+  /**
+   * Opens a folder by clicking on its name cell
+   * @param folderName Name of the folder to open
+   * @param waitForRequest Whether to wait for GET request to load folder contents (default: true)
+   */
+  public async openFolder(folderName: string, waitForRequest = true) {
+    if (waitForRequest) {
+      const requestPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().endsWith(API.folderFilesListingHost(folderName)) &&
+          resp.request().method() === 'GET' &&
+          resp.ok(),
+      );
+      await this.gridNameCellValue(folderName).click();
+      await requestPromise;
+    } else {
+      await this.gridNameCellValue(folderName).click();
+    }
+  }
 
   public async renameFile(currentName: string, newName: string) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);

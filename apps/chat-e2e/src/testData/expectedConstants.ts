@@ -364,6 +364,7 @@ export const ExpectedConstants = {
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
   failedToMoveFileMessage: 'Failed to move files. Please try again later.',
+  uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
 };
 
 export enum Types {
@@ -496,7 +497,8 @@ export const API = {
   fileHost: () => `/api/${API.filesHostSegment}`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
   deleteFileHost: () => `${API.fileHost()}/delete`,
-  folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
+  folderFilesListingHost: (folderName: string) =>
+    `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
