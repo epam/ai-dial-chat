@@ -109,3 +109,4 @@ export * from './filesManager/filesManagerFoldersTree';
 export * from './filesManager/filesManager';
 export * from './filesManager/filesManagerContainer';
 export * from './filesManager/filesManagerModal';
+export * from './filesManager/uploadProgressDialog';

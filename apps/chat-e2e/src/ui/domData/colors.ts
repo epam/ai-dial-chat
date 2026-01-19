@@ -65,4 +65,5 @@ export enum ThemeColorAttributes {
   controlsBgSolidPrimary = 'controls-bg-solid-primary',
   controlsBgSolidPrimaryHover = 'controls-bg-solid-primary-hover',
   controlsBgSolidDisable = 'controls-bg-solid-disable',
+  controlsBgOutlinedNeutralHover = 'controls-bg-outlined-neutral-hover',
 }

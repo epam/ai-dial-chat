@@ -53,6 +53,7 @@ import {
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
   TopicsTooltip,
+  UploadProgressDialog,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
@@ -453,6 +454,7 @@ const dialTest = test.extend<{
   filesManagerModalGridAssertion: FilesManagerGridAssertion;
   fileConflictConfirmationPopup: ConfirmationPopup;
   fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  uploadProgressDialog: UploadProgressDialog;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1876,6 +1878,10 @@ const dialTest = test.extend<{
     const fileConflictConfirmationPopupAssertion =
       new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
     await use(fileConflictConfirmationPopupAssertion);
+  },
+  uploadProgressDialog: async ({ page }, use) => {
+    const uploadProgressDialog = new UploadProgressDialog(page);
+    await use(uploadProgressDialog);
   },
 });
 

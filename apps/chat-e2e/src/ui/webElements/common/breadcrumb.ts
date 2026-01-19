@@ -17,4 +17,10 @@ export class Breadcrumb extends BaseElement {
         hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`),
       }),
     });
+
+  public async clickBreadcrumbByName(name: string) {
+    await this.itemByName(name)
+      .locator(BreadcrumbSelectors.breadcrumbItemContent)
+      .click();
+  }
 }
