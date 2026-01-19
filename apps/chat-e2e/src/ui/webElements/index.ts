@@ -105,7 +105,6 @@ export * from './filesManager/filesManagerToolbar';
 export * from './filesManager/filesManagerNavigationPanel';
 export * from './filesManager/filesManagerGrid';
 export * from './filesManager/filesManagerCollapsibleSidebar';
-export * from './filesManager/filesManagerFoldersTree';
 export * from './filesManager/filesManager';
 export * from './filesManager/filesManagerContainer';
 export * from './filesManager/filesManagerModal';

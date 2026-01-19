@@ -1,11 +1,9 @@
-import { FilesManagerFoldersTree } from './filesManagerFoldersTree';
-
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
   FilesManagerSidebarSelectors,
   IconSelectors,
 } from '@/src/ui/selectors';
-import { BaseElement, Button } from '@/src/ui/webElements';
+import { BaseElement, Button, FoldersTree } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export class FilesManagerCollapsibleSidebar extends BaseElement {
@@ -13,7 +11,7 @@ export class FilesManagerCollapsibleSidebar extends BaseElement {
     super(page, FilesManagerSidebarSelectors.container, parentLocator);
   }
 
-  private foldersTree!: FilesManagerFoldersTree;
+  private foldersTree!: FoldersTree;
   private collapseAllButton!: Button;
   private stateButton!: Button;
 
@@ -65,13 +63,9 @@ export class FilesManagerCollapsibleSidebar extends BaseElement {
     }
   }
 
-  getFoldersTree(): FilesManagerFoldersTree {
+  getFoldersTree(): FoldersTree {
     if (!this.foldersTree) {
-      this.foldersTree = new FilesManagerFoldersTree(
-        this.page,
-        this.rootLocator,
-        this,
-      );
+      this.foldersTree = new FoldersTree(this.page, this.rootLocator);
     }
     return this.foldersTree;
   }
