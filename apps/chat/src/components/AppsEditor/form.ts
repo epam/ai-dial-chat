@@ -15,7 +15,6 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { customSortEntitiesByName } from '@/src/utils/marketplace';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import {
@@ -64,6 +63,7 @@ import {
 } from '@/src/constants/validation-helpers';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
+import { sortBy } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
 import { z as zodValidation } from 'zod';
 
@@ -356,7 +356,7 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
     name: getQuickAppItemNameFromConfig(item),
   }));
 
-  const sortedItems = allItems.sort(customSortEntitiesByName);
+  const sortedItems = sortBy(allItems, [(item) => item.name.toLowerCase()]);
 
   const sortedIds = sortedItems.map((item) => {
     const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
