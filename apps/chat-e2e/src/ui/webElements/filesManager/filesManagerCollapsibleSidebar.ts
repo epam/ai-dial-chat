@@ -43,9 +43,9 @@ export class FilesManagerCollapsibleSidebar extends BaseElement {
    * When expanded, the icon has 'tabler-icon-chevrons-left' class.
    */
   async isCollapsed(): Promise<boolean> {
-    const iconLocator = this.getStateButton()
-      .getElementLocator()
-      .locator(Tags.svg);
+    const iconLocator = this.getStateButton().getChildElementBySelector(
+      Tags.svg,
+    );
     const classAttribute = await iconLocator.getAttribute(Attributes.class);
     return (
       classAttribute?.includes(
