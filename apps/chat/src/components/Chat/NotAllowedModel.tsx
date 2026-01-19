@@ -17,7 +17,7 @@ import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 const ICON_SIZE = 24;
 const BUTTON_CLASS_NAME =
-  'px-0 underline underline-offset-2 transition-colors text-primary';
+  'border-0 px-0 text-primary underline underline-offset-2 transition-colors hover:text-primary';
 const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
 
 interface NotAllowedModelProps {
