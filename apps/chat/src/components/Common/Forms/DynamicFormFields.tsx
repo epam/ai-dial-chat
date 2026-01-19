@@ -70,16 +70,19 @@ export const DynamicFormFields = <
   valueLabel = 'Value',
 }: DynamicFieldsProps<T, K>) => {
   const { t } = useTranslation(Translation.Chat);
-  const { getValues, register, control } = useFormContext<T>();
+  const { register, control } = useFormContext<T>();
 
-  const fields = getValues(name as Path<T>) as (DynamicField & {
-    id: string;
-  })[];
-
-  const { append, remove } = useFieldArray<T, typeof name, 'id'>({
+  const {
+    append,
+    remove,
+    fields: _fields,
+  } = useFieldArray<T, typeof name, 'id'>({
     control,
     name,
   });
+  const fields = _fields as unknown as (DynamicField & {
+    id: string;
+  })[];
 
   const handleAdd = (option?: SelectOption<string, string>) => {
     append({
@@ -103,7 +106,7 @@ export const DynamicFormFields = <
       <div className="flex flex-col gap-2">
         {fields.map((field, i) => (
           <div
-            key={field.label + i}
+            key={field.id}
             className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:py-[7px]"
           >
             <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">
