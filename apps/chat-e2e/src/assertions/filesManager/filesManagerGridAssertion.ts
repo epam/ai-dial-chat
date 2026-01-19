@@ -14,13 +14,29 @@ export class FilesManagerGridAssertion extends BaseAssertion {
     name: string,
     expectedState: ElementState,
   ) {
-    await this.assertElementState(
-      this.filesManagerGrid.gridRowByNameCell(name),
-      expectedState,
-      expectedState === 'visible'
-        ? ExpectedMessages.gridRowIsVisible
-        : ExpectedMessages.gridRowIsNotVisible,
-    );
+    await this.filesManagerGrid.loadingIndicator.waitForState({
+      state: 'hidden',
+    });
+    // check the row is hidden if there is no any data in the grid
+    if (await this.filesManagerGrid.isVisible()) {
+      // if the grid is not empty, go on top of the grid and look for the record
+      await this.filesManagerGrid.goTop();
+      const gridRowByNameLocator =
+        await this.filesManagerGrid.goToGridRowByNameCell(name);
+      await this.assertElementState(
+        gridRowByNameLocator,
+        expectedState,
+        expectedState === 'visible'
+          ? ExpectedMessages.gridRowIsVisible
+          : ExpectedMessages.gridRowIsNotVisible,
+      );
+    } else {
+      this.assertBooleanCondition(
+        true,
+        expectedState !== 'visible',
+        ExpectedMessages.gridRowIsNotVisible,
+      );
+    }
   }
 
   public async assertGridCheckboxByNameState(
@@ -28,21 +44,21 @@ export class FilesManagerGridAssertion extends BaseAssertion {
     expectedState: CheckboxState,
   ) {
     await this.assertCheckboxState(
-      this.filesManagerGrid.gridCheckboxByNameCell(name),
+      await this.filesManagerGrid.gridCheckboxByNameCell(name),
       expectedState,
     );
   }
 
   public async assertGridRowColor(name: string, expectedColor: string) {
-    await this.assertElementColor(
-      this.filesManagerGrid.gridRowByNameCell(name),
-      expectedColor,
-    );
+    await this.filesManagerGrid.goTop();
+    const gridRowByNameLocator =
+      await this.filesManagerGrid.goToGridRowByNameCell(name);
+    await this.assertElementColor(gridRowByNameLocator, expectedColor);
   }
 
   public async assertGridCheckboxColor(name: string, expectedColor: string) {
     await this.assertElementColor(
-      this.filesManagerGrid.gridCheckboxByNameCell(name),
+      await this.filesManagerGrid.gridCheckboxByNameCell(name),
       expectedColor,
     );
   }

@@ -117,4 +117,8 @@ export class FilesManagerToolbar extends BaseElement {
   public myFilesTab = this.getToolbarTabs().tabByName(
     FilesManagerToolbarTabs.MyFiles,
   );
+
+  public organizationTab = this.getToolbarTabs().tabByName(
+    FilesManagerToolbarTabs.Organization,
+  );
 }

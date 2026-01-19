@@ -15,7 +15,6 @@ dialTest(
     dataInjector,
     fileApiHelper,
     filesManagerFoldersTree,
-    filesManagerGrid,
     filesManagerGridAssertion,
     chatHeader,
     chat,
@@ -83,8 +82,8 @@ dialTest(
 
         await navigationPanel.goToFilesManager();
         await filesManagerFoldersTree.expandFolders(...imagePathSegments);
-        await filesManagerGridAssertion.assertElementState(
-          filesManagerGrid.gridRowByNameCell(Attachment.cloudImageName),
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
           'visible',
         );
         await navigationPanel.backToChat();
@@ -108,8 +107,8 @@ dialTest(
 
         await navigationPanel.goToFilesManager();
         await filesManagerFoldersTree.expandFolders(...secondImagePathSegments);
-        await filesManagerGridAssertion.assertElementState(
-          filesManagerGrid.gridRowByNameCell(Attachment.flowerImageName),
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
           'visible',
         );
       },

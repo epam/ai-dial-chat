@@ -321,7 +321,9 @@ dialTest(
           (f) => !updatedAttachedFiles.includes(f),
         );
         for (const file of filesToUncheck) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.unchecked,
@@ -337,7 +339,9 @@ dialTest(
           (f) => !initAttachedFiles.includes(f),
         );
         for (const file of filesToCheck) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,

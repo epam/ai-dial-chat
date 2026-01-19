@@ -16,4 +16,5 @@ export const keys = {
   delete: 'Delete',
   backspace: 'Backspace',
   escape: 'Escape',
+  pageDown: 'PageDown',
 };

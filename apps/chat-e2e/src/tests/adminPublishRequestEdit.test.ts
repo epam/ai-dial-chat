@@ -12,12 +12,11 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import path from 'path';
 
-dialAdminTest.skip(
+dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
     '"Add agent to My workspace to continue" is not displayed for conversation from (un)publish request if open info modal',
   async ({
@@ -225,7 +224,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required.\n' +
@@ -363,7 +362,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   'Regenerate last message for chat form publication request.\n' +
     'Edit chat: remove all messages.\n' +
     '[Admin view][Edit request]: Edit chat icon stays after it was clicked and message input is displayed',
@@ -476,7 +475,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   '[Admin view][Edit request]: Edit button is not displayed for the chat in Playback mode in publish request',
   async ({
     conversationData,
@@ -545,7 +544,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
     '[Admin view][Edit chat] Added file appears in review. User updates old prompt.\n' +
     '[Admin view][Edit chat] Deleted file in chat history stays in review',
@@ -564,7 +563,8 @@ dialAdminTest.skip(
     adminPublicationReviewControl,
     adminFileApiHelper,
     adminAttachmentDropdownMenu,
-    adminAttachFilesModal,
+    adminFilesManagerModal,
+    adminFilesManagerModalGrid,
     adminChatHeaderAssertion,
     adminPublishFilesAssertion,
     adminChatMessages,
@@ -622,11 +622,14 @@ dialAdminTest.skip(
         await adminChatMessages.getChatMessageClipIcon(firstMessage).click();
         await adminAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await adminAttachFilesModal.checkAttachedFile(
-          Attachment.cloudImageName,
-        );
-        await adminAttachFilesModal.attachFiles();
+        const attachmentCheckbox =
+          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.cloudImageName,
+          );
+        await attachmentCheckbox.click();
+        await adminFilesManagerModal.getAttachButton().click();
         await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessagesCount(2);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
@@ -640,9 +643,14 @@ dialAdminTest.skip(
         await adminSendMessage.attachmentMenuTrigger.click();
         await adminAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await adminAttachFilesModal.checkAttachedFile(Attachment.sunImageName);
-        await adminAttachFilesModal.attachFiles();
+        const attachmentCheckbox =
+          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.sunImageName,
+          );
+        await attachmentCheckbox.click();
+        await adminFilesManagerModal.getAttachButton().click();
         await adminChat.sendRequestWithButton(newPrompt);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
@@ -690,7 +698,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
     'Organization: The chat with a generated file is published\n' +
     'Organization: the chat with added by user file is published\n' +
@@ -717,12 +725,14 @@ dialAdminTest.skip(
       organizationConversations,
       localStorageManager,
       chatMessagesAssertion,
-      chatBar,
+      filesManagerToolbar,
+      filesManagerGridAssertion,
+      navigationPanel,
       fileApiHelper,
-      manageAttachmentsAssertion,
+      adminFilesManagerModal,
+      adminFilesManagerModalGrid,
       adminChatMessages,
       adminAttachmentDropdownMenu,
-      adminAttachFilesModal,
       adminSendMessage,
       baseAssertion,
       adminFilesToApproveTree,
@@ -845,11 +855,12 @@ dialAdminTest.skip(
           UploadMenuOptions.attachUploadedFiles,
           { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
         );
-        await adminAttachFilesModal.checkAttachedFile(
-          Attachment.flowerImageName,
-          FileModalSection.AllFiles,
-        );
-        await adminAttachFilesModal.attachFiles();
+        const attachmentCheckbox =
+          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.flowerImageName,
+          );
+        await attachmentCheckbox.click();
+        await adminFilesManagerModal.getAttachButton().click();
         await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           3,
@@ -885,13 +896,12 @@ dialAdminTest.skip(
           UploadMenuOptions.attachUploadedFiles,
           { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
         );
-
-        await adminAttachFilesModal.checkAttachedFile(
-          Attachment.longImageName,
-          FileModalSection.AllFiles,
-        );
-
-        await adminAttachFilesModal.attachFiles();
+        const attachmentCheckbox =
+          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.longImageName,
+          );
+        await attachmentCheckbox.click();
+        await adminFilesManagerModal.getAttachButton().click();
         await adminChat.sendRequestWithButton(requestPrompt);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           7,
@@ -956,8 +966,9 @@ dialAdminTest.skip(
             .getFileDownloadIcon(updatedCloudImageName)
             .click(),
         );
-        const downloadedFileName = downloadedData.path.split(path.sep)[
-          downloadedData.path.split(path.sep).length - 1
+        const downloadedPath = downloadedData.path as string;
+        const downloadedFileName = downloadedPath.split(path.sep)[
+          downloadedPath.split(path.sep).length - 1
         ];
         baseAssertion.assertValuesAreEqual(
           downloadedFileName,
@@ -1000,18 +1011,18 @@ dialAdminTest.skip(
     );
 
     await dialTest.step(
-      'Open "Manage attachments" and verify all files are in the organization file tree',
+      'Open "File manager" page and verify all files stay at the Organization tab',
       async () => {
-        await chatBar.openManageAttachmentsModal();
+        await navigationPanel.goToFilesManager();
+        await filesManagerToolbar.organizationTab.click();
         for (const attach of [
           updatedCloudImageName,
           Attachment.heartImageName,
           Attachment.flowerImageName,
           Attachment.longImageName,
         ]) {
-          await manageAttachmentsAssertion.assertEntityState(
-            { name: attach },
-            FileModalSection.Organization,
+          await filesManagerGridAssertion.assertGridRowByNameState(
+            attach,
             'visible',
           );
         }
@@ -1020,7 +1031,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
     "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
@@ -1342,7 +1353,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   // 'Last version is not displayed after update chat\'s name\n'+
   '[Admin view][Edit request]: Edit version for chat ( there is no previous version)\n' +
     '[Admin view][Edit request]:Edit version when there are more that one public version',
@@ -1575,10 +1586,10 @@ dialAdminTest.skip(
       dialHomePage,
       localStorageManager,
       adminApproveRequiredConversationsAssertion,
-      chatBar,
-      manageAttachmentsAssertion,
-      attachFilesModal,
-      attachedOrganizationFiles,
+      navigationPanel,
+      filesManagerToolbar,
+      filesManagerGridAssertion,
+      filesManagerFoldersTree,
       fileApiHelper,
       adminFilesToApproveTree,
       organizationFolderConversationAssertions,
@@ -1712,22 +1723,19 @@ dialAdminTest.skip(
     );
 
     await dialTest.step(
-      "Check folder's name for file in Manage attachments - updated folder's names are displayed",
+      "Check folder's name for file in File manager - updated folder's names are displayed",
       async () => {
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertFolderState(
+        await navigationPanel.goToFilesManager();
+        await filesManagerToolbar.organizationTab.click();
+        await filesManagerGridAssertion.assertGridRowByNameState(
           updatedFileFolderName,
-          FileModalSection.Organization,
           'visible',
         );
-        await attachedOrganizationFiles.expandFolder(updatedFileFolderName);
-        await manageAttachmentsAssertion.assertFolderEntityState(
-          { name: updatedFileFolderName },
-          { name: imageName },
-          FileModalSection.Organization,
+        await filesManagerFoldersTree.expandFolders(...updatedFileFolderName);
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          imageName,
           'visible',
         );
-        await attachFilesModal.closeButton.click();
       },
     );
   },
