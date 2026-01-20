@@ -1,16 +1,16 @@
 import { IconPlus } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import {
-  FieldArray,
   FieldArrayPath,
   FieldError,
   FieldErrorsImpl,
   FieldValues,
   Merge,
   Path,
+  PathValue,
   RegisterOptions,
-  useFieldArray,
   useFormContext,
+  useWatch,
 } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -25,6 +25,7 @@ import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessa
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { nanoid } from 'nanoid';
 
 export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;
@@ -70,27 +71,42 @@ export const DynamicFormFields = <
   valueLabel = 'Value',
 }: DynamicFieldsProps<T, K>) => {
   const { t } = useTranslation(Translation.Chat);
-  const { register, control } = useFormContext<T>();
+  const { register, control, setValue } = useFormContext<T>();
 
-  const {
-    append,
-    remove,
-    fields: _fields,
-  } = useFieldArray<T, typeof name, 'id'>({
+  const fieldsWithoutIds = useWatch({
     control,
-    name,
-  });
-  const fields = _fields as unknown as (DynamicField & {
-    id: string;
-  })[];
+    name: name as Path<T>,
+  }) as DynamicField[];
+
+  const fields = useMemo(
+    () =>
+      fieldsWithoutIds.map((field) => ({
+        ...field,
+        id: nanoid(),
+      })),
+    [fieldsWithoutIds],
+  );
 
   const handleAdd = (option?: SelectOption<string, string>) => {
-    append({
-      label: option?.value ?? '',
-      value: option?.defaultValue ?? '',
-      editableKey: !option,
-      visibleName: option?.label,
-    } as FieldArray<T, K>);
+    setValue(
+      name as Path<T>,
+      [
+        ...fields,
+        {
+          label: option?.value ?? '',
+          value: option?.defaultValue ?? '',
+          editableKey: !option,
+          visibleName: option?.label,
+        },
+      ] as PathValue<T, Path<T>>,
+    );
+  };
+
+  const handleRemove = (index: number) => {
+    setValue(
+      name as Path<T>,
+      fields.filter((_, i) => i !== index) as PathValue<T, Path<T>>,
+    );
   };
 
   const filteredOptions = useMemo(() => {
@@ -158,7 +174,7 @@ export const DynamicFormFields = <
             <DialCloseButton
               disabled={field.static || disabled}
               className={classNames(field.static && 'invisible')}
-              onClose={() => remove(i)}
+              onClose={() => handleRemove(i)}
               size={18}
             />
           </div>

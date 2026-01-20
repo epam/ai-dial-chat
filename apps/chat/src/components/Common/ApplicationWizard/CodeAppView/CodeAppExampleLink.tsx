@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -33,21 +33,7 @@ export const CodeAppExampleLink = ({
   fileNames,
 }: CodeAppExampleLinkProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-  const { control } = useFormContext<CodeData>();
-
-  const {
-    append: appendEndpoint,
-    fields: endpoints,
-    update: updateEndpoint,
-  } = useFieldArray({
-    control,
-    name: 'endpoints',
-  });
-  const {
-    append: appendEnv,
-    fields: envs,
-    update: updateEnv,
-  } = useFieldArray({ control, name: 'env' });
+  const { setValue, getValues } = useFormContext<CodeData>();
 
   const dispatch = useAppDispatch();
 
@@ -74,54 +60,37 @@ export const CodeAppExampleLink = ({
       }
     });
     if (example.endpoints) {
+      const endpoints = getValues('endpoints');
       Object.entries(example.endpoints).forEach(([endpoint, endpointUrl]) => {
         const index = endpoints.findIndex((end) => end.label === endpoint);
         if (index === -1) {
-          appendEndpoint({
+          setValue(`endpoints.${endpoints.length}`, {
             label: endpoint,
             value: endpointUrl,
             visibleName: FEATURES_ENDPOINTS_NAMES[endpoint],
-            editableKey: false,
           });
         } else {
-          updateEndpoint(index, {
-            ...endpoints[index],
-            value: endpointUrl,
-          });
+          setValue(`endpoints.${index}.value`, endpointUrl);
         }
       });
     }
     if (example.variables) {
+      const envs = getValues('env');
       Object.entries(example.variables).forEach(([variable, getEnvValue]) => {
         const index = envs.findIndex((item) => item.label === variable);
         if (index === -1) {
-          appendEnv({
+          setValue(`env.${envs.length}`, {
             label: variable,
             value: getEnvValue(),
             editableKey: true,
-            visibleName: undefined,
+            visibleName: variable,
           });
         } else {
-          updateEnv(index, {
-            ...envs[index],
-            value: getEnvValue(),
-          });
+          setValue(`env.${index}.value`, getEnvValue());
         }
       });
     }
-  }, [
-    exampleType,
-    fileNames,
-    dispatch,
-    folderId,
-    bucket,
-    endpoints,
-    appendEndpoint,
-    updateEndpoint,
-    envs,
-    appendEnv,
-    updateEnv,
-  ]);
+  }, [exampleType, fileNames, dispatch, folderId, bucket, getValues, setValue]);
 
   return (
     <span
