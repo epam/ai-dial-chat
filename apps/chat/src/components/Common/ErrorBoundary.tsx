@@ -4,7 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -31,8 +31,7 @@ function DefaultFallbackComponent({ onClick }: DefaultFallbackComponentProps) {
   return (
     <div className="w-fit p-6">
       <h2 className="text-lg">{t('Oops, something went wrong...')}</h2>
-      <DialButton
-        variant={ButtonVariant.Secondary}
+      <DialNeutralButton
         title={t('Back')}
         onClick={handleBack}
         data-qa="back-button"

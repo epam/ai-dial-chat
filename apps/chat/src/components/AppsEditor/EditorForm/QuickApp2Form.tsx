@@ -56,6 +56,7 @@ import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/Toolset
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { Feature } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -120,11 +121,17 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
   const sortedAgentsAndToolsets = useMemo(() => {
     const ids = [...(agentsAndToolsetsIds || [])];
-    return ids.sort((a, b) =>
-      getEntityDisplayName(a, allEntitiesMap).localeCompare(
-        getEntityDisplayName(b, allEntitiesMap),
-      ),
-    );
+
+    const itemsWithName = ids.map((id) => ({
+      id: id,
+      name: getEntityDisplayName(id, allEntitiesMap),
+    }));
+
+    const sortedItems = sortBy(itemsWithName, [
+      (item) => item.name.toLowerCase(),
+    ]);
+
+    return sortedItems.map((item) => item.id);
   }, [agentsAndToolsetsIds, allEntitiesMap]);
 
   const handleAgentsAndToolsetsChange = useCallback(

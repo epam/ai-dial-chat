@@ -239,8 +239,12 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           const modelsToInstall = referencesToInstall.filter(
             (reference: string) => !installedModelIds.has(reference),
           );
+          const isMarketplaceEnabled = SettingsSelectors.isFeatureEnabled(
+            state$.value,
+            Feature.Marketplace,
+          );
 
-          if (modelsToInstall.length) {
+          if (modelsToInstall.length && isMarketplaceEnabled) {
             actions.push(
               of(
                 ModelsActions.addInstalledModels({

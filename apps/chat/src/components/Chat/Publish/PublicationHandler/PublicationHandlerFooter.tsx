@@ -74,7 +74,11 @@ import {
   PublishActions,
   ShareEntity,
 } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialLinkButton,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
@@ -510,8 +514,8 @@ export const PublicationHandlerFooter = ({
       ) : (
         !isOnlyFilesPublication &&
         !!resourcesToReview.length && (
-          <DialButton
-            className="text-accent-primary"
+          <DialLinkButton
+            className="px-0"
             onClick={handlePublicationReview}
             data-qa="go-to-review"
             label={t(
@@ -535,9 +539,8 @@ export const PublicationHandlerFooter = ({
                     Icon={IconPencil}
                   />
                 )}
-                <DialButton
+                <DialNeutralButton
                   label={t('Reject')}
-                  variant={ButtonVariant.Secondary}
                   onClick={() =>
                     dispatch(
                       PublicationActions.rejectPublication({
@@ -553,9 +556,8 @@ export const PublicationHandlerFooter = ({
               hideTooltip={!isApproveOrSendDisabled}
               tooltip={t(getSubmitTooltipText())}
             >
-              <DialButton
+              <DialPrimaryButton
                 label={t(getSubmitBtnText())}
-                variant={ButtonVariant.Primary}
                 textClassName="whitespace-nowrap"
                 onClick={publishModel ? undefined : handleApprovePublication}
                 type={publishModel ? 'submit' : 'button'}
@@ -566,9 +568,8 @@ export const PublicationHandlerFooter = ({
           </>
         ) : (
           <>
-            <DialButton
+            <DialNeutralButton
               label={t('Cancel')}
-              variant={ButtonVariant.Secondary}
               onClick={handleToggleEditMode}
               data-qa="cancel"
             />
@@ -581,9 +582,8 @@ export const PublicationHandlerFooter = ({
                   : 'Make any changes to update the request',
               )}
             >
-              <DialButton
+              <DialPrimaryButton
                 label={t('Update request')}
-                variant={ButtonVariant.Primary}
                 textClassName="whitespace-nowrap"
                 disabled={isEditDisabled}
                 type="submit"

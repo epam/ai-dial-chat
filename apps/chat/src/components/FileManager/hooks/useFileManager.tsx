@@ -157,10 +157,11 @@ export const useFileManager = ({
 
   const searchResults = useAppSelector(
     useCallback(
-      (state) =>
-        currentPath
+      (state) => {
+        return currentPath
           ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
-          : [],
+          : [];
+      },
       [currentPath],
     ),
   );
@@ -172,7 +173,7 @@ export const useFileManager = ({
 
   const [treeCollapsedState, setTreeCollapsedState] = useState<
     boolean | undefined
-  >(true);
+  >(false);
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
     my_files: MY_FILES_SECTION,
@@ -407,9 +408,12 @@ export const useFileManager = ({
 
   const handleSearchFiles = useCallback(
     (folder: string) => {
+      if (folder !== currentPath) {
+        setCurrentPath(folder);
+      }
       dispatch(FilesActions.getFullListing({ folderPath: folder }));
     },
-    [dispatch],
+    [dispatch, setCurrentPath, currentPath],
   );
 
   const operationLoaderModalOptions = useMemo(() => {
@@ -556,16 +560,21 @@ export const useFileManager = ({
     [gridActionLabels, visibleColumns],
   );
 
-  const toolbarOptions = useMemo(
+  const toolbarOptions = useMemo<ToolbarOptions>(
     () => ({
       tabs: filteredTabs,
       activeTab: activeTab,
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
-      newActionLabels,
+      newActions: {
+        uploadFiles: { label: t('Upload files') },
+        newFolder: { label: t('New folder') },
+        uploadArchive: { label: t('Upload archive') },
+      },
+      showHiddenFilesToggle: true,
       ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions],
+    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
   );
 
   const destinationFolderPopupOptions = useMemo(

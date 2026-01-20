@@ -37,7 +37,9 @@ export class PublishingRequestDialogAssertion extends BaseAssertion {
     if (expectedState === 'disabled') {
       await this.assertElementBackgroundColors(
         this.publishingRequestDialog.sendRequestButton,
-        ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsBgDisable),
+        ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.controlsBgSolidDisable,
+        ),
       );
     } else {
       await this.assertElementBackgroundColors(

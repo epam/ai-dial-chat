@@ -22,6 +22,7 @@ import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
 } from '@/src/constants/folders';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isFolderId } from './shared-utils';
@@ -524,4 +525,16 @@ export const getMyBucketAttachments = (
   return attachments.filter((attachment) =>
     isMyEntity({ id: attachment.url ?? '' }),
   );
+};
+
+export const getRootFolderPlaceholderName = (bucket: string): string => {
+  const userBucket = BucketService.getBucket();
+  if (userBucket === bucket) {
+    return translate('My Files');
+  }
+  if (bucket === PUBLIC_URL_PREFIX) {
+    return translate('Organization');
+  }
+
+  return translate('Shared with Me');
 };

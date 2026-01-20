@@ -108,3 +108,4 @@ export * from './filesManager/filesManagerCollapsibleSidebar';
 export * from './filesManager/filesManager';
 export * from './filesManager/filesManagerContainer';
 export * from './filesManager/filesManagerModal';
+export * from './filesManager/uploadProgressDialog';

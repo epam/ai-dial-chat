@@ -7,6 +7,7 @@ import {
 } from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
 import {
+  AttributeValues,
   Attributes,
   Colors,
   Cursors,
@@ -232,12 +233,14 @@ export class BaseAssertion {
   public async assertElementClass(
     element: BaseElement | Locator,
     expectedValue: string | RegExp,
+    expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
-        `${ExpectedMessages.elementAttributeValueShouldBe}${expectedValue}`,
+        expectedMessage ??
+          `${ExpectedMessages.elementAttributeValueShouldBe}${expectedValue}`,
       )
       .toHaveClass(expectedValue);
   }
@@ -458,17 +461,39 @@ export class BaseAssertion {
       .toHaveCSS(Styles.overflow_wrap, expectedWrap);
   }
 
+  /**
+   * The 'truncate' class refers to Tailwind CSS utility class that truncates overflowing text with an ellipsis
+   * The truncate class applies these CSS properties:
+   * - overflow: hidden;
+   * - text-overflow: ellipsis;
+   * - white-space: nowrap;
+   */
   public async assertElementTextIsTruncated(
     element: BaseElement | Locator,
     expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect
-      .soft(
-        elementLocator,
-        expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
-      )
-      .toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
+    await this.assertElementClass(
+      elementLocator,
+      new RegExp(AttributeValues.truncate),
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+    );
+  }
+
+  /**
+   * The 'line-clamp-*' class refers to Tailwind CSS utility class that truncates overflowing text after multiple lines
+   */
+  public async assertElementMultilineTextIsTruncated(
+    element: BaseElement | Locator,
+    linesCount: number,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await this.assertElementClass(
+      elementLocator,
+      new RegExp(AttributeValues.lineClamp + linesCount),
+      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+    );
   }
 
   public async assertElementDisplayStyle(

@@ -42,7 +42,7 @@ import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEdito
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 const ChatPreview = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -138,10 +138,8 @@ const ChatPreview = () => {
               </span>
               {t('after making changes.')}
             </div>
-            <DialButton
+            <DialLinkButton
               label={t('Deploy code app')}
-              className="text-accent-secondary"
-              variant={ButtonVariant.Tertiary}
               onClick={handleDeployClick}
               disabled={!isApplicationValid}
               data-qa="deploy-code-app"
@@ -285,9 +283,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
         <div className="flex space-x-2">
           {showRedeployButton && (
-            <DialButton
-              className="text-accent-secondary"
-              variant={ButtonVariant.Tertiary}
+            <DialLinkButton
               data-qa="redeploy-code-app"
               disabled={!isApplicationValid}
               onClick={handleRedeploy}

@@ -13,7 +13,7 @@ import { Label } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
@@ -142,10 +142,8 @@ export const CustomLogoSelect = ({
         </div>
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
-            <DialButton
+            <DialLinkButton
               onClick={onClickAddHandler}
-              className="text-accent-primary"
-              textClassName="font-normal"
               disabled={disabled}
               data-qa={localLogo ? 'change-icon' : 'add-icon'}
               label={localLogo ? t('Change') : t('Add')}
