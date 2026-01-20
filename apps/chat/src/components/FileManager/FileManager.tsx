@@ -17,7 +17,9 @@ import { DialFileManager, DialLoader } from '@epam/ai-dial-ui-kit';
 
 export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
+
   const initialDataStatus = useAppSelector(
     SettingsSelectors.selectInitialDataStatus,
   );

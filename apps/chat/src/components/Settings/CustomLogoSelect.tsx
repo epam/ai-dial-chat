@@ -27,9 +27,10 @@ interface CustomLogoSelectProps {
   sourceFilters?: Set<FileSourceType>;
   confirmDialogValues?: ConfirmDialogValueTypes;
   warningMessage?: string;
+  isFormView?: boolean;
+  maxSelectableFileSize?: number;
   onLogoSelect: (filesIds: string[]) => void;
   onDeleteLocalLogoHandler: () => void;
-  isFormView?: boolean;
 }
 
 export const CustomLogoSelect = ({
@@ -44,6 +45,7 @@ export const CustomLogoSelect = ({
   sourceFilters,
   confirmDialogValues,
   warningMessage,
+  maxSelectableFileSize,
   onLogoSelect,
   onDeleteLocalLogoHandler,
   isFormView,
@@ -168,6 +170,7 @@ export const CustomLogoSelect = ({
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
+          maxSelectableFileSize={maxSelectableFileSize}
         />
       )}
 
