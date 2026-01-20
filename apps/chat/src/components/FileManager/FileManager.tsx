@@ -70,7 +70,7 @@ export const FileManager: React.FC = () => {
   return (
     <div className="flex w-full grow overflow-auto" data-qa="file-manager">
       {initialDataStatus !== UploadStatus.LOADED ? (
-        <DialLoader size={45}/>
+        <DialLoader size={45} />
       ) : (
         <DialFileManager
           path={currentPath}
