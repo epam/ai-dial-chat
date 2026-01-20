@@ -25,7 +25,7 @@ import { ServiceSelectors } from '@/src/store/selectors';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onClose: () => void;
@@ -157,11 +157,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
         <EmptyRequiredInputMessage />
       </div>
       <div className="flex justify-end">
-        <DialButton
-          type="submit"
-          variant={ButtonVariant.Primary}
-          label={t('Report an issue')}
-        />
+        <DialPrimaryButton type="submit" label={t('Report an issue')} />
       </div>
     </Modal>
   );

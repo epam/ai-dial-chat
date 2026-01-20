@@ -42,8 +42,8 @@ import { Modal } from '@/src/components/Common/Modal';
 import { SelectFolderModal } from './SelectFolderModal';
 
 import {
-  ButtonVariant,
-  DialButton,
+  DialLinkButton,
+  DialPrimaryButton,
   DialRemoveButton,
 } from '@epam/ai-dial-ui-kit';
 
@@ -359,8 +359,8 @@ export const PreUploadDialog = ({
                       folderPath ?? rootFolderName,
                     )}
               </span>
-              <DialButton
-                textClassName="text-accent-primary font-normal"
+              <DialLinkButton
+                className="px-0"
                 onClick={handleFolderChange}
                 data-qa="change-button"
                 label={t('Change')}
@@ -430,14 +430,13 @@ export const PreUploadDialog = ({
           />
         </label>
 
-        <DialButton
+        <DialPrimaryButton
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
           data-qa="upload"
           label={
             customUploadButtonLabel ? customUploadButtonLabel : t('Upload')
           }
-          variant={ButtonVariant.Primary}
         />
       </div>
 

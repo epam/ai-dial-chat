@@ -1,5 +1,5 @@
 import { IconPlayerPlay, IconPlaystationSquare } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -21,7 +21,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ApplicationDetailsFooterProps } from './ApplicationDetails';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface DeployButtonProps {
   entity: DialAIEntityModel;
@@ -53,43 +53,49 @@ export const DeployButton = ({ entity }: DeployButtonProps) => {
     );
   }, [dispatch, entity.id]);
 
+  const DialKitDeployButton =
+    isAppDeploymentInProgress || isAppDeployed
+      ? DialNeutralButton
+      : DialPrimaryButton;
+
+  const deployButtonProps = useMemo(() => {
+    if (isAppDeploymentInProgress) {
+      return {
+        label: isDeploying ? t('Deploying') : t('Undeploying'),
+        iconBefore: <Spinner size={18} className="!text-controls-disable" />,
+        'data-qa': 'deploy-pending',
+        disabled: true,
+      };
+    }
+    if (isAppDeployed) {
+      return {
+        label: t('Undeploy'),
+        iconBefore: <IconPlaystationSquare size={18} />,
+        onClick: handleUndeploy,
+        'data-qa': 'undeploy-in-details',
+        disabled: false,
+      };
+    }
+    return {
+      label: t('Deploy'),
+      iconBefore: <IconPlayerPlay size={18} />,
+      onClick: handleDeploy,
+      'data-qa': 'deploy-in-details',
+      disabled: false,
+    };
+  }, [
+    isAppDeploymentInProgress,
+    isAppDeployed,
+    isDeploying,
+    t,
+    handleUndeploy,
+    handleDeploy,
+  ]);
   if (!isExecutableApp(entity)) {
     return null;
   }
 
-  if (isAppDeploymentInProgress) {
-    return (
-      <DialButton
-        label={isDeploying ? t('Deploying') : t('Undeploying')}
-        iconBefore={<Spinner size={18} className="!text-controls-disable" />}
-        variant={ButtonVariant.Secondary}
-        data-qa="deploy-pending"
-        disabled
-      />
-    );
-  }
-
-  if (isAppDeployed) {
-    return (
-      <DialButton
-        label={t('Undeploy')}
-        iconBefore={<IconPlaystationSquare size={18} />}
-        variant={ButtonVariant.Secondary}
-        onClick={handleUndeploy}
-        data-qa="undeploy-in-details"
-      />
-    );
-  }
-
-  return (
-    <DialButton
-      label={t('Deploy')}
-      iconBefore={<IconPlayerPlay size={18} />}
-      variant={ButtonVariant.Primary}
-      onClick={handleDeploy}
-      data-qa="deploy-in-details"
-    />
-  );
+  return <DialKitDeployButton {...deployButtonProps} />;
 };
 
 export const SimpleApplicationDetailsFooter = ({
@@ -113,11 +119,10 @@ export const SimpleApplicationDetailsFooter = ({
           onSelect={onChangeVersion}
           currentEntity={entity}
         />
-        <DialButton
+        <DialNeutralButton
           onClick={handleRemove}
           data-qa="remove"
           label={t('Remove')}
-          variant={ButtonVariant.Secondary}
         />
       </div>
 

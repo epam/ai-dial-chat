@@ -14,7 +14,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChangePathDialog } from '../ChangePathDialog';
 import { PublicationRequestFormData, PublishRequestFieldsNames } from './form';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   maxDepth: number;
@@ -77,8 +77,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
             {displayPublishToUrl}
           </Tooltip>
 
-          <DialButton
-            className="h-full text-accent-primary"
+          <DialLinkButton
             data-qa="change-button"
             onClick={handleFolderChange}
             label={t('Change')}

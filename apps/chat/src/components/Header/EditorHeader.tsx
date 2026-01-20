@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { Stepper } from '@/src/components/Common/Stepper';
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EditorHeaderTab<T extends string> {
   label: string;
@@ -134,14 +134,12 @@ export const EditorHeader = <T extends string>({
       }
       RightItems={
         <div className="flex h-full items-center xl:mr-2 xl:border-r xl:border-secondary">
-          <DialButton
-            className="shrink-0"
+          <DialLinkButton
             onClick={onSave}
             data-qa="save-and-exit"
             iconBefore={<IconLogout size={14} />}
             label={t(saveLabel ?? 'Save and exit')}
-            variant={ButtonVariant.Tertiary}
-          ></DialButton>
+          />
         </div>
       }
     />
