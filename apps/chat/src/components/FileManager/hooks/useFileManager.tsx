@@ -60,10 +60,10 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
 
-const newActionLabels = {
-  uploadFiles: translate('Upload files'),
-  newFolder: translate('New folder'),
-  uploadArchive: translate('Upload archive'),
+const newActions = {
+  uploadFiles: { label: translate('Upload files') },
+  newFolder: { label: translate('New folder') },
+  uploadArchive: { label: translate('Upload archive') },
 };
 
 const dateOptions = {
@@ -566,15 +566,11 @@ export const useFileManager = ({
       activeTab: activeTab,
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
-      newActions: {
-        uploadFiles: { label: t('Upload files') },
-        newFolder: { label: t('New folder') },
-        uploadArchive: { label: t('Upload archive') },
-      },
+      newActions,
       showHiddenFilesToggle: true,
       ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
+    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions],
   );
 
   const destinationFolderPopupOptions = useMemo(
