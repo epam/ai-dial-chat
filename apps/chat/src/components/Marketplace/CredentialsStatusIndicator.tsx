@@ -10,10 +10,12 @@ import { Badge } from '@/src/components/Badge';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;
+  showAdditionalBadge?: boolean;
 }
 
 export const CredentialsStatusIndicator = ({
   entity,
+  showAdditionalBadge,
 }: CredentialsStatusIndicatorProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -27,16 +29,27 @@ export const CredentialsStatusIndicator = ({
 
   const loginLabel = isSignedInUser || !isPublic ? 'MY CREDS' : 'ORG CREDS';
   const label = isSignedIn ? loginLabel : 'LOGGED OUT';
+  const additionalBadge =
+    isPublic && isSignedInGlobal && isSignedInUser && 'ORG CREDS';
 
   if (!isToolsetWithAuth(entity)) {
     return null;
   }
 
   return (
-    <Badge
-      label={t(label)}
-      type={isSignedIn ? 'success' : 'error'}
-      className="shrink-0"
-    />
+    <div className="flex items-center gap-1">
+      <Badge
+        label={t(label)}
+        type={isSignedIn ? 'success' : 'error'}
+        className="shrink-0"
+      />
+      {showAdditionalBadge && additionalBadge && (
+        <Badge
+          label={t(additionalBadge)}
+          type="disabled"
+          className="shrink-0"
+        />
+      )}
+    </div>
   );
 };
