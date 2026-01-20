@@ -27,10 +27,7 @@ import {
   getStringFromSearchParams,
   updateQueryParams,
 } from '@/src/utils/app/url/query-params';
-import {
-  customSortEntitiesByName,
-  isInstalledEntity,
-} from '@/src/utils/marketplace';
+import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
@@ -68,6 +65,7 @@ import {
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import sortBy from 'lodash-es/sortBy';
 
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
   allVersions?: MarketplaceEntity[];
@@ -348,10 +346,15 @@ const AgentAndToolsetModalView = ({
       return true;
     });
 
-    const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
+    const allGroupedItemsUnsorted = groupMarketplaceEntityAndSaveOrder(
+      filteredItems,
+    )
       .map(getSelectedItemFromGroup)
-      .filter((item): item is DisplayedMarketplaceEntity => !!item)
-      .sort(customSortEntitiesByName);
+      .filter((item): item is DisplayedMarketplaceEntity => !!item);
+
+    const allGroupedItems = sortBy(allGroupedItemsUnsorted, [
+      (item) => item.name.toLowerCase(),
+    ]);
 
     if (!isMyWorkspace) {
       return allGroupedItems;
