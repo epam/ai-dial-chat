@@ -25,9 +25,9 @@ import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
 import {
-  ButtonVariant,
   DialButton,
   DialCloseButton,
+  DialPrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 
 const emptySelector = translate('Select');
@@ -229,10 +229,9 @@ export function TargetAudienceFilterComponent({
           </div>
           {/* )} */}
           <div className="flex justify-end">
-            <DialButton
+            <DialPrimaryButton
               label={t('Add filter')}
               onClick={handleSaveFilter}
-              variant={ButtonVariant.Primary}
               disabled={isSaveBtnDisabled}
             />
           </div>

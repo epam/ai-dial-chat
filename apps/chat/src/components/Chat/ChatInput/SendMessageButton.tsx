@@ -56,9 +56,9 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'absolute bottom-4 hover:text-accent-primary',
+            'absolute hover:text-accent-primary',
             isLastMessageError && 'text-error',
-            isOverlay ? 'right-3' : 'right-4',
+            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
           aria-label={t('Send a message')}
           onClick={onSend}
@@ -80,8 +80,8 @@ export const SendMessageButton = Inversify.register(
     return (
       <DialButton
         className={classNames(
-          'absolute bottom-3 hover:text-accent-primary disabled:text-secondary',
-          isOverlay ? 'right-3' : 'right-4',
+          'absolute hover:text-accent-primary disabled:text-controls-disable',
+          isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
         )}
         onClick={onSend}
         disabled={disabled}

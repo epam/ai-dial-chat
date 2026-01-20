@@ -31,7 +31,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -78,9 +78,8 @@ function ShareAccessSection({
   return (
     <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
       {isShared ? (
-        <DialButton
+        <DialLinkButton
           onClick={onUnshare}
-          className="flex text-sm text-accent-primary"
           data-qa="remove-access-button"
           iconBefore={<IconUserUnshare height={18} width={18} />}
           label={unshareLabel}

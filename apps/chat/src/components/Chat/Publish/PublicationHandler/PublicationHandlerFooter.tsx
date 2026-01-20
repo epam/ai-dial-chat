@@ -1,5 +1,6 @@
 import { IconExclamationCircle, IconPencil } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -60,6 +61,10 @@ import {
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+} from '@/src/components/Chat/Publish/form';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -69,17 +74,25 @@ import {
   PublishActions,
   ShareEntity,
 } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialLinkButton,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
+
+const formErrors = {
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]:
+    'Enter a valid name for the publish request',
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: 'Enter an author name',
+};
 
 interface Props {
   initialState: PublicationHandlerState;
   publication: Publication;
   isFormChanged: boolean;
   areRulesChanged: boolean;
-  isFormErrors: boolean;
-  displayAuthorEditState: string;
 }
 
 export const PublicationHandlerFooter = ({
@@ -87,8 +100,6 @@ export const PublicationHandlerFooter = ({
   publication,
   isFormChanged,
   areRulesChanged,
-  isFormErrors,
-  displayAuthorEditState,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -133,6 +144,16 @@ export const PublicationHandlerFooter = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+
+  const { control } = useFormContext<PublicationRequestFormData>();
+  const { errors, isValid } = useFormState({ control });
+
+  const formError =
+    formErrors[
+      Object.keys(errors)[0] as
+        | PublishRequestFieldsNames.PUBLICATION_AUTHOR
+        | PublishRequestFieldsNames.PUBLISH_REQUEST_NAME
+    ];
 
   const dispatch = useAppDispatch();
 
@@ -386,13 +407,9 @@ export const PublicationHandlerFooter = ({
     },
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
-  const isDisplayAuthorInvalid = !isEntityNameValid(
-    displayAuthorEditState,
-    false,
-  );
 
   const isEditInvalid =
-    isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+    isNamesOrVersionsInvalid || isFoldersInvalid || !isValid;
   const someReviewedConversationHasNoMessages =
     uploadedPublicationConversations.some(
       ({ messages, playback }) =>
@@ -419,15 +436,13 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
-      return isFormErrors
-        ? 'Enter a valid name for the publish request'
-        : isDisplayAuthorInvalid
-          ? 'Enter a valid name for the author'
-          : !selectedPublicationItems.length
+      return !isValid
+        ? formError
+        : !selectedPublicationItems.length
+          ? 'Nothing is selected and rules have not changed'
+          : areNoChanges
             ? 'Nothing is selected and rules have not changed'
-            : areNoChanges
-              ? 'Nothing is selected and rules have not changed'
-              : "Request can't be published as some items are invalid";
+            : "Request can't be published as some items are invalid";
     }
 
     return selectedInvalidEntities.length
@@ -445,14 +460,15 @@ export const PublicationHandlerFooter = ({
     someReviewedConversationHasNoMessages,
     isPublicationUpdating,
     areNoChanges,
-    isFormErrors,
-    isDisplayAuthorInvalid,
+    isValid,
+    formError,
     selectedPublicationItems.length,
   ]);
+
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
     (publishModel &&
-      (isEditInvalid || isFormErrors || !selectedPublicationItems.length));
+      (isEditInvalid || !isValid || !selectedPublicationItems.length));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {
@@ -498,8 +514,8 @@ export const PublicationHandlerFooter = ({
       ) : (
         !isOnlyFilesPublication &&
         !!resourcesToReview.length && (
-          <DialButton
-            className="text-accent-primary"
+          <DialLinkButton
+            className="px-0"
             onClick={handlePublicationReview}
             data-qa="go-to-review"
             label={t(
@@ -523,9 +539,8 @@ export const PublicationHandlerFooter = ({
                     Icon={IconPencil}
                   />
                 )}
-                <DialButton
+                <DialNeutralButton
                   label={t('Reject')}
-                  variant={ButtonVariant.Secondary}
                   onClick={() =>
                     dispatch(
                       PublicationActions.rejectPublication({
@@ -541,9 +556,8 @@ export const PublicationHandlerFooter = ({
               hideTooltip={!isApproveOrSendDisabled}
               tooltip={t(getSubmitTooltipText())}
             >
-              <DialButton
+              <DialPrimaryButton
                 label={t(getSubmitBtnText())}
-                variant={ButtonVariant.Primary}
                 textClassName="whitespace-nowrap"
                 onClick={publishModel ? undefined : handleApprovePublication}
                 type={publishModel ? 'submit' : 'button'}
@@ -554,9 +568,8 @@ export const PublicationHandlerFooter = ({
           </>
         ) : (
           <>
-            <DialButton
+            <DialNeutralButton
               label={t('Cancel')}
-              variant={ButtonVariant.Secondary}
               onClick={handleToggleEditMode}
               data-qa="cancel"
             />
@@ -569,9 +582,8 @@ export const PublicationHandlerFooter = ({
                   : 'Make any changes to update the request',
               )}
             >
-              <DialButton
+              <DialPrimaryButton
                 label={t('Update request')}
-                variant={ButtonVariant.Primary}
                 textClassName="whitespace-nowrap"
                 disabled={isEditDisabled}
                 type="submit"

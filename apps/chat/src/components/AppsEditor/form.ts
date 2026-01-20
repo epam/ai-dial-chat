@@ -63,6 +63,7 @@ import {
 } from '@/src/constants/validation-helpers';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 import { z as zodValidation } from 'zod';
 
@@ -350,13 +351,12 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
       ?.flatMap((toolset) => toolset.tools) ?? [];
   const mcpToolsets = appProperties?.tool_sets?.filter(isMcpToolset) ?? [];
 
-  const allItems = [...agentToolsets, ...mcpToolsets];
+  const allItems = [...agentToolsets, ...mcpToolsets].map((item) => ({
+    ...item,
+    name: getQuickAppItemNameFromConfig(item),
+  }));
 
-  const sortedItems = allItems.sort((a, b) =>
-    getQuickAppItemNameFromConfig(a).localeCompare(
-      getQuickAppItemNameFromConfig(b),
-    ),
-  );
+  const sortedItems = sortBy(allItems, [(item) => item.name.toLowerCase()]);
 
   const sortedIds = sortedItems.map((item) => {
     const id = 'dial_id' in item ? item.dial_id : item.deployment_id;

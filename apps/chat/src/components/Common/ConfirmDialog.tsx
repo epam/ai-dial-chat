@@ -6,7 +6,7 @@ import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   isOpen: boolean;
@@ -78,20 +78,18 @@ export const ConfirmDialog = ({
         </div>
         <div className="flex w-full items-center justify-end gap-3">
           {cancelLabel && (
-            <DialButton
+            <DialNeutralButton
               data-no-context-menu
-              variant={ButtonVariant.Secondary}
               label={cancelLabel}
               onClick={handleCancel}
               data-qa="cancel-dialog"
             />
           )}
-          <DialButton
+          <DialPrimaryButton
             data-no-context-menu
             ref={confirmLabelRef}
             autoFocus
             label={confirmLabel}
-            variant={ButtonVariant.Primary}
             onClick={handleConfirm}
             data-qa="confirm"
           />

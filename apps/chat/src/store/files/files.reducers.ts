@@ -630,10 +630,14 @@ export const filesSlice = createSlice({
     },
     addSharedFiles: (
       state,
-      { payload }: PayloadAction<{ files: DialFile[] }>,
+      { payload }: PayloadAction<{ files: DialFile[]; reviewFolder?: string }>,
     ) => {
-      //remove sharedWithMe files from state to have latest state from API
-      const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
+      //remove sharedWithMe files from state except those on review to have the latest state from API
+      const filteredFiles = state.files.filter(
+        (file) =>
+          !file.sharedWithMe ||
+          (payload.reviewFolder && file.id.startsWith(payload.reviewFolder)),
+      );
       state.files = combineEntities(payload.files, filteredFiles);
     },
     resetAllFoldersStatus: (state) => {

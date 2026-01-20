@@ -19,7 +19,6 @@ import {
   getConversationSchema,
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialFile, DialLink } from '@/src/types/files';
@@ -347,13 +346,13 @@ export const ChatInputMessage = Inversify.register(
       onRegenerate,
     ]);
 
-    const enterType = useAppSelector(UISelectors.selectEnterType);
+    const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (showPromptList && filteredPrompts.length > 0) {
           handleKeyDownIfShown(e);
-        } else if (!isTyping && allowEnterClick(e, enterType)) {
+        } else if (!isTyping && allowEnterClick(e)) {
           e.preventDefault();
           if (isReplay || messageIsStreaming) {
             return;
@@ -368,7 +367,7 @@ export const ChatInputMessage = Inversify.register(
         showPromptList,
         filteredPrompts.length,
         isTyping,
-        enterType,
+        allowEnterClick,
         handleKeyDownIfShown,
         isReplay,
         messageIsStreaming,
@@ -563,7 +562,14 @@ export const ChatInputMessage = Inversify.register(
           />
           {canAttach && (
             <>
-              <div className="absolute bottom-3 left-4 cursor-pointer rounded disabled:cursor-not-allowed">
+              <div
+                className={classNames(
+                  'absolute cursor-pointer rounded disabled:cursor-not-allowed',
+                  isOverlay
+                    ? 'bottom-2 left-3'
+                    : 'bottom-2.5 left-4 md:bottom-3',
+                )}
+              >
                 <AttachButton
                   selectedFilesIds={selectedFiles
                     .map((f) => f.id)

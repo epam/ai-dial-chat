@@ -12,7 +12,6 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
@@ -42,7 +41,7 @@ import {
   MessageFormValue,
   onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import throttle from 'lodash/throttle';
 
@@ -136,16 +135,16 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
     ],
   );
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!isTyping && allowEnterClick(e, enterType)) {
+      if (!isTyping && allowEnterClick(e)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [enterType, formValue, handleEditMessage, isTyping, messageContent],
+    [allowEnterClick, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleCancelEditing = useCallback(() => {
@@ -199,17 +198,15 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
 
       <div className="flex items-center justify-end">
         <div className="relative flex gap-3">
-          <DialButton
+          <DialNeutralButton
             label={t('Cancel')}
-            variant={ButtonVariant.Secondary}
             onClick={handleCancelEditing}
             data-qa="cancel"
           />
 
           {!isInputHidden && (
-            <DialButton
+            <DialPrimaryButton
               label={t('Save & Submit')}
-              variant={ButtonVariant.Primary}
               onClick={() => handleEditMessage(formValue, messageContent)}
               disabled={!messageContent}
               data-qa="save-and-submit"

@@ -29,12 +29,12 @@ import { OperationLoaderModal } from '@/src/components/FileManager/OperationLoad
 
 import {
   ButtonVariant,
-  DialButton,
   DialFileAcceptType,
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
   DialLoader,
+  DialPrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -399,9 +399,8 @@ export const FileManagerModal = memo(
           </div>
 
           <div className="flex justify-end">
-            <DialButton
+            <DialPrimaryButton
               onClick={handleAttachFiles}
-              variant={ButtonVariant.Primary}
               label={customButtonLabel ?? t('Attach')}
               disabled={
                 selectedFilesIds.length === 0 && selectedFolderIds.length === 0

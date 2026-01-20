@@ -106,7 +106,7 @@ import {
   Message,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import { intersectionBy } from 'lodash-es';
+import intersectionBy from 'lodash-es/intersectionBy';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 

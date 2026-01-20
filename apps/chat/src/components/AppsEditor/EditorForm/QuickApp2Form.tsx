@@ -56,6 +56,7 @@ import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/Toolset
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { Feature } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -113,20 +114,34 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     name: 'model',
   });
 
+  const agentsAndToolsetsIds = useWatch({
+    control,
+    name: 'agentsAndToolsets',
+  });
+
+  const sortedAgentsAndToolsets = useMemo(() => {
+    const ids = [...(agentsAndToolsetsIds || [])];
+
+    const itemsWithName = ids.map((id) => ({
+      id: id,
+      name: getEntityDisplayName(id, allEntitiesMap),
+    }));
+
+    const sortedItems = sortBy(itemsWithName, [
+      (item) => item.name.toLowerCase(),
+    ]);
+
+    return sortedItems.map((item) => item.id);
+  }, [agentsAndToolsetsIds, allEntitiesMap]);
+
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
-      const sortedValue = value.sort((a, b) =>
-        getEntityDisplayName(a, allEntitiesMap).localeCompare(
-          getEntityDisplayName(b, allEntitiesMap),
-        ),
-      );
-
-      setValue('agentsAndToolsets', sortedValue, {
+      setValue('agentsAndToolsets', value, {
         shouldTouch: true,
         shouldDirty: true,
       });
     },
-    [allEntitiesMap, setValue],
+    [setValue],
   );
 
   const showTemperatureSlider = useMemo(() => {
@@ -248,11 +263,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       <Controller
         name="agentsAndToolsets"
         control={control}
-        render={({ field }) => {
+        render={() => {
           return (
             <>
               <AgentAndToolsetSelectorField
-                value={field.value}
+                value={sortedAgentsAndToolsets}
                 onChange={handleAgentsAndToolsetsChange}
                 allItemsMap={allEntitiesMap}
                 label={t('Agents & Toolsets')}
