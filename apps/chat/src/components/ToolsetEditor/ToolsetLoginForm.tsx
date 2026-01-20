@@ -96,20 +96,23 @@ export const ToolsetLoginForm = ({
     <div className={classNames('flex flex-col gap-4', className)}>
       {type === ToolsetAuthTypes.API_KEY && !isSignedIn && (
         <>
-          <Field
-            {...register('keyHeader')}
-            label={t('API Key parameter name')}
-            mandatory
-            placeholder={t('Enter key name')}
-            id="keyHeader"
-            autoComplete="username"
-            error={errors.keyHeader?.message}
-            disabled={disabled}
-            tooltip={fieldsTooltip}
+          <div
             className={classNames({
               hidden: hideConfigFields,
             })}
-          />
+          >
+            <Field
+              {...register('keyHeader')}
+              label={t('API Key parameter name')}
+              mandatory
+              placeholder={t('Enter key name')}
+              id="keyHeader"
+              autoComplete="username"
+              error={errors.keyHeader?.message}
+              disabled={disabled}
+              tooltip={fieldsTooltip}
+            />
+          </div>
           {withLogin === WithLogin.WithLogin && (
             <Field
               {...register('apiKey')}

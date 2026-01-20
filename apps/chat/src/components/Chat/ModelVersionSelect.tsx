@@ -83,7 +83,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}
-      listClassName="z-[60]"
+      listClassName="z-[2000]"
       data-qa="model-version-select"
       trigger={
         <div
