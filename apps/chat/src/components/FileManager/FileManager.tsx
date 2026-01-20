@@ -71,37 +71,41 @@ export const FileManager: React.FC = () => {
 
   return (
     <div className="flex w-full grow overflow-auto" data-qa="file-manager">
-      <DialFileManager
-        path={currentPath}
-        onPathChange={setCurrentPath}
-        items={fileTreeItems}
-        rootItem={rootFolder}
-        filesLoading={areFilesLoading || areFoldersLoading}
-        sharedByMePaths={sharedByMePaths}
-        onSearchFiles={handleSearchFiles}
-        searchInProgress={isLoadingSearchListing}
-        searchResults={searchResultsUIKit}
-        bulkActionsToolbarOptions={bulkActionsToolbarOptions}
-        treeOptions={treeOptions}
-        fileMetadataPopupOptions={fileMetadataPopupOptions}
-        navigationPanelOptions={navigationPanelOptions}
-        gridOptions={gridOptions}
-        toolbarOptions={toolbarOptions}
-        onCopyFiles={handleCopyFiles}
-        onGetInfo={handleGetInfo}
-        onMoveToFiles={handleMoveFiles}
-        onDeleteFiles={handleDeleteFiles}
-        onDownloadFiles={handleDownloadFiles}
-        onTableFileClick={handleTableFileClick}
-        destinationFolderPopupOptions={destinationFolderPopupOptions}
-        deleteConfirmationOptions={deleteConfirmationOptions}
-        onUploadFiles={handleUploadFiles}
-        onCreateFolder={handleCreateFolder}
-        onUploadArchive={handleUploadArchive}
-        onUnshareFiles={handleUnshareFiles}
-        onRenameValidate={handleRenameValidation}
-        sharedWithMeIds={sharedWithMeIds}
-      />
+      {initialDataStatus !== UploadStatus.LOADED ? (
+        <DialLoader size={45} />
+      ) : (
+        <DialFileManager
+          path={currentPath}
+          onPathChange={setCurrentPath}
+          items={fileTreeItems}
+          rootItem={rootFolder}
+          filesLoading={areFilesLoading || areFoldersLoading}
+          sharedByMePaths={sharedByMePaths}
+          onSearchFiles={handleSearchFiles}
+          searchInProgress={isLoadingSearchListing}
+          searchResults={searchResultsUIKit}
+          bulkActionsToolbarOptions={bulkActionsToolbarOptions}
+          treeOptions={treeOptions}
+          fileMetadataPopupOptions={fileMetadataPopupOptions}
+          navigationPanelOptions={navigationPanelOptions}
+          gridOptions={gridOptions}
+          toolbarOptions={toolbarOptions}
+          onCopyFiles={handleCopyFiles}
+          onGetInfo={handleGetInfo}
+          onMoveToFiles={handleMoveFiles}
+          onDeleteFiles={handleDeleteFiles}
+          onDownloadFiles={handleDownloadFiles}
+          onTableFileClick={handleTableFileClick}
+          destinationFolderPopupOptions={destinationFolderPopupOptions}
+          deleteConfirmationOptions={deleteConfirmationOptions}
+          onUploadFiles={handleUploadFiles}
+          onCreateFolder={handleCreateFolder}
+          onUploadArchive={handleUploadArchive}
+          onUnshareFiles={handleUnshareFiles}
+          onRenameValidate={handleRenameValidation}
+          sharedWithMeIds={sharedWithMeIds}
+        />
+      )}
       {isAnyOperationInProgress && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
           <DialLoader size={48} ariaLabel={t('Processing files...')} />
