@@ -95,7 +95,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
                 entity.topics?.length ? 'gap-2' : '',
               )}
             >
-              <MarketplaceEntityIndicator entity={entity} />
+              <MarketplaceEntityIndicator entity={entity} isDetailedView />
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
