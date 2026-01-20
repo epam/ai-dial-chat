@@ -31,6 +31,7 @@ import {
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
+import { getVersionFromId } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
 import {
@@ -99,10 +100,10 @@ const getLoginSuccessMessage = (
   switch (authLevel) {
     case ToolsetCredentialsLevel.GLOBAL:
       return isAdminAndPublic
-        ? 'Successful login\nYou have successfully logged into the "{{name}}" with organizational credentials.'
-        : 'Successful login\nYou have successfully logged into the "{{name}}" toolset.';
+        ? 'Successful login\nYou have successfully logged into the "{{name}}" version {{version}} with credentials to entire organization.'
+        : 'Successful login\nYou have successfully logged into the "{{name}}" version {{version}}.';
     case ToolsetCredentialsLevel.USER:
-      return 'Successful login\nYou have successfully logged into the "{{name}}" with personal credentials.';
+      return 'Successful login\nYou have successfully logged into the "{{name}}" version {{version}} with personal credentials.';
     default:
       return '';
   }
@@ -114,10 +115,10 @@ const getLogoutSuccessMessage = (
   switch (authLevel) {
     case ToolsetCredentialsLevel.GLOBAL:
       return isAdminAndPublic
-        ? 'Successful logout\nYou have successfully logged out of the "{{name}}" using organizational credentials.'
-        : 'Successful logout\nYou have successfully logged out of the "{{name}}" toolset.';
+        ? 'Successful logout\nYou have successfully logged out of the "{{name}}" version {{version}} with credentials to entire organization.'
+        : 'Successful logout\nYou have successfully logged out of the "{{name}}" version {{version}}.';
     case ToolsetCredentialsLevel.USER:
-      return 'Successful logout\nYou have successfully logged out of the "{{name}}" using your personal credentials.';
+      return 'Successful logout\nYou have successfully logged out of the "{{name}}" version {{version}} using your personal credentials.';
     default:
       return '';
   }
@@ -767,6 +768,7 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           const name = getEntityNameFromId(payload.toolsetId, {
             removeVersion: true,
           });
+          const version = getVersionFromId(payload.toolsetId);
 
           const toastAction$ = of(
             UIActions.showSuccessToast(
@@ -775,7 +777,7 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
                   (payload.isAdmin ?? isAdmin) && isPublic,
                   payload.authLevel,
                 ),
-                { name },
+                { name, version },
               ),
             ),
           );
@@ -824,6 +826,7 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
           const name = getEntityNameFromId(payload.toolsetId, {
             removeVersion: true,
           });
+          const version = getVersionFromId(payload.toolsetId);
 
           return refreshToolset$(payload.toolsetId, state$.value).pipe(
             mergeMap((actions) =>
@@ -836,7 +839,7 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
                         isAdmin && isPublic,
                         payload.authLevel,
                       ),
-                      { name },
+                      { name, version },
                     ),
                   ),
                 ),

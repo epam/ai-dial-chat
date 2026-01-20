@@ -14,8 +14,6 @@ import {
 } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
@@ -30,6 +28,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { RadioButton } from '@/src/components/Common/Forms/RadioButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
+import { AuthAccordion } from '@/src/components/ToolsetEditor/AuthAccordion';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
 import {
   ToolsetEditorForm,
@@ -103,40 +102,18 @@ const AuthTypeSection = ({
       tooltip={tooltip ?? t('Log out before changing authentication type')}
       triggerClassName="w-full"
     >
-      <div className="overflow-hidden rounded bg-layer-3">
-        <button
-          onClick={handleOnClick}
-          className={classNames(
-            'flex w-full gap-3 border-l p-4',
-            isSelected ? 'border-accent-primary' : 'border-transparent',
-            isSectionDisabled && 'cursor-not-allowed',
-          )}
-          disabled={isSectionDisabled}
-          data-qa={type.toString().toLowerCase()}
-        >
-          <Icon
-            size={18}
-            className={classNames(
-              isSelected ? 'text-accent-primary' : 'text-secondary',
-            )}
-          />
-
-          <span
-            className={classNames(
-              'text-sm font-semibold',
-              isSelected ? 'text-accent-primary' : 'text-primary',
-            )}
-            data-qa={type.toString().toLowerCase().concat('-label')}
-          >
-            {name}
-          </span>
-        </button>
-
-        {isSelected && type !== ToolsetAuthTypes.NONE && (
-          <div
-            className="flex flex-col gap-4 border-t border-tertiary p-4"
-            data-qa="auth-details-container"
-          >
+      <AuthAccordion
+        Icon={Icon}
+        title={name}
+        isOpen={isSelected}
+        onClick={handleOnClick}
+        disabled={isSectionDisabled}
+        triggerQa={type.toString().toLowerCase()}
+        titleQa={type.toString().toLowerCase().concat('-label')}
+        contentQa="auth-details-container"
+      >
+        {type !== ToolsetAuthTypes.NONE && (
+          <>
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
               <RadioButton
                 id={WithLogin.WithLogin}
@@ -187,9 +164,9 @@ const AuthTypeSection = ({
                 fieldsTooltip={tooltip}
               />
             )}
-          </div>
+          </>
         )}
-      </div>
+      </AuthAccordion>
     </Tooltip>
   );
 };
