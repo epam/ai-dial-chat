@@ -9,7 +9,7 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface SuggestionButtonProps {
   onSetTab?: (tab: MarketplaceTabs) => void;
@@ -27,8 +27,7 @@ export const SuggestionButton = ({
   }, [onSetTab]);
 
   return (
-    <DialButton
-      className="text-accent-primary"
+    <DialLinkButton
       onClick={handleClick}
       label={t('{{baseText}} {{tabName}}', {
         baseText: t(customText),

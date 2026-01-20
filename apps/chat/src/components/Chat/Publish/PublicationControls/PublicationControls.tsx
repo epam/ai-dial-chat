@@ -28,7 +28,7 @@ import {
 
 import { TEntity } from './view-props';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props<TEntity> {
   entity: TEntity;
@@ -186,9 +186,7 @@ function PublicationControlsView({
       )}
       data-qa="chat-review-container"
     >
-      <DialButton
-        variant={ButtonVariant.Secondary}
-        className="p-2 disabled:bg-layer-2"
+      <DialNeutralButton
         data-qa="prev-chat-review-button"
         disabled={publicationIdx === 0}
         onClick={() => toggleResource(-1)}
@@ -200,9 +198,7 @@ function PublicationControlsView({
           />
         }
       />
-      <DialButton
-        variant={ButtonVariant.Secondary}
-        className="p-2 disabled:bg-layer-2"
+      <DialNeutralButton
         data-qa="next-chat-review-button"
         disabled={publicationIdx === resourcesToReview.length - 1}
         onClick={() => toggleResource(1)}
@@ -210,8 +206,7 @@ function PublicationControlsView({
           <IconPlayerPlay className="shrink-0" height={18} width={18} />
         }
       />
-      <DialButton
-        variant={ButtonVariant.Primary}
+      <DialPrimaryButton
         onClick={handleBackToPublication}
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
