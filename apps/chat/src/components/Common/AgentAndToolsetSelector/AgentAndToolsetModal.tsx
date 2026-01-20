@@ -65,7 +65,7 @@ import {
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
-import { sortBy } from 'lodash-es';
+import sortBy from 'lodash-es/sortBy';
 
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
   allVersions?: MarketplaceEntity[];

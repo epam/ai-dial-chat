@@ -63,7 +63,7 @@ import {
 } from '@/src/constants/validation-helpers';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
-import { sortBy } from 'lodash-es';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 import { z as zodValidation } from 'zod';
 
