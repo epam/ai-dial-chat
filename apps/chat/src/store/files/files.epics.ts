@@ -847,10 +847,14 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       const verbPast = isCopy ? 'copied' : 'moved';
 
       if (items.length > 0) {
+        const destinationUrl = action.payload.request.destinationFolder;
+        const path = items[0].destinationUrl;
+        const { name, bucket } = splitEntityId(path);
+        const folderPlaceholder = destinationUrl.replace(
+          `files/${bucket}`,
+          getRootFolderPlaceholderName(bucket),
+        );
         if (items.length === 1) {
-          const destinationUrl = items[0].destinationUrl;
-          const { parentPath, name, bucket } = splitEntityId(destinationUrl);
-
           return UIActions.showToast({
             type: ToastType.Success,
             title: translate('Item {{verb}} successfully', {
@@ -860,14 +864,11 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
             message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
               ns: Translation.Files,
               fileName: name,
-              folder: parentPath ?? getRootFolderPlaceholderName(bucket),
+              folder: folderPlaceholder,
               verb: verbPast,
             }),
           });
         }
-
-        const destinationUrl = request.destinationFolder;
-        const { parentPath, bucket } = splitEntityId(destinationUrl);
 
         return UIActions.showToast({
           type: ToastType.Success,
@@ -878,7 +879,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
           message: translate('{{count}} items {{verb}} to {{folder}}', {
             ns: Translation.Files,
             count: items.length,
-            folder: parentPath ?? getRootFolderPlaceholderName(bucket),
+            folder: folderPlaceholder,
             verb: verbPast,
           }),
         });
@@ -933,8 +934,13 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
       const verbPast = 'deleted';
 
       if (items.length > 0) {
+        const destinationUrl = payload.request.folderUrl;
         const path = items[0].sourceUrl;
-        const { parentPath, name, bucket } = splitEntityId(path);
+        const { name, bucket } = splitEntityId(path);
+        const folderPlaceholder = destinationUrl.replace(
+          `files/${bucket}`,
+          getRootFolderPlaceholderName(bucket),
+        );
 
         if (items.length === 1) {
           return UIActions.showToast({
@@ -946,7 +952,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
             message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
               ns: Translation.Files,
               fileName: name,
-              folder: parentPath ?? getRootFolderPlaceholderName(bucket),
+              folder: folderPlaceholder,
               verb: verbPast,
             }),
           });
@@ -961,7 +967,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           message: translate('{{count}} items {{verb}} from {{folder}}', {
             ns: Translation.Files,
             count: items.length,
-            folder: getRootFolderPlaceholderName(bucket),
+            folder: folderPlaceholder,
             verb: verbPast,
           }),
         });
