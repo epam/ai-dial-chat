@@ -16,7 +16,7 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   publicVersionGroupId: string;
@@ -118,11 +118,11 @@ export function PublicVersionSelector({
       className="flex shrink-0 items-center"
       disabled={allVersions.length <= 1}
       trigger={
-        <DialButton
+        <DialLinkButton
           onClick={(e) => stopBubbling(e)}
           disabled={allVersions.length <= 1}
           className={classNames(
-            'flex',
+            'flex px-0 text-primary hover:text-primary',
             allVersions.length <= 1 && 'cursor-default',
             btnClassNames,
             readonly && 'text-xs text-secondary',

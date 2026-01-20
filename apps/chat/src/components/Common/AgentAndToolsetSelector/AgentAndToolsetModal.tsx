@@ -27,10 +27,7 @@ import {
   getStringFromSearchParams,
   updateQueryParams,
 } from '@/src/utils/app/url/query-params';
-import {
-  customSortEntitiesByName,
-  isInstalledEntity,
-} from '@/src/utils/marketplace';
+import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
@@ -67,7 +64,8 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import sortBy from 'lodash-es/sortBy';
 
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
   allVersions?: MarketplaceEntity[];
@@ -348,10 +346,15 @@ const AgentAndToolsetModalView = ({
       return true;
     });
 
-    const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
+    const allGroupedItemsUnsorted = groupMarketplaceEntityAndSaveOrder(
+      filteredItems,
+    )
       .map(getSelectedItemFromGroup)
-      .filter((item): item is DisplayedMarketplaceEntity => !!item)
-      .sort(customSortEntitiesByName);
+      .filter((item): item is DisplayedMarketplaceEntity => !!item);
+
+    const allGroupedItems = sortBy(allGroupedItemsUnsorted, [
+      (item) => item.name.toLowerCase(),
+    ]);
 
     if (!isMyWorkspace) {
       return allGroupedItems;
@@ -530,16 +533,8 @@ const AgentAndToolsetModalView = ({
         ref={footerRef}
         className="absolute bottom-0 flex w-full justify-end gap-3 border-t border-tertiary px-6 py-[14px]"
       >
-        <DialButton
-          label={t('Cancel')}
-          variant={ButtonVariant.Secondary}
-          onClick={onClose}
-        />
-        <DialButton
-          label={t('Confirm')}
-          variant={ButtonVariant.Primary}
-          onClick={handleConfirm}
-        />
+        <DialNeutralButton label={t('Cancel')} onClick={onClose} />
+        <DialPrimaryButton label={t('Confirm')} onClick={handleConfirm} />
       </div>
     </>
   );

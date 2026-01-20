@@ -38,7 +38,7 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
@@ -228,10 +228,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           tooltip={t('Fill in all required fields')}
           hideTooltip={isValid || isEditing}
         >
-          <DialButton
+          <DialPrimaryButton
             label={t('Next')}
             data-qa="save-entity-general-info"
-            variant={ButtonVariant.Primary}
             type="submit"
             disabled={(!isValid && !isEditing) || isAppLoading}
           />

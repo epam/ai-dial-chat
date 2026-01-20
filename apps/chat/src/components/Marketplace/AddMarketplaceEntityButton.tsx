@@ -13,7 +13,7 @@ import { Translation } from '@/src/types/translation';
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { FeatureType } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface AddMarketplaceEntityButtonProps {
   menuItems: DisplayMenuItemProps[];
@@ -41,11 +41,9 @@ export function AddMarketplaceEntityButton({
 
   if (visibleActions.length === 1)
     return (
-      <DialButton
-        className="shrink-0"
+      <DialPrimaryButton
         onClick={visibleActions[0].onClick}
         label={t(`Add ${label}`)}
-        variant={ButtonVariant.Primary}
         iconBefore={<IconPlus size={18} />}
         data-qa={dataQa}
       />
@@ -59,9 +57,7 @@ export function AddMarketplaceEntityButton({
       onOpenChange={setIsOpen}
       placement="bottom"
       TriggerCustomRenderer={
-        <DialButton
-          className="shrink-0 focus:border-transparent"
-          variant={ButtonVariant.Primary}
+        <DialPrimaryButton
           data-qa={dataQa}
           label={isScreenSmall ? t('Add') : t(`Add ${label}`)}
           iconAfter={
