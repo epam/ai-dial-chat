@@ -45,6 +45,7 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
     onBookmarkClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
+    
     const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();

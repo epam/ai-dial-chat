@@ -54,7 +54,7 @@ export const OverflowIndicator = ({
     >
       <DialButton
         className={classNames(
-          'flex items-center rounded border border-accent-primary bg-transparent p-0 px-1.5 py-1',
+          'flex h-auto items-center rounded border border-accent-primary bg-transparent p-0 px-1.5 py-1',
           className,
         )}
         textClassName="font-normal leading-3 text-xs"
