@@ -89,9 +89,11 @@ export const CodeAppForm = () => {
   const { errors } = useFormState<CodeAppFormType>({ control });
   const sources = useWatch<CodeAppFormType, 'sources'>({
     name: 'sources',
+    control,
   });
   const filesLoaded = useWatch<CodeAppFormType, 'filesLoaded'>({
     name: 'filesLoaded',
+    control,
   });
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
