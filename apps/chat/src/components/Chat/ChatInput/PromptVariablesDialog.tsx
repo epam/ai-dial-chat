@@ -31,11 +31,7 @@ import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageT
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  ButtonVariant,
-  DialButton,
-  DialCloseButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -234,10 +230,9 @@ export const PromptVariablesDialog: FC<Props> = ({
         ))}
 
         <div className="mt-1 flex justify-end">
-          <DialButton
+          <DialPrimaryButton
             label={t('Submit')}
             type="submit"
-            variant={ButtonVariant.Primary}
             data-qa="submit-variable"
           />
         </div>

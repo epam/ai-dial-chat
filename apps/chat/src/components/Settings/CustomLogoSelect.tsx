@@ -13,7 +13,7 @@ import { Label } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
@@ -27,9 +27,10 @@ interface CustomLogoSelectProps {
   sourceFilters?: Set<FileSourceType>;
   confirmDialogValues?: ConfirmDialogValueTypes;
   warningMessage?: string;
+  isFormView?: boolean;
+  maxSelectableFileSize?: number;
   onLogoSelect: (filesIds: string[]) => void;
   onDeleteLocalLogoHandler: () => void;
-  isFormView?: boolean;
 }
 
 export const CustomLogoSelect = ({
@@ -44,6 +45,7 @@ export const CustomLogoSelect = ({
   sourceFilters,
   confirmDialogValues,
   warningMessage,
+  maxSelectableFileSize,
   onLogoSelect,
   onDeleteLocalLogoHandler,
   isFormView,
@@ -140,10 +142,8 @@ export const CustomLogoSelect = ({
         </div>
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
-            <DialButton
+            <DialLinkButton
               onClick={onClickAddHandler}
-              className="text-accent-primary"
-              textClassName="font-normal"
               disabled={disabled}
               data-qa={localLogo ? 'change-icon' : 'add-icon'}
               label={localLogo ? t('Change') : t('Add')}
@@ -170,6 +170,7 @@ export const CustomLogoSelect = ({
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
+          maxSelectableFileSize={maxSelectableFileSize}
         />
       )}
 

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { DialSpinner } from './Spinner';
 
-import { ButtonVariant, DialButton, DialPopup } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton, DialPopup } from '@epam/ai-dial-ui-kit';
 
 interface OperationLoaderModalProps {
   title: string;
@@ -40,9 +40,8 @@ export const OperationLoaderModal = ({
           <div className="text-lg font-semibold">{title}</div>
           <div className="text-sm">{text}</div>
         </div>
-        <DialButton
+        <DialLinkButton
           className="w-fit"
-          variant={ButtonVariant.Tertiary}
           label="Cancel"
           onClick={() => {
             setIsOpen(false);

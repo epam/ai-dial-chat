@@ -16,7 +16,7 @@ import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDia
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { AgentAndToolsetModal } from './AgentAndToolsetModal';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 const NoAgentsAndToolsets: React.FC = () => {
   const { t } = useTranslation(Translation.Common);
@@ -88,10 +88,8 @@ export const AgentAndToolsetSelector: React.FC<
           <Tooltip
             tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
           >
-            <DialButton
+            <DialLinkButton
               disabled={readonly}
-              className="flex items-center text-accent-primary"
-              textClassName="font-normal"
               onClick={handleOpenSelectModal}
               iconBefore={<IconPlus size={18} />}
               label={t('Add')}

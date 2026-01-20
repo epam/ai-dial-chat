@@ -6,9 +6,8 @@ import { Translation } from '@/src/types/translation';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import {
-  ButtonVariant,
-  DialButton,
   DialFileName,
+  DialNeutralButton,
   DialPopup,
 } from '@epam/ai-dial-ui-kit';
 
@@ -60,8 +59,7 @@ export const FilesUploadingModal = ({
       closeOnOutsideClick={false}
       footer={
         <div className="flex justify-end gap-2 px-6 py-4">
-          <DialButton
-            variant={ButtonVariant.Secondary}
+          <DialNeutralButton
             label={t('Cancel')}
             onClick={() => {
               setIsOpen(false);
