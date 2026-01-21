@@ -49,6 +49,8 @@ export const CustomViewerForm = () => {
       const iframeUrl = `${host}?authProvider=${providerId}&id=${encodeURIComponent(id)}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('generateTargetUrl catch error', error);
       router.push(Routes.NotFound);
     }
   }, [host, id, providerId, router, theme]);

@@ -191,6 +191,7 @@ export class FileService {
                 relativePath,
               ),
               serverSynced: true,
+              permissions: folder.permissions,
             };
           });
       }),

@@ -27,7 +27,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
 
@@ -130,13 +130,12 @@ export default function Signin({
         </div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
-            <DialButton
-              className="place-content-center gap-4 p-4"
+            <DialNeutralButton
+              className="gap-4 p-4"
               onClick={() => {
                 void handleSignIn(provider);
               }}
               key={provider.id + provider.name}
-              variant={ButtonVariant.Secondary}
               iconBefore={
                 <Image
                   className="h-6"

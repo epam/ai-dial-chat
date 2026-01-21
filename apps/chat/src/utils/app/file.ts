@@ -13,7 +13,11 @@ import {
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
-import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
+import {
+  BYTES_IN_KB,
+  BYTES_IN_MB,
+  MAX_FILE_SIZE_IN_BYTES,
+} from '@/src/constants/file';
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
@@ -505,6 +509,14 @@ export const getFilesFromDataTransferItems = (
   return Array.from(items)
     .filter((item) => item.webkitGetAsEntry()?.isFile)
     .map((item) => item.getAsFile()) as File[];
+};
+
+export const formatFileSize = (sizeInBytes: number): string => {
+  if (sizeInBytes >= BYTES_IN_MB) {
+    return `${Math.ceil(sizeInBytes / BYTES_IN_MB)} ${translate('MB')}`;
+  }
+
+  return `${Math.ceil(sizeInBytes / BYTES_IN_KB)} ${translate('KB')}`;
 };
 
 export const getMyBucketAttachments = (

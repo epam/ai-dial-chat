@@ -26,7 +26,7 @@ import { ServiceSelectors } from '@/src/store/selectors';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 function transformDateString(dateString: string): string {
   const dateParts = dateString.split('-');
@@ -564,11 +564,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
       </div>
 
       <div className="flex justify-end">
-        <DialButton
-          type="submit"
-          variant={ButtonVariant.Primary}
-          label={t('Send request')}
-        />
+        <DialPrimaryButton type="submit" label={t('Send request')} />
       </div>
     </Modal>
   );

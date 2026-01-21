@@ -46,6 +46,7 @@ dialTest(
     setTestIds('EPMRTC-1884', 'EPMRTC-3296');
 
     let fileDotsMenu: Locator;
+    let fileRow: Locator;
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
@@ -62,9 +63,11 @@ dialTest(
     await dialTest.step(
       'Open attached file dropdown menu and select Delete option',
       async () => {
+        fileRow = filesManagerGrid.gridRowByNameCell(Attachment.sunImageName);
         fileDotsMenu = await filesManagerGrid.gridDotsMenuByNameCell(
           Attachment.sunImageName,
         );
+        await fileRow.hover();
         await fileDotsMenu.click();
         await filesManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
           isHttpMethodTriggered: false,
@@ -104,6 +107,7 @@ dialTest(
     await dialTest.step(
       'Proceed again to "Confirm Deleting Item" popup, confirm file delete and verify it disappears from the grid',
       async () => {
+        await fileRow.hover();
         await fileDotsMenu.click();
         await filesManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
           isHttpMethodTriggered: false,
@@ -519,6 +523,7 @@ dialTest(
     await dialTest.step(
       'Open attached file dropdown menu, select Download option and verify file is successfully downloaded',
       async () => {
+        await filesManagerGrid.gridRowByNameCell(filename).hover();
         const dotsMenu =
           await filesManagerGrid.gridDotsMenuByNameCell(filename);
         await dotsMenu.click();

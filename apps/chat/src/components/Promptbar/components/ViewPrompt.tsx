@@ -28,7 +28,7 @@ import { ViewPromptButtons } from './ViewPromptButtons';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface PromptFieldProps {
   children: React.ReactNode;
@@ -157,10 +157,9 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                   onChangeSelectedVersion={handleChangeSelectedVersion}
                 />
               )}
-              <DialButton
+              <DialPrimaryButton
                 onClick={onUse}
                 disabled={disableUsePrompt}
-                variant={ButtonVariant.Primary}
                 data-qa="use-prompt"
                 iconBefore={<InsertPromptIcon className="size-[18px]" />}
                 label={
