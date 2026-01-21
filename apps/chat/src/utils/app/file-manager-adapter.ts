@@ -10,6 +10,7 @@ import {
   DialFileResourceType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
+import { BucketService } from './data/bucket-service';
 
 export interface DialRootFolder extends UIKitDialFile {
   label: string;
@@ -229,6 +230,7 @@ export const buildFileTree = (
     items: rootItems,
     parentPath: null,
     label: pathRootAlias || 'Files',
+    permissions: rootId === `files/${BucketService.getBucket()}` ? [DialFilePermission.READ, DialFilePermission.WRITE] : [] ,
   };
 
   return {

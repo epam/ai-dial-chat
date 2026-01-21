@@ -573,6 +573,7 @@ export const useFileManager = ({
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
+      isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
       ...externalToolbarOptions,
     }),
     [filteredTabs, activeTab, handleTabChange, externalToolbarOptions],
