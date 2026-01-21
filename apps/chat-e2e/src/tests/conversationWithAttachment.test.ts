@@ -600,10 +600,13 @@ dialTest(
           ),
           'disabled',
         );
+        // hover is cancelled here by the inner call of goTop()
+        const dotsMenu = await filesManagerModalGrid.gridDotsMenuByNameCell(
+          Attachment.textName,
+        );
+        await attachmentLocator.hover();
         await filesManagerModalGridAssertion.assertElementState(
-          await filesManagerModalGrid.gridDotsMenuByNameCell(
-            Attachment.textName,
-          ),
+          dotsMenu,
           'hidden',
         );
         await filesManagerModalGridAssertion.assertElementActionabilityState(

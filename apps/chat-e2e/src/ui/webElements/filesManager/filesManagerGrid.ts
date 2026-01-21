@@ -111,15 +111,12 @@ export class FilesManagerGrid extends Grid {
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
         timeout: scrollingTimeout,
       });
-    } catch (e) {
+    } catch {
       //scroll to the next page if the record is not visible
       if (pagesCount >= pageNumber) {
-        const gridBodyBounding = await this.gridBody.getElementBoundingBox();
         await this.gridBody.hoverOver();
-        await this.page.mouse.wheel(
-          gridBodyBounding!.x,
-          gridBodyBounding!.y + gridBodyBounding!.height + 1,
-        );
+        // mouse.wheel expects delta values in pixels: deltaX (horizontal), deltaY (vertical)
+        await this.page.mouse.wheel(0, scrollBodyHeight);
         pageNumber += 1;
         return this.goToGridRowByNameCell(name, pageNumber);
       } else {
@@ -133,15 +130,24 @@ export class FilesManagerGrid extends Grid {
     const scrollTop = await this.gridViewPort
       .getElementLocator()
       .evaluate((p) => p.scrollTop);
-    //check the scroll is not on the top of the grid
     if (scrollTop !== 0) {
       await this.gridBody.click({
         position: { x: 0, y: 0 },
       });
       await this.page.keyboard.press(keys.home);
-      // wait until scrolling is finished
-      // eslint-disable-next-line playwright/no-wait-for-timeout
-      await this.page.waitForTimeout(scrollingTimeout);
+      // Wait until scroll actually reaches top
+      await this.gridViewPort.getElementLocator().evaluate((el) => {
+        return new Promise<void>((resolve) => {
+          const checkScroll = () => {
+            if (el.scrollTop === 0) {
+              resolve();
+            } else {
+              requestAnimationFrame(checkScroll);
+            }
+          };
+          checkScroll();
+        });
+      });
     }
   }
 }
