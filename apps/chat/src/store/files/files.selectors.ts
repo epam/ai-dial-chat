@@ -284,6 +284,9 @@ const selectSearchResultsForFolder = createSelector(
   },
 );
 
+const selectSharedWithMeFilesAndFoldersIds = (state: RootState) =>
+  rootSelector(state).sharedWithMeFilesAndFoldersIds;
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -319,4 +322,5 @@ export const FilesSelectors = {
   selectIsMovingFiles,
   selectIsCopyingFiles,
   selectIsUploadingFiles,
+  selectSharedWithMeFilesAndFoldersIds,
 };
