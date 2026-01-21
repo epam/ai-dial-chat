@@ -422,12 +422,18 @@ export const PublicationHandlerFooter = ({
       ),
     [invalidEntities, selectedPublicationItems],
   );
+
+  const isResourceUnpublish = publication.resources.some(
+    (resource) => resource.action === PublishActions.DELETE,
+  );
+
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!selectedInvalidEntities.length ||
-    someReviewedConversationHasNoMessages ||
+    (someReviewedConversationHasNoMessages && !isResourceUnpublish) ||
     isPublicationUpdating ||
     areNoChanges;
+
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   const getSubmitTooltipText = useCallback(() => {

@@ -708,7 +708,8 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                     !isPlayback &&
                                     !isReplay &&
                                     !isReadOnly &&
-                                    !isApproveRequiredEntity
+                                    !isApproveRequiredEntity &&
+                                    !isExternal
                                   }
                                   isShowSettings={isShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
