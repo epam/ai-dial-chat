@@ -3,6 +3,8 @@ import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
+import { BucketService } from './data/bucket-service';
+
 import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
@@ -10,7 +12,6 @@ import {
   DialFileResourceType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
-import { BucketService } from './data/bucket-service';
 
 export interface DialRootFolder extends UIKitDialFile {
   label: string;
@@ -230,7 +231,10 @@ export const buildFileTree = (
     items: rootItems,
     parentPath: null,
     label: pathRootAlias || 'Files',
-    permissions: rootId === `files/${BucketService.getBucket()}` ? [DialFilePermission.READ, DialFilePermission.WRITE] : [] ,
+    permissions:
+      rootId === `files/${BucketService.getBucket()}`
+        ? [DialFilePermission.READ, DialFilePermission.WRITE]
+        : [],
   };
 
   return {
