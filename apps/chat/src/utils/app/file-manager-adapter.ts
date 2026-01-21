@@ -198,6 +198,11 @@ export const buildFileTree = (
     }
   });
 
+  const rootId = getFileRootId(
+    getEntityBucket({ id: rootItems?.[0]?.id || '' }),
+  );
+
+
   uikitFiles.forEach((file) => {
     const parentFolderId = file.folderId;
     const parentFolder = folderMap.get(parentFolderId);
@@ -210,13 +215,11 @@ export const buildFileTree = (
 
   uikitFiles.forEach((file) => {
     if (file.id && !placedFileIds.has(file.id)) {
-      rootItems.push(file);
+      if (file.folderId === rootId || !file.folderId) {
+        rootItems.push(file);
+      }
     }
   });
-
-  const rootId = getFileRootId(
-    getEntityBucket({ id: rootItems?.[0]?.id || '' }),
-  );
 
   loadedFoldersPaths.add(rootId);
 
