@@ -63,6 +63,8 @@ export const FileManager: React.FC = () => {
     handleRenameValidation,
 
     sharedWithMeIds,
+
+    uploadEnabled,
   } = useFileManager();
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export const FileManager: React.FC = () => {
           onUnshareFiles={handleUnshareFiles}
           onRenameValidate={handleRenameValidation}
           sharedWithMeIds={sharedWithMeIds}
+          uploadEnabled={uploadEnabled}
         />
       )}
       {isAnyOperationInProgress && (
