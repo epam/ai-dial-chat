@@ -842,6 +842,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
+                                              !isChatReadyForInput ||
                                               ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
@@ -859,6 +860,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                                 : undefined
                                             }
                                             onRegenerate={
+                                              isChatReadyForInput &&
                                               index ===
                                                 mergedMessages.length - 1 &&
                                               showLastMessageRegenerate &&
