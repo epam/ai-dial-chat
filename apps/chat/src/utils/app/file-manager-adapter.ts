@@ -202,7 +202,6 @@ export const buildFileTree = (
     getEntityBucket({ id: rootItems?.[0]?.id || '' }),
   );
 
-
   uikitFiles.forEach((file) => {
     const parentFolderId = file.folderId;
     const parentFolder = folderMap.get(parentFolderId);
