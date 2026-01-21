@@ -23,6 +23,7 @@ import {
   SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
+import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { Translation } from '@/src/types/translation';
@@ -285,8 +286,14 @@ export const useFileManager = ({
         break;
     }
 
+    const firstEntityId =
+      filteredFolders?.[0]?.id || filteredFiles?.[0]?.id || '';
+    const rootId = firstEntityId
+      ? getFileRootId(getEntityBucket({ id: firstEntityId }))
+      : getFileRootId();
+
     const { rootFolder, items, loadedFoldersPaths, sharedByMePaths } =
-      buildFileTree(filteredFiles, filteredFolders, pathRootAlias);
+      buildFileTree(filteredFiles, filteredFolders, pathRootAlias, rootId);
 
     if (activeTab === DialFileManagerTabs.Shared) {
       const currentSharedRootId =
