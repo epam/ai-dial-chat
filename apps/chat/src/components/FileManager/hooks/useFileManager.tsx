@@ -241,10 +241,12 @@ export const useFileManager = ({
     sharedByMePaths,
     visibleColumns,
     currentPathRootAlias,
+    uploadEnabled,
   } = useMemo(() => {
     let filteredFiles = files;
     let filteredFolders = folders;
     let pathRootAlias = MY_FILES_SECTION;
+    let uploadEnabled = true;
     const visibleColumns: FileManagerColumnKey[] = [
       FileManagerColumnKey.Name,
       FileManagerColumnKey.UpdatedAt,
@@ -278,6 +280,7 @@ export const useFileManager = ({
           PublishedWithMeFilter,
         );
         pathRootAlias = ORGANIZATION_FILES_SECTION;
+        uploadEnabled = false;
         break;
       default:
         break;
@@ -297,6 +300,7 @@ export const useFileManager = ({
 
       rootFolder.id = currentSharedRootId;
       rootFolder.path = currentSharedRootId;
+      uploadEnabled = isRootId(currentPath) && currentPath ? false : true;
     }
 
     if (
@@ -316,6 +320,7 @@ export const useFileManager = ({
       sharedByMePaths,
       visibleColumns,
       currentPathRootAlias: pathRootAlias,
+      uploadEnabled,
     };
   }, [files, folders, activeTab, previousActiveTabRef, currentPath]);
 
@@ -569,6 +574,7 @@ export const useFileManager = ({
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
+      isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
       ...externalToolbarOptions,
     }),
     [filteredTabs, activeTab, handleTabChange, externalToolbarOptions],
@@ -753,6 +759,10 @@ export const useFileManager = ({
     [t],
   );
 
+  const sharedWithMeIds = useAppSelector(
+    FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
+  );
+
   return {
     currentPath,
     setCurrentPath,
@@ -790,5 +800,8 @@ export const useFileManager = ({
     handleUploadArchive,
     handleUnshareFiles,
     handleRenameValidation,
+    sharedWithMeIds,
+
+    uploadEnabled,
   };
 };
