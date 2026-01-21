@@ -114,7 +114,7 @@ export class ChatVisualizerConnector {
     if (
       this.dialHosts[0] !== '*' &&
       !this.dialHosts.some((allowedHost) =>
-        event.origin.startsWith(allowedHost),
+        allowedHost.startsWith(event.origin),
       )
     )
       return;
