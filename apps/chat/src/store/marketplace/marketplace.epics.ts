@@ -64,21 +64,27 @@ const initEpic: AppEpic = (action$, state$) =>
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
       const firstRoutePart = previousRoute?.split('/')[1];
       const firstRoutePartWithoutParams = firstRoutePart?.split('?')[0];
-      const isPreviousRouteEditor =
-        !!firstRoutePartWithoutParams &&
-        ['apps-editor', 'toolset-editor'].includes(firstRoutePartWithoutParams);
+      const isShareLink = !!new URL(window.location.href).searchParams.get(
+        'share',
+      );
+      const shouldSaveFilters =
+        (!!firstRoutePartWithoutParams &&
+          ['apps-editor', 'toolset-editor'].includes(
+            firstRoutePartWithoutParams,
+          )) ||
+        isShareLink;
 
       return concat(
         of(
           MarketplaceActions.initSuccess({
-            saveFilters: isPreviousRouteEditor,
+            saveFilters: shouldSaveFilters,
             selectedTab: workSpaceTab
               ? MarketplaceTabs.MY_WORKSPACE
               : undefined,
           }),
         ),
         iif(
-          () => !isPreviousRouteEditor,
+          () => !shouldSaveFilters,
           of(
             MarketplaceActions.setSelectedTab(
               workSpaceTab

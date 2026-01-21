@@ -40,11 +40,7 @@ const DEFAULT_TAB_ACTIONS: ActionsByTab = {
     DialFileManagerActions.Delete,
     DialFileManagerActions.Info,
   ],
-  organization: [
-    DialFileManagerActions.Download,
-    DialFileManagerActions.Info,
-    DialFileManagerActions.Delete,
-  ],
+  organization: [DialFileManagerActions.Download, DialFileManagerActions.Info],
 };
 
 const buildLabelMap = (actions: FileAction[], t: TranslationFn) =>

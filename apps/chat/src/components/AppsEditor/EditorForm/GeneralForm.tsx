@@ -27,6 +27,7 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { BYTES_IN_KB } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { BaseAppForm } from '@/src/components/AppsEditor/form';
@@ -184,6 +185,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               confirmDialogValues={
                 appDetails?.isShared ? CONFIRM_ICON_FILE_VALUES : undefined
               }
+              maxSelectableFileSize={100 * BYTES_IN_KB}
               warningMessage={iconWarning}
               sourceFilters={sourceFilters}
             />

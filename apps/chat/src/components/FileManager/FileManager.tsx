@@ -17,7 +17,9 @@ import { DialFileManager, DialLoader } from '@epam/ai-dial-ui-kit';
 
 export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
+
   const initialDataStatus = useAppSelector(
     SettingsSelectors.selectInitialDataStatus,
   );
@@ -59,6 +61,10 @@ export const FileManager: React.FC = () => {
     handleUploadArchive,
     handleUnshareFiles,
     handleRenameValidation,
+
+    sharedWithMeIds,
+
+    uploadEnabled,
   } = useFileManager();
 
   useEffect(() => {
@@ -101,6 +107,8 @@ export const FileManager: React.FC = () => {
           onUploadArchive={handleUploadArchive}
           onUnshareFiles={handleUnshareFiles}
           onRenameValidate={handleRenameValidation}
+          sharedWithMeIds={sharedWithMeIds}
+          uploadEnabled={uploadEnabled}
         />
       )}
       {isAnyOperationInProgress && (
