@@ -29,7 +29,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
@@ -147,7 +147,7 @@ export const VisualizerRenderer = ({
     const postMessageListener = (
       event: MessageEvent<VisualizerConnectorRequest>,
     ) => {
-      if (event.origin !== rendererUrl) return;
+      if (!rendererUrl.startsWith(event.origin)) return;
 
       if (
         event.data.type ===
@@ -199,7 +199,7 @@ export const VisualizerRenderer = ({
       <div className="mb-2 flex flex-row justify-between">
         <h2>{visualizerTitle}</h2>
 
-        <DialButton
+        <DialLinkButton
           className="flex text-accent-primary"
           onClick={() => visualizer.current && sendMessage(visualizer.current)}
           iconBefore={<IconRefresh size={18} />}
