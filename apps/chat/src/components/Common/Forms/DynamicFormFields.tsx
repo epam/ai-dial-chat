@@ -99,6 +99,7 @@ export const DynamicFormFields = <
           visibleName: option?.label,
         },
       ] as PathValue<T, Path<T>>,
+      { shouldDirty: true, shouldTouch: true },
     );
   };
 
@@ -106,6 +107,7 @@ export const DynamicFormFields = <
     setValue(
       name as Path<T>,
       fields.filter((_, i) => i !== index) as PathValue<T, Path<T>>,
+      { shouldDirty: true, shouldTouch: true },
     );
   };
 
