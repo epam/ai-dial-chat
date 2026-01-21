@@ -39,5 +39,7 @@ export interface FilesState {
   movingFilesSignal: AbortController | null;
 
   isLoadingSearchListing: boolean;
-  searchListingMetadata: Record<string, SearchListingMetadata>; // ключ - folderPath
+  searchListingMetadata: Record<string, SearchListingMetadata>;
+
+  sharedWithMeFilesAndFoldersIds: string[];
 }
