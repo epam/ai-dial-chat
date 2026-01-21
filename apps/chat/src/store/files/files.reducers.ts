@@ -399,7 +399,10 @@ export const filesSlice = createSlice({
 
       const incomingIds = new Set(payload.folders.map((f) => f.id));
       const filteredState = state.folders.filter(
-        (f) => f.folderId !== payload.folderId || incomingIds.has(f.id),
+        (f) =>
+          f.folderId !== payload.folderId ||
+          incomingIds.has(f.id) ||
+          f.temporary,
       );
 
       state.folders = combineEntities(
@@ -467,6 +470,7 @@ export const filesSlice = createSlice({
           type: FeatureType.File,
           folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
+          temporary: true,
         }),
       );
       state.newAddedFolderId = newAddedFolderId;
