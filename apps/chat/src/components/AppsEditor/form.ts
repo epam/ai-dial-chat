@@ -340,6 +340,18 @@ const getQuickAppItemNameFromConfig = (
     );
   }
 
+  if ('open_ai_tool' in item) {
+    return (
+      (item.open_ai_tool as { function?: { name?: string } })?.function?.name ||
+      'OpenAI Tool'
+    );
+  }
+
+  if (!item.deployment_id) {
+    console.error('Dial Tool is missing deployment_id:', item);
+    return 'unknown';
+  }
+
   return item.deployment_id;
 };
 
@@ -361,7 +373,7 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
 
   const sortedIds = sortedItems.map((item) => {
     const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
-    return ApiUtils.decodeApiUrl(id);
+    return id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown');
   });
 
   return {
