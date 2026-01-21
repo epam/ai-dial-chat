@@ -29,7 +29,7 @@ import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper
 import { Loader } from './Common/Loader';
 import { Title } from './Title';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const removeQueryString = (url: string) => url.split('?')[0];
 
@@ -137,9 +137,8 @@ export function Layout({
       <Title settings={settings} />
       {shouldOverlayLogin ? (
         <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
-          <DialButton
+          <DialNeutralButton
             label={t('Login')}
-            variant={ButtonVariant.Secondary}
             onClick={handleOverlayAuth}
             disabled={authStatus === 'loading'}
           />

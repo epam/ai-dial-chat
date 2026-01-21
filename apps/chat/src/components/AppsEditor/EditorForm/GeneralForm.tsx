@@ -27,6 +27,7 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { BYTES_IN_KB } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { BaseAppForm } from '@/src/components/AppsEditor/form';
@@ -38,7 +39,7 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
@@ -184,6 +185,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               confirmDialogValues={
                 appDetails?.isShared ? CONFIRM_ICON_FILE_VALUES : undefined
               }
+              maxSelectableFileSize={100 * BYTES_IN_KB}
               warningMessage={iconWarning}
               sourceFilters={sourceFilters}
             />
@@ -228,10 +230,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           tooltip={t('Fill in all required fields')}
           hideTooltip={isValid || isEditing}
         >
-          <DialButton
+          <DialPrimaryButton
             label={t('Next')}
             data-qa="save-entity-general-info"
-            variant={ButtonVariant.Primary}
             type="submit"
             disabled={(!isValid && !isEditing) || isAppLoading}
           />

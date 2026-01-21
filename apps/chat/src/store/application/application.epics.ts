@@ -497,7 +497,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
-        catchError(() => {
+        catchError((error) => {
+          // eslint-disable-next-line no-console
+          console.log('getApplicationEpic catchError', error);
+
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),

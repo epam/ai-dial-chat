@@ -31,7 +31,7 @@ import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 import { ReplaceSelector } from './ReplaceSelector';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
@@ -226,15 +226,13 @@ export function ReplaceConfirmationModalView() {
       </div>
 
       <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6 md:pb-4">
-        <DialButton
+        <DialNeutralButton
           onClick={handleCancel}
-          variant={ButtonVariant.Secondary}
           label={t('Cancel')}
           data-qa="cancel-import"
         />
-        <DialButton
+        <DialPrimaryButton
           onClick={handleContinueImport}
-          variant={ButtonVariant.Primary}
           label={t('Continue')}
           data-qa="continue-import"
         />
