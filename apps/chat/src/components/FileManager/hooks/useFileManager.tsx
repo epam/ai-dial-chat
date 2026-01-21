@@ -17,6 +17,7 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
@@ -623,8 +624,22 @@ export const useFileManager = ({
           folderUrl,
         }),
       );
+
+      const deletedCurrentOrParent = deletedItems.find(
+        (item) =>
+          item.sourceUrl === currentPath ||
+          currentPath?.startsWith(item.sourceUrl),
+      );
+
+      if (deletedCurrentOrParent) {
+        const parentId = getFolderIdFromEntityId(
+          deletedCurrentOrParent.sourceUrl,
+        );
+
+        setCurrentPath(parentId);
+      }
     },
-    [dispatch],
+    [dispatch, currentPath],
   );
 
   const handleDownloadFiles = useCallback(
