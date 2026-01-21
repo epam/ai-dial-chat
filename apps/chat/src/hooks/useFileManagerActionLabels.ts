@@ -43,7 +43,6 @@ const DEFAULT_TAB_ACTIONS: ActionsByTab = {
   organization: [
     DialFileManagerActions.Download,
     DialFileManagerActions.Info,
-    DialFileManagerActions.Delete,
   ],
 };
 
