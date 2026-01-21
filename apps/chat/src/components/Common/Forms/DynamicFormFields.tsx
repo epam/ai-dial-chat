@@ -31,6 +31,7 @@ export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;
   static?: boolean;
   visibleName?: string;
+  id: string;
 }
 
 interface DynamicFieldsProps<
@@ -73,19 +74,10 @@ export const DynamicFormFields = <
   const { t } = useTranslation(Translation.Chat);
   const { register, control, setValue } = useFormContext<T>();
 
-  const fieldsWithoutIds = useWatch({
+  const fields = useWatch({
     control,
     name: name as Path<T>,
   }) as DynamicField[];
-
-  const fields = useMemo(
-    () =>
-      fieldsWithoutIds.map((field) => ({
-        ...field,
-        id: nanoid(),
-      })),
-    [fieldsWithoutIds],
-  );
 
   const handleAdd = (option?: SelectOption<string, string>) => {
     setValue(
@@ -97,6 +89,7 @@ export const DynamicFormFields = <
           value: option?.defaultValue ?? '',
           editableKey: !option,
           visibleName: option?.label,
+          id: nanoid(),
         },
       ] as PathValue<T, Path<T>>,
       { shouldDirty: true, shouldTouch: true },
