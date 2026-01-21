@@ -78,6 +78,7 @@ const initialState: FilesState = {
 
   isLoadingSearchListing: false,
   searchListingMetadata: {},
+  sharedWithMeFilesAndFoldersIds: [],
 };
 
 export const filesSlice = createSlice({
@@ -955,6 +956,13 @@ export const filesSlice = createSlice({
     },
     uploadArchiveFail: (state) => {
       state.isUploadingArchive = false;
+    },
+
+    setSharedWithMeFilesAndFoldersIds: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.sharedWithMeFilesAndFoldersIds = payload.ids;
     },
   },
 });
