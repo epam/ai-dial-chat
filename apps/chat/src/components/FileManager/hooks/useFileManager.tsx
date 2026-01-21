@@ -190,13 +190,16 @@ export const useFileManager = ({
   }, [availableTabs, tabs]);
 
   useEffect(() => {
-    if (currentPath && !isRootId(currentPath)) {
+    if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
       const folder = folders.find((folder) => folder.id === currentPath);
-      if (folder?.status !== UploadStatus.LOADED) {
+      if (
+        folder?.status !== UploadStatus.LOADED &&
+        folder?.status !== UploadStatus.LOADING
+      ) {
         dispatch(FilesActions.getFilesWithFolders({ id: currentPath }));
       }
     }
-  }, [dispatch, currentPath, folders]);
+  }, [dispatch, currentPath, folders, isMovingFiles]);
 
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
@@ -395,12 +398,14 @@ export const useFileManager = ({
         }),
       );
 
-      const movedCurrent = movedItems.find(
-        (item) => item.sourceUrl === currentPath,
+      const movedCurrentOrParent = movedItems.find(
+        (item) =>
+          item.sourceUrl === currentPath ||
+          currentPath?.startsWith(item.sourceUrl),
       );
 
-      if (movedCurrent) {
-        setCurrentPath(undefined);
+      if (movedCurrentOrParent) {
+        setCurrentPath(movedCurrentOrParent.destinationUrl);
       }
     },
     [dispatch, currentPath],
