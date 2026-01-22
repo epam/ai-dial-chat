@@ -1,7 +1,6 @@
 import { PublicationFunctions } from '@/src/types/publication';
 
 import '@/src/constants/default-ui-settings';
-import { formErrors } from '@/src/constants/form-errors';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import { z as zodValidation } from 'zod';
@@ -16,11 +15,12 @@ export enum PublishRequestFieldsNames {
 export const PublicationRequestFormSchema = zodValidation.object({
   [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: getEntityNameSchema({
     name: 'Request name',
-    checkDotsInTheEnd: true,
+    skipCheckRestrictedSymbols: true,
   }),
-  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: zodValidation
-    .string()
-    .nonempty(formErrors.required),
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: getEntityNameSchema({
+    name: 'Request name',
+    skipCheckRestrictedSymbols: true,
+  }),
   [PublishRequestFieldsNames.RULES]: zodValidation.array(
     zodValidation.object({
       source: zodValidation.string(),
