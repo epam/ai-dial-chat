@@ -362,7 +362,7 @@ export const FileManagerModal = memo(
             data-qa="file-manager"
           >
             <DialFileManager
-              className="px-0 pb-5"
+              className="bg-layer-2 px-0 pb-5"
               path={currentPath}
               onPathChange={setCurrentPath}
               onSelectedPathsChange={pathSelectionHandler}
