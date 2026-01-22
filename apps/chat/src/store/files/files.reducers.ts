@@ -33,6 +33,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialCopiedItem,
   DialDeletedItem,
+  DialFileNodeType,
   DialUploadFileItem,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
@@ -787,13 +788,33 @@ export const filesSlice = createSlice({
 
     moveFiles: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         files: DialCopiedItem[];
         sourceFolder: string;
         destinationFolder: string;
       }>,
     ) => {
       state.isMovingFiles = true;
+
+      const movedFoldersSourceUrls = payload.files
+        .filter((f) => f.nodeType === DialFileNodeType.FOLDER)
+        .map((f) => f.sourceUrl);
+
+      state.files = state.files.filter(
+        (f) =>
+          !movedFoldersSourceUrls.some((sourceUrl) =>
+            f.folderId.startsWith(sourceUrl),
+          ),
+      );
+
+      state.folders = state.folders.filter(
+        (f) =>
+          !movedFoldersSourceUrls.some((sourceUrl) =>
+            f.folderId.startsWith(sourceUrl),
+          ),
+      );
     },
     moveFilesSuccess: (
       state,
