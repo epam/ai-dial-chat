@@ -65,6 +65,7 @@ import {
 import { ShareEntity } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
+import { nanoid } from 'nanoid';
 import { z as zodValidation } from 'zod';
 
 export enum AppsEditorSchemaTypes {
@@ -339,6 +340,18 @@ const getQuickAppItemNameFromConfig = (
     );
   }
 
+  if ('open_ai_tool' in item) {
+    return (
+      (item.open_ai_tool as { function?: { name?: string } })?.function?.name ||
+      'OpenAI Tool'
+    );
+  }
+
+  if (!item.deployment_id) {
+    console.error('Dial Tool is missing deployment_id:', item);
+    return 'unknown';
+  }
+
   return item.deployment_id;
 };
 
@@ -360,7 +373,7 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
 
   const sortedIds = sortedItems.map((item) => {
     const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
-    return ApiUtils.decodeApiUrl(id);
+    return id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown');
   });
 
   return {
@@ -413,6 +426,7 @@ const getCodeAppFormData = ({
         editableKey:
           !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
         static: key === FEATURES_ENDPOINTS.chat_completion,
+        id: nanoid(),
       }))
     : [
         {
@@ -425,6 +439,7 @@ const getCodeAppFormData = ({
             ] || '',
           editableKey: false,
           static: true,
+          id: nanoid(),
         },
       ],
   env: app?.function?.env
@@ -432,6 +447,7 @@ const getCodeAppFormData = ({
         label,
         value,
         editableKey: true,
+        id: nanoid(),
       }))
     : [],
 });
