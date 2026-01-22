@@ -156,7 +156,6 @@ export const useToolsetMenuItems = ({
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         Icon: IconTrashX,
-        iconClassName: 'stroke-error',
         onClick: handleDelete,
       },
     ],
