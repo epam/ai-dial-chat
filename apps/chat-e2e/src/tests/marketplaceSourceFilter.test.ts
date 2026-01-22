@@ -18,14 +18,13 @@ import {
   SourcesFilterOptions,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest.skip(
+dialTest(
   'Sources: check My Custom apps.\n' +
     'Sources: combination inside sources filter works as OR; combination sources + type/topic works as AND.\n' +
     '[App Editor]: Filters and search results are saved when edit field icon for custom app',
@@ -43,7 +42,8 @@ dialTest.skip(
     baseAssertion,
     fileApiHelper,
     entityEditorGeneralForm,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
     entityEditorHeader,
   }) => {
     setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
@@ -184,11 +184,12 @@ dialTest.skip(
         'visible',
       );
       await entityEditorGeneralForm.changeIcon.click();
-      await attachFilesModal.checkAttachedFile(
-        Attachment.cloudImageName,
-        FileModalSection.AllFiles,
-      );
-      await attachFilesModal.attachFiles();
+      const attachmentCheckbox =
+        await filesManagerModalGrid.gridCheckboxByNameCell(
+          Attachment.cloudImageName,
+        );
+      await attachmentCheckbox.click();
+      await filesManagerModal.getSelectButton().click();
       await entityEditorHeader.saveAndExitButton.click();
       await marketplacePage.waitForPageLoaded();
     });
@@ -213,7 +214,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Sources: the search results are updated if to remove/add custom application.\n' +
     'Sources: the filter disappears and search results are updated if to remove custom application when only one existed.\n' +
     `My workspace: The button is named 'Add app', the menu has names 'Custom app', 'Code app'`,
@@ -357,7 +358,7 @@ dialTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sources: check Shared with me.\n' +
     'Sources: check Public. And Sorting order - alphabetically.\n' +
     'Copy link is not available for Shared with me applications',

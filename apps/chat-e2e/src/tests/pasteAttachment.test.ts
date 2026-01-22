@@ -9,14 +9,13 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
-import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
 let appEntity: DialAIEntityModel;
 let conversation: Conversation;
 
-dialTest.skip(
+dialTest(
   'Ctrl-V pastes a file into input.\n' +
     'Pasted file appears in Manage attachments in "uploads/<year-month>" folder. New folder structure.\n' +
     'The uploads folder is changed for each month in the successful message and in Manage attachments.\n' +
@@ -38,9 +37,10 @@ dialTest.skip(
     localStorageManager,
     sendMessage,
     attachmentDropdownMenu,
-    attachedAllFiles,
-    attachFilesModal,
-    manageAttachmentsAssertion,
+    filesManagerModal,
+    filesManagerModalCollapsibleSidebar,
+    filesManagerModalFoldersTree,
+    filesManagerGridAssertion,
     baseAssertion,
     conversationData,
     dataInjector,
@@ -125,20 +125,16 @@ dialTest.skip(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await attachedAllFiles.expandFolder(
+        await filesManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await filesManagerModalFoldersTree.expandFolders(
           ExpectedConstants.fileUploadFolder,
-          { isHttpMethodTriggered: true, httpHost: API.filesListingHost() },
+          yearMonthSubfolder,
         );
-        await attachedAllFiles.expandFolder(yearMonthSubfolder, {
-          isHttpMethodTriggered: true,
-          httpHost: API.filesListingHost(),
-        });
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.fileToCopyName },
-          FileModalSection.AllFiles,
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.fileToCopyName,
           'visible',
         );
-        await attachFilesModal.closeButton.click();
+        await filesManagerModal.getCloseButton().click();
       },
     );
 
@@ -279,7 +275,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   `Ctrl-V does nothing if to paste a file into input when agent doesn't work with attachments.\n` +
     `Ctrl-V does nothing if to paste a file into user-message in edit mode when agent doesn't work with attachments`,
   async ({
