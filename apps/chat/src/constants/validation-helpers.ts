@@ -21,6 +21,7 @@ import { z as zodValidation } from 'zod';
 export const getEntityNameSchema = (options: {
   name: string;
   checkDotsInTheEnd?: boolean;
+  skipCheckRestrictedSymbols?: boolean;
 }) =>
   zodValidation
     .string()
@@ -32,7 +33,8 @@ export const getEntityNameSchema = (options: {
     )
     .max(MAX_ENTITY_LENGTH, formErrors.tooLong(options.name, MAX_ENTITY_LENGTH))
     .refine(
-      (str) => !isEntityNameInvalid(str, false),
+      (str) =>
+        options.skipCheckRestrictedSymbols || !isEntityNameInvalid(str, false),
       formErrors.hasSpecialCharacters(options.name),
     )
     .refine(

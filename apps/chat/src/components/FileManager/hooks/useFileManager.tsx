@@ -17,6 +17,7 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
@@ -190,13 +191,16 @@ export const useFileManager = ({
   }, [availableTabs, tabs]);
 
   useEffect(() => {
-    if (currentPath && !isRootId(currentPath)) {
+    if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
       const folder = folders.find((folder) => folder.id === currentPath);
-      if (folder?.status !== UploadStatus.LOADED) {
+      if (
+        folder?.status !== UploadStatus.LOADED &&
+        folder?.status !== UploadStatus.LOADING
+      ) {
         dispatch(FilesActions.getFilesWithFolders({ id: currentPath }));
       }
     }
-  }, [dispatch, currentPath, folders]);
+  }, [dispatch, currentPath, folders, isMovingFiles]);
 
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
@@ -400,12 +404,14 @@ export const useFileManager = ({
         }),
       );
 
-      const movedCurrent = movedItems.find(
-        (item) => item.sourceUrl === currentPath,
+      const movedCurrentOrParent = movedItems.find(
+        (item) =>
+          item.sourceUrl === currentPath ||
+          currentPath?.startsWith(item.sourceUrl),
       );
 
-      if (movedCurrent) {
-        setCurrentPath(undefined);
+      if (movedCurrentOrParent) {
+        setCurrentPath(movedCurrentOrParent.destinationUrl);
       }
     },
     [dispatch, currentPath],
@@ -632,8 +638,22 @@ export const useFileManager = ({
           folderUrl,
         }),
       );
+
+      const deletedCurrentOrParent = deletedItems.find(
+        (item) =>
+          item.sourceUrl === currentPath ||
+          currentPath?.startsWith(item.sourceUrl),
+      );
+
+      if (deletedCurrentOrParent) {
+        const parentId = getFolderIdFromEntityId(
+          deletedCurrentOrParent.sourceUrl,
+        );
+
+        setCurrentPath(parentId);
+      }
     },
-    [dispatch],
+    [dispatch, currentPath],
   );
 
   const handleDownloadFiles = useCallback(
