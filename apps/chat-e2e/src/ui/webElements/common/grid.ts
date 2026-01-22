@@ -8,6 +8,15 @@ export class Grid extends BaseElement {
     super(page, GridSelectors.gridContainer, parentLocator);
   }
 
+  public loadingIndicator = this.getChildElementBySelector(
+    GridSelectors.loadingIndicator,
+  );
+
+  public gridViewPort = this.getChildElementBySelector(
+    GridSelectors.gridViewPort,
+  );
+  public gridBody = this.getChildElementBySelector(GridSelectors.gridBody);
+
   public gridHeaderColumn = (columnId: string) =>
     this.getChildElementBySelector(GridSelectors.gridHeaderColumn(columnId));
 

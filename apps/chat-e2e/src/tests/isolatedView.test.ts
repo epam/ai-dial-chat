@@ -182,9 +182,9 @@ dialTest(
       await attachmentDropdownMenu.selectMenuOption(
         UploadMenuOptions.attachUploadedFiles,
       );
-      await filesManagerModalGrid
-        .gridCheckboxByNameCell(attachmentName)
-        .click();
+      const attachmentCheckbox =
+        await filesManagerModalGrid.gridCheckboxByNameCell(attachmentName);
+      await attachmentCheckbox.click();
       await filesManagerModal.getAttachButton().click();
       await sendMessage.messageInput.typeInInput(testMessage);
       await dialHomePage.mockChatTextResponse(
