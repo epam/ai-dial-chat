@@ -65,6 +65,7 @@ import {
 import { ShareEntity } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
+import { nanoid } from 'nanoid';
 import { z as zodValidation } from 'zod';
 
 export enum AppsEditorSchemaTypes {
@@ -425,6 +426,7 @@ const getCodeAppFormData = ({
         editableKey:
           !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
         static: key === FEATURES_ENDPOINTS.chat_completion,
+        id: nanoid(),
       }))
     : [
         {
@@ -437,6 +439,7 @@ const getCodeAppFormData = ({
             ] || '',
           editableKey: false,
           static: true,
+          id: nanoid(),
         },
       ],
   env: app?.function?.env
@@ -444,6 +447,7 @@ const getCodeAppFormData = ({
         label,
         value,
         editableKey: true,
+        id: nanoid(),
       }))
     : [],
 });
