@@ -97,3 +97,9 @@ export enum FileManagerColumnKey {
   Actions = '__actions',
   Select = '__select',
 }
+
+export enum ModelTopic {
+  TextGeneration = 'Text Generation',
+  ImageGeneration = 'Image Generation',
+  ImageRecognition = 'Image Recognition',
+}
