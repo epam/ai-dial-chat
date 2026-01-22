@@ -104,7 +104,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
               )}
               <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
                 <div
-                  className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+                  className="shrink truncate text-lg font-semibold leading-5 md:text-xl md:leading-6"
                   data-qa="entity-name"
                 >
                   {entity.name}
