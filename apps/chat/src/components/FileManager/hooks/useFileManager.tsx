@@ -574,7 +574,9 @@ export const useFileManager = ({
       newActions,
       showHiddenFilesToggle: true,
       isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
-      disabledNewButtonTooltip: t('You do not have permission to create new items here'),
+      disabledNewButtonTooltip: t(
+        'You do not have permission to create new items here',
+      ),
       ...externalToolbarOptions,
     }),
     [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
