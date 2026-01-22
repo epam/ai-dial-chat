@@ -77,6 +77,7 @@ export const DynamicFieldSchema = zodValidation.object({
   editableKey: zodValidation.boolean().optional(),
   static: zodValidation.boolean().optional(),
   visibleName: zodValidation.string().optional(),
+  id: zodValidation.string().optional(),
 });
 
 export const CompletionUrlSchema = zodValidation

@@ -411,10 +411,21 @@ export const PublicationHandlerFooter = ({
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || !isValid;
   const someReviewedConversationHasNoMessages =
-    uploadedPublicationConversations.some(
-      ({ messages, playback }) =>
-        !messages.length && !playback?.messagesStack.length,
-    );
+    uploadedPublicationConversations.some((conversation) => {
+      const isEmpty =
+        !conversation.messages.length &&
+        !conversation.playback?.messagesStack.length;
+
+      if (!isEmpty) {
+        return false;
+      }
+
+      const resource = publication.resources.find(
+        (res) => res.reviewUrl === conversation.id,
+      );
+
+      return resource?.action !== PublishActions.DELETE;
+    });
   const areNoChanges =
     !selectedPublicationItems.length &&
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
@@ -426,12 +437,14 @@ export const PublicationHandlerFooter = ({
       ),
     [invalidEntities, selectedPublicationItems],
   );
+
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!selectedInvalidEntities.length ||
     someReviewedConversationHasNoMessages ||
     isPublicationUpdating ||
     areNoChanges;
+
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   const getSubmitTooltipText = useCallback(() => {
