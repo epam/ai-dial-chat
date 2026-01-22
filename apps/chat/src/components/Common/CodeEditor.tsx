@@ -30,6 +30,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { isHiddenEntity } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
@@ -334,7 +335,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
   );
-  const files = useAppSelector(FilesSelectors.selectFiles);
+  const allFiles = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const selectedFileId = useAppSelector(CodeEditorSelectors.selectSelectedFile);
   const modifiedFileIds = useAppSelector(
@@ -349,6 +350,11 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const [deletingFileId, setDeletingFileId] = useState<string>();
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const files = useMemo(
+    () => allFiles.filter((file) => !isHiddenEntity(file)),
+    [allFiles],
+  );
 
   const { rootFiles, rootFolders } = useMemo(() => {
     if (sourcesFolderId) {
