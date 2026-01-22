@@ -242,7 +242,9 @@ dialTest(
       await entityEditorGeneralForm.topicsDropdownToggle.click();
 
       await entityEditorGeneralForm.addIconButton.click();
-      await filesManagerModalGrid.gridCheckboxByNameCell(filename).click();
+      const attachmentCheckbox =
+        await filesManagerModalGrid.gridCheckboxByNameCell(filename);
+      await attachmentCheckbox.click();
       await filesManagerModal.getSelectButton().click();
     });
 

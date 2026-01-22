@@ -78,6 +78,7 @@ dialTest.skip(
     baseAssertion,
     localStorageManager,
     toastAssertion,
+    filesManagerGridAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -94,8 +95,8 @@ dialTest.skip(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => filesManagerModal.openUploadFromDevice(),
       );
-      await baseAssertion.assertElementState(
-        filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
+      await filesManagerGridAssertion.assertGridRowByNameState(
+        Attachment.sunImageName,
         'visible',
       );
     });

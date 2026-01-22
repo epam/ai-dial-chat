@@ -64,7 +64,7 @@ dialTest(
       'Open attached file dropdown menu and select Delete option',
       async () => {
         fileRow = filesManagerGrid.gridRowByNameCell(Attachment.sunImageName);
-        fileDotsMenu = filesManagerGrid.gridDotsMenuByNameCell(
+        fileDotsMenu = await filesManagerGrid.gridDotsMenuByNameCell(
           Attachment.sunImageName,
         );
         await fileRow.hover();
@@ -181,7 +181,9 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
         }
       },
     );
@@ -522,7 +524,9 @@ dialTest(
       'Open attached file dropdown menu, select Download option and verify file is successfully downloaded',
       async () => {
         await filesManagerGrid.gridRowByNameCell(filename).hover();
-        await filesManagerGrid.gridDotsMenuByNameCell(filename).click();
+        const dotsMenu =
+          await filesManagerGrid.gridDotsMenuByNameCell(filename);
+        await dotsMenu.click();
         const downloadedData = await filesManagerPage.downloadData(() =>
           filesManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
             isHttpMethodTriggered: false,
@@ -559,7 +563,9 @@ dialTest(
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
         for (const file of attachedFiles) {
-          await filesManagerGrid.gridCheckboxByNameCell(file).click();
+          const attachmentCheckbox =
+            await filesManagerGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
         }
       },
     );
@@ -752,8 +758,11 @@ dialTest(
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
-        await filesManagerGrid.gridRowByNameCell(attachments[0]).hover();
-        const checkbox = filesManagerGrid.gridCheckboxByNameCell(
+        const attachmentLocator = await filesManagerGrid.goToGridRowByNameCell(
+          attachments[0],
+        );
+        await attachmentLocator.hover();
+        const checkbox = await filesManagerGrid.gridCheckboxByNameCell(
           attachments[0],
         );
         await filesManagerGridAssertion.assertElementState(checkbox, 'visible');
@@ -768,9 +777,8 @@ dialTest(
       'Check both files and verify checkbox state in the rows and in the header, toolbar panel is changed to bulk operations',
       async () => {
         for (let i = 0; i < attachments.length; i++) {
-          const attachmentCheckbox = filesManagerGrid.gridCheckboxByNameCell(
-            attachments[i],
-          );
+          const attachmentCheckbox =
+            await filesManagerGrid.gridCheckboxByNameCell(attachments[i]);
           await attachmentCheckbox.click();
           await filesManagerGridAssertion.assertCheckboxState(
             attachmentCheckbox,
@@ -814,9 +822,8 @@ dialTest(
       'Uncheck both files and verify checkbox state in the rows and in the header, toolbar panel is changed to tabs',
       async () => {
         for (let i = 0; i < attachments.length; i++) {
-          const attachmentCheckbox = filesManagerGrid.gridCheckboxByNameCell(
-            attachments[i],
-          );
+          const attachmentCheckbox =
+            await filesManagerGrid.gridCheckboxByNameCell(attachments[i]);
           await attachmentCheckbox.click();
           await filesManagerGridAssertion.assertCheckboxState(
             attachmentCheckbox,
