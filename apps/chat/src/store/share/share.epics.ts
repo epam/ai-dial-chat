@@ -56,6 +56,7 @@ import {
   ShareResource,
 } from '@/src/types/share';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -90,7 +91,6 @@ import {
 import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
-import { Translation } from '@/src/types/translation';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
