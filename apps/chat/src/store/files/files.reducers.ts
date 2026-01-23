@@ -908,6 +908,16 @@ export const filesSlice = createSlice({
       state.isDownloadingArchive = false;
     },
 
+    createNewFolder: (
+      state,
+      _action: PayloadAction<{
+        files: DialUploadFileItem[];
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingFiles = true;
+    },
+
     uploadFiles: (
       state,
       {

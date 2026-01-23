@@ -14,6 +14,7 @@ import {
   of,
   scan,
   switchMap,
+  take,
   takeUntil,
   tap,
 } from 'rxjs';
@@ -1011,6 +1012,39 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
     filter(Boolean),
   );
 
+const createNewFolderEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.createNewFolder.type),
+    mergeMap(({ payload }) => {
+      return concat(
+        of(
+          FilesActions.uploadFiles({
+            files: payload.files,
+            destinationUrl: payload.destinationUrl,
+          }),
+        ),
+        action$.pipe(
+          ofType(FilesActions.uploadFilesSuccess.type),
+          take(1),
+          mergeMap(() => {
+            const urlParts = payload.destinationUrl.split('/');
+            const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+            const parentFolderId =
+              urlParts.length > 2
+                ? urlParts.slice(0, -1).join('/')
+                : getFileRootId(bucket);
+
+            return of(
+              FilesActions.getFolders({
+                id: parentFolderId,
+              }),
+            );
+          }),
+        ),
+      );
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -1035,6 +1069,7 @@ export const FilesEpics = combineEpics(
   moveFilesEpic,
   deleteFilesEpic,
   downloadFilesAsArchiveEpic,
+  createNewFolderEpic,
   uploadFilesEpic,
   uploadArchiveEpic,
   copyMoveFilesResultToastEpic,
