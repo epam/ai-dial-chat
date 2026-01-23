@@ -756,39 +756,37 @@ const uploadFilesEpic: AppEpic = (action$) =>
         ),
 
         mergeMap(({ finished, total, successCount, lastAction }) => {
-          const last$ = of(lastAction);
+          const actions: AppAction[] = [lastAction];
 
           if (canceled || finished !== total) {
-            return last$;
+            return from(actions);
           }
 
           const allFailed = successCount === 0;
 
-          return concat(
-            last$,
-
-            allFailed
-              ? of(
-                  UIActions.showToast({
-                    type: ToastType.Error,
-                    title: translate('Upload failed'),
-                    message: translate(
-                      'Please check your internet connection and try again.',
-                    ),
-                  }),
-                )
-              : EMPTY,
-
-            allFailed
-              ? of(FilesActions.uploadFilesFail())
-              : of(FilesActions.uploadFilesSuccess()),
-
-            of(
-              FilesActions.getFilesWithFolders({
-                id: payload.destinationUrl,
+          if (allFailed) {
+            actions.push(
+              UIActions.showToast({
+                type: ToastType.Error,
+                title: translate('Upload failed'),
+                message: translate(
+                  'Please check your internet connection and try again.',
+                ),
               }),
-            ),
+              FilesActions.uploadFilesFail(),
+            );
+
+            return from(actions);
+          }
+
+          actions.push(
+            FilesActions.uploadFilesSuccess(),
+            FilesActions.getFilesWithFolders({
+              id: payload.destinationUrl,
+            }),
           );
+
+          return from(actions);
         }),
         catchError(() =>
           canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
