@@ -34,7 +34,7 @@ import {
   Role,
   onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
-import { DialButton, DialRemoveButton } from '@epam/ai-dial-ui-kit';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface MessageUserButtonsProps {
   realMessageIndex: number;
@@ -109,9 +109,11 @@ export const MessageUserButtons = ({
           )}
           {onDelete && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-              <DialRemoveButton
-                iconClassName="text-secondary hover:text-accent-primary"
+              {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
+              <DialButton
+                className="text-secondary hover:text-accent-primary"
                 onClick={onDelete}
+                iconBefore={<IconTrashX size={18} />}
               />
             </Tooltip>
           )}
