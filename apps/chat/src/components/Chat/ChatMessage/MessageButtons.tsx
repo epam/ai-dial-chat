@@ -128,7 +128,7 @@ interface MessageAssistantButtonsProps {
   messageCopied?: boolean;
   isLikesEnabled: boolean;
   message: Message;
-  copyOnClick: () => void;
+  copyOnClick?: () => void;
   onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing?: () => void;

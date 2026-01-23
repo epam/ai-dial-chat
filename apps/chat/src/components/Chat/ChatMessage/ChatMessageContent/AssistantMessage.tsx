@@ -380,7 +380,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         (!conversation.isMessageStreaming || !isLastMessage) &&
         !isConversationInvalid && (
           <MessageAssistantButtons
-            copyOnClick={() => onCopy?.()}
+            copyOnClick={onCopy}
             isLikesEnabled={isLikesEnabled}
             message={message}
             realMessageIndex={realMessageIndex}
