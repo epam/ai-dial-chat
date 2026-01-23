@@ -185,6 +185,9 @@ const rehypePlugins: Options['rehypePlugins'] = [
           ['className'],
         ],
       },
+      protocols: {
+        src: [...(defaultSchema.protocols?.src ?? []), 'data'],
+      },
     },
   ],
   [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
