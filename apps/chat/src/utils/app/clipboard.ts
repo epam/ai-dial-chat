@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import removeMd from 'remove-markdown';
 
 export const writeTextToClipboard = (
   content: string,
@@ -9,9 +10,10 @@ export const writeTextToClipboard = (
     if (!navigator.clipboard?.write || !window.ClipboardItem) return;
 
     const html = marked(content, { async: false });
+    const plainText = removeMd(content);
 
     const htmlBlob = new Blob([html], { type: 'text/html' });
-    const textBlob = new Blob([content], { type: 'text/plain' });
+    const textBlob = new Blob([plainText], { type: 'text/plain' });
 
     navigator.clipboard
       .write([
