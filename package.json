@@ -71,6 +71,7 @@
     "jszip": "^3.10.1",
     "katex": "^0.16.22",
     "lodash-es": "^4.17.23",
+    "marked": "^17.0.1",
     "mime-types": "^2.1.35",
     "monaco-editor": "0.54.0",
     "nanoid": "^5.1.5",

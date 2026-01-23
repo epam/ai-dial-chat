@@ -12,6 +12,7 @@ import {
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { constructPath } from '@/src/utils/app/file';
 import { getShareType } from '@/src/utils/app/share';
 
@@ -172,9 +173,8 @@ export function ShareModalView() {
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
 
-      navigator.clipboard.writeText(url).then(() => {
+      writeTextToClipboard(url, () => {
         setUrlCopied(true);
         if (timeoutRef.current !== null) {
           clearTimeout(timeoutRef.current);

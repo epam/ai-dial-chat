@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getApplicationLink, getToolsetLink } from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -47,9 +48,7 @@ export function MarketplaceCopyLink({
       e.preventDefault();
       e.stopPropagation();
 
-      if (!navigator.clipboard) return;
-
-      navigator.clipboard.writeText(link).then(() => {
+      writeTextToClipboard(link, () => {
         setUrlCopied(true);
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);

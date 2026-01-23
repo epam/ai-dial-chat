@@ -9,6 +9,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
@@ -72,17 +73,17 @@ const DownloadStageView = ({ content }: { content: string }) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const copyToClipboard = useCallback(() => {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      return;
-    }
+    writeTextToClipboard(
+      content,
+      () => {
+        setIsCopied(true);
 
-    navigator.clipboard.writeText(content).then(() => {
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    });
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
+      },
+      { convertFromMarkdown: true },
+    );
   }, [content]);
 
   const downloadAsFile = useCallback(() => {

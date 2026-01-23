@@ -3,6 +3,7 @@ import { FC, memo, useCallback, useMemo, useState } from 'react';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile } from '@/src/utils/app/mobile';
 
@@ -133,14 +134,16 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     const handleCopy = useCallback(() => {
-      if (!navigator.clipboard) return;
-
-      navigator.clipboard.writeText(message.content).then(() => {
-        setMessageCopied(true);
-        setTimeout(() => {
-          setMessageCopied(false);
-        }, 2000);
-      });
+      writeTextToClipboard(
+        message.content,
+        () => {
+          setMessageCopied(true);
+          setTimeout(() => {
+            setMessageCopied(false);
+          }, 2000);
+        },
+        { convertFromMarkdown: true },
+      );
     }, [message.content]);
 
     const handleDeleteMessage = useCallback(() => {

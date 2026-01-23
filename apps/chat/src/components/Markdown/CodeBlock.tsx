@@ -10,6 +10,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import {
   languageExtensionMapping,
   languageFilenameMapping,
@@ -47,11 +48,7 @@ export const CodeBlock: FC<Props> = memo(
     const theme = useAppSelector(UISelectors.selectThemeState);
 
     const copyToClipboard = useCallback(() => {
-      if (!navigator.clipboard || !navigator.clipboard.writeText) {
-        return;
-      }
-
-      navigator.clipboard.writeText(value).then(() => {
+      writeTextToClipboard(value, () => {
         setIsCopied(true);
 
         setTimeout(() => {
