@@ -711,7 +711,7 @@ export const useFileManager = ({
   const handleCreateFolder = useCallback(
     (file: DialUploadFileItem, folderPath: string) => {
       dispatch(
-        FilesActions.uploadFiles({
+        FilesActions.createNewFolder({
           files: [file],
           destinationUrl: folderPath,
         }),
