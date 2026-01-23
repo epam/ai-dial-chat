@@ -332,7 +332,9 @@ dialTest(
       'In "Attach files" modal change attached files and verify updated files are displayed in Edit message box',
       async () => {
         for (const file of filesToCheck) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,

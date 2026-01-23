@@ -52,6 +52,9 @@ export const GridSelectors = {
   gridCell: (columnId: string) =>
     `[role="gridcell"]${GridSelectors.gridColumn(columnId)}`,
   gridCellValue: '#name',
+  loadingIndicator: '.ag-overlay-loading-center',
+  gridViewPort: '.ag-body-viewport',
+  gridBody: '.ag-body',
 };
 
 export const CheckboxSelectors = {

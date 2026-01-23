@@ -183,9 +183,11 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await filesManagerModalGrid
-          .gridCheckboxByNameCell(Attachment.sunImageName)
-          .click();
+        const attachmentCheckbox =
+          await filesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.sunImageName,
+          );
+        await attachmentCheckbox.click();
         await filesManagerModal.getAttachButton().click();
       },
     );
@@ -334,9 +336,11 @@ dialTest(
     await dialTest.step(
       'Check uploaded file and verify its name is truncated in "Manage attachments" modal',
       async () => {
-        await filesManagerModalGrid
-          .gridCheckboxByNameCell(Attachment.longImageName)
-          .click();
+        const attachmentCheckbox =
+          await filesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.longImageName,
+          );
+        await attachmentCheckbox.click();
         await filesManagerModalGridAssertion.assertElementTextIsTruncated(
           filesManagerModalGrid.gridNameCellValue(Attachment.longImageName),
         );
@@ -522,7 +526,6 @@ dialTest(
     setTestIds,
     filesManagerModal,
     filesManagerModalGrid,
-
     filesManagerModalGridAssertion,
     sendMessage,
     conversationData,
@@ -582,19 +585,28 @@ dialTest(
     await dialTest.step(
       'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is not available',
       async () => {
-        await filesManagerModalGrid
-          .gridRowByNameCell(Attachment.textName)
-          .hover();
+        const attachmentLocator =
+          await filesManagerModalGrid.goToGridRowByNameCell(
+            Attachment.textName,
+          );
+        await attachmentLocator.hover();
         await filesManagerModalGridAssertion.assertElementCursor(
           filesManagerModalGrid.gridNameCellValue(Attachment.textName),
           Cursors.notAllowed,
         );
         await filesManagerModalGridAssertion.assertElementActionabilityState(
-          filesManagerModalGrid.gridCheckboxByNameCell(Attachment.textName),
+          await filesManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.textName,
+          ),
           'disabled',
         );
+        // hover is cancelled here by the inner call of goTop()
+        const dotsMenu = await filesManagerModalGrid.gridDotsMenuByNameCell(
+          Attachment.textName,
+        );
+        await attachmentLocator.hover();
         await filesManagerModalGridAssertion.assertElementState(
-          filesManagerModalGrid.gridDotsMenuByNameCell(Attachment.textName),
+          dotsMenu,
           'hidden',
         );
         await filesManagerModalGridAssertion.assertElementActionabilityState(
@@ -619,7 +631,6 @@ dialTest(
     fileApiHelper,
     filesManagerModalGrid,
     attachmentDropdownMenu,
-
     filesManagerModalGridAssertion,
     chatMessages,
     conversations,
@@ -696,9 +707,11 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await filesManagerModalGrid.gridRowByNameCell(folderName).hover();
+        const folderRowLocator =
+          await filesManagerModalGrid.goToGridRowByNameCell(folderName);
+        await folderRowLocator.hover();
         const folderCheckboxElement =
-          filesManagerModalGrid.gridCheckboxByNameCell(folderName);
+          await filesManagerModalGrid.gridCheckboxByNameCell(folderName);
         await filesManagerModalGridAssertion.assertCheckboxState(
           folderCheckboxElement,
           CheckboxState.unchecked,
