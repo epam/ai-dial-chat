@@ -90,6 +90,7 @@ import {
 import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
+import { Translation } from '@/src/types/translation';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -1185,8 +1186,12 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
 
       return ShareService.shareDiscard(resourceUrls).pipe(
         mergeMap(() => {
-          const actions: Observable<AppAction>[] = payload.resourceIds.map(
-            (resourceId) =>
+          const actions: Observable<AppAction>[] = [];
+
+          payload.resourceIds.forEach((resourceId) => {
+            const { name } = splitEntityId(resourceId);
+
+            actions.push(
               of(
                 ShareActions.discardSharedWithMeSuccess({
                   resourceId,
@@ -1194,10 +1199,48 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                   isFolder: payload.isFolder,
                 }),
               ),
-          );
+              of(
+                UIActions.showSuccessToast(
+                  translate(
+                    payload.isFolder
+                      ? 'Folder "{{itemName}}" has been unshared successfully'
+                      : '"{{itemName}}" has been unshared successfully',
+                    {
+                      ns: Translation.Common,
+                      itemName: name,
+                    },
+                  ),
+                ),
+              ),
+            );
+          });
+
           return concat(...actions);
         }),
-        catchError(() => of(ShareActions.discardSharedWithMeFail())),
+        catchError(() => {
+          const errorActions: Observable<AppAction>[] = payload.resourceIds.map(
+            (resourceId) => {
+              const { name } = splitEntityId(resourceId);
+              return of(
+                UIActions.showErrorToast(
+                  translate(
+                    payload.isFolder
+                      ? 'Failed to unshare folder "{{itemName}}". Please try again later'
+                      : 'Failed to unshare "{{itemName}}". Please try again later',
+                    {
+                      ns: Translation.Common,
+                      itemName: name,
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+          return concat(
+            ...errorActions,
+            of(ShareActions.discardSharedWithMeFail()),
+          );
+        }),
       );
     }),
   );
