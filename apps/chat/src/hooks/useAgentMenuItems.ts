@@ -186,7 +186,6 @@ export const useAgentMenuItems = ({
         display: isMyAppOrPreview && disabledActions.delete !== true,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
-        iconClassName: 'stroke-error',
         onClick: handleDelete,
       },
     ],
