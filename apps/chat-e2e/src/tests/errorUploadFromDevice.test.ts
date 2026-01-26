@@ -70,30 +70,33 @@ dialTest.skip(
     '[Upload from device] File name is updated ok if the file has restricted special char in the name',
   async ({
     dialHomePage,
-    setTestIds,
-    filesManagerModal,
-    filesManagerModalGrid,
-    filesManagerModalGridAssertion,
-    chatBar,
-    baseAssertion,
-    localStorageManager,
-    toastAssertion,
+    navigationPanel,
+    filesManagerPage,
+    filesManagerToolbar,
+    filesManagerGrid,
     filesManagerGridAssertion,
+    setTestIds,
+    toastAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
 
-    await dialTest.step('Upload file through chat bar dots menu', async () => {
+    await dialTest.step('Upload file through Files Manager page', async () => {
       await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await chatBar.openManageAttachmentsModal();
-      await baseAssertion.assertElementState(filesManagerModal, 'visible');
-      await dialHomePage.uploadData(
+      await navigationPanel.goToFilesManager();
+      await filesManagerPage.waitForPageLoaded({isGridVisible: false});
+      await filesManagerToolbar.getNewButton().click();
+      await filesManagerPage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
-        () => filesManagerModal.openUploadFromDevice(),
+        () =>
+          filesManagerToolbar
+            .getNewButtonDropdownMenu()
+            .selectItem(UploadMenuOptions.uploadFiles),
       );
       await filesManagerGridAssertion.assertGridRowByNameState(
         Attachment.sunImageName,
@@ -104,7 +107,7 @@ dialTest.skip(
     await dialTest.step(
       'Add restricted symbol to file name, click Upload and observe restricted symbols are restricted, file is not renamed',
       async () => {
-        await filesManagerModalGrid.renameFile(
+        await filesManagerGrid.renameFile(
           Attachment.sunImageName,
           `${Attachment.sunImageName}${restrictedChar}`,
         );
@@ -113,11 +116,11 @@ dialTest.skip(
           ExpectedConstants.failedToMoveFileMessage,
         );
 
-        await filesManagerModalGridAssertion.assertGridRowByNameState(
+        await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',
         );
-        await filesManagerModalGridAssertion.assertGridRowColor(
+        await filesManagerGridAssertion.assertGridRowColor(
           Attachment.sunImageName,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
         );

@@ -82,7 +82,8 @@ export class FilesManagerGrid extends Grid {
 
   public async renameFile(currentName: string, newName: string) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
-    await dotsMenu.click();
+    // eslint-disable-next-line playwright/no-force-option
+    await dotsMenu.click({force: true});
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
     const nameWithoutExtension =
       FileUtil.getFilenameWithoutExtension(currentName);
