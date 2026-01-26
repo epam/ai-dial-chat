@@ -150,12 +150,13 @@ dialTest.skip(
     '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
   async ({
     dialHomePage,
+    navigationPanel,
+    filesManagerPage,
+    filesManagerToolbar,
+    filesManagerGridAssertion,
     setTestIds,
-    filesManagerModal,
-    filesManagerModalGridAssertion,
     fileConflictConfirmationPopupAssertion,
     toastAssertion,
-    chatBar,
     fileApiHelper,
     fileConflictConfirmationPopup,
     localStorageManager,
@@ -172,13 +173,15 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await filesManagerModalGridAssertion.assertGridRowByNameState(
+        await navigationPanel.goToFilesManager();
+        await filesManagerPage.waitForPageLoaded();
+        await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',
         );
 
-        await dialHomePage.uploadData(
+        await filesManagerToolbar.getNewButton().click();
+        await filesManagerPage.uploadData(
           {
             path: [
               Attachment.sunImageName,
@@ -189,7 +192,10 @@ dialTest.skip(
             ],
             dataType: 'upload',
           },
-          () => filesManagerModal.openUploadFromDevice(),
+          () =>
+            filesManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles),
         );
 
         await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
@@ -216,7 +222,7 @@ dialTest.skip(
 
     // TODO: when uploading files with restricted chars in the name, neither toast nor file appears
     // Based on previous code, it expected a modal error, but now we deal with toasts or other indicators.
-    await dialTest.step.skip('Verify 2 error messages are shown', async () => {
+    await dialTest.step('Verify 2 error messages are shown', async () => {
       await toastAssertion.assertToastMessage(
         ExpectedConstants.notAllowedFilenameError(
           Attachment.restrictedSemicolonCharFilename,
