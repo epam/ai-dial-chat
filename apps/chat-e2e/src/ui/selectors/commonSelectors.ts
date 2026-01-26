@@ -73,7 +73,8 @@ export const LoaderSelectors = {
 };
 
 export const InputSelectors = {
-  value: (value: string) => `[value="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`,
+  value: (value: string) =>
+    `[value="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`,
   inputErrorIcon: (value: string) =>
     `.dial-input-error:has(input[value="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]) svg[aria-label="alert"]`,
 };

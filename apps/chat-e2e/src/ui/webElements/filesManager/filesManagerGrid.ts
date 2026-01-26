@@ -95,7 +95,9 @@ export class FilesManagerGrid extends Grid {
   }
 
   public getRenameInputError(name: string) {
-    return this.getElementLocator().locator(InputSelectors.inputErrorIcon(name));
+    return this.getElementLocator().locator(
+      InputSelectors.inputErrorIcon(name),
+    );
   }
 
   public getRenameInput(value: string) {

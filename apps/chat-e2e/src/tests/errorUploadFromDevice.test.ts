@@ -77,7 +77,6 @@ dialTest.skip(
     filesManagerGrid,
     filesManagerGridAssertion,
     setTestIds,
-    toastAssertion,
     localStorageManager,
     page,
   }) => {
@@ -112,7 +111,10 @@ dialTest.skip(
         const invalidName = `${Attachment.sunImageName}${restrictedChar}`;
         await filesManagerGrid.renameFile(Attachment.sunImageName, invalidName);
 
-        await filesManagerGridAssertion.assertRenameInputError();
+        await filesManagerGridAssertion.assertRenameInputError(
+          invalidName,
+          'visible',
+        );
 
         await page.keyboard.press(keys.enter);
         await filesManagerGridAssertion.assertRenameInputState(
@@ -131,7 +133,7 @@ dialTest.skip(
         );
         await filesManagerGridAssertion.assertRenameInputState(
           invalidName,
-          'visible',
+          'hidden',
         );
         await filesManagerGridAssertion.assertGridRowColor(
           Attachment.sunImageName,
