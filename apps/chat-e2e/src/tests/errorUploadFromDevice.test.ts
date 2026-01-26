@@ -112,9 +112,7 @@ dialTest.skip(
           `${Attachment.sunImageName}${restrictedChar}`,
         );
 
-        await toastAssertion.assertToastMessage(
-          ExpectedConstants.failedToMoveFileMessage,
-        );
+        await filesManagerGridAssertion.assertRenameInputError();
 
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,

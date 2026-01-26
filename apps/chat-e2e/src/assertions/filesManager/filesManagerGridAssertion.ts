@@ -72,4 +72,11 @@ export class FilesManagerGridAssertion extends BaseAssertion {
       expectedColor,
     );
   }
+
+  public async assertRenameInputError() {
+    await this.assertElementState(
+      this.filesManagerGrid.getRenameInputError(),
+      'visible',
+    );
+  }
 }
