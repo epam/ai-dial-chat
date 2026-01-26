@@ -144,6 +144,16 @@ dialTest(
   },
 );
 
+// TODO: The test is skipped due to a bug in multi-file upload logic.
+// When uploading a mix of:
+// 1. A duplicate file (triggers confirmation popup)
+// 2. Files with equal sanitized names (e.g. 'restricted=char.jpg' and 'restricted=,;{}%&.JPG' both become 'restrictedchar.jpg')
+// 3. Files with restricted characters
+//
+// The current behavior is incorrect:
+// - The confirmation popup appears for the duplicate file.
+// - Upon confirmation, one of the files with restricted characters is silently sanitized and uploaded (e.g. 'restrictedchar.jpg').
+// - No error messages found for restricted characters or duplicate names.
 dialTest.skip(
   '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
     "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
