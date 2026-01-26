@@ -6,6 +6,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -78,6 +79,7 @@ dialTest.skip(
     setTestIds,
     toastAssertion,
     localStorageManager,
+    page,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -89,7 +91,7 @@ dialTest.skip(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await navigationPanel.goToFilesManager();
-      await filesManagerPage.waitForPageLoaded({isGridVisible: false});
+      await filesManagerPage.waitForPageLoaded({ isGridVisible: false });
       await filesManagerToolbar.getNewButton().click();
       await filesManagerPage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
@@ -107,15 +109,28 @@ dialTest.skip(
     await dialTest.step(
       'Add restricted symbol to file name, click Upload and observe restricted symbols are restricted, file is not renamed',
       async () => {
-        await filesManagerGrid.renameFile(
-          Attachment.sunImageName,
-          `${Attachment.sunImageName}${restrictedChar}`,
-        );
+        const invalidName = `${Attachment.sunImageName}${restrictedChar}`;
+        await filesManagerGrid.renameFile(Attachment.sunImageName, invalidName);
 
         await filesManagerGridAssertion.assertRenameInputError();
 
+        await page.keyboard.press(keys.enter);
+        await filesManagerGridAssertion.assertRenameInputState(
+          invalidName,
+          'visible',
+        );
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
+          'hidden',
+        );
+
+        await page.keyboard.press(keys.escape);
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await filesManagerGridAssertion.assertRenameInputState(
+          invalidName,
           'visible',
         );
         await filesManagerGridAssertion.assertGridRowColor(

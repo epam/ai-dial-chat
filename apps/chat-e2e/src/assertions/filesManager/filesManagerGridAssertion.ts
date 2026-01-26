@@ -79,4 +79,14 @@ export class FilesManagerGridAssertion extends BaseAssertion {
       'visible',
     );
   }
+
+  public async assertRenameInputState(
+    value: string,
+    expectedState: ElementState,
+  ) {
+    await this.assertElementState(
+      this.filesManagerGrid.getRenameInput(value),
+      expectedState,
+    );
+  }
 }

@@ -95,9 +95,11 @@ export class FilesManagerGrid extends Grid {
   }
 
   public getRenameInputError() {
-    return this.getElementLocator().locator(
-      '.dial-input-error svg[aria-label="alert"]',
-    );
+    return this.getElementLocator().locator(InputSelectors.inputErrorIcon);
+  }
+
+  public getRenameInput(value: string) {
+    return this.getElementLocator().locator(InputSelectors.value(value));
   }
 
   public async goToGridRowByNameCell(
