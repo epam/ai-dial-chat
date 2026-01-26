@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useMemo } from 'react';
 import {
   Controller,
   useFormContext,
@@ -10,16 +10,10 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getEntityDisplayName,
-  getSharedTooltip,
-  isDialAiEntityModel,
-} from '@/src/utils/app/application';
+import { getSharedTooltip } from '@/src/utils/app/application';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
-import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -27,7 +21,6 @@ import {
   ApplicationSelectors,
   ModelsSelectors,
   SettingsSelectors,
-  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import {
@@ -35,12 +28,12 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 
+import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/AgentsAndToolsetsField';
 import {
   QuickApp2Form as QuickApp2FormType,
   getAttachmentTypeErrorHandlers,
 } from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
-import { AgentAndToolsetSelector } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetSelector';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -50,21 +43,13 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
-import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/ApplicationDetails/SimpleApplicationDetailsFooter';
-import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
-import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { Feature } from '@epam/ai-dial-shared';
-import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
-const AgentAndToolsetSelectorField = withErrorMessage(
-  withLabel(AgentAndToolsetSelector),
-);
 const ToggleSwitchField = withLabel(ToggleSwitch);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
@@ -82,10 +67,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     ApplicationSelectors.selectApplicationDetail,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
-
-  const allModels = useAppSelector(ModelsSelectors.selectModels);
-  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
 
   const toolSupportingModels = useMemo(
@@ -97,15 +78,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
-  const allEntitiesMap = useMemo(
-    () => ({
-      ...modelsMap,
-      ...toolsetsMap,
-    }),
-    [modelsMap, toolsetsMap],
-  );
-
-  const { control, register, setError, clearErrors, getValues, setValue } =
+  const { control, register, setError, clearErrors } =
     useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
 
@@ -114,36 +87,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     name: 'model',
   });
 
-  const agentsAndToolsetsIds = useWatch({
-    control,
-    name: 'agentsAndToolsets',
-  });
-
-  const sortedAgentsAndToolsets = useMemo(() => {
-    const ids = [...(agentsAndToolsetsIds || [])];
-
-    const itemsWithName = ids.map((id) => ({
-      id: id,
-      name: getEntityDisplayName(id, allEntitiesMap),
-    }));
-
-    const sortedItems = sortBy(itemsWithName, [
-      (item) => item.name.toLowerCase(),
-    ]);
-
-    return sortedItems.map((item) => item.id);
-  }, [agentsAndToolsetsIds, allEntitiesMap]);
-
-  const handleAgentsAndToolsetsChange = useCallback(
-    (value: string[]) => {
-      setValue('agentsAndToolsets', value, {
-        shouldTouch: true,
-        shouldDirty: true,
-      });
-    },
-    [setValue],
-  );
-
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
     return selectedModel ? doesModelAllowTemperature(selectedModel) : true;
@@ -151,65 +94,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
-
-  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
-
-  const detailedViewEntity = useMemo(
-    () => (selectedEntityId ? allEntitiesMap[selectedEntityId] : null),
-    [selectedEntityId, allEntitiesMap],
-  );
-
-  const handleOpenDetails = useCallback(
-    (entity: MarketplaceEntity) => {
-      setSelectedEntityId(entity.id);
-      onAutoSave();
-    },
-    [onAutoSave],
-  );
-
-  const handleCloseDetails = useCallback(() => {
-    setSelectedEntityId(null);
-  }, []);
-
-  const handleChangeVersionInDetails = useCallback(
-    (entity: MarketplaceEntity) => {
-      setSelectedEntityId(entity.id);
-    },
-    [],
-  );
-
-  const handleItemClick = useCallback(
-    (id: string) => {
-      const entity = allEntitiesMap[id];
-      if (entity) {
-        handleOpenDetails(entity);
-      }
-    },
-    [allEntitiesMap, handleOpenDetails],
-  );
-
-  const handleRemoveFromDetails = useCallback(
-    (entityToRemove: MarketplaceEntity) => {
-      const currentValue = getValues('agentsAndToolsets') || [];
-      setValue(
-        'agentsAndToolsets',
-        currentValue.filter((id) => id !== entityToRemove.id),
-        { shouldTouch: true, shouldDirty: true },
-      );
-      handleCloseDetails();
-    },
-    [getValues, setValue, handleCloseDetails],
-  );
-
-  const commonDetailsProps = useMemo(
-    () => ({
-      onClose: handleCloseDetails,
-      onChangeVersion: handleChangeVersionInDetails,
-      onRemove: handleRemoveFromDetails,
-      isPreview: true,
-    }),
-    [handleCloseDetails, handleChangeVersionInDetails, handleRemoveFromDetails],
-  );
 
   return (
     <div
@@ -260,44 +144,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         )}
       />
 
-      <Controller
-        name="agentsAndToolsets"
-        control={control}
-        render={() => {
-          return (
-            <>
-              <AgentAndToolsetSelectorField
-                value={sortedAgentsAndToolsets}
-                onChange={handleAgentsAndToolsetsChange}
-                allItemsMap={allEntitiesMap}
-                label={t('Agents & Toolsets')}
-                readonly={isAppPublic}
-                tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-                onItemClick={handleItemClick}
-              />
-              {detailedViewEntity &&
-                isDialAiEntityModel(detailedViewEntity) && (
-                  <ApplicationDetails
-                    entity={detailedViewEntity}
-                    allEntities={allModels}
-                    FooterComponent={SimpleApplicationDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
-
-              {detailedViewEntity &&
-                isToolsetEntityModel(detailedViewEntity) && (
-                  <ToolsetDetails
-                    entity={detailedViewEntity}
-                    allEntities={allToolsets}
-                    FooterComponent={SimpleToolsetDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
-            </>
-          );
-        }}
-      />
+      <AgentsAndToolsetsField onAutoSave={onAutoSave} />
 
       <FieldTextArea
         {...register('instructions')}
