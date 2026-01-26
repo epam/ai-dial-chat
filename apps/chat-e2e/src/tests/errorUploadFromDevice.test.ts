@@ -66,7 +66,7 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Upload from device] Error appears if to load the file with restricted special char in the name which was renamed.\n' +
     '[Upload from device] File name is updated ok if the file has restricted special char in the name',
   async ({
