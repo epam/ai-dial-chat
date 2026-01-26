@@ -73,10 +73,13 @@ export class FilesManagerGridAssertion extends BaseAssertion {
     );
   }
 
-  public async assertRenameInputError() {
+  public async assertRenameInputError(
+    name: string,
+    expectedState: ElementState = 'visible',
+  ) {
     await this.assertElementState(
-      this.filesManagerGrid.getRenameInputError(),
-      'visible',
+      this.filesManagerGrid.getRenameInputError(name),
+      expectedState,
     );
   }
 
