@@ -242,6 +242,10 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [handleCloseDetails, handleChangeVersionInDetails, handleRemoveFromDetails],
   );
 
+  const shortEditorError = editorError
+    ? t('App settings are not matching the schema')
+    : undefined;
+
   return (
     <>
       <Controller
@@ -275,13 +279,14 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
             <JsonEditor
               label={t('Agents & Toolsets')}
-              error={errors.agentsAndToolsetsJson?.message || editorError}
-              height={200}
+              error={errors.agentsAndToolsetsJson?.message || shortEditorError}
+              height={280}
               allowFullScreen
               onChange={field.onChange}
               value={field.value}
               language="json"
               options={editorOptions}
+              errors={editorError ? [editorError] : undefined}
             />
           </div>
         )}
