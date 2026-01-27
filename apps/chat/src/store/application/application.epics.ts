@@ -359,6 +359,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       isExitingAfterSave: payload.isSaveAndExit,
                     }),
                   ),
+                  of(ApplicationActions.setEditorError()),
                 ];
 
                 if (payload.isSaveAndExit) {

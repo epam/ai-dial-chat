@@ -21,9 +21,8 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { AnyToolset } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/actions';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -45,11 +44,10 @@ import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/App
 import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 
-const AgentAndToolsetSelectorField = withErrorMessage(
-  withLabel(AgentAndToolsetSelector),
-);
+const AgentAndToolsetSelectorField = withLabel(AgentAndToolsetSelector);
 const JsonEditor = withErrorMessage(withLabel(MonacoEditor));
 
 interface AgentsAndToolsetsFieldProps {
@@ -60,7 +58,6 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   onAutoSave,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
-  const dispatch = useAppDispatch();
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -78,7 +75,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
 
   const { control, setValue, getValues } = useFormContext<QuickApp2FormType>();
-  const { errors, isDirty } = useFormState<QuickApp2FormType>({ control });
+  const { errors, dirtyFields } = useFormState<QuickApp2FormType>({ control });
 
   const isJsonView = useWatch({
     control,
@@ -144,7 +141,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   }, [agentsAndToolsetsJson, isJsonView, setValue]);
 
   const handleJsonViewChange = useCallback(() => {
-    if (isJsonView && isDirty) {
+    if (isJsonView && (dirtyFields.agentsAndToolsetsJson || editorError)) {
       onAutoSave(true);
       return;
     } else if (isJsonView) {
@@ -167,27 +164,15 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
       });
     }
   }, [
-    allEntitiesMap,
-    getValues,
-    isDirty,
     isJsonView,
-    onAutoSave,
+    dirtyFields.agentsAndToolsetsJson,
+    editorError,
     setValue,
+    onAutoSave,
     switchToSimpleView,
+    getValues,
+    allEntitiesMap,
   ]);
-
-  const handleJsonChange = useCallback(
-    (value: string | undefined) => {
-      if (editorError) {
-        dispatch(ApplicationActions.setEditorError());
-      }
-      setValue('agentsAndToolsetsJson', value ?? '', {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    },
-    [dispatch, editorError, setValue],
-  );
 
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
@@ -258,47 +243,42 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   );
 
   return (
-    <div>
-      <Controller
-        name="isJsonView"
-        control={control}
-        render={({ field }) => (
-          <ToggleSwitch
-            disabled={
-              (field.value &&
-                (!!errors.agentsAndToolsetsJson || !!editorError)) ||
-              isLoading
-            }
-            isOn={field.value}
-            handleSwitch={handleJsonViewChange}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
-            additionalText={t('JSON view')}
-            className="mb-2 flex w-fit items-center gap-2"
-            tooltip={
-              field.value && !!errors.agentsAndToolsetsJson
-                ? t('Fix JSON config before switching to simple mode')
-                : ''
-            }
-          />
-        )}
-      />
-
+    <>
       <Controller
         name="agentsAndToolsetsJson"
         control={control}
         render={({ field }) => (
           <div
-            className={classNames({
-              'invisible h-0 overflow-hidden': !isJsonView,
+            className={classNames('relative', {
+              hidden: !isJsonView,
             })}
           >
+            <div className="absolute right-0 top-[-5px]">
+              {dirtyFields.agentsAndToolsetsJson || editorError || isLoading ? (
+                <DialLinkButton
+                  disabled={!!errors.agentsAndToolsetsJson || isLoading}
+                  onClick={handleJsonViewChange}
+                  label={t('Save JSON')}
+                />
+              ) : (
+                <ToggleSwitch
+                  disabled={!!errors.agentsAndToolsetsJson}
+                  isOn
+                  handleSwitch={handleJsonViewChange}
+                  switchOnText={t('ON')}
+                  additionalText={t('JSON')}
+                  className="mb-2 flex w-fit items-center gap-2"
+                  tooltip={t('Switch to marketplace Agents and Toolsets view')}
+                />
+              )}
+            </div>
+
             <JsonEditor
               label={t('Agents & Toolsets')}
               error={errors.agentsAndToolsetsJson?.message || editorError}
               height={200}
               allowFullScreen
-              onChange={handleJsonChange}
+              onChange={field.onChange}
               value={field.value}
               language="json"
               options={editorOptions}
@@ -326,6 +306,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   readonly={isAppPublic}
                   tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
                   onItemClick={handleItemClick}
+                  onJsonSwitchClick={handleJsonViewChange}
                 />
               </div>
               {detailedViewEntity &&
@@ -351,6 +332,6 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           );
         }}
       />
-    </div>
+    </>
   );
 };

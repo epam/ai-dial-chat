@@ -15,10 +15,7 @@ import { FeatureType } from '@/src/types/common';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import {
-  ApplicationState,
-  AppsEditorDelayedActions,
-} from './applications.types';
+import { ApplicationState } from './applications.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
@@ -114,7 +111,6 @@ export const applicationSlice = createSlice({
         isSaveAndExit?: boolean;
         shouldSelectApplication?: boolean;
         shouldSetEditorError?: boolean;
-        delayedActions?: AppsEditorDelayedActions[];
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
