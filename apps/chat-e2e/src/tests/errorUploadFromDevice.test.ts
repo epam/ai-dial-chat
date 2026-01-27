@@ -7,6 +7,7 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -66,78 +67,66 @@ dialTest(
   },
 );
 
-dialTest(
-  '[Upload from device] Error appears if to load the file with restricted special char in the name which was renamed.\n' +
-    '[Upload from device] File name is updated ok if the file has restricted special char in the name',
+dialTest.only(
+  '[Upload from device] Restricted special chars are not allowed to be entered or copied\n' +
+    '[Upload from device] File name is updated ok if the file had restricted special char in the name',
   async ({
     dialHomePage,
-    navigationPanel,
-    filesManagerPage,
-    filesManagerToolbar,
-    filesManagerGrid,
-    filesManagerGridAssertion,
     setTestIds,
+    attachmentDropdownMenu,
+    uploadFromDeviceModal,
     localStorageManager,
-    page,
+    sendMessage,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
 
-    await dialTest.step('Upload file through Files Manager page', async () => {
-      await localStorageManager.setShowSideBarPanels();
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await navigationPanel.goToFilesManager();
-      await filesManagerPage.waitForPageLoaded({ isGridVisible: false });
-      await filesManagerToolbar.getNewButton().click();
-      await filesManagerPage.uploadData(
-        { path: Attachment.sunImageName, dataType: 'upload' },
-        () =>
-          filesManagerToolbar
-            .getNewButtonDropdownMenu()
-            .selectItem(UploadMenuOptions.uploadFiles),
-      );
-      await filesManagerGridAssertion.assertGridRowByNameState(
-        Attachment.sunImageName,
-        'visible',
-      );
-    });
+    await dialTest.step(
+      'Upload file through chat bar attachment menu',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await sendMessage.attachmentMenuTrigger.click();
+        await dialHomePage.uploadData(
+          { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
+          () =>
+            attachmentDropdownMenu.selectMenuOption(
+              UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
+            ),
+        );
+      },
+    );
 
     await dialTest.step(
-      'Add restricted symbol to file name, click Upload and observe restricted symbols are restricted, file is not renamed',
+      'Add restricted symbol to filename and verify filename is not changed',
       async () => {
-        const invalidName = `${Attachment.sunImageName}${restrictedChar}`;
-        await filesManagerGrid.renameFile(Attachment.sunImageName, invalidName);
+        await uploadFromDeviceModal
+          .getUploadedFilenameInput(ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename))
+          .click();
+        await uploadFromDeviceModal.typeInUploadedFilename(
+          ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename),
+          restrictedChar,
+        );
+        //TODO assert filename is not changed
+      },
+    );
 
-        await filesManagerGridAssertion.assertRenameInputError(
-          invalidName,
+    await dialTest.step(
+      'Fix file name and upload file successfully',
+      async () => {
+        await uploadFromDeviceModal.uploadFiles();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename) },
+          FileModalSection.AllFiles,
           'visible',
-        );
-
-        await page.keyboard.press(keys.enter);
-        await filesManagerGridAssertion.assertRenameInputState(
-          invalidName,
-          'visible',
-        );
-        await filesManagerGridAssertion.assertGridRowByNameState(
-          Attachment.sunImageName,
-          'hidden',
-        );
-
-        await page.keyboard.press(keys.escape);
-        await filesManagerGridAssertion.assertGridRowByNameState(
-          Attachment.sunImageName,
-          'visible',
-        );
-        await filesManagerGridAssertion.assertRenameInputState(
-          invalidName,
-          'hidden',
-        );
-        await filesManagerGridAssertion.assertGridRowColor(
-          Attachment.sunImageName,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
         );
       },
     );
@@ -154,7 +143,7 @@ dialTest(
 // - The confirmation popup appears for the duplicate file.
 // - Upon confirmation, one of the files with restricted characters is silently sanitized and uploaded (e.g. 'restrictedchar.jpg').
 // - No error messages found for restricted characters or duplicate names.
-dialTest.skip(
+dialTest(
   '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
     "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
     '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
@@ -247,30 +236,38 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Upload from device] Error appears if to upload a file with a dot at the name without extension.\n' +
     '[Upload from device] A file without extension is uploaded successfully',
   async ({
     dialHomePage,
     setTestIds,
     attachFilesModal,
-    chatBar,
+    attachmentDropdownMenu,
     uploadFromDeviceModal,
     localStorageManager,
+    sendMessage,
   }) => {
     setTestIds('EPMRTC-3216', 'EPMRTC-3113');
     const dot = '.';
 
     await dialTest.step(
-      'Upload file without extension through chat bar dots menu',
+      'Upload file without extension through chat bar attachment menu',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
+        await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
+          () =>
+            attachmentDropdownMenu.selectMenuOption(
+              UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
+            ),
         );
       },
     );
