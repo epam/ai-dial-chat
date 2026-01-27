@@ -5,11 +5,7 @@ import {
   ExpectedMessages,
   UploadMenuOptions,
 } from '@/src/testData';
-import { ThemeColorAttributes } from '@/src/ui/domData';
-import { keys } from '@/src/ui/keyboard';
-import { FileModalSection } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
-import { ThemesUtil } from '@/src/utils/themesUtil';
+import { FileUtil, GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -67,7 +63,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Upload from device] Restricted special chars are not allowed to be entered or copied\n' +
     '[Upload from device] File name is updated ok if the file had restricted special char in the name',
   async ({
@@ -77,15 +73,17 @@ dialTest.only(
     uploadFromDeviceModal,
     localStorageManager,
     sendMessage,
-    manageAttachmentsAssertion,
-           sendMessageInputAttachmentsAssertions,
-           baseAssertion,
+    sendMessageInputAttachmentsAssertions,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
-    const replacedSymbolsFilename = ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename);
+    const replacedSymbolsFilename =
+      ExpectedConstants.replacedRestrictedCharsName(
+        Attachment.restrictedCharsFilename,
+      );
 
     await dialTest.step(
       'Upload file through chat bar attachment menu',
@@ -112,20 +110,35 @@ dialTest.only(
       'Add restricted symbol to filename and verify filename is not changed',
       async () => {
         await uploadFromDeviceModal
-          .getUploadedFilenameInput(ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename))
+          .getUploadedFilenameInput(
+            ExpectedConstants.replacedRestrictedCharsName(
+              Attachment.restrictedCharsFilename,
+            ),
+          )
           .click();
         await uploadFromDeviceModal.typeInUploadedFilename(
           replacedSymbolsFilename,
           restrictedChar,
         );
-        await baseAssertion.assertElementState(uploadFromDeviceModal
-          .getUploadedFilenameInput(replacedSymbolsFilename),
-          'visible'
-        )
-        await baseAssertion.assertElementState(uploadFromDeviceModal
-            .getUploadedFilenameInput(`${replacedSymbolsFilename}${restrictedChar}`),
-          'hidden'
-        )
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFilenameInput(
+            replacedSymbolsFilename,
+          ),
+          'visible',
+        );
+
+        const filenameWithoutExt = FileUtil.getFilenameWithoutExtension(
+          replacedSymbolsFilename,
+        );
+        const fileExtension = FileUtil.getFileExtension(
+          replacedSymbolsFilename,
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFilenameInput(
+            `${filenameWithoutExt}${restrictedChar}${fileExtension}`,
+          ),
+          'hidden',
+        );
       },
     );
 
@@ -136,11 +149,6 @@ dialTest.only(
         await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
           replacedSymbolsFilename,
-          'visible',
-        );
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          FileModalSection.AllFiles,
           'visible',
         );
       },

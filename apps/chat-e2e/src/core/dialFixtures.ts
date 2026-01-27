@@ -94,7 +94,6 @@ import {
   ToastAssertion,
   ToolsetAuthAssertion,
   TooltipAssertion,
-  UploadFromDeviceModalAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
@@ -456,7 +455,6 @@ const dialTest = test.extend<{
   fileConflictConfirmationPopup: ConfirmationPopup;
   fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
   uploadProgressDialog: UploadProgressDialog;
-  uploadFromDeviceModalAssertion: UploadFromDeviceModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -479,12 +477,7 @@ const dialTest = test.extend<{
     );
     await use(entityEditorHeaderAssertion);
   },
-  uploadFromDeviceModalAssertion: async ({ uploadFromDeviceModal }, use) => {
-    const uploadFromDeviceModalAssertion = new UploadFromDeviceModalAssertion(
-      uploadFromDeviceModal,
-    );
-    await use(uploadFromDeviceModalAssertion);
-  },
+
   sendMessageInputAttachmentsAssertions: async (
     { sendMessageInputAttachments },
     use,
