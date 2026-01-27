@@ -78,13 +78,14 @@ dialTest.only(
     localStorageManager,
     sendMessage,
     manageAttachmentsAssertion,
-    uploadFromDeviceModalAssertion,
+           sendMessageInputAttachmentsAssertions,
            baseAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
+    const replacedSymbolsFilename = ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename);
 
     await dialTest.step(
       'Upload file through chat bar attachment menu',
@@ -114,17 +115,17 @@ dialTest.only(
           .getUploadedFilenameInput(ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename))
           .click();
         await uploadFromDeviceModal.typeInUploadedFilename(
-          ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename),
+          replacedSymbolsFilename,
           restrictedChar,
         );
-        await uploadFromDeviceModalAssertion.assertUploadedFilenameInputValue(
-          ExpectedConstants.replacedRestrictedCharsName(
-            Attachment.restrictedCharsFilename,
-          ),
-          ExpectedConstants.replacedRestrictedCharsName(
-            Attachment.restrictedCharsFilename,
-          ),
-        );
+        await baseAssertion.assertElementState(uploadFromDeviceModal
+          .getUploadedFilenameInput(replacedSymbolsFilename),
+          'visible'
+        )
+        await baseAssertion.assertElementState(uploadFromDeviceModal
+            .getUploadedFilenameInput(`${replacedSymbolsFilename}${restrictedChar}`),
+          'hidden'
+        )
       },
     );
 
@@ -132,12 +133,11 @@ dialTest.only(
       'Fix file name and upload file successfully',
       async () => {
         await uploadFromDeviceModal.uploadFiles();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename) },
-          FileModalSection.AllFiles,
+        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          replacedSymbolsFilename,
           'visible',
         );
-        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
         await manageAttachmentsAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
           FileModalSection.AllFiles,
