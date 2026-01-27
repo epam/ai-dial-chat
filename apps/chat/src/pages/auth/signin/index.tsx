@@ -186,10 +186,12 @@ export const getServerSideProps: GetServerSideProps = async ({
 
   const providerFromQuery = checkProvider ? query.provider : null;
   const themesHostDefined = !!process.env.THEMES_CONFIG_HOST;
+
   return {
     props: {
       provider: DEFAULT_PROVIDER ?? providerFromQuery,
-      providers: authProviders ?? [],
+      providers:
+        authProviders?.map(({ id, name, type }) => ({ id, name, type })) ?? [],
       themesHostDefined,
     },
   };
