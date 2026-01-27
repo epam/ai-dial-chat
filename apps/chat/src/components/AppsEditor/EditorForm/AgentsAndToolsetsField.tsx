@@ -21,8 +21,9 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { AnyToolset } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/actions';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -52,13 +53,14 @@ const AgentAndToolsetSelectorField = withErrorMessage(
 const JsonEditor = withErrorMessage(withLabel(MonacoEditor));
 
 interface AgentsAndToolsetsFieldProps {
-  onAutoSave: () => void;
+  onAutoSave: (isSimpleViewSwitch?: boolean) => void;
 }
 
 export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   onAutoSave,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -67,12 +69,16 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const editorError = useAppSelector(ApplicationSelectors.selectEditorError);
+  const isLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
 
   const { control, setValue, getValues } = useFormContext<QuickApp2FormType>();
-  const { errors } = useFormState<QuickApp2FormType>({ control });
+  const { errors, isDirty } = useFormState<QuickApp2FormType>({ control });
 
   const isJsonView = useWatch({
     control,
@@ -124,14 +130,25 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [selectedEntityId, allEntitiesMap],
   );
 
+  const switchToSimpleView = useCallback(() => {
+    setValue(
+      'agentsAndToolsets',
+      getAgentsAndToolsetsFormValue(
+        JSON.parse(agentsAndToolsetsJson) as AnyToolset[],
+      ),
+    );
+    setValue('isJsonView', !isJsonView, {
+      shouldDirty: false,
+      shouldValidate: true,
+    });
+  }, [agentsAndToolsetsJson, isJsonView, setValue]);
+
   const handleJsonViewChange = useCallback(() => {
-    if (isJsonView) {
-      setValue(
-        'agentsAndToolsets',
-        getAgentsAndToolsetsFormValue(
-          JSON.parse(agentsAndToolsetsJson) as AnyToolset[],
-        ),
-      );
+    if (isJsonView && isDirty) {
+      onAutoSave(true);
+      return;
+    } else if (isJsonView) {
+      switchToSimpleView();
     } else {
       setValue(
         'agentsAndToolsetsJson',
@@ -144,12 +161,33 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           2,
         ),
       );
+      setValue('isJsonView', !isJsonView, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
     }
-    setValue('isJsonView', !isJsonView, {
-      shouldDirty: false,
-      shouldValidate: true,
-    });
-  }, [agentsAndToolsetsJson, allEntitiesMap, getValues, isJsonView, setValue]);
+  }, [
+    allEntitiesMap,
+    getValues,
+    isDirty,
+    isJsonView,
+    onAutoSave,
+    setValue,
+    switchToSimpleView,
+  ]);
+
+  const handleJsonChange = useCallback(
+    (value: string | undefined) => {
+      if (editorError) {
+        dispatch(ApplicationActions.setEditorError());
+      }
+      setValue('agentsAndToolsetsJson', value ?? '', {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+    [dispatch, editorError, setValue],
+  );
 
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
@@ -226,7 +264,11 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         control={control}
         render={({ field }) => (
           <ToggleSwitch
-            disabled={field.value && !!errors.agentsAndToolsetsJson}
+            disabled={
+              (field.value &&
+                (!!errors.agentsAndToolsetsJson || !!editorError)) ||
+              isLoading
+            }
             isOn={field.value}
             handleSwitch={handleJsonViewChange}
             switchOnText={t('ON')}
@@ -253,10 +295,10 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           >
             <JsonEditor
               label={t('Agents & Toolsets')}
-              error={errors.agentsAndToolsetsJson?.message}
+              error={errors.agentsAndToolsetsJson?.message || editorError}
               height={200}
               allowFullScreen
-              onChange={field.onChange}
+              onChange={handleJsonChange}
               value={field.value}
               language="json"
               options={editorOptions}

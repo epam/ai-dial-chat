@@ -383,12 +383,25 @@ const updateApplicationEpic: AppEpic = (action$) =>
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
-                return of(
-                  ApplicationActions.updateFail({
-                    oldApplication: payload.oldApplication,
-                  }),
-                  UIActions.showErrorToast(
-                    translate('Failed to update application'),
+                return concat(
+                  of(
+                    ApplicationActions.updateFail({
+                      oldApplication: payload.oldApplication,
+                    }),
+                  ),
+                  of(
+                    UIActions.showErrorToast(
+                      translate('Failed to update application'),
+                    ),
+                  ),
+                  iif(
+                    () => !!payload.shouldSetEditorError,
+                    of(
+                      ApplicationActions.setEditorError(
+                        translate('App settings are not matching the schema'),
+                      ),
+                    ),
+                    EMPTY,
                   ),
                 );
               }),

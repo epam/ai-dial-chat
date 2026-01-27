@@ -17,7 +17,6 @@ export enum ToolsetTypes {
 
 export enum DialDeploymentToolsetToolTypes {
   DialDeploymentSimple = 'dial-deployment-simple',
-  DeploymentTool = 'deployment-tool',
 }
 
 export enum AgentsAndToolsetsModalQueryParams {
