@@ -8,14 +8,4 @@ export class UploadFromDeviceModalAssertion extends BaseAssertion {
     super();
     this.uploadFromDeviceModal = uploadFromDeviceModal;
   }
-
-  public async assertUploadedFilenameInputValue(
-    currentFilename: string,
-    expectedValue: string,
-    expectedMessage?: string,
-  ) {
-    const filenameInput =
-      this.uploadFromDeviceModal.getUploadedFilenameInput(currentFilename);
-    await this.assertInputValue(filenameInput, expectedValue, expectedMessage);
-  }
 }

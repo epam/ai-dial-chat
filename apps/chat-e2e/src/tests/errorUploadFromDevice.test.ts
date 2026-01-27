@@ -156,32 +156,19 @@ dialTest(
   },
 );
 
-// TODO: The test is skipped due to a bug in multi-file upload logic.
-// When uploading a mix of:
-// 1. A duplicate file (triggers confirmation popup)
-// 2. Files with equal sanitized names (e.g. 'restricted=char.jpg' and 'restricted=,;{}%&.JPG' both become 'restrictedchar.jpg')
-// 3. Files with restricted characters
-//
-// The current behavior is incorrect:
-// - The confirmation popup appears for the duplicate file.
-// - Upon confirmation, one of the files with restricted characters is silently sanitized and uploaded (e.g. 'restrictedchar.jpg').
-// - No error messages found for restricted characters or duplicate names.
-dialTest(
+dialTest.only(
   '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
     "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
     '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
   async ({
     dialHomePage,
-    navigationPanel,
-    filesManagerPage,
-    filesManagerToolbar,
-    filesManagerGridAssertion,
     setTestIds,
-    fileConflictConfirmationPopupAssertion,
-    toastAssertion,
-    fileApiHelper,
-    fileConflictConfirmationPopup,
+    attachmentDropdownMenu,
+    uploadFromDeviceModal,
     localStorageManager,
+    sendMessage,
+    fileApiHelper,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
@@ -191,19 +178,12 @@ dialTest(
     });
 
     await dialTest.step(
-      'Upload one file with already uploaded name, 2 files with restricted symbols, 2 files with equal names through chat bar dots menu',
+      'Upload one file with already uploaded name, 2 files with restricted symbols, 2 files with equal names through chat bar attachment menu',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await navigationPanel.goToFilesManager();
-        await filesManagerPage.waitForPageLoaded();
-        await filesManagerGridAssertion.assertGridRowByNameState(
-          Attachment.sunImageName,
-          'visible',
-        );
-
-        await filesManagerToolbar.getNewButton().click();
-        await filesManagerPage.uploadData(
+        await sendMessage.attachmentMenuTrigger.click();
+        await dialHomePage.uploadData(
           {
             path: [
               Attachment.sunImageName,
@@ -215,47 +195,69 @@ dialTest(
             dataType: 'upload',
           },
           () =>
-            filesManagerToolbar
-              .getNewButtonDropdownMenu()
-              .selectItem(UploadMenuOptions.uploadFiles),
+            attachmentDropdownMenu.selectMenuOption(
+              UploadMenuOptions.uploadFromDevice,
+              {
+                isHttpMethodTriggered: true,
+                triggeredHttpMethod: 'GET',
+              },
+            ),
         );
-
-        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
-          ExpectedConstants.replaceAttachmentConfirmationTitle,
-        );
-        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupContent(
-          ExpectedConstants.replaceAttachmentConfirmationMessage(
-            Attachment.sunImageName,
-          ),
-        );
-
-        const expectedRequests = new Map([
-          [Attachment.sunImageName, 'POST'],
-          [Attachment.cloudImageName, 'POST'],
-          [
-            encodeURIComponent(Attachment.restrictedSemicolonCharFilename),
-            'POST',
-          ],
-          [encodeURIComponent(Attachment.restrictedEqualCharFilename), 'POST'],
-        ]);
-        await fileConflictConfirmationPopup.confirm({ expectedRequests });
       },
     );
 
-    // TODO: when uploading files with restricted chars in the name, neither toast nor file appears
-    // Based on previous code, it expected a modal error, but now we deal with toasts or other indicators.
-    await dialTest.step('Verify 2 error messages are shown', async () => {
-      await toastAssertion.assertToastMessage(
-        ExpectedConstants.notAllowedFilenameError(
+    await dialTest.step(
+      'Verify files with restricted chars are auto-sanitized in modal',
+      async () => {
+        const sanitizedSemicolon =
+          ExpectedConstants.replacedRestrictedCharsName(
+            Attachment.restrictedSemicolonCharFilename,
+          );
+        const sanitizedEqual = ExpectedConstants.replacedRestrictedCharsName(
+          Attachment.restrictedEqualCharFilename,
+        );
+
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFilenameInput(sanitizedSemicolon).getNthElement(1),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFilenameInput(sanitizedEqual).getNthElement(2),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Upload and verify combined error messages are shown',
+      async () => {
+        await uploadFromDeviceModal.uploadButton.click();
+
+        const modalError = uploadFromDeviceModal.getModalError();
+        await baseAssertion.assertElementState(modalError, 'visible');
+
+        const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
           Attachment.restrictedSemicolonCharFilename,
-        ),
-      );
-      await toastAssertion.assertToastMessage(
-        ExpectedConstants.sameFilenamesError(
-          `${Attachment.restrictedEqualCharFilename.replace('=', '_')}, ${Attachment.cloudImageName}`,
-        ),
-      );
-    });
+        );
+
+        await baseAssertion.assertElementText(
+          modalError.errorMessage,
+          new RegExp(
+            ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName),
+          ),
+          ExpectedMessages.errorMessageContentIsValid,
+        );
+        await baseAssertion.assertElementText(
+          modalError.errorMessage,
+          new RegExp(
+            ExpectedConstants.sameFilenamesError(
+              `${sanitizedFilename}, ${Attachment.cloudImageName}`,
+            ),
+          ),
+          ExpectedMessages.errorMessageContentIsValid,
+        );
+      },
+    );
   },
 );
 

@@ -477,7 +477,6 @@ const dialTest = test.extend<{
     );
     await use(entityEditorHeaderAssertion);
   },
-
   sendMessageInputAttachmentsAssertions: async (
     { sendMessageInputAttachments },
     use,
