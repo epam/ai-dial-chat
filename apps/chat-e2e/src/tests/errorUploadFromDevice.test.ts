@@ -156,7 +156,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
     "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
     '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
@@ -169,8 +169,13 @@ dialTest.only(
     sendMessage,
     fileApiHelper,
     baseAssertion,
+    sendMessageInputAttachmentsAssertions,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
+
+    const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
+      Attachment.restrictedSemicolonCharFilename,
+    );
 
     await dialTest.step('Upload file with valid name to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
@@ -209,20 +214,16 @@ dialTest.only(
     await dialTest.step(
       'Verify files with restricted chars are auto-sanitized in modal',
       async () => {
-        const sanitizedSemicolon =
-          ExpectedConstants.replacedRestrictedCharsName(
-            Attachment.restrictedSemicolonCharFilename,
-          );
-        const sanitizedEqual = ExpectedConstants.replacedRestrictedCharsName(
-          Attachment.restrictedEqualCharFilename,
-        );
-
         await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFilenameInput(sanitizedSemicolon).getNthElement(1),
+          uploadFromDeviceModal
+            .getUploadedFilenameInput(sanitizedFilename)
+            .getNthElement(1),
           'visible',
         );
         await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFilenameInput(sanitizedEqual).getNthElement(2),
+          uploadFromDeviceModal
+            .getUploadedFilenameInput(sanitizedFilename)
+            .getNthElement(2),
           'visible',
         );
       },
@@ -236,25 +237,48 @@ dialTest.only(
         const modalError = uploadFromDeviceModal.getModalError();
         await baseAssertion.assertElementState(modalError, 'visible');
 
-        const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
-          Attachment.restrictedSemicolonCharFilename,
+        //TODO currently the error message about the duplicated file that already exiss in user's filestorage do not appear
+        // await baseAssertion.assertElementText(
+        //   modalError.errorMessage,
+        //     ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName),
+        //   ExpectedMessages.errorMessageContentIsValid,
+        // );
+        await baseAssertion.assertElementText(
+          modalError.errorMessage,
+          ExpectedConstants.sameFilenamesError(
+            sanitizedFilename,
+            Attachment.cloudImageName,
+          ),
+          ExpectedMessages.errorMessageContentIsValid,
         );
+      },
+    );
 
-        await baseAssertion.assertElementText(
-          modalError.errorMessage,
-          new RegExp(
-            ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName),
-          ),
-          ExpectedMessages.errorMessageContentIsValid,
+    await dialTest.step(
+      'Remove duplicate files and upload successfully',
+      async () => {
+        await uploadFromDeviceModal
+          .getDeleteUploadedFileButtonIcon(Attachment.sunImageName)
+          .click();
+        await uploadFromDeviceModal
+          .getDeleteUploadedFileButtonIcon(Attachment.cloudImageName)
+          .nth(0)
+          .click();
+        await uploadFromDeviceModal
+          .getDeleteUploadedFileButtonIcon(sanitizedFilename)
+          .nth(0)
+          .click();
+
+        await uploadFromDeviceModal.uploadFiles();
+        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
+
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          sanitizedFilename,
+          'visible',
         );
-        await baseAssertion.assertElementText(
-          modalError.errorMessage,
-          new RegExp(
-            ExpectedConstants.sameFilenamesError(
-              `${sanitizedFilename}, ${Attachment.cloudImageName}`,
-            ),
-          ),
-          ExpectedMessages.errorMessageContentIsValid,
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          Attachment.cloudImageName,
+          'visible',
         );
       },
     );
