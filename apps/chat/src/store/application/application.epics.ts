@@ -399,7 +399,8 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     () => !!payload.shouldSetEditorError,
                     of(
                       ApplicationActions.setEditorError(
-                        translate('App settings are not matching the schema'),
+                        err.message ??
+                          translate('App settings are not matching the schema'),
                       ),
                     ),
                     EMPTY,

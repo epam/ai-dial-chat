@@ -207,7 +207,7 @@ export const MonacoEditor = memo(function MonacoEditor(
           className={classNames(
             'absolute bottom-[70px] right-[20px] z-[9999] flex max-h-[400px] w-[400px] flex-col overflow-hidden bg-layer-3 p-3',
             {
-              '!max-h-[calc(100%-110px)]': !isFullScreen,
+              '!max-h-[calc(100%-120px)]': !isFullScreen,
             },
           )}
         >
