@@ -47,3 +47,4 @@ export * from './replaceConfirmationModalAssertion';
 export * from './toolset/toolsetAuthAssertion';
 export * from './common/confirmationPopupAssertion';
 export * from './filesManager/filesManagerGridAssertion';
+export * from './uploadFromDeviceModalAssertion';

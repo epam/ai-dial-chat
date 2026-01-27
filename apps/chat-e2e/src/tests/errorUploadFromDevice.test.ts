@@ -78,6 +78,8 @@ dialTest.only(
     localStorageManager,
     sendMessage,
     manageAttachmentsAssertion,
+    uploadFromDeviceModalAssertion,
+           baseAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -115,7 +117,14 @@ dialTest.only(
           ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename),
           restrictedChar,
         );
-        //TODO assert filename is not changed
+        await uploadFromDeviceModalAssertion.assertUploadedFilenameInputValue(
+          ExpectedConstants.replacedRestrictedCharsName(
+            Attachment.restrictedCharsFilename,
+          ),
+          ExpectedConstants.replacedRestrictedCharsName(
+            Attachment.restrictedCharsFilename,
+          ),
+        );
       },
     );
 
@@ -125,6 +134,12 @@ dialTest.only(
         await uploadFromDeviceModal.uploadFiles();
         await manageAttachmentsAssertion.assertEntityState(
           { name: ExpectedConstants.replacedRestrictedCharsName(Attachment.restrictedCharsFilename) },
+          FileModalSection.AllFiles,
+          'visible',
+        );
+        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
           FileModalSection.AllFiles,
           'visible',
         );
