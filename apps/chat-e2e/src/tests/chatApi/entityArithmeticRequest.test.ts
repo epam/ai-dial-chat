@@ -23,8 +23,10 @@ for (const entity of arithmeticRequestModels) {
       if (entity.isSysPromptAllowed) {
         systemPrompt = entity.systemPrompt ?? defaultSystemPrompt;
       }
+      const temperature =
+        entity.temperature !== undefined ? Number(entity.temperature) : 0;
       const conversation = conversationData.prepareModelConversation(
-        0,
+        temperature,
         systemPrompt,
         entity.entityId,
       );
