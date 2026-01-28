@@ -359,6 +359,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       isExitingAfterSave: payload.isSaveAndExit,
                     }),
                   ),
+                  of(ApplicationActions.setEditorError()),
                 ];
 
                 if (payload.isSaveAndExit) {
@@ -383,12 +384,26 @@ const updateApplicationEpic: AppEpic = (action$) =>
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
-                return of(
-                  ApplicationActions.updateFail({
-                    oldApplication: payload.oldApplication,
-                  }),
-                  UIActions.showErrorToast(
-                    translate('Failed to update application'),
+                return concat(
+                  of(
+                    ApplicationActions.updateFail({
+                      oldApplication: payload.oldApplication,
+                    }),
+                  ),
+                  of(
+                    UIActions.showErrorToast(
+                      translate('Failed to update application'),
+                    ),
+                  ),
+                  iif(
+                    () => !!payload.shouldSetEditorError,
+                    of(
+                      ApplicationActions.setEditorError(
+                        err.message ??
+                          translate('App settings are not matching the schema'),
+                      ),
+                    ),
+                    EMPTY,
                   ),
                 );
               }),
@@ -497,10 +512,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
-        catchError((error) => {
-          // eslint-disable-next-line no-console
-          console.log('getApplicationEpic catchError', error);
-
+        catchError(() => {
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
