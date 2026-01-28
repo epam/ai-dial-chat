@@ -1,4 +1,5 @@
 import { Attributes, Tags } from '@/src/ui/domData';
+import { RegexUtil } from '@/src/utils';
 
 export const SwitcherSelectors = {
   switcherContainer: '[role="switch"]',
@@ -52,6 +53,9 @@ export const GridSelectors = {
   gridCell: (columnId: string) =>
     `[role="gridcell"]${GridSelectors.gridColumn(columnId)}`,
   gridCellValue: '#name',
+  loadingIndicator: '.ag-overlay-loading-center',
+  gridViewPort: '.ag-body-viewport',
+  gridBody: '.ag-body',
 };
 
 export const CheckboxSelectors = {
@@ -70,5 +74,7 @@ export const LoaderSelectors = {
 };
 
 export const InputSelectors = {
-  value: (value: string) => `[value="${value}"]`,
+  value: (value: string) => `[value="${RegexUtil.escapeSelectorValue(value)}"]`,
+  inputErrorIcon: (value: string) =>
+    `.dial-input-error:has(input[value="${RegexUtil.escapeSelectorValue(value)}"]) svg[aria-label="alert"]`,
 };

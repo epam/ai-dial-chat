@@ -1,4 +1,4 @@
-import { IconFile } from '@tabler/icons-react';
+import { IconFile, IconTrashX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   useCallback,
@@ -42,9 +42,9 @@ import { Modal } from '@/src/components/Common/Modal';
 import { SelectFolderModal } from './SelectFolderModal';
 
 import {
+  DialButton,
   DialLinkButton,
   DialPrimaryButton,
-  DialRemoveButton,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -401,10 +401,12 @@ export const PreUploadDialog = ({
                       </span>
                     </div>
 
-                    <DialRemoveButton
+                    {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
+                    <DialButton
                       onClick={handleUnselectFile(index)}
                       aria-label="remove-file"
-                      iconClassName="size-6 shrink-0 text-secondary hover:text-accent-primary"
+                      className="text-secondary hover:text-accent-primary"
+                      iconBefore={<IconTrashX />}
                     />
                   </div>
                 ))}

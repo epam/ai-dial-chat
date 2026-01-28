@@ -1288,9 +1288,11 @@ dialTest(
       }
       await entityEditorGeneralForm.topicsDropdownToggle.click();
       await entityEditorGeneralForm.addIconButton.click();
-      await filesManagerModalGrid
-        .gridCheckboxByNameCell(Attachment.sunImageName)
-        .click();
+      const attachmentCheckbox =
+        await filesManagerModalGrid.gridCheckboxByNameCell(
+          Attachment.sunImageName,
+        );
+      await attachmentCheckbox.click();
       await filesManagerModal.getSelectButton().click();
     });
 
@@ -1777,9 +1779,9 @@ dialTest(
           'hidden',
         );
         await entityEditorGeneralForm.addIconButton.click();
-        await filesManagerModalGrid
-          .gridCheckboxByNameCell(newIconFileName)
-          .click();
+        const iconCheckbox =
+          await filesManagerModalGrid.gridCheckboxByNameCell(newIconFileName);
+        await iconCheckbox.click();
         await filesManagerModal.getSelectButton().click();
       },
     );
@@ -2023,7 +2025,9 @@ dialTest(
       'Select several files with correct type and click attach',
       async () => {
         for (const pdfFile of pdfFilesToUpload) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(pdfFile).click();
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(pdfFile);
+          await attachmentCheckbox.click();
         }
         await filesManagerModal.getAttachButton().click();
         for (const pdfFile of pdfFilesToUpload) {

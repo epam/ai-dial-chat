@@ -17,12 +17,14 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
+import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { Translation } from '@/src/types/translation';
@@ -190,13 +192,16 @@ export const useFileManager = ({
   }, [availableTabs, tabs]);
 
   useEffect(() => {
-    if (currentPath && !isRootId(currentPath)) {
+    if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
       const folder = folders.find((folder) => folder.id === currentPath);
-      if (folder?.status !== UploadStatus.LOADED) {
+      if (
+        folder?.status !== UploadStatus.LOADED &&
+        folder?.status !== UploadStatus.LOADING
+      ) {
         dispatch(FilesActions.getFilesWithFolders({ id: currentPath }));
       }
     }
-  }, [dispatch, currentPath, folders]);
+  }, [dispatch, currentPath, folders, isMovingFiles]);
 
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
@@ -285,8 +290,14 @@ export const useFileManager = ({
         break;
     }
 
+    const firstEntityId =
+      filteredFolders?.[0]?.id || filteredFiles?.[0]?.id || '';
+    const rootId = firstEntityId
+      ? getFileRootId(getEntityBucket({ id: firstEntityId }))
+      : getFileRootId();
+
     const { rootFolder, items, loadedFoldersPaths, sharedByMePaths } =
-      buildFileTree(filteredFiles, filteredFolders, pathRootAlias);
+      buildFileTree(filteredFiles, filteredFolders, pathRootAlias, rootId);
 
     if (activeTab === DialFileManagerTabs.Shared) {
       const currentSharedRootId =
@@ -400,12 +411,14 @@ export const useFileManager = ({
         }),
       );
 
-      const movedCurrent = movedItems.find(
-        (item) => item.sourceUrl === currentPath,
+      const movedCurrentOrParent = movedItems.find(
+        (item) =>
+          item.sourceUrl === currentPath ||
+          currentPath?.startsWith(item.sourceUrl),
       );
 
-      if (movedCurrent) {
-        setCurrentPath(undefined);
+      if (movedCurrentOrParent) {
+        setCurrentPath(movedCurrentOrParent.destinationUrl);
       }
     },
     [dispatch, currentPath],
@@ -574,9 +587,12 @@ export const useFileManager = ({
       newActions,
       showHiddenFilesToggle: true,
       isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
+      disabledNewButtonTooltip: t(
+        'You do not have permission to create new items here',
+      ),
       ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions],
+    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
   );
 
   const destinationFolderPopupOptions = useMemo(
@@ -629,8 +645,22 @@ export const useFileManager = ({
           folderUrl,
         }),
       );
+
+      const deletedCurrentOrParent = deletedItems.find(
+        (item) =>
+          item.sourceUrl === currentPath ||
+          currentPath?.startsWith(item.sourceUrl),
+      );
+
+      if (deletedCurrentOrParent) {
+        const parentId = getFolderIdFromEntityId(
+          deletedCurrentOrParent.sourceUrl,
+        );
+
+        setCurrentPath(parentId);
+      }
     },
-    [dispatch],
+    [dispatch, currentPath],
   );
 
   const handleDownloadFiles = useCallback(
@@ -681,7 +711,7 @@ export const useFileManager = ({
   const handleCreateFolder = useCallback(
     (file: DialUploadFileItem, folderPath: string) => {
       dispatch(
-        FilesActions.uploadFiles({
+        FilesActions.createNewFolder({
           files: [file],
           destinationUrl: folderPath,
         }),

@@ -10,6 +10,9 @@ import {
   DropdownMenu,
   EntityDetailsModal,
   FileDropArea,
+  FilesManager,
+  FilesManagerGrid,
+  FilesManagerModal,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -169,6 +172,9 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
+  adminFilesManagerModal: FilesManagerModal;
+  adminFilesManagerModalManager: FilesManager;
+  adminFilesManagerModalGrid: FilesManagerGrid;
   adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: PublishApplicationsTree;
@@ -693,6 +699,23 @@ const dialAdminTest = dialTest.extend<{
   adminAttachFilesModal: async ({ adminPage }, use) => {
     const adminAttachFilesModal = new AttachFilesModal(adminPage);
     await use(adminAttachFilesModal);
+  },
+  adminFilesManagerModal: async ({ adminPage }, use) => {
+    const adminFilesManagerModal = new FilesManagerModal(adminPage);
+    await use(adminFilesManagerModal);
+  },
+  adminFilesManagerModalManager: async ({ adminFilesManagerModal }, use) => {
+    const adminFilesManagerModalManager =
+      adminFilesManagerModal.getFilesManager();
+    await use(adminFilesManagerModalManager);
+  },
+  adminFilesManagerModalGrid: async (
+    { adminFilesManagerModalManager },
+    use,
+  ) => {
+    const adminFilesManagerModalGrid =
+      adminFilesManagerModalManager.getFilesManagerGrid();
+    await use(adminFilesManagerModalGrid);
   },
   adminEntityDetailsModal: async ({ adminMarketplaceEntities }, use) => {
     const adminEntityDetailsModal =

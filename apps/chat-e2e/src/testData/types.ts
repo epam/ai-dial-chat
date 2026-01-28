@@ -34,6 +34,7 @@ export interface Entity {
 export interface ArithmeticRequestEntity extends Entity {
   isSysPromptAllowed?: boolean;
   systemPrompt?: string;
+  temperature?: string;
 }
 
 export interface EntitySimpleRequest extends Entity {
@@ -96,4 +97,10 @@ export enum FileManagerColumnKey {
   Path = 'path',
   Actions = '__actions',
   Select = '__select',
+}
+
+export enum ModelTopic {
+  TextGeneration = 'Text Generation',
+  ImageGeneration = 'Image Generation',
+  ImageRecognition = 'Image Recognition',
 }
