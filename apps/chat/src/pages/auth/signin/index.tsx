@@ -1,4 +1,4 @@
-import { getProviders, signIn, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
@@ -157,6 +157,15 @@ export default function Signin({
   );
 }
 
+const mapProvider = (provider: Provider) =>
+  provider
+    ? {
+        id: provider.options?.id ?? provider.id,
+        name: provider.options?.name ?? provider.name,
+        type: provider.type,
+      }
+    : null;
+
 export const getServerSideProps: GetServerSideProps = async ({
   query,
   req,
@@ -182,15 +191,15 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const checkProvider = authProviders.some(({ id }) => id === query.provider);
+  const checkProvider = authProviders?.some(({ id }) => id === query.provider);
 
   const providerFromQuery = checkProvider ? query.provider : null;
-  const providers = await getProviders();
   const themesHostDefined = !!process.env.THEMES_CONFIG_HOST;
+
   return {
     props: {
       provider: DEFAULT_PROVIDER ?? providerFromQuery,
-      providers,
+      providers: authProviders?.map(mapProvider).filter(Boolean) ?? [],
       themesHostDefined,
     },
   };
