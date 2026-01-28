@@ -1,4 +1,4 @@
-import { IconLogin, IconLogout } from '@tabler/icons-react';
+import { IconKey, IconLogin, IconLogout } from '@tabler/icons-react';
 import { FC } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -49,7 +49,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
   if (isOrganizationView)
     return (
       <DialPrimaryButton
-        iconBefore={<LoginIcon size={18} />}
+        iconBefore={<IconKey size={18} />}
         onClick={handleLogin}
         label={t('Manage creds')}
         data-qa="login-button"
