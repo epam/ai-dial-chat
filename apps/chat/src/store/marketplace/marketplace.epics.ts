@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, iif, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, first, iif, map, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -111,7 +111,13 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedView.type,
       MarketplaceActions.setTableSort.type,
     ),
-    filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
+    switchMap((action) =>
+      state$.pipe(
+        filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)), // Wait until true
+        first(),
+        map(() => action), // Emit the stored action
+      ),
+    ),
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
