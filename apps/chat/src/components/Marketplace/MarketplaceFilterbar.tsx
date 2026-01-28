@@ -61,7 +61,10 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span className="ml-2 whitespace-nowrap text-sm" data-qa="option-label">
+      <span
+        className="ml-2 truncate whitespace-nowrap text-sm"
+        data-qa="option-label"
+      >
         {displayValue ?? filterValue}
       </span>
     </label>

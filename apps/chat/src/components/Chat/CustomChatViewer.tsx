@@ -118,6 +118,8 @@ export const CustomChatViewer: React.FC<Props> = ({
 
   const onMessage = useCallback(
     (event: MessageEvent<VisualizerConnectorRequest>) => {
+      if (!customViewerUrl.startsWith(event.origin)) return;
+
       const eventData = event.data;
       if (!eventData?.type) return;
 
@@ -145,6 +147,7 @@ export const CustomChatViewer: React.FC<Props> = ({
       }
     },
     [
+      customViewerUrl,
       title,
       handleDebouncedCreatedConversation,
       handleDebouncedUpdateConversation,
