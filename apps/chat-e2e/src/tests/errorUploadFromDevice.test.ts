@@ -6,7 +6,6 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { FileUtil, GeneratorUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   '[Upload from device] Error appears if to load the file with the same name and extension if it already exists in a folder.\n' +
@@ -286,16 +285,17 @@ dialTest(
 );
 
 dialTest(
-  '[Upload from device] Error appears if to upload a file with a dot at the name without extension.\n' +
+  '[Upload from device] Dot at the end of the name without extension is not allowed to be entered.\n' +
     '[Upload from device] A file without extension is uploaded successfully',
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     localStorageManager,
     sendMessage,
+    baseAssertion,
+    sendMessageInputAttachmentsAssertions,
   }) => {
     setTestIds('EPMRTC-3216', 'EPMRTC-3113');
     const dot = '.';
@@ -322,8 +322,16 @@ dialTest(
     );
 
     await dialTest.step(
-      'Add dot at the end of file name and verify file is uploaded',
+      'Verify file extension is empty and attempt to add a dot at the end',
       async () => {
+        await baseAssertion.assertElementText(
+          uploadFromDeviceModal.getUploadedFileExtension(
+            Attachment.fileWithoutExtension,
+          ),
+          '',
+          ExpectedMessages.fileExtensionIsValid,
+        );
+
         await uploadFromDeviceModal
           .getUploadedFilenameInput(Attachment.fileWithoutExtension)
           .click();
@@ -331,29 +339,33 @@ dialTest(
           Attachment.fileWithoutExtension,
           dot,
         );
-        const uploadedFileExtension = await uploadFromDeviceModal
-          .getUploadedFileExtension(Attachment.fileWithoutExtension)
-          .getElementInnerContent();
-        expect
-          .soft(uploadedFileExtension, ExpectedMessages.fileExtensionIsValid)
-          .toBe('');
 
+        // Verify dot is NOT entered
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFilenameInput(
+            Attachment.fileWithoutExtension,
+          ),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFilenameInput(
+            `${Attachment.fileWithoutExtension}${dot}${dot}`, // A hack to make it work with a filename without extension
+          ),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Upload file without extension successfully',
+      async () => {
         await uploadFromDeviceModal.uploadFiles();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.fileWithoutExtension),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
 
-        const isFileChecked = attachFilesModal
-          .getAllFilesTree()
-          .getEntityCheckbox(Attachment.fileWithoutExtension);
-        await expect
-          .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
-          .toBeChecked();
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          Attachment.fileWithoutExtension,
+          'visible',
+        );
       },
     );
   },
