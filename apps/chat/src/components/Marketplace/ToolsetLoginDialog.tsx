@@ -116,8 +116,10 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
           </>
         ) : (
           <>
-            {t('Log in with credentials that will be available ')}
-            <strong>{t(' to other users in the organization.')}</strong>
+            {t(
+              'Log in with credentials that will be available to other users in the ',
+            )}
+            <strong>{t('organization.')}</strong>
           </>
         );
       default:
