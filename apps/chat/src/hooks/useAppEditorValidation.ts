@@ -97,17 +97,7 @@ export const useAppEditorValidation = () => {
           ),
         )
     ) {
-      // eslint-disable-next-line no-console
-      console.log('slug is not equal to application type', {
-        slug: decodeURIComponent(type.toString()),
-        applicationType: cleanSchemaId(
-          getApplicationType(
-            (application ?? applicationData) as DialAIEntityModel,
-          ),
-        ),
-      });
       // if slug is not equal to application type)
-
       void router.push(Routes.NotFound);
       return;
     }
@@ -125,13 +115,6 @@ export const useAppEditorValidation = () => {
       !applicationId ||
       (!isAdmin && isAppPublic) // check if the application is public
     ) {
-      // eslint-disable-next-line no-console
-      console.log('application is not found or is not public', {
-        applicationId,
-        isAppPublic,
-        isAdmin,
-      });
-
       void router.push(Routes.NotFound);
       return;
     }
@@ -146,13 +129,6 @@ export const useAppEditorValidation = () => {
       !isMyApplication({ id: applicationId }) &&
       !canWriteSharedWithMe(application)
     ) {
-      // eslint-disable-next-line no-console
-      console.log('application is not public or not my application', {
-        applicationId,
-        isAppPublic,
-        isAdmin,
-      });
-
       void router.push(Routes.NotFound);
       return;
     }
