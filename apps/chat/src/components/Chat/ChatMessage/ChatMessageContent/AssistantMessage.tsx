@@ -229,8 +229,6 @@ interface AssistantMessageProps {
   isLikesEnabled: boolean;
   isEditing: boolean;
   withButtons?: boolean;
-  messageCopied?: boolean;
-  onCopy?: () => void;
   onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing: (value: boolean) => void;
@@ -251,8 +249,6 @@ export const AssistantMessage = memo(function AssistantMessage({
   isEditing,
   withButtons,
   isLikesEnabled,
-  messageCopied,
-  onCopy,
   onLike,
   onRegenerate,
   onToggleEditing,
@@ -380,11 +376,9 @@ export const AssistantMessage = memo(function AssistantMessage({
         (!conversation.isMessageStreaming || !isLastMessage) &&
         !isConversationInvalid && (
           <MessageAssistantButtons
-            copyOnClick={onCopy}
             isLikesEnabled={isLikesEnabled}
             message={message}
             realMessageIndex={realMessageIndex}
-            messageCopied={messageCopied}
             onLike={onLike}
             onRegenerate={onRegenerate}
             onToggleEditing={
