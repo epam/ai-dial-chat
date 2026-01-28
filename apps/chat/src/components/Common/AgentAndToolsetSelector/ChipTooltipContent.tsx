@@ -14,6 +14,7 @@ interface ChipTooltipContentProps {
   isLoggedOut: boolean;
   isUndeployed: boolean;
   isInSelectionList?: boolean;
+  isCustomTool?: boolean;
   readonly?: boolean;
 }
 
@@ -26,6 +27,7 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
   isLoggedOut,
   isUndeployed,
   isInSelectionList,
+  isCustomTool,
   readonly,
 }) => {
   const { t } = useTranslation(Translation.Common);
@@ -39,6 +41,7 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
         isLoggedOut={isLoggedOut}
         isUndeployed={isUndeployed}
         isInSelectionList={isInSelectionList}
+        isCustomTool={isCustomTool}
         readonly={readonly}
       />
 
