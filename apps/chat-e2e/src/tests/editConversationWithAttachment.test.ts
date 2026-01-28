@@ -15,7 +15,10 @@ import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
-  modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment(true, [
+    'image/*',
+    '*/*',
+  ]);
 });
 
 dialTest(
@@ -126,6 +129,10 @@ dialTest(
       Attachment.flowerImageName,
       Attachment.cloudImageName,
     ];
+    const finalAttachedFiles = [
+      Attachment.flowerImageName,
+      Attachment.cloudImageName,
+    ];
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textAccentPrimary,
     );
@@ -151,7 +158,9 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
@@ -167,45 +176,19 @@ dialTest(
       },
     );
 
-    await dialTest.step('Open "Attach files" modal again', async () => {
-      await sendMessage.attachmentMenuTrigger.click();
-      await attachmentDropdownMenu.selectMenuOption(
-        UploadMenuOptions.attachUploadedFiles,
-        { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
-      );
-    });
-
-    await dialTest.step.skip(
-      //TODO verify the desired behaviour - now previously selected files are not marked
-      'verify files are checked and marked with blue',
-      async () => {
-        for (const file of initAttachedFiles) {
-          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-            file,
-            CheckboxState.checked,
-          );
-          await filesManagerModalGridAssertion.assertGridCheckboxColor(
-            file,
-            expectedColor,
-          );
-        }
-      },
-    );
-
     await dialTest.step(
-      'Uncheck attached file, check another and verify updated files are displayed in Send message box',
-      //TODO verify the desired behaviour - now previously selected files are not marked
+      'Open "Attach files" modal again and check another file',
       async () => {
-        // await filesManagerModalGrid
-        //   .gridCheckboxByNameCell(initAttachedFiles[1])
-        //   .click();
-        // await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-        //   initAttachedFiles[1],
-        //   CheckboxState.unchecked,
-        // );
-        await filesManagerModalGrid
-          .gridCheckboxByNameCell(updatedAttachedFiles[1])
-          .click();
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        const updatedAttachmentCheckbox =
+          await filesManagerModalGrid.gridCheckboxByNameCell(
+            updatedAttachedFiles[1],
+          );
+        await updatedAttachmentCheckbox.click();
         await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
           updatedAttachedFiles[1],
           CheckboxState.checked,
@@ -243,6 +226,12 @@ dialTest(
           initAttachedFiles[0],
           'hidden',
         );
+        for (const file of finalAttachedFiles) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
+        }
       },
     );
   },

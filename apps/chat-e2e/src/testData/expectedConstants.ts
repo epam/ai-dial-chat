@@ -181,8 +181,8 @@ export const ExpectedConstants = {
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
-  sameFilenamesError: (filename: string) =>
-    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
+  sameFilenamesError: (...filenames: string[]) =>
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filenames.join(', ')}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
@@ -357,13 +357,14 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
-  filesManagerPath: '/files-manager',
+  filesManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
   failedToMoveFileMessage: 'Failed to move files. Please try again later.',
+  uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
 };
 
 export enum Types {
@@ -490,13 +491,14 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   toolsetsHost: () => `${API.api}/toolsets-listing`,
-  filePropsHost: '/files-manager.json',
+  filePropsHost: '/file-manager.json',
   filesHostSegment: 'files',
   filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
   fileHost: () => `/api/${API.filesHostSegment}`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
   deleteFileHost: () => `${API.fileHost()}/delete`,
-  folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
+  folderFilesListingHost: (folderName: string) =>
+    `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',

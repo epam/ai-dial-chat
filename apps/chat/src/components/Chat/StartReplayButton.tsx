@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
 import Play from '@/public/images/icons/play.svg';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 export const StartReplayButton = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -29,14 +29,13 @@ export const StartReplayButton = () => {
   }, [selectedConversationsIds, dispatch]);
 
   return (
-    <DialButton
-      className="button button-chat"
+    <DialNeutralButton
+      className="mx-auto mb-3"
       onClick={handleReplayStart}
       data-qa="start-replay"
       data-replay-variables
       iconBefore={<Play height={18} width={18} />}
       label={t('Start replay')}
-      variant={ButtonVariant.Secondary}
     />
   );
 };

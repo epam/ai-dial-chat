@@ -14,6 +14,7 @@ import {
   of,
   scan,
   switchMap,
+  take,
   takeUntil,
   tap,
 } from 'rxjs';
@@ -25,6 +26,7 @@ import { FileService } from '@/src/utils/app/data/file-service';
 import {
   constructPath,
   getDownloadPath,
+  getRootFolderPlaceholderName,
   triggerDownload,
 } from '@/src/utils/app/file';
 import {
@@ -734,35 +736,60 @@ const uploadFilesEpic: AppEpic = (action$) =>
         ),
         scan(
           (acc, action) => {
-            if (
-              action.type === FilesActions.uploadFileSuccess.type ||
-              action.type === FilesActions.uploadFileFail.type
-            ) {
-              acc.finished++;
+            if (action.type === FilesActions.uploadFileSuccess.type) {
+              acc.finished += 1;
+              acc.successCount += 1;
+            } else if (action.type === FilesActions.uploadFileFail.type) {
+              acc.finished += 1;
+              acc.failCount += 1;
             }
 
-            acc.total = payload.files.length;
             acc.lastAction = action;
             return acc;
           },
-          { finished: 0, total: payload.files.length, lastAction: null as any },
+          {
+            finished: 0,
+            total: payload.files.length,
+            successCount: 0,
+            failCount: 0,
+            lastAction: null as any,
+          },
         ),
-        mergeMap(({ finished, total, lastAction }) => {
-          const action$ = of(lastAction);
 
-          if (!canceled && finished === total) {
-            return concat(
-              action$,
-              of(FilesActions.uploadFilesSuccess()),
-              of(
-                FilesActions.getFilesWithFolders({
-                  id: payload.destinationUrl,
-                }),
-              ),
-            );
+        mergeMap(({ finished, total, successCount, lastAction }) => {
+          const last$ = of(lastAction);
+
+          if (canceled || finished !== total) {
+            return last$;
           }
 
-          return action$;
+          const allFailed = successCount === 0;
+
+          return concat(
+            last$,
+
+            allFailed
+              ? of(
+                  UIActions.showToast({
+                    type: ToastType.Error,
+                    title: translate('Upload failed'),
+                    message: translate(
+                      'Please check your internet connection and try again.',
+                    ),
+                  }),
+                )
+              : EMPTY,
+
+            allFailed
+              ? of(FilesActions.uploadFilesFail())
+              : of(FilesActions.uploadFilesSuccess()),
+
+            of(
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationUrl,
+              }),
+            ),
+          );
         }),
         catchError(() =>
           canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
@@ -821,10 +848,14 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       const verbPast = isCopy ? 'copied' : 'moved';
 
       if (items.length > 0) {
+        const destinationUrl = action.payload.request.destinationFolder;
+        const path = items[0].destinationUrl;
+        const { name, bucket } = splitEntityId(path);
+        const folderPlaceholder = destinationUrl.replace(
+          `files/${bucket}`,
+          getRootFolderPlaceholderName(bucket),
+        );
         if (items.length === 1) {
-          const destinationUrl = items[0].destinationUrl;
-          const { parentPath, name } = splitEntityId(destinationUrl);
-
           return UIActions.showToast({
             type: ToastType.Success,
             title: translate('Item {{verb}} successfully', {
@@ -834,14 +865,11 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
             message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
               ns: Translation.Files,
               fileName: name,
-              folder: parentPath,
+              folder: folderPlaceholder,
               verb: verbPast,
             }),
           });
         }
-
-        const destinationUrl = request.destinationFolder;
-        const { parentPath } = splitEntityId(destinationUrl);
 
         return UIActions.showToast({
           type: ToastType.Success,
@@ -852,7 +880,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
           message: translate('{{count}} items {{verb}} to {{folder}}', {
             ns: Translation.Files,
             count: items.length,
-            folder: parentPath,
+            folder: folderPlaceholder,
             verb: verbPast,
           }),
         });
@@ -907,8 +935,13 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
       const verbPast = 'deleted';
 
       if (items.length > 0) {
+        const destinationUrl = payload.request.folderUrl;
         const path = items[0].sourceUrl;
-        const { parentPath, name } = splitEntityId(path);
+        const { name, bucket } = splitEntityId(path);
+        const folderPlaceholder = destinationUrl.replace(
+          `files/${bucket}`,
+          getRootFolderPlaceholderName(bucket),
+        );
 
         if (items.length === 1) {
           return UIActions.showToast({
@@ -920,7 +953,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
             message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
               ns: Translation.Files,
               fileName: name,
-              folder: parentPath,
+              folder: folderPlaceholder,
               verb: verbPast,
             }),
           });
@@ -935,7 +968,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           message: translate('{{count}} items {{verb}} from {{folder}}', {
             ns: Translation.Files,
             count: items.length,
-            folder: parentPath,
+            folder: folderPlaceholder,
             verb: verbPast,
           }),
         });
@@ -979,6 +1012,39 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
     filter(Boolean),
   );
 
+const createNewFolderEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.createNewFolder.type),
+    mergeMap(({ payload }) => {
+      return concat(
+        of(
+          FilesActions.uploadFiles({
+            files: payload.files,
+            destinationUrl: payload.destinationUrl,
+          }),
+        ),
+        action$.pipe(
+          ofType(FilesActions.uploadFilesSuccess.type),
+          take(1),
+          mergeMap(() => {
+            const urlParts = payload.destinationUrl.split('/');
+            const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+            const parentFolderId =
+              urlParts.length > 2
+                ? urlParts.slice(0, -1).join('/')
+                : getFileRootId(bucket);
+
+            return of(
+              FilesActions.getFolders({
+                id: parentFolderId,
+              }),
+            );
+          }),
+        ),
+      );
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -999,11 +1065,11 @@ export const FilesEpics = combineEpics(
   deleteFileFailEpic,
   unselectFilesEpic,
   setChosenFolderEpic,
-
   copyFilesEpic,
   moveFilesEpic,
   deleteFilesEpic,
   downloadFilesAsArchiveEpic,
+  createNewFolderEpic,
   uploadFilesEpic,
   uploadArchiveEpic,
   copyMoveFilesResultToastEpic,

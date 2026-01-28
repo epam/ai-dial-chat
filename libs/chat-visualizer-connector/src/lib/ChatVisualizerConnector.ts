@@ -111,7 +111,13 @@ export class ChatVisualizerConnector {
 
   postMessageListener(event: MessageEvent<RequestParams>): void {
     // accept messages only from known hosts
-    if (!this.dialHosts.includes(event.origin)) return;
+    if (
+      this.dialHosts[0] !== '*' &&
+      !this.dialHosts.some((allowedHost) =>
+        allowedHost.startsWith(event.origin),
+      )
+    )
+      return;
 
     // check if there is a payload
     if (typeof event.data.payload !== 'object' || event.data.payload === null)

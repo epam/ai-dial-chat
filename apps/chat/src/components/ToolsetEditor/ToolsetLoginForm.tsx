@@ -24,7 +24,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const getItemLabel = (item: unknown): string => item as string;
@@ -67,6 +67,10 @@ export const ToolsetLoginForm = ({
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
+  const [LogInButton, LoginIcon] = isSignedIn
+    ? [DialNeutralButton, IconLogout]
+    : [DialPrimaryButton, IconLogin];
+
   const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
   const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
@@ -92,25 +96,32 @@ export const ToolsetLoginForm = ({
     <div className={classNames('flex flex-col gap-4', className)}>
       {type === ToolsetAuthTypes.API_KEY && !isSignedIn && (
         <>
-          {!hideConfigFields && (
+          <div
+            className={classNames({
+              hidden: hideConfigFields,
+            })}
+          >
             <Field
               {...register('keyHeader')}
               label={t('API Key parameter name')}
               mandatory
               placeholder={t('Enter key name')}
               id="keyHeader"
+              autoComplete="username"
               error={errors.keyHeader?.message}
               disabled={disabled}
               tooltip={fieldsTooltip}
             />
-          )}
+          </div>
           {withLogin === WithLogin.WithLogin && (
             <Field
               {...register('apiKey')}
               label={t('API Key')}
               mandatory
+              type="password"
               placeholder={t('Enter API Key')}
               id="apiKey"
+              autoComplete="current-password"
               error={errors.apiKey?.message}
               disabled={disabled}
               tooltip={fieldsTooltip}
@@ -185,18 +196,11 @@ export const ToolsetLoginForm = ({
         )}
 
       {withLogin !== WithLogin.WithoutLogin && (
-        <DialButton
+        <LogInButton
           className={classNames('flex w-fit items-center', buttonClassName)}
-          variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
-          iconBefore={
-            isSignedIn ? (
-              <IconLogout className="text-secondary" size={18} />
-            ) : (
-              <IconLogin size={18} />
-            )
-          }
+          iconBefore={<LoginIcon size={18} />}
           label={t(isSignedIn ? 'Log out' : 'Log in')}
         />
       )}

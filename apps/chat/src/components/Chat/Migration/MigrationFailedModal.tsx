@@ -39,7 +39,11 @@ import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialLinkButton,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface ItemsListProps<T> {
   entitiesToRetryIds: string[];
@@ -398,9 +402,8 @@ export const MigrationFailedWindow = ({
             )}
             <div className="mt-3 flex w-full justify-end">
               {!!failedMigratedPrompts.length && (
-                <DialButton
+                <DialNeutralButton
                   label={!isScreenSmall ? t('Backup prompts') : t('prompts')}
-                  variant={ButtonVariant.Secondary}
                   className="mr-3 flex min-w-[73px] items-center capitalize md:normal-case"
                   onClick={handleBackupPrompts}
                   data-qa="skip-migration"
@@ -417,9 +420,8 @@ export const MigrationFailedWindow = ({
                 />
               )}
               {!!failedMigratedConversations.length && (
-                <DialButton
+                <DialNeutralButton
                   label={!isScreenSmall ? t('Backup chats') : t('chats')}
-                  variant={ButtonVariant.Secondary}
                   className="mr-3 flex min-w-[73px] items-center capitalize md:normal-case"
                   onClick={handleBackupChats}
                   data-qa="skip-migration"
@@ -435,9 +437,8 @@ export const MigrationFailedWindow = ({
                   }
                 />
               )}
-              <DialButton
+              <DialPrimaryButton
                 label={t('Next')}
-                variant={ButtonVariant.Primary}
                 className="mr-3 flex items-center"
                 onClick={retryMigration}
                 data-qa="skip-migration"
@@ -449,9 +450,9 @@ export const MigrationFailedWindow = ({
       </div>
       <p className="mt-6 text-secondary">
         {t('If you have a problem please ')}
-        <DialButton
+        <DialLinkButton
           onClick={() => setIsReportIssueDialogOpen(true)}
-          className="underline"
+          className="px-0 underline"
           label={t('contact us.')}
         />
       </p>

@@ -5,7 +5,7 @@ import { Translation } from '@/src/types/translation';
 import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onCreateNewFolder: () => void;
@@ -44,10 +44,9 @@ export const SelectFolderFooter = ({
         )}
       </div>
       <div>
-        <DialButton
+        <DialPrimaryButton
           onClick={onSelectFolderClick}
           label={t(selectBtnText)}
-          variant={ButtonVariant.Primary}
           disabled={disableSelect}
           data-qa="select-folder"
         />

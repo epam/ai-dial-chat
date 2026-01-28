@@ -33,6 +33,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialCopiedItem,
   DialDeletedItem,
+  DialFileNodeType,
   DialUploadFileItem,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
@@ -78,6 +79,7 @@ const initialState: FilesState = {
 
   isLoadingSearchListing: false,
   searchListingMetadata: {},
+  sharedWithMeFilesAndFoldersIds: [],
 };
 
 export const filesSlice = createSlice({
@@ -398,7 +400,10 @@ export const filesSlice = createSlice({
 
       const incomingIds = new Set(payload.folders.map((f) => f.id));
       const filteredState = state.folders.filter(
-        (f) => f.folderId !== payload.folderId || incomingIds.has(f.id),
+        (f) =>
+          f.folderId !== payload.folderId ||
+          incomingIds.has(f.id) ||
+          f.temporary,
       );
 
       state.folders = combineEntities(
@@ -466,6 +471,7 @@ export const filesSlice = createSlice({
           type: FeatureType.File,
           folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
+          temporary: true,
         }),
       );
       state.newAddedFolderId = newAddedFolderId;
@@ -629,10 +635,14 @@ export const filesSlice = createSlice({
     },
     addSharedFiles: (
       state,
-      { payload }: PayloadAction<{ files: DialFile[] }>,
+      { payload }: PayloadAction<{ files: DialFile[]; reviewFolder?: string }>,
     ) => {
-      //remove sharedWithMe files from state to have latest state from API
-      const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
+      //remove sharedWithMe files from state except those on review to have the latest state from API
+      const filteredFiles = state.files.filter(
+        (file) =>
+          !file.sharedWithMe ||
+          (payload.reviewFolder && file.id.startsWith(payload.reviewFolder)),
+      );
       state.files = combineEntities(payload.files, filteredFiles);
     },
     resetAllFoldersStatus: (state) => {
@@ -778,13 +788,33 @@ export const filesSlice = createSlice({
 
     moveFiles: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         files: DialCopiedItem[];
         sourceFolder: string;
         destinationFolder: string;
       }>,
     ) => {
       state.isMovingFiles = true;
+
+      const movedFoldersSourceUrls = payload.files
+        .filter((f) => f.nodeType === DialFileNodeType.FOLDER)
+        .map((f) => f.sourceUrl);
+
+      state.files = state.files.filter(
+        (f) =>
+          !movedFoldersSourceUrls.some((sourceUrl) =>
+            f.folderId.startsWith(sourceUrl),
+          ),
+      );
+
+      state.folders = state.folders.filter(
+        (f) =>
+          !movedFoldersSourceUrls.some((sourceUrl) =>
+            f.folderId.startsWith(sourceUrl),
+          ),
+      );
     },
     moveFilesSuccess: (
       state,
@@ -878,6 +908,16 @@ export const filesSlice = createSlice({
       state.isDownloadingArchive = false;
     },
 
+    createNewFolder: (
+      state,
+      _action: PayloadAction<{
+        files: DialUploadFileItem[];
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingFiles = true;
+    },
+
     uploadFiles: (
       state,
       {
@@ -920,6 +960,7 @@ export const filesSlice = createSlice({
       state.isUploadingFiles = false;
     },
     uploadFilesFail: (state) => {
+      state.files = state.files.filter((f) => f.status !== UploadStatus.FAILED);
       state.isUploadingFiles = false;
     },
     cancelUploadFiles: (state, { payload }: PayloadAction<Set<string>>) => {
@@ -950,6 +991,13 @@ export const filesSlice = createSlice({
     },
     uploadArchiveFail: (state) => {
       state.isUploadingArchive = false;
+    },
+
+    setSharedWithMeFilesAndFoldersIds: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.sharedWithMeFilesAndFoldersIds = payload.ids;
     },
   },
 });

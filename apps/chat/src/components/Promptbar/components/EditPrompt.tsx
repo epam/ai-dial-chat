@@ -19,7 +19,6 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -34,11 +33,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  ButtonVariant,
-  DialButton,
-  DialCloseButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -143,17 +138,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const saveDisabled =
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (!saveDisabled && allowEnterClick(e, enterType)) {
+      if (!saveDisabled && allowEnterClick(e)) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);
       }
     },
-    [enterType, handleEdit, prompt, saveDisabled],
+    [allowEnterClick, handleEdit, prompt, saveDisabled],
   );
 
   const handleConfirmClose = useCallback(
@@ -273,13 +268,12 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           tooltip={t('Please fill in all required fields')}
           hideTooltip={!saveDisabled}
         >
-          <DialButton
+          <DialPrimaryButton
             type="submit"
             data-qa="save-prompt"
             onClick={(e) => handleSubmit(e, prompt)}
             disabled={saveDisabled}
             label={t('Save')}
-            variant={ButtonVariant.Primary}
           />
         </Tooltip>
       </div>

@@ -15,7 +15,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -32,11 +31,7 @@ import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageT
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  ButtonVariant,
-  DialButton,
-  DialCloseButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -117,18 +112,18 @@ export const PromptVariablesDialog: FC<Props> = ({
     [],
   );
 
-  const enterType = useAppSelector(UISelectors.selectEnterType);
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (allowEnterClick(e, enterType)) {
+      if (allowEnterClick(e)) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
         onClose();
       }
     },
-    [enterType, handleSubmit, onClose],
+    [allowEnterClick, handleSubmit, onClose],
   );
 
   useEffect(() => {
@@ -235,10 +230,9 @@ export const PromptVariablesDialog: FC<Props> = ({
         ))}
 
         <div className="mt-1 flex justify-end">
-          <DialButton
+          <DialPrimaryButton
             label={t('Submit')}
             type="submit"
-            variant={ButtonVariant.Primary}
             data-qa="submit-variable"
           />
         </div>

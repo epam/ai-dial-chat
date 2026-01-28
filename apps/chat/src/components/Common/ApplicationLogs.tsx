@@ -18,7 +18,11 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonSize,
+  DialButton,
+  DialNeutralButton,
+} from '@epam/ai-dial-ui-kit';
 
 const LogsHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -106,10 +110,9 @@ const LogsFooter = () => {
       </Tooltip>
       {applicationLogs && (
         <Tooltip tooltip={t('Download logs')}>
-          <DialButton
+          <DialNeutralButton
             label={t('Download')}
-            variant={ButtonVariant.Secondary}
-            textClassName="text-sm"
+            size={ButtonSize.Small}
             onClick={() => downloadApplicationLogs(applicationLogs)}
             data-qa="application-download-logs"
             disabled={isLogsLoading}

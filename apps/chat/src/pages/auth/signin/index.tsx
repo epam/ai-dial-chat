@@ -1,4 +1,4 @@
-import { getProviders, signIn, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
@@ -27,7 +27,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
 
@@ -130,13 +130,12 @@ export default function Signin({
         </div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
-            <DialButton
-              className="place-content-center gap-4 p-4"
+            <DialNeutralButton
+              className="gap-4 p-4"
               onClick={() => {
                 void handleSignIn(provider);
               }}
               key={provider.id + provider.name}
-              variant={ButtonVariant.Secondary}
               iconBefore={
                 <Image
                   className="h-6"
@@ -183,15 +182,16 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const checkProvider = authProviders.some(({ id }) => id === query.provider);
+  const checkProvider = authProviders?.some(({ id }) => id === query.provider);
 
   const providerFromQuery = checkProvider ? query.provider : null;
-  const providers = await getProviders();
   const themesHostDefined = !!process.env.THEMES_CONFIG_HOST;
+
   return {
     props: {
       provider: DEFAULT_PROVIDER ?? providerFromQuery,
-      providers,
+      providers:
+        authProviders?.map(({ id, name, type }) => ({ id, name, type })) ?? [],
       themesHostDefined,
     },
   };

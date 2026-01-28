@@ -5,6 +5,7 @@ import { useFileManager } from '@/src/components/FileManager/hooks/useFileManage
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  formatFileSize,
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
@@ -20,7 +21,6 @@ import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
-import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -29,12 +29,12 @@ import { OperationLoaderModal } from '@/src/components/FileManager/OperationLoad
 
 import {
   ButtonVariant,
-  DialButton,
   DialFileAcceptType,
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
   DialLoader,
+  DialPrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -50,6 +50,7 @@ interface Props {
   forceHideSelectFolders?: boolean;
   sourceFilters?: Set<FileSourceType>;
   warningMessage?: string;
+  maxSelectableFileSize?: number;
 }
 
 export const FileManagerModal = memo(
@@ -66,6 +67,7 @@ export const FileManagerModal = memo(
     onClose,
     sourceFilters,
     warningMessage,
+    maxSelectableFileSize,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -289,6 +291,9 @@ export const FileManagerModal = memo(
       handleUploadArchive,
       handleMoveFiles,
       handleRenameValidation,
+      sharedWithMeIds,
+
+      uploadEnabled,
     } = useFileManager({
       actionLabelsOptions: {
         actionsByTab: {
@@ -330,8 +335,11 @@ export const FileManagerModal = memo(
             {(canAttachFiles || forceShowSelectCheckBox) && (
               <p id={descriptionId} data-qa="supported-attributes">
                 {t(
-                  'Maximum size: 512 MB. Supported types: {{allowedExtensions}}.',
+                  'Maximum size: {{maxSelectableFileSize}}. Supported types: {{allowedExtensions}}.',
                   {
+                    maxSelectableFileSize: maxSelectableFileSize
+                      ? formatFileSize(maxSelectableFileSize)
+                      : '512 MB',
                     allowedExtensions:
                       typesLabel ||
                       allowedExtensions.join(', ') ||
@@ -354,7 +362,7 @@ export const FileManagerModal = memo(
             data-qa="file-manager"
           >
             <DialFileManager
-              className="px-0 pb-5"
+              className="bg-layer-2 px-0 pb-5"
               path={currentPath}
               onPathChange={setCurrentPath}
               onSelectedPathsChange={pathSelectionHandler}
@@ -366,7 +374,7 @@ export const FileManagerModal = memo(
               searchInProgress={isLoadingSearchListing}
               searchResults={searchResultsUIKit}
               allowedFileTypes={allowedTypes as DialFileAcceptType[]}
-              maxFileSize={MAX_FILE_SIZE_IN_BYTES}
+              maxSelectableFileSize={maxSelectableFileSize}
               bulkActionsToolbarOptions={bulkActionsToolbarOptions}
               treeOptions={treeOptions}
               fileMetadataPopupOptions={fileMetadataPopupOptions}
@@ -382,6 +390,8 @@ export const FileManagerModal = memo(
               onUploadArchive={handleUploadArchive}
               onMoveToFiles={handleMoveFiles}
               onRenameValidate={handleRenameValidation}
+              sharedWithMeIds={sharedWithMeIds}
+              uploadEnabled={uploadEnabled}
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
@@ -397,9 +407,8 @@ export const FileManagerModal = memo(
           </div>
 
           <div className="flex justify-end">
-            <DialButton
+            <DialPrimaryButton
               onClick={handleAttachFiles}
-              variant={ButtonVariant.Primary}
               label={customButtonLabel ?? t('Attach')}
               disabled={
                 selectedFilesIds.length === 0 && selectedFolderIds.length === 0

@@ -47,7 +47,11 @@ import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialButton,
+  DialCloseButton,
+  DialLinkButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversation: Conversation;
@@ -296,7 +300,8 @@ export const ChatHeader = Inversify.register(
 
               {isShowClearConversation &&
                 !isConversationInvalid &&
-                !isCompareMode && (
+                !isCompareMode &&
+                !conversation.publishedWithMe && (
                   <Tooltip
                     isTriggerClickable={!isMessageStreaming}
                     tooltip={t('Clear conversation messages')}
@@ -325,8 +330,8 @@ export const ChatHeader = Inversify.register(
               )}
 
               {isPlayback && !isExternal && (
-                <DialButton
-                  className="text-accent-primary"
+                <DialLinkButton
+                  className="px-0"
                   onClick={onCancelPlaybackMode}
                   data-qa="cancel-playback-mode"
                   label={

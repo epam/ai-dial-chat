@@ -199,12 +199,7 @@ const AttachmentRendererComponent = withErrorBoundary(
       selectIsCustomAttachmentTypeSelector,
     );
 
-    if (
-      mappedVisualizers &&
-      isCustomAttachmentType &&
-      attachment.url &&
-      mappedAttachmentUrl
-    ) {
+    if (mappedVisualizers && isCustomAttachmentType && mappedAttachmentUrl) {
       return (
         <VisualizerRenderer
           attachmentUrl={mappedAttachmentUrl}

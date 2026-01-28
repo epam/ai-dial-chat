@@ -42,7 +42,7 @@ export const AnnouncementsBanner = () => {
         <span dangerouslySetInnerHTML={{ __html: announcement }}></span>
       </div>
       <DialCloseButton
-        className="absolute right-2 top-[calc(50%_-_12px)] shrink-0"
+        className="absolute right-2 top-[calc(50%_-_12px)] shrink-0 text-controls-permanent"
         onClose={() => {
           dispatch(UIActions.closeAnnouncement({ announcement }));
         }}

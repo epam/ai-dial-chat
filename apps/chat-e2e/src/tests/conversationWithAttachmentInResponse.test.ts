@@ -15,12 +15,13 @@ dialTest(
     dataInjector,
     fileApiHelper,
     filesManagerFoldersTree,
-    filesManagerGrid,
+    filesManagerCollapsibleSidebar,
     filesManagerGridAssertion,
     chatHeader,
     chat,
     talkToAgentDialog,
     conversations,
+    appContainer,
   }) => {
     setTestIds('EPMRTC-3481');
     const defaultModel = ModelsUtil.getDefaultAgent()!;
@@ -55,10 +56,11 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Files manager" page and verify image is placed inside nested folders',
+      'Open "File manager" page and verify image is placed inside nested folders',
       async () => {
         await filesManagerPage.openFilesManagerPage();
         await filesManagerPage.waitForPageLoaded();
+        await filesManagerCollapsibleSidebar.expandIfCollapsed();
         await filesManagerFoldersTree.expandFolders(...imagePathSegments);
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
@@ -68,7 +70,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Generate one more picture for the same conversation and verify it is visible on "Files manager"',
+      'Generate one more picture for the same conversation and verify it is visible on "File manager"',
       async () => {
         await navigationPanel.backToChat();
         await dialHomePage.mockChatImageResponse(
@@ -76,15 +78,17 @@ dialTest(
           Attachment.cloudImageName,
         );
         await conversations.selectEntity(responseImageConversation.name);
+        await appContainer.getChatLoader().waitForState({ state: 'hidden' });
         await chat.sendRequestWithButton(requestContent);
         await fileApiHelper.putFile(Attachment.cloudImageName, {
           parentPath: imagePath,
         });
 
         await navigationPanel.goToFilesManager();
+        await filesManagerCollapsibleSidebar.expandIfCollapsed();
         await filesManagerFoldersTree.expandFolders(...imagePathSegments);
-        await filesManagerGridAssertion.assertElementState(
-          filesManagerGrid.gridRowByNameCell(Attachment.cloudImageName),
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
           'visible',
         );
         await navigationPanel.backToChat();
@@ -92,7 +96,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Change conversation model, generate one more picture and verify it is visible on "Files manager" under new model folder',
+      'Change conversation model, generate one more picture and verify it is visible on "File manager" under new model folder',
       async () => {
         await chatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(updatedModel);
@@ -107,9 +111,10 @@ dialTest(
         });
 
         await navigationPanel.goToFilesManager();
+        await filesManagerCollapsibleSidebar.expandIfCollapsed();
         await filesManagerFoldersTree.expandFolders(...secondImagePathSegments);
-        await filesManagerGridAssertion.assertElementState(
-          filesManagerGrid.gridRowByNameCell(Attachment.flowerImageName),
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
           'visible',
         );
       },

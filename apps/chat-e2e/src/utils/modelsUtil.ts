@@ -4,7 +4,7 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/chat/utils/app/models';
-import { ApplicationTypes } from '@/src/testData';
+import { ApplicationTypes, ModelTopic } from '@/src/testData';
 
 export class ModelsUtil {
   private static readonly slowModelIds: string[] = process.env.SLOW_MODELS_IDS
@@ -255,5 +255,18 @@ export class ModelsUtil {
       const hasMarkdownBold = description.match(markdownBoldRegExp);
       return !hasHtmlTag && !hasMarkdownLink && !hasMarkdownBold;
     });
+  }
+
+  /**
+   * Filters models/entities by topic
+   * @param entities - Array of entities to filter (output of other ModelsUtil methods)
+   * @param topic - Topic to filter by (from ModelTopic enum)
+   * @returns Filtered array of entities that have the specified topic
+   */
+  public static filterByTopic(
+    entities: DialAIEntityModel[],
+    topic: ModelTopic,
+  ): DialAIEntityModel[] {
+    return entities.filter((entity) => entity.topics?.includes(topic));
   }
 }

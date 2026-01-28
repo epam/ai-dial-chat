@@ -3,6 +3,8 @@ import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
+import { BucketService } from './data/bucket-service';
+
 import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
@@ -123,12 +125,23 @@ export const buildFileTree = (
   files: DialFile[],
   folders: FileFolderInterface[],
   pathRootAlias?: string,
+  rootId?: string,
 ): {
   rootFolder: DialRootFolder;
   items: UIKitDialFile[];
   loadedFoldersPaths: Set<string>;
   sharedByMePaths: Set<string>;
 } => {
+  const fileDataMap = new Map<string, DialFile>();
+  files.forEach((file) => {
+    fileDataMap.set(file.id, file);
+  });
+
+  const folderDataMap = new Map<string, FileFolderInterface>();
+  folders.forEach((folder) => {
+    folderDataMap.set(folder.id, folder);
+  });
+
   const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
@@ -165,6 +178,13 @@ export const buildFileTree = (
     const parentFolder = folderMap.get(parentFolderId);
 
     if (parentFolder && parentFolder.items && folder.id) {
+      const parentOriginalFolder = folderDataMap.get(parentFolderId);
+
+      if (!folder.permissions || folder.permissions.length === 0) {
+        folder.permissions =
+          parentOriginalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
+      }
+
       parentFolder.items.push(folder);
       placedFolderIds.add(folder.id);
     }
@@ -172,9 +192,19 @@ export const buildFileTree = (
 
   folderMap.forEach((folder) => {
     if (folder.id && !placedFolderIds.has(folder.id)) {
+      const originalFolder = folderDataMap.get(folder.id);
+      if (!folder.permissions || folder.permissions.length === 0) {
+        folder.permissions =
+          originalFolder?.permissions?.map((p) => PermissionMap[p]) || [];
+      }
       rootItems.push(folder);
     }
   });
+
+  const effectiveRootId =
+    rootId ||
+    getFileRootId(getEntityBucket({ id: rootItems?.[0]?.id || '' })) ||
+    getFileRootId();
 
   uikitFiles.forEach((file) => {
     const parentFolderId = file.folderId;
@@ -188,25 +218,27 @@ export const buildFileTree = (
 
   uikitFiles.forEach((file) => {
     if (file.id && !placedFileIds.has(file.id)) {
-      rootItems.push(file);
+      if (file.folderId === effectiveRootId || !file.folderId) {
+        rootItems.push(file);
+      }
     }
   });
 
-  const rootId = getFileRootId(
-    getEntityBucket({ id: rootItems?.[0]?.id || '' }),
-  );
-
-  loadedFoldersPaths.add(rootId);
+  loadedFoldersPaths.add(effectiveRootId);
 
   const rootFolder: DialRootFolder = {
-    id: rootId,
+    id: effectiveRootId,
     name: 'Files',
-    path: rootId,
+    path: effectiveRootId,
     folderId: '',
     nodeType: DialFileNodeType.FOLDER,
     items: rootItems,
     parentPath: null,
     label: pathRootAlias || 'Files',
+    permissions:
+      effectiveRootId === `files/${BucketService.getBucket()}`
+        ? [DialFilePermission.READ, DialFilePermission.WRITE]
+        : [],
   };
 
   return {

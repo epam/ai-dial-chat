@@ -81,7 +81,7 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
@@ -125,6 +125,9 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   );
   const isEditUserMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
+  );
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
   const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
@@ -184,9 +187,37 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     ConversationsSelectors.selectIsNotAllowed,
   );
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const autoScrollEnabledRef = useRef(true);
+
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-  const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
+
+  const mergedMessages = useMemo(() => {
+    if (selectedConversations.length === 0) {
+      return [];
+    }
+    const mergedMessages: MergedMessages[] = [];
+    const userMessages = selectedConversations.map((conv) =>
+      excludeSystemMessages(conv.messages),
+    );
+    const messagesLength = userMessages[0]?.length ?? 0;
+
+    for (let i = 0; i < messagesLength; i++) {
+      mergedMessages.push(
+        selectedConversations.map((conv, convIndex) => [
+          conv,
+          userMessages[convIndex][i] || {
+            role: Role.Assistant,
+            content: '',
+          },
+          i,
+          userMessages[convIndex],
+        ]),
+      );
+    }
+
+    return mergedMessages;
+  }, [selectedConversations]);
+
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
@@ -269,27 +300,30 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       clearTimeout(disableAutoScrollTimeoutRef.current);
     }
 
-    setAutoScrollEnabled(true);
+    autoScrollEnabledRef.current = true;
     setShowScrollDownButton(false);
   }, []);
 
   const scrollDown = useCallback(
     (force = false) => {
-      if (autoScrollEnabled || force) {
+      if (autoScrollEnabledRef.current || force) {
         setAutoScroll();
         chatContainerRef.current?.scrollTo({
           top: chatContainerRef.current.scrollHeight,
         });
       }
     },
-    [autoScrollEnabled, setAutoScroll],
+    [setAutoScroll],
   );
 
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
+  const throttledScrollDown = useMemo(
+    () => throttle(scrollDown, scrollThrottlingTimeout),
+    [scrollDown],
+  );
 
   useEffect(() => {
     throttledScrollDown();
-  }, [conversations, throttledScrollDown]);
+  }, [conversations, mergedMessages, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
     scrollDown(true);
@@ -302,7 +336,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       const bottomTolerance = 25;
 
       if (lastScrollTop.current > scrollTop) {
-        setAutoScrollEnabled(false);
+        autoScrollEnabledRef.current = false;
         setShowScrollDownButton(true);
       } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
         if (disableAutoScrollTimeoutRef.current !== null) {
@@ -310,7 +344,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
         }
 
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
-          setAutoScrollEnabled(false);
+          autoScrollEnabledRef.current = false;
           setShowScrollDownButton(true);
         }, scrollThrottlingTimeout);
       } else {
@@ -352,30 +386,6 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   }, [mergedMessages]);
 
   useLayoutEffect(() => {
-    if (selectedConversations.length > 0) {
-      const mergedMessages: MergedMessages[] = [];
-      const userMessages = selectedConversations.map((conv) =>
-        excludeSystemMessages(conv.messages),
-      );
-      const messagesLength = userMessages[0].length;
-
-      for (let i = 0; i < messagesLength; i++) {
-        mergedMessages.push(
-          selectedConversations.map((conv, convIndex) => [
-            conv,
-            userMessages[convIndex][i] || {
-              role: Role.Assistant,
-              content: '',
-            },
-            i,
-            userMessages[convIndex],
-          ]),
-        );
-      }
-
-      setMergedMessages(mergedMessages);
-    }
-
     if (
       selectedConversations.every(
         (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
@@ -383,7 +393,9 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     ) {
       setShowScrollDownButton(false);
     } else {
-      handleScroll();
+      if (!autoScrollEnabledRef.current) {
+        handleScroll();
+      }
     }
   }, [handleScroll, selectedConversations]);
 
@@ -585,6 +597,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   );
 
   const isChatReadyForInput =
+    !isMarketplaceEnabled ||
     areModelsInstalled ||
     isIsolatedView ||
     isAdminPreview ||
@@ -594,7 +607,11 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
       !isApproveRequiredEntity &&
-      (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+      (areModelsInstalled ||
+        isAdminPreview ||
+        isReplay ||
+        isIsolatedView ||
+        !isMarketplaceEnabled) &&
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
@@ -691,7 +708,8 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                     !isPlayback &&
                                     !isReplay &&
                                     !isReadOnly &&
-                                    !isApproveRequiredEntity
+                                    !isApproveRequiredEntity &&
+                                    !isExternal
                                   }
                                   isShowSettings={isShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
@@ -824,6 +842,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
+                                              !isChatReadyForInput ||
                                               ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
@@ -841,6 +860,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                                                 : undefined
                                             }
                                             onRegenerate={
+                                              isChatReadyForInput &&
                                               index ===
                                                 mergedMessages.length - 1 &&
                                               showLastMessageRegenerate &&
@@ -1026,9 +1046,8 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             </div>
 
             <div className="flex w-full flex-col items-center pt-3 md:pt-5">
-              <DialButton
+              <DialPrimaryButton
                 className="mb-2 flex items-center md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                variant={ButtonVariant.Primary}
                 label={t('Start working with the {{viewerTitle}}', {
                   ns: Translation.Chat,
                   viewerTitle: customViewer.title,

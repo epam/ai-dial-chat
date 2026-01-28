@@ -20,7 +20,7 @@ import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessa
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -121,10 +121,8 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
           </Tooltip>
           <Tooltip tooltip={tooltip}>
             <div className="flex items-center gap-3">
-              <DialButton
-                className="text-accent-primary"
+              <DialLinkButton
                 data-qa="change-button"
-                textClassName="font-normal"
                 disabled={disabled}
                 onClick={handleToggleFileManager}
                 label={value ? t('Change') : t('Add')}

@@ -18,7 +18,7 @@ import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/Marketp
 import { TopicsList } from './TopicsList';
 
 import { FeatureType } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EntityHeaderProps<T> {
   entity: T;
@@ -95,16 +95,16 @@ export function EntityHeader<T extends MarketplaceEntity>({
                 entity.topics?.length ? 'gap-2' : '',
               )}
             >
-              <MarketplaceEntityIndicator entity={entity} />
+              <MarketplaceEntityIndicator entity={entity} isDetailedView />
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
                   counterMarginRight={screenState === ScreenState.SM ? 18 : 0}
                 />
               )}
-              <div className="flex items-center gap-[2px] whitespace-nowrap">
+              <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
                 <div
-                  className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+                  className="shrink truncate text-lg font-semibold leading-6 md:text-xl"
                   data-qa="entity-name"
                 >
                   {entity.name}
@@ -117,9 +117,8 @@ export function EntityHeader<T extends MarketplaceEntity>({
 
       {/* Action buttons */}
       {isShareVisible && (
-        <DialButton
-          className="flex px-3 py-1.5 text-sm text-accent-primary"
-          textClassName="leading-normal"
+        <DialLinkButton
+          className="px-3 py-1.5"
           onClick={shareAction.onShare}
           data-qa="share"
           iconBefore={<IconUserShare size={18} />}

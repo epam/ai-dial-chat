@@ -71,6 +71,8 @@ module.exports = {
       'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-disable': 'var(--controls-text-disable, #5B6570)',
+      'layer-0': 'var(--bg-layer-0, #000000)',
+      'layer-3': 'var(--bg-layer-3, #222932)',
     },
     gradientColorStops: commonBgColors,
     /////////

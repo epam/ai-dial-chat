@@ -19,11 +19,7 @@ import {
 } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
 import { Cursors, StyleValues, Styles } from '@/src/ui/domData';
-import {
-  BaseElement,
-  EntityEditSteps,
-  FileModalSection,
-} from '@/src/ui/webElements';
+import { BaseElement, EntityEditSteps } from '@/src/ui/webElements';
 import {
   DateUtil,
   GeneratorUtil,
@@ -35,7 +31,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 let appEntityForCleanup: BackendEntity | undefined;
 
-dialTest.skip(
+dialTest(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
@@ -614,7 +610,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Edit custom application\n' + //EPMRTC-5131
     'Edit version for custom app\n' + //EPMRTC-4305
     'DIAL logo click on second step in AppEditor saves app ( decided on daily to leave for now)', // EPMRTC-5747
@@ -848,7 +844,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
     '[Custom app]: Delete specific not published version' + // EPMRTC-4285
@@ -1090,7 +1086,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Custom app Topic dropdown select.\n' + // EPMRTC-4374
     '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
     'Preview on step "General info"\n' + // EPMRTC-5749
@@ -1111,7 +1107,8 @@ dialTest.skip(
       entityEditorGeneralInfoPreviewCard,
       tooltipAssertion,
       customAppEditorViewForm,
-      attachFilesModal,
+      filesManagerModalGrid,
+      filesManagerModal,
       entityEditorGeneralInfoPreview,
       fileApiHelper,
       entityEditorHeader,
@@ -1291,11 +1288,12 @@ dialTest.skip(
       }
       await entityEditorGeneralForm.topicsDropdownToggle.click();
       await entityEditorGeneralForm.addIconButton.click();
-      await attachFilesModal.checkAttachedFile(
-        Attachment.sunImageName,
-        FileModalSection.AllFiles,
-      );
-      await attachFilesModal.attachFiles();
+      const attachmentCheckbox =
+        await filesManagerModalGrid.gridCheckboxByNameCell(
+          Attachment.sunImageName,
+        );
+      await attachmentCheckbox.click();
+      await filesManagerModal.getSelectButton().click();
     });
 
     await dialTest.step(
@@ -1684,7 +1682,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Edit Custom app: Update icon of custom app\n' + //EPMRTC-4109
     '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars\n' + // EPMRTC-5538
     '[App editor]: Release date displayed on detailed preview on "General info" step when edit custom app', //EPMRTC-5831
@@ -1693,7 +1691,8 @@ dialTest.skip(
     marketplaceEntitiesSection,
     entityDetailsModal,
     entityEditorPage,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
     entityEditorHeader,
     entityEditorGeneralForm,
     entityEditorGeneralInfoPreview,
@@ -1780,11 +1779,10 @@ dialTest.skip(
           'hidden',
         );
         await entityEditorGeneralForm.addIconButton.click();
-        await attachFilesModal.checkAttachedFile(
-          newIconFileName,
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
+        const iconCheckbox =
+          await filesManagerModalGrid.gridCheckboxByNameCell(newIconFileName);
+        await iconCheckbox.click();
+        await filesManagerModal.getSelectButton().click();
       },
     );
 
@@ -1866,7 +1864,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMRTC-4131
     '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMRTC-4290
   async ({
@@ -1885,7 +1883,8 @@ dialTest.skip(
     agentInfoAssertion,
     sendMessage,
     attachmentDropdownMenu,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     tooltipAssertion,
@@ -2006,16 +2005,16 @@ dialTest.skip(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        const modalHeaderText = await attachFilesModal
-          .getModalHeader()
-          .getElementInnerContent();
+        const modalHeaderText = await filesManagerModal
+          .getHeader()
+          .getSupportedTypes();
         baseAssertion.assertStringIncludes(
-          modalHeaderText,
+          modalHeaderText!,
           attachmentType.substring(attachmentType.lastIndexOf('/') + 1),
           ExpectedMessages.headerShouldContainDefinedAttachmentTypes,
         );
         baseAssertion.assertStringNotIncludes(
-          modalHeaderText,
+          modalHeaderText!,
           'Up to ',
           ExpectedMessages.headerMaxNumberOfAttacmentsNotMentioned,
         );
@@ -2026,12 +2025,11 @@ dialTest.skip(
       'Select several files with correct type and click attach',
       async () => {
         for (const pdfFile of pdfFilesToUpload) {
-          await attachFilesModal.checkAttachedFile(
-            pdfFile,
-            FileModalSection.AllFiles,
-          );
+          const attachmentCheckbox =
+            await filesManagerModalGrid.gridCheckboxByNameCell(pdfFile);
+          await attachmentCheckbox.click();
         }
-        await attachFilesModal.attachFiles();
+        await filesManagerModal.getAttachButton().click();
         for (const pdfFile of pdfFilesToUpload) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             pdfFile,
@@ -2051,7 +2049,7 @@ dialTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   'Check icons of chats with published custom app.\n' + //EPMRTC-4303
     'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
     'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
@@ -2212,7 +2210,7 @@ dialAdminTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
     'Create two custom apps consecutively', // EPMRTC-6263
   async ({
@@ -2379,7 +2377,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   "Tooltip for long app's name displayed in several lines\n" + // EPMRTC-5946
     '[App editor]: Changes are saved if set focus to field and then move cursor to Save and exit or to step in header', // EPMRTC-6046
   async ({

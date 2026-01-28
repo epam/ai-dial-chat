@@ -6,9 +6,8 @@ import { Translation } from '@/src/types/translation';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import {
-  ButtonVariant,
-  DialButton,
   DialFileName,
+  DialNeutralButton,
   DialPopup,
 } from '@epam/ai-dial-ui-kit';
 
@@ -38,7 +37,10 @@ export const FilesUploadingModal = ({
     if (percent === undefined) return null;
 
     return (
-      <div className="h-1 w-full overflow-hidden rounded-full bg-layer-1">
+      <div
+        className="h-1 w-full overflow-hidden rounded-full bg-layer-1"
+        data-qa="uploading-indicator"
+      >
         <div
           className="h-full rounded-full bg-accent-primary transition-all duration-300"
           style={{ width: `${percent}%` }}
@@ -53,11 +55,11 @@ export const FilesUploadingModal = ({
       open={isOpen}
       dividers={false}
       onClose={() => setIsOpen(false)}
+      hideClose
       closeOnOutsideClick={false}
       footer={
         <div className="flex justify-end gap-2 px-6 py-4">
-          <DialButton
-            variant={ButtonVariant.Secondary}
+          <DialNeutralButton
             label={t('Cancel')}
             onClick={() => {
               setIsOpen(false);
@@ -69,7 +71,12 @@ export const FilesUploadingModal = ({
       header={
         <div className="flex flex-col gap-2">
           <div>{title}</div>
-          <div className="text-sm text-secondary">{text}</div>
+          <div
+            className="text-sm text-secondary"
+            data-qa="uploading-items-count"
+          >
+            {text}
+          </div>
         </div>
       }
     >

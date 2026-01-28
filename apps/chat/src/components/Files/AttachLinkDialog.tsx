@@ -14,7 +14,7 @@ import { OUTSIDE_PRESS } from '@/src/constants/modal';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onClose: (link?: DialLink) => void;
@@ -113,9 +113,8 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           ></input>
         </div>
         <div className="flex justify-end">
-          <DialButton
+          <DialPrimaryButton
             label={t('Attach')}
-            variant={ButtonVariant.Primary}
             data-qa="attach"
             disabled={!isValid}
             type="submit"
