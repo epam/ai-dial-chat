@@ -45,10 +45,15 @@ export class GeneratorUtil {
     const chars =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let result = '';
-    const randomValues = new Uint8Array(length);
-    webcrypto.getRandomValues(randomValues);
-    for (let i = 0; i < length; i++) {
-      result += chars[randomValues[i] % chars.length];
+    // Generate random values in chunks to properly handle the 65536 bytes limit of webcrypto.getRandomValues
+    const maxBytes = 65536;
+    for (let i = 0; i < length; i += maxBytes) {
+      const size = Math.min(maxBytes, length - i);
+      const randomValues = new Uint8Array(size);
+      webcrypto.getRandomValues(randomValues);
+      for (let j = 0; j < size; j++) {
+        result += chars[randomValues[j] % chars.length];
+      }
     }
     return result;
   }
