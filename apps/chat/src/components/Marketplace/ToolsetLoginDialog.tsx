@@ -1,8 +1,9 @@
-import { IconApps, IconUser } from '@tabler/icons-react';
+import { IconLayoutGrid, IconUser } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -19,6 +20,8 @@ import {
   MarketplaceSelectors,
   ToolsetSelectors,
 } from '@/src/store/selectors';
+
+import { Routes } from '@/src/constants/routes';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -46,7 +49,7 @@ const credsTabs = [
   {
     key: ToolsetCredentialsLevel.GLOBAL,
     label: 'Entire organization credentials',
-    Icon: IconApps,
+    Icon: IconLayoutGrid,
   },
 ];
 
@@ -59,6 +62,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
+  const { route } = useRouter();
 
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
@@ -68,6 +72,8 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   const [authLevel, setAuthLevel] = useState<
     ToolsetCredentialsLevel | undefined
   >(undefined);
+
+  const isAppsEditor = route === Routes.AppsEditor;
 
   const formMethods = useForm<ToolsetLoginFormType>({
     defaultValues: getDefaultLoginFormData(
@@ -237,7 +243,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
             <span className="text-xs text-primary">{t('Version: ')}</span>
 
             <ModelVersionSelect
-              entities={allVersions}
+              entities={isAppsEditor ? [entity] : allVersions}
               currentEntity={entity}
               onSelect={handleVersionChange}
               className="truncate"
