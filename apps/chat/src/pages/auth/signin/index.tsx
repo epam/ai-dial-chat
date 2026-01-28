@@ -157,6 +157,15 @@ export default function Signin({
   );
 }
 
+const mapProvider = (provider: Provider) =>
+  provider
+    ? {
+        id: provider.options?.id ?? provider.id,
+        name: provider.options?.name ?? provider.name,
+        type: provider.type,
+      }
+    : null;
+
 export const getServerSideProps: GetServerSideProps = async ({
   query,
   req,
@@ -190,8 +199,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   return {
     props: {
       provider: DEFAULT_PROVIDER ?? providerFromQuery,
-      providers:
-        authProviders?.map(({ id, name, type }) => ({ id, name, type })) ?? [],
+      providers: authProviders?.map(mapProvider).filter(Boolean) ?? [],
       themesHostDefined,
     },
   };
