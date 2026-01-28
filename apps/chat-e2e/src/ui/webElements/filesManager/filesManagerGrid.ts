@@ -82,7 +82,8 @@ export class FilesManagerGrid extends Grid {
 
   public async renameFile(currentName: string, newName: string) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
-    await dotsMenu.click();
+    // eslint-disable-next-line playwright/no-force-option
+    await dotsMenu.click({ force: true });
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
     const nameWithoutExtension =
       FileUtil.getFilenameWithoutExtension(currentName);
@@ -91,6 +92,16 @@ export class FilesManagerGrid extends Grid {
     );
     await input.fill(newName);
     await this.click();
+  }
+
+  public getRenameInputError(name: string) {
+    return this.getElementLocator().locator(
+      InputSelectors.inputErrorIcon(name),
+    );
+  }
+
+  public getRenameInput(value: string) {
+    return this.getElementLocator().locator(InputSelectors.value(value));
   }
 
   public async goToGridRowByNameCell(
