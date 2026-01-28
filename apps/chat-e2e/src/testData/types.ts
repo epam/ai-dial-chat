@@ -34,6 +34,7 @@ export interface Entity {
 export interface ArithmeticRequestEntity extends Entity {
   isSysPromptAllowed?: boolean;
   systemPrompt?: string;
+  temperature?: string;
 }
 
 export interface EntitySimpleRequest extends Entity {
