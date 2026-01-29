@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, first, iif, map, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, first, map, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -80,19 +80,8 @@ const initEpic: AppEpic = (action$, state$) =>
             saveFilters: shouldSaveFilters,
             selectedTab: workSpaceTab
               ? MarketplaceTabs.MY_WORKSPACE
-              : undefined,
+              : MarketplaceTabs.HOME,
           }),
-        ),
-        iif(
-          () => !shouldSaveFilters,
-          of(
-            MarketplaceActions.setSelectedTab(
-              workSpaceTab
-                ? MarketplaceTabs.MY_WORKSPACE
-                : MarketplaceTabs.HOME,
-            ),
-          ),
-          EMPTY,
         ),
       );
     }),
