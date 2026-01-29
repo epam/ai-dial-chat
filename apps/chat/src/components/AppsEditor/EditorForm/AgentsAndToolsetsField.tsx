@@ -21,8 +21,9 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { AnyToolset } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/actions';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -44,7 +45,14 @@ import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/App
 import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
-import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonAppearance,
+  ButtonSize,
+  ButtonVariant,
+  ConfirmationPopupVariant,
+  DialButton,
+  DialConfirmationPopup,
+} from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 
 const AgentAndToolsetSelectorField = withLabel(AgentAndToolsetSelector);
@@ -58,6 +66,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   onAutoSave,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -73,8 +82,10 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+  const [isDiscardingJson, setIsDiscardingJson] = useState(false);
 
-  const { control, setValue, getValues } = useFormContext<QuickApp2FormType>();
+  const { control, setValue, getValues, resetField } =
+    useFormContext<QuickApp2FormType>();
   const { errors, dirtyFields } = useFormState<QuickApp2FormType>({ control });
 
   const isJsonView = useWatch({
@@ -141,10 +152,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   }, [agentsAndToolsetsJson, isJsonView, setValue]);
 
   const handleJsonViewChange = useCallback(() => {
-    if (isJsonView && (dirtyFields.agentsAndToolsetsJson || editorError)) {
-      onAutoSave(true);
-      return;
-    } else if (isJsonView) {
+    if (isJsonView) {
       switchToSimpleView();
     } else {
       setValue(
@@ -163,16 +171,15 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         shouldValidate: true,
       });
     }
-  }, [
-    isJsonView,
-    dirtyFields.agentsAndToolsetsJson,
-    editorError,
-    setValue,
-    onAutoSave,
-    switchToSimpleView,
-    getValues,
-    allEntitiesMap,
-  ]);
+  }, [isJsonView, setValue, switchToSimpleView, getValues, allEntitiesMap]);
+
+  const handleSaveJson = useCallback(() => {
+    setValue('agentsAndToolsetsJson', agentsAndToolsetsJson, {
+      shouldTouch: true,
+      shouldDirty: true,
+    });
+    onAutoSave(true);
+  }, [agentsAndToolsetsJson, onAutoSave, setValue]);
 
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
@@ -188,6 +195,35 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
       });
     },
     [agentsAndToolsetsOptions, setValue],
+  );
+
+  const handleCloseDiscard = useCallback(
+    (result: boolean) => {
+      if (result) {
+        resetField('agentsAndToolsetsJson', {
+          keepDirty: false,
+          keepError: false,
+        });
+        setValue(
+          'agentsAndToolsetsJson',
+          JSON.stringify(
+            getQuickApp2Toolsets({
+              data: getValues(),
+              allEntitiesMap: allEntitiesMap as Record<
+                string,
+                MarketplaceEntity
+              >,
+            }),
+            null,
+            2,
+          ),
+          { shouldDirty: false, shouldValidate: true, shouldTouch: false },
+        );
+        dispatch(ApplicationActions.setEditorError());
+      }
+      setIsDiscardingJson(false);
+    },
+    [allEntitiesMap, dispatch, getValues, resetField, setValue],
   );
 
   const handleOpenDetails = useCallback(
@@ -246,6 +282,40 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     ? t('App settings are not matching the schema')
     : undefined;
 
+  const EditorButtons = useCallback(
+    () => (
+      <div className="flex h-full grow items-center justify-end gap-2 border-r border-tertiary pr-3">
+        <DialButton
+          label={t('Discard')}
+          variant={ButtonVariant.Neutral}
+          size={ButtonSize.Small}
+          appearance={ButtonAppearance.Outlined}
+          onClick={() => setIsDiscardingJson(true)}
+          disabled={!dirtyFields.agentsAndToolsetsJson && !editorError}
+        />
+        <DialButton
+          label={t('Save JSON')}
+          variant={ButtonVariant.Primary}
+          size={ButtonSize.Small}
+          onClick={handleSaveJson}
+          disabled={
+            !!errors.agentsAndToolsetsJson ||
+            isLoading ||
+            !dirtyFields.agentsAndToolsetsJson
+          }
+        />
+      </div>
+    ),
+    [
+      dirtyFields.agentsAndToolsetsJson,
+      editorError,
+      errors.agentsAndToolsetsJson,
+      handleSaveJson,
+      isLoading,
+      t,
+    ],
+  );
+
   return (
     <>
       <Controller
@@ -258,23 +328,20 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
             })}
           >
             <div className="absolute right-0 top-[-5px]">
-              {dirtyFields.agentsAndToolsetsJson || editorError || isLoading ? (
-                <DialLinkButton
-                  disabled={!!errors.agentsAndToolsetsJson || isLoading}
-                  onClick={handleJsonViewChange}
-                  label={t('Save JSON')}
-                />
-              ) : (
-                <ToggleSwitch
-                  disabled={!!errors.agentsAndToolsetsJson}
-                  isOn
-                  handleSwitch={handleJsonViewChange}
-                  switchOnText={t('ON')}
-                  additionalText={t('JSON')}
-                  className="mb-2 flex w-fit items-center gap-2"
-                  tooltip={t('Switch to marketplace Agents and Toolsets view')}
-                />
-              )}
+              <ToggleSwitch
+                disabled={
+                  !!errors.agentsAndToolsetsJson ||
+                  !!editorError ||
+                  isLoading ||
+                  dirtyFields.agentsAndToolsetsJson
+                }
+                isOn
+                handleSwitch={handleJsonViewChange}
+                switchOnText={t('ON')}
+                additionalText={t('JSON')}
+                className="mb-2 flex w-fit items-center gap-2"
+                tooltip={t('Switch to marketplace Agents and Toolsets view')}
+              />
             </div>
 
             <JsonEditor
@@ -287,6 +354,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
               language="json"
               options={editorOptions}
               errors={editorError ? [editorError] : undefined}
+              renderButtons={EditorButtons}
             />
           </div>
         )}
@@ -336,6 +404,20 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
             </>
           );
         }}
+      />
+
+      <DialConfirmationPopup
+        variant={ConfirmationPopupVariant.Danger}
+        open={isDiscardingJson}
+        header={t('Discard changes')}
+        description={t(
+          'Are you sure you want to lose all recent changes made to the JSON?',
+        )}
+        confirmLabel={t('Discard')}
+        cancelLabel={t('Continue editing')}
+        onConfirm={() => handleCloseDiscard(true)}
+        onCancel={() => handleCloseDiscard(false)}
+        onClose={() => handleCloseDiscard(false)}
       />
     </>
   );

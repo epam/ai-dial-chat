@@ -67,6 +67,7 @@ interface MonacoEditorProps<T extends string = string> extends EditorProps {
   activeFileId?: T;
   onTabChange?: (fileId: T) => void;
   errors?: string[];
+  renderButtons?: () => React.ReactNode;
 }
 
 export const MonacoEditor = memo(function MonacoEditor(
@@ -163,6 +164,9 @@ export const MonacoEditor = memo(function MonacoEditor(
               />
             )}
           </div>
+
+          {props.renderButtons?.()}
+
           <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
             <DialButton
               className="p-2 text-secondary hover:text-accent-primary"
