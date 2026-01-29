@@ -284,7 +284,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const EditorButtons = useCallback(
     () => (
-      <div className="flex h-full grow items-center justify-end gap-2 border-r border-tertiary pr-3">
+      <div className="flex h-full grow items-center justify-end gap-2 pr-3">
         <DialButton
           label={t('Discard')}
           variant={ButtonVariant.Neutral}

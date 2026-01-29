@@ -2,7 +2,7 @@ import { EditorProps } from '@monaco-editor/react';
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
-  IconExclamationCircle,
+  IconExclamationCircleFilled,
 } from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
 
@@ -23,11 +23,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { TabOption, Tabs } from './Tabs';
 
-import {
-  ButtonVariant,
-  DialButton,
-  DialCloseButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 import omit from 'lodash-es/omit';
 import { nanoid } from 'nanoid';
 
@@ -151,7 +147,7 @@ export const MonacoEditor = memo(function MonacoEditor(
       })}
     >
       {props.allowFullScreen && (
-        <div className="flex items-center justify-between  border-tertiary bg-layer-2">
+        <div className="flex items-center justify-between  border-b border-tertiary bg-layer-3">
           <div className="flex">
             {props.files && props.files.length > 1 && (
               <Tabs
@@ -169,7 +165,11 @@ export const MonacoEditor = memo(function MonacoEditor(
 
           <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
             <DialButton
-              className="p-2 text-secondary hover:text-accent-primary"
+              className={classNames(
+                'px-[13px] py-2 text-secondary hover:text-accent-primary',
+                typeof props.renderButtons === 'function' &&
+                  'border-l border-tertiary',
+              )}
               onClick={(e) => {
                 setIsFullScreen(!isFullScreen);
                 dispatchMouseLeaveEvent(e);
@@ -180,57 +180,63 @@ export const MonacoEditor = memo(function MonacoEditor(
         </div>
       )}
 
-      <div
-        className={classNames('min-h-0 min-w-0 max-w-full shrink grow', {
-          ['p-2']: props.allowFullScreen,
-        })}
-      >
-        <Editor
-          {...editorProps}
-          options={{ ...editorOptions, ...props.options }}
-          theme={editorTheme}
-          {...omit(props, ['options', 'width', 'height'])}
-          width="100%"
-          height="100%"
-        />
-      </div>
-
-      {!!errorsWithIds.length && (
-        <div className="absolute bottom-[20px] right-[20px]">
-          <DialButton
-            onClick={handleErrorsClick}
-            variant={ButtonVariant.Error}
-            iconBefore={<IconExclamationCircle size={24} />}
-            label={errorLabel}
+      <div className="flex min-h-0 min-w-0 max-w-full shrink grow">
+        <div
+          className={classNames('h-full min-h-0 min-w-0 shrink grow', {
+            ['p-2']: props.allowFullScreen,
+          })}
+        >
+          <Editor
+            {...editorProps}
+            options={{ ...editorOptions, ...props.options }}
+            theme={editorTheme}
+            {...omit(props, ['options', 'width', 'height'])}
+            width="100%"
+            height="100%"
           />
         </div>
-      )}
+        {!!errorsWithIds.length && (
+          <div
+            className={classNames(
+              'flex h-full flex-col border-l border-tertiary bg-layer-3 p-3',
+              showErrors ? 'w-full max-w-[400px]' : 'cursor-pointer',
+            )}
+            onClick={!showErrors ? handleErrorsClick : undefined}
+          >
+            <div
+              className={classNames(
+                'flex items-center gap-2 text-sm font-semibold text-primary',
+                showErrors
+                  ? '[writing-mode:horizontal-tb]'
+                  : '[writing-mode:vertical-rl]',
+              )}
+            >
+              <IconExclamationCircleFilled
+                size={18}
+                className={classNames('text-error', !showErrors && 'rotate-90')}
+              />
+              {errorLabel}
 
-      {showErrors && !!errorsWithIds.length && (
-        <div
-          className={classNames(
-            'absolute bottom-[70px] right-[20px] z-[9999] flex max-h-[400px] w-[400px] flex-col overflow-hidden bg-layer-3 p-3',
-            {
-              '!max-h-[calc(100%-120px)]': !isFullScreen,
-            },
-          )}
-        >
-          <div className="mb-3 flex justify-between">
-            <div className="flex items-center gap-2">
-              <IconExclamationCircle size={16} className="text-error" />
-              <span className="text-sm text-primary">{errorLabel}</span>
+              {showErrors && (
+                <DialCloseButton
+                  onClose={handleErrorsClick}
+                  className="ml-auto"
+                  size={18}
+                />
+              )}
             </div>
-            <DialCloseButton size={16} onClose={handleErrorsClick} />
+            {showErrors && (
+              <div className="flex grow flex-col gap-3 overflow-scroll py-3">
+                {errorsWithIds.map(({ error, id }) => (
+                  <p key={id} className="text-error">
+                    {error}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="flex grow flex-col gap-3 overflow-scroll">
-            {errorsWithIds.map(({ error, id }) => (
-              <p key={id} className="text-error">
-                {error}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 });
