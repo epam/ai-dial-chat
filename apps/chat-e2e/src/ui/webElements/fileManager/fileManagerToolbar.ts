@@ -1,5 +1,5 @@
-import { API, FilesManagerToolbarTabs } from '@/src/testData';
-import { FilesManagerSelectors } from '@/src/ui/selectors';
+import { API, FileManagerToolbarTabs } from '@/src/testData';
+import { FileManagerSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
   Button,
@@ -9,9 +9,9 @@ import {
 } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-export class FilesManagerToolbar extends BaseElement {
+export class FileManagerToolbar extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, FilesManagerSelectors.toolbarContainer, parentLocator);
+    super(page, FileManagerSelectors.toolbarContainer, parentLocator);
   }
 
   private toolbarTabs!: Tab;
@@ -119,10 +119,10 @@ export class FilesManagerToolbar extends BaseElement {
   }
 
   public myFilesTab = this.getToolbarTabs().tabByName(
-    FilesManagerToolbarTabs.MyFiles,
+    FileManagerToolbarTabs.MyFiles,
   );
 
   public organizationTab = this.getToolbarTabs().tabByName(
-    FilesManagerToolbarTabs.Organization,
+    FileManagerToolbarTabs.Organization,
   );
 }

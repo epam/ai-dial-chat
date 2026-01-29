@@ -82,7 +82,7 @@ export enum OAuthOptions {
   WithLoginAndConfig = 'With login & config',
 }
 
-export enum FilesManagerToolbarTabs {
+export enum FileManagerToolbarTabs {
   MyFiles = 'My Files',
   SharedWithMe = 'Shared with Me',
   Organization = 'Organization',
