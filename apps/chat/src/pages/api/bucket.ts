@@ -26,7 +26,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const url = `${process.env.DIAL_API_HOST}/v1/bucket`;
     const response = await fetch(url, {
-      headers: getApiHeaders({ jwt: token?.access_token as string }),
+      headers: getApiHeaders({
+        jwt: token?.access_token ?? '',
+      }),
     });
 
     if (!response.ok) {
