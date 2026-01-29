@@ -50,8 +50,8 @@ export const SearchHeader = () => {
   };
 
   return (
-    <div className="flex w-full gap-2 sm:justify-end md:w-auto">
-      <div className="relative flex h-[38px] grow sm:w-[315px] md:w-[275px] lg:w-[500px]">
+    <div className="flex w-full grow items-center gap-2 sm:justify-end md:w-auto">
+      <div className="relative h-[38px] w-full grow sm:w-auto lg:max-w-[500px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
           size={18}
@@ -62,7 +62,7 @@ export const SearchHeader = () => {
           type="text"
           value={searchTerm}
           onChange={onSearchChange}
-          className="w-0 grow rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="size-full rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         />
       </div>
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
