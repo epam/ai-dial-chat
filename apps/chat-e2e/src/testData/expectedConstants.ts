@@ -357,7 +357,7 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
-  filesManagerPath: '/file-manager',
+  fileManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
