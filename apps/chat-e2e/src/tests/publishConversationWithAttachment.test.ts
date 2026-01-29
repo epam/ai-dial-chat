@@ -13,7 +13,6 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { FileModalSection } from '@/src/ui/webElements';
 import {
   DateUtil,
   FileUtil,
@@ -32,7 +31,7 @@ dialTest.beforeAll(async () => {
   )!;
 });
 
-dialAdminTest.skip(
+dialAdminTest(
   'Publish chat with file.\n' +
     'Publish chat with attachments: download files.\n' +
     'Admin area: Publish request details.\n' +
@@ -58,9 +57,9 @@ dialAdminTest.skip(
     publishFileTreeAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
-    chatBar,
-    attachFilesModal,
-    manageAttachmentsAssertion,
+    navigationPanel,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
     adminFilesToApproveTree,
@@ -328,15 +327,15 @@ dialAdminTest.skip(
     );
 
     await dialAdminTest.step(
-      'Verify attachment is displayed under "Organization" section in "Manage attachments" modal',
+      'Verify attachment is displayed under "Organization" section in File Manager',
       async () => {
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          FileModalSection.Organization,
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
           'visible',
         );
-        await attachFilesModal.closeButton.click();
+        await navigationPanel.backToChat();
       },
     );
 
@@ -400,7 +399,7 @@ dialAdminTest.skip(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   'Publish chat with plotly.\n' +
     'Header context menu options for chats from publication request from Approve required section.\n' +
     'Error message appears if to Share the conversation with an attachment from Organization',

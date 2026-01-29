@@ -37,10 +37,10 @@ dialTest(
     localStorageManager,
     sendMessage,
     attachmentDropdownMenu,
-    filesManagerModal,
-    filesManagerModalCollapsibleSidebar,
-    filesManagerModalFoldersTree,
-    filesManagerGridAssertion,
+    fileManagerModal,
+    fileManagerModalCollapsibleSidebar,
+    fileManagerModalFoldersTree,
+    fileManagerGridAssertion,
     baseAssertion,
     conversationData,
     dataInjector,
@@ -125,16 +125,16 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await filesManagerModalCollapsibleSidebar.expandIfCollapsed();
-        await filesManagerModalFoldersTree.expandFolders(
+        await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerModalFoldersTree.expandFolders(
           ExpectedConstants.fileUploadFolder,
           yearMonthSubfolder,
         );
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.fileToCopyName,
           'visible',
         );
-        await filesManagerModal.getCloseButton().click();
+        await fileManagerModal.getCloseButton().click();
       },
     );
 

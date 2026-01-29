@@ -186,7 +186,7 @@ export const callbacks: Partial<
     if (options.account) {
       return {
         ...options.token,
-        user: getUser(options.account?.access_token, options.account.provider),
+        user: getUser(options.account.access_token, options.account.provider),
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:

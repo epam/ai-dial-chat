@@ -1,14 +1,11 @@
 import { Attributes, Tags } from '@/src/ui/domData';
-import {
-  FilesManagerSidebarSelectors,
-  IconSelectors,
-} from '@/src/ui/selectors';
+import { FileManagerSidebarSelectors, IconSelectors } from '@/src/ui/selectors';
 import { BaseElement, Button, FoldersTree } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-export class FilesManagerCollapsibleSidebar extends BaseElement {
+export class FileManagerCollapsibleSidebar extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, FilesManagerSidebarSelectors.container, parentLocator);
+    super(page, FileManagerSidebarSelectors.container, parentLocator);
   }
 
   private foldersTree!: FoldersTree;

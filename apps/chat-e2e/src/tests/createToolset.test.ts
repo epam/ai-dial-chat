@@ -53,8 +53,8 @@ dialTest(
       entityEditorGeneralForm,
       toolsetEditorViewFormAssertion,
       listboxMenu,
-      filesManagerModal,
-      filesManagerModalGrid,
+      fileManagerModal,
+      fileManagerModalGrid,
       entityEditorGeneralInfoPreviewCardAssertion,
       toolsetEditorSettingsPreviewCardAssertion,
       entityEditorGeneralInfoPreviewCard,
@@ -243,9 +243,9 @@ dialTest(
 
       await entityEditorGeneralForm.addIconButton.click();
       const attachmentCheckbox =
-        await filesManagerModalGrid.gridCheckboxByNameCell(filename);
+        await fileManagerModalGrid.gridCheckboxByNameCell(filename);
       await attachmentCheckbox.click();
-      await filesManagerModal.getSelectButton().click();
+      await fileManagerModal.getSelectButton().click();
     });
 
     await dialTest.step(
