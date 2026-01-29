@@ -17,7 +17,6 @@ export function GitLab<P extends GitLabProfile>(
     idToken: true,
     checks: ['pkce', 'state'],
     profile(profile) {
-      console.log('profile', profile);
       return {
         id: profile?.sub ?? profile?.email,
         name: profile?.name ?? profile?.username,
