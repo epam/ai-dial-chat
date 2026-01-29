@@ -48,7 +48,7 @@ export class NavigationPanel extends BaseElement {
     }
   }
 
-  public async goToFilesManager() {
+  public async goToFileManager() {
     const hostsArray = [API.filePropsHost, API.filesListingHost()];
     const responses = [];
     for (const host of hostsArray) {

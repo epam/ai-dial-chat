@@ -58,8 +58,8 @@ dialAdminTest(
     adminDialHomePage,
     adminApproveRequiredConversations,
     navigationPanel,
-    filesManagerToolbar,
-    filesManagerGridAssertion,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
     adminFilesToApproveTree,
@@ -327,11 +327,11 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Verify attachment is displayed under "Organization" section in Files Manager',
+      'Verify attachment is displayed under "Organization" section in File Manager',
       async () => {
-        await navigationPanel.goToFilesManager();
-        await filesManagerToolbar.organizationTab.click();
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.cloudImageName,
           'visible',
         );

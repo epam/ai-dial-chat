@@ -564,8 +564,8 @@ dialAdminTest(
     adminPublicationReviewControl,
     adminFileApiHelper,
     adminAttachmentDropdownMenu,
-    adminFilesManagerModal,
-    adminFilesManagerModalGrid,
+    adminFileManagerModal,
+    adminFileManagerModalGrid,
     adminChatHeaderAssertion,
     adminPublishFilesAssertion,
     adminChatMessages,
@@ -626,11 +626,11 @@ dialAdminTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         const attachmentCheckbox =
-          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+          await adminFileManagerModalGrid.gridCheckboxByNameCell(
             Attachment.cloudImageName,
           );
         await attachmentCheckbox.click();
-        await adminFilesManagerModal.getAttachButton().click();
+        await adminFileManagerModal.getAttachButton().click();
         await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessagesCount(2);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
@@ -647,11 +647,11 @@ dialAdminTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         const attachmentCheckbox =
-          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+          await adminFileManagerModalGrid.gridCheckboxByNameCell(
             Attachment.sunImageName,
           );
         await attachmentCheckbox.click();
-        await adminFilesManagerModal.getAttachButton().click();
+        await adminFileManagerModal.getAttachButton().click();
         await adminChat.sendRequestWithButton(newPrompt);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
@@ -726,12 +726,12 @@ dialAdminTest(
       organizationConversations,
       localStorageManager,
       chatMessagesAssertion,
-      filesManagerToolbar,
-      filesManagerGridAssertion,
+      fileManagerToolbar,
+      fileManagerGridAssertion,
       navigationPanel,
       fileApiHelper,
-      adminFilesManagerModal,
-      adminFilesManagerModalGrid,
+      adminFileManagerModal,
+      adminFileManagerModalGrid,
       adminChatMessages,
       adminAttachmentDropdownMenu,
       adminSendMessage,
@@ -857,11 +857,11 @@ dialAdminTest(
           { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
         );
         const attachmentCheckbox =
-          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+          await adminFileManagerModalGrid.gridCheckboxByNameCell(
             Attachment.flowerImageName,
           );
         await attachmentCheckbox.click();
-        await adminFilesManagerModal.getAttachButton().click();
+        await adminFileManagerModal.getAttachButton().click();
         await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           3,
@@ -898,11 +898,11 @@ dialAdminTest(
           { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
         );
         const attachmentCheckbox =
-          await adminFilesManagerModalGrid.gridCheckboxByNameCell(
+          await adminFileManagerModalGrid.gridCheckboxByNameCell(
             Attachment.longImageName,
           );
         await attachmentCheckbox.click();
-        await adminFilesManagerModal.getAttachButton().click();
+        await adminFileManagerModal.getAttachButton().click();
         await adminChat.sendRequestWithButton(requestPrompt);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           7,
@@ -1014,15 +1014,15 @@ dialAdminTest(
     await dialTest.step(
       'Open "File manager" page and verify all files stay at the Organization tab',
       async () => {
-        await navigationPanel.goToFilesManager();
-        await filesManagerToolbar.organizationTab.click();
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
         for (const attach of [
           updatedCloudImageName,
           Attachment.heartImageName,
           Attachment.flowerImageName,
           Attachment.longImageName,
         ]) {
-          await filesManagerGridAssertion.assertGridRowByNameState(
+          await fileManagerGridAssertion.assertGridRowByNameState(
             attach,
             'visible',
           );
@@ -1588,9 +1588,9 @@ dialAdminTest.skip(
       localStorageManager,
       adminApproveRequiredConversationsAssertion,
       navigationPanel,
-      filesManagerToolbar,
-      filesManagerGridAssertion,
-      filesManagerFoldersTree,
+      fileManagerToolbar,
+      fileManagerGridAssertion,
+      fileManagerFoldersTree,
       fileApiHelper,
       adminFilesToApproveTree,
       organizationFolderConversationAssertions,
@@ -1726,14 +1726,14 @@ dialAdminTest.skip(
     await dialTest.step(
       "Check folder's name for file in File manager - updated folder's names are displayed",
       async () => {
-        await navigationPanel.goToFilesManager();
-        await filesManagerToolbar.organizationTab.click();
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
           updatedFileFolderName,
           'visible',
         );
-        await filesManagerFoldersTree.expandFolders(...updatedFileFolderName);
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerFoldersTree.expandFolders(...updatedFileFolderName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
           imageName,
           'visible',
         );

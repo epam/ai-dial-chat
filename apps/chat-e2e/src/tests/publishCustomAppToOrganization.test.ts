@@ -37,9 +37,9 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       navigationPanel,
-      filesManagerToolbar,
-      filesManagerGrid,
-      filesManagerGridAssertion,
+      fileManagerToolbar,
+      fileManagerGrid,
+      fileManagerGridAssertion,
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
@@ -247,16 +247,16 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Open Files Manager and verify app icon appears under "Organization" in the corresponding folder',
+      'Open File Manager and verify app icon appears under "Organization" in the corresponding folder',
       async () => {
-        await navigationPanel.goToFilesManager();
-        await filesManagerToolbar.organizationTab.click();
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
           orgFolder,
           'visible',
         );
-        await filesManagerGrid.openFolder(orgFolder);
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerGrid.openFolder(orgFolder);
+        await fileManagerGridAssertion.assertGridRowByNameState(
           filename,
           'visible',
         );

@@ -1,14 +1,14 @@
-import { FilesManagerModalSelectors } from '@/src/ui/selectors';
+import { FileManagerModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 const supportedTypesLabel = 'Supported types: ';
 
-export class FilesManagerModalHeader extends BaseElement {
+export class FileManagerModalHeader extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
-      FilesManagerModalSelectors.supportedAttributesLabel,
+      FileManagerModalSelectors.supportedAttributesLabel,
       parentLocator,
     );
   }

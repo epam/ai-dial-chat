@@ -1,13 +1,13 @@
-export const FilesManagerSelectors = {
+export const FileManagerSelectors = {
   container: '[data-qa="file-manager"]',
   toolbarContainer: '[role="toolbar"]',
 };
 
-export const FilesManagerSidebarSelectors = {
+export const FileManagerSidebarSelectors = {
   container: '[aria-label="collapsible-sidebar"]',
 };
 
-export const FilesManagerNavigationPanelSelectors = {
+export const FileManagerNavigationPanelSelectors = {
   navigationPanelContainer: '[aria-label="navigation-panel"]',
   searchField: '[role="search"]',
 };
