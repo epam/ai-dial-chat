@@ -74,15 +74,13 @@ const initEpic: AppEpic = (action$, state$) =>
           )) ||
         isShareLink;
 
-      return concat(
-        of(
-          MarketplaceActions.initSuccess({
-            saveFilters: shouldSaveFilters,
-            selectedTab: workSpaceTab
-              ? MarketplaceTabs.MY_WORKSPACE
-              : MarketplaceTabs.HOME,
-          }),
-        ),
+      return of(
+        MarketplaceActions.initSuccess({
+          saveFilters: shouldSaveFilters,
+          selectedTab: workSpaceTab
+            ? MarketplaceTabs.MY_WORKSPACE
+            : MarketplaceTabs.HOME,
+        }),
       );
     }),
   );
