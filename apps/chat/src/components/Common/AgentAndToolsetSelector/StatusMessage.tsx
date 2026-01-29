@@ -12,6 +12,7 @@ interface StatusMessageProps {
   isLoggedOut: boolean;
   isUndeployed: boolean;
   isInSelectionList?: boolean;
+  isCustomTool?: boolean;
   readonly?: boolean;
 }
 
@@ -21,6 +22,7 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   isLoggedOut,
   isUndeployed,
   isInSelectionList,
+  isCustomTool,
   readonly,
 }) => {
   const { t } = useTranslation(Translation.Common);
@@ -28,6 +30,16 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   let entityTypeKey: 'agent' | 'toolset' = 'agent';
   if (isToolsetId(id)) {
     entityTypeKey = 'toolset';
+  }
+
+  if (isCustomTool) {
+    return (
+      <div className="text-sm text-secondary">
+        {t(
+          'The agent is not available on the marketplace and was added via JSON',
+        )}
+      </div>
+    );
   }
 
   if (isInvalid) {

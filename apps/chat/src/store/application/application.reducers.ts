@@ -110,6 +110,7 @@ export const applicationSlice = createSlice({
         tabToOpen?: MarketplaceEditorSteps;
         isSaveAndExit?: boolean;
         shouldSelectApplication?: boolean;
+        shouldSetEditorError?: boolean;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -260,6 +261,9 @@ export const applicationSlice = createSlice({
       state.editorStep = payload;
     },
     initQueryParams: (state) => state,
+    setEditorError: (state, { payload }: PayloadAction<string | undefined>) => {
+      state.editorError = payload;
+    },
   },
 });
 

@@ -184,17 +184,52 @@ export const QuickAppSchema = zodValidation.object({
 });
 export type QuickAppForm = zodValidation.infer<typeof QuickAppSchema>;
 
-export const QuickApp2Schema = zodValidation.object({
-  type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp2),
-  instructions: zodValidation.string(),
-  temperature: zodValidation.number(),
-  documentRelativeUrl: zodValidation.array(zodValidation.string()),
-  model: zodValidation.string(),
-  agentsAndToolsets: zodValidation.array(zodValidation.string()),
-  codeInterpreter: zodValidation.boolean(),
-  inputAttachmentTypes: AttachmentTypesSchema,
-  maxInputAttachments: MaxInputAttachmentsSchema.optional(),
+const AgentOrToolsetSchema = zodValidation.object({
+  id: zodValidation.string(),
+  tool: zodValidation
+    .record(zodValidation.string(), zodValidation.any())
+    .optional(),
 });
+
+export type AgentOrToolsetFormType = zodValidation.infer<
+  typeof AgentOrToolsetSchema
+>;
+
+export const QuickApp2Schema = zodValidation
+  .object({
+    type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp2),
+    instructions: zodValidation.string(),
+    temperature: zodValidation.number(),
+    documentRelativeUrl: zodValidation.array(zodValidation.string()),
+    model: zodValidation.string(),
+    agentsAndToolsets: zodValidation.array(AgentOrToolsetSchema),
+    codeInterpreter: zodValidation.boolean(),
+    inputAttachmentTypes: AttachmentTypesSchema,
+    maxInputAttachments: MaxInputAttachmentsSchema.optional(),
+    isJsonView: zodValidation.boolean(),
+    agentsAndToolsetsJson: zodValidation.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isJsonView) {
+      try {
+        const parsed: unknown[] = JSON.parse(data.agentsAndToolsetsJson);
+
+        if (!Array.isArray(parsed)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['agentsAndToolsetsJson'],
+            message: 'Should be an array',
+          });
+        }
+      } catch {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['agentsAndToolsetsJson'],
+          message: 'Should be a valid JSON',
+        });
+      }
+    }
+  });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
 export const CodeAppSchema = zodValidation
@@ -355,14 +390,14 @@ const getQuickAppItemNameFromConfig = (
   return item.deployment_id;
 };
 
-const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
-  const appProperties = app?.applicationProperties as QuickApp2Config;
-
+export const getAgentsAndToolsetsFormValue = (
+  tools?: AnyToolset[],
+): AgentOrToolsetFormType[] => {
   const agentToolsets =
-    appProperties?.tool_sets
+    tools
       ?.filter(isDialDeploymentToolset)
       ?.flatMap((toolset) => toolset.tools) ?? [];
-  const mcpToolsets = appProperties?.tool_sets?.filter(isMcpToolset) ?? [];
+  const mcpToolsets = tools?.filter(isMcpToolset) ?? [];
 
   const allItems = [...agentToolsets, ...mcpToolsets].map((item) => ({
     ...item,
@@ -371,10 +406,17 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
 
   const sortedItems = sortBy(allItems, [(item) => item.name.toLowerCase()]);
 
-  const sortedIds = sortedItems.map((item) => {
+  return sortedItems.map((item) => {
     const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
-    return id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown');
+    return {
+      id: id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown'),
+      tool: item,
+    };
   });
+};
+
+const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
+  const appProperties = app?.applicationProperties as QuickApp2Config;
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -386,13 +428,19 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
     temperature:
       appProperties?.orchestrator?.deployment?.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
-    agentsAndToolsets: sortedIds,
+    agentsAndToolsets: getAgentsAndToolsetsFormValue(appProperties?.tool_sets),
     codeInterpreter:
       appProperties?.tool_sets?.some(
         (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
       ) ?? false,
     inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
     maxInputAttachments: app?.maxInputAttachments ?? undefined,
+    agentsAndToolsetsJson: JSON.stringify(
+      appProperties?.tool_sets ?? [],
+      null,
+      2,
+    ),
+    isJsonView: false,
   };
 };
 
@@ -549,31 +597,52 @@ const getActualSourceFolder = (formSources?: string) => {
     : formSources;
 };
 
-const getQuickApp2Toolsets = ({
+export const getAgentOrToolsetOption = (id: string) => {
+  const isDeploymentToolset = isApplicationId(id);
+
+  return {
+    id,
+    tool: {
+      type: isDeploymentToolset
+        ? DialDeploymentToolsetToolTypes.DialDeploymentSimple
+        : ToolsetTypes.DialMcp,
+      [isDeploymentToolset ? 'deployment_id' : 'dial_id']:
+        ApiUtils.encodeApiUrl(id),
+    },
+  };
+};
+
+export const getQuickApp2Toolsets = ({
   allEntitiesMap,
   data,
 }: {
   allEntitiesMap: Record<string, MarketplaceEntity>;
   data: QuickApp2Form;
+  currentTools?: AnyToolset[];
 }): AnyToolset[] => {
   const { dialDeploymentsToolsets, dialMCPToolsets } =
     data.agentsAndToolsets.reduce<{
       dialDeploymentsToolsets: DialDeploymentSimpleTool[];
       dialMCPToolsets: MCPToolset[];
+      otherToolsets: AnyToolset[];
     }>(
       (acc, agentAndToolset) => {
-        const entity = allEntitiesMap[agentAndToolset];
+        const entity = allEntitiesMap[agentAndToolset.id];
         if (!entity) {
-          if (isApplicationId(agentAndToolset)) {
+          if (isApplicationId(agentAndToolset.id)) {
             acc.dialDeploymentsToolsets.push({
               type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
-              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset),
+              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
             });
-          } else if (isToolsetId(agentAndToolset)) {
+          } else if (isToolsetId(agentAndToolset.id)) {
             acc.dialMCPToolsets.push({
-              dial_id: ApiUtils.encodeApiUrl(agentAndToolset),
+              dial_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
               type: ToolsetTypes.DialMcp,
             });
+          } else if (agentAndToolset.tool) {
+            acc.dialDeploymentsToolsets.push(
+              agentAndToolset.tool as DialDeploymentSimpleTool,
+            );
           }
           return acc;
         }
@@ -592,7 +661,7 @@ const getQuickApp2Toolsets = ({
 
         return acc;
       },
-      { dialDeploymentsToolsets: [], dialMCPToolsets: [] },
+      { dialDeploymentsToolsets: [], dialMCPToolsets: [], otherToolsets: [] },
     );
 
   return [
@@ -727,7 +796,9 @@ export const getApplicationPayload = ({
               url,
               type: 'file',
             })) ?? [],
-          tool_sets: getQuickApp2Toolsets({ data, allEntitiesMap }),
+          tool_sets: data.isJsonView
+            ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
+            : getQuickApp2Toolsets({ data, allEntitiesMap }),
         },
       };
     }

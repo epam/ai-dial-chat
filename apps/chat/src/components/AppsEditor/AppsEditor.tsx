@@ -108,6 +108,7 @@ export const AppsEditor = () => {
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
   const saveAndExitRef = useRef(false);
   const redirectToChatRef = useRef(false);
+  const isSimpleViewSwitchRef = useRef(false);
 
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
@@ -208,10 +209,12 @@ export const AppsEditor = () => {
             redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
             isSaveAndExit: saveAndExitRef.current,
             shouldSelectApplication: isCreatingApp,
+            shouldSetEditorError: isSimpleViewSwitchRef.current,
           }),
         );
       }
 
+      isSimpleViewSwitchRef.current = false;
       changeEditorTabRef.current = null;
       saveAndExitRef.current = false;
       redirectToChatRef.current = false;
@@ -337,10 +340,16 @@ export const AppsEditor = () => {
     }
   }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 
-  const handleAutoSave = useCallback(() => {
-    if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
-    void handleSubmit(undefined, true, true);
-  }, [editorStep, handleSubmit, isAppPublic]);
+  const handleAutoSave = useCallback(
+    (isSimpleViewSwitch?: boolean) => {
+      if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
+      if (isSimpleViewSwitch) {
+        isSimpleViewSwitchRef.current = true;
+      }
+      void handleSubmit(undefined, true, true);
+    },
+    [editorStep, handleSubmit, isAppPublic],
+  );
 
   useEffect(() => {
     if (shouldTriggerEditorAutoUpdate && !isAppPublic) {
