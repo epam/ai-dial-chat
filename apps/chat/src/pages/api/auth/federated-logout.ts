@@ -53,7 +53,7 @@ const handler = async (
 
     const url = client.endSessionUrl({
       post_logout_redirect_uri: DEFAULT_LOGOUT_REDIRECT_URI,
-      id_token_hint: token.idToken as string,
+      id_token_hint: token.idToken ?? '',
     });
 
     if (!url) {
