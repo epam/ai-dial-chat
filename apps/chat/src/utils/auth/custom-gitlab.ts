@@ -13,6 +13,8 @@ export function GitLab<P extends GitLabProfile>(
     authorization: {
       params: { scope: 'read_user' },
     },
+    token: `${host}/oauth/token`,
+    userinfo: `${host}/api/v4/user`,
     wellKnown: `${host}/.well-known/openid-configuration`,
     idToken: true,
     checks: ['pkce', 'state'],
