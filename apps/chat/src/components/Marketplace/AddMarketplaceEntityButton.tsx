@@ -45,6 +45,7 @@ export function AddMarketplaceEntityButton({
         onClick={visibleActions[0].onClick}
         label={t(`Add ${label}`)}
         iconBefore={<IconPlus size={18} />}
+        className="shrink-0"
         data-qa={dataQa}
       />
     );
@@ -60,6 +61,7 @@ export function AddMarketplaceEntityButton({
         <DialPrimaryButton
           data-qa={dataQa}
           label={isScreenSmall ? t('Add') : t(`Add ${label}`)}
+          className="shrink-0"
           iconAfter={
             <IconChevronDown
               size={18}
