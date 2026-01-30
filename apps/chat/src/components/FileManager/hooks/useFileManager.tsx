@@ -533,12 +533,12 @@ export const useFileManager = ({
     return hidden.replace(/\/$/, '') || null;
   }
 
-  const navigationPanelOptions = useMemo(() => {
+  const { navigationPanelOptions, isLocalSearch } = useMemo(() => {
+    const localSearch =
+      activeTab === DialFileManagerTabs.Shared &&
+      currentPath === rootFolder.path;
     const options: NavigationPanelOptions = {
       searchable: true,
-      disabled:
-        activeTab === DialFileManagerTabs.Shared &&
-        currentPath === rootFolder.path,
     };
 
     if (
@@ -564,7 +564,7 @@ export const useFileManager = ({
       }
     }
 
-    return options;
+    return { navigationPanelOptions: options, isLocalSearch: localSearch };
   }, [currentPath, rootFolder, activeTab]);
 
   const gridOptions = useMemo(
@@ -803,7 +803,7 @@ export const useFileManager = ({
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
 
-    handleSearchFiles,
+    handleSearchFiles: isLocalSearch ? undefined : handleSearchFiles,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,
