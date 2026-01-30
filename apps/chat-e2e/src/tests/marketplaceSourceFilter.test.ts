@@ -42,8 +42,8 @@ dialTest(
     baseAssertion,
     fileApiHelper,
     entityEditorGeneralForm,
-    filesManagerModal,
-    filesManagerModalGrid,
+    fileManagerModal,
+    fileManagerModalGrid,
     entityEditorHeader,
   }) => {
     setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
@@ -185,11 +185,11 @@ dialTest(
       );
       await entityEditorGeneralForm.changeIcon.click();
       const attachmentCheckbox =
-        await filesManagerModalGrid.gridCheckboxByNameCell(
+        await fileManagerModalGrid.gridCheckboxByNameCell(
           Attachment.cloudImageName,
         );
       await attachmentCheckbox.click();
-      await filesManagerModal.getSelectButton().click();
+      await fileManagerModal.getSelectButton().click();
       await entityEditorHeader.saveAndExitButton.click();
       await marketplacePage.waitForPageLoaded();
     });

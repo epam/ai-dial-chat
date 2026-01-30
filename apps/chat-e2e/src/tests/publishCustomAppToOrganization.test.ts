@@ -8,7 +8,7 @@ import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
-dialAdminTest.skip(
+dialAdminTest(
   'Publish custom app from Application pop-up form on DIAL Marketplace page.\n' +
     'Publish custom application to new folder in Change path.\n' +
     '[Admin view]: "Author" field is displayed on publish request form.\n' +
@@ -28,7 +28,6 @@ dialAdminTest.skip(
       selectFolders,
       publishingRequestDialogAssertion,
       fileApiHelper,
-      dialHomePage,
       adminDialHomePage,
       adminApproveRequiredPrompts,
       adminPublishingApprovalModal,
@@ -38,9 +37,9 @@ dialAdminTest.skip(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       navigationPanel,
-      organizationFoldersAssertion,
-      chatBar,
-      attachFilesModal,
+      fileManagerToolbar,
+      fileManagerGrid,
+      fileManagerGridAssertion,
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
@@ -248,23 +247,20 @@ dialAdminTest.skip(
     );
 
     await dialAdminTest.step(
-      'Open "Manage Attachments" modal and verify app icon appears under "Organization" in the corresponding folder',
+      'Open File Manager and verify app icon appears under "Organization" in the corresponding folder',
       async () => {
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          orgFolder,
+          'visible',
+        );
+        await fileManagerGrid.openFolder(orgFolder);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          filename,
+          'visible',
+        );
         await navigationPanel.backToChat();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await organizationFoldersAssertion.assertFolderState(
-          { name: orgFolder },
-          'visible',
-        );
-        await attachFilesModal
-          .getOrganizationFolderFiles()
-          .expandFolder(orgFolder);
-        await organizationFoldersAssertion.assertFolderEntityState(
-          { name: orgFolder },
-          { name: filename },
-          'visible',
-        );
       },
     );
 

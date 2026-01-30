@@ -6,4 +6,4 @@ export * from './marketplacePage';
 export * from './keycloakPage';
 export * from './entityEditorPage';
 export * from './dialErrorPage';
-export * from './filesManagerPage';
+export * from './fileManagerPage';
