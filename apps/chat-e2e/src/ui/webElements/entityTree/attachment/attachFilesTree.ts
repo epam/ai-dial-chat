@@ -2,8 +2,8 @@ import { AttributeValues, Tags } from '@/src/ui/domData';
 import {
   EntitySelectors,
   ErrorLabelSelectors,
+  FileManagerModalSelectors,
   FileSelectors,
-  FilesManagerModalSelectors,
 } from '@/src/ui/selectors';
 import { Button } from '@/src/ui/webElements';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
@@ -16,12 +16,12 @@ export class AttachFilesTree extends EntitiesTree {
 
   public attachedFileIcon = (filename: string, index?: number) =>
     this.getEntityByName(filename, index).locator(
-      FilesManagerModalSelectors.attachedFileIcon,
+      FileManagerModalSelectors.attachedFileIcon,
     );
 
   getAttachedFileArrowIcon(name: string, index?: number) {
     return this.getEntityByName(name, index)
-      .locator(FilesManagerModalSelectors.arrowAdditionalIcon)
+      .locator(FileManagerModalSelectors.arrowAdditionalIcon)
       .locator(Tags.svg);
   }
 
