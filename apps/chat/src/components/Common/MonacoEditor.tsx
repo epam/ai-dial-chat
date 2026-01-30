@@ -1,5 +1,9 @@
 import { EditorProps } from '@monaco-editor/react';
-import { IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react';
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconExclamationCircleFilled,
+} from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
 
 import dynamic from 'next/dynamic';
@@ -19,8 +23,9 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { TabOption, Tabs } from './Tabs';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 import omit from 'lodash-es/omit';
+import { nanoid } from 'nanoid';
 
 // Use dynamic import to prevent SSR issues with Monaco Editor
 const MonacoEditorNoSSR = dynamic(
@@ -57,6 +62,8 @@ interface MonacoEditorProps<T extends string = string> extends EditorProps {
   onChangeFile?: (fileId: T, newValue: string) => void;
   activeFileId?: T;
   onTabChange?: (fileId: T) => void;
+  errors?: string[];
+  renderButtons?: () => React.ReactNode;
 }
 
 export const MonacoEditor = memo(function MonacoEditor(
@@ -67,11 +74,21 @@ export const MonacoEditor = memo(function MonacoEditor(
   const editorTheme = useAppSelector(UISelectors.selectCodeEditorTheme);
 
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const activeFileId = props.activeFileId ?? props.files?.[0]?.id ?? '';
   const activeFile = useMemo(() => {
     return props.files?.find((f) => f.id === activeFileId);
   }, [props.files, activeFileId]);
+
+  const errorsWithIds = useMemo(
+    () =>
+      props.errors?.map((error) => ({
+        id: nanoid(),
+        error,
+      })) ?? [],
+    [props.errors],
+  );
 
   const wrapperStyles = useMemo(
     () =>
@@ -111,16 +128,26 @@ export const MonacoEditor = memo(function MonacoEditor(
     };
   }, [activeFile, activeFileId, props]);
 
+  const errorLabel = t(
+    `{{count}} error${errorsWithIds.length > 1 ? 's' : ''}`,
+    { count: errorsWithIds.length },
+  );
+
+  const handleErrorsClick = () => {
+    setShowErrors((p) => !p);
+  };
+
   return (
     <div
       style={wrapperStyles}
-      className={classNames('flex flex-col overflow-hidden', {
-        ['!fixed left-0 top-0 z-40 h-[100vh] w-[100vw]']: isFullScreen,
-        ['rounded border border-tertiary bg-layer-3']: props.allowFullScreen,
+      className={classNames('relative flex flex-col overflow-hidden', {
+        '!fixed left-0 top-0 z-40 h-[100vh] w-[100vw]': isFullScreen,
+        'rounded border border-tertiary bg-layer-3': props.allowFullScreen,
+        '!border-error': !!errorsWithIds.length,
       })}
     >
       {props.allowFullScreen && (
-        <div className="flex items-center justify-between  border-tertiary bg-layer-2">
+        <div className="flex items-center justify-between  border-b border-tertiary bg-layer-3">
           <div className="flex">
             {props.files && props.files.length > 1 && (
               <Tabs
@@ -133,9 +160,16 @@ export const MonacoEditor = memo(function MonacoEditor(
               />
             )}
           </div>
+
+          {props.renderButtons?.()}
+
           <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
             <DialButton
-              className="p-2 text-secondary hover:text-accent-primary"
+              className={classNames(
+                'px-[13px] py-2 text-secondary hover:text-accent-primary',
+                typeof props.renderButtons === 'function' &&
+                  'border-l border-tertiary',
+              )}
               onClick={(e) => {
                 setIsFullScreen(!isFullScreen);
                 dispatchMouseLeaveEvent(e);
@@ -146,19 +180,62 @@ export const MonacoEditor = memo(function MonacoEditor(
         </div>
       )}
 
-      <div
-        className={classNames('min-h-0 min-w-0 max-w-full shrink grow', {
-          ['p-2']: props.allowFullScreen,
-        })}
-      >
-        <Editor
-          {...editorProps}
-          options={{ ...editorOptions, ...props.options }}
-          theme={editorTheme}
-          {...omit(props, ['options', 'width', 'height'])}
-          width="100%"
-          height="100%"
-        />
+      <div className="flex min-h-0 min-w-0 max-w-full shrink grow">
+        <div
+          className={classNames('h-full min-h-0 min-w-0 shrink grow', {
+            ['p-2']: props.allowFullScreen,
+          })}
+        >
+          <Editor
+            {...editorProps}
+            options={{ ...editorOptions, ...props.options }}
+            theme={editorTheme}
+            {...omit(props, ['options', 'width', 'height'])}
+            width="100%"
+            height="100%"
+          />
+        </div>
+        {!!errorsWithIds.length && (
+          <div
+            className={classNames(
+              'flex h-full flex-col border-l border-tertiary bg-layer-3 p-3',
+              showErrors ? 'w-full max-w-[400px]' : 'cursor-pointer',
+            )}
+            onClick={!showErrors ? handleErrorsClick : undefined}
+          >
+            <div
+              className={classNames(
+                'flex items-center gap-2 text-sm font-semibold text-primary',
+                showErrors
+                  ? '[writing-mode:horizontal-tb]'
+                  : '[writing-mode:vertical-rl]',
+              )}
+            >
+              <IconExclamationCircleFilled
+                size={18}
+                className={classNames('text-error', !showErrors && 'rotate-90')}
+              />
+              {errorLabel}
+
+              {showErrors && (
+                <DialCloseButton
+                  onClose={handleErrorsClick}
+                  className="ml-auto"
+                  size={18}
+                />
+              )}
+            </div>
+            {showErrors && (
+              <div className="flex grow flex-col gap-3 overflow-scroll py-3">
+                {errorsWithIds.map(({ error, id }) => (
+                  <p key={id} className="text-error">
+                    {error}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -101,14 +101,14 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    filesManagerModal,
-    filesManagerModalGrid,
+    fileManagerModal,
+    fileManagerModalGrid,
     sendMessage,
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
     sendMessageInputAttachmentsAssertions,
-    filesManagerModalGridAssertion,
+    fileManagerModalGridAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1763', 'EPMRTC-1901');
@@ -159,14 +159,14 @@ dialTest(
         );
         for (const file of initAttachedFiles) {
           const attachmentCheckbox =
-            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+            await fileManagerModalGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
-          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+          await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
           );
         }
-        await filesManagerModal.getAttachButton().click();
+        await fileManagerModal.getAttachButton().click();
         for (const file of initAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             file,
@@ -185,15 +185,15 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         const updatedAttachmentCheckbox =
-          await filesManagerModalGrid.gridCheckboxByNameCell(
+          await fileManagerModalGrid.gridCheckboxByNameCell(
             updatedAttachedFiles[1],
           );
         await updatedAttachmentCheckbox.click();
-        await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
           updatedAttachedFiles[1],
           CheckboxState.checked,
         );
-        await filesManagerModal.getAttachButton().click();
+        await fileManagerModal.getAttachButton().click();
 
         for (const file of updatedAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(

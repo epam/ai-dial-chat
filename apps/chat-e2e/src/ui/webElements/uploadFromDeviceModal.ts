@@ -9,7 +9,7 @@ import {
 } from '@/src/ui/selectors';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import { Button } from '@/src/ui/webElements/common/button';
-import { FilesManagerModalHeader } from '@/src/ui/webElements/filesManagerModalHeader';
+import { FileManagerModalHeader } from '@/src/ui/webElements/fileManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 
@@ -18,13 +18,13 @@ export class UploadFromDeviceModal extends BaseElement {
     super(page, UploadFromDeviceModalSelectors.modalContainer);
   }
 
-  private modalHeader!: FilesManagerModalHeader;
+  private modalHeader!: FileManagerModalHeader;
   private changeUploadToPath!: ChangePath;
   public modalError!: ModalError;
 
-  getModalHeader(): FilesManagerModalHeader {
+  getModalHeader(): FileManagerModalHeader {
     if (!this.modalHeader) {
-      this.modalHeader = new FilesManagerModalHeader(
+      this.modalHeader = new FileManagerModalHeader(
         this.page,
         this.rootLocator,
       );

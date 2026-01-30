@@ -347,6 +347,9 @@ export const MessageMobileButtons = ({
   const isAllLastMessageEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
   );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
+  );
 
   const isAssistant = message.role === Role.Assistant;
   const customMessageButtons = useAppSelector((state) =>
@@ -432,7 +435,7 @@ export const MessageMobileButtons = ({
   }
 
   return (
-    !editDisabled &&
+    !isReadOnly &&
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>

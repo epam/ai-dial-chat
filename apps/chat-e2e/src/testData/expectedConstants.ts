@@ -181,8 +181,8 @@ export const ExpectedConstants = {
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
-  sameFilenamesError: (filename: string) =>
-    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
+  sameFilenamesError: (...filenames: string[]) =>
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filenames.join(', ')}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
@@ -357,7 +357,7 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
-  filesManagerPath: '/file-manager',
+  fileManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',

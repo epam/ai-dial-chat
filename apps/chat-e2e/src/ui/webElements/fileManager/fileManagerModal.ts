@@ -1,19 +1,19 @@
 import { UploadMenuOptions } from '@/src/testData';
-import { FilesManagerModalSelectors } from '@/src/ui/selectors';
-import { FilesManager, FilesManagerModalHeader } from '@/src/ui/webElements';
+import { FileManagerModalSelectors } from '@/src/ui/selectors';
+import { FileManager, FileManagerModalHeader } from '@/src/ui/webElements';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Button } from '@/src/ui/webElements/common/button';
 import { Page } from '@playwright/test';
 
-export class FilesManagerModal extends BaseElement {
+export class FileManagerModal extends BaseElement {
   constructor(page: Page) {
-    super(page, FilesManagerModalSelectors.modalContainer);
+    super(page, FileManagerModalSelectors.modalContainer);
   }
   private closeButton!: Button;
   private attachButton!: Button;
   private selectButton!: Button;
-  private header!: FilesManagerModalHeader;
-  private filesManager!: FilesManager;
+  private header!: FileManagerModalHeader;
+  private fileManager!: FileManager;
 
   getCloseButton(): Button {
     if (!this.closeButton) {
@@ -40,34 +40,31 @@ export class FilesManagerModal extends BaseElement {
     return this.selectButton;
   }
 
-  getHeader(): FilesManagerModalHeader {
+  getHeader(): FileManagerModalHeader {
     if (!this.header) {
-      this.header = new FilesManagerModalHeader(this.page, this.rootLocator);
+      this.header = new FileManagerModalHeader(this.page, this.rootLocator);
     }
     return this.header;
   }
 
-  getFilesManager(): FilesManager {
-    if (!this.filesManager) {
-      this.filesManager = new FilesManager(this.page, this.rootLocator);
+  getFileManager(): FileManager {
+    if (!this.fileManager) {
+      this.fileManager = new FileManager(this.page, this.rootLocator);
     }
-    return this.filesManager;
+    return this.fileManager;
   }
 
   public title = this.getChildElementBySelector(
-    FilesManagerModalSelectors.title,
+    FileManagerModalSelectors.title,
   );
   public modalTitle = this.getChildElementBySelector(
-    FilesManagerModalSelectors.title,
+    FileManagerModalSelectors.title,
   );
 
   public async openUploadFromDevice() {
-    await this.getFilesManager()
-      .getFilesManagerToolbar()
-      .getNewButton()
-      .click();
-    await this.getFilesManager()
-      .getFilesManagerToolbar()
+    await this.getFileManager().getFileManagerToolbar().getNewButton().click();
+    await this.getFileManager()
+      .getFileManagerToolbar()
       .getNewButtonDropdownMenu()
       .selectItem(UploadMenuOptions.uploadFiles);
   }

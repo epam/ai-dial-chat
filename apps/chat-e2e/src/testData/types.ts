@@ -34,6 +34,7 @@ export interface Entity {
 export interface ArithmeticRequestEntity extends Entity {
   isSysPromptAllowed?: boolean;
   systemPrompt?: string;
+  temperature?: string;
 }
 
 export interface EntitySimpleRequest extends Entity {
@@ -81,7 +82,7 @@ export enum OAuthOptions {
   WithLoginAndConfig = 'With login & config',
 }
 
-export enum FilesManagerToolbarTabs {
+export enum FileManagerToolbarTabs {
   MyFiles = 'My Files',
   SharedWithMe = 'Shared with Me',
   Organization = 'Organization',
