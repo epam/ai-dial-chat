@@ -1,9 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-
-
 import { getThemeIconUrl } from '@/src/utils/app/themes';
-
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'DIAL';
