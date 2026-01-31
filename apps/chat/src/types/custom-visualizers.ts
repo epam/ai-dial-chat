@@ -4,6 +4,8 @@ export interface CustomVisualizer {
   icon: string;
   contentType: string;
   url: string;
+
+  hideTitle?: boolean;
 }
 
 export type MappedVisualizers = Record<string, CustomVisualizer[]>;

@@ -48,7 +48,7 @@ export const VisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle } = renderer;
+  const { url: rendererUrl, title: visualizerTitle, hideTitle = false } = renderer;
 
   const dispatch = useAppDispatch();
 
@@ -197,7 +197,7 @@ export const VisualizerRenderer = ({
   return (
     <div>
       <div className="mb-2 flex flex-row justify-between">
-        <h2>{visualizerTitle}</h2>
+        {!hideTitle && <h2>{visualizerTitle}</h2>}
 
         <DialLinkButton
           className="flex text-accent-primary"
