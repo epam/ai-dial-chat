@@ -48,7 +48,11 @@ export const VisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle, hideTitle = false } = renderer;
+  const {
+    url: rendererUrl,
+    title: visualizerTitle,
+    hideTitle = false,
+  } = renderer;
 
   const dispatch = useAppDispatch();
 
