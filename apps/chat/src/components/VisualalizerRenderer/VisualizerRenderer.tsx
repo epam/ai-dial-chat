@@ -201,7 +201,7 @@ export const VisualizerRenderer = ({
   return (
     <div>
       <div className="mb-2 flex flex-row justify-between">
-        {!hideTitle && <h2>{visualizerTitle}</h2>}
+        {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
         <DialLinkButton
           className="flex text-accent-primary"
