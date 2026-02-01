@@ -6,6 +6,8 @@ export interface CustomVisualizer {
   url: string;
 
   hideTitle?: boolean;
+  expandedByDefault?: boolean;
+  borderless?: boolean;
 }
 
 export type MappedVisualizers = Record<string, CustomVisualizer[]>;
