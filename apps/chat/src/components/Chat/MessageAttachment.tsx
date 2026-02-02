@@ -226,9 +226,6 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
 
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const mappedVisualizers = useAppSelector(
-    SettingsSelectors.selectMappedVisualizers,
-  );
   const selectIsCustomAttachmentTypeSelector = useMemo(
     () => SettingsSelectors.selectIsCustomAttachmentType(attachment.type),
     [attachment.type],
@@ -237,12 +234,13 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     selectIsCustomAttachmentTypeSelector,
   );
 
-  const customRenderer = isCustomAttachmentType
-    ? mappedVisualizers?.[attachment.type]?.[0]
-    : undefined;
-  const isBorderless = customRenderer?.borderless ?? false;
+  const { expandedTypes, borderlessTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentFlags,
+  );
+
+  const isBorderless = borderlessTypes.includes(attachment.type);
   const isExpandedByDefault =
-    isBorderless || (customRenderer?.expandedByDefault ?? false);
+    isBorderless || expandedTypes.includes(attachment.type);
 
   const [isOpened, setIsOpened] = useState(isExpandedByDefault);
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
@@ -304,7 +302,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         'rounded',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
         !isInner && !isBorderless && 'border border-secondary',
-        !isBorderless && 'bg-layer-3 px-1 py-2',
+        !isBorderless ? 'bg-layer-3 px-1 py-2' : 'mb-3 last:mb-0',
       )}
     >
       {!isBorderless && (

@@ -39,4 +39,10 @@ export interface SettingsState {
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;
   widgetsSchemaIds?: string[];
+
+  attachmentFlags: {
+    expandedTypes: string[];
+    borderlessTypes: string[];
+    withoutTitleTypes: string[];
+  };
 }

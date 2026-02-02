@@ -242,6 +242,9 @@ const selectWidgetsSchemaIds = (state: RootState) =>
 const selectIsAuthDisabled = (state: RootState) =>
   rootSelector(state).isAuthDisabled;
 
+const selectAttachmentFlags = (state: RootState) =>
+  rootSelector(state).attachmentFlags;
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -275,4 +278,5 @@ export const SettingsSelectors = {
   selectProviderId,
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
+  selectAttachmentFlags,
 };

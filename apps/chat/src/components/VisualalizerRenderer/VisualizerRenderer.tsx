@@ -48,11 +48,7 @@ export const VisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const {
-    url: rendererUrl,
-    title: visualizerTitle,
-    hideTitle = false,
-  } = renderer;
+  const { url: rendererUrl, title: visualizerTitle } = renderer;
 
   const dispatch = useAppDispatch();
 
@@ -73,6 +69,12 @@ export const VisualizerRenderer = ({
   const isAllowedSendMessage = useAppSelector(
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
+
+  const { withoutTitleTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentFlags,
+  );
+
+  const hideTitle = withoutTitleTypes.includes(mimeType);
 
   const scrollWidth =
     iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;

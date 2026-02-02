@@ -167,6 +167,20 @@ export const getCommonPageProps: GetServerSideProps = async ({
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     providerId: session?.providerId ?? null,
+    attachmentFlags: {
+      expandedTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_EXPANDED,
+        [],
+      ),
+      borderlessTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_BORDERLESS,
+        [],
+      ),
+      withoutTitleTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_WITHOUT_TITLE,
+        [],
+      ),
+    },
   };
 
   if (isIsolatedView) {

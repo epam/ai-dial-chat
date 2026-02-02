@@ -53,6 +53,10 @@ declare global {
       WIDGETS_SCHEMA_IDS?: string;
       NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
 
+      ATTACHMENT_TYPES_EXPANDED?: string;
+      ATTACHMENT_TYPES_BORDERLESS?: string;
+      ATTACHMENT_TYPES_WITHOUT_TITLE?: string;
+
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
       AUTH_TEST_TOKEN?: string;
