@@ -191,7 +191,7 @@ const AgentOrToolsetSchema = zodValidation.object({
   tool: zodValidation
     .record(zodValidation.string(), zodValidation.any())
     .optional(),
-  isDialDeploymentTool: zodValidation.boolean().optional(),
+  isDialDeploymentTool: zodValidation.boolean().optional(), // tool_sets can have both agents from marketplace and custom tools listed in DialDeploymentToolset
 });
 
 export type AgentOrToolsetFormType = zodValidation.infer<
