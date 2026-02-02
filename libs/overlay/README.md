@@ -15,7 +15,7 @@ Regular DIAL Chat web application and DIAL Chat Overlay should be deployed as se
 
 [DIAL Chat application configuration](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/README.md):
 
-- `IS_IFRAME`: set this flag to `true` to enable Overlay. **Note**: In the Overlay mode, DIAL Chat works properly only inside iFrame.
+- `IS_IFRAME`: set this flag to `true` to enable Overlay. **Note**: In the Overlay mode, DIAL Chat works properly only inside the iFrame created by the overlay library.
 - `ALLOWED_IFRAME_ORIGINS`: list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
 
 ```
