@@ -544,7 +544,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   }
 
   return (
-    <div className="z-20 w-full max-w-full">
+    <div className="z-40 w-full max-w-full">
       <div
         className={classNames(
           'grid min-h-[400px] w-full max-w-full grid-rows-[100%]',
