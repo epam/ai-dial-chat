@@ -20,7 +20,7 @@ ALLOWED_IFRAME_SOURCES=http://localhost:8000
 
 Moreover, it needs to be configured some **Visualizer** properties:
 
-- `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ title, description, icon, contentType, url, hideTitle, expandedByDefault, borderless }`.
+- `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ title, description, icon, contentType, url }`.
 
 ```typescript
 interface CustomVisualizer {
@@ -40,9 +40,6 @@ CUSTOM_VISUALIZERS=[
                       "icon":"data:image/svg+xml;base64,some-base64-image", // Icon for the Visualizer
                       "contentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
                       "url":"http://localhost:8000", // Visualizer host
-                      "hideTitle": false, // If set true, title of the Visualizer will not be visible in the attachments
-                      "borderless": false, // If set true, attachment with Visualizer will have clean collapsed view, without attachment controls and border. Flag 'expandedByDefault' will be ignored since it's already expanded
-                      "expandedByDefault": false // If set true, attachment with Visualizer will be expanded by default
                     },
                     {
                       //Other Visualizer
