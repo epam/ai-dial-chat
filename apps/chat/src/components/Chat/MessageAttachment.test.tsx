@@ -49,6 +49,11 @@ vi.mock('@/src/store/selectors', () => ({
       ],
     }),
     selectIsCustomAttachmentType: () => () => true, // Return a function that returns true
+    selectAttachmentsSettings: () => ({
+      expandedTypes: [],
+      borderlessTypes: [],
+      withoutTitleTypes: [],
+    }),
   },
 }));
 
