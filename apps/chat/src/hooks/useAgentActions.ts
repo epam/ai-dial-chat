@@ -2,13 +2,11 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  getApplicationNextStatus,
-  getApplicationType,
-} from '@/src/utils/app/application';
+import { getApplicationType } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -25,6 +23,8 @@ import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
+import { useApplicationStatusActions } from './useApplicationStatusActions';
+
 import { PublishActions } from '@epam/ai-dial-shared';
 
 export const useAgentMenuActions = (entity: DialAIEntityModel) => {
@@ -32,21 +32,33 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
 
   const dispatch = useAppDispatch();
 
+  const { handleDeploy, handleRedeploy, handleUndeploy } =
+    useApplicationStatusActions(entity.id);
+
   const detailedApplicationTypeSchema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+
+  const handleRedeployWrapper = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      handleRedeploy();
+    },
+    [handleRedeploy],
   );
 
   const handleUpdateFunctionStatus = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      dispatch(
-        ApplicationActions.startUpdatingFunctionStatus({
-          id: entity.id,
-          status: getApplicationNextStatus(entity),
-        }),
-      );
+      e.preventDefault();
+      if (entity.functionStatus === ApplicationStatus.DEPLOYED) {
+        handleUndeploy();
+      } else {
+        handleDeploy();
+      }
     },
-    [dispatch, entity],
+    [entity.functionStatus, handleDeploy, handleUndeploy],
   );
 
   const handleOpenApplicationLogs = useCallback(
@@ -159,5 +171,6 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
     handleOpenUnshare,
     handleUpdateFunctionStatus,
     handleOpenApplicationLogs,
+    handleRedeploy: handleRedeployWrapper,
   };
 };
