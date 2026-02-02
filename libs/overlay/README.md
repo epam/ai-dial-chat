@@ -1,17 +1,21 @@
 # DIAL Overlay
 
-DIAL Overlay is a library designed for using DIAL Chat in an overlay format. It allows you to set up and interact with the chat via an iframe event-based protocol.
+DIAL Overlay is a library designed for using DIAL Chat in an overlay format. In this format, you can use DIAL Chat via an iframe event-based protocol.
+
+## Deployment Highlights
+
+Regular DIAL Chat web application and DIAL Chat Overlay should be deployed as separate instances.
 
 ## Public Classes to Use
 
-- `ChatOverlay` - a class which creates an iframe with DIAL and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
+- `ChatOverlay` - a class which creates an iframe with DIAL Chat and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
 - `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want it placed with predefined styles options.
 
 ## Prerequisites
 
 [DIAL Chat application configuration](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/README.md):
 
-- `IS_IFRAME`: set this flag to `true` to enable Overlay.
+- `IS_IFRAME`: set this flag to `true` to enable Overlay. **Note**: In the Overlay mode, DIAL Chat works properly only inside the iFrame created by the overlay library.
 - `ALLOWED_IFRAME_ORIGINS`: list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
 
 ```
@@ -23,19 +27,19 @@ ALLOWED_IFRAME_ORIGINS=http://localhost:8000
 
 Follow these steps to integrate the Overlay library with the DIAL Chat application:
 
-1. Install the Overlay library
+1. Install the Overlay library:
 
 ```bash
 npm i @epam/ai-dial-overlay
 ```
 
-2. Add a file to the serving folder in your application or just import it in code
+2. Add a file to the serving folder in your application or just import it in code:
 
 ```typescript
 import { ChatOverlay, ChatOverlayManager, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 ```
 
-3. Create an instance of `ChatOverlay` (to use just one overlay and nothing more) or `ChatOverlayManager` (if you want to create more than one ChatOverlay, or additional style options, like positions, animations, etc.)
+3. Create an instance of `ChatOverlay` (to use just one overlay and nothing more) or `ChatOverlayManager` (if you want to create more than one `ChatOverlay`, or additional style options, like positions, animations, etc.)
 
 `ChatOverlay`:
 
@@ -112,7 +116,7 @@ const run = async () => {
 
 `ChatOverlayManager`:
 
-The same principle applies to `ChatOverlayManager` as for `ChatOverlay` but with minor changes. Specify overlay displaying options and id for a new instance.
+The same principle applies to `ChatOverlayManager` as to `ChatOverlay` but with minor changes. Specify overlay displaying options and id for a new instance.
 
 ```typescript
 ChatOverlayManager.createOverlay({
