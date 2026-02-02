@@ -1,5 +1,5 @@
 import { IconCheck, IconLink } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useRef } from 'react';
+import { MouseEvent, useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -33,8 +33,6 @@ export function MarketplaceCopyLink({
   className,
 }: MarketplaceCopyLinkProps) {
   const { t } = useTranslation(Translation.Marketplace);
-
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const link =
     'authSettings' in entity
