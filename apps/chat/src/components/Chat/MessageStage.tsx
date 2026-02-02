@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
@@ -69,21 +70,7 @@ interface Props {
 const DownloadStageView = ({ content }: { content: string }) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCopied, setIsCopied] = useState(false);
-
-  const copyToClipboard = useCallback(() => {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(content).then(() => {
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    });
-  }, [content]);
+  const { copied: isCopied, onCopy: copyToClipboard } = useCopy(content, true);
 
   const downloadAsFile = useCallback(() => {
     const fileName = `ai-chat-stage-${getDownLoadCurrentDate()}.txt`;
