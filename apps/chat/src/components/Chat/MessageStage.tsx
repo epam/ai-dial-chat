@@ -1,11 +1,11 @@
-import { IconCheck, IconCopy, IconExclamationCircle } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconCopy,
+  IconExclamationCircle,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-
-
 import classNames from 'classnames';
-
-
 
 import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
