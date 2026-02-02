@@ -41,7 +41,7 @@ CUSTOM_VISUALIZERS=[
                       "contentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
                       "url":"http://localhost:8000", // Visualizer host
                       "hideTitle": false, // If set true, title of the Visualizer will not be visible in the attachments
-                      "borderless": false, // If set true, attachment with Visualizer will have clean view, without attachment controls and border
+                      "borderless": false, // If set true, attachment with Visualizer will have clean collapsed view, without attachment controls and border. Flag 'expandedByDefault' will be ignored since it's already expanded
                       "expandedByDefault": false // If set true, attachment with Visualizer will be expanded by default
                     },
                     {

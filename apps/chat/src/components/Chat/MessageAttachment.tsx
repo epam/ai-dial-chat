@@ -241,7 +241,8 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     ? mappedVisualizers?.[attachment.type]?.[0]
     : undefined;
   const isBorderless = customRenderer?.borderless ?? false;
-  const isExpandedByDefault = customRenderer?.expandedByDefault ?? isBorderless;
+  const isExpandedByDefault =
+    isBorderless || (customRenderer?.expandedByDefault ?? false);
 
   const [isOpened, setIsOpened] = useState(isExpandedByDefault);
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
