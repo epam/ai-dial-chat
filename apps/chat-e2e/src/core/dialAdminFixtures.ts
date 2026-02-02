@@ -10,9 +10,9 @@ import {
   DropdownMenu,
   EntityDetailsModal,
   FileDropArea,
-  FilesManager,
-  FilesManagerGrid,
-  FilesManagerModal,
+  FileManager,
+  FileManagerGrid,
+  FileManagerModal,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -172,9 +172,9 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
-  adminFilesManagerModal: FilesManagerModal;
-  adminFilesManagerModalManager: FilesManager;
-  adminFilesManagerModalGrid: FilesManagerGrid;
+  adminFileManagerModal: FileManagerModal;
+  adminFileManagerModalManager: FileManager;
+  adminFileManagerModalGrid: FileManagerGrid;
   adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: PublishApplicationsTree;
@@ -700,22 +700,18 @@ const dialAdminTest = dialTest.extend<{
     const adminAttachFilesModal = new AttachFilesModal(adminPage);
     await use(adminAttachFilesModal);
   },
-  adminFilesManagerModal: async ({ adminPage }, use) => {
-    const adminFilesManagerModal = new FilesManagerModal(adminPage);
-    await use(adminFilesManagerModal);
+  adminFileManagerModal: async ({ adminPage }, use) => {
+    const adminFileManagerModal = new FileManagerModal(adminPage);
+    await use(adminFileManagerModal);
   },
-  adminFilesManagerModalManager: async ({ adminFilesManagerModal }, use) => {
-    const adminFilesManagerModalManager =
-      adminFilesManagerModal.getFilesManager();
-    await use(adminFilesManagerModalManager);
+  adminFileManagerModalManager: async ({ adminFileManagerModal }, use) => {
+    const adminFileManagerModalManager = adminFileManagerModal.getFileManager();
+    await use(adminFileManagerModalManager);
   },
-  adminFilesManagerModalGrid: async (
-    { adminFilesManagerModalManager },
-    use,
-  ) => {
-    const adminFilesManagerModalGrid =
-      adminFilesManagerModalManager.getFilesManagerGrid();
-    await use(adminFilesManagerModalGrid);
+  adminFileManagerModalGrid: async ({ adminFileManagerModalManager }, use) => {
+    const adminFileManagerModalGrid =
+      adminFileManagerModalManager.getFileManagerGrid();
+    await use(adminFileManagerModalGrid);
   },
   adminEntityDetailsModal: async ({ adminMarketplaceEntities }, use) => {
     const adminEntityDetailsModal =

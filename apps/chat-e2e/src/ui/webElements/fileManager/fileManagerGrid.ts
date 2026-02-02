@@ -11,7 +11,7 @@ import { Locator, Page } from '@playwright/test';
 
 export const scrollingTimeout = 1000;
 
-export class FilesManagerGrid extends Grid {
+export class FileManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
 
   constructor(page: Page, parentLocator: Locator) {
