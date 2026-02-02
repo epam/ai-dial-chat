@@ -149,6 +149,7 @@
     "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.16",
     "babel-plugin-react-compiler": "^1.0.0",
+    "baseline-browser-mapping": "^2.9.19",
     "dotenv": "^16.3.1",
     "endent": "^2.1.0",
     "eslint": "^8.49.0",

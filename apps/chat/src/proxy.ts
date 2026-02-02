@@ -7,7 +7,7 @@ import {
 
 import { HeadersNames } from './constants/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
