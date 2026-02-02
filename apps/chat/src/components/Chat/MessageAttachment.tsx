@@ -235,7 +235,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   );
 
   const { expandedTypes, borderlessTypes } = useAppSelector(
-    SettingsSelectors.selectAttachmentFlags,
+    SettingsSelectors.selectAttachmentsSettings,
   );
 
   const isBorderless = borderlessTypes.includes(attachment.type);

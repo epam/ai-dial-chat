@@ -167,7 +167,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     providerId: session?.providerId ?? null,
-    attachmentFlags: {
+    attachmentsSettings: {
       expandedTypes: parseCommaSeparatedList(
         process.env.ATTACHMENT_TYPES_EXPANDED,
         [],

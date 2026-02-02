@@ -71,7 +71,7 @@ export const VisualizerRenderer = ({
   );
 
   const { withoutTitleTypes } = useAppSelector(
-    SettingsSelectors.selectAttachmentFlags,
+    SettingsSelectors.selectAttachmentsSettings,
   );
 
   const hideTitle = withoutTitleTypes.includes(mimeType);

@@ -26,7 +26,7 @@ const initialState: SettingsState = {
   codeEditorPythonVersions: [],
   providerId: null,
   initialDataStatus: UploadStatus.UNINITIALIZED,
-  attachmentFlags: {
+  attachmentsSettings: {
     expandedTypes: [],
     borderlessTypes: [],
     withoutTitleTypes: [],

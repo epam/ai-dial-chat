@@ -242,8 +242,8 @@ const selectWidgetsSchemaIds = (state: RootState) =>
 const selectIsAuthDisabled = (state: RootState) =>
   rootSelector(state).isAuthDisabled;
 
-const selectAttachmentFlags = (state: RootState) =>
-  rootSelector(state).attachmentFlags;
+const selectAttachmentsSettings = (state: RootState) =>
+  rootSelector(state).attachmentsSettings;
 
 export const SettingsSelectors = {
   selectAppName,
@@ -278,5 +278,5 @@ export const SettingsSelectors = {
   selectProviderId,
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
-  selectAttachmentFlags,
+  selectAttachmentsSettings,
 };

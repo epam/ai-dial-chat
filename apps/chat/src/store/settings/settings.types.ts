@@ -40,7 +40,7 @@ export interface SettingsState {
   defaultAuthProvider?: OAuthProviderType | null;
   widgetsSchemaIds?: string[];
 
-  attachmentFlags: {
+  attachmentsSettings: {
     expandedTypes: string[];
     borderlessTypes: string[];
     withoutTitleTypes: string[];
