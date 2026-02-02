@@ -1,8 +1,8 @@
 # DIAL Overlay
 
-DIAL Overlay is a library designed for using DIAL Chat in an overlay format. In this format, you can use DIAL Chat via an iframe event-based protocol. 
+DIAL Overlay is a library designed for using DIAL Chat in an overlay format. In this format, you can use DIAL Chat via an iframe event-based protocol.
 
-## Deployment Highlights 
+## Deployment Highlights
 
 Regular DIAL Chat web application and DIAL Chat Overlay should be deployed as separate instances.
 
