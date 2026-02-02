@@ -1,15 +1,15 @@
-import {
-  IconCheck,
-  IconCopy,
-  IconExclamationCircle,
-} from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconExclamationCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
+
 
 import classNames from 'classnames';
 
+
+
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
@@ -70,21 +70,7 @@ interface Props {
 const DownloadStageView = ({ content }: { content: string }) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCopied, setIsCopied] = useState(false);
-
-  const copyToClipboard = useCallback(() => {
-    writeTextToClipboard(
-      content,
-      () => {
-        setIsCopied(true);
-
-        setTimeout(() => {
-          setIsCopied(false);
-        }, 2000);
-      },
-      { convertFromMarkdown: true },
-    );
-  }, [content]);
+  const { copied: isCopied, onCopy: copyToClipboard } = useCopy(content, true);
 
   const downloadAsFile = useCallback(() => {
     const fileName = `ai-chat-stage-${getDownLoadCurrentDate()}.txt`;

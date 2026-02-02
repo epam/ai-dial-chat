@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 
@@ -20,6 +20,12 @@ export const useCopy = (content: string, convertFromMarkdown = false) => {
       { convertFromMarkdown },
     );
   }, [content, convertFromMarkdown]);
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) return clearTimeout(timeoutRef.current);
+    },
+    [],
+  );
   return {
     onCopy,
     copied,

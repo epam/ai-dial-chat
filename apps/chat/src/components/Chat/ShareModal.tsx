@@ -10,9 +10,9 @@ import {
   useState,
 } from 'react';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { constructPath } from '@/src/utils/app/file';
 import { getShareType } from '@/src/utils/app/share';
 
@@ -96,9 +96,6 @@ export function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
-  const [urlCopied, setUrlCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [editAccess, setEditAccess] = useState(false);
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
   const readInvitationId = useAppSelector(ShareSelectors.selectInvitationId);
@@ -169,22 +166,16 @@ export function ShareModalView() {
     dispatch(ShareActions.setModalState({ modalState: ModalState.CLOSED }));
   }, [dispatch]);
 
+  const { copied: urlCopied, onCopy } = useCopy(url);
+
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
-      writeTextToClipboard(url, () => {
-        setUrlCopied(true);
-        if (timeoutRef.current !== null) {
-          clearTimeout(timeoutRef.current);
-        }
-        timeoutRef.current = setTimeout(() => {
-          setUrlCopied(false);
-        }, 2000);
-      });
+      onCopy();
     },
-    [url],
+    [onCopy],
   );
 
   const handleOpenUnshare = useCallback(() => {
@@ -196,13 +187,6 @@ export function ShareModalView() {
     handleClose();
     dispatch(ShareActions.setUnshareResourceId(shareResourceId));
   }, [dispatch, handleClose, shareResourceId]);
-
-  useEffect(
-    () => () => {
-      if (timeoutRef.current !== null) return clearTimeout(timeoutRef.current);
-    },
-    [],
-  );
 
   return (
     <Modal

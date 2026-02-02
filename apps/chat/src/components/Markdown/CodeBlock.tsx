@@ -1,5 +1,5 @@
 import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { CSSProperties, FC, memo, useCallback, useState } from 'react';
+import { CSSProperties, FC, memo, useCallback } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -8,9 +8,9 @@ import {
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import {
   languageExtensionMapping,
   languageFilenameMapping,
@@ -43,19 +43,11 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
     const { t } = useTranslation(Translation.Markdown);
-    const [isCopied, setIsCopied] = useState<boolean>(false);
 
     const theme = useAppSelector(UISelectors.selectThemeState);
 
-    const copyToClipboard = useCallback(() => {
-      writeTextToClipboard(value, () => {
-        setIsCopied(true);
+    const { copied: isCopied, onCopy: copyToClipboard } = useCopy(value);
 
-        setTimeout(() => {
-          setIsCopied(false);
-        }, 2000);
-      });
-    }, [value]);
     const lowercaseLanguage = language.toLowerCase();
     const displayLanguage =
       languageNameMapping[lowercaseLanguage] || lowercaseLanguage;

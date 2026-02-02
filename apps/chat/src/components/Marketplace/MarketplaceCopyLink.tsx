@@ -1,11 +1,11 @@
 import { IconCheck, IconLink } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useRef, useState } from 'react';
+import { MouseEvent, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getApplicationLink, getToolsetLink } from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -34,8 +34,6 @@ export function MarketplaceCopyLink({
 }: MarketplaceCopyLinkProps) {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const [urlCopied, setUrlCopied] = useState(false);
-
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const link =
@@ -43,22 +41,16 @@ export function MarketplaceCopyLink({
       ? getToolsetLink(entity)
       : getApplicationLink(entity);
 
+  const { copied: urlCopied, onCopy } = useCopy(link);
+
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
-      writeTextToClipboard(link, () => {
-        setUrlCopied(true);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        timeoutRef.current = setTimeout(() => {
-          setUrlCopied(false);
-        }, 2000);
-      });
+      onCopy();
     },
-    [link],
+    [onCopy],
   );
 
   return (
