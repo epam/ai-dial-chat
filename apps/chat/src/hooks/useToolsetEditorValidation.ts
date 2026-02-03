@@ -84,6 +84,10 @@ export const useToolsetEditorValidation = () => {
     }
 
     if (!toolsetId || (!isAdmin && isToolsetPublic)) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `toolset is not found or is not public. toolsetId: ${toolsetId}, isToolsetPublic: ${isToolsetPublic}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }
@@ -101,6 +105,10 @@ export const useToolsetEditorValidation = () => {
       !isMyEntity(toolset) &&
       !canWriteSharedWithMe(toolset)
     ) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `toolset is not public or not my toolset or not shared with me. toolset: ${toolset}, isToolsetPublic: ${isToolsetPublic}, isMyEntity: ${isMyEntity(toolset)}, canWriteSharedWithMe: ${canWriteSharedWithMe(toolset)}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }
