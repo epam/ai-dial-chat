@@ -54,7 +54,11 @@ export const OverflowIndicator = ({
     >
       <DialLinkButton
         className={classNames(
+<<<<<<< Updated upstream
           'min-w-0 border-accent-primary px-1.5 py-1',
+=======
+          'flex h-auto items-center rounded border border-accent-primary bg-transparent p-0 px-1.5 py-1',
+>>>>>>> Stashed changes
           className,
         )}
         textClassName="leading-3"
