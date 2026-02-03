@@ -24,10 +24,7 @@ import {
   SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
-<<<<<<< Updated upstream
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
-=======
->>>>>>> Stashed changes
 import { translate } from '@/src/utils/app/translation';
 
 import { Translation } from '@/src/types/translation';
@@ -65,17 +62,10 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
 
-<<<<<<< Updated upstream
 const newActions = {
   uploadFiles: { label: translate('Upload files') },
   newFolder: { label: translate('New folder') },
   uploadArchive: { label: translate('Upload archive') },
-=======
-const newActionLabels = {
-  uploadFiles: translate('Upload files'),
-  newFolder: translate('New folder'),
-  uploadArchive: translate('Upload archive'),
->>>>>>> Stashed changes
 };
 
 const dateOptions = {
@@ -260,10 +250,7 @@ export const useFileManager = ({
     let filteredFiles = files;
     let filteredFolders = folders;
     let pathRootAlias = MY_FILES_SECTION;
-<<<<<<< Updated upstream
     let uploadEnabled = true;
-=======
->>>>>>> Stashed changes
     const visibleColumns: FileManagerColumnKey[] = [
       FileManagerColumnKey.Name,
       FileManagerColumnKey.UpdatedAt,
@@ -297,10 +284,7 @@ export const useFileManager = ({
           PublishedWithMeFilter,
         );
         pathRootAlias = ORGANIZATION_FILES_SECTION;
-<<<<<<< Updated upstream
         uploadEnabled = false;
-=======
->>>>>>> Stashed changes
         break;
       default:
         break;
@@ -326,10 +310,7 @@ export const useFileManager = ({
 
       rootFolder.id = currentSharedRootId;
       rootFolder.path = currentSharedRootId;
-<<<<<<< Updated upstream
       uploadEnabled = isRootId(currentPath) && currentPath ? false : true;
-=======
->>>>>>> Stashed changes
     }
 
     if (
@@ -597,17 +578,12 @@ export const useFileManager = ({
     [gridActionLabels, visibleColumns],
   );
 
-<<<<<<< Updated upstream
   const toolbarOptions = useMemo<ToolbarOptions>(
-=======
-  const toolbarOptions = useMemo(
->>>>>>> Stashed changes
     () => ({
       tabs: filteredTabs,
       activeTab: activeTab,
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
-<<<<<<< Updated upstream
       newActions,
       showHiddenFilesToggle: true,
       isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
@@ -617,12 +593,6 @@ export const useFileManager = ({
       ...externalToolbarOptions,
     }),
     [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
-=======
-      newActionLabels,
-      ...externalToolbarOptions,
-    }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions],
->>>>>>> Stashed changes
   );
 
   const destinationFolderPopupOptions = useMemo(
