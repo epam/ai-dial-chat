@@ -39,7 +39,7 @@ CUSTOM_VISUALIZERS=[
                       "description": "CUSTOM VISUALIZER to render images", // Short description for the Visualizer
                       "icon":"data:image/svg+xml;base64,some-base64-image", // Icon for the Visualizer
                       "contentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
-                      "url":"http://localhost:8000", // Visualizer host
+                      "url":"http://localhost:8000" // Visualizer host
                     },
                     {
                       //Other Visualizer
