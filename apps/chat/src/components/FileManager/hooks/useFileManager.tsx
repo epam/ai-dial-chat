@@ -782,7 +782,7 @@ export const useFileManager = ({
         return validationResult.error.issues[0].message;
       }
     },
-    [],
+    [t],
   );
 
   const sharedWithMeIds = useAppSelector(
