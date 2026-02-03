@@ -137,7 +137,7 @@ export const EditorHeader = <T extends string>({
           <DialLinkButton
             onClick={onSave}
             data-qa="save-and-exit"
-            iconBefore={<IconLogout size={14} />}
+            iconBefore={<IconLogout size={20} stroke={1.5} />}
             label={t(saveLabel ?? 'Save and exit')}
           />
         </div>

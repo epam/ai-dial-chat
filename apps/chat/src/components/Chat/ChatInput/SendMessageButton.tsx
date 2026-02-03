@@ -56,7 +56,7 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'absolute hover:text-accent-primary',
+            'absolute max-h-[24px] !px-0 hover:text-accent-primary',
             isLastMessageError && 'text-error',
             isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
@@ -80,7 +80,7 @@ export const SendMessageButton = Inversify.register(
     return (
       <DialButton
         className={classNames(
-          'absolute hover:text-accent-primary disabled:text-controls-disable',
+          'absolute max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable',
           isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
         )}
         onClick={onSend}
