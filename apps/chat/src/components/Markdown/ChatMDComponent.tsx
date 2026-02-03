@@ -14,6 +14,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
+  mathMLTags,
   modelCursorSign,
   modelCursorSignWithBackquote,
 } from '@/src/constants/chat';
@@ -177,6 +178,7 @@ const rehypePlugins: Options['rehypePlugins'] = [
     rehypeSanitize,
     {
       ...defaultSchema,
+      tagNames: [...(defaultSchema.tagNames || []), ...mathMLTags],
       attributes: {
         ...defaultSchema.attributes,
         code: [
