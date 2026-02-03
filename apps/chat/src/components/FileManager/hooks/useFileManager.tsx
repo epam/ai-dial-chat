@@ -39,6 +39,7 @@ import {
   ORGANIZATION_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
 } from '@/src/constants/file';
+import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
   NavigationPanelOptions,
@@ -764,14 +765,24 @@ export const useFileManager = ({
   );
 
   const handleRenameValidation = useCallback(
-    (value: string, _item: DialFile) => {
-      if (doesHaveNotAllowedSymbols(value)) {
-        return t('Name contains invalid characters');
-      }
+    (value: string, item: DialFile) => {
+      const schema = getEntityNameSchema({
+        name:
+          item.nodeType === DialFileNodeType.FOLDER
+            ? t('folder name')
+            : t('file name'),
+        checkDotsInTheEnd: true,
+      });
 
-      return null;
+      const validationResult = schema.safeParse(value);
+
+      if (validationResult.success) {
+        return null;
+      } else {
+        return validationResult.error.issues[0].message;
+      }
     },
-    [t],
+    [],
   );
 
   const sharedWithMeIds = useAppSelector(
