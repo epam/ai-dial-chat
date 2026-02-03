@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { getToolsetLink } from '@/src/utils/marketplace';
 
@@ -52,10 +53,10 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
       const link = getToolsetLink(toolset);
-      navigator.clipboard.writeText(link);
-      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      writeTextToClipboard(link, () => {
+        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      });
     },
     [dispatch, t, toolset],
   );
