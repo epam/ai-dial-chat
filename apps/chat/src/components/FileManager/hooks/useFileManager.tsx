@@ -6,11 +6,7 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  constructPath,
-  doesHaveNotAllowedSymbols,
-  prepareFileName,
-} from '@/src/utils/app/file';
+import { constructPath, prepareFileName } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
