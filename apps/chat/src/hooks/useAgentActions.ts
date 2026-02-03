@@ -6,6 +6,7 @@ import {
   getApplicationNextStatus,
   getApplicationType,
 } from '@/src/utils/app/application';
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
@@ -83,10 +84,10 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
       const link = getApplicationLink(entity);
-      navigator.clipboard.writeText(link);
-      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      writeTextToClipboard(link, () => {
+        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      });
     },
     [dispatch, entity, t],
   );
