@@ -113,16 +113,22 @@ async function handlePutRequest(
     body: readable,
   });
 
-  let json: unknown;
+  let json: string | undefined;
+  let text: string | undefined;
   try {
-    json = await proxyRes.json();
+    text = await proxyRes.text();
+  } catch {
+    text = undefined;
+  }
+  try {
+    json = JSON.parse(text as string);
   } catch {
     json = undefined;
   }
 
   if (!proxyRes.ok) {
     throw new DialAIError(
-      (typeof json === 'string' && json) || proxyRes.statusText,
+      json ?? text ?? proxyRes.statusText,
       proxyRes.status,
       req,
     );

@@ -1,16 +1,16 @@
-import { IconPlus, IconTrashX } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import {
-  FieldArray,
   FieldArrayPath,
   FieldError,
   FieldErrorsImpl,
   FieldValues,
   Merge,
   Path,
+  PathValue,
   RegisterOptions,
-  useFieldArray,
   useFormContext,
+  useWatch,
 } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -24,10 +24,14 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { nanoid } from 'nanoid';
+
 export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;
   static?: boolean;
   visibleName?: string;
+  id: string;
 }
 
 interface DynamicFieldsProps<
@@ -68,24 +72,36 @@ export const DynamicFormFields = <
   valueLabel = 'Value',
 }: DynamicFieldsProps<T, K>) => {
   const { t } = useTranslation(Translation.Chat);
-  const { getValues, register, control } = useFormContext<T>();
+  const { register, control, setValue } = useFormContext<T>();
 
-  const fields = getValues(name as Path<T>) as (DynamicField & {
-    id: string;
-  })[];
-
-  const { append, remove } = useFieldArray<T, typeof name, 'id'>({
+  const fields = useWatch({
     control,
-    name,
-  });
+    name: name as Path<T>,
+  }) as DynamicField[];
 
   const handleAdd = (option?: SelectOption<string, string>) => {
-    append({
-      label: option?.value ?? '',
-      value: option?.defaultValue ?? '',
-      editableKey: !option,
-      visibleName: option?.label,
-    } as FieldArray<T, K>);
+    setValue(
+      name as Path<T>,
+      [
+        ...fields,
+        {
+          label: option?.value ?? '',
+          value: option?.defaultValue ?? '',
+          editableKey: !option,
+          visibleName: option?.label,
+          id: nanoid(),
+        },
+      ] as PathValue<T, Path<T>>,
+      { shouldDirty: true, shouldTouch: true },
+    );
+  };
+
+  const handleRemove = (index: number) => {
+    setValue(
+      name as Path<T>,
+      fields.filter((_, i) => i !== index) as PathValue<T, Path<T>>,
+      { shouldDirty: true, shouldTouch: true },
+    );
   };
 
   const filteredOptions = useMemo(() => {
@@ -101,7 +117,7 @@ export const DynamicFormFields = <
       <div className="flex flex-col gap-2">
         {fields.map((field, i) => (
           <div
-            key={field.label}
+            key={field.id}
             className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:py-[7px]"
           >
             <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">
@@ -150,18 +166,12 @@ export const DynamicFormFields = <
               </div>
             </div>
 
-            <button
-              type="button"
+            <DialCloseButton
               disabled={field.static || disabled}
-              className={classNames(
-                'flex items-center self-center rounded border border-transparent text-secondary outline-none',
-                field.static && 'invisible',
-                disabled ? 'cursor-not-allowed' : 'hover:text-accent-primary',
-              )}
-              onClick={() => remove(i)}
-            >
-              <IconTrashX size={18} />
-            </button>
+              className={classNames(field.static && 'invisible')}
+              onClose={() => handleRemove(i)}
+              size={18}
+            />
           </div>
         ))}
 
@@ -170,21 +180,16 @@ export const DynamicFormFields = <
             isTriggerEnabled={!disabled}
             className="max-w-[150px]"
             trigger={
-              <button
-                type="button"
-                className={classNames(
-                  'flex items-center gap-2 rounded text-accent-primary',
-                  disabled && 'cursor-not-allowed',
-                )}
+              <DialButton
+                className={classNames('flex items-center text-accent-primary')}
                 onClick={
                   !filteredOptions.length && creatable
                     ? () => handleAdd()
                     : undefined
                 }
-              >
-                <IconPlus size={18} />
-                {t(addLabel ?? 'Add')}
-              </button>
+                iconBefore={<IconPlus size={18} />}
+                label={t(addLabel ?? 'Add')}
+              />
             }
           >
             <div className="w-full bg-layer-3">

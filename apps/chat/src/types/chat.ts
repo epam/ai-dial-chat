@@ -17,9 +17,7 @@ export interface ChatBody {
   reference?: string;
   prompt?: string;
   temperature?: number;
-  selectedAddons?: string[];
   model?: DialAIEntityModel;
-  assistantModel?: DialAIEntityModel;
 }
 
 export interface RateBody {
@@ -28,6 +26,7 @@ export interface RateBody {
   id: string;
   value: boolean;
   reference?: string;
+  comment?: string;
 }
 
 export type MergedMessages = [Conversation, Message, number, Message[]][];
@@ -36,8 +35,6 @@ export interface ConversationsTemporarySettings {
   modelId: string;
   prompt: string;
   temperature: number;
-  currentAssistantModelId: string | undefined;
-  addonsIds: string[];
   isShared: boolean;
 }
 

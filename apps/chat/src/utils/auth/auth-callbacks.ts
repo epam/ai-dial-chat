@@ -1,5 +1,4 @@
 import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
-import { TokenEndpointHandler } from 'next-auth/providers';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { logger } from '@/src/utils/server/logger';
@@ -76,30 +75,6 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     isAdmin,
     ...featureFlags,
   };
-};
-
-// Need to be set for all providers
-export const tokenConfig: TokenEndpointHandler = {
-  request: async (context) => {
-    let tokens;
-
-    NextClient.setClient(context.client, context.provider);
-
-    if (context.provider.idToken) {
-      tokens = await context.client.callback(
-        context.provider.callbackUrl,
-        context.params,
-        context.checks,
-      );
-    } else {
-      tokens = await context.client.oauthCallback(
-        context.provider.callbackUrl,
-        context.params,
-        context.checks,
-      );
-    }
-    return { tokens };
-  },
 };
 
 /**
@@ -211,7 +186,7 @@ export const callbacks: Partial<
     if (options.account) {
       return {
         ...options.token,
-        user: getUser(options.account?.access_token, options.account.provider),
+        user: getUser(options.account.access_token, options.account.provider),
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:

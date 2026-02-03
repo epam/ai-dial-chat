@@ -4,25 +4,38 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 import { BackendResourceTypeName, EntityType } from '@/src/types/common';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/selectors';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { PublicationItemRow } from './PublicationItemRow';
+import { PublicationItemProps } from './view-props';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
+export const PublicationApplicationRow: React.FC<PublicationItemProps> = ({
+  item,
+  level,
+  publicationUrl,
+}) => {
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const publishRequestModels = useAppSelector(
+    ModelsSelectors.selectPublishRequestModels,
+  );
 
-interface Props {
-  item: ShareEntity;
-  level: number;
-}
+  const agent = useMemo(() => {
+    return [...publishRequestModels, ...models].find(
+      (agent) => item.id === agent.id,
+    );
+  }, [publishRequestModels, models, item.id]);
 
-export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
   const entity = useMemo(
     () => ({
       ...item,
       folderId: getFolderIdFromEntityId(item.name),
+      iconUrl: agent?.iconUrl,
       type: EntityType.Application,
     }),
-    [item],
+    [agent?.iconUrl, item],
   );
 
   return (
@@ -32,6 +45,7 @@ export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
       item={item}
       itemTypeName={BackendResourceTypeName.APPLICATION}
       dataQa="application"
+      publicationUrl={publicationUrl}
     />
   );
 };

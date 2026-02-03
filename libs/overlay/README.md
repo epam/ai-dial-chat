@@ -1,17 +1,21 @@
 # DIAL Overlay
 
-DIAL Overlay is a library designed for using AI DIAL Chat in an overlay format. It allows you to set up and interact with the chat via an iframe event-based protocol.
+DIAL Overlay is a library designed for using DIAL Chat in an overlay format. In this format, you can use DIAL Chat via an iframe event-based protocol.
+
+## Deployment Highlights
+
+Regular DIAL Chat web application and DIAL Chat Overlay should be deployed as separate instances.
 
 ## Public Classes to Use
 
-- `ChatOverlay` - a class which creates an iframe with DIAL and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
+- `ChatOverlay` - a class which creates an iframe with DIAL Chat and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
 - `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want it placed with predefined styles options.
 
 ## Prerequisites
 
-[AI DIAL Chat application configuration](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/README.md):
+[DIAL Chat application configuration](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/README.md):
 
-- `IS_IFRAME`: set this flag to `true` to enable Overlay.
+- `IS_IFRAME`: set this flag to `true` to enable Overlay. **Note**: In the Overlay mode, DIAL Chat works properly only inside the iFrame created by the overlay library.
 - `ALLOWED_IFRAME_ORIGINS`: list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
 
 ```
@@ -19,23 +23,23 @@ IS_IFRAME=true
 ALLOWED_IFRAME_ORIGINS=http://localhost:8000
 ```
 
-## Integration with AI DIAL Chat
+## Integration with DIAL Chat
 
-Follow these steps to integrate the Overlay library with the AI DIAL Chat application:
+Follow these steps to integrate the Overlay library with the DIAL Chat application:
 
-1. Install the Overlay library
+1. Install the Overlay library:
 
 ```bash
 npm i @epam/ai-dial-overlay
 ```
 
-2. Add a file to the serving folder in your application or just import it in code
+2. Add a file to the serving folder in your application or just import it in code:
 
 ```typescript
 import { ChatOverlay, ChatOverlayManager, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 ```
 
-3. Create an instance of `ChatOverlay` (to use just one overlay and nothing more) or `ChatOverlayManager` (if you want to create more than one ChatOverlay, or additional style options, like positions, animations, etc.)
+3. Create an instance of `ChatOverlay` (to use just one overlay and nothing more) or `ChatOverlayManager` (if you want to create more than one `ChatOverlay`, or additional style options, like positions, animations, etc.)
 
 `ChatOverlay`:
 
@@ -66,7 +70,7 @@ const run = async () => {
     // optional, id of the conversation to be selected at the start
     overlayConversationId: 'some-conversation-id',
     // optional, if DIAL should redirect to sign in the same browser window
-    // to use this flag AI DIAL Chat 'ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME' environmental variable should be set to 'true'
+    // to use this flag DIAL Chat 'ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME' environmental variable should be set to 'true'
     signInInSameWindow: false,
     // optional, auto-sign in options
     signInOptions: {
@@ -74,6 +78,8 @@ const run = async () => {
       autoSignIn: true,
       //provider which will be used for the sign in
       signInProvider: 'provider_name',
+      // optional, use this in case one of multiple active accounts needs to be selected for automatic sign in
+      logInHint: 'account@example.com',
       //optional, should be true if provider page couldn't be open in iframe and hostDomain and DIAL have different providers or application id within one provider
       signInInNewWindow: true,
     },
@@ -110,7 +116,7 @@ const run = async () => {
 
 `ChatOverlayManager`:
 
-The same principle applies to `ChatOverlayManager` as for `ChatOverlay` but with minor changes. Specify overlay displaying options and id for a new instance.
+The same principle applies to `ChatOverlayManager` as to `ChatOverlay` but with minor changes. Specify overlay displaying options and id for a new instance.
 
 ```typescript
 ChatOverlayManager.createOverlay({
@@ -144,7 +150,7 @@ There are 2 parts of implementation:
 
 ### ChatOverlay
 
-Main methods and practices that allow us to communicate with AI DIAL:
+Main methods and practices that allow us to communicate with DIAL:
 
 1. `ChatOverlay` is the class which in constructor creates an iframe and sets the origin of the deployed version of DIAL. That is how it works for the end user:
 
@@ -213,7 +219,7 @@ subscribe(eventType: string, callback: () => void) {
 }
 ```
 
-9. We are showing the loader until AI DIAL Chat notifies that `OverlayOptions` is installed.
+9. We are showing the loader until DIAL Chat notifies that `OverlayOptions` is installed.
 
 ### DIAL Chat
 

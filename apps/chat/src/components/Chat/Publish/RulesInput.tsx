@@ -8,6 +8,7 @@ import { Translation } from '@/src/types/translation';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
@@ -36,6 +37,10 @@ export const RulesInput = ({
   const handleClear = useCallback(() => {
     setFilters([]);
   }, [setFilters]);
+
+  const handleCloseFilter = useCallback(() => {
+    onSwitchRulesSetter(false);
+  }, [onSwitchRulesSetter]);
 
   const handleSaveFilter = useCallback(
     (targetFilter: TargetAudienceFilter) => {
@@ -92,27 +97,25 @@ export const RulesInput = ({
           </div>
         ))}
         {!isOpen && (
-          <button
+          <DialButton
             onClick={() => onSwitchRulesSetter(true)}
             className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
             data-qa="add-rule"
-          >
-            <IconPlus stroke="1" size={18} />
-          </button>
+            iconBefore={<IconPlus stroke="1" size={18} />}
+          />
         )}
         {!!filters.length && (
-          <IconX
+          <DialCloseButton
+            onClose={handleClear}
+            className="absolute right-3 top-[10.5px] text-secondary"
+            ariaLabel="cancel-all-rules"
             size={18}
-            stroke="2"
-            onClick={handleClear}
-            className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
-            name="cancel-all-rules"
           />
         )}
       </div>
       {isOpen && (
         <TargetAudienceFilterComponent
-          onCloseFilter={() => onSwitchRulesSetter(false)}
+          onCloseFilter={handleCloseFilter}
           onSaveFilter={handleSaveFilter}
         />
       )}

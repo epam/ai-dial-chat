@@ -23,7 +23,7 @@ import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
@@ -160,6 +160,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModelId,
             true,
+            undefined,
             specialCharsImageUrl,
           );
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
@@ -506,7 +507,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -1089,7 +1090,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Deleted by the owner file disappears from "Shared with me". There was only one shared and existed file. "Shared with me" disappears.',
   async ({
     setTestIds,

@@ -41,13 +41,18 @@ export enum LikeState {
   NoState = 0,
 }
 
+export type onLikeMessageHandler = (
+  likeStatus: LikeState,
+  comment?: string,
+) => void;
+
 export interface MessageSettings {
   prompt: string;
   temperature: number;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
+  /**
+   * @deprecated but required by core validation
+   */
+  selectedAddons?: string[];
 }
 
 export interface ConversationEntityModel {
@@ -114,6 +119,7 @@ export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
   versionGroup?: string;
+  publishCredentials?: boolean;
 }
 
 export enum FeatureType {
@@ -139,7 +145,6 @@ export interface FolderInterface extends ShareEntity {
   type: FeatureType;
   temporary?: boolean;
   serverSynced?: boolean;
-  isPublicationFolder?: boolean;
 }
 
 export interface TemporaryFolderInterface
@@ -175,13 +180,13 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;
   temperature: number;
+  /**
+   * @deprecated but required by core validation
+   */
+  selectedAddons?: string[];
   reference?: string;
   replay?: Replay;
   playback?: Playback;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
 
   isMessageStreaming?: boolean;
   customViewState?: Record<string, unknown>;

@@ -15,7 +15,7 @@ interface Props {
   isNotEmptyConversations: boolean;
   showReplayControls: boolean;
   isChatReadyForInput: boolean;
-  isConversationWithSchema: boolean;
+  isSomeConversationWithSchema: boolean;
   showScrollDownButton: boolean;
   isWideLayout?: boolean;
   onScrollDown: () => void;
@@ -25,7 +25,7 @@ export const ChatInputControls = ({
   isNotEmptyConversations,
   showReplayControls,
   isChatReadyForInput,
-  isConversationWithSchema,
+  isSomeConversationWithSchema,
   showScrollDownButton,
   isWideLayout,
   onScrollDown,
@@ -41,7 +41,7 @@ export const ChatInputControls = ({
     selectedConversations.length > 0 &&
     isEntityIdPublic(selectedConversations[0]);
 
-  if (isConversationWithSchema && selectedConversations.length > 1) {
+  if (isSomeConversationWithSchema && selectedConversations.length > 1) {
     return <SchemaCompareWarning />;
   }
 

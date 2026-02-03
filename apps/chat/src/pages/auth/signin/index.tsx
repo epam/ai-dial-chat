@@ -1,4 +1,4 @@
-import { getProviders, signIn, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
@@ -6,6 +6,8 @@ import { getServerSession } from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
@@ -18,10 +20,16 @@ import {
   isServerSessionValid,
 } from '@/src/utils/auth/session';
 
+import { Translation } from '@/src/types/translation';
+
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
+
+const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
 
 interface PageProps {
   providers: Provider[];
@@ -36,6 +44,7 @@ export default function Signin({
 }: PageProps) {
   const dispatch = useAppDispatch();
   const { status, ...session } = useSession();
+  const { t } = useTranslation(Translation.Common);
   const router = useRouter();
   const logoImgSrc = useMemo(() => {
     if (themesHostDefined) {
@@ -55,7 +64,7 @@ export default function Signin({
         !isClientSessionValid(session) ||
         !session.data)
     ) {
-      signIn(defaultAuthProvider ?? undefined);
+      void signIn(defaultAuthProvider ?? undefined);
     }
 
     if (
@@ -111,42 +120,51 @@ export default function Signin({
   }
 
   return (
-    <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
-      <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
-        <div className="my-5 flex justify-center">
+    <div className="flex size-full h-screen flex-col items-center overflow-auto bg-auth-layer-0">
+      <div className="shrink grow"></div>
+      <div className="my-1 h-fit w-[368px] shrink-0 grow-0 rounded bg-auth-layer-1 p-6">
+        <div className="mb-6 flex justify-center">
           {!!logoImgSrc && (
             <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
           )}
         </div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
-            <button
-              key={provider.id + provider.name}
-              className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
+            <DialNeutralButton
+              className="gap-4 p-4"
               onClick={() => {
-                handleSignIn(provider);
+                void handleSignIn(provider);
               }}
-              data-qa={provider.id}
-            >
-              <span className="flex shrink-0 flex-wrap content-center justify-center">
+              key={provider.id + provider.name}
+              iconBefore={
                 <Image
                   className="h-6"
-                  src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+                  src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
                   alt="Provider icon"
                   width={24}
                   height={24}
                 />
-              </span>
-              <div className="flex flex-wrap content-center">
-                <span className="text-lg">Sign in with {provider.name}</span>
-              </div>
-            </button>
+              }
+              label={`${t('Sign in with')} ${provider.name}`}
+              textClassName="text-lg"
+              data-qa={provider.id}
+            />
           ))}
         </div>
       </div>
+      <div className="shrink grow"></div>
     </div>
   );
 }
+
+const mapProvider = (provider: Provider) =>
+  provider
+    ? {
+        id: provider.options?.id ?? provider.id,
+        name: provider.options?.name ?? provider.name,
+        type: provider.type,
+      }
+    : null;
 
 export const getServerSideProps: GetServerSideProps = async ({
   query,
@@ -173,15 +191,15 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const checkProvider = authProviders.some(({ id }) => id === query.provider);
+  const checkProvider = authProviders?.some(({ id }) => id === query.provider);
 
   const providerFromQuery = checkProvider ? query.provider : null;
-  const providers = await getProviders();
   const themesHostDefined = !!process.env.THEMES_CONFIG_HOST;
+
   return {
     props: {
       provider: DEFAULT_PROVIDER ?? providerFromQuery,
-      providers,
+      providers: authProviders?.map(mapProvider).filter(Boolean) ?? [],
       themesHostDefined,
     },
   };

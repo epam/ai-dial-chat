@@ -140,6 +140,10 @@ export class BaseElement {
     await this.rootLocator.scrollIntoViewIfNeeded();
   }
 
+  async getElementInputValue() {
+    return this.rootLocator.inputValue();
+  }
+
   async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
     await this.rootLocator.setInputFiles(
       filenames.map((filename) => path.join(filesDirectory, filename)),
@@ -199,13 +203,44 @@ export class BaseElement {
     return scrollHeight > clientHeight;
   }
 
+  /**
+   * Waits for the scroll position to stabilize (stop changing) before returning.
+   * This helps avoid race conditions when auto-scroll is still in progress.
+   */
+  private async waitForScrollStabilization(
+    stabilityThresholdMs = 100,
+  ): Promise<void> {
+    const element = await this.rootLocator.elementHandle();
+    if (!element) return;
+
+    await this.page.waitForFunction(
+      ([el, threshold]) => {
+        return new Promise<boolean>((resolve) => {
+          const initialScrollTop = el.scrollTop;
+          setTimeout(() => {
+            resolve(el.scrollTop === initialScrollTop);
+          }, threshold);
+        });
+      },
+      [element, stabilityThresholdMs] as const,
+      { timeout: 1000 },
+    );
+  }
+
   public async getVerticalScrollPosition(): Promise<ScrollState> {
+    // Wait for scroll to stabilize before checking position
+    await this.waitForScrollStabilization();
+
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     const scrollTop = await this.rootLocator.evaluate((p) => p.scrollTop);
     const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
-    if (scrollTop == 0) {
+
+    // Use tolerance of 3 pixels to account for subpixel rendering differences
+    const scrollTolerance = 3;
+
+    if (scrollTop < scrollTolerance) {
       return ScrollState.top;
-    } else if (scrollHeight - (scrollTop + clientHeight) < 1) {
+    } else if (scrollHeight - (scrollTop + clientHeight) < scrollTolerance) {
       return ScrollState.bottom;
     }
     return ScrollState.middle;
@@ -228,8 +263,8 @@ export class BaseElement {
     return allIcons;
   }
 
-  public getElementIcon(elementLocator: Locator) {
-    const iconLocator = elementLocator
+  public getElementIcon(elementLocator: Locator | BaseElement) {
+    const iconLocator = BaseElement.getElementLocator(elementLocator)
       .locator(ChatSelectors.iconSelector)
       .first();
     return iconLocator.locator(`${Tags.img}:visible`);

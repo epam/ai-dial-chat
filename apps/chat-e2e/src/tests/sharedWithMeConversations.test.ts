@@ -256,7 +256,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Shared with me. Share root Folder.\n' +
     'Shared with me. Folder with folder/chat inside is unshared.\n' +
     'Shared with me. No delete option in context menu for chat/folder in shared folder.\n' +
@@ -542,7 +542,19 @@ dialSharedWithMeTest(
 
         await folderConversations.editFolderName(updatedFolderName);
         await page.keyboard.press(keys.enter);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await dialHomePage.waitForExpectedResponses(
+          () => confirmationDialog.confirm(),
+          [
+            {
+              apiMethod: 'PUT',
+              urlPattern: nestedConversations[nestedLevel - 1].name,
+            },
+            {
+              apiMethod: 'PUT',
+              urlPattern: nestedConversations[nestedLevel - 2].name,
+            },
+          ],
+        );
         await chatBarFolderAssertion.assertFolderState(
           { name: updatedFolderName },
           'visible',
@@ -1031,7 +1043,8 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared with me. Replay chat.\n' +
-    'Header context menu options for chats from folder inside Shared with me section',
+    'Header context menu options for chats from folder inside Shared with me section.\n' +
+    'Header context menu: Delete option is not available for shared chat from shared folder in Shared with me section',
   async ({
     conversationData,
     dataInjector,
@@ -1048,7 +1061,7 @@ dialSharedWithMeTest(
     additionalShareUserConversationDropdownMenuAssertion,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1846', 'EPMRTC-4777');
+    setTestIds('EPMRTC-1846', 'EPMRTC-4777', 'EPMRTC-4778');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;

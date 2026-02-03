@@ -28,10 +28,10 @@ dialAdminTest(
       localStorageManager,
       organizationPrompts,
       promptDropdownMenu,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       publishingRulesAssertion,
-      promptToPublishAssertion,
+      publishPromptsTreeAssertion,
       promptsToPublishTree,
       tooltipAssertion,
       adminApproveRequiredPromptsAssertion,
@@ -39,8 +39,8 @@ dialAdminTest(
       adminPublishingRulesAssertion,
       adminPublishingApprovalModal,
       adminApproveRequiredPrompts,
-      adminPromptsToApprove,
-      adminPromptToApproveAssertion,
+      adminPromptsToApproveTree,
+      adminPublishPromptsTreeAssertion,
       adminPublishedPromptPreviewModal,
       adminPublishedPromptPreviewModalAssertion,
       organizationPromptAssertion,
@@ -95,11 +95,11 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await organizationPrompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           unpublishFromLabel: 'visible',
           unpublishFrom: PublishPath.Organization,
           authorLabel: 'hidden',
@@ -108,17 +108,17 @@ dialAdminTest(
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await promptToPublishAssertion.assertElementState(
+        await publishPromptsTreeAssertion.assertElementState(
           promptsToPublishTree.promptIcon(prompt.name),
           'visible',
         );
@@ -129,9 +129,9 @@ dialAdminTest(
       'Set empty or spaces as a request name and verify "Send request" button is disabled',
       async () => {
         for (const name of ['', ' '.repeat(3)]) {
-          await publishingRequestModal.requestName.fillInInput(name);
-          await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
-          await publishingRequestModal.sendRequestButton.hoverOver();
+          await publishingRequestDialog.requestName.fillInInput(name);
+          await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
+          await publishingRequestDialog.sendRequestButton.hoverOver();
           await tooltipAssertion.assertTooltipContent(
             ExpectedConstants.noPublishNameTooltip,
           );
@@ -140,10 +140,10 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(firstRequestName);
-      publishApiModels = await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+      await publishingRequestDialog.requestName.fillInInput(firstRequestName);
+      publishApiModels = await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -203,18 +203,18 @@ dialAdminTest(
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPromptsToApprove.promptIcon(prompt.name),
+        await adminPublishPromptsTreeAssertion.assertElementState(
+          adminPromptsToApproveTree.promptIcon(prompt.name),
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertButtonsState({
@@ -262,7 +262,7 @@ dialAdminTest(
         await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
           name: prompt.name,
           content: prompt.content!,
-          version: ExpectedConstants.defaultAppVersion,
+          version: ExpectedConstants.defaultEntityVersion,
           versionColor: expectedErrorColor,
         });
         publicationReviewControlElement =

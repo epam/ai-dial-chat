@@ -1,21 +1,19 @@
-import { FloatingOverlay } from '@floating-ui/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
-
-import { ScreenState } from '@/src/types/common';
-
-import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
   ModelsSelectors,
-  UISelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -31,11 +29,21 @@ export const Marketplace = () => {
 
   const router = useRouter();
 
-  const isFilterbarOpen = useAppSelector(
-    UISelectors.selectShowMarketplaceFilterbar,
+  const isModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
   );
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isLoading = useAppSelector(ModelsSelectors.selectAreModelsLoading);
+  const isToolsetsEntitiesLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
+  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+
+  const isInstalledToolsetsInitialized = useAppSelector(
+    ToolsetSelectors.selectIsInstalledToolsetsInitialized,
+  );
+
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
@@ -47,17 +55,32 @@ export const Marketplace = () => {
     MarketplaceSelectors.selectSelectedEntitiesTab,
   );
 
+  const isMarketplaceLoading = useAppSelector(
+    MarketplaceSelectors.selectShowLoader,
+  );
+
   const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
-  const screenState = useScreenState();
+  const isLoading = useMemo(() => {
+    const isWorkspaceTab = selectedTab === MarketplaceTabs.MY_WORKSPACE;
+    const isAgentsLoading = isWorkspaceTab
+      ? isModelsLoading || !isInstalledModelsInitialized
+      : isModelsLoading;
 
-  const showOverlay =
-    (isFilterbarOpen || isProfileOpen) &&
-    (screenState === ScreenState.SM || screenState === ScreenState.MD);
-
-  const handleCloseOverlay = () => {
-    dispatch(UIActions.closeAllPanels());
-  };
+    const isToolsetsLoading = isWorkspaceTab
+      ? isToolsetsEntitiesLoading || !isInstalledToolsetsInitialized
+      : isToolsetsEntitiesLoading;
+    const showLoader = isAgentsTab ? isAgentsLoading : isToolsetsLoading;
+    return showLoader || isMarketplaceLoading;
+  }, [
+    isAgentsTab,
+    isInstalledModelsInitialized,
+    isInstalledToolsetsInitialized,
+    isMarketplaceLoading,
+    isModelsLoading,
+    isToolsetsEntitiesLoading,
+    selectedTab,
+  ]);
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
@@ -81,12 +104,6 @@ export const Marketplace = () => {
         <>
           <TabHeader isBannerVisible={isBannerVisible} />
           {isAgentsTab ? <AgentsTabRenderer /> : <ToolsTabRenderer />}
-          {showOverlay && (
-            <FloatingOverlay
-              className="z-30 bg-blackout"
-              onClick={handleCloseOverlay}
-            />
-          )}
         </>
       )}
     </div>

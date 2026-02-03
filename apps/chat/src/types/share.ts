@@ -71,4 +71,5 @@ export interface ShareListingRequestModel {
   resourceTypes: BackendResourceType[];
   with: ShareRelations;
   order: 'popular_asc';
+  includeUserInfo?: boolean;
 }

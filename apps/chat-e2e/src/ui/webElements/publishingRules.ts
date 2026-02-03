@@ -1,7 +1,9 @@
 import { PublicationFunctions } from '@/chat/types/publication';
 import { BooleanOperator, PublishingRulesFilterTarget } from '@/src/testData';
+import { AttributeValues } from '@/src/ui/domData';
 import { IconSelectors, PublishingRulesSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Button } from '@/src/ui/webElements/common/button';
 import { PublishingFilter } from '@/src/ui/webElements/publishingFilter';
 import { Locator, Page } from '@playwright/test';
 
@@ -44,8 +46,10 @@ export class PublishingRules extends BaseElement {
   public allRules = this.rulesList.getChildElementBySelector(
     PublishingRulesSelectors.rule,
   );
-  public cancelAllRules = this.rulesList.getChildElementBySelector(
-    PublishingRulesSelectors.cancelAllRulesIcon,
+  public cancelAllRules = new Button(
+    this.page,
+    AttributeValues.cancelAllRules,
+    this.rootLocator,
   );
 
   public rule = (rule: {

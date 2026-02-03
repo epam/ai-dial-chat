@@ -11,9 +11,9 @@ import {
   PublicVersionOption,
   Publication,
   PublicationInfo,
+  PublicationModel,
   PublicationRequestModel,
   PublicationRule,
-  PublicationUpdateRequestModel,
   ResourceToReview,
 } from '@/src/types/publication';
 
@@ -31,8 +31,6 @@ import {
   FolderInterface,
   Message,
   Prompt,
-  PublishActions,
-  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
@@ -53,21 +51,19 @@ const initialState: PublicationState = {
     [FeatureType.Application]: false,
     [FeatureType.Toolset]: false,
   },
-  selectedItemsToPublish: [],
   isApplicationReview: false,
   isToolsetReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
+  selectedPublicationItems: {},
+  selectedCredentialsItems: {},
 
-  // Review edit mode
-  selectedItemsToApprove: {},
+  // Edit or publish mode
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
-  rulesOnEdit: [],
   isPublicationUpdating: false,
-  displayAuthorEditState: '',
-  publishToUrl: '',
+  currentPublicationInvalidEntities: [],
 };
 
 export const publicationSlice = createSlice({
@@ -225,33 +221,48 @@ export const publicationSlice = createSlice({
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
     },
-    setItemsToPublish: (
+    setPublicationItems: (
       state,
-      { payload }: PayloadAction<{ ids: string[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        publicationUrl: string;
+        ids: string[];
+      }>,
     ) => {
-      state.selectedItemsToPublish = payload.ids;
+      state.selectedPublicationItems[payload.publicationUrl] = payload.ids;
+
+      const publishCredentialsResources = state.publications
+        .find((publication) => publication.url === payload.publicationUrl)
+        ?.resources?.filter(
+          ({ publishCredentials, reviewUrl }) =>
+            publishCredentials && payload.ids.includes(reviewUrl),
+        );
+
+      if (publishCredentialsResources?.length) {
+        if (!payload.publicationUrl) {
+          state.selectedCredentialsItems[payload.publicationUrl] = [];
+        } else if (publishCredentialsResources) {
+          state.selectedCredentialsItems[payload.publicationUrl] =
+            publishCredentialsResources.map(({ reviewUrl }) => reviewUrl);
+        }
+      }
     },
-    setItemsToApprove: (
+    selectPublicationItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
     ) => {
-      state.selectedItemsToApprove[payload.publicationUrl] = payload.ids;
-    },
-    selectItemsToPublish: (
-      state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
-      state.selectedItemsToPublish = xor(
-        state.selectedItemsToPublish,
+      state.selectedPublicationItems[payload.publicationUrl] = xor(
+        state.selectedPublicationItems[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },
-    selectItemsToApprove: (
+    selectCredentialsItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
     ) => {
-      state.selectedItemsToApprove[payload.publicationUrl] = xor(
-        state.selectedItemsToApprove[payload.publicationUrl] ?? [],
+      state.selectedCredentialsItems[payload.publicationUrl] = xor(
+        state.selectedCredentialsItems[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },
@@ -363,18 +374,7 @@ export const publicationSlice = createSlice({
     },
     setPublishModel(
       state,
-      {
-        payload,
-      }: PayloadAction<
-        | {
-            entity: Omit<ShareEntity, 'folderId'> & {
-              iconUrl?: string;
-              folderId?: string;
-            };
-            action: PublishActions;
-          }
-        | undefined
-      >,
+      { payload }: PayloadAction<PublicationModel | undefined>,
     ) {
       if (payload) {
         state.publishModel = {
@@ -384,7 +384,9 @@ export const publicationSlice = createSlice({
             folderId: getFolderIdFromEntityId(payload.entity.id),
             iconUrl: payload.entity.iconUrl,
           },
+          isFolder: payload.isFolder,
           action: payload.action,
+          publishCredentials: payload.publishCredentials,
         };
       } else {
         state.publishModel = undefined;
@@ -403,7 +405,7 @@ export const publicationSlice = createSlice({
     updateApplicationPublicationUrls: (
       state,
       _action: PayloadAction<{
-        publicationUrl?: string;
+        publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
       }>,
@@ -431,7 +433,7 @@ export const publicationSlice = createSlice({
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
-        dataToUpdate: PublicationUpdateRequestModel;
+        dataToUpdate: PublicationRequestModel;
         url: string;
       }>,
     ) => {
@@ -456,9 +458,6 @@ export const publicationSlice = createSlice({
     ) => {
       state.entitiesEditState = payload.editState.entities;
       state.foldersEditState = payload.editState.folders;
-      state.rulesOnEdit = payload.rules;
-      state.displayAuthorEditState = payload.displayAuthor;
-      state.publishToUrl = payload.publishToUrl;
     },
     setEntityEditStateByReviewUrl: (
       state,
@@ -512,14 +511,11 @@ export const publicationSlice = createSlice({
         message: Message;
       }>,
     ) => state,
-    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
-      state.rulesOnEdit = payload;
-    },
-    setDisplayAuthorEditState: (state, { payload }: PayloadAction<string>) => {
-      state.displayAuthorEditState = payload;
-    },
-    setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
-      state.publishToUrl = payload;
+    setCurrentPublicationInvalidEntities: (
+      state,
+      { payload }: PayloadAction<string[]>,
+    ) => {
+      state.currentPublicationInvalidEntities = payload;
     },
   },
 });

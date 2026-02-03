@@ -443,6 +443,7 @@ dialTest(
     dataInjector,
     setTestIds,
     localStorageManager,
+    chatBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-579');
     let conversationInFolder: FolderConversation;
@@ -461,23 +462,19 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        let isFolderCaretExpanded =
-          await folderConversations.isFolderCaretExpanded(
-            conversationInFolder.folders.name,
-          );
-        expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
-          .toBeFalsy();
+
+        await chatBarFolderAssertion.assertFolderCaretState(
+          { name: conversationInFolder.folders.name },
+          'collapsed',
+        );
 
         await folderConversations.expandCollapseFolder(
           conversationInFolder.folders.name,
         );
-        isFolderCaretExpanded = await folderConversations.isFolderCaretExpanded(
-          conversationInFolder.folders.name,
+        await chatBarFolderAssertion.assertFolderCaretState(
+          { name: conversationInFolder.folders.name },
+          'expanded',
         );
-        expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
-          .toBeTruthy();
       },
     );
   },
@@ -826,7 +823,7 @@ dialTest(
     toastAssertion,
     conversationDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1764');
     let firstConversation: Conversation;
 
     await dialTest.step('Prepare folders hierarchy', async () => {

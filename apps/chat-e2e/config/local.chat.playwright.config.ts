@@ -17,9 +17,11 @@ dotenv.config({ path: './.env.local' });
  */
 config.retries = 0;
 config.timeout = 3000000;
-config.use!.headless = false;
-config.use!.video = 'on';
-config.use!.trace = 'on';
+if (config.use) {
+  config.use.headless = false;
+  config.use.video = 'on';
+  config.use.trace = 'on';
+}
 (config.reporter as ReporterDescription[]).push([
   'html',
   { outputFolder: `../${ResultFolder.chatHtmlReport}`, open: 'never' },
@@ -36,16 +38,18 @@ if (!process.env.E2E_HOST) {
   };
 }
 
+const isDesktopAuth = process.env.IS_DESKTOP_AUTH === 'true';
+
 config.projects = [
   {
-    name: 'debug_auth',
+    name: isDesktopAuth ? 'auth' : 'debug_auth',
     fullyParallel: true,
-    testMatch: /debugAuth\.ts/,
+    testMatch: isDesktopAuth ? /desktopAuth\.ts/ : /debugAuth\.ts/,
   },
   {
     name: 'cleanup',
     testMatch: /cleanup\.ts/,
-    dependencies: ['debug_auth'],
+    dependencies: isDesktopAuth ? ['auth'] : ['debug_auth'],
   },
   {
     name: 'chat e2e',

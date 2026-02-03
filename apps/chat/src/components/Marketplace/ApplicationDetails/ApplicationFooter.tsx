@@ -32,8 +32,11 @@ import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
+import { ApplicationDetailsFooterProps } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -47,21 +50,13 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   }
 };
 
-interface Props {
-  entity: DialAIEntityModel;
-  allVersions: DialAIEntityModel[];
-  onChangeVersion: (entity: DialAIEntityModel) => void;
-  onUseEntity: () => void;
-  onBookmarkClick: (entity: DialAIEntityModel) => void;
-}
-
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
   onChangeVersion,
   onUseEntity,
   onBookmarkClick,
-}: Props) => {
+}: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
@@ -75,20 +70,20 @@ export const ApplicationDetailsFooter = ({
   );
 
   const screenState = useScreenState();
+  const isScreenSmall = screenState === ScreenState.SM;
 
-  const showContextMenu =
-    entity.reference !== entity.id && screenState === ScreenState.SM;
+  const showContextMenu = entity.reference !== entity.id && isScreenSmall;
 
   const agentMenuItemsParams = useMemo(
     () => ({
       entity,
       disabledActions: {
-        copyLink: screenState !== ScreenState.SM,
+        copyLink: !isScreenSmall,
         share: !showContextMenu,
         unshare: !entity?.sharedWithMe,
       },
     }),
-    [entity, screenState, showContextMenu],
+    [entity, isScreenSmall, showContextMenu],
   );
 
   const menuItems = useAgentMenuItems(agentMenuItemsParams);
@@ -112,7 +107,7 @@ export const ApplicationDetailsFooter = ({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <AgentContextMenu
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
@@ -131,12 +126,14 @@ export const ApplicationDetailsFooter = ({
               ),
             )
           )}
-          <AgentBookmark
-            entity={entity}
-            size={24}
-            className="icon-button group/bookmark"
-            onBookmarkClick={onBookmarkClick}
-          />
+          {onBookmarkClick && (
+            <MarketplaceEntityBookmark
+              entity={entity}
+              size={24}
+              className="icon-button group/bookmark"
+              onBookmarkClick={onBookmarkClick}
+            />
+          )}
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect
@@ -151,6 +148,7 @@ export const ApplicationDetailsFooter = ({
               !isExecutableApp(entity) ||
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
+            triggerClassName="shrink-0"
             tooltip={t(
               isPublicApp && !isAdmin
                 ? 'Ask your administrator to deploy this application to be able to use it'
@@ -158,23 +156,23 @@ export const ApplicationDetailsFooter = ({
             )}
           >
             {!isExternalApp(entity) ? (
-              <button
+              <DialPrimaryButton
                 onClick={onUseEntity}
-                className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
                 data-qa="use-button"
                 disabled={
                   isExecutableApp(entity) &&
                   playerStatus !== SimpleApplicationStatus.UNDEPLOY
                 }
-              >
-                <IconPlayerPlay size={18} />
-                <span className="hidden md:block">
-                  {t('Use {{modelType}}', {
-                    modelType: entity.type,
-                  })}
-                </span>
-                <span className="block md:hidden">{t('Use')}</span>
-              </button>
+                iconBefore={<IconPlayerPlay size={18} />}
+                label={
+                  isScreenSmall
+                    ? t('Use')
+                    : t('Use {{modelType}}', {
+                        ns: Translation.Marketplace,
+                        modelType: entity.type,
+                      })
+                }
+              />
             ) : (
               <Link
                 href={

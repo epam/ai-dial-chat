@@ -1,42 +1,55 @@
-import classNames from 'classnames';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isToolsetSignedIn, isToolsetWithAuth } from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
-
-import IconKey from '@/public/images/icons/key.svg';
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { Badge } from '@/src/components/Badge';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;
-  level?: ToolsetCredentialsLevel;
+  showAdditionalBadge?: boolean;
 }
 
 export const CredentialsStatusIndicator = ({
   entity,
-  level = ToolsetCredentialsLevel.GLOBAL,
+  showAdditionalBadge,
 }: CredentialsStatusIndicatorProps) => {
-  const isSignedIn = isToolsetSignedIn(entity, level);
+  const { t } = useTranslation(Translation.Marketplace);
 
-  if (entity.authSettings.authenticationType === ToolsetAuthTypes.NONE) {
+  const isSignedInGlobal = isToolsetSignedIn(entity);
+  const isSignedInUser = isToolsetSignedIn(
+    entity,
+    ToolsetCredentialsLevel.USER,
+  );
+  const isPublic = isEntityIdPublic(entity);
+  const isSignedIn = isSignedInUser || isSignedInGlobal;
+
+  const loginLabel = isSignedInUser || !isPublic ? 'MY CREDS' : 'ORG CREDS';
+  const label = isSignedIn ? loginLabel : 'LOGGED OUT';
+  const additionalBadge =
+    isPublic && isSignedInGlobal && isSignedInUser && 'ORG CREDS';
+
+  if (!isToolsetWithAuth(entity)) {
     return null;
   }
 
   return (
-    <Tooltip
-      tooltip={isSignedIn ? 'Signed In' : 'Signed Out'}
-      isTriggerClickable
-    >
-      <IconKey
-        className={classNames(
-          'ml-2',
-          isSignedIn ? 'text-success' : 'text-error',
-        )}
-        width={18}
-        height={18}
+    <div className="flex items-center gap-1">
+      <Badge
+        label={t(label)}
+        type={isSignedIn ? 'success' : 'error'}
+        className="shrink-0"
       />
-    </Tooltip>
+      {showAdditionalBadge && additionalBadge && (
+        <Badge
+          label={t(additionalBadge)}
+          type="disabled"
+          className="shrink-0"
+        />
+      )}
+    </div>
   );
 };

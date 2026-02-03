@@ -1,13 +1,20 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
+
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
+import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
+import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
@@ -25,39 +32,50 @@ const stepFields: {
 ];
 
 interface ToolsetEditorHeaderProps {
-  currentToolset?: ToolsetModel;
-  currentStep: ToolsetEditorSteps;
   onTabClick: (tab: ToolsetEditorSteps) => void;
-  onSave: (saveDraft?: boolean) => void;
+  onSave: (saveDraft?: boolean, redirectToChat?: boolean) => void;
 }
 
 export const ToolsetEditorHeader = ({
-  currentToolset,
-  currentStep,
   onTabClick,
   onSave,
 }: ToolsetEditorHeaderProps) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Marketplace);
+
+  const {
+    query: {
+      [ToolsetEditorQuery.Id]: idQuery,
+      [ToolsetEditorQuery.IsCreating]: isCreating,
+    },
+  } = useRouter();
+
   const dispatch = useAppDispatch();
 
-  const isEditing = !!currentToolset;
+  const isCreatingToolset =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
+
+  const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
+  const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+
+  const isExistingToolset = !!currentToolset;
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
+  const [redirectToChat, setRedirectToChat] = useState(false);
 
-  const { formState, trigger } = useFormContext<ToolsetEditorForm>();
-  const errors = formState.errors;
+  const { trigger, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const errorSteps = useMemo(() => {
     return stepFields.reduce<Set<ToolsetEditorSteps>>(
       (steps, { step, fields }) => {
-        if (fields.some((field) => errors[field])) {
+        if (!isValid && fields.some((field) => errors[field])) {
           steps.add(step);
         }
         return steps;
       },
       new Set(),
     );
-  }, [errors]);
+  }, [errors, isValid]);
 
   const tabs = useMemo(
     () => [
@@ -69,10 +87,27 @@ export const ToolsetEditorHeader = ({
       {
         label: ToolsetEditorSteps.Settings,
         key: ToolsetEditorSteps.Settings,
-        disabled: !isEditing,
+        disabled: !isExistingToolset,
       },
     ],
-    [isEditing],
+    [isExistingToolset],
+  );
+
+  const handleLogoClick = useCallback(
+    async (e: MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      if (isExistingToolset) {
+        const isValid = await trigger();
+
+        if (!isValid) {
+          setSaveDraftDialog(true);
+          setRedirectToChat(true);
+          return;
+        }
+      }
+      onSave(false, true);
+    },
+    [isExistingToolset, onSave, trigger],
   );
 
   const handleTabClick = useCallback(
@@ -84,31 +119,42 @@ export const ToolsetEditorHeader = ({
   );
 
   const handleSaveClick = useCallback(async () => {
-    const isValid = await trigger();
+    if (isExistingToolset) {
+      const isValid = await trigger();
 
-    if (!isValid) {
-      setSaveDraftDialog(true);
-      return;
+      if (!isValid) {
+        setSaveDraftDialog(true);
+        return;
+      }
     }
     onSave();
-  }, [onSave, trigger]);
+  }, [isExistingToolset, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
       setSaveDraftDialog(false);
-      if (!result) {
+      if (result && redirectToChat) {
+        onSave(true, true);
+        return;
+      } else if (result) {
         onSave(true);
         return;
       }
-
+      setRedirectToChat(false);
       const invalidStep = Array.from(errorSteps)[0];
 
       if (invalidStep) {
         dispatch(ToolsetActions.setEditorStep(invalidStep));
       }
     },
-    [dispatch, errorSteps, onSave],
+    [dispatch, errorSteps, onSave, redirectToChat],
   );
+
+  const saveLabel =
+    isExistingToolset &&
+    (currentToolset ? !isEntityIdPublic(currentToolset) : false)
+      ? 'Save and exit'
+      : 'Exit';
 
   return (
     <>
@@ -116,22 +162,23 @@ export const ToolsetEditorHeader = ({
         tabs={tabs}
         activeTab={currentStep}
         errorTabsSet={errorSteps}
-        isEditing={isEditing}
+        isEditing={isExistingToolset}
         onTabClick={handleTabClick}
-        title={t(isEditing ? 'Edit toolset' : 'Add toolset')}
-        saveLabel={isEditing ? 'Save and exit' : 'Exit'}
+        title={t(isCreatingToolset ? 'Add toolset' : 'Edit toolset')}
+        saveLabel={saveLabel}
         onSave={handleSaveClick}
+        onLogoClick={handleLogoClick}
+        dataQa="entity-editor-header"
       />
 
       <ConfirmDialog
         isOpen={saveDraftDialog}
-        heading={t('Invalid fields will not be saved')}
+        heading={t('Only valid data will be saved')}
         description={t(
-          'Some fields are filled in incorrectly, or required fields are missing. Any invalid fields will not be saved.\n' +
-            'Are you sure you want to exit?',
+          'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
         )}
-        confirmLabel={t('Continue editing')}
-        cancelLabel={t('Exit')}
+        confirmLabel={t('Save valid data')}
+        cancelLabel={t('Continue editing')}
         onClose={handleCloseConfirmDialog}
       />
     </>

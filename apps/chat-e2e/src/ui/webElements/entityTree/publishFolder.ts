@@ -1,4 +1,4 @@
-import { PublishEntitySelectors } from '@/src/ui/selectors';
+import { EntitySelectors, FolderSelectors } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
 
 export class PublishFolder extends Folders {
@@ -13,9 +13,7 @@ export class PublishFolder extends Folders {
       entityName,
       folderIndex,
       entityIndex,
-    ).locator(
-      `~*${PublishEntitySelectors.version}, ~* > ${PublishEntitySelectors.version}`,
-    );
+    ).locator(`~*${EntitySelectors.version}, ~* > ${EntitySelectors.version}`);
   }
 
   public getFolderEntityVersionElement(
@@ -31,6 +29,12 @@ export class PublishFolder extends Folders {
         folderIndex,
         entityIndex,
       ),
+    );
+  }
+
+  public getFolderNameInput(folderName: string) {
+    return this.getFolderByName(folderName).locator(
+      FolderSelectors.folderInput,
     );
   }
 }

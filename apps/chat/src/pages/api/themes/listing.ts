@@ -3,13 +3,14 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from '@/src/utils/server/logger';
 
 import { HTTPMethod } from '@/src/types/http';
-import { Theme, ThemesConfig } from '@/src/types/themes';
+import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
 import fetch from 'node-fetch';
 
-let cachedThemes: Theme[] = [];
+let cachedThemes: ThemesConfig = FALLBACK_THEME_CONFIG;
 let cachedThemesExpiration: number | undefined;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -54,7 +55,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const dayInMs = 86400000;
 
-  cachedThemes = Array.isArray(json.themes) ? json.themes : [];
+  cachedThemes = {
+    ...json,
+    themes: Array.isArray(json.themes) ? json.themes : [],
+  };
   cachedThemesExpiration = Date.now() + dayInMs;
 
   return res

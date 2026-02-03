@@ -9,6 +9,8 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
@@ -39,7 +41,7 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
 };
 
 interface Props {
-  children: ReactNode[];
+  children: ReactNode[] | ReactNode;
   isLastMessageStreaming: boolean;
 }
 
@@ -57,7 +59,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
     (type: CopyTableType, fn: (table: HTMLTableElement) => string) => () => {
       if (tableRef.current) {
         const text = fn(tableRef.current);
-        navigator.clipboard.writeText(text).then(() => {
+        writeTextToClipboard(text, () => {
           if (timer && type !== copiedType) {
             clearTimeout(timer);
           }

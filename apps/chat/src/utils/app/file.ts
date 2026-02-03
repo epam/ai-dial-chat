@@ -13,11 +13,16 @@ import {
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
-import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
+import {
+  BYTES_IN_KB,
+  BYTES_IN_MB,
+  MAX_FILE_SIZE_IN_BYTES,
+} from '@/src/constants/file';
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
 } from '@/src/constants/folders';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isFolderId } from './shared-utils';
@@ -506,10 +511,30 @@ export const getFilesFromDataTransferItems = (
     .map((item) => item.getAsFile()) as File[];
 };
 
+export const formatFileSize = (sizeInBytes: number): string => {
+  if (sizeInBytes >= BYTES_IN_MB) {
+    return `${Math.ceil(sizeInBytes / BYTES_IN_MB)} ${translate('MB')}`;
+  }
+
+  return `${Math.ceil(sizeInBytes / BYTES_IN_KB)} ${translate('KB')}`;
+};
+
 export const getMyBucketAttachments = (
   attachments: Attachment[],
 ): Attachment[] => {
   return attachments.filter((attachment) =>
     isMyEntity({ id: attachment.url ?? '' }),
   );
+};
+
+export const getRootFolderPlaceholderName = (bucket: string): string => {
+  const userBucket = BucketService.getBucket();
+  if (userBucket === bucket) {
+    return translate('My Files');
+  }
+  if (bucket === PUBLIC_URL_PREFIX) {
+    return translate('Organization');
+  }
+
+  return translate('Shared with Me');
 };

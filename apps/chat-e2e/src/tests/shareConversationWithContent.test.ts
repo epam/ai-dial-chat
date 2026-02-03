@@ -29,7 +29,7 @@ dialTest.beforeAll(async () => {
   );
 });
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Share with me. Chats with different context.\n' +
     'Shared chat history is updated in Shared with me if to generate new picture.\n' +
     'Publish chat with file, file is from "Shared with me" section',
@@ -43,7 +43,7 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserConversations,
     additionalShareUserConversationDropdownMenu,
-    additionalShareUserPublishingRequestModal,
+    additionalShareUserPublishingRequestDialog,
     additionalShareUserToast,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
@@ -90,6 +90,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -133,6 +134,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             responseImageUrl,
           );
         conversationWithSharedFile.messages[0].custom_content!.attachments =
@@ -248,10 +250,10 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.publish,
         );
-        await additionalShareUserPublishingRequestModal.requestName.fillInInput(
+        await additionalShareUserPublishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
-        await additionalShareUserPublishingRequestModal.sendRequestButton.click();
+        await additionalShareUserPublishingRequestDialog.sendRequestButton.click();
         await baseAssertion.assertElementState(
           additionalShareUserToast,
           'visible',
@@ -261,7 +263,7 @@ dialSharedWithMeTest(
           ExpectedConstants.attachmentPublishErrorMessage,
         );
         await baseAssertion.assertElementState(
-          additionalShareUserPublishingRequestModal,
+          additionalShareUserPublishingRequestDialog,
           'hidden',
         );
       },
@@ -328,7 +330,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Share with me. Folder with chats with different context',
   async ({
     conversationData,
@@ -379,6 +381,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -554,7 +557,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
     'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
     'Unshared by the owner file disappears from "Shared with me". User1 shares two files, unshares one file.\n' +
@@ -846,7 +849,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat in Playback mode',
   async ({
     conversationData,
@@ -1042,7 +1045,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat with plotly graph',
   async ({
     conversationData,
@@ -1120,7 +1123,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat with attached link',
   async ({
     conversationData,

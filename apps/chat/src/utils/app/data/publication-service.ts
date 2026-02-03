@@ -10,7 +10,6 @@ import {
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
-  PublicationUpdateRequestModel,
   PublicationsListModel,
   PublishedFileItem,
   PublishedItem,
@@ -39,28 +38,18 @@ const prepareBasePublicationDataTargetFolder = (
   };
 };
 
-const preparePublicationCreateData = (
+const preparePublicationRequestData = (
   publicationData: PublicationRequestModel,
 ): PublicationRequestModel => {
   return {
-    name: publicationData.name,
-    resources: publicationData.resources.map((r) => ({
-      action: r.action,
-      sourceUrl: r.sourceUrl ? ApiUtils.encodeApiUrl(r.sourceUrl) : undefined,
-      targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-    })),
-    ...prepareBasePublicationDataTargetFolder(publicationData),
-  };
-};
-
-const preparePublicationUpdateData = (
-  publicationData: PublicationUpdateRequestModel,
-): PublicationUpdateRequestModel => {
-  return {
-    resources: publicationData.resources.map((r) => ({
-      action: r.action,
-      sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
-      targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+    ...(publicationData.name ? { name: publicationData.name } : {}),
+    resources: publicationData.resources.map((resource) => ({
+      action: resource.action,
+      sourceUrl: ApiUtils.encodeApiUrl(resource.sourceUrl),
+      targetUrl: ApiUtils.encodeApiUrl(resource.targetUrl),
+      ...(resource.publishCredentials
+        ? { publishCredentials: resource.publishCredentials }
+        : {}),
     })),
     ...prepareBasePublicationDataTargetFolder(publicationData),
   };
@@ -72,7 +61,7 @@ export class PublicationService {
   ): Observable<Publication> {
     return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_CREATE), {
       method: HTTPMethod.POST,
-      body: JSON.stringify(preparePublicationCreateData(publicationData)),
+      body: JSON.stringify(preparePublicationRequestData(publicationData)),
     });
   }
 
@@ -80,16 +69,30 @@ export class PublicationService {
     publicationData,
     url,
   }: {
-    publicationData: PublicationUpdateRequestModel;
+    publicationData: PublicationRequestModel;
     url: string;
   }): Observable<Publication> {
     return ApiUtils.request(getOpsApiUrl(ServerSlugs.PUBLICATION_UPDATE), {
       method: HTTPMethod.POST,
       body: JSON.stringify({
-        ...preparePublicationUpdateData(publicationData),
+        ...preparePublicationRequestData(publicationData),
         url: ApiUtils.encodeApiUrl(url),
       }),
-    });
+    }).pipe(
+      map((publication: Publication) => {
+        return {
+          ...publication,
+          resources: publication.resources.map((resource) => ({
+            ...resource,
+            targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+            reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
+            sourceUrl: resource.sourceUrl
+              ? ApiUtils.decodeApiUrl(resource.sourceUrl)
+              : null,
+          })),
+        };
+      }),
+    );
   }
 
   public static publicationList(): Observable<PublicationInfo[]> {

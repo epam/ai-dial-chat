@@ -16,6 +16,8 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+
 interface Props {
   publicVersionGroupId: string;
   btnClassNames?: string;
@@ -116,30 +118,31 @@ export function PublicVersionSelector({
       className="flex shrink-0 items-center"
       disabled={allVersions.length <= 1}
       trigger={
-        <button
+        <DialLinkButton
           onClick={(e) => stopBubbling(e)}
           disabled={allVersions.length <= 1}
           className={classNames(
-            'flex gap-1 whitespace-nowrap text-sm',
+            'flex px-0 text-primary hover:text-primary',
             allVersions.length <= 1 && 'cursor-default',
             btnClassNames,
             readonly && 'text-xs text-secondary',
           )}
           data-qa="version"
-        >
-          {textBeforeSelector ? textBeforeSelector : t('v. ')}
-          {currentVersionGroup.selectedVersion.version}
-          {allVersions.length > 1 && (
-            <IconChevronDown
-              className={classNames(
-                'shrink-0 transition-all',
-                isVersionSelectOpen && 'rotate-180',
-                readonly && 'text-secondary',
-              )}
-              size={readonly ? 16 : 18}
-            />
-          )}
-        </button>
+          textClassName="font-normal whitespace-nowrap leading-normal"
+          label={`${textBeforeSelector ? textBeforeSelector : t('v.')} ${currentVersionGroup.selectedVersion.version}`}
+          iconAfter={
+            allVersions.length > 1 && (
+              <IconChevronDown
+                className={classNames(
+                  'shrink-0 transition-all',
+                  isVersionSelectOpen && 'rotate-180',
+                  readonly && 'text-secondary',
+                )}
+                size={readonly ? 16 : 18}
+              />
+            )
+          }
+        />
       }
     >
       {allVersions.map(({ version, id }) => {

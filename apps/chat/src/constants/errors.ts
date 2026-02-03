@@ -8,10 +8,9 @@ export const errorsMessages = {
   403: 'Forbidden',
   400: 'Invalid request',
   404: 'Not found',
+  bodyExeededLimit: 'Conversation is too large to process.',
   ModelDeprecated:
     'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
-  noAssistantModelSelected:
-    'No assistant model selected. Please select an assistant model and try again.',
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
   unsupportedConversationsDataFormat:
@@ -82,7 +81,7 @@ export const errorsMessages = {
 
   // Toolsets
   // params: {{name}}
-  toolsetGetFailed: 'Filed to get toolset: {{name}}',
+  toolsetGetFailed: 'Failed to get toolset: {{name}}',
   toolsetsGetFailed: 'Failed to get toolsets',
   toolsetUpdateFailed: 'Failed to update toolset',
   toolsetOAuthNotSupported: 'MCP server does not support OAuth authentication',

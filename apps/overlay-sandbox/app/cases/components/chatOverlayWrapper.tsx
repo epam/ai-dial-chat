@@ -1,5 +1,6 @@
 'use client';
 
+import { ConfigurationInJSON, OverlayFeatures } from './OverlayConfiguration';
 import { BackToButton } from './backToSelectOverlayMode';
 
 import {
@@ -12,7 +13,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export const commonOverlayProps = {
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
+  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST ?? '',
   requestTimeout: 20000,
   loaderStyles: {
     background: 'white',
@@ -37,6 +38,8 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   const [importedConversation, setImportedConversation] = useState('');
   const [messageIndex, setMessageIndex] = useState('0');
   const [inputContent, setInputContent] = useState('');
+
+  const { enabledFeatures, ...restOverlayOptions } = overlayOptions;
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
@@ -135,9 +138,21 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
     );
   }, [conversationIdInputValue, conversationNewName, handleDisplayInformation]);
 
+  const setOverlayOptions = useCallback(
+    (newOptions: Partial<ChatOverlayOptions>) => {
+      const updatedOptions = {
+        ...overlayOptions,
+        hostDomain: window.location.origin,
+        ...newOptions,
+      };
+      overlay.current?.setOverlayOptions(updatedOptions);
+    },
+    [overlayOptions],
+  );
+
   useEffect(() => {
-    if (!overlay.current) {
-      overlay.current = new ChatOverlay(containerRef.current!, {
+    if (!overlay.current && containerRef.current) {
+      overlay.current = new ChatOverlay(containerRef.current, {
         ...overlayOptions,
         hostDomain: window.location.origin,
       });
@@ -158,8 +173,10 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
       async (info) => {
         console.info('Conversation selected - ');
-        const { messages } = await overlay.current!.getMessages();
-        console.info('messages', messages);
+        if (overlay.current) {
+          const { messages } = await overlay.current.getMessages();
+          console.info('messages', messages);
+        }
 
         console.info(JSON.stringify(info, null, 2));
       },
@@ -266,12 +283,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         }}
       ></div>
 
-      <div className="flex max-w-[600px] flex-col gap-2">
+      <div className="flex max-w-[900px] flex-col gap-2">
         <BackToButton />
         <details open={true} id="chat-actions">
           <summary>Chat actions</summary>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col gap-2">
               <button
                 className="button"
@@ -476,9 +493,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 <select
                   className="max-w-[70%] shrink"
                   value={conversationIdInputValue}
-                  onChange={(e) =>
-                    setConversationIdInputValue((e.target as any).value)
-                  }
+                  onChange={(e) => setConversationIdInputValue(e.target.value)}
                 >
                   {conversations.map((conv) => (
                     <option className="truncate" key={conv.id} value={conv.id}>
@@ -538,6 +553,16 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 </div>
               </div>
             </div>
+            <div className="flex flex-col gap-1">
+              <ConfigurationInJSON
+                restOverlayOptions={restOverlayOptions}
+                handleSetOverlayOptions={setOverlayOptions}
+              />
+              <OverlayFeatures
+                enabledFeatures={enabledFeatures}
+                setOverlayOptions={setOverlayOptions}
+              />
+            </div>
           </div>
         </details>
         <details open={true} id="configuration">
@@ -553,7 +578,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 };
 
                 newOptions.theme = 'light';
-                newOptions.modelId = 'imagegeneration@005';
+                newOptions.modelId = 'dall-e-3';
 
                 overlay.current?.setOverlayOptions(newOptions);
               }}

@@ -15,8 +15,6 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isFolderNameNotUniq } from '@/src/utils/app/publications';
 
-import { PublicationReviewItem } from '@/src/types/publication';
-
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
@@ -24,35 +22,37 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
+import { PublicationItemProps } from './view-props';
+
 import {
   FeatureType,
   FolderInterface,
   PublishActions,
+  ShareEntity,
 } from '@epam/ai-dial-shared';
 
-interface Props<T extends PublicationReviewItem> {
+interface Props {
   currentFolder: FolderInterface;
   allFolders: FolderInterface[];
-  allItems: T[];
+  allItems: ShareEntity[];
   level: number;
-  ItemComponent: React.FC<{
-    item: T;
-    level: number;
-  }>;
+  ItemComponent: React.FC<PublicationItemProps>;
+  publicationUrl: string;
 }
 
-const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
+const filteredItems = <T extends ShareEntity>(
   allItems: T[],
   currentFolderId: string,
 ) => sortByName(allItems.filter((item) => item.folderId === currentFolderId));
 
-export const PublicationFolderRow = <T extends PublicationReviewItem>({
+export const PublicationFolderRow = ({
   currentFolder,
   allFolders,
   allItems,
   level,
   ItemComponent,
-}: Props<T>) => {
+  publicationUrl,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const [inputName, setInputName] = useState(currentFolder.name);
@@ -61,25 +61,27 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   const [isPartialSelected, setIsPartialSelected] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
-
   const chosenFoldersSelector = useMemo(
     () =>
-      PublicationSelectors.selectChosenFolderIdsToApprove(allFolders, allItems),
-    [allFolders, allItems],
+      PublicationSelectors.selectChosenPublicationFolderIds(
+        publicationUrl,
+        allFolders,
+        allItems,
+      ),
+    [allFolders, allItems, publicationUrl],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
   } = useAppSelector(chosenFoldersSelector);
-
-  const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToApprove,
+  const chosenItemsIds = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
   );
-
   const folderEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
@@ -135,8 +137,8 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     });
 
     dispatch(
-      PublicationActions.selectItemsToApprove({
-        publicationUrl: selectedPublication?.url ?? '',
+      PublicationActions.selectPublicationItems({
+        publicationUrl,
         ids: entitiesToSelect,
       }),
     );
@@ -146,7 +148,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     currentFolder.id,
     dispatch,
     partialSelectedFolderIds,
-    selectedPublication?.url,
+    publicationUrl,
   ]);
 
   useEffect(() => {
@@ -208,7 +210,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
           >
             <EditableField
               value={inputName}
-              isEditMode={isEditDisabled ? false : isEditMode}
+              isEditMode={isEditDisabled || publishModel ? false : isEditMode}
               onChange={handleChangeName}
               inputClassName={classNames(
                 'w-full',
@@ -216,6 +218,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
               )}
               tooltipIconClassName="right-1"
               errors={errors}
+              dataQA="folder-input"
             />
           </div>
         </div>
@@ -224,6 +227,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
         <div className="flex flex-col">
           {folders.map((item) => (
             <PublicationFolderRow
+              publicationUrl={publicationUrl}
               key={item.id}
               level={level + 1}
               currentFolder={item}
@@ -233,9 +237,13 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
             />
           ))}
         </div>
-        {items.map((item: T) => (
+        {items.map((item) => (
           <div key={item.id}>
-            <ItemComponent item={item} level={level + 1} />
+            <ItemComponent
+              item={item}
+              level={level + 1}
+              publicationUrl={publicationUrl}
+            />
           </div>
         ))}
       </div>

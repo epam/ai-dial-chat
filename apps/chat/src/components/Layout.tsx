@@ -1,14 +1,17 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '@/src/hooks/useRouteHistory';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '@/src/utils/app/route';
 import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
@@ -17,6 +20,7 @@ import {
   AuthSelectors,
   MarketplaceSelectors,
   SettingsSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 
@@ -24,6 +28,8 @@ import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper
 
 import { Loader } from './Common/Loader';
 import { Title } from './Title';
+
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const removeQueryString = (url: string) => url.split('?')[0];
 
@@ -52,8 +58,22 @@ export function Layout({
   const isApplyingModel = useAppSelector(
     MarketplaceSelectors.selectIsApplyingModel,
   );
+  const isEditorLoader = useAppSelector(UISelectors.selectIsEditorLoader);
+  const isAnyMenuOpen = useAppSelector((state) =>
+    UISelectors.selectIsAnyMenuOpen(state, router.pathname),
+  );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+
+  const screenState = useScreenState();
 
   const [loading, setLoading] = useState(isApplyingModel);
+
+  const showFloatingOverlay =
+    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
+
+  const handleCloseOverlay = useCallback(() => {
+    dispatch(UIActions.closeAllPanels());
+  }, [dispatch]);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
@@ -117,13 +137,11 @@ export function Layout({
       <Title settings={settings} />
       {shouldOverlayLogin ? (
         <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
-          <button
+          <DialNeutralButton
+            label={t('Login')}
             onClick={handleOverlayAuth}
-            className="button button-secondary"
             disabled={authStatus === 'loading'}
-          >
-            {t('Login')}
-          </button>
+          />
         </div>
       ) : (
         <main
@@ -131,10 +149,16 @@ export function Layout({
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
+          {showFloatingOverlay && (
+            <FloatingOverlay
+              className="z-30 bg-blackout"
+              onClick={handleCloseOverlay}
+            />
+          )}
           <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}
-      {loading && (
+      {(loading || isEditorLoader) && (
         <Loader containerClassName="absolute bg-blackout size-full top-0 z-50" />
       )}
     </>

@@ -1,4 +1,8 @@
-import { OAuthProviderType, Provider } from 'next-auth/providers';
+import {
+  OAuthProviderType,
+  Provider,
+  TokenEndpointHandler,
+} from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import AzureB2CProvider from 'next-auth/providers/azure-ad-b2c';
@@ -9,176 +13,290 @@ import OktaProvider from 'next-auth/providers/okta';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
-import { tokenConfig } from './auth-callbacks';
+import {
+  ProviderConfig,
+  ProviderConfigFields,
+  SupportedProviders,
+  providerConfigSchema,
+} from '@/src/types/auth';
+
 import { GitLab } from './custom-gitlab';
+import NextClient from './nextauth-client';
 import PingId from './ping-identity';
 
 const DEFAULT_NAME = 'SSO';
 
+// Need to be set for all providers
+export const tokenConfig: TokenEndpointHandler = {
+  request: async (context) => {
+    let tokens;
+
+    NextClient.setClient(context.client, context.provider);
+
+    if (context.provider.idToken) {
+      tokens = await context.client.callback(
+        context.provider.callbackUrl,
+        context.params,
+        context.checks,
+      );
+    } else {
+      tokens = await context.client.oauthCallback(
+        context.provider.callbackUrl,
+        context.params,
+        context.checks,
+      );
+    }
+    return { tokens };
+  },
+};
+
+const getAzureProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.tenantId
+    ? AzureProvider({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        tenantId: config.tenantId,
+        name: config.name ?? DEFAULT_NAME,
+        authorization: {
+          params: {
+            scope:
+              config.scope || 'openid profile user.Read email offline_access',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getAzureB2CProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.tenantId && config.userFlow
+    ? AzureB2CProvider({
+        id: config.id,
+        issuer: config.issuer,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        tenantId: config.tenantId,
+        primaryUserFlow: config.userFlow,
+        name: config.name ?? DEFAULT_NAME,
+        authorization: {
+          params: {
+            scope:
+              config.scope || 'openid profile user.Read email offline_access',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getGitLabProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret
+    ? GitLab({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        name: config.name ?? DEFAULT_NAME,
+        gitlabHost: config.host,
+        authorization: {
+          params: { scope: config.scope || 'read_user' },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getGoogleProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret
+    ? GoogleProvider({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        name: config.name ?? DEFAULT_NAME,
+        authorization: {
+          params: {
+            scope: config.scope || 'openid email profile offline_access',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getAuth0Provider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.host
+    ? Auth0Provider({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        name: config.name ?? DEFAULT_NAME,
+        issuer: config.host,
+        authorization: {
+          params: {
+            audience: config.audience,
+            scope: config.scope || 'openid email profile offline_access',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getPingIdProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.host
+    ? PingId({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        name: config.name ?? DEFAULT_NAME,
+        issuer: config.host,
+        authorization: {
+          params: {
+            scope: config.scope || 'offline_access',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getKeycloakProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.host
+    ? KeycloakProvider({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        name: config.name ?? DEFAULT_NAME,
+        issuer: config.host,
+        userinfo: {
+          async request(context) {
+            const userinfo = await context.client.userinfo(
+              context.tokens.access_token as string,
+            );
+            return userinfo;
+          },
+        },
+        authorization: {
+          params: {
+            scope: config.scope || 'openid email profile offline_access',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getCognitoProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.host
+    ? CognitoProvider({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        issuer: config.host,
+        name: config.name ?? DEFAULT_NAME,
+        authorization: {
+          params: {
+            scope: config.scope || 'openid email profile',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const getOktaProvider = (config: ProviderConfig) =>
+  config.clientId && config.clientSecret && config.issuer
+    ? OktaProvider({
+        id: config.id,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        issuer: config.issuer,
+        authorization: {
+          params: {
+            scope: config.scope || 'openid email profile',
+          },
+        },
+        token: tokenConfig,
+      })
+    : undefined;
+
+const providerNames = {
+  [SupportedProviders.AUTH0]: 'auth0',
+  [SupportedProviders.AZURE_B2C]: 'azure-ad-b2c',
+  [SupportedProviders.AZURE_AD]: 'azure-ad',
+  [SupportedProviders.COGNITO]: 'cognito',
+  [SupportedProviders.GOOGLE]: 'google',
+  [SupportedProviders.KEYCLOAK]: 'keycloak',
+  [SupportedProviders.OKTA]: 'okta',
+  [SupportedProviders.GITLAB]: 'gitlab',
+  [SupportedProviders.PING_ID]: 'pingId',
+};
+
+const providerConfigMethods = {
+  [SupportedProviders.AUTH0]: getAuth0Provider,
+  [SupportedProviders.AZURE_B2C]: getAzureB2CProvider,
+  [SupportedProviders.AZURE_AD]: getAzureProvider,
+  [SupportedProviders.COGNITO]: getCognitoProvider,
+  [SupportedProviders.GOOGLE]: getGoogleProvider,
+  [SupportedProviders.KEYCLOAK]: getKeycloakProvider,
+  [SupportedProviders.OKTA]: getOktaProvider,
+  [SupportedProviders.GITLAB]: getGitLabProvider,
+  [SupportedProviders.PING_ID]: getPingIdProvider,
+};
+
+const getProviderFromConfig = (config: ProviderConfig) => {
+  return providerConfigMethods[config.provider]?.(config);
+};
+
+const getProviderEnv = (
+  provider: SupportedProviders,
+  envName: ProviderConfigFields,
+  index = 0,
+) => {
+  const indexStr = index ? `_${index}` : '';
+  return process.env[`AUTH_${provider}${indexStr}_${envName}`];
+};
+
+const getProviderConfig = (provider: SupportedProviders, index = 0) => {
+  const getEnv = (name: ProviderConfigFields) =>
+    getProviderEnv(provider, name, index);
+
+  const config = {
+    provider,
+    id: `${providerNames[provider]}${index || ''}`,
+    clientId: getEnv(ProviderConfigFields.CLIENT_ID),
+    clientSecret:
+      getEnv(ProviderConfigFields.CLIENT_SECRET) ??
+      getEnv(ProviderConfigFields.SECRET),
+    name: getEnv(ProviderConfigFields.NAME),
+    host: getEnv(ProviderConfigFields.HOST),
+    scope: getEnv(ProviderConfigFields.SCOPE),
+    audience: getEnv(ProviderConfigFields.AUDIENCE),
+    tenantId: getEnv(ProviderConfigFields.TENANT_ID),
+    userFlow: getEnv(ProviderConfigFields.USER_FLOW),
+    issuer: getEnv(ProviderConfigFields.ISSUER),
+    adminRoleNames: getEnv(ProviderConfigFields.ADMIN_ROLE_NAMES),
+    dialRolesField: getEnv(ProviderConfigFields.DIAL_ROLES_FIELD),
+  };
+
+  return providerConfigSchema.safeParse(config).success
+    ? (config as ProviderConfig)
+    : undefined;
+};
+
+const getSSOConfigs = () => {
+  return Object.values(SupportedProviders).flatMap((provider) => {
+    let index = 0;
+    const configs = [getProviderConfig(provider, index)];
+    while (configs[configs.length - 1]) {
+      index += 1;
+      configs.push(getProviderConfig(provider, index));
+    }
+
+    return configs.filter(Boolean) as ProviderConfig[];
+  });
+};
+
+const getProviders = () => {
+  const configs = getSSOConfigs();
+
+  return configs.map(getProviderFromConfig).filter(Boolean) as Provider[];
+};
+
 // TODO: create a validator for providers options
-const allProviders: (Provider | boolean)[] = [
-  !!process.env.AUTH_AZURE_AD_CLIENT_ID &&
-    !!process.env.AUTH_AZURE_AD_SECRET &&
-    !!process.env.AUTH_AZURE_AD_TENANT_ID &&
-    AzureProvider({
-      clientId: process.env.AUTH_AZURE_AD_CLIENT_ID,
-      clientSecret: process.env.AUTH_AZURE_AD_SECRET,
-      tenantId: process.env.AUTH_AZURE_AD_TENANT_ID,
-      name: process.env.AUTH_AZURE_AD_NAME ?? DEFAULT_NAME,
-      authorization: {
-        params: {
-          scope:
-            process.env.AUTH_AZURE_AD_SCOPE ||
-            'openid profile user.Read email offline_access',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_AZURE_B2C_CLIENT_ID &&
-    !!process.env.AUTH_AZURE_B2C_CLIENT_SECRET &&
-    !!process.env.AUTH_AZURE_B2C_TENANT_ID &&
-    !!process.env.AUTH_AZURE_B2C_USER_FLOW &&
-    AzureB2CProvider({
-      issuer: process.env.AUTH_AZURE_B2C_ISSUER,
-      clientId: process.env.AUTH_AZURE_B2C_CLIENT_ID,
-      clientSecret: process.env.AUTH_AZURE_B2C_CLIENT_SECRET,
-      tenantId: process.env.AUTH_AZURE_B2C_TENANT_ID,
-      primaryUserFlow: process.env.AUTH_AZURE_B2C_USER_FLOW,
-      name: process.env.AUTH_AZURE_B2C_NAME ?? DEFAULT_NAME,
-      authorization: {
-        params: {
-          scope:
-            process.env.AUTH_AZURE_B2C_SCOPE ||
-            'openid profile email offline_access',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_GITLAB_CLIENT_ID &&
-    !!process.env.AUTH_GITLAB_SECRET &&
-    GitLab({
-      clientId: process.env.AUTH_GITLAB_CLIENT_ID,
-      clientSecret: process.env.AUTH_GITLAB_SECRET,
-      name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
-      gitlabHost: process.env.AUTH_GITLAB_HOST,
-      authorization: {
-        params: { scope: process.env.AUTH_GITLAB_SCOPE || 'read_user' },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_GOOGLE_CLIENT_ID &&
-    !!process.env.AUTH_GOOGLE_SECRET &&
-    GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_CLIENT_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      name: process.env.AUTH_GOOGLE_NAME ?? DEFAULT_NAME,
-      authorization: {
-        params: {
-          scope:
-            process.env.AUTH_GOOGLE_SCOPE ||
-            'openid email profile offline_access',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_AUTH0_CLIENT_ID &&
-    !!process.env.AUTH_AUTH0_SECRET &&
-    !!process.env.AUTH_AUTH0_HOST &&
-    Auth0Provider({
-      clientId: process.env.AUTH_AUTH0_CLIENT_ID,
-      clientSecret: process.env.AUTH_AUTH0_SECRET,
-      name: process.env.AUTH_AUTH0_NAME ?? DEFAULT_NAME,
-      issuer: process.env.AUTH_AUTH0_HOST,
-      authorization: {
-        params: {
-          audience: process.env.AUTH_AUTH0_AUDIENCE,
-          scope:
-            process.env.AUTH_AUTH0_SCOPE ||
-            'openid email profile offline_access',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_PING_ID_CLIENT_ID &&
-    !!process.env.AUTH_PING_ID_SECRET &&
-    !!process.env.AUTH_PING_ID_HOST &&
-    PingId({
-      clientId: process.env.AUTH_PING_ID_CLIENT_ID,
-      clientSecret: process.env.AUTH_PING_ID_SECRET,
-      name: process.env.AUTH_PING_ID_NAME ?? DEFAULT_NAME,
-      issuer: process.env.AUTH_PING_ID_HOST,
-      authorization: {
-        params: {
-          scope: process.env.AUTH_PING_ID_SCOPE || 'offline_access',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
-    !!process.env.AUTH_KEYCLOAK_SECRET &&
-    !!process.env.AUTH_KEYCLOAK_HOST &&
-    KeycloakProvider({
-      clientId: process.env.AUTH_KEYCLOAK_CLIENT_ID,
-      clientSecret: process.env.AUTH_KEYCLOAK_SECRET,
-      name: process.env.AUTH_KEYCLOAK_NAME ?? DEFAULT_NAME,
-      issuer: process.env.AUTH_KEYCLOAK_HOST,
-      userinfo: {
-        async request(context) {
-          const userinfo = await context.client.userinfo(
-            context.tokens.access_token as string,
-          );
-          return userinfo;
-        },
-      },
-      authorization: {
-        params: {
-          scope:
-            process.env.AUTH_KEYCLOAK_SCOPE ||
-            'openid email profile offline_access',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_COGNITO_CLIENT_ID &&
-    !!process.env.AUTH_COGNITO_SECRET &&
-    !!process.env.AUTH_COGNITO_HOST &&
-    CognitoProvider({
-      clientId: process.env.AUTH_COGNITO_CLIENT_ID,
-      clientSecret: process.env.AUTH_COGNITO_SECRET,
-      issuer: process.env.AUTH_COGNITO_HOST,
-      name: process.env.AUTH_COGNITO_NAME ?? DEFAULT_NAME,
-      authorization: {
-        params: {
-          scope: process.env.AUTH_COGNITO_SCOPE || 'openid email profile',
-        },
-      },
-      token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_OKTA_CLIENT_SECRET &&
-    !!process.env.AUTH_OKTA_CLIENT_ID &&
-    !!process.env.AUTH_OKTA_ISSUER &&
-    OktaProvider({
-      clientId: process.env.AUTH_OKTA_CLIENT_ID,
-      clientSecret: process.env.AUTH_OKTA_CLIENT_SECRET,
-      issuer: process.env.AUTH_OKTA_ISSUER,
-      authorization: {
-        params: {
-          scope: process.env.AUTH_OKTA_SCOPE || 'openid email profile',
-        },
-      },
-      token: tokenConfig,
-    }),
-];
-
-export const authProviders = allProviders.filter(Boolean) as Provider[];
+export const authProviders = getProviders();
 
 /**
  * Sets the DEFAULT_PROVIDER to the single available provider's ID if:

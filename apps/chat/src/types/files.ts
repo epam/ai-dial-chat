@@ -24,7 +24,6 @@ export type DialFile = Omit<
   BaseDialEntity & {
     percent?: number;
     fileContent?: File;
-    isPublicationFile?: boolean;
   } & ShareEntity;
 
 // For file folders folderId is relative path and id is relative path + '/' + name
@@ -55,4 +54,22 @@ export enum FileValidationErrors {
   IncorrectSize = 'incorrectSize',
   IncorrectType = 'incorrectType',
   IncorrectName = 'incorrectName',
+}
+
+export interface OperationData<T> {
+  index: number;
+  data: T;
+}
+
+export interface OperationDataError<T> extends OperationData<T> {
+  error: string;
+}
+
+export interface FileOperationsResult<T> {
+  success: boolean;
+  succeeded: number;
+  failed: number;
+  total: number;
+  results: OperationData<T>[];
+  errors?: OperationDataError<T>[];
 }

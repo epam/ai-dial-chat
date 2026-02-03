@@ -1,6 +1,10 @@
+import { JSX } from 'react';
+
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { EnterType } from '@/src/types/settings';
+import { ThemesConfig } from '@/src/types/themes';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -22,6 +26,7 @@ const initialState: UIState = {
   initialized: false,
   theme: '',
   availableThemes: [],
+  themesImages: {},
   showChatbar: false,
   showPromptbar: false,
   showMarketplaceFilterbar: false,
@@ -41,6 +46,7 @@ const initialState: UIState = {
     [FeatureType.Chat]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
     [FeatureType.Prompt]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
   },
+  enterType: EnterType.Enter,
 };
 
 export const uiSlice = createSlice({
@@ -55,11 +61,12 @@ export const uiSlice = createSlice({
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
-    setAvailableThemes: (
-      state,
-      { payload }: PayloadAction<UIState['availableThemes']>,
-    ) => {
-      state.availableThemes = payload;
+    setEnterType: (state, { payload }: PayloadAction<EnterType>) => {
+      state.enterType = payload;
+    },
+    setAvailableThemes: (state, { payload }: PayloadAction<ThemesConfig>) => {
+      state.availableThemes = payload.themes;
+      state.themesImages = payload.images;
     },
     setChatbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.chatbarWidth = payload;
@@ -123,6 +130,7 @@ export const uiSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string | null;
+        title?: string;
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;
@@ -220,6 +228,9 @@ export const uiSlice = createSlice({
       }>,
     ) => {
       state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
+    },
+    setEditorLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditorLoader = payload;
     },
   },
 });

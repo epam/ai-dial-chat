@@ -21,7 +21,7 @@ export const Label: FC<LabelProps> = ({
   info,
 }) => (
   <label
-    className="mb-1 flex items-center gap-1 text-xs text-secondary"
+    className="mb-2 flex items-center gap-1 text-xs text-secondary"
     data-qa={htmlFor?.concat('-label')}
     htmlFor={htmlFor}
   >
@@ -31,7 +31,7 @@ export const Label: FC<LabelProps> = ({
       <Tooltip
         tooltip={info}
         triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-        placement="top-end"
+        contentClassName="z-[2000]"
       >
         <IconHelp size={18} />
       </Tooltip>

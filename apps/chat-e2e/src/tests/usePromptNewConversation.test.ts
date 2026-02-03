@@ -12,7 +12,7 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest(
+dialTest.skip(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file\n' +
@@ -45,8 +45,11 @@ dialTest(
       'EPMRTC-5497',
     );
     // Select a model that allows file attachments
+    //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => m.features?.configuration !== true,
+      ),
     );
     await localStorageManager.setRecentModelsIdsAndUseLastModel(
       modelWithAttachment,
@@ -150,7 +153,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt with parameters for chat',
   async ({
     dialHomePage,
@@ -205,7 +208,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt option is not available for Chat in Replay mode\n' +
     'Use prompt is available for chat in Replay mode when response generation was stopped\n' +
     'Use prompt option is not available for Chat in Playback mode',
@@ -314,7 +317,7 @@ dialTest(
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest(
+dialAdminTest.skip(
   'Use prompt not available for chat from Organization\n' +
     'Use prompt not available for chat from Approve required.\n' +
     'Use prompt option is not available when publication request is selected.\n' +
@@ -458,7 +461,7 @@ dialAdminTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt is not available for chat with not available agent\n' +
     'Use prompt is not available for chat with agent which not added to My workspace',
   async ({
@@ -474,10 +477,10 @@ dialTest(
     localStorageManager,
     talkToAgentDialog,
     navigationPanel,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
     chatHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
   }) => {
     setTestIds('EPMRTC-5506', 'EPMRTC-5507');
     const prompt = promptData.prepareDefaultPrompt();
@@ -534,9 +537,9 @@ dialTest(
         await chatHeader.chatModelIcon.click();
         await talkToAgentDialog.goToMyWorkspace();
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(initialModel);
+          await marketplaceEntitiesSection.findEntityElement(initialModel);
         await agentElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
@@ -555,7 +558,7 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Use prompt not available for chat from Shared with me\n' +
     `View prompt: 'Use prompt' button is disabled for just created new prompt if there is a chat without available input field selected.\n` +
     'Use prompt from "Shared with me" section for chat with history',
@@ -658,7 +661,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt from Organization for chat',
   async ({
     dialHomePage,

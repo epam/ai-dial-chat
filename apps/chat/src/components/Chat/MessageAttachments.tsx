@@ -10,6 +10,7 @@ import { MessageAttachment } from './MessageAttachment';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   attachments: Attachment[] | undefined;
@@ -33,21 +34,23 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
       data-no-context-menu
       className="rounded border border-secondary bg-layer-1"
     >
-      <button
-        className="flex w-full items-center justify-between gap-2 p-2 text-sm"
+      <DialButton
+        className="flex w-full items-center justify-between gap-2 p-2"
+        textClassName="text-sm font-normal"
         onClick={() => setIsSectionOpened((val) => !val)}
         data-qa="grouped-attachments"
-      >
-        {t('Attachments')}
-        <ChevronDown
-          height={18}
-          width={18}
-          className={classNames(
-            'shrink-0 text-secondary transition',
-            isSectionOpened && 'rotate-180',
-          )}
-        />
-      </button>
+        label={t('Attachments')}
+        iconAfter={
+          <ChevronDown
+            height={18}
+            width={18}
+            className={classNames(
+              'shrink-0 text-secondary transition',
+              isSectionOpened && 'rotate-180',
+            )}
+          />
+        }
+      />
       {isSectionOpened && (
         <div className="grid max-w-full grid-cols-1 gap-1 border-t border-secondary p-2 sm:grid-cols-2 md:grid-cols-3">
           {attachments?.map((attachment) => (

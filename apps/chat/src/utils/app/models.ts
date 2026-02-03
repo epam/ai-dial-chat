@@ -1,6 +1,11 @@
 import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntity, DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import {
+  DialAIEntity,
+  DialAIEntityFeatures,
+  DialAIEntityModel,
+  ModelsMap,
+} from '@/src/types/models';
 
 import { Conversation, Role } from '@epam/ai-dial-shared';
 
@@ -12,17 +17,11 @@ export const doesModelAllowTemperature = (
   model: DialAIEntityModel | undefined,
 ) => !!model?.features?.temperature;
 
-export const doesModelAllowAddons = (model: DialAIEntityModel | undefined) =>
-  !!model?.features?.addons;
-
 export const doesModelHaveSettings = (model: DialAIEntityModel | undefined) => {
   return (
     model &&
     model.type !== EntityType.Application && // custom settings in future
-    (model.type === EntityType.Assistant ||
-      doesModelAllowSystemPrompt(model) ||
-      doesModelAllowTemperature(model) ||
-      doesModelAllowAddons(model))
+    (doesModelAllowSystemPrompt(model) || doesModelAllowTemperature(model))
   );
 };
 
@@ -68,13 +67,34 @@ export const checkIsNotAllowedModelUtil = (
     return true;
   }
 
-  if (
-    modelInMap.type === EntityType.Assistant &&
-    conv.assistantModelId &&
-    !modelsMap[conv.assistantModelId]
-  ) {
-    return true;
-  }
-
   return false;
+};
+
+export const mergeFeatures = (
+  features: Record<string, boolean | undefined> | undefined,
+): DialAIEntityFeatures => {
+  const {
+    system_prompt: systemPrompt = true,
+    temperature = true,
+    truncate_prompt: truncatePrompt = false,
+    url_attachments: urlAttachments = false,
+    folder_attachments: folderAttachments = false,
+    allow_resume: allowResume = true,
+    configuration = false,
+    tools = true,
+    assistant_attachments_in_request: assistantAttachmentsInRequest = false,
+    ...otherFeatures
+  } = features || {};
+  return {
+    systemPrompt,
+    temperature,
+    truncatePrompt,
+    urlAttachments,
+    folderAttachments,
+    allowResume,
+    configuration,
+    tools,
+    assistantAttachmentsInRequest,
+    ...otherFeatures,
+  };
 };

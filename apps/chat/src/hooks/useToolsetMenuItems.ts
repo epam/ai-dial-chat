@@ -1,5 +1,6 @@
 import {
   IconEye,
+  IconKey,
   IconLink,
   IconLogin,
   IconLogout,
@@ -11,36 +12,36 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import {
+  getToolsetAuthAction,
+  getToolsetAuthActionLabel,
+  isToolsetWithAuth,
+} from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetContextMenuDisabledActions,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
 
+import { ToolsetAuthAction } from '@/src/constants/toolsets';
+
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ToolsetModel;
-  disabledActions?: Partial<{
-    copyLink: boolean;
-    edit: boolean;
-    share: boolean;
-    unshare: boolean;
-    publish: boolean;
-    unpublish: boolean;
-    delete: boolean;
-    login: boolean;
-  }>;
+  disabledActions?: ToolsetContextMenuDisabledActions;
   isPreview?: boolean;
   triggerIconSize?: number;
 }
@@ -51,6 +52,7 @@ export const useToolsetMenuItems = ({
   isPreview = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const screenState = useScreenState();
 
   // const isApplicationsSharingEnabled = useAppSelector((state) =>
   //   SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
@@ -74,9 +76,8 @@ export const useToolsetMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
-  const isSignedIn = isToolsetSignedIn(entity);
-  const isWithAuth =
-    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
+  const isWithAuth = isToolsetWithAuth(entity);
+  const authAction = getToolsetAuthAction(entity, isAdmin);
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
@@ -97,10 +98,23 @@ export const useToolsetMenuItems = ({
         onClick: handleEdit,
       },
       {
-        name: t(isSignedIn ? 'Log out' : 'Log in'),
+        name: t('Manage creds'),
         dataQa: 'toolset-login',
-        display: canEditOrView && disabledActions.login !== true && isWithAuth,
-        Icon: isSignedIn ? IconLogout : IconLogin,
+        display:
+          disabledActions.login !== true && isWithAuth && isPublicAndAdmin,
+        Icon: IconKey,
+        onClick: handleLogin,
+      },
+      {
+        name: t(getToolsetAuthActionLabel(authAction, screenState)),
+        dataQa: 'toolset-login',
+        display:
+          disabledActions.login !== true && isWithAuth && !isPublicAndAdmin,
+        Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
+        iconClassName:
+          authAction === ToolsetAuthAction.LogOut
+            ? 'stroke-error'
+            : 'stroke-accent-secondary',
         onClick: handleLogin,
       },
       // {
@@ -142,7 +156,6 @@ export const useToolsetMenuItems = ({
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         Icon: IconTrashX,
-        iconClassName: 'stroke-error',
         onClick: handleDelete,
       },
     ],
@@ -159,9 +172,11 @@ export const useToolsetMenuItems = ({
       isAppIdPublic,
       canEditOrView,
       handleEdit,
-      isSignedIn,
       isWithAuth,
+      isPublicAndAdmin,
       handleLogin,
+      authAction,
+      screenState,
       isMyAppOrPreview,
       handlePublish,
       handleUnpublish,

@@ -11,18 +11,19 @@ export function GitLab<P extends GitLabProfile>(
     name: 'GitLab',
     type: 'oauth',
     authorization: {
-      url: `${host}/oauth/authorize`,
       params: { scope: 'read_user' },
     },
     token: `${host}/oauth/token`,
     userinfo: `${host}/api/v4/user`,
+    wellKnown: `${host}/.well-known/openid-configuration`,
+    idToken: true,
     checks: ['pkce', 'state'],
     profile(profile) {
       return {
-        id: profile.id.toString(),
-        name: profile.name ?? profile.username,
-        email: profile.email,
-        image: profile.avatar_url,
+        id: profile?.sub ?? profile?.email,
+        name: profile?.name ?? profile?.username,
+        email: profile?.email,
+        image: profile?.avatar_url,
       };
     },
     style: {

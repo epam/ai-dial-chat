@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
 
-import { GetServerSideProps } from 'next';
-import { getServerSession } from 'next-auth/next';
 import { useRouter } from 'next/router';
 
 import { decodeToolsetRedirectState } from '@/src/utils/app/toolsets';
-import { isServerSessionValid } from '@/src/utils/auth/session';
+import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import {
   ToolsetCredentialsLevel,
@@ -15,13 +13,11 @@ import {
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
-export default function ToolsetSignin() {
+function ToolsetSignin() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -38,9 +34,23 @@ export default function ToolsetSignin() {
       window.location.assign(window.location.origin);
       return;
     }
+
+    let callbackUrl = '/';
+    try {
+      const url = new URL(
+        parsedState.callbackUrl ?? '',
+        window.location.origin,
+      );
+      if (url.origin === window.location.origin) {
+        callbackUrl = url.href;
+      }
+    } catch {
+      console.error('Invalid callback url');
+    }
+
     if (!code || !parsedState.toolsetId) {
       console.error('Toolset signin failed');
-      window.location.assign(window.location.origin);
+      window.location.assign(callbackUrl);
       return;
     }
 
@@ -50,8 +60,9 @@ export default function ToolsetSignin() {
         authLevel:
           parsedState.credentialsLevel ?? ToolsetCredentialsLevel.GLOBAL,
         authType: ToolsetAuthTypes.OAUTH,
-        callbackUrl: parsedState.callbackUrl,
+        callbackUrl,
         code: code.toString(),
+        isAdmin: parsedState.isAdmin,
       }),
     );
   }, [dispatch, router]);
@@ -63,21 +74,6 @@ export default function ToolsetSignin() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getServerSession(req, res, authOptions);
+export default ToolsetSignin;
 
-  if (!isServerSessionValid(session, true)) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: '/signin',
-      },
-    };
-  }
-
-  return {
-    props: {
-      isSessionValid: false,
-    },
-  };
-};
+export const getServerSideProps = getCommonPageProps;

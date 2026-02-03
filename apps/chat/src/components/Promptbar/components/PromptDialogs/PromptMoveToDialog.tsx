@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -16,11 +16,17 @@ import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
+import { PromptInfo } from '@epam/ai-dial-shared';
 
-const PromptMoveToDialogComponent = () => {
+interface PromptMoveToDialogProps {
+  moveToPromptId: string;
+}
+
+const PromptMoveToDialogComponent: FC<PromptMoveToDialogProps> = ({
+  moveToPromptId,
+}) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
@@ -31,9 +37,10 @@ const PromptMoveToDialogComponent = () => {
   );
 
   const collapsedSections = useAppSelector(collapsedSectionsSelector);
-  const moveToPrompt = useAppSelector(
-    PromptsSelectors.selectMoveToPrompt,
-  ) as ShareEntity;
+  const moveToPrompt = useAppSelector((state) =>
+    PromptsSelectors.selectPrompt(state, moveToPromptId),
+  ) as PromptInfo;
+
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const handleMoveToFolder = useCallback(
@@ -85,14 +92,14 @@ const PromptMoveToDialogComponent = () => {
         }),
       );
       dispatch(UIActions.setScrollToEntityId(regeneratedPromptId));
-      dispatch(PromptsActions.setMoveToPrompt());
+      dispatch(PromptsActions.setMoveToPromptId());
     },
 
     [allPrompts, collapsedSections, dispatch, moveToPrompt, t],
   );
 
   const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setMoveToPrompt());
+    dispatch(PromptsActions.setMoveToPromptId());
   }, [dispatch]);
 
   return (
@@ -105,6 +112,7 @@ const PromptMoveToDialogComponent = () => {
   );
 };
 
-export const PromptMoveToDialog = withRenderWhen(
-  PromptsSelectors.selectMoveToPrompt,
-)(PromptMoveToDialogComponent);
+export const PromptMoveToDialog =
+  withRenderWhenEntities<PromptMoveToDialogProps>({
+    moveToPromptId: PromptsSelectors.selectMoveToPromptId,
+  })(PromptMoveToDialogComponent);

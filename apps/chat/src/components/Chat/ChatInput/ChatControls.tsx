@@ -18,6 +18,7 @@ import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageBu
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import RefreshCW from '@/public/images/icons/refresh-cw.svg';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showReplayControls: boolean;
@@ -76,28 +77,29 @@ export const ChatControls: FC<Props> = ({
   const Icon = isError ? RefreshCW : IconPlayerPlay;
 
   return (
-    <button
+    <DialButton
       className={classNames(
-        'absolute top-[calc(50%_-_12px)]',
-        isOverlay ? 'right-3' : 'right-4',
+        'absolute',
+        isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
       )}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
       data-replay-variables
-    >
-      <Tooltip
-        tooltip={isError ? t('Try again') : t('Continue replay')}
-        isTriggerClickable
-      >
-        <Icon
-          height={24}
-          width={24}
-          className={classNames(
-            'shrink-0 hover:text-accent-primary',
-            isError ? 'text-error' : 'text-secondary',
-          )}
-        />
-      </Tooltip>
-    </button>
+      iconBefore={
+        <Tooltip
+          tooltip={isError ? t('Try again') : t('Continue replay')}
+          isTriggerClickable
+        >
+          <Icon
+            height={24}
+            width={24}
+            className={classNames(
+              'shrink-0 hover:text-accent-primary',
+              isError ? 'text-error' : 'text-secondary',
+            )}
+          />
+        </Tooltip>
+      }
+    />
   );
 };

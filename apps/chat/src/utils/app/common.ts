@@ -12,6 +12,7 @@ import {
 } from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
+import { ApiKeys } from '@/src/types/common';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -219,12 +220,15 @@ export const isVersionExists = (
 ) => {
   const { apiKey, parentPath, name: oldName } = splitEntityId(entityId);
   const modelName = oldName.split(pathKeySeparator)[0];
-  const newEntityId = constructPath(
-    apiKey,
-    rootFolder,
-    parentPath,
-    `${modelName}${pathKeySeparator}${newName}`,
-  );
+
+  let newApiKey: string;
+  if (apiKey === ApiKeys.Conversations) {
+    newApiKey = `${modelName}${pathKeySeparator}${newName}`;
+  } else {
+    newApiKey = newName;
+  }
+
+  const newEntityId = constructPath(apiKey, rootFolder, parentPath, newApiKey);
   const allVersions = publicVersionGroups[newEntityId]?.allVersions;
 
   return allVersions?.some(
@@ -373,4 +377,14 @@ export const getEntityBaseId = (id: string): string => {
     return id;
   }
   return id.substring(0, lastColonIndex);
+};
+
+export const getSafeRedirectUrl = (url: string) => {
+  try {
+    const safeUrl = new URL(url, window.location.origin);
+    if (window.location.origin === safeUrl.origin) return safeUrl;
+  } catch {
+    console.error('Invalid url');
+  }
+  return undefined;
 };

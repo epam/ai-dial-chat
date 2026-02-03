@@ -33,8 +33,6 @@ export const ExpectedMessages = {
   tooManyNestedFolders: "It's not allowed to have more nested folders",
   defaultTalkToIsValid: 'Default Talk to is GPT-3.5',
   talkToEntityIsSelected: 'Talk to entity is selected',
-  defaultAssistantModelIsValid: 'Default Assistant model to is GPT-4',
-  assistantModelsValid: 'Assistant models are valid',
   modelSelectorNotVisible: 'Model selector is not visible',
   defaultSystemPromptIsEmpty: 'Default System Prompt is empty',
   systemPromptValid: 'System Prompt is valid',
@@ -109,8 +107,6 @@ export const ExpectedMessages = {
   chatInfoAppIsValid: 'Chat info application is valid',
   chatInfoAppIconIsValid: 'Chat info application icon is valid',
   chatInfoAssistantIsValid: 'Chat info assistant is valid',
-  chatInfoAssistantModelIsValid: 'Chat info assistant model is valid',
-  chatInfoAssistantModelIconIsValid: 'Chat info assistant model icon is valid',
   chatInfoAssistantIconIsValid: 'Chat info assistant icon is valid',
   chatInfoTemperatureIsValid: 'Chat info temperature is valid',
   chatInfoPromptIsValid: 'Chat info prompt is valid',
@@ -132,8 +128,6 @@ export const ExpectedMessages = {
   requestModeIdIsValid: 'Request modelId is valid in API request',
   requestPromptIsValid: 'Request prompt is valid in API request',
   requestTempIsValid: 'Request temperature is valid in API request',
-  requestAssistantModelIdIsValid:
-    'Request assistant modelId is valid in API request',
   requestCustomContentIsValid: 'Request custom content is valid in API request',
   regenerateNotAvailable: 'Regenerate button is not available',
   regenerateIsAvailable: 'Regenerate button is available',
@@ -254,8 +248,8 @@ export const ExpectedMessages = {
   folderIsHighlighted: 'Folder is highlighted',
   entitiesCountIsValid: 'Number of entities returned in API response is valid',
   modelIsAvailable: 'Model is returned in API response',
-  responseCodeIsValid: 'Response code is valid for model: ',
-  responseTextIsValid: 'Response text is valid for model: ',
+  responseCodeIsValid: 'Response code is valid for entity: ',
+  responseTextIsValid: 'Response text is valid for entity: ',
   imageUrlReturnedInResponse:
     'Image url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
@@ -408,9 +402,10 @@ export const ExpectedMessages = {
   attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
   navigationPanelShouldBeVisible: 'Navigation panel should be visible',
   navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
-  defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
-  defaultAppNameShouldBeFilled:
-    'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+  defaultEntityVersionShouldBeFilled:
+    'Default entity version should be pre-filled',
+  defaultEntityNameShouldBeFilled:
+    'Default entity name should be pre-filled and match pattern "Untitled app/toolset <number>"',
   releaseDateIsValid: 'Release date is valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
@@ -426,6 +421,39 @@ export const ExpectedMessages = {
     "Request can't be approved as some conversations have no messages",
   shareLinkIsUpdated: 'Share link is updated',
   valueIsDefined: 'Values is defined',
+  apiItemReceived: (statusCode: number, body: string) =>
+    `Received response code: ${statusCode} with body: ${body}`,
+  apiItemCreated: (body: string) => `Item created with data: ${body}`,
+  apiItemDeleted: (id: string) => `Item with id: ${id} was deleted`,
+  folderVisibleInReplaceDialog: (folderName: string) =>
+    `Folder "${folderName}" should be visible in replace confirmation dialog`,
+  folderNotVisibleInReplaceDialog: (folderName: string) =>
+    `Folder "${folderName}" should not be visible in replace confirmation dialog`,
+  conversationVisibleInReplaceDialog: (conversationName: string) =>
+    `Conversation "${conversationName}" should be visible in replace confirmation dialog`,
+  conversationNotVisibleInReplaceDialog: (conversationName: string) =>
+    `Conversation "${conversationName}" should not be visible in replace confirmation dialog`,
+  folderExpandedInReplaceDialog: (folderName: string) =>
+    `Folder "${folderName}" should be expanded (arrow icon rotated)`,
+  allItemsOptionIsValid: (expectedOption: string) =>
+    `"All items" dropdown should show "${expectedOption}" option`,
+  conversationOptionIsValid: (
+    conversationName: string,
+    expectedOption: string,
+  ) =>
+    `Conversation "${conversationName}" dropdown should show "${expectedOption}" option`,
+  conversationsImportedSuccessfully: 'Conversation(s) imported successfully',
+  mixedImportOption: 'Mixed',
+  replacedConversationHasOriginalMessages:
+    'Replaced conversation should have original messages only',
+  updatedConversationHasOriginalAndNewMessages:
+    'Updated conversation should have original and new messages',
+  postfixedConversationHasImportedMessages:
+    'Postfixed conversation should have imported (original) messages only',
+  popupHeaderIsValid: 'Popup header is valid',
+  popupContentIsValid: 'Popup content is valid',
+  gridRowIsVisible: 'Grid row is visible',
+  gridRowIsNotVisible: 'Grid row is not visible',
 };
 
 export const PublishingExpectedMessages = {
@@ -440,6 +468,10 @@ export const PublishingExpectedMessages = {
   publicationTopicsAreValid: 'Publication topics are valid',
   publishedResourceIsAvailable: (resource: string) =>
     `Published resource: ${resource} is available`,
+  publicationRequestCreated: 'Successfully created publication request',
+  unpublishRequestCreated: 'Successfully created unpublish request',
+  publicationRequestApproved: 'Successfully approved publication request',
+  publicationRequestRejected: 'Successfully rejected publication request',
 };
 
 export const MarketplaceExpectedMessages = {

@@ -29,7 +29,7 @@ dialAdminTest(
       folderPrompts,
       folderDropdownMenu,
       promptDropdownMenu,
-      publishingRequestModal,
+      publishingRequestDialog,
       publishingRequestFolderPromptAssertion,
       organizationFolderPrompts,
       adminDialHomePage,
@@ -41,13 +41,15 @@ dialAdminTest(
       adminPublishedPromptPreviewModalAssertion,
       adminPublishedPromptPreviewModalControlsAssertion,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminFolderPromptsToApproveAssertion,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
+      publishingRules,
       adminOrganizationFolderPrompts,
       adminPromptDropdownMenu,
       adminInformationModalAssertion,
       adminOrganizationFolderPromptAssertions,
-      promptToPublishAssertion,
+      publishPromptsTreeAssertion,
       promptBarOrganizationFolderAssertion,
       setTestIds,
       localStorageManager,
@@ -77,6 +79,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const publishToPath = `${PublishPath.Organization}/${folderName}`;
 
     await dialTest.step('Prepare 2 prompts inside folder', async () => {
       folderPrompt = promptData.preparePromptsInFolder(2, folderName);
@@ -94,8 +97,8 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await folderPrompts.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         for (const prompt of folderPrompt.prompts) {
@@ -111,9 +114,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, update Author field and send the request',
       async () => {
-        await publishingRequestModal.author.fillInInput(author);
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.author.fillInInput(author);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -285,35 +288,48 @@ dialAdminTest(
           folderPrompt.prompts[0].name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        //TODO: update the assertion when fixed https://github.com/epam/ai-dial-chat/issues/2064
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: folderPrompt.prompts[0].name },
           {
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await promptToPublishAssertion.assertElementState(
+        await publishPromptsTreeAssertion.assertElementState(
           promptsToPublishTree.promptIcon(folderPrompt.prompts[0].name),
+          'visible',
+        );
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.publishPath,
+          publishToPath,
+        );
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRules.publishingPath,
+          folderName,
+        );
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRules.addRuleButton,
           'visible',
         );
       },
     );
 
     await dialTest.step('Set a request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         firstUnpublishRequestName,
       );
       unpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -352,10 +368,16 @@ dialAdminTest(
           expectedErrorColor,
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: PublishPath.Organization,
+          publishTo: publishToPath,
           requestCreated: unpublishApiModels.response,
           author: unpublishAuthor,
         });
+        await adminPublishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+          noChangesLabel: 'visible',
+        });
+        //TODO: update the assertion when fixed https://github.com/epam/ai-dial-chat/issues/2064
         await adminFolderPromptsToApproveAssertion.assertFolderEntityToPublish(
           { name: folderName },
           { name: folderPrompt.prompts[0].name },
@@ -363,7 +385,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );

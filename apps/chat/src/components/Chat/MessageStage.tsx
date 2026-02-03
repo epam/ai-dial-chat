@@ -7,17 +7,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
-import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { AddonsSelectors } from '@/src/store/selectors';
-
-import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -28,80 +24,53 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import CircleCheck from '@/public/images/icons/circle-check.svg';
 import Download from '@/public/images/icons/download.svg';
 import { Stage } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface StageTitleProps {
   isOpened: boolean;
   stage: Stage;
 }
 
-const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
-  const [addon, setAddon] = useState<DialAIEntityAddon | undefined>();
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-
-  const match = stage.name?.match(/^[^(]*/);
-
-  useEffect(() => {
-    if (match) {
-      setAddon(addonsMap[match[0]]);
-    }
-  }, [addonsMap, match]);
-
-  return (
-    <div className="relative grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden text-ellipsis">
-      {stage.status == null ? (
-        <Spinner size={20} />
-      ) : stage.status === 'completed' ? (
-        <CircleCheck
-          height={20}
-          width={20}
-          className="shrink-0 grow-0 basis-auto text-secondary"
-          data-qa="stage-completed"
-        />
-      ) : (
-        <IconExclamationCircle
-          size={20}
-          className="shrink-0 grow-0 basis-auto text-secondary"
-        />
+const StageTitle = ({ isOpened, stage }: StageTitleProps) => (
+  <div className="relative grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden text-ellipsis">
+    {stage.status == null ? (
+      <Spinner size={20} />
+    ) : stage.status === 'completed' ? (
+      <CircleCheck
+        height={20}
+        width={20}
+        className="shrink-0 grow-0 basis-auto text-secondary"
+        data-qa="stage-completed"
+      />
+    ) : (
+      <IconExclamationCircle
+        size={20}
+        className="shrink-0 grow-0 basis-auto text-secondary"
+      />
+    )}
+    <span
+      className={classNames(
+        'block whitespace-pre text-start',
+        isOpened ? 'max-w-full' : 'truncate',
       )}
-      {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
-      <span
-        className={classNames(
-          'block whitespace-pre text-start',
-          isOpened ? 'max-w-full' : 'truncate',
-        )}
-        data-qa={isOpened ? 'stage-opened' : 'stage-closed'}
-      >
-        {stage.name}
-      </span>
-    </div>
-  );
-};
+      data-qa={isOpened ? 'stage-opened' : 'stage-closed'}
+    >
+      {stage.name}
+    </span>
+  </div>
+);
+
+const getLimitStageContent = () =>
+  parseFloat(process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT ?? '40');
 
 interface Props {
   stage: Stage;
 }
 
-const maxKiloBytes = 40;
-const maxBytes = maxKiloBytes * 1024; // in bytes
-
 const DownloadStageView = ({ content }: { content: string }) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCopied, setIsCopied] = useState(false);
-
-  const copyToClipboard = useCallback(() => {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(content).then(() => {
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    });
-  }, [content]);
+  const { copied: isCopied, onCopy: copyToClipboard } = useCopy(content, true);
 
   const downloadAsFile = useCallback(() => {
     const fileName = `ai-chat-stage-${getDownLoadCurrentDate()}.txt`;
@@ -117,32 +86,35 @@ const DownloadStageView = ({ content }: { content: string }) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, [content]);
+
   return (
     <div className="flex justify-between gap-1 ps-1">
-      {t(`Content is too large to display (exceeds ${maxKiloBytes} KB).`)}
+      {t(
+        `Content is too large to display (exceeds ${getLimitStageContent()} KB).`,
+      )}
       <div className="flex items-center gap-3 text-secondary">
-        <button
-          className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
+        <DialButton
+          className="[&:not(:disabled)]:hover:text-accent-primary"
           onClick={copyToClipboard}
           disabled={isCopied}
-        >
-          {isCopied ? (
-            <Tooltip tooltip={t('Copied!')}>
-              <IconCheck size={18} />
-            </Tooltip>
-          ) : (
-            <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
-              <IconCopy size={18} />
-            </Tooltip>
-          )}
-        </button>
+          iconBefore={
+            isCopied ? (
+              <Tooltip tooltip={t('Copied!')}>
+                <IconCheck size={18} />
+              </Tooltip>
+            ) : (
+              <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
+                <IconCopy size={18} />
+              </Tooltip>
+            )
+          }
+        />
         <Tooltip isTriggerClickable tooltip={t('Download')}>
-          <button
-            className="flex items-center rounded bg-none hover:text-accent-primary"
+          <DialButton
+            className="bg-none hover:text-accent-primary"
             onClick={downloadAsFile}
-          >
-            <Download width={18} height={18} />
-          </button>
+            iconBefore={<Download width={18} height={18} />}
+          />
         </Tooltip>
       </div>
     </div>
@@ -153,7 +125,8 @@ const StageView = ({ content }: { content: string }) => {
   // Calculate byte size of the string
   const size = useMemo(() => new Blob([content]).size, [content]);
 
-  if (size > maxBytes) {
+  // in bytes
+  if (size > getLimitStageContent() * 1024) {
     return <DownloadStageView content={content} />;
   }
   return (

@@ -45,8 +45,11 @@ dialTest(
       'EPMRTC-2973',
       'EPMRTC-4891',
     );
+    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
+      ModelsUtil.getModels().filter(
+        (m) => m.iconUrl !== undefined && !m.id.includes(':'),
+      ),
     )!;
     const expectedModelName = expectedModel.name;
     const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
@@ -142,7 +145,8 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessage,
-    attachFilesModal,
+    fileManagerModalGrid,
+    fileManagerModal,
     chatHeaderAssertion,
     chatMessagesAssertion,
     footerAssertion,
@@ -151,8 +155,11 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2965');
     const attachmentName = Attachment.sunImageName;
+    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => !m.id.includes(':'),
+      ),
     )!;
     const testMessage = 'Test message with attachment';
 
@@ -175,8 +182,10 @@ dialTest(
       await attachmentDropdownMenu.selectMenuOption(
         UploadMenuOptions.attachUploadedFiles,
       );
-      await attachFilesModal.checkAttachedFile(attachmentName);
-      await attachFilesModal.attachFiles();
+      const attachmentCheckbox =
+        await fileManagerModalGrid.gridCheckboxByNameCell(attachmentName);
+      await attachmentCheckbox.click();
+      await fileManagerModal.getAttachButton().click();
       await sendMessage.messageInput.typeInInput(testMessage);
       await dialHomePage.mockChatTextResponse(
         MockedChatApiResponseBodies.simpleTextBody,

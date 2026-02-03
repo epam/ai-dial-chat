@@ -6,6 +6,8 @@ import {
   getApplicationNextStatus,
   getApplicationType,
 } from '@/src/utils/app/application';
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { FeatureType } from '@/src/types/common';
@@ -82,10 +84,10 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
       const link = getApplicationLink(entity);
-      navigator.clipboard.writeText(link);
-      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      writeTextToClipboard(link, () => {
+        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      });
     },
     [dispatch, entity, t],
   );
@@ -112,7 +114,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity,
+          entity: { ...entity, folderId: getFolderIdFromEntityId(entity.id) },
           action: PublishActions.ADD,
         }),
       );
@@ -126,7 +128,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity,
+          entity: { ...entity, folderId: getFolderIdFromEntityId(entity.id) },
           action: PublishActions.DELETE,
         }),
       );

@@ -1,9 +1,10 @@
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
 import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
+import { EntityType, PartialBy, ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import {
   ToolsetCredentialsLevel,
@@ -12,12 +13,14 @@ import {
 } from '@/src/types/toolsets';
 
 import { Routes } from '@/src/constants/routes';
+import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import {
   Toolset,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
+import pickBy from 'lodash-es/pickBy';
 
 export const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
@@ -66,6 +69,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       codeChallenge: data.auth_settings.code_challenge,
       codeChallengeMethod: data.auth_settings.code_challenge_method,
       scopesSupported: data.auth_settings.scopes_supported,
+      tokenEndpoint: data.auth_settings.token_endpoint,
     },
   };
 };
@@ -83,6 +87,8 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         redirect_uri: data.authSettings.redirectUri,
         ...(data.authSettings.clientId && {
           client_id: data.authSettings.clientId,
+        }),
+        ...(data.authSettings.clientSecret && {
           client_secret: data.authSettings.clientSecret,
         }),
         ...(data.authSettings.scopesSupported && {
@@ -94,6 +100,12 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         ...(data.authSettings.authorizationEndpoint && {
           authorization_endpoint: data.authSettings.authorizationEndpoint,
         }),
+        ...(data.authSettings.codeChallenge && {
+          code_challenge: data.authSettings.codeChallenge,
+        }),
+        ...(data.authSettings.codeChallengeMethod && {
+          code_challenge_method: data.authSettings.codeChallengeMethod,
+        }),
       };
     default:
     case ToolsetAuthTypes.NONE:
@@ -104,7 +116,7 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
 };
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
-  endpoint: data.endpoint ?? '',
+  endpoint: data.endpoint?.trim() ?? '',
   transport: data.transport,
   allowed_tools: data.allowedTools,
   display_version: data.version,
@@ -178,12 +190,22 @@ export const decodeToolsetRedirectState = (
 export const getToolsetRedirectUri = () =>
   `${window.location.origin}${Routes.ToolsetSignIn}`;
 
+export const isToolsetWithAuth = (toolset: ToolsetModel) => {
+  return (
+    toolset.authSettings.authenticationType !== ToolsetAuthTypes.NONE &&
+    !(
+      toolset.authSettings.authenticationType === ToolsetAuthTypes.API_KEY &&
+      !toolset.authSettings.apiKeyHeader
+    )
+  );
+};
+
 export const isToolsetSignedIn = (
   toolset: ToolsetModel,
   level = ToolsetCredentialsLevel.GLOBAL,
 ) => {
   return (
-    toolset.authSettings.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
+    toolset.authSettings?.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
   );
 };
 
@@ -197,28 +219,17 @@ export const getToolsetPayload = (
 ): ToolsetModel => {
   const isEndpointChanged = newToolset.endpoint !== oldToolset?.endpoint;
   const authType = newToolset.authSettings.authenticationType;
-  const authSettings = {
+  const authSettings: ToolsetModel['authSettings'] = {
+    authenticationType: authType,
     ...(oldToolset?.authSettings &&
       !isEndpointChanged &&
       oldToolset.authSettings),
-    ...newToolset.authSettings,
+    ...pickBy(newToolset.authSettings, Boolean),
     ...(authType === ToolsetAuthTypes.API_KEY && {
-      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? 'api_key',
+      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? '',
     }),
     ...(authType === ToolsetAuthTypes.OAUTH && {
       redirectUri: getToolsetRedirectUri(),
-    }),
-    ...(newToolset.authSettings.clientId && {
-      clientId: newToolset.authSettings.clientId,
-    }),
-    ...(newToolset.authSettings.clientSecret && {
-      clientSecret: newToolset.authSettings.clientSecret,
-    }),
-    ...(newToolset.authSettings.authorizationEndpoint && {
-      authorizationEndpoint: newToolset.authSettings.authorizationEndpoint,
-    }),
-    ...(newToolset.authSettings.tokenEndpoint && {
-      tokenEndpoint: newToolset.authSettings.tokenEndpoint,
     }),
   };
 
@@ -238,4 +249,34 @@ export const getToolsetPayload = (
     version: newToolset.version,
     authSettings,
   };
+};
+
+export const getToolsetAuthAction = (
+  entity: ToolsetModel,
+  isAdmin?: boolean,
+) => {
+  const isPublic = isMarketplaceEntityPublic(entity);
+  const isSignedInGlobal = isToolsetSignedIn(entity);
+  const isSignedInUser = isToolsetSignedIn(
+    entity,
+    ToolsetCredentialsLevel.USER,
+  );
+
+  if (isPublic && !isAdmin && !isSignedInUser)
+    return ToolsetAuthAction.LoginWithMyCreds;
+  if (!isSignedInGlobal && !isSignedInUser) return ToolsetAuthAction.LogIn;
+
+  return ToolsetAuthAction.LogOut;
+};
+
+export const getToolsetAuthActionLabel = (
+  action: ToolsetAuthAction,
+  screenState?: ScreenState,
+) => {
+  if (
+    action === ToolsetAuthAction.LoginWithMyCreds &&
+    screenState === ScreenState.SM
+  )
+    return 'Log in';
+  return action as string;
 };

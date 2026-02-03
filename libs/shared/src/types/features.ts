@@ -19,6 +19,7 @@ export enum Feature {
 
   // Conversation functions
   Likes = 'likes', // Display likes
+  DislikeComment = 'dislike-comment', // Enable adding comment when disliking a message
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
@@ -66,10 +67,12 @@ export enum Feature {
   // User settings
   HideUserSettings = 'hide-user-settings', // Hide user settings
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
+  HideUserMenu = 'hide-user-menu', // Hide user menu button from top header
 
   // Applications
   CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
   CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
+  CodeInterpreter = 'code-interpreter', // Enable Code Interpreter feature
 
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace

@@ -3,10 +3,18 @@ import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
-import { constructPath, isMyEntity } from '@/src/utils/app/shared-utils';
+import {
+  getIdWithoutRootPathSegments,
+  isConversationId,
+  isFileId,
+} from '@/src/utils/app/id';
+import {
+  constructPath,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { PublicationResource } from '@/src/types/publication';
@@ -19,6 +27,8 @@ import {
 } from '@/src/store/actions';
 import { PublicationSelectors } from '@/src/store/selectors';
 
+import { getFolderIdFromEntityId } from '../folders';
+
 import { Message, PublishActions } from '@epam/ai-dial-shared';
 
 export const getSetUpdatedItemsToApproveAction$ = (
@@ -28,22 +38,21 @@ export const getSetUpdatedItemsToApproveAction$ = (
   publicationUrl: string,
 ) => {
   const selectedItemsToApprove =
-    PublicationSelectors.selectSelectedItemsToApprove(state);
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl);
 
-  const previousSourceUrlsToApprove = oldPublicationResources
-    .filter((resource) => selectedItemsToApprove.includes(resource.reviewUrl))
-    .map((resource) => resource.sourceUrl ?? '');
-  const newSelectedItemsToApprove = newPublicationResources.filter(
-    (resource) =>
-      resource.sourceUrl &&
-      previousSourceUrlsToApprove.includes(resource.sourceUrl),
+  const previousSourceUrlsPublicationItems = oldPublicationResources
+    .filter(({ reviewUrl }) => selectedItemsToApprove.includes(reviewUrl))
+    .map(({ sourceUrl }) => sourceUrl ?? '');
+  const newSelectedPublicationItems = newPublicationResources.filter(
+    ({ sourceUrl }) =>
+      sourceUrl && previousSourceUrlsPublicationItems.includes(sourceUrl),
   );
 
-  if (newSelectedItemsToApprove.length) {
+  if (newSelectedPublicationItems.length) {
     return of(
-      PublicationActions.setItemsToApprove({
+      PublicationActions.setPublicationItems({
         publicationUrl,
-        ids: newSelectedItemsToApprove.map((resource) => resource.reviewUrl),
+        ids: newSelectedPublicationItems.map(({ reviewUrl }) => reviewUrl),
       }),
     );
   }
@@ -108,18 +117,21 @@ export const addMessageAttachmentsToPublication$ = (
   }).pipe(
     map((response) => {
       const newFilesReviewUrls = response.resources
-        .filter((resource) =>
+        .filter(({ sourceUrl }) =>
           messageAttachmentsToAdd.some(
-            (attachment) => attachment.url === resource.sourceUrl,
+            (attachment) => attachment.url === sourceUrl,
           ),
         )
-        .map((resource) => ApiUtils.decodeApiUrl(resource.reviewUrl));
-      const selectedItemsToApprove =
-        PublicationSelectors.selectSelectedItemsToApprove(state);
+        .map(({ reviewUrl }) => ApiUtils.decodeApiUrl(reviewUrl));
+      const selectedPublicationItems =
+        PublicationSelectors.selectSelectedPublicationItems(
+          state,
+          publicationUrl,
+        );
 
       return {
         updatedPublication: response,
-        newItemsToSelect: [...selectedItemsToApprove, ...newFilesReviewUrls],
+        newItemsToSelect: [...selectedPublicationItems, ...newFilesReviewUrls],
       };
     }),
   );
@@ -176,3 +188,52 @@ export const getUpdateApplicationGeneralInfoAction$ = (
     }),
   );
 };
+
+export function getPublicationResourceEntityData<T>(
+  resources: PublicationResource[],
+  uploadedUnpublishIdsSet: Set<string>,
+  publicationUrl: string,
+  extraFields?: (resource: PublicationResource) => Partial<T>,
+): T[] {
+  return resources.map((resource) => {
+    const { reviewUrl, action } = resource;
+
+    const apiKey = splitEntityId(reviewUrl).name;
+    const { name, version, modelInfo } = parseEntityApiKey(apiKey, {
+      parseVersion: !isFileId(reviewUrl),
+      parseModel: isConversationId(reviewUrl),
+    });
+
+    const base = {
+      name,
+      id: reviewUrl,
+      folderId: getFolderIdFromEntityId(reviewUrl),
+      publicationInfo: {
+        version,
+        action,
+        isNotExist:
+          action === PublishActions.DELETE &&
+          !isFileId(reviewUrl) &&
+          !uploadedUnpublishIdsSet.has(reviewUrl),
+        publicationUrl,
+        publishCredentials: resource.publishCredentials,
+      },
+    };
+
+    const extra = extraFields ? extraFields(resource) : {};
+
+    const modelExtra = modelInfo
+      ? {
+          model: modelInfo.model,
+          isPlayback: modelInfo.isPlayback,
+          isReplay: modelInfo.isReplay,
+        }
+      : {};
+
+    return {
+      ...base,
+      ...modelExtra,
+      ...extra,
+    } as T;
+  });
+}

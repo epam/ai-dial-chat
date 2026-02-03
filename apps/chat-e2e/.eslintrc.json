@@ -4,7 +4,13 @@
   "settings": {
     "playwright": {
       "globalAliases": {
-        "test": ["base", "dialTest", "dialSharedWithMeTest", "dialOverlayTest"]
+        "test": [
+          "base",
+          "dialTest",
+          "dialSharedWithMeTest",
+          "dialAdminTest",
+          "dialOverlayTest"
+        ]
       }
     }
   },

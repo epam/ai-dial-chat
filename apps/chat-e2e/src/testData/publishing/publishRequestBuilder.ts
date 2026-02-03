@@ -63,19 +63,17 @@ export class PublishRequestBuilder {
     action: PublishActions,
     entityType: ApiKeys,
     targetResource: string,
-    sourceUrl?: string,
+    sourceUrl: string,
     version?: string,
   ): PublishRequestBuilder {
     const versionSuffix = version
       ? `${ItemUtil.entityIdSeparator}${version}`
       : '';
     const targetUrl = `${entityType}/${this.getPublishRequest().targetFolder}${targetResource}${versionSuffix}`;
-    const resource: PublicationResource = {
+    const resource = {
       action,
       targetUrl,
-      ...(action === 'ADD' || (action === 'ADD_IF_ABSENT' && sourceUrl)
-        ? { sourceUrl }
-        : {}),
+      sourceUrl,
     };
     this.publishRequest.resources.push(resource);
     return this;
@@ -94,7 +92,7 @@ export class PublishRequestBuilder {
       ApiKeys.Conversations,
       targetResource,
       conversation.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -111,7 +109,7 @@ export class PublishRequestBuilder {
       ApiKeys.Conversations,
       targetResource,
       conversation.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -126,7 +124,7 @@ export class PublishRequestBuilder {
       ApiKeys.Prompts,
       targetResource,
       prompt.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -141,7 +139,7 @@ export class PublishRequestBuilder {
       ApiKeys.Prompts,
       targetResource,
       prompt.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -160,14 +158,28 @@ export class PublishRequestBuilder {
   withFileResource(
     attachment: Attachment | string,
     action: PublishActions,
+    //That is not a folder in the Organization structure
+    //but the same folder that conversation belongs to
+    targetFolder?: string,
   ): PublishRequestBuilder {
     const title =
       typeof attachment === 'string'
         ? attachment.substring(attachment.lastIndexOf('/') + 1)
         : attachment.title;
+    const targetResource =
+      targetFolder === undefined
+        ? title
+        : targetFolder.endsWith('/')
+          ? `${targetFolder}${title}`
+          : `${targetFolder}/${title}`;
     const sourceUrl =
-      typeof attachment === 'string' ? attachment : attachment.url;
-    return this.withEntityResource(action, ApiKeys.Files, title, sourceUrl);
+      typeof attachment === 'string' ? attachment : attachment.url!;
+    return this.withEntityResource(
+      action,
+      ApiKeys.Files,
+      targetResource,
+      sourceUrl,
+    );
   }
 
   withRule(rule: PublicationRule): PublishRequestBuilder {

@@ -1,13 +1,15 @@
 import { FormEvent, useCallback, useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { preventEnterDown } from '@/src/utils/app/forms';
 
 import { ScreenState } from '@/src/types/common';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
@@ -17,6 +19,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
+import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -27,14 +30,22 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
 interface GeneralFormProps {
   onNextClick: (e: React.FormEvent<HTMLFormElement>) => void;
+  toolset: ToolsetModel | undefined;
+  isToolsetPublic: boolean;
 }
 
-export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
+export const GeneralForm = ({
+  onNextClick,
+  toolset,
+  isToolsetPublic,
+}: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
   const topics = useAppSelector(SettingsSelectors.selectTopics);
@@ -45,12 +56,10 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
 
   const screenState = useScreenState();
   const isMobileView = screenState === ScreenState.SM;
+  const isEditing = !!toolset;
 
-  const {
-    register,
-    formState: { errors, isValid },
-    control,
-  } = useFormContext<ToolsetEditorForm>();
+  const { register, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
@@ -68,6 +77,8 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
     <form
       onSubmit={onNextClick}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
+      data-qa="entity-general-form"
+      onKeyDown={preventEnterDown}
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field
@@ -76,7 +87,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           mandatory
           placeholder={t('Type name')}
           id="name"
+          disabled={isToolsetPublic}
           error={errors.name?.message}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
         <Field
           {...register('version')}
@@ -85,6 +98,8 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           mandatory
           placeholder={DEFAULT_VERSION}
           id="version"
+          disabled={isToolsetPublic}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
           error={errors.version?.message}
           name="version"
         />
@@ -103,6 +118,8 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               fileManagerModalTitle="Select toolset icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
+              disabled={isToolsetPublic}
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />
@@ -116,6 +133,8 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           rows={3}
           className="resize-none"
           id="description"
+          disabled={isToolsetPublic}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
         <Controller
           name="topics"
@@ -132,6 +151,8 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               isMulti
               isClearable
               menuPlacement={isMobileView ? 'top' : 'auto'}
+              isDisabled={isToolsetPublic}
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />
@@ -139,15 +160,14 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
       <div className="mt-auto flex justify-end gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6">
         <Tooltip
           tooltip={t('Fill in all required fields')}
-          hideTooltip={isValid}
+          hideTooltip={isValid || isEditing}
         >
-          <button
-            className="button button-primary py-2"
+          <DialPrimaryButton
+            data-qa="save-entity-general-info"
             type="submit"
-            disabled={!isValid || isToolsetDetailsLoading}
-          >
-            {t('Next')}
-          </button>
+            disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
+            label={t('Next')}
+          />
         </Tooltip>
       </div>
     </form>

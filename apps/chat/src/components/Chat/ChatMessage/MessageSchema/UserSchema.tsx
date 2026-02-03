@@ -6,16 +6,18 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getConfigurationSchema,
-  getFormButtonType,
   getMessageSchema,
+  getVisibleFormValues,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
+import { FormSchemaPropertyType } from '@/src/types/form-schema';
 import { Translation } from '@/src/types/translation';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
+import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
 
 import {
   DialSchemaProperties,
@@ -24,6 +26,9 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
+const emptyHandler = () => undefined;
 
 interface UserSchemaProps {
   messageIndex: number;
@@ -65,22 +70,17 @@ const UserSchemaView = memo(function UserSchemaView({
     [formValue, onSubmit, schema, setFormValue, setInputValue],
   );
 
-  const userForm = useMemo(() => {
-    if (!formValue || !schema) return [];
-
-    return Object.entries(schema.properties)
-      .map(([key, property]) => ({
-        property: key,
-        description: property.description,
-        options: property.oneOf,
-      }))
-      .filter(
-        ({ options }) =>
-          !!options?.some(
-            (option) => getFormButtonType(option) === FormButtonType.Submit,
+  const schemaPropertiesWithUserResponse = useMemo(
+    () =>
+      getVisibleFormValues(schema, formValue).filter(
+        (property) =>
+          property.type === FormSchemaPropertyType.Checkbox ||
+          property.options.some(
+            (option) => option.buttonType === FormButtonType.Submit,
           ),
-      );
-  }, [formValue, schema]);
+      ),
+    [formValue, schema],
+  );
 
   if (!schema && formValue)
     return <ErrorMessage error={t('Form schema is missing')} />;
@@ -98,9 +98,9 @@ const UserSchemaView = memo(function UserSchemaView({
       />
     );
 
-  return userForm.length ? (
-    <div className="flex flex-col gap-2">
-      {userForm.map((row) => (
+  return schemaPropertiesWithUserResponse ? (
+    <div className="flex flex-col gap-6">
+      {schemaPropertiesWithUserResponse.map((row) => (
         <div key={row.property}>
           {!!row.description && (
             <p className="mb-3 whitespace-pre-line text-base text-primary">
@@ -108,21 +108,36 @@ const UserSchemaView = memo(function UserSchemaView({
             </p>
           )}
 
-          <div className="flex flex-wrap gap-2">
-            {row.options?.map((option) => (
-              <button
-                key={`${option.const}`}
-                className={classNames(
-                  'chat-button',
-                  formValue[row.property] === option.const &&
-                    'button-accent-primary',
-                )}
-                disabled
-              >
-                {option.title}
-              </button>
-            ))}
-          </div>
+          {row.type === FormSchemaPropertyType.Button && (
+            <div className="flex flex-wrap gap-2">
+              {row.options?.map((option) => (
+                <DialButton
+                  key={String(option.value)}
+                  className={classNames(
+                    'chat-button',
+                    option.selected && 'button-accent-primary',
+                  )}
+                  disabled
+                  label={option.label}
+                />
+              ))}
+            </div>
+          )}
+
+          {row.type === FormSchemaPropertyType.Checkbox && (
+            <div className="flex flex-wrap gap-4">
+              {row.options?.map((option) => (
+                <Checkbox
+                  key={String(option.value)}
+                  checked={option.selected}
+                  caption={option.label}
+                  disabled={!option.selected}
+                  readonly={option.selected}
+                  onClick={emptyHandler}
+                />
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </div>

@@ -1,4 +1,3 @@
-import { IconArrowsMinimize } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
@@ -7,30 +6,31 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { fakeCallback } from '@/src/utils/app/common';
 
 import { EntityType } from '@/src/types/common';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { PreviewMode } from '@/src/types/marketplace';
+import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
-import { Tooltip } from '@/src/components/Common/Tooltip';
-import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
+import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
+import { MarketplaceEntityCard } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTiles/MarketplaceEntityCard';
 import { ToolsetDetailsContent } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsContent';
 import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
 interface ToolsetPreviewProps {
-  onClosePreview?: () => void;
   currentToolset?: ToolsetModel;
+  dataQA?: string;
 }
 
 export const ToolsetPreview = ({
-  onClosePreview,
   currentToolset,
+  dataQA,
 }: ToolsetPreviewProps) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Marketplace);
   const { control } = useFormContext<ToolsetEditorForm>();
-  const [isDetailed, setIsDetailed] = useState(false);
+  const [isDetailed, setIsDetailed] = useState(true);
 
   const [
     name,
@@ -55,11 +55,10 @@ export const ToolsetPreview = ({
     ],
   });
 
-  const cardEntity = useMemo(
+  const cardEntity: ToolsetModel = useMemo(
     () => ({
       type: EntityType.Toolset,
       isDefault: false,
-
       name,
       description,
       iconUrl,
@@ -67,7 +66,6 @@ export const ToolsetPreview = ({
       version,
       allowedTools,
       transport,
-
       createdAt: currentToolset?.createdAt,
       updatedAt: currentToolset?.updatedAt,
       owner: currentToolset?.author,
@@ -103,8 +101,18 @@ export const ToolsetPreview = ({
   }, []);
 
   return (
-    <div className="flex h-full flex-col px-5 py-4 xl:p-6">
-      <div className="hidden max-w-full items-center justify-between md:flex xl:justify-end">
+    <div
+      className="flex h-full flex-col px-5 py-4 xl:p-6"
+      data-qa={
+        dataQA === ToolsetEditorSteps.General
+          ? 'entity-preview-general-info-full-container'
+          : 'preview-body'
+      }
+    >
+      <div
+        className="hidden max-w-full items-center justify-between md:flex xl:justify-end"
+        data-qa="preview-toggle-container"
+      >
         <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
           {t('Preview')}
         </span>
@@ -118,20 +126,17 @@ export const ToolsetPreview = ({
             switchOFFText={t('OFF')}
           />
         </div>
-        <button
-          className="hidden pl-3 text-secondary hover:text-accent-primary max-xl:flex"
-          onClick={onClosePreview}
-        >
-          <Tooltip tooltip={t('Hide preview')}>
-            <IconArrowsMinimize size={24} />
-          </Tooltip>
-        </button>
+
+        <PreviewModeButton
+          mode={PreviewMode.closed}
+          className="hidden pl-3 max-xl:flex"
+        />
       </div>
 
       <div className="flex flex-1 items-center justify-center">
         <div
           className="w-full max-w-[700px] xl:max-w-[720px]"
-          data-qa="app-preview-general-info"
+          data-qa="entity-preview-general-info"
         >
           {isDetailed ? (
             <div className="flex w-full flex-col divide-y divide-tertiary rounded bg-layer-3">
@@ -139,7 +144,7 @@ export const ToolsetPreview = ({
               <ToolsetDetailsContent entity={cardEntity} />
             </div>
           ) : (
-            <ApplicationCard
+            <MarketplaceEntityCard
               entity={cardEntity}
               onClick={fakeCallback}
               isPreview

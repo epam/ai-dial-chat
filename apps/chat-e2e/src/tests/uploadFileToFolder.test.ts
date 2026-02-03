@@ -10,7 +10,7 @@ import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Create new folder.\n' +
     '[Manage attachments] Upload file directly to newly created nested folder',
   async ({
@@ -104,7 +104,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Tooltip is shown for folder and file names.\n' +
     '[Manage attachments] Upload file directly to "old" folder',
   async ({

@@ -1,5 +1,6 @@
 import { IconDownload } from '@tabler/icons-react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -21,23 +22,26 @@ import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { BackendResourceTypeName } from '@/src/types/common';
-import { PublicationReviewItem } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/publication';
+import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+} from '@/src/components/Chat/Publish/form';
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
-import { PublishActions } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
-  item: PublicationReviewItem;
+  item: ShareEntity;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
@@ -47,6 +51,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
   const dispatch = useAppDispatch();
 
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const editState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
@@ -54,6 +61,13 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+
+  const publishToUrl = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
+  >({
+    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
+  });
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
@@ -66,11 +80,26 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     setInputVersion(defaultVersion);
   }, [defaultVersion, isEditMode]);
 
+  const publicItemId = useMemo(() => {
+    let itemId = item.id;
+    if (publicationModel) {
+      const parts = item.id.split('/');
+      if (parts.length > 1) {
+        parts[1] = publishToUrl;
+        itemId = parts.join('/');
+      }
+    }
+    return itemId;
+  }, [item.id, publicationModel, publishToUrl]);
+
   useEffect(() => {
-    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
+    if (
+      publicationModel ||
+      (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE)
+    ) {
       const isExistVersion = isVersionExists(
         inputVersion,
-        item.id,
+        publicItemId,
         publicVersionGroups,
         item.name,
       );
@@ -89,7 +118,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     item.id,
     item.name,
     item.publicationInfo?.action,
+    publicItemId,
     publicVersionGroups,
+    publicationModel,
+    publishToUrl,
   ]);
 
   const handleChangeVersion = useCallback(
@@ -107,7 +139,17 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [dispatch, editState?.name, item.id, item.name],
   );
 
-  const publicVersionGroupId = usePublicVersionGroupId(item);
+  const usePublicVersionGroupIdParams = useMemo(
+    () => ({
+      ...item,
+      id: publicItemId,
+    }),
+    [item, publicItemId],
+  );
+
+  const publicVersionGroupId = usePublicVersionGroupId(
+    usePublicVersionGroupIdParams,
+  );
 
   if (isFileId(item.id)) {
     return (
@@ -147,7 +189,14 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         <EditableField
           value={inputVersion}
           isEditMode={
-            isDeleteAction || isToolsetId(item.id) ? false : isEditMode
+            publicationModel &&
+            !isToolsetId(publicationModel.entity.id) &&
+            !isApplicationId(publicationModel.entity.id) &&
+            publicationModel.action !== PublishActions.DELETE
+              ? true
+              : isDeleteAction || isToolsetId(item.id)
+                ? false
+                : isEditMode
           }
           onChange={handleChangeVersion}
           inputClassName={classNames(
@@ -155,9 +204,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             (errors.length || inputVersion === NA_VERSION) && '!border-b-error',
             errors.length && 'pl-5',
           )}
-          placeholder="0.0.1"
+          placeholder={DEFAULT_VERSION}
           errors={errors}
           tooltipIconClassName="ml-1"
+          dataQA="version"
         />
       </span>
     </div>
@@ -167,9 +217,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 interface PublicationRowProps {
   level: number;
   Icon: ReactNode;
-  item: PublicationReviewItem;
+  item: ShareEntity;
   dataQa: string;
   itemTypeName: BackendResourceTypeName;
+  publicationUrl: string;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -178,26 +229,30 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   item,
   dataQa,
   itemTypeName,
+  publicationUrl,
 }) => {
   const dispatch = useAppDispatch();
 
-  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
   );
+  const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
-  const selectedPublicationResources = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToApprove,
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
+  );
+  const selectedCredentialsItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedCredentialsItems(state, publicationUrl),
   );
   const editState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
   );
 
   const isSelected = useMemo(
-    () => selectedPublicationResources.includes(item.id),
-    [item.id, selectedPublicationResources],
+    () => selectedPublicationItems.includes(item.id),
+    [item.id, selectedPublicationItems],
   );
 
   const [inputName, setInputName] = useState(item.name);
@@ -237,29 +292,44 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
           name,
-          version:
-            entityEditState?.version ??
-            item.publicationInfo?.version ??
-            NA_VERSION,
+          version: entityEditState?.version ?? NA_VERSION,
         }),
       );
     },
-    [
-      dispatch,
-      entityEditState?.version,
-      item.id,
-      item.publicationInfo?.version,
-    ],
+    [dispatch, entityEditState?.version, item.id],
   );
 
   const handleSelect = useCallback(() => {
     dispatch(
-      PublicationActions.selectItemsToApprove({
-        publicationUrl: selectedPublication?.url ?? '',
+      PublicationActions.selectPublicationItems({
+        publicationUrl,
         ids: [item.id],
       }),
     );
-  }, [dispatch, item.id, selectedPublication?.url]);
+
+    if (isToolsetId(item.id) && item.publicationInfo?.publishCredentials) {
+      if (
+        (!selectedCredentialsItems.includes(item.id) &&
+          !selectedPublicationItems.includes(item.id)) ||
+        (selectedCredentialsItems.includes(item.id) &&
+          selectedPublicationItems.includes(item.id))
+      ) {
+        dispatch(
+          PublicationActions.selectCredentialsItems({
+            publicationUrl,
+            ids: [item.id],
+          }),
+        );
+      }
+    }
+  }, [
+    dispatch,
+    item.id,
+    item.publicationInfo?.publishCredentials,
+    selectedCredentialsItems,
+    publicationUrl,
+    selectedPublicationItems,
+  ]);
 
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
@@ -271,6 +341,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       )}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
+      data-qa={'entity-publication-row'}
     >
       <span
         className="relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center gap-2 truncate rounded px-4"
@@ -288,7 +359,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <EditableField
           value={inputName}
           isEditMode={
-            isDeleteAction || isToolsetId(item.id) ? false : isEditMode
+            isDeleteAction || isToolsetId(item.id) || publicationModel
+              ? false
+              : isEditMode
           }
           onChange={handleChangeName}
           inputClassName={classNames('w-full', errors.length && 'pr-5')}
@@ -299,6 +372,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           )}
           tooltipIconClassName="right-5"
           errors={errors}
+          dataQA="entity-input"
         />
       </span>
       <PublicationVersionInfo item={item} />

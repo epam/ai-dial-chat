@@ -41,6 +41,12 @@ import { Modal } from '@/src/components/Common/Modal';
 
 import { SelectFolderModal } from './SelectFolderModal';
 
+import {
+  DialButton,
+  DialLinkButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
+
 interface Props {
   isOpen: boolean;
   initialFilesSelect?: boolean;
@@ -341,7 +347,7 @@ export const PreUploadDialog = ({
               <span className="text-xs text-secondary">{t('Upload to')}</span>
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
-            <button
+            <div
               className="flex grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="change-path-container"
             >
@@ -353,14 +359,13 @@ export const PreUploadDialog = ({
                       folderPath ?? rootFolderName,
                     )}
               </span>
-              <span
-                className="cursor-pointer text-accent-primary"
+              <DialLinkButton
+                className="px-0"
                 onClick={handleFolderChange}
                 data-qa="change-button"
-              >
-                {t('Change')}
-              </span>
-            </button>
+                label={t('Change')}
+              />
+            </div>
           </div>
 
           {selectedFiles.length !== 0 && (
@@ -396,15 +401,13 @@ export const PreUploadDialog = ({
                       </span>
                     </div>
 
-                    <button
+                    {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
+                    <DialButton
                       onClick={handleUnselectFile(index)}
-                      data-qa="delete-file"
-                    >
-                      <IconTrashX
-                        size={24}
-                        className="shrink-0 text-secondary hover:text-accent-primary"
-                      />
-                    </button>
+                      aria-label="remove-file"
+                      className="text-secondary hover:text-accent-primary"
+                      iconBefore={<IconTrashX />}
+                    />
                   </div>
                 ))}
               </div>
@@ -429,14 +432,14 @@ export const PreUploadDialog = ({
           />
         </label>
 
-        <button
-          className="button button-primary"
+        <DialPrimaryButton
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
           data-qa="upload"
-        >
-          {customUploadButtonLabel ? customUploadButtonLabel : t('Upload')}
-        </button>
+          label={
+            customUploadButtonLabel ? customUploadButtonLabel : t('Upload')
+          }
+        />
       </div>
 
       <SelectFolderModal

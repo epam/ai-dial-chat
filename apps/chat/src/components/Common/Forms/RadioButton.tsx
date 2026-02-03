@@ -1,65 +1,78 @@
 import { IconCircle } from '@tabler/icons-react';
-import { InputHTMLAttributes, useId } from 'react';
+import React, { InputHTMLAttributes, useId } from 'react';
 
 import classNames from 'classnames';
+
+import { Tooltip } from '../Tooltip';
 
 import IconCircleChecked from '@/public/images/icons/radio-checked.svg';
 
 interface RadioButtonProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  caption?: string;
+  caption?: React.ReactNode;
   className?: string;
+  tooltip?: string;
 }
+
+const iconSize = 18;
 
 export const RadioButton = ({
   caption,
   checked,
   className,
+  tooltip,
   ...rest
 }: RadioButtonProps) => {
   const generatedId = useId();
   const id = rest.id ?? generatedId;
 
   return (
-    <label
-      htmlFor={id}
-      className={classNames(
-        'group flex select-none items-center justify-start gap-2',
-        {
-          'cursor-pointer': !checked && !rest.disabled,
-        },
-        className,
-      )}
-    >
-      <input
-        id={id}
-        type="radio"
-        {...rest}
-        checked={checked}
-        className="peer sr-only"
-      />
-
-      <span className="hidden peer-checked:block">
-        <IconCircleChecked
-          width={17}
-          height={17}
-          className="text-accent-primary"
+    <Tooltip tooltip={tooltip} triggerClassName="w-fit">
+      <label
+        id="auth-login-option"
+        htmlFor={id}
+        className={classNames(
+          'group flex select-none items-center justify-start gap-2',
+          {
+            'cursor-pointer': !checked && !rest.disabled,
+          },
+          className,
+        )}
+      >
+        <input
+          id={id}
+          type="radio"
+          {...rest}
+          checked={checked}
+          className="peer sr-only"
         />
-      </span>
-      <span className="block peer-checked:hidden">
-        <IconCircle size={18} className="text-secondary" strokeWidth={1} />
-      </span>
 
-      {!!caption && (
-        <span
-          className={classNames(
-            'text-sm',
-            rest.disabled ? 'text-secondary' : 'text-primary',
-          )}
-        >
-          {caption}
+        <span className="hidden peer-checked:block">
+          <IconCircleChecked
+            width={iconSize}
+            height={iconSize}
+            className="text-accent-primary"
+          />
         </span>
-      )}
-    </label>
+        <span className="block peer-checked:hidden">
+          <IconCircle
+            size={iconSize}
+            className="text-secondary"
+            strokeWidth={1}
+          />
+        </span>
+
+        {!!caption && (
+          <span
+            className={classNames(
+              'text-sm',
+              rest.disabled ? 'text-secondary' : 'text-primary',
+            )}
+          >
+            {caption}
+          </span>
+        )}
+      </label>
+    </Tooltip>
   );
 };

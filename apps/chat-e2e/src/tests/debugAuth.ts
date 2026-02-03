@@ -13,34 +13,46 @@ if (process.env.E2E_ADMIN) {
   usernames.push(process.env.E2E_ADMIN);
 }
 
-// Generate authentication tests for each user
-usernames.forEach((username, index) => {
-  test(`Debug authenticate user: ${username}`, async ({ request }) => {
-    const baseUrl = config.use?.baseURL || 'http://localhost:3000';
-    const debugAuth = new DebugAuth(request, baseUrl);
+// Authenticate all users in parallel
+test('Debug authenticate all users in parallel', async () => {
+  const baseUrl = config.use?.baseURL || 'http://localhost:3000';
 
-    try {
-      const authData = await debugAuth.authenticateAndSaveState(
-        username,
-        process.env.E2E_PASSWORD!,
-        stateFilePath(index),
-      );
+  // Prepare user credentials for parallel authentication
+  const userCredentials = usernames.map((username, index) => ({
+    username,
+    password: process.env.E2E_PASSWORD!,
+    statePath: stateFilePath(index),
+    index,
+  }));
+
+  try {
+    // Authenticate all users in parallel
+    const results = await DebugAuth.authenticateAllUsersInParallel(
+      userCredentials,
+      baseUrl,
+    );
+
+    // Process results and set environment variables
+    results.forEach(({ index, authTokens }) => {
+      const username = usernames[index];
+      // eslint-disable-next-line no-console
+      console.log(`Debug authentication was successful for: ${username}`);
 
       // Store bucket and related data in environment variables
       process.env[`BUCKET${index}`] =
-        authData.bucketJson ?? JSON.stringify({ bucket: authData.bucket });
+        authTokens.bucketJson ?? JSON.stringify({ bucket: authTokens.bucket });
 
       // Store additional data for first worker only
       if (index < numWorkers) {
-        process.env.MODELS = authData.models ?? '[]';
-        process.env.ADDONS = authData.addons ?? '[]';
-        process.env.THEMES = authData.themes ?? '[]';
-        process.env.RECENT_ADDONS = authData.recentAddons ?? '[]';
-        process.env.RECENT_MODELS = authData.recentModels ?? '[]';
+        process.env.MODELS = authTokens.models ?? '[]';
+        process.env.THEMES = authTokens.themes ?? '[]';
+        process.env.APP_SCHEMAS = authTokens.appSchemas ?? '[]';
+        process.env.RECENT_MODELS = authTokens.recentModels ?? '[]';
       }
-    } catch (error) {
-      console.error(`Debug authentication failed for user ${username}:`, error);
-      throw error;
-    }
-  });
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Parallel authentication failed:', error);
+    throw error;
+  }
 });

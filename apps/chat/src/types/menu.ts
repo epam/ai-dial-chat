@@ -1,6 +1,6 @@
 import { Placement } from '@floating-ui/react';
 import { Icon } from '@tabler/icons-react';
-import { FC, MouseEventHandler, ReactNode } from 'react';
+import { FC, JSX, MouseEventHandler, ReactNode } from 'react';
 
 import { ApplicationType } from './applications';
 import { FeatureType } from './common';

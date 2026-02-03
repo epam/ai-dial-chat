@@ -30,12 +30,18 @@ export const ReviewExternalAppSection = ({
 
   return (
     <div className="flex gap-4">
-      <span className="w-[122px] text-secondary">{t('External URL:')}</span>
+      <span
+        className="w-[122px] text-secondary"
+        data-qa="app-external-url-label"
+      >
+        {t('External URL:')}
+      </span>
       <Link
         href={externalUrl ?? ''}
         target="_blank"
         rel="noopener noreferrer"
         className="flex max-w-[414px] flex-nowrap items-center gap-1 break-all text-accent-primary"
+        data-qa="app-external-url"
       >
         {externalUrl} <IconExternalLink size={16}></IconExternalLink>
       </Link>

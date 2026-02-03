@@ -1,4 +1,4 @@
-import { RefObject } from 'react';
+import { KeyboardEvent, RefObject } from 'react';
 import {
   FieldErrors,
   FieldValues,
@@ -25,13 +25,14 @@ import { doesHaveNotAllowedSymbols } from './file';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
-  inputsRefs: RefObject<InputElement>[],
+  inputsRefs: RefObject<InputElement | null>[],
 ): boolean => {
   let isValid = true;
   let focusableElement: InputElement | null = null;
 
-  for (const { current } of inputsRefs) {
-    if (!current) return false;
+  for (const ref of inputsRefs) {
+    if (!ref || !ref.current) return false;
+    const current = ref.current;
 
     const isEmpty =
       !current.value ||
@@ -195,4 +196,11 @@ export const getVersionValidationErrors = (
   }
 
   return errors;
+};
+
+export const preventEnterDown = (e: KeyboardEvent<HTMLFormElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 };

@@ -2,12 +2,18 @@ import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import { getToolsetLink } from '@/src/utils/marketplace';
+
 import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import {
   MarketplaceActions,
   PublicationActions,
   ToolsetActions,
+  UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
@@ -15,10 +21,12 @@ import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
+import { useTranslation } from './useTranslation';
+
 import { PublishActions } from '@epam/ai-dial-shared';
 
 export const useToolsetMenuActions = (toolset: ToolsetModel) => {
-  // const { t } = useTranslation(Translation.Marketplace);
+  const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
 
@@ -41,15 +49,17 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     // dispatch(ShareActions.setUnshareEntity(entity));
   }, []);
 
-  const handleCopy = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // TODO: Implement toolset copying
-    // if (!navigator.clipboard) return;
-    // const link = getApplicationLink(entity);
-    // navigator.clipboard.writeText(link);
-    // dispatch(UIActions.showSuccessToast(t('Link copied!')));
-  }, []);
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const link = getToolsetLink(toolset);
+      writeTextToClipboard(link, () => {
+        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      });
+    },
+    [dispatch, t, toolset],
+  );
 
   const handleEdit = useCallback(
     (e: React.MouseEvent) => {
@@ -61,6 +71,8 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         query: {
           [ToolsetEditorQuery.Id]: toolset.reference,
           [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
+          [ToolsetEditorQuery.ReturnUrl]:
+            window.location.pathname + window.location.search,
         },
       });
     },
@@ -75,6 +87,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         PublicationActions.setPublishModel({
           entity: toolset,
           action: PublishActions.ADD,
+          publishCredentials: isToolsetSignedIn(toolset),
         }),
       );
     },

@@ -20,6 +20,7 @@ import {
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { BackendChatEntity, FeatureType, MoveModel } from '@/src/types/common';
+import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
@@ -37,6 +38,7 @@ import {
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
@@ -396,6 +398,37 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
 
+  copyFiles(
+    _data: {
+      files: DialCopiedItem[];
+    },
+    _options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    throw new Error('BrowserStorage.copyFiles not implemented');
+  }
+
+  moveFiles(
+    _data: {
+      files: DialCopiedItem[];
+    },
+    _options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    throw new Error('BrowserStorage.moveFiles not implemented');
+  }
+
+  deleteFiles(_data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationsResult<string>> {
+    throw new Error('BrowserStorage.deleteFiles not implemented');
+  }
+
+  uploadArchive(_data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    throw new Error('BrowserStorage.uploadArchive not implemented');
+  }
+
   createApplication(
     _application: CustomApplicationModel,
   ): Observable<ApplicationInfo> {
@@ -409,6 +442,12 @@ export class BrowserStorage implements DialStorage {
   getApplication(
     _applicationId: string,
   ): Observable<CustomApplicationModel | null> {
+    throw new Error('Method not implemented.');
+  }
+  getApplications(
+    _path: string,
+    _recursive: boolean,
+  ): Observable<ApplicationInfo[]> {
     throw new Error('Method not implemented.');
   }
   deleteApplication(_applicationId: string): Observable<void> {
@@ -449,6 +488,9 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   getToolsetById(_id: string): Observable<ToolsetModel | null> {
+    throw new Error('Method not implemented.');
+  }
+  getToolsetsByPath(_path: string): Observable<ToolsetInfo[]> {
     throw new Error('Method not implemented.');
   }
   deleteToolset(_id: string): Observable<void> {

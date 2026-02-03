@@ -108,6 +108,8 @@ export const filterIdsByFeatureType = (
     return ids.filter(isApplicationId);
   } else if (featureType === FeatureType.File) {
     return ids.filter(isFileId);
+  } else if (featureType === FeatureType.Toolset) {
+    return ids.filter(isToolsetId);
   }
 
   return [];
@@ -138,4 +140,19 @@ export const getEntityNameFromId = (
   }
 
   return name;
+};
+
+export const transformIdToRootEntityId = (id: string) => {
+  const { apiKey, name: entityName } = splitEntityId(id);
+
+  return constructPath(
+    getRootId({ featureType: EnumMapper.getFeatureTypeByApiKey(apiKey), id }),
+    entityName,
+  );
+};
+
+export const replaceIdWithBucket = (id: string, bucket: string) => {
+  const splittedId = id.split('/');
+  splittedId[1] = bucket;
+  return splittedId.join('/');
 };

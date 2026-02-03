@@ -1,17 +1,16 @@
-import { IconPointFilled } from '@tabler/icons-react';
-
-import classNames from 'classnames';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { Badge } from '@/src/components/Badge';
 
 interface FunctionStatusIndicatorProps {
   entity: DialAIEntityModel;
 }
 
-const getFunctionTooltip = (entity: DialAIEntityModel) => {
+const getLabel = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
@@ -19,6 +18,7 @@ const getFunctionTooltip = (entity: DialAIEntityModel) => {
     case ApplicationStatus.DEPLOYED:
       return 'Deployed';
     case ApplicationStatus.DEPLOYING:
+    case ApplicationStatus.REDEPLOYING:
       return 'Deploying';
     case ApplicationStatus.UNDEPLOYING:
       return 'Undeploying';
@@ -27,24 +27,31 @@ const getFunctionTooltip = (entity: DialAIEntityModel) => {
   }
 };
 
+const getBadgeType = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.UNDEPLOYED:
+    case ApplicationStatus.FAILED:
+      return 'error';
+    case ApplicationStatus.DEPLOYING:
+    case ApplicationStatus.UNDEPLOYING:
+    case ApplicationStatus.REDEPLOYING:
+      return 'warning';
+    case ApplicationStatus.DEPLOYED:
+    default:
+      return 'success';
+  }
+};
+
 export const FunctionStatusIndicator = ({
   entity,
-}: FunctionStatusIndicatorProps) =>
-  entity.functionStatus ? (
-    <Tooltip tooltip={getFunctionTooltip(entity)} isTriggerClickable>
-      <IconPointFilled
-        size={20}
-        className={classNames({
-          ['text-accent-secondary']:
-            entity.functionStatus === ApplicationStatus.DEPLOYED,
-          ['text-error']:
-            entity.functionStatus === ApplicationStatus.UNDEPLOYED ||
-            entity.functionStatus === ApplicationStatus.FAILED,
-          ['animate-pulse text-warning']:
-            entity.functionStatus === ApplicationStatus.UNDEPLOYING ||
-            entity.functionStatus === ApplicationStatus.DEPLOYING ||
-            entity.functionStatus === ApplicationStatus.REDEPLOYING,
-        })}
-      />
-    </Tooltip>
+}: FunctionStatusIndicatorProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  return entity.functionStatus ? (
+    <Badge
+      label={t(getLabel(entity))}
+      type={getBadgeType(entity)}
+      className="shrink-0"
+    />
   ) : null;
+};

@@ -59,8 +59,10 @@ import {
   Feature,
   Message,
   MessageFormValue,
+  Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -135,6 +137,9 @@ export const UserMessage = memo(function UserMessage({
       state,
       conversation.id,
     ),
+  );
+  const isExternalChat = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -355,14 +360,16 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
+
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+      if (!isTyping && allowEnterClick(e)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, messageContent],
+    [allowEnterClick, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleUnselectFile = useCallback(
@@ -417,6 +424,22 @@ export const UserMessage = memo(function UserMessage({
     },
     [isEditingTemplates, onToggleEditingTemplates],
   );
+
+  const deleteHandler = useMemo(() => {
+    if (!isExternalChat) {
+      return onDelete;
+    }
+
+    const userMessagesCount = allMessages.filter(
+      (m) => m.role === Role.User,
+    ).length;
+
+    if (userMessagesCount <= 1) {
+      return undefined;
+    }
+
+    return onDelete;
+  }, [allMessages, isExternalChat, onDelete]);
 
   useEffect(() => {
     setMessageContent(message.content);
@@ -574,28 +597,24 @@ export const UserMessage = memo(function UserMessage({
           </div>
 
           <div className="relative flex gap-3">
-            <button
-              className="button button-secondary"
+            <DialNeutralButton
+              label={t('Cancel')}
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
                 handleToggleEditing(false);
               }}
               data-qa="cancel"
-            >
-              {t('Cancel')}
-            </button>
+            />
             {!isInputHidden && (
-              <button
-                className="button button-primary"
+              <DialPrimaryButton
+                label={t('Save & Submit')}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
                   isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
                 }
                 data-qa="save-and-submit"
-              >
-                {t('Save & Submit')}
-              </button>
+              />
             )}
             <div ref={anchorRef} className="absolute bottom-0"></div>
           </div>
@@ -643,7 +662,7 @@ export const UserMessage = memo(function UserMessage({
           realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
           isEditAvailable={!!onEdit && !editDisabled}
-          onDelete={onDelete}
+          onDelete={deleteHandler}
           onToggleEditing={handleToggleEditing}
           isEditTemplatesAvailable={
             (!isReadOnly || isApproveRequiredEntitySelected) &&

@@ -18,12 +18,15 @@ import {
 } from '@/src/store/selectors';
 
 import {
+  AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
   PLOTLY_CONTENT_TYPE,
+  VIDEO_TYPES_SET,
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
+import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -41,22 +44,52 @@ interface AttachmentDataRendererProps {
   isInner?: boolean;
 }
 
+const getSourceDataUrl = (attachment: Attachment): string | undefined => {
+  if (attachment.url) {
+    return getMappedAttachmentUrl(attachment.url);
+  }
+  if (attachment.data) {
+    return `data:${attachment.type};base64,${attachment.data}`;
+  }
+};
+
+const AttachmentSourceRenderer = ({
+  attachment,
+}: AttachmentDataRendererProps) => {
+  return <source src={getSourceDataUrl(attachment)} type={attachment.type} />;
+};
+
 const AttachmentDataRenderer = ({
   attachment,
   isInner,
 }: AttachmentDataRendererProps) => {
-  if (!attachment.data) {
-    return null;
+  if (AUDIO_TYPES_SET.has(attachment.type)) {
+    return (
+      <audio controls>
+        <AttachmentSourceRenderer attachment={attachment} />
+      </audio>
+    );
+  }
+  if (VIDEO_TYPES_SET.has(attachment.type)) {
+    return (
+      <video width="100%" controls>
+        <AttachmentSourceRenderer attachment={attachment} />
+      </video>
+    );
   }
 
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
-        src={`data:${attachment.type};base64,${attachment.data}`}
+        src={getSourceDataUrl(attachment)}
         className="m-0 aspect-auto w-full"
         alt="Attachment image"
       />
     );
+  }
+
+  if (!attachment.data) {
+    return null;
   }
 
   if (attachment.type === 'text/html') {
@@ -91,32 +124,6 @@ const AttachmentDataRenderer = ({
   }
   if (attachment.type === PLOTLY_CONTENT_TYPE) {
     return <PlotlyStringDataRenderer plotlyStringData={attachment.data} />;
-  }
-
-  return null;
-};
-
-interface AttachmentUrlRendererProps {
-  attachmentUrl: string | undefined;
-  attachmentType: MIMEType;
-}
-
-const AttachmentUrlRenderer = ({
-  attachmentUrl,
-  attachmentType,
-}: AttachmentUrlRendererProps) => {
-  if (!attachmentUrl) {
-    return null;
-  }
-
-  if (IMAGE_TYPES_SET.has(attachmentType)) {
-    return (
-      <img
-        src={attachmentUrl}
-        className="m-0 aspect-auto w-full"
-        alt="Attachment image"
-      />
-    );
   }
 
   return null;
@@ -174,54 +181,48 @@ interface Props {
   isInner?: boolean;
 }
 
-interface AttachmentUrlRendererComponentProps {
-  mappedAttachmentUrl: string;
-  attachmentType: string;
-}
-
-const AttachmentUrlRendererComponent = ({
-  mappedAttachmentUrl,
-  attachmentType,
-}: AttachmentUrlRendererComponentProps) => {
-  const mappedVisualizers = useAppSelector(
-    SettingsSelectors.selectMappedVisualizers,
-  );
-  const selectIsCustomAttachmentTypeSelector = useMemo(
-    () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
-    [attachmentType],
-  );
-  const isCustomAttachmentType = useAppSelector(
-    selectIsCustomAttachmentTypeSelector,
-  );
-
-  if (mappedVisualizers && isCustomAttachmentType) {
-    return (
-      <VisualizerRenderer
-        attachmentUrl={mappedAttachmentUrl}
-        renderer={mappedVisualizers[attachmentType][0]}
-        mimeType={attachmentType}
-      />
+const AttachmentRendererComponent = withErrorBoundary(
+  ({ attachment, isInner }: AttachmentDataRendererProps) => {
+    const attachmentType: MIMEType = attachment.type;
+    const mappedAttachmentUrl = useMemo(
+      () => getSourceDataUrl(attachment),
+      [attachment],
     );
-  }
+    const mappedVisualizers = useAppSelector(
+      SettingsSelectors.selectMappedVisualizers,
+    );
+    const selectIsCustomAttachmentTypeSelector = useMemo(
+      () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
+      [attachmentType],
+    );
+    const isCustomAttachmentType = useAppSelector(
+      selectIsCustomAttachmentTypeSelector,
+    );
 
-  if (attachmentType === PLOTLY_CONTENT_TYPE) {
-    return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
-  }
+    if (mappedVisualizers && isCustomAttachmentType && mappedAttachmentUrl) {
+      return (
+        <VisualizerRenderer
+          attachmentUrl={mappedAttachmentUrl}
+          renderer={mappedVisualizers[attachmentType][0]}
+          mimeType={attachmentType}
+        />
+      );
+    }
 
-  return (
-    <AttachmentUrlRenderer
-      attachmentUrl={mappedAttachmentUrl}
-      attachmentType={attachmentType}
-    />
-  );
-};
+    if (
+      attachmentType === PLOTLY_CONTENT_TYPE &&
+      attachment.url &&
+      mappedAttachmentUrl
+    ) {
+      return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+    }
+
+    return <AttachmentDataRenderer attachment={attachment} isInner={isInner} />;
+  },
+);
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-
-  const [isOpened, setIsOpened] = useState(false);
-  const [wasOpened, setWasOpened] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -232,6 +233,18 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const isCustomAttachmentType = useAppSelector(
     selectIsCustomAttachmentTypeSelector,
   );
+
+  const { expandedTypes, borderlessTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentsSettings,
+  );
+
+  const isBorderless = borderlessTypes.includes(attachment.type);
+  const isExpandedByDefault =
+    isBorderless || expandedTypes.includes(attachment.type);
+
+  const [isOpened, setIsOpened] = useState(isExpandedByDefault);
+  const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
+  const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
 
   useEffect(() => {
     const handleResize = () => {
@@ -265,123 +278,135 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     attachment.data ||
     (attachment.url && IMAGE_TYPES_SET.has(attachment.type)) ||
     attachment.type === PLOTLY_CONTENT_TYPE ||
+    (attachment.url && VIDEO_TYPES_SET.has(attachment.type)) ||
+    (attachment.url && AUDIO_TYPES_SET.has(attachment.type)) ||
     isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
-    () => getMappedAttachmentUrl(attachment.url),
-    [attachment.url],
+    () => getSourceDataUrl(attachment),
+    [attachment],
   );
   const mappedAttachmentReferenceUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.reference_url),
     [attachment.reference_url],
   );
 
+  const isDownloadable =
+    IMAGE_TYPES_SET.has(attachment.type) ||
+    VIDEO_TYPES_SET.has(attachment.type) ||
+    AUDIO_TYPES_SET.has(attachment.type);
+
   return (
     <div
       data-no-context-menu
       className={classNames(
-        'rounded bg-layer-3 px-1 py-2',
+        'rounded',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
-        !isInner && 'border border-secondary',
+        !isInner && !isBorderless && 'border border-secondary',
+        !isBorderless ? 'bg-layer-3 px-1 py-2' : 'mb-3 last:mb-0',
       )}
     >
-      <div className="flex items-center gap-3 px-2">
-        <div className="flex items-center">
-          {mappedAttachmentReferenceUrl ? (
-            <Tooltip tooltip="Open link">
-              <a
-                href={mappedAttachmentReferenceUrl}
-                target="_blank"
-                className="shrink-0"
-                rel="noopener noreferrer"
-              >
-                <LinkIcon
+      {!isBorderless && (
+        <div className="flex items-center gap-3 px-2">
+          <div className="flex items-center">
+            {mappedAttachmentReferenceUrl ? (
+              <Tooltip tooltip="Open link">
+                <a
+                  href={mappedAttachmentReferenceUrl}
+                  target="_blank"
+                  className="shrink-0"
+                  rel="noopener noreferrer"
+                >
+                  <LinkIcon
+                    height={18}
+                    width={18}
+                    className="text-secondary hover:text-accent-primary"
+                  />
+                </a>
+              </Tooltip>
+            ) : (
+              <Icon size={18} className="shrink-0 text-secondary" />
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setIsExpanded((isExpanded) => !isExpanded);
+              if (isOpenable) {
+                setIsOpened((isOpened) => {
+                  if (!isOpened) {
+                    setWasOpened(true);
+                  }
+                  return !isOpened;
+                });
+              }
+            }}
+            className="flex grow items-center justify-between overflow-hidden"
+            data-qa={
+              isExpanded ? 'attachment-expanded' : 'attachment-collapsed'
+            }
+          >
+            <span
+              className={classNames(
+                'shrink truncate whitespace-pre text-left text-sm',
+                isExpanded || isFolder || mappedAttachmentReferenceUrl
+                  ? 'max-w-full'
+                  : 'max-w-[calc(100%-30px)]',
+              )}
+              title={attachment.title || attachment.url || t('Attachment')}
+            >
+              {attachment.title || attachment.url || t('Attachment')}
+            </span>
+            {isOpenable && !isFolder ? (
+              <div className="flex gap-2">
+                {isDownloadable && (
+                  <a
+                    download={attachment.title}
+                    href={mappedAttachmentUrl}
+                    onClick={stopBubbling}
+                    className="text-secondary hover:text-accent-primary"
+                  >
+                    <IconDownload size={18} />
+                  </a>
+                )}
+                <ChevronDown
                   height={18}
                   width={18}
-                  className="text-secondary hover:text-accent-primary"
+                  className={classNames(
+                    'shrink-0 text-secondary transition',
+                    isOpened && 'rotate-180',
+                  )}
                 />
-              </a>
-            </Tooltip>
-          ) : (
-            <Icon size={18} className="shrink-0 text-secondary" />
-          )}
-        </div>
-        <button
-          onClick={() => {
-            setIsExpanded((isExpanded) => !isExpanded);
-            if (isOpenable) {
-              setIsOpened((isOpened) => {
-                if (!isOpened) {
-                  setWasOpened(true);
-                }
-                return !isOpened;
-              });
-            }
-          }}
-          className="flex grow items-center justify-between overflow-hidden"
-          data-qa={isExpanded ? 'attachment-expanded' : 'attachment-collapsed'}
-        >
-          <span
-            className={classNames(
-              'shrink truncate whitespace-pre text-left text-sm',
-              isExpanded || isFolder || mappedAttachmentReferenceUrl
-                ? 'max-w-full'
-                : 'max-w-[calc(100%-30px)]',
-            )}
-            title={attachment.title || attachment.url || t('Attachment')}
-          >
-            {attachment.title || attachment.url || t('Attachment')}
-          </span>
-          {isOpenable && !isFolder ? (
-            <div className="flex gap-2">
-              {IMAGE_TYPES_SET.has(attachment.type) && (
+              </div>
+            ) : (
+              !isFolder &&
+              !mappedAttachmentReferenceUrl && (
                 <a
                   download={attachment.title}
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
+                  target="_blank"
                   className="text-secondary hover:text-accent-primary"
                 >
                   <IconDownload size={18} />
                 </a>
-              )}
-              <ChevronDown
-                height={18}
-                width={18}
-                className={classNames(
-                  'shrink-0 text-secondary transition',
-                  isOpened && 'rotate-180',
-                )}
-              />
-            </div>
-          ) : (
-            !isFolder &&
-            !mappedAttachmentReferenceUrl && (
-              <a
-                download={attachment.title}
-                href={mappedAttachmentUrl}
-                onClick={stopBubbling}
-                target="_blank"
-                className="text-secondary hover:text-accent-primary"
-              >
-                <IconDownload size={18} />
-              </a>
-            )
-          )}
-        </button>
-      </div>
+              )
+            )}
+          </button>
+        </div>
+      )}
       {isOpenable && isOpened && (
         <div
-          className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
+          className={classNames(
+            'relative h-auto w-full overflow-hidden text-sm duration-200',
+            {
+              'mt-2 border-t border-tertiary p-3 pt-4': !isBorderless,
+            },
+          )}
           ref={anchorRef}
         >
-          {attachment.data && (
-            <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
-          )}
-          {mappedAttachmentUrl && (
-            <AttachmentUrlRendererComponent
-              attachmentType={attachment.type}
-              mappedAttachmentUrl={mappedAttachmentUrl}
-            />
-          )}
+          <AttachmentRendererComponent
+            attachment={attachment}
+            isInner={isInner}
+          />
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}

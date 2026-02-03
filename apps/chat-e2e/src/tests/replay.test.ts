@@ -137,7 +137,7 @@ dialTest(
           ExpectedConstants.replayAsIsLabel,
         );
         await talkToAgentDialogAssertion.assertElementText(
-          talkToAgents.getAgentDescription(ExpectedConstants.replayAsIsLabel),
+          talkToAgents.getEntityDescription(ExpectedConstants.replayAsIsLabel),
           ExpectedConstants.replayAsIsDescr,
         );
       },
@@ -524,8 +524,16 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const replayRequests = await chat.startReplayForDifferentModels();
-
+        const { actionResult: replayRequests } =
+          await dialHomePage.waitForExpectedResponses(
+            () => chat.startReplayForDifferentModels(),
+            [
+              {
+                apiMethod: 'POST',
+                urlPattern: API.moveHost,
+              },
+            ],
+          );
         apiAssertion.assertRequestModelId(replayRequests[0], bModel);
         apiAssertion.assertRequestTemperature(replayRequests[0], simpleTemp);
         apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);
@@ -696,7 +704,6 @@ dialTest(
     sendMessage,
     sendMessageAssertion,
     talkToAgents,
-    marketplaceAgentsAssertion,
   }) => {
     setTestIds('EPMRTC-1328', 'EPMRTC-2839');
     let notAllowedModelConversation: Conversation;
@@ -748,18 +755,18 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentIsSelected(
           ExpectedConstants.replayAsIsLabel,
         );
-        const actualAgentNames = await talkToAgents.getAgentNames();
+        const actualAgentNames = await talkToAgents.getEntityNames();
         talkToAgentDialogAssertion.assertValue(
           actualAgentNames[0],
           ExpectedConstants.replayAsIsLabel,
         );
-        const replayAsIsModelElement = talkToAgents.getAgent(
+        const replayAsIsModelElement = talkToAgents.getEntity(
           ExpectedConstants.replayAsIsLabel,
         );
-        const replayAsIsDescrElement = talkToAgents.getAgentDescription(
+        const replayAsIsDescrElement = talkToAgents.getEntityDescription(
           replayAsIsModelElement,
         );
-        await marketplaceAgentsAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           replayAsIsDescrElement,
           ExpectedConstants.replayAsIsDescr,
         );

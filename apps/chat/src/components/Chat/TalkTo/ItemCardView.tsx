@@ -36,10 +36,11 @@ import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
-import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
-import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
+
+export type DisabledActions = Record<string, boolean>;
 
 interface ItemCardViewProps<T extends MarketplaceEntity> {
   entity: T;
@@ -47,10 +48,12 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   onClick: (entity: T) => void;
   conversation?: Conversation;
   disabled?: boolean;
+  hasError?: boolean;
   isUnavailableModel?: boolean;
   hasContextMenu?: boolean;
   className?: string;
   selectedBaseIdsSet?: Set<string>;
+  overrideDisabledActions?: Partial<DisabledActions>;
 }
 
 const agentDisabledActions = {
@@ -74,10 +77,12 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   onClick,
   conversation,
   disabled,
+  hasError,
   isUnavailableModel,
   hasContextMenu = true,
   className,
   selectedBaseIdsSet,
+  overrideDisabledActions,
 }: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -89,6 +94,17 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   const screenState = useScreenState();
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
+
+  const disabledActions = useMemo(() => {
+    const baseActions = isDialAiEntityModel(entity)
+      ? agentDisabledActions
+      : toolsetDisabledActions;
+
+    return {
+      ...baseActions,
+      ...overrideDisabledActions,
+    };
+  }, [entity, overrideDisabledActions]);
 
   const versionsToSelect = useMemo(() => {
     const sourceList = isDialAiEntityModel(entity)
@@ -102,7 +118,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
     }
 
     return sourceList.filter(
-      (item) =>
+      (item: MarketplaceEntity) =>
         getGroupMarketplaceEntityKey(entity) ===
         getGroupMarketplaceEntityKey(item),
     );
@@ -131,29 +147,21 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
-        isUnavailableModel && 'border-error',
+        hasError && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
         className,
       )}
       aria-selected={isSelected}
-      data-qa="agent"
+      data-qa="entity"
     >
       {hasContextMenu && (
         <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
-          {isDialAiEntityModel(entity) ? (
-            <AgentContextMenu
-              className="xl:invisible group-hover:xl:visible"
-              entity={entity}
-              disabledActions={agentDisabledActions}
-            />
-          ) : (
-            <ToolsetContextMenu
-              className="xl:invisible group-hover:xl:visible"
-              entity={entity}
-              disabledActions={toolsetDisabledActions}
-            />
-          )}
+          <MarketplaceEntityContextMenu
+            className="xl:invisible group-hover:xl:visible"
+            entity={entity}
+            disabledActions={disabledActions}
+          />
         </div>
       )}
       <div className="flex items-center gap-4 overflow-hidden">
@@ -194,20 +202,26 @@ export const ItemCardView = <T extends MarketplaceEntity>({
             )}
         </div>
         <div className="flex grow flex-col justify-center gap-1 overflow-hidden leading-4 md:gap-2">
-          {!!versionsToSelect.length && (
-            <div className="flex items-center">
-              <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
-              <ModelVersionSelect
-                readonly={conversation && isPlaybackConversation(conversation)}
-                className="h-max truncate text-xs"
-                triggerClassName="text-xs"
-                selectedBaseIdsSet={selectedBaseIdsSet}
-                entities={versionsToSelect}
-                onSelect={handleSelectVersion}
-                currentEntity={entity}
-              />
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {!!versionsToSelect.length && (
+              <div className="flex items-center truncate">
+                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
+                <ModelVersionSelect
+                  readonly={
+                    conversation && isPlaybackConversation(conversation)
+                  }
+                  className="h-max truncate text-xs"
+                  triggerClassName="text-xs"
+                  selectedBaseIdsSet={selectedBaseIdsSet}
+                  entities={versionsToSelect}
+                  onSelect={handleSelectVersion}
+                  currentEntity={entity}
+                />
+              </div>
+            )}
+
+            <MarketplaceEntityIndicator entity={entity} />
+          </div>
           <div className="flex whitespace-nowrap">
             <div
               className={classNames(
@@ -219,7 +233,6 @@ export const ItemCardView = <T extends MarketplaceEntity>({
             >
               {entity.name}
             </div>
-            <MarketplaceEntityIndicator entity={entity} />
           </div>
           <EntityMarkdownDescription
             className={classNames(

@@ -1,11 +1,13 @@
 import { FC, memo, useCallback, useMemo, useState } from 'react';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -17,6 +19,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
+import { DislikeCommentModal } from './DislikeCommentModal';
 
 import {
   Feature,
@@ -24,6 +27,7 @@ import {
   Message,
   PublishActions,
   Role,
+  onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
 
 export interface Props {
@@ -38,6 +42,7 @@ export interface Props {
     index: number,
     conversation: Conversation,
     likeStatus: LikeState,
+    comment?: string,
   ) => void;
   onDelete?: (messageIndex: number, conversation: Conversation) => void;
   onEdit: (
@@ -67,7 +72,6 @@ export const ChatMessage: FC<Props> = memo(
   }) => {
     const { t } = useTranslation(Translation.Chat);
 
-    const [messageCopied, setMessageCopied] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
@@ -90,11 +94,28 @@ export const ChatMessage: FC<Props> = memo(
       return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
     }, [isFirstMessageSystem, messageIndex]);
 
-    const handleLike = useCallback(
+    const isDislikeCommentEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DislikeComment),
+    );
+    const [isDislikeModalOpen, setDislikeModalOpen] = useState(false);
+
+    const handleLike: onLikeMessageHandler = useCallback(
       (likeStatus: LikeState) => {
         if (conversation && onLike) {
-          onLike(messageIndex, conversation, likeStatus);
+          if (!isDislikeCommentEnabled || likeStatus !== LikeState.Disliked) {
+            onLike(messageIndex, conversation, likeStatus);
+          } else {
+            setDislikeModalOpen(true);
+          }
         }
+      },
+      [conversation, onLike, isDislikeCommentEnabled, messageIndex],
+    );
+
+    const handleDislike = useCallback(
+      (comment?: string) => {
+        onLike(messageIndex, conversation, LikeState.Disliked, comment);
+        setDislikeModalOpen(false);
       },
       [conversation, onLike, messageIndex],
     );
@@ -110,17 +131,6 @@ export const ChatMessage: FC<Props> = memo(
       [isTemplateModalOpened],
     );
 
-    const handleCopy = useCallback(() => {
-      if (!navigator.clipboard) return;
-
-      navigator.clipboard.writeText(message.content).then(() => {
-        setMessageCopied(true);
-        setTimeout(() => {
-          setMessageCopied(false);
-        }, 2000);
-      });
-    }, [message.content]);
-
     const handleDeleteMessage = useCallback(() => {
       onDelete?.(messageIndex, conversation);
     }, [onDelete, messageIndex, conversation]);
@@ -131,9 +141,21 @@ export const ChatMessage: FC<Props> = memo(
       setIsDeleteConfirmationOpened(true);
     }, [onDelete]);
 
+    const screenState = useScreenState();
+
     return (
       <>
-        {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
+        {isDislikeModalOpen && (
+          <DislikeCommentModal
+            onClose={() => setDislikeModalOpen(false)}
+            onSubmit={(comment: string) => {
+              handleDislike(comment);
+              setDislikeModalOpen(false);
+            }}
+          />
+        )}
+        {(screenState !== ScreenState.SM || isOverlay) &&
+        !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}
@@ -145,11 +167,9 @@ export const ChatMessage: FC<Props> = memo(
             editDisabled={editDisabled}
             onToggleEditingTemplates={handleToggleEditingTemplates}
             isEditingTemplates={isTemplateModalOpened}
-            messageCopied={messageCopied}
             conversation={conversation}
             allMessages={filteredMessages}
             onLike={handleLike}
-            onCopy={handleCopy}
             message={message}
             onRegenerate={onRegenerate}
             withButtons={
@@ -190,7 +210,7 @@ export const ChatMessage: FC<Props> = memo(
                 message={message}
                 onEdit={onEdit}
                 onClick={(e, messageRef) => {
-                  const rect = messageRef.current!.getBoundingClientRect();
+                  const rect = messageRef.current.getBoundingClientRect();
                   setClientY(e.clientY - rect.y);
                   setClientX(
                     e.clientX -
@@ -212,8 +232,6 @@ export const ChatMessage: FC<Props> = memo(
               realMessageIndex={realMessageIndex}
               message={message}
               isLikesEnabled={isLikesEnabled}
-              onCopy={handleCopy}
-              messageCopied={messageCopied}
               editDisabled={editDisabled}
               onLike={handleLike}
               onDelete={onDelete && handleDelete}

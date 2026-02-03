@@ -4,9 +4,9 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getChosenFormButtons,
   getConfigurationSchema,
   getConfigurationValue,
-  getFormValueDefinitions,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -16,13 +16,11 @@ import {
   parseEntityApiKey,
 } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
-import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import { ApiKeys, PartialBy } from '@/src/types/common';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import {
   getConversationRootId,
@@ -38,37 +36,16 @@ import {
   MessageSettings,
   Replay,
   Role,
+  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
-import uniq from 'lodash-es/uniq';
-
-export const getValidEntitiesFromIds = <T>(
-  entitiesIds: string[],
-  addonsMap: Partial<Record<string, T>>,
-): T[] =>
-  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
-
-export const getSelectedAddons = (
-  selectedAddons: string[],
-  addonsMap: AddonsMap,
-  model?: DialAIEntityModel,
-) => {
-  if (model && model.type !== EntityType.Application) {
-    const preselectedAddons = model.selectedAddons ?? [];
-    const addons = uniq([...preselectedAddons, ...selectedAddons]);
-
-    return getValidEntitiesFromIds(addons, addonsMap);
-  }
-
-  return null;
-};
 
 export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,
 ): boolean => {
-  const isChanged = Object.keys(newSettings).some((key) => {
+  return Object.keys(newSettings).some((key) => {
     const convSetting = conversation[key as keyof Conversation];
     const newSetting = newSettings[key as keyof MessageSettings];
 
@@ -91,8 +68,6 @@ export const isSettingsChanged = (
       newSettings[key as keyof MessageSettings]
     );
   });
-
-  return isChanged;
 };
 
 export const getNewConversationName = (
@@ -112,7 +87,7 @@ export const getNewConversationName = (
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
   } else if (formValue && configurationSchema) {
-    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+    const definitions = getChosenFormButtons(formValue, configurationSchema);
 
     if (definitions.length) return prepareEntityName(definitions[0].title);
   }
@@ -243,26 +218,18 @@ export const isChosenConversationValidForCompare = (
     (message) => message.role === Role.User,
   );
 
-  if (convUserMessages.length !== selectedConvUserMessages.length) {
-    return false;
-  }
-
-  return true;
+  return convUserMessages.length === selectedConvUserMessages.length;
 };
 
 export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
   model.name || model.id;
 
 export const addPausedError = (
-  conversation: Conversation,
+  _conversation: Conversation,
   models: DialAIEntityModel[],
   messages: Message[],
 ): Message[] => {
-  if (
-    models.every(
-      (m) => m.features?.allowResume && !conversation.selectedAddons.length,
-    )
-  ) {
+  if (models.every((m) => m.features?.allowResume)) {
     return messages;
   }
   let assistantMessageIndex = -1;
@@ -307,7 +274,6 @@ export const getConversationModelParams = (
   conversation: Conversation,
   modelId: string | undefined,
   modelsMap: ModelsMap,
-  addonsMap: AddonsMap,
 ): Partial<Conversation> => {
   if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
     return {
@@ -328,24 +294,10 @@ export const getConversationModelParams = (
         ...conversation.replay,
         replayAsIs: false,
       };
-  const updatedAddons =
-    isReplayConversation(conversation) &&
-    isReplayAsIsConversation(conversation) &&
-    !updatedReplay?.replayAsIs
-      ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
-      : conversation.selectedAddons;
 
   return {
     model: { id: newAiEntity.reference },
-    assistantModelId:
-      newAiEntity.type === EntityType.Assistant
-        ? DefaultsService.get(
-            'assistantSubmodelId',
-            FALLBACK_ASSISTANT_SUBMODEL_ID,
-          )
-        : undefined,
     replay: updatedReplay,
-    selectedAddons: updatedAddons,
   };
 };
 
@@ -378,7 +330,7 @@ export const getDefaultModelReference = ({
 };
 
 export const isOldConversationReplay = (replay: Replay | undefined) =>
-  replay &&
+  !!replay &&
   replay.isReplay &&
   replay.replayUserMessagesStack &&
   replay.replayUserMessagesStack.some((message) => !message.model);
@@ -425,3 +377,41 @@ export const updateMessagesAttachmentsTitles = (
     },
   }));
 };
+
+export const isConversationInfoEntity = (
+  entity: ShareEntity,
+): entity is ConversationInfo =>
+  entity.id.startsWith(`${ApiKeys.Conversations}/`);
+
+export const isLoadedConversationEntity = (
+  entity: ShareEntity,
+): entity is Conversation =>
+  isConversationInfoEntity(entity) && entity.status === UploadStatus.LOADED;
+
+export function getMessageCustomContent(
+  message: Message,
+  allowAssistantAttachments = false,
+): Partial<Message> | undefined {
+  return message.custom_content?.state ||
+    message.custom_content?.attachments?.length ||
+    message.custom_content?.form_value ||
+    message.custom_content?.form_schema
+    ? {
+        custom_content: {
+          ...((allowAssistantAttachments || message.role !== Role.Assistant) &&
+            message.custom_content?.attachments?.length && {
+              attachments: message.custom_content?.attachments,
+            }),
+          ...(message.custom_content?.state && {
+            state: message.custom_content.state,
+          }),
+          ...(message.custom_content?.form_value && {
+            form_value: message.custom_content?.form_value,
+          }),
+          ...(message.custom_content?.form_schema && {
+            form_schema: message.custom_content?.form_schema,
+          }),
+        },
+      }
+    : undefined;
+}

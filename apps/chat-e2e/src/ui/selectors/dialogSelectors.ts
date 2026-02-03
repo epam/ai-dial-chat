@@ -1,4 +1,4 @@
-import { Tags } from '@/src/ui/domData';
+import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
 
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
@@ -74,12 +74,15 @@ export const ReviewApplicationDialog = {
   featuresData: '[data-qa="app-feature"]',
   attachmentTypes: '[data-qa="app-attach-type"]',
   maxAttachmentsNumber: '[data-qa="app-max-attach"]',
+  completionUrlLabel: '[data-qa="app-completion-url-label"]',
   completionUrl: '[data-qa="app-completion-url"]',
+  externalUrlLabel: '[data-qa="app-external-url-label"]',
+  externalUrl: '[data-qa="app-external-url"]',
 };
 
 export const ModelTooltip = {
   modelTooltip: '[data-qa="chat-model-tooltip"]',
-  modelInfo: '[data-qa="agent-info"]',
+  modelInfo: '[data-qa="entity-info"]',
   versionInfo: '[data-qa="version-info"]',
   title: '[data-qa="tooltip-title"]',
 };
@@ -88,7 +91,6 @@ export const SettingsTooltip = {
   settingsTooltip: '[data-qa="chat-settings-tooltip"]',
   applicationInfo: '[data-qa="application-info"]',
   assistantInfo: '[data-qa="assistant-info"]',
-  assistantModelInfo: '[data-qa="assistant agent-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
 };
@@ -115,13 +117,14 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
-export const AttachFilesModalSelectors = {
+export const FileManagerModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
+  title: '[data-qa="modal-title"]',
+  supportedAttributesLabel: '[data-qa="supported-attributes"]',
   organizationFilesContainer: '[data-qa="organization-files-container"]',
   sharedWithMeFilesContainer: '[data-qa="shared-with-me-files-container"]',
   allFilesContainer: '[data-qa="all-files-container"]',
@@ -136,10 +139,6 @@ export const AttachFilesModalSelectors = {
   fileSection: '[data-qa="file-section-content"]',
 };
 
-export const FilesModalSelectors = {
-  supportedAttributesLabel: '[data-qa="supported-attributes"]',
-};
-
 export const SelectFolderModalSelectors = {
   modalContainer: '[data-qa="select-folder-modal"]',
   newFolderButton: '[data-qa="new-folder"]',
@@ -150,55 +149,55 @@ export const SelectFolderModalSelectors = {
   searchInput: '[data-qa="search-folder"]',
 };
 
-export const PublishingModalSelectors = {
-  modalContainer: '[data-qa="publish-modal"]',
+export const PublishingDialogSelectors = {
+  dialogContainer: '[data-qa="publish-dialog"]',
   requestName: '[data-qa="publishRequestName"]',
-  authorLabel: '[data-qa="publicationAuthor-label"]',
+  authorLabel: '[data-qa="publication-display-author-label"]',
   author: '#publicationAuthor',
-  publishToLabel: '[data-qa="publish-to-label"]',
-  publishTo: '[data-qa="change-path-container"]',
-  unpublishFromLabel: '[data-qa="unpublish-from-label"]',
-  unpublishFromPath: '[data-qa="unpublish-from-path"]',
+  publishPathLabel: '[data-qa="publish-label"]',
+  publishPath: '[data-qa="publish-path"]',
   changePublishToPath: '[data-qa="change-button"]',
-  conversationsToPublishContainer:
-    '[data-qa="conversations-to-send-request-container"]',
-  filesToPublishContainer: '[data-qa="files-to-send-request-container"]',
-  promptsToPublishContainer: '[data-qa="prompts-to-send-request-container"]',
-  appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
-  sendButton: '[data-qa="publish"]',
+  sendButton: '[data-qa="submit"]',
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
   fieldErrorMessage: `[data-qa="error-message"]`,
   requestNameErrorMessage: () =>
-    `${PublishingModalSelectors.requestName} + ${PublishingModalSelectors.fieldErrorMessage}`,
+    `${PublishingDialogSelectors.requestName} + ${PublishingDialogSelectors.fieldErrorMessage}`,
 };
 
 export const ChangePathElement = {
   changePathContainer: '[data-qa="change-path-container"]',
   path: '[data-qa="path"]',
-  changeButton: '[data-qa="change-button"]',
 };
 
 export const PublishingApprovalModalSelectors = {
   modalContainer: '[data-qa="publish-approval-modal"]',
   publishName: '[data-qa="publish-name"]',
-  publishToPath: '[data-qa="publish-to-path"]',
-  publishToPathLabel: '[data-qa="publish-to-label"]',
+  publishPath: '[data-qa="publish-path"]',
+  publishPathLabel: '[data-qa="publish-label"]',
   creationDate: '[data-qa="creation-date"]',
   authorLabel: '[data-qa="publication-author-label"]',
   author: '[data-qa="publication-author"]',
   publicAuthor: '[data-qa="publication-display-author"]',
   publicAuthorLabel: '[data-qa="publication-display-author-label"]',
+  publicAuthorContainerEditMode: '[data-qa="publicationAuthor"]',
+  publicAuthorLabelEditMode: '[data-qa="publicationAuthor-label"]',
   requestCreatedLabel: '[data-qa="creation-date-label"]',
-  conversationsToApproveContainer:
-    '[data-qa="conversations-to-approve-container"]',
-  filesToApproveContainer: '[data-qa="files-to-approve-container"]',
-  promptsToApproveContainer: '[data-qa="prompts-to-approve-container"]',
-  applicationsToApproveContainer:
-    '[data-qa="applications-to-approve-container"]',
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
-  approveButton: '[data-qa="approve"]',
+  approveButton: '[data-qa="submit"]',
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
+  editButton: '[data-qa="edit"]',
+  updateRequestButton: '[data-qa="update"]',
+  version: '[data-qa="version"]',
+  entityRow: '[data-qa="entity-publication-row"]',
+  fieldValue: (name: string) => InputSelectors.value(name),
+};
+
+export const PublishingTreeSelectors = {
+  conversationsTree: '[data-qa="conversations-tree-container"]',
+  filesTree: '[data-qa="files-tree-container"]',
+  promptsTree: '[data-qa="prompts-tree-container"]',
+  appsTree: '[data-qa="applications-tree-container"]',
 };
 
 export const ChatSettingsModalSelectors = {
@@ -248,11 +247,11 @@ export const ReportAnIssueModalSelectors = {
   reportAnIssueContainer: '[data-qa="report-issue-dialog"]',
 };
 
-export const ApplicationEditorHeader = {
-  header: '[data-qa="app-editor-header"]',
+export const EntityEditorHeaderSelectors = {
+  header: '[data-qa="entity-editor-header"]',
   saveAndExitButton: '[data-qa="save-and-exit"]',
   exitLink: '[data-qa="save-and-exit"]',
-  actionAndApplicationTypeTitle: '[data-qa="action-application-type-title"]',
+  actionAndEntityTypeTitle: '[data-qa="action-entity-type-title"]',
   stepsContainer: '[data-qa="steps-container"]',
   singleStepLink: '[data-qa="single-step-link"]',
   singleStepTitle: '[data-qa="single-step-title"]',
@@ -260,40 +259,48 @@ export const ApplicationEditorHeader = {
   notSelectedStepIcon: '[data-qa="not-selected-step-icon"]',
 };
 
-export const AppEditorGeneralInfoPreviewSelectors = {
-  fullContainer: '[data-qa="app-preview-general-info-full-container"]',
+export const EntityEditorPreviewToggleSelectors = {
+  toggleContainer: '[data-qa="preview-toggle-container"]',
   detailedSwitch: '[data-qa="toggle-switch"]',
-  appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
-  previewIconContainer: '[data-qa="entity-icon"]',
-  previewAgentName: '[data-qa="entity-name"]',
-  previewTopicsContainer: '[data-qa="app-topics"]',
-  previewInformationSection: '[data-qa="application-information"]',
+};
+
+export const EntityEditorGeneralInfoPreviewSelectors = {
+  fullContainer: '[data-qa="entity-preview-general-info-full-container"]',
+  entityPreviewGeneralInfoContainer: '[data-qa="entity-preview-general-info"]',
+  previewIconContainer: '[data-qa="icon-container"]',
+  previewEntityName: '[data-qa="entity-name"]',
+  previewTopicsContainer: '[data-qa="entity-topics"]',
+  previewInformationSection: '[data-qa="entity-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
   previewAuthorValue: '[data-qa="author"]',
-  description: '[data-qa="application-description"]',
+  description: '[data-qa="entity-description"]',
   version: '[data-qa="version"]',
   releaseDate: '[data-qa="created-at"]',
+  credsLabel: '[data-qa="creds-label"]',
 };
 
-export const AppEditorAppSettingsPreviewSelectors = {
-  container: '[data-qa="app-preview-settings"]',
-  appSettingsChatModeContainer: '[data-qa="app-settings-chat-mode"]',
+export const EntityEditorEntitySettingsPreviewSelectors = {
+  container: '[data-qa="entity-preview-settings"]',
+  header: '[data-qa="preview-header"]',
+  body: '[data-qa="preview-body"]',
+  entitySettingsChatModeContainer: '[data-qa="entity-settings-chat-mode"]',
   previewIcon: '[data-qa="entity-icon"]',
-  agentInfoContainer: '[data-qa="agent-info-container"]',
-  agentInfo: '[data-qa="agent-info"]',
-  agentName: '[data-qa="entity-name"]',
+  entityInfoContainer: '[data-qa="entity-info-container"]',
+  entityInfo: '[data-qa="entity-info"]',
+  entityName: '[data-qa="entity-name"]',
 };
 
-export const AddApplicationGeneralInfoFormSelector = {
-  appGeneralFormContainer: '[data-qa="app-general-form"]',
+export const AddEntityGeneralInfoFormSelector = {
+  entityGeneralFormContainer: '[data-qa="entity-general-form"]',
   name: '#name',
   version: '#version',
+  icon: '[data-qa="icon"]',
   addIcon: '[data-qa="add-icon"]',
   changeIcon: '[data-qa="change-icon"]',
   descriptionInput: '#description',
   descriptionLabel: '[for="description"]',
   topicsDropdownContainer: '#topics-dropdown',
-  nextButton: '[data-qa="save-application-general-info"]',
+  nextButton: '[data-qa="save-entity-general-info"]',
   topicsDropdownToggle: '[class*="-indicatorContainer"]', // Selector for the dropdown arrow within the container
   selectedTopicPills: '[class*="-multiValue"]', // Selector for the selected topic pills within the container
   selectedTopicPillRemoveIcon: (topicName: string) =>
@@ -301,17 +308,44 @@ export const AddApplicationGeneralInfoFormSelector = {
   clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
 };
 
-export const AddApplicationAppSettingsFormSelector = {
+export const AddEntitySettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
-  attachmentTypesContainer: '[data-qa="attachment-types-field"]',
   chatCompletionUrl: '#completionUrl',
-  addButton: '[data-qa="add-application"]',
-  appViewFormContainer: '[data-qa="app-view-form"]',
+  entityViewFormContainer: '[data-qa="entity-view-form"]',
   maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
-  selectedAttachmentTypePills: '[data-qa="combobox-pill"]',
-  unselectAttachmentTypePillButton: (type: string) =>
-    `button[data-qa="unselect-item-${type}"]`,
+};
+
+export const ComboboxSelectors = {
+  comboboxContainer: '[data-qa="combobox"]',
+  selectedPills: '[data-qa="combobox-pill"]',
+  unselectPillButton: (value: string) =>
+    `button[data-qa="unselect-item-${value}"]`,
+};
+
+export const AddExternalAppSettingsFormSelector = {
+  externalUrl: '#externalUrl',
+};
+
+export const AddToolsetSettingsFormSelector = {
+  definitionLabel: '[data-qa="definition-label"]',
+  endpointLabel: '[for="endpoint"]',
+  endpoint: '#endpoint',
+  protocolLabel: '[for="protocol"]',
+  transportProtocol: '#protocol',
+  authenticationLabel: '[data-qa="authentication-label"]',
+  authenticationLabelSubtitle: '[data-qa="authentication-subtitle"]',
+  authContainer: '[data-qa="auth-container"]',
+  oauthContainer: '[data-qa="oauth"]',
+  oauthLabel: '[data-qa="oauth-label"]',
+  authDetailsContainer: '[data-qa="auth-details-container"]',
+  authLoginOption: '#auth-login-option',
+  apiKeyContainer: '[data-qa="api_key"]',
+  apiKeyLabel: '[data-qa="api_key-label"]',
+  withoutAuthContainer: '[data-qa="none"]',
+  withoutAuthLabel: '[data-qa="none-label"]',
+  allowedToolsLabel: '[data-qa="allowed-tools-label"]',
+  allowedToolsLabelSubtitle: '[data-qa="allowed-tools-subtitle"]',
 };
 
 export const InformationModalSelectors = {
@@ -326,4 +360,24 @@ export const InformationModalSelectors = {
   createdDateValue: '[data-qa="created-at-value"]',
   authorLabel: '[data-qa="author-label"]',
   authorValue: '[data-qa="author-value"]',
+};
+
+export const ReplaceConfirmationModalSelectors = {
+  modalContainer: '[data-qa="replace-confirmation-modal"]',
+  mainFolderTree: '[data-qa="main-folder-tree"]',
+  allItemsSelector: '[data-qa="all-items-selector"]',
+  cancelButton: '[data-qa="cancel-import"]',
+  continueButton: '[data-qa="continue-import"]',
+  dropdownTrigger: '[data-qa="dropdown-trigger"]',
+  dropdownMenu: '[data-qa="dropdown-menu"]',
+  menuItem: '[data-qa="menu-item"]',
+  iconContainer: '[data-qa="icon-container"]',
+};
+
+export const UploadProgressDialogSelectors = {
+  title: 'div:has-text("Uploading items")',
+  itemName: '#name',
+  fileTypeIcon: '[aria-label="File type icon"]',
+  uploadingIndicator: '[data-qa="uploading-indicator"]',
+  uploadingItemsCount: '[data-qa="uploading-items-count"]',
 };

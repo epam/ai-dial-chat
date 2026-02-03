@@ -208,7 +208,8 @@ export const FolderContextMenu = ({
           isPublishingEnabled &&
           isEntityIdPublic(folder) &&
           !!onUnpublish &&
-          !!additionalItemData?.isSidePanelItem,
+          !!additionalItemData?.isSidePanelItem &&
+          !isUnpublishFolder,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,

@@ -8,6 +8,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ScreenState } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
+import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions, UIActions } from '@/src/store/actions';
@@ -21,24 +22,27 @@ import {
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
+import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 
 import { CustomLogoSelect } from './CustomLogoSelect';
 import { DefaultModelSelect } from './DefaultModelSelect';
+import { EnterTypeSelectLabeled } from './EnterTypeSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-}
+const ToggleSwitchLabel = withLabel(ToggleSwitchLabeled);
 
 const getCustomLogoLocalStoreName = (customLogoId: string | undefined) =>
   customLogoId && splitEntityId(customLogoId).name;
 
-export const SettingDialog: FC<Props> = ({ open, onClose }) => {
+const SettingDialogView: FC = () => {
+  const dispatch = useAppDispatch();
+
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -49,16 +53,27 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const savedDefaultModelReference = useAppSelector(
     ModelsSelectors.selectDefaultModelOption,
   );
+  const savedEnterType = useAppSelector(UISelectors.selectEnterType);
 
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
   );
 
+  const [enterType, setEnterType] = useState(savedEnterType);
+
   const screenState = useScreenState();
+
+  const handleCloseDialog = useCallback(() => {
+    dispatch(UIActions.setIsUserSettingsOpen(false));
+  }, [dispatch]);
 
   useEffect(() => {
     setDefaultModelReference(savedDefaultModelReference);
   }, [savedDefaultModelReference]);
+
+  useEffect(() => {
+    setEnterType(savedEnterType);
+  }, [savedEnterType]);
 
   const customLogoLocalStoreName = useMemo(() => {
     return getCustomLogoLocalStoreName(customLogoId);
@@ -78,8 +93,6 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   const saveBtnRef = useRef<HTMLButtonElement>(null);
 
-  const dispatch = useAppDispatch();
-
   const { t } = useTranslation(Translation.Settings);
 
   const handleClose = useCallback(() => {
@@ -88,8 +101,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setLocalLogoFile(undefined);
     setDeleteLogo(false);
     setDefaultModelReference(savedDefaultModelReference);
-    onClose();
-  }, [theme, isChatFullWidth, onClose, savedDefaultModelReference]);
+    setEnterType(savedEnterType);
+    handleCloseDialog();
+  }, [
+    theme,
+    isChatFullWidth,
+    savedDefaultModelReference,
+    savedEnterType,
+    handleCloseDialog,
+  ]);
 
   useEffect(() => {
     setLocalTheme(theme);
@@ -128,6 +148,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
+    dispatch(UIActions.setEnterType(enterType));
     if (localLogoFile && !deleteLogo) {
       dispatch(UIActions.setCustomLogo({ logo: localLogoFile.id }));
     }
@@ -137,15 +158,16 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     dispatch(ModelsActions.setDefaultModelReference(defaultModelReference));
 
     setLocalLogoFile(undefined);
-    onClose();
+    handleCloseDialog();
   }, [
     dispatch,
     localTheme,
     isChatFullWidthLocal,
+    enterType,
     localLogoFile,
     deleteLogo,
     defaultModelReference,
-    onClose,
+    handleCloseDialog,
   ]);
 
   if (!open) {
@@ -155,15 +177,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[500px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[400px] md:p-6"
+      containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[509px] md:p-6"
       dataQa="settings-modal"
-      state={open ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-      <div className="mb-4 flex flex-col gap-5">
+      <div className="mb-4 flex flex-col gap-4">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
@@ -179,6 +201,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
                   customLogoLocalStoreName)
             }
             title={t('Custom logo')}
+            isFormView
           />
         )}
 
@@ -187,29 +210,46 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           onModelChange={onModelChange}
         />
 
-        {screenState !== ScreenState.SM && (
-          <ToggleSwitchLabeled
+        {screenState > ScreenState.SM && (
+          <ToggleSwitchLabel
+            label={t('Chat width')}
             isOn={isChatFullWidthLocal}
-            labelText={t('Full width chat')}
-            labelClassName="basis-1/3 md:basis-1/4"
+            labelText={t('Show chat full screen width')}
+            labelClassName="grow"
             handleSwitch={onChangeHandlerFullWidth}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
+            isLabelOnRight
+            className="mt-1"
+          />
+        )}
+        {screenState > ScreenState.MD && (
+          <EnterTypeSelectLabeled
+            label={t('Keyboard shortcuts')}
+            value={enterType}
+            onValueChange={(value) => setEnterType(value as EnterType)}
           />
         )}
       </div>
 
       <div className="flex justify-end">
-        <button
-          type="button"
-          ref={saveBtnRef}
-          className="button button-primary"
-          data-qa="save"
+        <DialPrimaryButton
+          label={t('Save')}
           onClick={handleSave}
-        >
-          {t('Save')}
-        </button>
+          data-qa="save"
+          ref={saveBtnRef}
+        />
       </div>
     </Modal>
   );
 };
+
+export const SettingDialog = withRenderWhen((state) => {
+  const isOpen = UISelectors.selectIsUserSettingsOpen(state);
+  const isUserMenuHidden = SettingsSelectors.isFeatureEnabled(
+    state,
+    Feature.HideUserMenu,
+  );
+
+  return isOpen && !isUserMenuHidden;
+})(SettingDialogView);

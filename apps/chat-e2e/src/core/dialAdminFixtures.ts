@@ -1,6 +1,5 @@
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AgentDetailsModal,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -9,17 +8,21 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
+  EntityDetailsModal,
   FileDropArea,
+  FileManager,
+  FileManagerGrid,
+  FileManagerModal,
   InformationModal,
   Marketplace,
-  MarketplaceAgents,
   MarketplaceContainer,
+  MarketplaceEntities,
   MarketplaceHeader,
   ModelInfoTooltip,
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
-  PublishingRequestModal,
+  PublishingRequestDialog,
   PublishingRules,
   SelectFolderModal,
   SendMessage,
@@ -37,7 +40,6 @@ import {
   ConversationAssertion,
   ConversationInfoTooltipAssertion,
   ManageAttachmentsAssertion,
-  MarketplaceAgentsAssertion,
   MenuAssertion,
   PublicationReviewControlAssertion,
   PublishEntityAssertion,
@@ -46,15 +48,17 @@ import {
   PublishedAppReviewModalAssertion,
   PublishedPromptPreviewModalAssertion,
   PublishingApprovalModalAssertion,
-  PublishingRequestModalAssertion,
+  PublishingRequestDialogAssertion,
+  TalkToAgentDialogAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
-import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
+import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -66,29 +70,27 @@ import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInter
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
 import {
-  ApplicationsToApproveTree,
-  ApplicationsToPublishTree,
   ApproveRequiredConversationsTree,
   ApproveRequiredPrompts,
-  ConversationsToApproveTree,
-  ConversationsToPublishTree,
   ConversationsTree,
-  FilesToApproveTree,
-  FolderConversationsToApprove,
   FolderPrompts,
-  FolderPromptsToApprove,
   Folders,
   OrganizationConversationsTree,
   OrganizationPromptsTree,
-  PromptsToApproveTree,
-  PromptsToPublishTree,
   PromptsTree,
+  PublishApplicationsTree,
+  PublishConversationsTree,
+  PublishFolderConversations,
+  PublishFolderPrompts,
+  PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
-import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
+import { MarketplaceEntitiesSection } from '@/src/ui/webElements/marketplace/marketplaceEntitiesSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
@@ -103,12 +105,13 @@ const dialAdminTest = dialTest.extend<{
   adminPromptBar: PromptBar;
   adminFileDropArea: FileDropArea;
   adminChat: Chat;
+  adminChatHeaderDropdownMenu: DropdownMenu;
   adminMarketplaceContainer: MarketplaceContainer;
   adminNavigationPanel: NavigationPanel;
   adminMarketplace: Marketplace;
   adminMarketplaceHeader: MarketplaceHeader;
-  adminMarketplaceAgentsSection: MarketplaceAgentsSection;
-  adminMarketplaceAgents: MarketplaceAgents;
+  adminMarketplaceEntitiesSection: MarketplaceEntitiesSection;
+  adminMarketplaceEntities: MarketplaceEntities;
   adminFolderPrompts: FolderPrompts;
   adminConversations: ConversationsTree;
   adminPrompts: PromptsTree;
@@ -116,30 +119,28 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredPrompts: ApproveRequiredPrompts;
   adminOrganizationFolderConversations: Folders;
   adminOrganizationFolderPrompts: Folders;
-  adminConversationsToApprove: ConversationsToApproveTree;
-  adminFilesToApprove: FilesToApproveTree;
-  adminPromptsToApprove: PromptsToApproveTree;
-  adminAppsToApprove: ApplicationsToApproveTree;
+  adminConversationsToApproveTree: PublishConversationsTree;
+  adminFilesToApproveTree: PublishFilesTree;
+  adminPromptsToApproveTree: PublishPromptsTree;
+  adminAppsToApprove: PublishApplicationsTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
   adminPublishedPromptPreviewModal: PublishedPromptPreviewModal;
   adminApiInjector: ApiInjector;
   adminBrowserStorageInjector: BrowserStorageInjector;
   adminDataInjector: DataInjectorInterface;
-  adminPublishingRequestModal: PublishingRequestModal;
+  adminPublishingRequestDialog: PublishingRequestDialog;
   adminToast: Toast;
   adminShareModal: ShareModal;
-  adminPromptsToPublishTree: PromptsToPublishTree;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
-  adminConversationToApproveAssertion: PublishEntityAssertion<ConversationsToApproveTree>;
-  adminAppToApproveAssertion: PublishEntityAssertion<ApplicationsToApproveTree>;
-  adminFilesToApproveAssertion: PublishFileAssertion<FilesToApproveTree>;
-  adminPromptToApproveAssertion: PublishEntityAssertion<PromptsToApproveTree>;
-  adminFolderConversationsToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
-  adminFolderPromptsToApproveAssertion: PublishFolderAssertion<FolderPromptsToApprove>;
+  adminAppToApproveAssertion: PublishEntityAssertion<PublishApplicationsTree>;
+  adminPublishFilesAssertion: PublishFileAssertion<PublishFilesTree>;
+  adminPublishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
+  adminFolderConversationsToApproveAssertion: PublishFolderAssertion<PublishFolderConversations>;
+  adminFolderPromptsToApproveAssertion: PublishFolderAssertion<PublishFolderPrompts>;
   adminPromptDropdownMenuAssertion: MenuAssertion;
   adminPromptDropdownMenu: DropdownMenu;
   adminPublicationReviewControl: PublicationReviewControl;
@@ -148,7 +149,6 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderDropdownMenu: DropdownMenu;
   adminApproveRequiredConversationDropdownMenu: DropdownMenu;
   adminApproveRequiredPromptDropdownMenu: DropdownMenu;
-  adminChatHeaderDropdownMenu: DropdownMenu;
   adminTooltip: Tooltip;
   adminOrganizationConversations: OrganizationConversationsTree;
   adminVariableModal: VariableModalDialog;
@@ -165,24 +165,25 @@ const dialAdminTest = dialTest.extend<{
   adminPublishedPromptPreviewModalControlsAssertion: PublicationReviewControlAssertion;
   adminVariableModalAssertion: VariableModalAssertion;
   adminConversationAssertion: ConversationAssertion;
-  adminConversationsToPublishTree: ConversationsToPublishTree;
-  adminConversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
+  adminPublishConversationsTreeAssertion: PublishEntityAssertion<PublishConversationsTree>;
   adminPublishedApplicationReviewModal: PublishedApplicationReviewModal;
   adminPublishedAppReviewModalAssertion: PublishedAppReviewModalAssertion;
   adminPublishedAppReviewModalControlsAssertion: PublicationReviewControlAssertion;
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
-  adminAgentDetailsModal: AgentDetailsModal;
+  adminFileManagerModal: FileManagerModal;
+  adminFileManagerModalManager: FileManager;
+  adminFileManagerModalGrid: FileManagerGrid;
+  adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
-  adminAppsToPublishTree: ApplicationsToPublishTree;
+  adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
-  adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
-  adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
+  adminEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
-  adminPublishingRequestModalAssertion: PublishingRequestModalAssertion;
-  adminAppToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
+  adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
+  adminAppToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
   adminPublishingRulesAssertion: PublishingRulesAssertion;
   adminConversationSettings: ConversationSettingsModal;
   adminTalkToAgentDialog: TalkToAgentDialog;
@@ -199,7 +200,22 @@ const dialAdminTest = dialTest.extend<{
   adminModelInfoTooltip: ModelInfoTooltip;
   adminChatSettingsTooltip: ChatSettingsTooltip;
   adminConversationDropdownMenuAssertion: MenuAssertion;
+  adminTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  adminRenameConversationModal: RenameConversationModal;
+  adminRenameConversationModalAssertion: RenameConversationModalAssertion;
 }>({
+  adminRenameConversationModal: async ({ adminPage }, use) => {
+    const adminRenameConversationModal = new RenameConversationModal(adminPage);
+    await use(adminRenameConversationModal);
+  },
+  adminRenameConversationModalAssertion: async (
+    { adminRenameConversationModal },
+    use,
+  ) => {
+    const adminRenameConversationModalAssertion =
+      new RenameConversationModalAssertion(adminRenameConversationModal);
+    await use(adminRenameConversationModalAssertion);
+  },
   adminChatSettingsTooltip: async ({ adminPage }, use) => {
     const chatSettingsTooltip = new ChatSettingsTooltip(adminPage);
     await use(chatSettingsTooltip);
@@ -310,6 +326,10 @@ const dialAdminTest = dialTest.extend<{
     const additionalShareUserChat = adminFileDropArea.getChat();
     await use(additionalShareUserChat);
   },
+  adminChatHeaderDropdownMenu: async ({ adminPage }, use) => {
+    const adminChatHeaderDropdownMenu = new DropdownMenu(adminPage);
+    await use(adminChatHeaderDropdownMenu);
+  },
   adminMarketplaceContainer: async ({ adminMarketplacePage }, use) => {
     const adminMarketplaceContainer =
       adminMarketplacePage.getMarketplaceContainer();
@@ -327,14 +347,18 @@ const dialAdminTest = dialTest.extend<{
     const adminMarketplaceHeader = adminMarketplace.getMarketplaceHeader();
     await use(adminMarketplaceHeader);
   },
-  adminMarketplaceAgentsSection: async ({ adminMarketplace }, use) => {
-    const adminMarketplaceAgentsSection =
-      adminMarketplace.getMarketplaceAgentsSection();
-    await use(adminMarketplaceAgentsSection);
+  adminMarketplaceEntitiesSection: async ({ adminMarketplace }, use) => {
+    const adminMarketplaceEntitiesSection =
+      adminMarketplace.getMarketplaceEntitiesSection();
+    await use(adminMarketplaceEntitiesSection);
   },
-  adminMarketplaceAgents: async ({ adminMarketplaceAgentsSection }, use) => {
-    const adminMarketplaceAgents = adminMarketplaceAgentsSection.getAgents();
-    await use(adminMarketplaceAgents);
+  adminMarketplaceEntities: async (
+    { adminMarketplaceEntitiesSection },
+    use,
+  ) => {
+    const adminMarketplaceEntities =
+      adminMarketplaceEntitiesSection.getEntities();
+    await use(adminMarketplaceEntities);
   },
   adminConversations: async ({ adminChatBar }, use) => {
     const additionalShareUserConversations =
@@ -370,23 +394,23 @@ const dialAdminTest = dialTest.extend<{
       adminPromptBar.getOrganizationFolderPrompts();
     await use(adminOrganizationFolderPrompts);
   },
-  adminConversationsToApprove: async (
+  adminConversationsToApproveTree: async (
     { adminPublishingApprovalModal },
     use,
   ) => {
-    const adminConversationsToApprove =
+    const adminConversationsToApproveTree =
       adminPublishingApprovalModal.getConversationsToApproveTree();
-    await use(adminConversationsToApprove);
+    await use(adminConversationsToApproveTree);
   },
-  adminFilesToApprove: async ({ adminPublishingApprovalModal }, use) => {
-    const adminFilesToApprove =
+  adminFilesToApproveTree: async ({ adminPublishingApprovalModal }, use) => {
+    const adminFilesToApproveTree =
       adminPublishingApprovalModal.getFilesToApproveTree();
-    await use(adminFilesToApprove);
+    await use(adminFilesToApproveTree);
   },
-  adminPromptsToApprove: async ({ adminPublishingApprovalModal }, use) => {
-    const adminPromptsToApprove =
+  adminPromptsToApproveTree: async ({ adminPublishingApprovalModal }, use) => {
+    const adminPromptsToApproveTree =
       adminPublishingApprovalModal.getPromptsToApproveTree();
-    await use(adminPromptsToApprove);
+    await use(adminPromptsToApproveTree);
   },
   adminAppsToApprove: async ({ adminPublishingApprovalModal }, use) => {
     const adminAppsToApprove =
@@ -433,10 +457,6 @@ const dialAdminTest = dialTest.extend<{
     const adminApproveRequiredPromptDropdownMenu =
       adminApproveRequiredPrompts.getDropdownMenu();
     await use(adminApproveRequiredPromptDropdownMenu);
-  },
-  adminChatHeaderDropdownMenu: async ({ adminPage }, use) => {
-    const adminChatHeaderDropdownMenu = new DropdownMenu(adminPage);
-    await use(adminChatHeaderDropdownMenu);
   },
   adminTooltip: async ({ adminPage }, use) => {
     const adminTooltip = new Tooltip(adminPage);
@@ -493,9 +513,9 @@ const dialAdminTest = dialTest.extend<{
     const adminShareModal = new ShareModal(adminPage);
     await use(adminShareModal);
   },
-  adminPublishingRequestModal: async ({ adminPage }, use) => {
-    const adminPublishingRequestModal = new PublishingRequestModal(adminPage);
-    await use(adminPublishingRequestModal);
+  adminPublishingRequestDialog: async ({ adminPage }, use) => {
+    const adminPublishingRequestDialog = new PublishingRequestDialog(adminPage);
+    await use(adminPublishingRequestDialog);
   },
   adminDataInjector: async (
     { adminApiInjector, adminBrowserStorageInjector },
@@ -505,11 +525,6 @@ const dialAdminTest = dialTest.extend<{
       ? adminApiInjector
       : adminBrowserStorageInjector;
     await use(adminDataInjector);
-  },
-  adminPromptsToPublishTree: async ({ adminPublishingRequestModal }, use) => {
-    const adminPromptsToPublishTree =
-      adminPublishingRequestModal.getPromptsToPublishTree();
-    await use(adminPromptsToPublishTree);
   },
   adminApproveRequiredConversationsAssertion: async (
     { adminApproveRequiredConversations },
@@ -555,31 +570,24 @@ const dialAdminTest = dialTest.extend<{
       new PublishingApprovalModalAssertion(adminPublishingApprovalModal);
     await use(adminPublishingApprovalModalAssertion);
   },
-  adminConversationToApproveAssertion: async (
-    { adminConversationsToApprove },
-    use,
-  ) => {
-    const adminConversationToApproveAssertion =
-      new PublishEntityAssertion<ConversationsToApproveTree>(
-        adminConversationsToApprove,
-      );
-    await use(adminConversationToApproveAssertion);
-  },
   adminAppToApproveAssertion: async ({ adminAppsToApprove }, use) => {
     const adminAppToApproveAssertion =
-      new PublishEntityAssertion<ApplicationsToApproveTree>(adminAppsToApprove);
+      new PublishEntityAssertion<PublishApplicationsTree>(adminAppsToApprove);
     await use(adminAppToApproveAssertion);
   },
-  adminFilesToApproveAssertion: async ({ adminFilesToApprove }, use) => {
-    const adminFilesToApproveAssertion = new PublishFileAssertion(
-      adminFilesToApprove,
+  adminPublishFilesAssertion: async ({ adminFilesToApproveTree }, use) => {
+    const adminPublishFilesAssertion = new PublishFileAssertion(
+      adminFilesToApproveTree,
     );
-    await use(adminFilesToApproveAssertion);
+    await use(adminPublishFilesAssertion);
   },
-  adminPromptToApproveAssertion: async ({ adminPromptsToApprove }, use) => {
-    const adminPromptToApproveAssertion =
-      new PublishEntityAssertion<PromptsToApproveTree>(adminPromptsToApprove);
-    await use(adminPromptToApproveAssertion);
+  adminPublishPromptsTreeAssertion: async (
+    { adminPromptsToApproveTree },
+    use,
+  ) => {
+    const adminPublishPromptsTreeAssertion =
+      new PublishEntityAssertion<PublishPromptsTree>(adminPromptsToApproveTree);
+    await use(adminPublishPromptsTreeAssertion);
   },
   adminFolderConversationsToApproveAssertion: async (
     { adminPublishingApprovalModal },
@@ -643,23 +651,15 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminConversationAssertion);
   },
-  adminConversationsToPublishTree: async (
-    { adminPublishingRequestModal },
+  adminPublishConversationsTreeAssertion: async (
+    { adminConversationsToApproveTree },
     use,
   ) => {
-    const adminConversationsToPublishTree =
-      adminPublishingRequestModal.getConversationsToPublishTree();
-    await use(adminConversationsToPublishTree);
-  },
-  adminConversationToPublishAssertion: async (
-    { adminConversationsToPublishTree },
-    use,
-  ) => {
-    const adminConversationToPublishAssertion =
-      new PublishEntityAssertion<ConversationsToPublishTree>(
-        adminConversationsToPublishTree,
+    const adminPublishConversationsTreeAssertion =
+      new PublishEntityAssertion<PublishConversationsTree>(
+        adminConversationsToApproveTree,
       );
-    await use(adminConversationToPublishAssertion);
+    await use(adminPublishConversationsTreeAssertion);
   },
   adminPublishedAppReviewModalAssertion: async (
     { adminPublishedApplicationReviewModal },
@@ -700,14 +700,27 @@ const dialAdminTest = dialTest.extend<{
     const adminAttachFilesModal = new AttachFilesModal(adminPage);
     await use(adminAttachFilesModal);
   },
-  adminAgentDetailsModal: async ({ adminMarketplaceAgents }, use) => {
-    const adminAgentDetailsModal =
-      adminMarketplaceAgents.getAgentDetailsModal();
-    await use(adminAgentDetailsModal);
+  adminFileManagerModal: async ({ adminPage }, use) => {
+    const adminFileManagerModal = new FileManagerModal(adminPage);
+    await use(adminFileManagerModal);
   },
-  adminAppsToPublishTree: async ({ adminPublishingRequestModal }, use) => {
+  adminFileManagerModalManager: async ({ adminFileManagerModal }, use) => {
+    const adminFileManagerModalManager = adminFileManagerModal.getFileManager();
+    await use(adminFileManagerModalManager);
+  },
+  adminFileManagerModalGrid: async ({ adminFileManagerModalManager }, use) => {
+    const adminFileManagerModalGrid =
+      adminFileManagerModalManager.getFileManagerGrid();
+    await use(adminFileManagerModalGrid);
+  },
+  adminEntityDetailsModal: async ({ adminMarketplaceEntities }, use) => {
+    const adminEntityDetailsModal =
+      adminMarketplaceEntities.getEntityDetailsModal();
+    await use(adminEntityDetailsModal);
+  },
+  adminAppsToPublishTree: async ({ adminPublishingRequestDialog }, use) => {
     const adminAppsToPublishTree =
-      adminPublishingRequestModal.getApplicationsToPublishTree();
+      adminPublishingRequestDialog.getApplicationsToPublishTree();
     await use(adminAppsToPublishTree);
   },
   adminPublishingRules: async ({ adminPublishingApprovalModal }, use) => {
@@ -725,17 +738,14 @@ const dialAdminTest = dialTest.extend<{
     const adminSelectFolderModal = new SelectFolderModal(adminPage);
     await use(adminSelectFolderModal);
   },
-  adminMarketplaceAgentsAssertion: async ({ adminMarketplaceAgents }, use) => {
-    const adminMarketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
-      adminMarketplaceAgents,
+  adminEntityDetailsModalAssertion: async (
+    { adminEntityDetailsModal },
+    use,
+  ) => {
+    const adminEntityDetailsModalAssertion = new EntityDetailsModalAssertion(
+      adminEntityDetailsModal,
     );
-    await use(adminMarketplaceAgentsAssertion);
-  },
-  adminAgentDetailsModalAssertion: async ({ adminAgentDetailsModal }, use) => {
-    const adminAgentDetailsModalAssertion = new AgentDetailsModalAssertion(
-      adminAgentDetailsModal,
-    );
-    await use(adminAgentDetailsModalAssertion);
+    await use(adminEntityDetailsModalAssertion);
   },
   adminSelectFoldersAssertion: async ({ adminSelectFolderModal }, use) => {
     const adminSelectFoldersAssertion = new FolderAssertion(
@@ -743,17 +753,17 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminSelectFoldersAssertion);
   },
-  adminPublishingRequestModalAssertion: async (
-    { adminPublishingRequestModal },
+  adminPublishingRequestDialogAssertion: async (
+    { adminPublishingRequestDialog },
     use,
   ) => {
-    const adminPublishingRequestModalAssertion =
-      new PublishingRequestModalAssertion(adminPublishingRequestModal);
-    await use(adminPublishingRequestModalAssertion);
+    const adminPublishingRequestDialogAssertion =
+      new PublishingRequestDialogAssertion(adminPublishingRequestDialog);
+    await use(adminPublishingRequestDialogAssertion);
   },
   adminAppToPublishAssertion: async ({ adminAppsToPublishTree }, use) => {
     const adminAppToPublishAssertion =
-      new PublishEntityAssertion<ApplicationsToPublishTree>(
+      new PublishEntityAssertion<PublishApplicationsTree>(
         adminAppsToPublishTree,
       );
     await use(adminAppToPublishAssertion);
@@ -817,6 +827,12 @@ const dialAdminTest = dialTest.extend<{
       adminConversationDropdownMenu,
     );
     await use(adminConversationDropdownMenuAssertion);
+  },
+  adminTalkToAgentDialogAssertion: async ({ adminTalkToAgentDialog }, use) => {
+    const adminTalkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
+      adminTalkToAgentDialog,
+    );
+    await use(adminTalkToAgentDialogAssertion);
   },
 });
 

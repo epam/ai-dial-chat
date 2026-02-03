@@ -6,10 +6,10 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
@@ -31,6 +31,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
+import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -77,14 +78,12 @@ function ShareAccessSection({
   return (
     <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
       {isShared ? (
-        <button
+        <DialLinkButton
           onClick={onUnshare}
-          className="flex gap-2 text-sm text-accent-primary"
           data-qa="remove-access-button"
-        >
-          <IconUserUnshare height={18} width={18} />
-          <p>{unshareLabel}</p>
-        </button>
+          iconBefore={<IconUserUnshare height={18} width={18} />}
+          label={unshareLabel}
+        />
       ) : (
         <p data-qa="not-shared-entity-label">{notSharedMessage}</p>
       )}
@@ -95,9 +94,6 @@ function ShareAccessSection({
 export function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
-
-  const [urlCopied, setUrlCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [editAccess, setEditAccess] = useState(false);
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
@@ -169,21 +165,16 @@ export function ShareModalView() {
     dispatch(ShareActions.setModalState({ modalState: ModalState.CLOSED }));
   }, [dispatch]);
 
+  const { copied: urlCopied, onCopy } = useCopy(url);
+
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
 
-      navigator.clipboard.writeText(url).then(() => {
-        setUrlCopied(true);
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-          setUrlCopied(false);
-        }, 2000);
-      });
+      onCopy();
     },
-    [url],
+    [onCopy],
   );
 
   const handleOpenUnshare = useCallback(() => {
@@ -195,8 +186,6 @@ export function ShareModalView() {
     handleClose();
     dispatch(ShareActions.setUnshareResourceId(shareResourceId));
   }, [dispatch, handleClose, shareResourceId]);
-
-  useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   return (
     <Modal
@@ -265,17 +254,16 @@ export function ShareModalView() {
                 </Tooltip>
               ) : (
                 <Tooltip tooltip={t('Copy URL')}>
-                  <button
-                    className="outline-none"
+                  <DialButton
                     onClick={handleCopy}
-                    data-qa="copy-link"
-                  >
-                    <IconCopy
-                      height={20}
-                      width={20}
-                      className="text-secondary hover:text-accent-primary"
-                    />
-                  </button>
+                    aria-label="copy-link"
+                    iconBefore={
+                      <IconCopy
+                        size={20}
+                        className="text-secondary hover:text-accent-primary"
+                      />
+                    }
+                  />
                 </Tooltip>
               )}
             </div>

@@ -13,7 +13,7 @@ import path from 'path';
 import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
-  path: string;
+  path: string | string[];
   dataType?: 'download' | 'upload';
 }
 
@@ -21,6 +21,7 @@ export interface ExpectedApiResponse {
   apiMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
   urlPattern?: string | RegExp;
   status?: number;
+  requestBodyPattern?: string | RegExp;
 }
 
 export interface FileMetadata {
@@ -92,13 +93,13 @@ export class BasePage {
         { apiMethod: 'GET', urlPattern: API.modelsHost },
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { apiMethod: 'GET', urlPattern: API.themesListingHost },
+        { apiMethod: 'GET', urlPattern: API.appSchemasHost },
       ];
     } else {
       expectedApiResponses = [
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { urlPattern: API.installedDeploymentsHost() },
         { apiMethod: 'GET', urlPattern: API.publishedApplicationsHost() },
-        { apiMethod: 'GET', urlPattern: API.filesListingHost() },
         { apiMethod: 'GET', urlPattern: API.publishedConversationsHost() },
         { apiMethod: 'GET', urlPattern: API.publishedPromptsHost() },
         { apiMethod: 'GET', urlPattern: API.appSchemasHost },
@@ -110,7 +111,7 @@ export class BasePage {
         expectedApiResponses.push({ apiMethod: 'GET', urlPattern: iconHost! });
       }
     }
-    const responses = await this.waitForExpectedResponses(
+    const { responses: responses } = await this.waitForExpectedResponses(
       () => method(),
       expectedApiResponses,
     );
@@ -286,10 +287,13 @@ export class BasePage {
       return downloadedData;
     } catch (error) {
       await Promise.all(
-        downloadedData.map((data) =>
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          fs.promises.unlink(data.path).catch(() => {}),
-        ),
+        downloadedData.map((data) => {
+          const paths = Array.isArray(data.path) ? data.path : [data.path];
+          return Promise.all(
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            paths.map((p) => fs.promises.unlink(p).catch(() => {})),
+          );
+        }),
       );
       throw new Error(`Download failed:`);
     }
@@ -314,7 +318,10 @@ export class BasePage {
     const fileChooserPromise = this.page.waitForEvent('filechooser');
     await method();
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(directory, uploadData.path));
+    const filePaths = Array.isArray(uploadData.path)
+      ? uploadData.path.map((p) => path.join(directory, p))
+      : path.join(directory, uploadData.path);
+    await fileChooser.setFiles(filePaths);
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(500);
   }
@@ -329,7 +336,7 @@ export class BasePage {
   }) {
     if (options?.triggeredApiResponses) {
       const responseBodies = [];
-      const responses = await this.waitForExpectedResponses(
+      const { responses: responses } = await this.waitForExpectedResponses(
         () => this.page.keyboard.press(keys.ctrlPlusV),
         options.triggeredApiResponses,
       );
@@ -422,7 +429,7 @@ export class BasePage {
     }
 
     // 3. Create a DataTransfer object in the browser context and dispatch a 'paste' event
-    const responses = await this.waitForExpectedResponses(
+    const { responses: responses } = await this.waitForExpectedResponses(
       () => this.firePasteFilesEvent(filesMetadata),
       expectedApiResponses,
     );
@@ -618,8 +625,8 @@ export class BasePage {
     });
   }
 
-  public async waitForExpectedResponses(
-    action: () => Promise<void>,
+  public async waitForExpectedResponses<T>(
+    action: () => Promise<T>,
     expectedApiResponses: ExpectedApiResponse[],
     defaultStatus = 200,
     timeout = apiTimeout,
@@ -641,14 +648,22 @@ export class BasePage {
               ? urlPattern.test(responseUrl)
               : responseUrl.includes(urlPattern)
             : true;
-          return methodMatch && statusMatch && urlMatch;
+          const requestBodyPattern = expectedResponse.requestBodyPattern;
+          const requestBody = response.request().postData();
+          const bodyMatch =
+            requestBodyPattern && requestBody
+              ? requestBodyPattern instanceof RegExp
+                ? requestBodyPattern.test(requestBody)
+                : requestBody.includes(requestBodyPattern)
+              : true;
+          return methodMatch && statusMatch && urlMatch && bodyMatch;
         },
         { timeout: timeout },
       );
       responsePromises.push(promise);
     }
 
-    await action();
+    const actionResult = await action();
 
     const responses = [];
     for (let i = 0; i < responsePromises.length; i++) {
@@ -661,6 +676,7 @@ export class BasePage {
           method: expectedResponse.apiMethod || 'ANY',
           urlPattern: expectedResponse.urlPattern?.toString() || 'ANY',
           expectedStatus: expectedResponse.status ?? defaultStatus,
+          body: expectedResponse.requestBodyPattern?.toString() ?? 'ANY',
           timeout: timeout,
           error: (error as Error).message,
         });
@@ -668,7 +684,7 @@ export class BasePage {
       }
     }
 
-    return responses;
+    return { actionResult: actionResult, responses: responses };
   }
 
   public async getAttachmentFileMetadataAndContent(

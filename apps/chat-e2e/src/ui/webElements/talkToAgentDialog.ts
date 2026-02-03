@@ -3,14 +3,15 @@ import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
+  ErrorLabelSelectors,
   IconSelectors,
-  MarketplaceAgentSelectors,
+  MarketplaceEntitySelectors,
   MenuSelectors,
   TalkToAgentDialogSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
-import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
+import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToAgentDialog extends BaseElement {
@@ -18,7 +19,7 @@ export class TalkToAgentDialog extends BaseElement {
     super(page, TalkToAgentDialogSelectors.talkToAgentModal, parentLocator);
   }
 
-  private agents!: MarketplaceAgents;
+  private agents!: MarketplaceEntities;
   private versionDropdownMenu!: DropdownButtonMenu;
   public goToMyWorkspaceButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.goToMyWorkspaceButton,
@@ -44,10 +45,13 @@ export class TalkToAgentDialog extends BaseElement {
   public previousArrowButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.previousArrowButton,
   );
+  public noResultFound = this.getChildElementBySelector(
+    ErrorLabelSelectors.noResultFound,
+  );
 
-  getAgents(): MarketplaceAgents {
+  getAgents(): MarketplaceEntities {
     if (!this.agents) {
-      this.agents = new MarketplaceAgents(this.page, this.rootLocator);
+      this.agents = new MarketplaceEntities(this.page, this.rootLocator);
     }
     return this.agents;
   }
@@ -60,13 +64,13 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public getTalkToAgent(entity: DialAIEntityModel | string) {
-    return this.getAgents().getAgent(entity);
+    return this.getAgents().getEntity(entity);
   }
 
   public getVersionMenuTrigger(agentElement: Locator | BaseElement) {
     const agentLocator = BaseElement.getElementLocator(agentElement);
     return agentLocator.locator(
-      MarketplaceAgentSelectors.agentVersionMenuTrigger,
+      MarketplaceEntitySelectors.agentVersionMenuTrigger,
     );
   }
 
@@ -75,13 +79,13 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public async getAllAgentNames() {
-    const allAgentNames = await this.getAgents().getAgentNames();
+    const allAgentNames = await this.getAgents().getEntityNames();
     while (
       (await this.nextArrowButton.isVisible()) &&
       (await this.nextArrowButton.isElementEnabled())
     ) {
       await this.nextArrowButton.click();
-      const visibleAgentNames = await this.getAgents().getAgentNames();
+      const visibleAgentNames = await this.getAgents().getEntityNames();
       for (const visibleAgentName of visibleAgentNames) {
         if (!allAgentNames.includes(visibleAgentName)) {
           allAgentNames.push(visibleAgentName);
@@ -96,7 +100,12 @@ export class TalkToAgentDialog extends BaseElement {
     options: {
       isHttpMethodTriggered?: boolean;
       triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
-    } = { isHttpMethodTriggered: true, triggeredHttpMethod: 'PUT' },
+      isAgentVisible?: boolean;
+    } = {
+      isHttpMethodTriggered: true,
+      triggeredHttpMethod: 'PUT',
+      isAgentVisible: true,
+    },
   ) {
     //check if agent is among recent ones
     const isRecentAgentUsed = await this.useAgent(entity, options);
@@ -104,7 +113,7 @@ export class TalkToAgentDialog extends BaseElement {
     if (!isRecentAgentUsed) {
       await this.allAgentsTab.click();
       const isMarketplaceAgentUsed = await this.useAgent(entity, options);
-      if (!isMarketplaceAgentUsed) {
+      if (!isMarketplaceAgentUsed && options.isAgentVisible) {
         throw new Error(
           `Agent with name: ${entity} and version: ${typeof entity !== 'string' ? (entity.version ?? 'N/A') : 'N/A'} is not found!`,
         );
@@ -128,7 +137,7 @@ export class TalkToAgentDialog extends BaseElement {
       //check if agent name stays among visible agents
       if (!isEntityOfStringType) {
         const agentWithVersionToSetLocator =
-          await agents.agentWithVersionToSet(entity);
+          await agents.entityWithVersionToSet(entity);
         //get agent version from dropdown menu if the name is found
         if (agentWithVersionToSetLocator) {
           return this.getAgentVersionFromMenu(
@@ -218,7 +227,7 @@ export class TalkToAgentDialog extends BaseElement {
       const selectedAttr = await agent.getAttribute(Attributes.ariaSelected);
       if (selectedAttr && JSON.parse(selectedAttr.toLowerCase())) {
         const selectedAgent = agent.locator(
-          MarketplaceAgentSelectors.agentName,
+          MarketplaceEntitySelectors.entityName,
         );
         return selectedAgent.innerText();
       }

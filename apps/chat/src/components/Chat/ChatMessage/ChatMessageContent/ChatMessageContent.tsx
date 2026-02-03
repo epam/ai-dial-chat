@@ -18,7 +18,7 @@ import { AssistantMessage } from '@/src/components/Chat/ChatMessage/ChatMessageC
 import { UserMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/UserMessage';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
-import { LikeState, Message, Role } from '@epam/ai-dial-shared';
+import { Message, Role, onLikeMessageHandler } from '@epam/ai-dial-shared';
 
 interface Props {
   message: Message;
@@ -42,7 +42,7 @@ interface Props {
     conversationId: string,
   ) => void;
   onCopy?: () => void;
-  onLike?: (likeStatus: LikeState) => void;
+  onLike?: onLikeMessageHandler;
   onDelete?: () => void;
   onClick?: (
     e: MouseEvent<HTMLDivElement>,
@@ -63,7 +63,6 @@ export function ChatMessageContent({
   conversation,
   editDisabled,
   isLikesEnabled,
-  messageCopied,
   isEditing,
   isEditingTemplates,
   withButtons,
@@ -72,7 +71,6 @@ export function ChatMessageContent({
   onLike,
   onDelete,
   onClick,
-  onCopy,
   onEdit,
   onRegenerate,
 }: Props) {
@@ -104,8 +102,8 @@ export function ChatMessageContent({
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
-        if (!conversation.isMessageStreaming) {
-          onClick?.(e, messageRef);
+        if (!conversation.isMessageStreaming && !!messageRef.current) {
+          onClick?.(e, messageRef as RefObject<HTMLDivElement>);
         }
       }}
     >
@@ -170,8 +168,6 @@ export function ChatMessageContent({
               isLastMessage={isLastMessage}
               isLikesEnabled={isLikesEnabled}
               withButtons={withButtons}
-              messageCopied={messageCopied}
-              onCopy={onCopy}
               onLike={onLike}
               onToggleEditing={onToggleEditing}
               onEdit={onEdit}

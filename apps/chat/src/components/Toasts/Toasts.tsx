@@ -3,13 +3,14 @@ import {
   IconAlertTriangle,
   IconCircleCheck,
   IconInfoCircle,
-  IconX,
 } from '@tabler/icons-react';
 import hotToast, { Toast, ToastBar, Toaster } from 'react-hot-toast';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { ToastType } from '@/src/types/toasts';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 const getToastConfigByType = (toastType: ToastType) => {
   switch (toastType) {
@@ -74,12 +75,11 @@ export const Toasts = () => (
               >
                 {message}
               </div>
-              <button
+              <DialCloseButton
                 className="mt-0.5 self-start"
-                onClick={() => hotToast.dismiss(toast.id)}
-              >
-                <IconX stroke={1} size={24} className="text-secondary" />
-              </button>
+                onClose={() => hotToast.dismiss(toast.id)}
+                size={24}
+              />
             </>
           )}
         </ToastBar>

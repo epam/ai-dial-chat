@@ -17,6 +17,7 @@ import {
   CreateConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
+  Message,
   OverlayConversation,
   PublishActions,
   SelectConversationResponse,
@@ -25,6 +26,18 @@ import {
 import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
+
+const removeSelectedAddons = (message: Message): Message => {
+  if (message.settings) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { selectedAddons, ...restSettings } = message.settings;
+    return {
+      ...message,
+      settings: restSettings,
+    };
+  }
+  return message;
+};
 
 dialOverlayTest(
   `[Overlay. Events in sandbox] Send 'Hello' to Chat.\n` +
@@ -59,7 +72,7 @@ dialOverlayTest(
     const secondRequestContent = 'test';
     const systemPrompt = `End each word with string "!?!?!"`;
     let secondRequest: Conversation;
-    const configuredModelId = 'imagegeneration@005';
+    const configuredModelId = 'dall-e-3';
 
     await overlayHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
@@ -101,17 +114,17 @@ dialOverlayTest(
       async () => {
         await overlayActions.getMessagesButton.click();
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
-        const actualMessages =
+        const actualMessagesString =
           await overlayDialog.content.getElementInnerContent();
-        const expectedItem = await overlayItemApiHelper.getItem(
+        const expectedItem = await overlayItemApiHelper.getItem<Conversation>(
           secondRequest.id,
         );
-        const expectedMessages: GetMessagesResponse = {
-          messages: expectedItem.messages,
-        };
+        const { messages } = JSON.parse(
+          actualMessagesString,
+        ) as GetMessagesResponse;
         expect
-          .soft(JSON.parse(actualMessages) as GetMessagesResponse)
-          .toStrictEqual(expectedMessages);
+          .soft(messages)
+          .toStrictEqual(expectedItem.messages.map(removeSelectedAddons));
         await overlayDialog.closeButton.click();
       },
     );
@@ -346,7 +359,7 @@ dialOverlayTest(
           );
         for (let i = 0; i < actualConversationsList.length; i++) {
           let expectedConversation: OverlayConversation | Conversation;
-          const conversation = await overlayItemApiHelper.getItem(
+          const conversation = await overlayItemApiHelper.getItem<Conversation>(
             actualConversationsList[i].url,
           );
           const actualConversation = actualConversationsList[i];
@@ -425,7 +438,7 @@ dialOverlayTest(
         const actualSharedConversationsList =
           await overlayShareApiHelper.listSharedWithMeConversations();
         for (const actualSharedConversation of actualSharedConversationsList.resources) {
-          const conversation = await overlayItemApiHelper.getItem(
+          const conversation = await overlayItemApiHelper.getItem<Conversation>(
             actualSharedConversation.url,
           );
           const permissions = conversation.permissions;

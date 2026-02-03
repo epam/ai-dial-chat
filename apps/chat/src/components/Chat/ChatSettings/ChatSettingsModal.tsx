@@ -4,7 +4,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -15,13 +14,14 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Modal } from '@/src/components/Common/Modal';
 
 import { ConversationSettings } from './ConversationSettings';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface ChatSettingsViewProps {
   conversation: Conversation;
@@ -31,8 +31,6 @@ interface ChatSettingsViewProps {
       modelId: string;
       prompt: string;
       temperature: number;
-      currentAssistantModelId: string | undefined;
-      addonsIds: string[];
       isShared: boolean;
     },
   ) => void;
@@ -46,48 +44,17 @@ const ChatSettingsView = ({
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const [currentAssistantModelReference, setCurrentAssistantModelReference] =
-    useState(
-      modelsMap[
-        conversation.assistantModelId ??
-          DefaultsService.get('assistantSubmodelId') ??
-          FALLBACK_ASSISTANT_SUBMODEL_ID
-      ]?.reference ?? FALLBACK_ASSISTANT_SUBMODEL_ID,
-    );
-  const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
-    conversation.selectedAddons || [],
-  );
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
-  const handleOnChangeAddon = useCallback((addonId: string) => {
-    setCurrentSelectedAddonsIds((addons) => {
-      if (addons.includes(addonId)) {
-        return addons.filter((id) => id !== addonId);
-      }
-
-      return [...addons, addonId];
-    });
-  }, []);
-
   const handleChangeSettings = useCallback(() => {
     onChangeSettings(conversation, {
-      currentAssistantModelId: currentAssistantModelReference,
       modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
-      addonsIds: currentSelectedAddonsIds,
       isShared: !!conversation.isShared,
     });
-  }, [
-    conversation,
-    currentAssistantModelReference,
-    currentPrompt,
-    currentSelectedAddonsIds,
-    currentTemperature,
-    onChangeSettings,
-  ]);
+  }, [conversation, currentPrompt, currentTemperature, onChangeSettings]);
 
   useEffect(() => {
     handleChangeSettings();
@@ -97,15 +64,10 @@ const ChatSettingsView = ({
     <ConversationSettings
       conversation={conversation}
       prompts={prompts}
-      assistantModelId={currentAssistantModelReference}
       prompt={currentPrompt}
-      selectedAddons={currentSelectedAddonsIds}
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
-      onSelectAssistantSubModel={setCurrentAssistantModelReference}
-      onChangeAddon={handleOnChangeAddon}
-      onApplyAddons={setCurrentSelectedAddonsIds}
     />
   );
 };
@@ -121,8 +83,6 @@ interface Props {
       modelId: string;
       prompt: string;
       temperature: number;
-      currentAssistantModelId: string | undefined;
-      addonsIds: string[];
       isShared: boolean;
     },
   ) => void;
@@ -238,13 +198,11 @@ export const ChatSettings = ({
       </div>
       {isSomethingConfigurable && (
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
-          <button
-            className="button button-primary"
-            data-qa="apply-changes"
+          <DialPrimaryButton
+            label={t('Apply changes')}
             onClick={handleOnApplySettings}
-          >
-            {t('Apply changes')}
-          </button>
+            data-qa="apply-changes"
+          />
         </div>
       )}
     </Modal>
