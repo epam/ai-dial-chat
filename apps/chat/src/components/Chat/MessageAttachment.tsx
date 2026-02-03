@@ -224,10 +224,6 @@ const AttachmentRendererComponent = withErrorBoundary(
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isOpened, setIsOpened] = useState(false);
-  const [wasOpened, setWasOpened] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const selectIsCustomAttachmentTypeSelector = useMemo(
@@ -237,6 +233,18 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const isCustomAttachmentType = useAppSelector(
     selectIsCustomAttachmentTypeSelector,
   );
+
+  const { expandedTypes, borderlessTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentsSettings,
+  );
+
+  const isBorderless = borderlessTypes.includes(attachment.type);
+  const isExpandedByDefault =
+    isBorderless || expandedTypes.includes(attachment.type);
+
+  const [isOpened, setIsOpened] = useState(isExpandedByDefault);
+  const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
+  const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
 
   useEffect(() => {
     const handleResize = () => {
@@ -291,98 +299,108 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       data-no-context-menu
       className={classNames(
-        'rounded bg-layer-3 px-1 py-2',
+        'rounded',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
-        !isInner && 'border border-secondary',
+        !isInner && !isBorderless && 'border border-secondary',
+        !isBorderless ? 'bg-layer-3 px-1 py-2' : 'mb-3 last:mb-0',
       )}
     >
-      <div className="flex items-center gap-3 px-2">
-        <div className="flex items-center">
-          {mappedAttachmentReferenceUrl ? (
-            <Tooltip tooltip="Open link">
-              <a
-                href={mappedAttachmentReferenceUrl}
-                target="_blank"
-                className="shrink-0"
-                rel="noopener noreferrer"
-              >
-                <LinkIcon
+      {!isBorderless && (
+        <div className="flex items-center gap-3 px-2">
+          <div className="flex items-center">
+            {mappedAttachmentReferenceUrl ? (
+              <Tooltip tooltip="Open link">
+                <a
+                  href={mappedAttachmentReferenceUrl}
+                  target="_blank"
+                  className="shrink-0"
+                  rel="noopener noreferrer"
+                >
+                  <LinkIcon
+                    height={18}
+                    width={18}
+                    className="text-secondary hover:text-accent-primary"
+                  />
+                </a>
+              </Tooltip>
+            ) : (
+              <Icon size={18} className="shrink-0 text-secondary" />
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setIsExpanded((isExpanded) => !isExpanded);
+              if (isOpenable) {
+                setIsOpened((isOpened) => {
+                  if (!isOpened) {
+                    setWasOpened(true);
+                  }
+                  return !isOpened;
+                });
+              }
+            }}
+            className="flex grow items-center justify-between overflow-hidden"
+            data-qa={
+              isExpanded ? 'attachment-expanded' : 'attachment-collapsed'
+            }
+          >
+            <span
+              className={classNames(
+                'shrink truncate whitespace-pre text-left text-sm',
+                isExpanded || isFolder || mappedAttachmentReferenceUrl
+                  ? 'max-w-full'
+                  : 'max-w-[calc(100%-30px)]',
+              )}
+              title={attachment.title || attachment.url || t('Attachment')}
+            >
+              {attachment.title || attachment.url || t('Attachment')}
+            </span>
+            {isOpenable && !isFolder ? (
+              <div className="flex gap-2">
+                {isDownloadable && (
+                  <a
+                    download={attachment.title}
+                    href={mappedAttachmentUrl}
+                    onClick={stopBubbling}
+                    className="text-secondary hover:text-accent-primary"
+                  >
+                    <IconDownload size={18} />
+                  </a>
+                )}
+                <ChevronDown
                   height={18}
                   width={18}
-                  className="text-secondary hover:text-accent-primary"
+                  className={classNames(
+                    'shrink-0 text-secondary transition',
+                    isOpened && 'rotate-180',
+                  )}
                 />
-              </a>
-            </Tooltip>
-          ) : (
-            <Icon size={18} className="shrink-0 text-secondary" />
-          )}
-        </div>
-        <button
-          onClick={() => {
-            setIsExpanded((isExpanded) => !isExpanded);
-            if (isOpenable) {
-              setIsOpened((isOpened) => {
-                if (!isOpened) {
-                  setWasOpened(true);
-                }
-                return !isOpened;
-              });
-            }
-          }}
-          className="flex grow items-center justify-between overflow-hidden"
-          data-qa={isExpanded ? 'attachment-expanded' : 'attachment-collapsed'}
-        >
-          <span
-            className={classNames(
-              'shrink truncate whitespace-pre text-left text-sm',
-              isExpanded || isFolder || mappedAttachmentReferenceUrl
-                ? 'max-w-full'
-                : 'max-w-[calc(100%-30px)]',
-            )}
-            title={attachment.title || attachment.url || t('Attachment')}
-          >
-            {attachment.title || attachment.url || t('Attachment')}
-          </span>
-          {isOpenable && !isFolder ? (
-            <div className="flex gap-2">
-              {isDownloadable && (
+              </div>
+            ) : (
+              !isFolder &&
+              !mappedAttachmentReferenceUrl && (
                 <a
                   download={attachment.title}
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
+                  target="_blank"
                   className="text-secondary hover:text-accent-primary"
                 >
                   <IconDownload size={18} />
                 </a>
-              )}
-              <ChevronDown
-                height={18}
-                width={18}
-                className={classNames(
-                  'shrink-0 text-secondary transition',
-                  isOpened && 'rotate-180',
-                )}
-              />
-            </div>
-          ) : (
-            !isFolder &&
-            !mappedAttachmentReferenceUrl && (
-              <a
-                download={attachment.title}
-                href={mappedAttachmentUrl}
-                onClick={stopBubbling}
-                target="_blank"
-                className="text-secondary hover:text-accent-primary"
-              >
-                <IconDownload size={18} />
-              </a>
-            )
-          )}
-        </button>
-      </div>
+              )
+            )}
+          </button>
+        </div>
+      )}
       {isOpenable && isOpened && (
         <div
-          className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
+          className={classNames(
+            'relative h-auto w-full overflow-hidden text-sm duration-200',
+            {
+              'mt-2 border-t border-tertiary p-3 pt-4': !isBorderless,
+            },
+          )}
           ref={anchorRef}
         >
           <AttachmentRendererComponent

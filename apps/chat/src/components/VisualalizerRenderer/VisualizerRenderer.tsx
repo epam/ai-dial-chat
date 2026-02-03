@@ -70,6 +70,12 @@ export const VisualizerRenderer = ({
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
+  const { withoutTitleTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentsSettings,
+  );
+
+  const hideTitle = withoutTitleTypes.includes(mimeType);
+
   const scrollWidth =
     iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;
 
@@ -197,7 +203,7 @@ export const VisualizerRenderer = ({
   return (
     <div>
       <div className="mb-2 flex flex-row justify-between">
-        <h2>{visualizerTitle}</h2>
+        {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
         <DialLinkButton
           className="flex text-accent-primary"
