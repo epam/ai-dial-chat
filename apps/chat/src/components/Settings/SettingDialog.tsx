@@ -177,7 +177,7 @@ const SettingDialogView: FC = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[518px] md:p-6"
+      containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[509px] md:p-6"
       dataQa="settings-modal"
       state={ModalState.OPENED}
       onClose={handleClose}
