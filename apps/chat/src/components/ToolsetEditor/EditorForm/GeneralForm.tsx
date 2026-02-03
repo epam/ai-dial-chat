@@ -18,6 +18,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { BYTES_IN_KB } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
@@ -119,6 +120,7 @@ export const GeneralForm = ({
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
               disabled={isToolsetPublic}
+              maxSelectableFileSize={100 * BYTES_IN_KB}
               tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
