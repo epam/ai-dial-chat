@@ -3,7 +3,6 @@ import {
   IconPlaystationSquare,
   IconRefresh,
 } from '@tabler/icons-react';
-import { useCallback } from 'react';
 
 import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -89,7 +88,7 @@ export const RedeployButton = ({ entity }: ActionButtonProps) => {
   }
 
   return (
-    <DialPrimaryButton
+    <DialNeutralButton
       label={t('Redeploy')}
       iconBefore={<IconRefresh size={18} />}
       onClick={handleRedeploy}
@@ -101,33 +100,20 @@ export const RedeployButton = ({ entity }: ActionButtonProps) => {
 export const SimpleApplicationDetailsFooter = ({
   entity,
   onChangeVersion,
-  onRemove,
 }: ApplicationDetailsFooterProps) => {
-  const { t } = useTranslation(Translation.Marketplace);
-
-  const handleRemove = useCallback(() => {
-    onRemove?.(entity);
-  }, [onRemove, entity]);
-
   return (
-    <div className="flex items-center justify-end gap-4 p-4">
-      <div className="flex items-center gap-4">
-        <ModelVersionSelect
-          className="h-max"
-          entities={[entity]}
-          showVersionPrefix
-          onSelect={onChangeVersion}
-          currentEntity={entity}
-        />
-        <DialNeutralButton
-          onClick={handleRemove}
-          data-qa="remove"
-          label={t('Remove')}
-        />
+    <div className="flex items-center justify-end gap-3 p-4 sm:gap-4">
+      <ModelVersionSelect
+        className="h-max"
+        entities={[entity]}
+        showVersionPrefix
+        onSelect={onChangeVersion}
+        currentEntity={entity}
+      />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <DeployUndeployButton entity={entity} />
+        <RedeployButton entity={entity} />
       </div>
-
-      <DeployUndeployButton entity={entity} />
-      <RedeployButton entity={entity} />
     </div>
   );
 };
