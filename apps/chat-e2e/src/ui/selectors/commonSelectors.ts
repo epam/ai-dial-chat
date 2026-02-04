@@ -56,6 +56,7 @@ export const GridSelectors = {
   loadingIndicator: '.ag-overlay-loading-center',
   gridViewPort: '.ag-body-viewport',
   gridBody: '.ag-body',
+  gridCheckboxInput: 'input.ag-checkbox-input',
 };
 
 export const CheckboxSelectors = {
