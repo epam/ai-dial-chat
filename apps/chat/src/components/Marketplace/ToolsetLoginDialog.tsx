@@ -84,7 +84,10 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   });
 
   const isOrganizationView = isAdmin && isPublic;
-  const isSignedIn = isToolsetSignedIn(entity, ToolsetCredentialsLevel.GLOBAL);
+  const isSignedIn = isToolsetSignedIn(
+    entity,
+    isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL,
+  );
 
   const fieldsInfo = useMemo(
     () => ({
@@ -137,20 +140,28 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     (data: ToolsetLoginFormType) => {
       dispatch(
         ToolsetActions.startSignInProcess({
-          authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
+          authLevel:
+            authLevel ??
+            (isPublic
+              ? ToolsetCredentialsLevel.USER
+              : ToolsetCredentialsLevel.GLOBAL),
           apiKey: data.apiKey,
           toolset: entity,
         }),
       );
       handleClose();
     },
-    [dispatch, entity, handleClose, authLevel],
+    [dispatch, authLevel, isPublic, entity, handleClose],
   );
 
   const handleLogout = useCallback(() => {
     dispatch(
       ToolsetActions.logOutToolset({
-        authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
+        authLevel:
+          authLevel ??
+          (isPublic
+            ? ToolsetCredentialsLevel.USER
+            : ToolsetCredentialsLevel.GLOBAL),
         authType: entity.authSettings.authenticationType,
         toolsetId: entity.id,
       }),
@@ -158,10 +169,11 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     handleClose();
   }, [
     dispatch,
+    authLevel,
+    isPublic,
     entity.authSettings.authenticationType,
     entity.id,
     handleClose,
-    authLevel,
   ]);
 
   const handleVersionChange = useCallback(
@@ -281,7 +293,11 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
             ))
           ) : (
             <ToolsetLoginForm
-              credentialsLevel={ToolsetCredentialsLevel.GLOBAL}
+              credentialsLevel={
+                isPublic
+                  ? ToolsetCredentialsLevel.USER
+                  : ToolsetCredentialsLevel.GLOBAL
+              }
               type={entity.authSettings.authenticationType}
               toolset={entity}
               buttonClassName="ml-auto"
