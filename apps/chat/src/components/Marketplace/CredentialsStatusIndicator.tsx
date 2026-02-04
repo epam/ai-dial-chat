@@ -7,6 +7,7 @@ import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { Badge } from '@/src/components/Badge';
+import { isPredefinedEntity } from '@/src/utils/app/id';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;
@@ -24,7 +25,7 @@ export const CredentialsStatusIndicator = ({
     entity,
     ToolsetCredentialsLevel.USER,
   );
-  const isPublic = isEntityIdPublic(entity);
+  const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
   const isSignedIn = isSignedInUser || isSignedInGlobal;
 
   const loginLabel = isSignedInUser || !isPublic ? 'MY CREDS' : 'ORG CREDS';

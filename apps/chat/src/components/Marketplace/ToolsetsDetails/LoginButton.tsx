@@ -21,6 +21,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { isPredefinedEntity } from '@/src/utils/app/id';
 
 interface LoginButtonProps {
   entity: ToolsetModel;
@@ -32,7 +33,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
 
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isPublic = isEntityIdPublic(entity);
+  const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
   const withAuth = isToolsetWithAuth(entity);
   const { handleLogin } = useToolsetMenuActions(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);

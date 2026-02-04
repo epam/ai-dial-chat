@@ -1,5 +1,6 @@
 import { Observable, catchError, map, of } from 'rxjs';
 
+import { isPredefinedEntity, isToolsetId } from '@/src/utils/app/id';
 import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
 import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 
@@ -24,7 +25,22 @@ export class ToolsetService {
     );
   }
 
+  public static getToolsetByName(
+    name: string,
+  ): Observable<ToolsetModel | null> {
+    return ApiUtils.request(`/api/toolsets-listing/${name}`, {
+      method: HTTPMethod.GET,
+    }).pipe(
+      map(convertToolsetFromApi),
+      catchError(() => of(null)),
+    );
+  }
+
   public static getToolsetById(id: string): Observable<ToolsetModel | null> {
+    if (!isPredefinedEntity({ id })) {
+      return ToolsetService.getToolsetByName(id);
+    }
+
     return DataService.getDataStorage().getToolsetById(id);
   }
 

@@ -75,11 +75,10 @@ export const useToolsetMenuItems = ({
   const isAppIdPublic = isEntityIdPublic(entity);
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
-  const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const isWithAuth = isToolsetWithAuth(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);
 
-  const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
+  const canEditOrView = isMyApp || canWrite || (isAppIdPublic && isAdmin);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -101,7 +100,7 @@ export const useToolsetMenuItems = ({
         name: t('Manage creds'),
         dataQa: 'toolset-login',
         display:
-          disabledActions.login !== true && isWithAuth && isPublicAndAdmin,
+          disabledActions.login !== true && isWithAuth && isPublicApp && isAdmin,
         Icon: IconKey,
         onClick: handleLogin,
       },
@@ -109,7 +108,7 @@ export const useToolsetMenuItems = ({
         name: t(getToolsetAuthActionLabel(authAction, screenState)),
         dataQa: 'toolset-login',
         display:
-          disabledActions.login !== true && isWithAuth && !isPublicAndAdmin,
+          disabledActions.login !== true && isWithAuth && !(isPublicApp && isAdmin),
         Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
         iconClassName:
           authAction === ToolsetAuthAction.LogOut
@@ -159,29 +158,7 @@ export const useToolsetMenuItems = ({
         onClick: handleDelete,
       },
     ],
-    [
-      t,
-      isPublicApp,
-      disabledActions.copyLink,
-      disabledActions.edit,
-      disabledActions.login,
-      disabledActions.publish,
-      disabledActions.unpublish,
-      disabledActions.delete,
-      handleCopy,
-      isAppIdPublic,
-      canEditOrView,
-      handleEdit,
-      isWithAuth,
-      isPublicAndAdmin,
-      handleLogin,
-      authAction,
-      screenState,
-      isMyAppOrPreview,
-      handlePublish,
-      handleUnpublish,
-      handleDelete,
-    ],
+    [t, isPublicApp, disabledActions.copyLink, disabledActions.edit, disabledActions.login, disabledActions.publish, disabledActions.unpublish, disabledActions.delete, handleCopy, isAppIdPublic, canEditOrView, handleEdit, isWithAuth, isAdmin, handleLogin, authAction, screenState, isMyAppOrPreview, handlePublish, handleUnpublish, handleDelete],
   );
 
   return menuItems;

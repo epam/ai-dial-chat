@@ -39,6 +39,7 @@ import {
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isPredefinedEntity } from '@/src/utils/app/id';
 
 const credsTabs = [
   {
@@ -67,7 +68,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const authType = entity.authSettings.authenticationType;
-  const isPublic = isEntityIdPublic(entity);
+  const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
 
   const [authLevel, setAuthLevel] = useState<
     ToolsetCredentialsLevel | undefined
@@ -90,7 +91,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   });
 
   const isOrganizationView = isAdmin && isPublic;
-  const isSignedIn = isToolsetSignedIn(entity, ToolsetCredentialsLevel.GLOBAL);
+  const isSignedIn = isToolsetSignedIn(entity, isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL);
 
   const fieldsInfo = useMemo(
     () => ({
@@ -145,26 +146,27 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     (data: ToolsetLoginFormType) => {
       dispatch(
         ToolsetActions.startSignInProcess({
-          authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
+          authLevel: authLevel ?? (isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL),
           apiKey: data.apiKey,
           toolset: entity,
         }),
       );
       handleClose();
     },
-    [dispatch, entity, handleClose, authLevel],
+    [dispatch, authLevel, isPublic, entity, handleClose],
   );
 
   const handleLogout = useCallback(() => {
     dispatch(
       ToolsetActions.logOutToolset({
-        authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
+        authLevel: authLevel ?? (isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL),
         authType: entity.authSettings.authenticationType,
         toolsetId: entity.id,
       }),
     );
     handleClose();
   }, [
+    isPublic,
     dispatch,
     entity.authSettings.authenticationType,
     entity.id,
@@ -244,13 +246,15 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
           <div className="flex items-center gap-1">
             <span className="text-xs text-primary">{t('Version: ')}</span>
 
-            <ModelVersionSelect
-              entities={isAppsEditor ? [entity] : allVersions}
-              currentEntity={entity}
-              onSelect={handleVersionChange}
-              className="truncate"
-              triggerClassName="!text-xs bg-layer-4 rounded p-1"
-            />
+            {entity.version ? (
+              <ModelVersionSelect
+                entities={isAppsEditor ? [entity] : allVersions}
+                currentEntity={entity}
+                onSelect={handleVersionChange}
+                className="truncate"
+                triggerClassName="!text-xs bg-layer-4 rounded p-1"
+              />
+            ) : <span className="text-xs text-secondary">N/A</span>}
           </div>
         </div>
       </div>
@@ -289,7 +293,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
             ))
           ) : (
             <ToolsetLoginForm
-              credentialsLevel={ToolsetCredentialsLevel.GLOBAL}
+              credentialsLevel={isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL}
               type={entity.authSettings.authenticationType}
               toolset={entity}
               buttonClassName="ml-auto"
