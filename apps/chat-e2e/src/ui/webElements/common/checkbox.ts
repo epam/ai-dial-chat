@@ -8,11 +8,14 @@ import { Locator, Page } from '@playwright/test';
  */
 export class Checkbox extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    // AG-Grid checkbox container
-    super(page, '.ag-selection-checkbox', parentLocator);
+    // AG-Grid checkbox input (was container)
+    // Targeting input directly allows toBeChecked() and other standard assertions to work
+    super(page, GridSelectors.gridCheckboxInput, parentLocator);
   }
 
-  public checkboxInput = this.getChildElementBySelector(
-    GridSelectors.gridCheckboxInput,
-  );
+  // Backward compatibility: existing tests access .checkboxInput
+  // Since the Checkbox object now wraps the input, this property can return the instance itself
+  public get checkboxInput(): BaseElement {
+    return this;
+  }
 }
