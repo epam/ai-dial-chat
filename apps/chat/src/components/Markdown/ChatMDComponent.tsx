@@ -15,6 +15,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
+  mathMLTags,
   modelCursorSign,
   modelCursorSignWithBackquote,
 } from '@/src/constants/chat';
@@ -162,7 +163,7 @@ const getMDComponents = (
 
 const remarkPlugins: PluggableList = [
   remarkGfm,
-  [remarkMath, { singleDollarTextMath: true }],
+  [remarkMath, { singleDollarTextMath: false }],
 ];
 const rehypePlugins = [
   rehypeRaw,
@@ -171,6 +172,7 @@ const rehypePlugins = [
     rehypeSanitize,
     {
       ...defaultSchema,
+      tagNames: [...(defaultSchema.tagNames || []), ...mathMLTags],
       attributes: {
         ...defaultSchema.attributes,
         code: [

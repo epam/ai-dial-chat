@@ -63,6 +63,7 @@
     "jszip": "^3.10.1",
     "katex": "^0.16.22",
     "lodash-es": "^4.17.21",
+    "micromark-extension-llm-math": "^3.1.0",
     "mime-types": "^2.1.35",
     "nanoid": "^5.1.5",
     "next": "15.5.9",
