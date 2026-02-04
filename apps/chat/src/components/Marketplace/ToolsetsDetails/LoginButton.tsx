@@ -5,6 +5,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   getToolsetAuthAction,
@@ -21,7 +22,6 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
-import { isPredefinedEntity } from '@/src/utils/app/id';
 
 interface LoginButtonProps {
   entity: ToolsetModel;

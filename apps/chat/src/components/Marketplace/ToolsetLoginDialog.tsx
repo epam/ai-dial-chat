@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
@@ -39,7 +40,6 @@ import {
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isPredefinedEntity } from '@/src/utils/app/id';
 
 const credsTabs = [
   {
@@ -91,7 +91,10 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   });
 
   const isOrganizationView = isAdmin && isPublic;
-  const isSignedIn = isToolsetSignedIn(entity, isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL);
+  const isSignedIn = isToolsetSignedIn(
+    entity,
+    isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL,
+  );
 
   const fieldsInfo = useMemo(
     () => ({
@@ -146,7 +149,11 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     (data: ToolsetLoginFormType) => {
       dispatch(
         ToolsetActions.startSignInProcess({
-          authLevel: authLevel ?? (isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL),
+          authLevel:
+            authLevel ??
+            (isPublic
+              ? ToolsetCredentialsLevel.USER
+              : ToolsetCredentialsLevel.GLOBAL),
           apiKey: data.apiKey,
           toolset: entity,
         }),
@@ -159,7 +166,11 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   const handleLogout = useCallback(() => {
     dispatch(
       ToolsetActions.logOutToolset({
-        authLevel: authLevel ?? (isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL),
+        authLevel:
+          authLevel ??
+          (isPublic
+            ? ToolsetCredentialsLevel.USER
+            : ToolsetCredentialsLevel.GLOBAL),
         authType: entity.authSettings.authenticationType,
         toolsetId: entity.id,
       }),
@@ -254,7 +265,9 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
                 className="truncate"
                 triggerClassName="!text-xs bg-layer-4 rounded p-1"
               />
-            ) : <span className="text-xs text-secondary">N/A</span>}
+            ) : (
+              <span className="text-xs text-secondary">N/A</span>
+            )}
           </div>
         </div>
       </div>
@@ -293,7 +306,11 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
             ))
           ) : (
             <ToolsetLoginForm
-              credentialsLevel={isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL}
+              credentialsLevel={
+                isPublic
+                  ? ToolsetCredentialsLevel.USER
+                  : ToolsetCredentialsLevel.GLOBAL
+              }
               type={entity.authSettings.authenticationType}
               toolset={entity}
               buttonClassName="ml-auto"

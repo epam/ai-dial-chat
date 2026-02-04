@@ -1,5 +1,6 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn, isToolsetWithAuth } from '@/src/utils/app/toolsets';
 
@@ -7,7 +8,6 @@ import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { Badge } from '@/src/components/Badge';
-import { isPredefinedEntity } from '@/src/utils/app/id';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;

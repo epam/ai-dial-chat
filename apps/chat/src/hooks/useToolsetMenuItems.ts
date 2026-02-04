@@ -100,7 +100,10 @@ export const useToolsetMenuItems = ({
         name: t('Manage creds'),
         dataQa: 'toolset-login',
         display:
-          disabledActions.login !== true && isWithAuth && isPublicApp && isAdmin,
+          disabledActions.login !== true &&
+          isWithAuth &&
+          isPublicApp &&
+          isAdmin,
         Icon: IconKey,
         onClick: handleLogin,
       },
@@ -108,7 +111,9 @@ export const useToolsetMenuItems = ({
         name: t(getToolsetAuthActionLabel(authAction, screenState)),
         dataQa: 'toolset-login',
         display:
-          disabledActions.login !== true && isWithAuth && !(isPublicApp && isAdmin),
+          disabledActions.login !== true &&
+          isWithAuth &&
+          !(isPublicApp && isAdmin),
         Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
         iconClassName:
           authAction === ToolsetAuthAction.LogOut
@@ -158,7 +163,29 @@ export const useToolsetMenuItems = ({
         onClick: handleDelete,
       },
     ],
-    [t, isPublicApp, disabledActions.copyLink, disabledActions.edit, disabledActions.login, disabledActions.publish, disabledActions.unpublish, disabledActions.delete, handleCopy, isAppIdPublic, canEditOrView, handleEdit, isWithAuth, isAdmin, handleLogin, authAction, screenState, isMyAppOrPreview, handlePublish, handleUnpublish, handleDelete],
+    [
+      t,
+      isPublicApp,
+      disabledActions.copyLink,
+      disabledActions.edit,
+      disabledActions.login,
+      disabledActions.publish,
+      disabledActions.unpublish,
+      disabledActions.delete,
+      handleCopy,
+      isAppIdPublic,
+      canEditOrView,
+      handleEdit,
+      isWithAuth,
+      isAdmin,
+      handleLogin,
+      authAction,
+      screenState,
+      isMyAppOrPreview,
+      handlePublish,
+      handleUnpublish,
+      handleDelete,
+    ],
   );
 
   return menuItems;

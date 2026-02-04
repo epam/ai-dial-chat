@@ -1,6 +1,6 @@
 import { Observable, catchError, map, of } from 'rxjs';
 
-import { isPredefinedEntity, isToolsetId } from '@/src/utils/app/id';
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
 import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 

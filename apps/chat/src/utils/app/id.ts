@@ -115,12 +115,18 @@ export const filterIdsByFeatureType = (
   return [];
 };
 
-export const isPredefinedEntity = (entity: { id: string; reference?: string}) => {
+export const isPredefinedEntity = (entity: {
+  id: string;
+  reference?: string;
+}) => {
   if (entity.id === entity.reference) return true;
   const idParts = entity.id.split('/');
 
-  return !Object.values(ApiKeys).includes(idParts[0] as ApiKeys) && idParts.length >= 3;
-}
+  return (
+    !Object.values(ApiKeys).includes(idParts[0] as ApiKeys) &&
+    idParts.length >= 3
+  );
+};
 
 export const isRootEntity = (id: string) => {
   return id.split('/').length === 3;
