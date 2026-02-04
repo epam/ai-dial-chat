@@ -120,12 +120,9 @@ export const isPredefinedEntity = (entity: {
   reference?: string;
 }) => {
   if (entity.id === entity.reference) return true;
-  const idParts = entity.id.split('/');
+  const [key, bucket] = entity.id.split('/');
 
-  return (
-    !Object.values(ApiKeys).includes(idParts[0] as ApiKeys) &&
-    idParts.length >= 3
-  );
+  return !Object.values(ApiKeys).includes(key as ApiKeys) || !bucket;
 };
 
 export const isRootEntity = (id: string) => {

@@ -37,7 +37,7 @@ export class ToolsetService {
   }
 
   public static getToolsetById(id: string): Observable<ToolsetModel | null> {
-    if (!isPredefinedEntity({ id })) {
+    if (isPredefinedEntity({ id })) {
       return ToolsetService.getToolsetByName(id);
     }
 
