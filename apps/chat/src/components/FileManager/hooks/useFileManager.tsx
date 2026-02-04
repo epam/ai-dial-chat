@@ -573,7 +573,7 @@ export const useFileManager = ({
       dateOptions: dateOptions,
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
-      selectionMode: GridSelectionMode.CHECKBOX,
+      selectionMode: GridSelectionMode.MULTIPLE,
     }),
     [gridActionLabels, visibleColumns],
   );
