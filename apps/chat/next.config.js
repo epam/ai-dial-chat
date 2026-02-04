@@ -167,6 +167,11 @@ const nextConfig = {
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
 
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'micromark-extension-math': 'micromark-extension-llm-math',
+    };
+
     return config;
   },
 
