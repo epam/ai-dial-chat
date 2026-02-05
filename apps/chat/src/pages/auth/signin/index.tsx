@@ -77,7 +77,7 @@ export default function Signin({
 
   const errorMessage =
     error && typeof error === 'string'
-      ? (errors[error] ?? errors.default)
+      ? t(errors[error] ?? errors.default)
       : undefined;
 
   useEffect(() => {
@@ -151,7 +151,7 @@ export default function Signin({
             <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
           )}
         </div>
-        <ErrorMessage error={t(errorMessage ?? '')} className="my-4" />
+        <ErrorMessage error={errorMessage} className="my-4" />
         <div className="my-4 text-center">{t('Sign in with:')}</div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
