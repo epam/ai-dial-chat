@@ -152,31 +152,26 @@ const CopyButton = ({
   const { t } = useTranslation(Translation.Chat);
 
   const { copied, onCopy } = useCopy(content, convertFromMarkdown);
-  if (copied) {
-    return (
-      <Tooltip
-        key={`copied${keyPostfix}`}
-        placement="top"
-        tooltip={t(copiedLabel)}
-        triggerClassName="p-0.5"
-      >
-        <IconCheck size={18} className="text-secondary" />
-      </Tooltip>
-    );
-  }
 
   return (
     <Tooltip
-      key={`copy${keyPostfix}`}
+      key={`${copied ? 'copied' : 'copy'}${keyPostfix}`}
       placement="top"
       isTriggerClickable
-      tooltip={t(copyLabel)}
+      tooltip={t(copied ? copiedLabel : copyLabel)}
     >
       <DialPrimaryIconButton
         appearance={ButtonAppearance.Ghost}
         size={ButtonSize.Small}
         onClick={onCopy}
-        icon={<Icon size={18} stroke={1.5} />}
+        disabled={copied}
+        icon={
+          copied ? (
+            <IconCheck size={18} className="text-secondary" />
+          ) : (
+            <Icon size={18} stroke={1.5} />
+          )
+        }
       />
     </Tooltip>
   );
