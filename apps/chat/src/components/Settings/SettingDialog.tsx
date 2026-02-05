@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isTouchable } from '@/src/utils/app/mobile';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { ScreenState } from '@/src/types/common';
@@ -225,7 +226,7 @@ const SettingDialogView: FC = () => {
             className="mt-1"
           />
         )}
-        {screenState > ScreenState.MD && (
+        {!isTouchable() && (
           <EnterTypeSelectLabeled
             label={t('Keyboard shortcuts')}
             value={enterType}
