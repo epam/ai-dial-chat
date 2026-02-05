@@ -110,7 +110,7 @@ export function SidebarMenu({
     [displayedItems.length],
   );
 
-  useResizeObserver(containerRef.current, handleResize, true);
+  useResizeObserver(containerRef.current, handleResize);
 
   return (
     <div
