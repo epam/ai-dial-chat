@@ -1,13 +1,10 @@
 import { useEffect } from 'react';
 
+
 export const useResizeObserver = (
   target: Element | null,
-  callback: () => void,
-  callImmediately = false,
+  callback: ResizeObserverCallback,
 ) => {
-  if (callImmediately && target) {
-    callback();
-  }
   useEffect(() => {
     if (!target) return;
 
