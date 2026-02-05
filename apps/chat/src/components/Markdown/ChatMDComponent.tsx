@@ -169,7 +169,7 @@ const getMDComponents = (
 
 const remarkPlugins: Options['remarkPlugins'] = [
   remarkGfm,
-  [remarkMath, { singleDollarTextMath: true }],
+  [remarkMath, { singleDollarTextMath: false }],
 ];
 const rehypePlugins: Options['rehypePlugins'] = [
   rehypeRaw,

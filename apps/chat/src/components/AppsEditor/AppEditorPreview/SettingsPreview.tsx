@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -17,12 +18,12 @@ import {
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
-import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
+import { ApplicationType } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ConversationsActions } from '@/src/store/actions';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -46,8 +47,6 @@ import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 const ChatPreview = () => {
   const { t } = useTranslation(Translation.Chat);
-
-  const dispatch = useAppDispatch();
 
   const router = useRouter();
   const {
@@ -79,6 +78,8 @@ const ChatPreview = () => {
   );
 
   const applicationId = appDetails?.id;
+  const { handleDeploy } = useApplicationStatusActions(applicationId);
+
   const modelFromState = appReference ? modelsMap[appReference] : null;
   const isAppDeployed = useMemo(
     () => !!modelFromState && isApplicationDeployed(modelFromState),
@@ -88,17 +89,6 @@ const ChatPreview = () => {
     () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
     [modelFromState],
   );
-
-  const handleDeployClick = useCallback(() => {
-    if (applicationId) {
-      dispatch(
-        ApplicationActions.startUpdatingFunctionStatus({
-          id: applicationId,
-          status: ApplicationStatus.DEPLOYING,
-        }),
-      );
-    }
-  }, [applicationId, dispatch]);
 
   if (
     !areSelectedConversationLoaded ||
@@ -140,7 +130,7 @@ const ChatPreview = () => {
             </div>
             <DialLinkButton
               label={t('Deploy code app')}
-              onClick={handleDeployClick}
+              onClick={handleDeploy}
               disabled={!isApplicationValid}
               data-qa="deploy-code-app"
               iconBefore={<IconPlayerPlay size={18} />}
@@ -189,6 +179,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     ConversationsSelectors.selectPreviewConversationId,
   );
 
+  const { handleRedeploy } = useApplicationStatusActions(appDetails?.id);
+
   const isExternalAppEditing = useMemo(() => isExternalAppEditor(type), [type]);
 
   const isPreviewHalf = previewMode === PreviewMode.half;
@@ -209,15 +201,6 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
   const showRedeployButton =
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
-
-  const handleRedeploy = () => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: appDetails?.id ?? '',
-        status: ApplicationStatus.REDEPLOYING,
-      }),
-    );
-  };
 
   const handleFocusChat = useCallback(
     (e: FocusEvent<HTMLDivElement>) => {
