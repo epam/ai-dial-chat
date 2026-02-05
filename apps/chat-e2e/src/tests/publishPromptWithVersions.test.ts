@@ -28,13 +28,13 @@ dialTest(
     promptDropdownMenu,
     promptPreviewModal,
     promptPreviewVersionDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     promptDropdownMenuAssertion,
     promptPreviewModalAssertion,
     organizationPromptAssertion,
     promptAssertion,
-    publishingRequestModalAssertion,
-    promptToPublishAssertion,
+    publishingRequestDialogAssertion,
+    publishPromptsTreeAssertion,
     prompts,
   }) => {
     setTestIds(
@@ -50,9 +50,9 @@ dialTest(
     );
     let prompt: Prompt;
     const sortedVersionsArray = SortingUtil.sortVersionsArray([
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
+      GeneratorUtil.randomEntityVersion(),
+      GeneratorUtil.randomEntityVersion(),
+      GeneratorUtil.randomEntityVersion(),
     ]);
     const promptVersionDataMap = new Map(
       sortedVersionsArray.map((version) => [
@@ -289,11 +289,11 @@ dialTest(
           },
         );
         await promptPreviewModal.promptUnpublishButton.click();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
@@ -302,7 +302,7 @@ dialTest(
             expectedVersionColor: expectedColor,
           },
         );
-        await publishingRequestModal.cancelButton.click();
+        await publishingRequestDialog.cancelButton.click();
         await promptPreviewModal.closeButton.click();
       },
     );
@@ -312,11 +312,11 @@ dialTest(
       async () => {
         await organizationPrompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',

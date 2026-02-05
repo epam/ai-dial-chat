@@ -8,7 +8,6 @@ import {
 } from '@/src/utils/app/conversation';
 import { getConfigurationValue } from '@/src/utils/app/form-schema';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
@@ -41,31 +40,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const {
-    id,
-    reference,
-    messages,
-    prompt,
-    temperature,
-    selectedAddons,
-    model,
-    assistantModel,
-  } = req.body as ChatBody;
+  const { id, reference, messages, prompt, temperature, model } =
+    req.body as ChatBody;
 
   try {
     const token = await getToken({ req });
 
-    if (
-      !id ||
-      !model ||
-      (!!assistantModel && model.type !== EntityType.Assistant) ||
-      (!prompt && !messages?.length)
-    ) {
+    if (!id || !model || (!prompt && !messages?.length)) {
       return res.status(400).send(errorsMessages[400]);
-    }
-
-    if (!assistantModel && model.type === EntityType.Assistant) {
-      return res.status(400).send(errorsMessages.noAssistantModelSelected);
     }
 
     let promptToSend = prompt;
@@ -93,19 +75,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
-    // For assistant submodel features, limits, tokenizer should be used
-    const limits =
-      model.type === EntityType.Assistant
-        ? assistantModel!.limits
-        : model.limits;
-    const features =
-      model.type === EntityType.Assistant
-        ? assistantModel!.features
-        : model.features;
-    const tokenizer =
-      model.type === EntityType.Assistant
-        ? assistantModel!.tokenizer
-        : model.tokenizer;
+    const { limits, features, tokenizer } = model;
 
     let messagesToSend: Message[] = limitMessagesByTokens({
       promptToSend,
@@ -121,7 +91,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     messagesToSend = messagesToSend.map((message) => ({
-      ...getUserMessageCustomContent(message),
+      ...getUserMessageCustomContent(
+        message,
+        model.features?.assistantAttachmentsInRequest,
+      ),
       role: message.role,
       content: message.content,
     }));
@@ -140,11 +113,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       temperature: temperatureToUse,
       messages: messagesToSend,
-      selectedAddonsIds:
-        selectedAddons?.length && doesModelAllowAddons(model)
-          ? selectedAddons
-          : undefined,
-      assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
       chatReference: reference ?? id,
       jobTitle: token?.jobTitle as string,

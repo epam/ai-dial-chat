@@ -1,7 +1,7 @@
 {
   "name": "@epam/ai-dial-modulify-ui",
   "description": "Modulify Toolkit (UI) for turning a monolith-like project into a modular one",
-  "homepage": "https://epam-rail.com",
+  "homepage": "https://dialx.ai",
   "version": "0.0.1",
   "dependencies": {},
   "type": "module",

@@ -115,6 +115,16 @@ export const filterIdsByFeatureType = (
   return [];
 };
 
+export const isPredefinedEntity = (entity: {
+  id: string;
+  reference?: string;
+}) => {
+  if (entity.id === entity.reference) return true;
+  const [key, bucket] = entity.id.split('/');
+
+  return !Object.values(ApiKeys).includes(key as ApiKeys) || !bucket;
+};
+
 export const isRootEntity = (id: string) => {
   return id.split('/').length === 3;
 };
@@ -140,4 +150,19 @@ export const getEntityNameFromId = (
   }
 
   return name;
+};
+
+export const transformIdToRootEntityId = (id: string) => {
+  const { apiKey, name: entityName } = splitEntityId(id);
+
+  return constructPath(
+    getRootId({ featureType: EnumMapper.getFeatureTypeByApiKey(apiKey), id }),
+    entityName,
+  );
+};
+
+export const replaceIdWithBucket = (id: string, bucket: string) => {
+  const splittedId = id.split('/');
+  splittedId[1] = bucket;
+  return splittedId.join('/');
 };

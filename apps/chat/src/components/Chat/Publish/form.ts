@@ -1,39 +1,36 @@
-import { Path, RegisterOptions } from 'react-hook-form';
-
-import { createFormValidationRules } from '@/src/utils/app/forms';
+import { PublicationFunctions } from '@/src/types/publication';
 
 import '@/src/constants/default-ui-settings';
+import { getEntityNameSchema } from '@/src/constants/validation-helpers';
+
+import { z as zodValidation } from 'zod';
 
 export enum PublishRequestFieldsNames {
   PUBLISH_REQUEST_NAME = 'publishRequestName',
   PUBLICATION_AUTHOR = 'publicationAuthor',
-}
-export interface PublicationRequestFormData {
-  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
-  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
+  RULES = 'rules',
+  PUBLISH_TO_URL = 'publishToUrl',
 }
 
-type Options<T extends Path<PublicationRequestFormData>> = Omit<
-  RegisterOptions<PublicationRequestFormData, T>,
-  'disabled' | 'valueAsNumber' | 'valueAsDate'
+export const PublicationRequestFormSchema = zodValidation.object({
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: getEntityNameSchema({
+    name: 'Request name',
+    skipCheckRestrictedSymbols: true,
+  }),
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: getEntityNameSchema({
+    name: 'Request name',
+    skipCheckRestrictedSymbols: true,
+  }),
+  [PublishRequestFieldsNames.RULES]: zodValidation.array(
+    zodValidation.object({
+      source: zodValidation.string(),
+      targets: zodValidation.array(zodValidation.string()),
+      function: zodValidation.enum(PublicationFunctions),
+    }),
+  ),
+  [PublishRequestFieldsNames.PUBLISH_TO_URL]: zodValidation.string(),
+});
+
+export type PublicationRequestFormData = zodValidation.infer<
+  typeof PublicationRequestFormSchema
 >;
-
-export type Validators = {
-  [K in keyof PublicationRequestFormData]?: Options<K>;
-};
-
-export const publishRequestFields = {
-  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: {
-    name: PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
-    label: 'Request name',
-    checkDotsInTheEnd: true,
-  },
-  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: {
-    name: PublishRequestFieldsNames.PUBLICATION_AUTHOR,
-    label: 'Author',
-  },
-};
-
-export const validators: Validators = createFormValidationRules(
-  Object.values(publishRequestFields),
-);

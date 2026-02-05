@@ -1,10 +1,16 @@
 import { getModelIdWithoutVersion } from '@/src/utils/server/api';
 
-import { EntitiesGroup, MarketplaceEntity } from '@/src/types/marketplace';
+import {
+  EntitiesGroup,
+  MarketplaceEditorSteps,
+  MarketplaceEntity,
+} from '@/src/types/marketplace';
 
 import { constructPath } from './shared-utils';
 
-import { groupBy, omit, uniqBy } from 'lodash-es';
+import groupBy from 'lodash-es/groupBy';
+import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
   if (entity.id === entity.reference) {
@@ -59,4 +65,13 @@ export const deleteFromMarketplaceEntitiesMap = <
     return omit(entitiesMap, entity.reference, entity.id);
   }
   return entitiesMap;
+};
+
+export const isMarketplaceEditorStep = (
+  step: string,
+): step is MarketplaceEditorSteps => {
+  return (
+    step === MarketplaceEditorSteps.General ||
+    step === MarketplaceEditorSteps.Settings
+  );
 };

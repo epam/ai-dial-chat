@@ -1,10 +1,11 @@
-import { Tags } from '@/src/ui/domData';
+import { AttributeValues, Tags } from '@/src/ui/domData';
 import {
-  AttachFilesModalSelectors,
   EntitySelectors,
   ErrorLabelSelectors,
+  FileManagerModalSelectors,
   FileSelectors,
 } from '@/src/ui/selectors';
+import { Button } from '@/src/ui/webElements';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -15,12 +16,12 @@ export class AttachFilesTree extends EntitiesTree {
 
   public attachedFileIcon = (filename: string, index?: number) =>
     this.getEntityByName(filename, index).locator(
-      AttachFilesModalSelectors.attachedFileIcon,
+      FileManagerModalSelectors.attachedFileIcon,
     );
 
   getAttachedFileArrowIcon(name: string, index?: number) {
     return this.getEntityByName(name, index)
-      .locator(AttachFilesModalSelectors.arrowAdditionalIcon)
+      .locator(FileManagerModalSelectors.arrowAdditionalIcon)
       .locator(Tags.svg);
   }
 
@@ -28,8 +29,10 @@ export class AttachFilesTree extends EntitiesTree {
     this.getEntityByName(filename).locator(FileSelectors.loadingIndicator);
 
   public removeAttachedFileIcon = (filename: string) =>
-    this.createElementFromLocator(
-      this.getEntityByName(filename).locator(FileSelectors.remove),
+    new Button(
+      this.page,
+      AttributeValues.removeFile,
+      this.getEntityByName(filename),
     );
 
   public attachedFileErrorIcon = (filename: string) =>

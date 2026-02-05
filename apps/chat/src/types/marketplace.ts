@@ -1,4 +1,7 @@
-import { FilterTypes } from '@/src/constants/marketplace';
+import {
+  FilterTypes,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 
 import { DialAIEntityModel } from './models';
 import { ToolsetModel } from './toolsets';
@@ -12,9 +15,9 @@ export interface MarketplaceFilters {
 }
 
 export enum PreviewMode {
-  half,
-  full,
-  closed,
+  half = 'half',
+  full = 'full',
+  closed = 'closed',
 }
 
 export type MarketplaceEntity = DialAIEntityModel | ToolsetModel;
@@ -22,4 +25,15 @@ export type MarketplaceEntity = DialAIEntityModel | ToolsetModel;
 export interface EntitiesGroup<T extends MarketplaceEntity> {
   groupName: string;
   entities: T[];
+}
+
+export enum MarketplaceEditorSteps {
+  General = 'General',
+  Settings = 'Settings',
+}
+
+export interface DetailsEntity {
+  reference: string;
+  isSuggested: boolean;
+  type: MarketplaceEntitiesTabs;
 }

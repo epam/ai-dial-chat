@@ -1,14 +1,21 @@
 import { IconDotsVertical } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getFormButtonType } from '@/src/utils/app/form-schema';
+import {
+  getFormButtonType,
+  getFormCheckboxDefinitionOptions,
+  getFormSchemaPropertyType,
+  getSortedFormSchemaProperties,
+} from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
+import { SelectOption } from '@/src/types/common';
+import { FormSchemaPropertyType } from '@/src/types/form-schema';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -16,6 +23,7 @@ import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
+import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
 import { SchemaButton } from './SchemaButton';
@@ -24,11 +32,11 @@ import {
   DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaProperty,
-  FormSchemaPropertyWidget,
   MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import intersection from 'lodash-es/intersection';
 
 interface HiddenButtonsPropertyProps {
@@ -170,17 +178,18 @@ const HiddenButtonsProperty = ({
       )}
     >
       {options.map((option) => (
-        <button
+        <DialButton
           key={`${option.const}`}
           className={classNames('chat-button', buttonClassName)}
           disabled
-        >
-          {option.title}
-        </button>
+          label={option.title}
+        />
       ))}
-      <button ref={dotsButtonRef} className="chat-button">
-        <IconDotsVertical size={18} />
-      </button>
+      <DialButton
+        ref={dotsButtonRef}
+        className="chat-button"
+        iconBefore={<IconDotsVertical size={18} />}
+      />
     </div>
   );
 };
@@ -263,7 +272,7 @@ const ButtonsProperty = ({
         ))}
 
         {hiddenOptions.length > 0 && (
-          <button
+          <DialButton
             onClick={() => setHiddenOptionsModal(true)}
             className={classNames(
               'chat-button',
@@ -274,9 +283,8 @@ const ButtonsProperty = ({
                 ).length &&
                 'button-accent-primary',
             )}
-          >
-            <IconDotsVertical size={18} />
-          </button>
+            iconBefore={<IconDotsVertical size={18} />}
+          />
         )}
       </div>
 
@@ -319,8 +327,49 @@ const ButtonsProperty = ({
   );
 };
 
+interface CheckboxPropertyProps {
+  options: SelectOption<string, string>[];
+  formValue?: MessageFormValue;
+  propertyKey: string;
+  onClick: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+const CheckboxProperty = ({
+  options,
+  formValue,
+  propertyKey,
+  onClick,
+  className,
+  disabled,
+}: CheckboxPropertyProps) => {
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
+  return (
+    <div className={classNames('flex flex-wrap gap-4', className)}>
+      {options.map(({ value, label }) => (
+        <Checkbox
+          key={value}
+          checked={
+            Array.isArray(formValue?.[propertyKey]) &&
+            formValue?.[propertyKey]?.includes(value)
+          }
+          onChange={() => onClick(value)}
+          caption={label}
+          disabled={disabled}
+          readonly={isPlayback}
+        />
+      ))}
+    </div>
+  );
+};
+
 interface PropertyRendererProps {
   property: FormSchemaProperty;
+  schema: MessageFormSchema;
   name: string;
   onChange: (
     name: string,
@@ -338,6 +387,7 @@ interface PropertyRendererProps {
 
 const PropertyRenderer = ({
   property,
+  schema,
   name,
   onChange,
   formValue,
@@ -348,12 +398,32 @@ const PropertyRenderer = ({
   buttonsWrapperClassName,
   buttonClassName,
 }: PropertyRendererProps) => {
-  const handleClick = useCallback(
+  const propertyType = getFormSchemaPropertyType(schema, name);
+
+  const handleButtonClick = useCallback(
     (value: MessageFormValueType, type: FormButtonType) => {
       onChange(name, value, type === FormButtonType.Submit);
     },
     [name, onChange],
   );
+
+  const handleCheckboxClick = useCallback(
+    (value: string) => {
+      const currentValue = Array.isArray(formValue?.[name])
+        ? formValue?.[name]
+        : [];
+      const newValue = currentValue.includes(value)
+        ? currentValue.filter((v) => v !== value)
+        : [...currentValue, value];
+
+      onChange(name, newValue, false);
+    },
+    [formValue, name, onChange],
+  );
+
+  const checkboxDefinitions = useMemo(() => {
+    return getFormCheckboxDefinitionOptions(schema, name);
+  }, [name, schema]);
 
   return (
     <div
@@ -365,16 +435,25 @@ const PropertyRenderer = ({
         </p>
       )}
 
-      {property[DialSchemaProperties.DialWidget] ===
-        FormSchemaPropertyWidget.buttons && (
+      {propertyType === FormSchemaPropertyType.Button && (
         <ButtonsProperty
           options={property.oneOf}
-          onClick={handleClick}
+          onClick={handleButtonClick}
           disabled={disabled}
           showSelected={showSelected}
           formValue={formValue}
           className={buttonsWrapperClassName}
           buttonClassName={buttonClassName}
+        />
+      )}
+
+      {propertyType === FormSchemaPropertyType.Checkbox && (
+        <CheckboxProperty
+          options={checkboxDefinitions}
+          onClick={handleCheckboxClick}
+          disabled={disabled}
+          formValue={formValue}
+          propertyKey={name}
         />
       )}
     </div>
@@ -409,11 +488,17 @@ export const FormSchemaMemo = memo(function FormSchema({
   buttonsWrapperClassName,
   buttonClassName,
 }: FormSchemaProps) {
+  const sortedProperties = useMemo(
+    () => getSortedFormSchemaProperties(schema),
+    [schema],
+  );
+
   return (
-    <div className={classNames('flex flex-col gap-2', wrapperClassName)}>
-      {Object.entries(schema.properties).map(([name, property]) => (
+    <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
+      {sortedProperties.map(([name, property]) => (
         <PropertyRenderer
           property={property}
+          schema={schema}
           name={name}
           onChange={onChange}
           key={name}

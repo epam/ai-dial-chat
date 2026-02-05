@@ -1,12 +1,14 @@
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
+  EntityEditorAppTypes,
   ExpectedConstants,
   ExpectedMessages,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
-import { BaseElement, MarketplaceAgentProperties } from '@/src/ui/webElements';
+import { BaseElement, MarketplaceEntityProperties } from '@/src/ui/webElements';
 import {
   GeneratorUtil,
   ModelsUtil,
@@ -27,10 +29,10 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     marketplace,
-    agentDetailsModal,
+    entityDetailsModal,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -39,7 +41,7 @@ dialTest(
     adminApplicationApiHelper,
     adminPublicationApiHelper,
     publishRequestBuilder,
-    agentVersionsDropdownMenuAssertion,
+    entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4424',
@@ -64,7 +66,7 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        installedAppVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
@@ -74,12 +76,12 @@ dialTest(
           .withDisplayVersion(installedAppVersion)
           .build();
 
-        nonInstalledAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+        nonInstalledAppFirstVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppVersion,
         ]);
-        nonInstalledAppSecondVersion = GeneratorUtil.randomApplicationVersion([
+        nonInstalledAppSecondVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppVersion,
@@ -127,9 +129,9 @@ dialTest(
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(nonInstalledAppName);
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const actualFilteredAgents = actualAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertValue(
           actualFilteredAgents.length,
@@ -142,7 +144,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           marketplace.noWorkspaceResultsFound,
-          ExpectedConstants.noWorkspaceAgentsFoundMessage,
+          ExpectedConstants.noWorkspaceEntitiesFoundMessage,
         );
         await baseAssertion.assertElementState(
           marketplace.noWorkspaceResultsFoundIcon,
@@ -185,14 +187,14 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           marketplace.noResultsFoundDescription,
-          ExpectedConstants.noMarketplaceAgentsFoundMessage,
+          ExpectedConstants.noMarketplaceEntitiesFoundMessage,
         );
         await baseAssertion.assertElementState(
           marketplace.noResultsFoundIcon,
           'visible',
         );
         await baseAssertion.assertElementState(
-          marketplaceAgentsSection,
+          marketplaceEntitiesSection,
           'hidden',
         );
       },
@@ -206,7 +208,7 @@ dialTest(
           marketplace.marketplaceSuggestionsLabel,
           'hidden',
         );
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.filter((agent) => agent.isSuggested).length,
           0,
@@ -214,7 +216,7 @@ dialTest(
         );
 
         const filteredAgents = actualAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertValue(
           filteredAgents.length,
@@ -233,9 +235,9 @@ dialTest(
       'Search by unique installed agent version and verify agent is displayed, no Marketplace agents are suggested',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(installedAppVersion);
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = actualAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertValue(
           filteredAgents.length,
@@ -263,21 +265,21 @@ dialTest(
       'Open found agent and verify no versions menu and Copy link are available',
       async () => {
         const foundAgent =
-          await marketplaceAgentsSection.findAgentElement(installedAppName);
+          await marketplaceEntitiesSection.findEntityElement(installedAppName);
         await foundAgent.click();
         await baseAssertion.assertElementState(
-          agentDetailsModal.versionMenuTrigger,
+          entityDetailsModal.versionMenuTrigger,
           'hidden',
         );
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           installedAppVersion,
         );
         await baseAssertion.assertElementState(
-          agentDetailsModal.copyLink,
+          entityDetailsModal.copyLink,
           'hidden',
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -287,9 +289,9 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(
           nonInstalledAppSecondVersion,
         );
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
-          actualAgents.filter((agent) => agent.isWorkspaceAgent).length,
+          actualAgents.filter((agent) => agent.isWorkspaceEntity).length,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
@@ -299,7 +301,7 @@ dialTest(
         );
         await baseAssertion.assertElementText(
           marketplace.noWorkspaceResultsFound,
-          ExpectedConstants.noWorkspaceAgentsFoundMessage,
+          ExpectedConstants.noWorkspaceEntitiesFoundMessage,
         );
         await baseAssertion.assertElementState(
           marketplace.noWorkspaceResultsFoundIcon,
@@ -325,10 +327,11 @@ dialTest(
         );
 
         foundSuggestedAgentElement =
-          await marketplaceAgentsSection.findAgentElement(nonInstalledAppName);
-        const actualSuggestedAgentVersion = marketplaceAgents.getAgentVersion(
-          foundSuggestedAgentElement,
-        );
+          await marketplaceEntitiesSection.findEntityElement(
+            nonInstalledAppName,
+          );
+        const actualSuggestedAgentVersion =
+          marketplaceEntities.getEntityVersion(foundSuggestedAgentElement);
         await baseAssertion.assertElementText(
           actualSuggestedAgentVersion,
           nonInstalledAppSecondVersion,
@@ -341,11 +344,11 @@ dialTest(
       async () => {
         await foundSuggestedAgentElement.click();
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           nonInstalledAppSecondVersion,
         );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([
             nonInstalledAppFirstVersion,
             nonInstalledAppSecondVersion,
@@ -362,20 +365,20 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     addAppDropdownMenu,
     localStorageManager,
-    marketplaceAgents,
-    agentDetailsModal,
+    marketplaceEntities,
+    entityDetailsModal,
     customApplicationBuilder,
     applicationApiHelper,
-    appEditorPage,
-    appEditorGeneralForm,
-    appEditorViewForm,
-    appEditorHeader,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    customAppEditorViewForm,
+    entityEditorHeader,
     setTestIds,
     baseAssertion,
-    agentVersionsDropdownMenuAssertion,
+    entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-4627', 'EPMRTC-4319');
     let recentNames: string[];
@@ -387,7 +390,7 @@ dialTest(
     let firstAddedAppVersion: string;
     let secondAddedAppName: string;
     let secondAddedAppVersion: string;
-    let allAgents: MarketplaceAgentProperties[];
+    let allAgents: MarketplaceEntityProperties[];
 
     await dialTest.step(
       'Open "My Workspace", search by one of the installed agent versions and verify only that version is displayed in the results',
@@ -396,11 +399,11 @@ dialTest(
         recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
         recentVersions = ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        installedAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppFirstVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
-        installedAppSecondVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppSecondVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppFirstVersion,
@@ -425,9 +428,9 @@ dialTest(
         await marketplaceHeader.searchInput.fillInInput(
           installedAppFirstVersion,
         );
-        allAgents = await marketplaceAgentsSection.getAllAgents();
+        allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = allAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredAgents.length,
@@ -435,9 +438,9 @@ dialTest(
           ExpectedMessages.conversationsCountIsValid,
         );
         const foundAgentElement =
-          await marketplaceAgentsSection.findAgentElement(installedAppName);
+          await marketplaceEntitiesSection.findEntityElement(installedAppName);
         await baseAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(foundAgentElement),
+          marketplaceEntities.getEntityVersion(foundAgentElement),
           installedAppFirstVersion,
         );
       },
@@ -461,16 +464,16 @@ dialTest(
       'Open found agent and verify there are two versions in dropdown list',
       async () => {
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(installedAppName);
+          await marketplaceEntitiesSection.findEntityElement(installedAppName);
         await agentElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([
             installedAppFirstVersion,
             installedAppSecondVersion,
           ]),
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -485,7 +488,7 @@ dialTest(
       'Add custom app with the name including/excluding searched app name and verify the search term is preserved, first added app is displayed in the results',
       async () => {
         firstAddedAppName = GeneratorUtil.randomString(5) + installedAppName;
-        firstAddedAppVersion = GeneratorUtil.randomApplicationVersion([
+        firstAddedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppFirstVersion,
@@ -493,7 +496,7 @@ dialTest(
         ]);
 
         secondAddedAppName = GeneratorUtil.randomApplicationName();
-        secondAddedAppVersion = GeneratorUtil.randomApplicationVersion([
+        secondAddedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppFirstVersion,
@@ -510,21 +513,31 @@ dialTest(
           await addAppDropdownMenu.selectMenuOption(
             AddAppMenuOptions.customApp,
           );
-          await appEditorPage.waitForPageLoaded();
-          await appEditorGeneralForm.fillInAppFields({
+          await entityEditorPage.waitForPageLoaded(
+            EntityEditorAppTypes.CustomApp,
+          );
+          await entityEditorGeneralForm.fillInEntityFields({
             name: addedAppNameVersion.name,
             version: addedAppNameVersion.version,
           });
-          await appEditorGeneralForm.goNext();
-          await appEditorViewForm.fillInAppFields();
-          await appEditorHeader.focusOn();
-          await appEditorHeader.saveAndExitButton.click();
+          await entityEditorGeneralForm.goNext({
+            hostsArray: [
+              API.applicationCreateHost,
+              API.installedDeploymentsHost(),
+            ],
+          });
+          await customAppEditorViewForm.fillInAppFields();
+          await entityEditorHeader.focusOn({
+            triggeredHost: API.applicationCreateHost,
+          });
+          await entityEditorHeader.saveAndExitButton.click();
           await marketplacePage.waitForPageLoaded();
+          await entityDetailsModal.closeButton.click();
         }
 
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = allAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredAgents.length,
@@ -558,8 +571,8 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     navigationPanel,
     localStorageManager,
     setTestIds,
@@ -585,7 +598,7 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        appVersion = GeneratorUtil.randomApplicationVersion([
+        appVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
@@ -637,7 +650,7 @@ dialTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appVersion);
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const expectedAgents = allAgents.filter(
           (a) =>
             (a.name === firstAppName || a.name === secondAppName) &&
@@ -655,13 +668,13 @@ dialTest(
       'Bookmark the 1st app from "Marketplace" tab and the 2nd one from "My Workspace" tab',
       async () => {
         const firstAppElement =
-          await marketplaceAgentsSection.findAgentElement(firstAppName);
-        await marketplaceAgents.addAgentToWorkspace(firstAppElement);
+          await marketplaceEntitiesSection.findEntityElement(firstAppName);
+        await marketplaceEntities.addEntityToWorkspace(firstAppElement);
         await toast.closeToast();
         await navigationPanel.goToMyWorkspace();
         const secondAppElement =
-          await marketplaceAgentsSection.findAgentElement(secondAppName);
-        await marketplaceAgents.addAgentToWorkspace(secondAppElement);
+          await marketplaceEntitiesSection.findEntityElement(secondAppName);
+        await marketplaceEntities.addEntityToWorkspace(secondAppElement);
         await toast.closeToast();
       },
     );
@@ -669,9 +682,9 @@ dialTest(
     await dialTest.step(
       'Verify both apps are displayed as a search result',
       async () => {
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = allAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredAgents.length,
@@ -690,9 +703,9 @@ dialTest(
       'Search by common part of app names and verify two apps are found, one app is suggested',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(commonAppNamePart);
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredWorkspaceAgents = allAgents.filter(
-          (agent) => agent.isWorkspaceAgent,
+          (agent) => agent.isWorkspaceEntity,
         );
         baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredWorkspaceAgents.length,
@@ -729,7 +742,7 @@ dialTest(
     marketplacePage,
     marketplaceHeader,
     marketplace,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -810,9 +823,10 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         for (const searchTerm of searchTermResultMap.keys()) {
           await marketplaceHeader.searchInput.fillInInput(searchTerm);
-          const actualAgents = await marketplaceAgentsSection.getAllAgents();
+          const actualAgents =
+            await marketplaceEntitiesSection.getAllEntities();
           const filteredAgents = actualAgents.filter(
-            (agent) => agent.isWorkspaceAgent,
+            (agent) => agent.isWorkspaceEntity,
           );
           baseAssertion.assertValue(
             filteredAgents.length,

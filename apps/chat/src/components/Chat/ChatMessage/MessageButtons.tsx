@@ -1,20 +1,20 @@
 import {
+  Icon,
   IconCheck,
   IconCopy,
   IconEdit,
   IconListDetails,
+  IconMarkdown,
   IconRefresh,
-  IconThumbDown,
-  IconThumbUp,
   IconTrashX,
 } from '@tabler/icons-react';
-import { ButtonHTMLAttributes, FC } from 'react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getMessageCustomContent } from '@/src/utils/server/chat';
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -29,28 +29,19 @@ import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
+import { MessageLikes } from './MessageLikes';
 
-import { Feature, LikeState, Message, Role } from '@epam/ai-dial-shared';
-
-const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
-  children,
-  className,
-  type = 'button',
-  ...props
-}) => {
-  return (
-    <button
-      type={type}
-      className={classNames(
-        '[&:not(:disabled)]:hover:text-accent-primary',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
+import {
+  Feature,
+  Message,
+  Role,
+  onLikeMessageHandler,
+} from '@epam/ai-dial-shared';
+import {
+  ButtonAppearance,
+  ButtonSize,
+  DialPrimaryIconButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface MessageUserButtonsProps {
   realMessageIndex: number;
@@ -107,32 +98,33 @@ export const MessageUserButtons = ({
               isTriggerClickable
               tooltip={t('Set message template')}
             >
-              <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+              <DialPrimaryIconButton
+                appearance={ButtonAppearance.Ghost}
+                size={ButtonSize.Small}
                 onClick={onToggleTemplatesEditing}
-              >
-                <IconListDetails size={18} />
-              </button>
+                icon={<IconListDetails size={16} stroke={1.5} />}
+              />
             </Tooltip>
           )}
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-              <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+              <DialPrimaryIconButton
+                appearance={ButtonAppearance.Ghost}
+                size={ButtonSize.Small}
                 onClick={onToggleEditing}
-              >
-                <IconEdit size={18} />
-              </button>
+                icon={<IconEdit size={16} stroke={1.5} />}
+              />
             </Tooltip>
           )}
           {onDelete && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-              <button
-                className="text-secondary hover:text-accent-primary"
+              {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
+              <DialPrimaryIconButton
+                appearance={ButtonAppearance.Ghost}
+                size={ButtonSize.Small}
                 onClick={onDelete}
-              >
-                <IconTrashX size={18} />
-              </button>
+                icon={<IconTrashX size={16} stroke={1.5} />}
+              />
             </Tooltip>
           )}
         </>
@@ -141,23 +133,67 @@ export const MessageUserButtons = ({
   );
 };
 
+interface CopyButtonProps {
+  keyPostfix?: string;
+  content: string;
+  convertFromMarkdown?: boolean;
+  copyLabel?: string;
+  copiedLabel?: string;
+  Icon?: Icon;
+}
+const CopyButton = ({
+  keyPostfix = '',
+  content,
+  convertFromMarkdown = false,
+  copyLabel = 'Copy',
+  copiedLabel = 'Copied',
+  Icon = IconCopy,
+}: CopyButtonProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const { copied, onCopy } = useCopy(content, convertFromMarkdown);
+  if (copied) {
+    return (
+      <Tooltip
+        key={`copied${keyPostfix}`}
+        placement="top"
+        tooltip={t(copiedLabel)}
+      >
+        <IconCheck size={18} className="text-secondary" />
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip
+      key={`copy${keyPostfix}`}
+      placement="top"
+      isTriggerClickable
+      tooltip={t(copyLabel)}
+    >
+      <DialPrimaryIconButton
+        appearance={ButtonAppearance.Ghost}
+        size={ButtonSize.Small}
+        onClick={onCopy}
+        icon={<Icon size={18} stroke={1.5} />}
+      />
+    </Tooltip>
+  );
+};
+
 interface MessageAssistantButtonsProps {
   realMessageIndex: number;
-  messageCopied?: boolean;
   isLikesEnabled: boolean;
   message: Message;
-  copyOnClick: () => void;
-  onLike: (likeStatus: LikeState) => void;
+  onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing?: () => void;
 }
 
 export const MessageAssistantButtons = ({
-  messageCopied,
   message,
   realMessageIndex,
   isLikesEnabled,
-  copyOnClick,
   onLike,
   onRegenerate,
   onToggleEditing,
@@ -171,6 +207,8 @@ export const MessageAssistantButtons = ({
       realMessageIndex,
     ),
   );
+
+  const hasMessageContent = !!message.content.trim();
 
   return (
     <div
@@ -189,108 +227,95 @@ export const MessageAssistantButtons = ({
       ))}
       {onRegenerate && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
-          <Button
+          <DialPrimaryIconButton
+            appearance={ButtonAppearance.Ghost}
+            size={ButtonSize.Small}
             onClick={onRegenerate}
+            icon={<IconRefresh size={16} stroke={1.5} />}
             data-qa="regenerate"
-            className="text-secondary"
-          >
-            <IconRefresh size={18} />
-          </Button>
+          />
         </Tooltip>
       )}
-      {message.content.trim() &&
-        (messageCopied ? (
-          <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
-            <IconCheck size={18} className="text-secondary" />
-          </Tooltip>
-        ) : (
-          <Tooltip
-            key="copy"
-            placement="top"
-            isTriggerClickable
-            tooltip={t('Copy text')}
-          >
-            <Button className="text-secondary" onClick={copyOnClick}>
-              <IconCopy size={18} />
-            </Button>
-          </Tooltip>
-        ))}
+      {hasMessageContent && (
+        <>
+          <CopyButton
+            content={message.content}
+            copyLabel="Copy text"
+            copiedLabel="Text copied"
+            convertFromMarkdown
+          />
+          <CopyButton
+            content={message.content}
+            copyLabel="Copy markdown"
+            copiedLabel="Markdown copied"
+            Icon={IconMarkdown}
+          />
+        </>
+      )}
       {onToggleEditing && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-          <Button
+          <DialPrimaryIconButton
+            appearance={ButtonAppearance.Ghost}
+            size={ButtonSize.Small}
             onClick={onToggleEditing}
             data-qa="edit"
-            className="text-secondary"
-          >
-            <IconEdit size={18} />
-          </Button>
+            icon={<IconEdit size={16} stroke={1.5} />}
+          />
         </Tooltip>
       )}
       {isLikesEnabled &&
-        (message.content.trim() || !!getMessageCustomContent(message)) && (
+        onLike &&
+        (hasMessageContent || !!getMessageCustomContent(message)) && (
           <div className="flex flex-row gap-2">
-            {message.like !== LikeState.Disliked && (
-              <Tooltip
-                placement="top"
-                isTriggerClickable={message.like !== LikeState.Liked}
-                tooltip={
-                  message.like !== LikeState.Liked ? t('Like') : t('Liked')
-                }
-              >
-                <Button
-                  onClick={() => {
-                    if (message.like !== LikeState.NoState) {
-                      onLike(LikeState.Liked);
-                    }
-                  }}
-                  className={
-                    message.like !== LikeState.Liked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
-                  }
-                  disabled={message.like === LikeState.Liked}
-                  data-qa="like"
-                >
-                  <IconThumbUp size={18} />
-                </Button>
-              </Tooltip>
-            )}
-            {message.like !== LikeState.Liked && (
-              <Tooltip
-                placement="top"
-                isTriggerClickable={message.like !== LikeState.Disliked}
-                tooltip={t(
-                  message.like !== LikeState.Disliked ? 'Dislike' : 'Disliked',
-                )}
-              >
-                <Button
-                  onClick={() => {
-                    if (message.like !== LikeState.NoState) {
-                      onLike(LikeState.Disliked);
-                    }
-                  }}
-                  className={
-                    message.like !== LikeState.Disliked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
-                  }
-                  disabled={message.like === LikeState.Disliked}
-                  data-qa="dislike"
-                >
-                  <IconThumbDown size={18} />
-                </Button>
-              </Tooltip>
-            )}
+            <MessageLikes likeStatus={message.like} onLike={onLike} />
           </div>
         )}
     </div>
   );
 };
 
+const MobileCopyButton = ({
+  keyPostfix = '',
+  content,
+  convertFromMarkdown = false,
+  copyLabel = 'Copy',
+  copiedLabel = 'Copied',
+  Icon = IconCopy,
+}: CopyButtonProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const { copied, onCopy } = useCopy(content, convertFromMarkdown);
+  if (copied) {
+    return (
+      <MenuItem
+        key={`copy${keyPostfix}`}
+        item={
+          <div className="flex items-center gap-3 text-nowrap">
+            <IconCheck size={20} className="text-secondary" />
+            <p>{t(copiedLabel)}</p>
+          </div>
+        }
+      />
+    );
+  }
+
+  return (
+    <MenuItem
+      className="hover:bg-accent-primary-alpha"
+      item={
+        <div className="flex items-center gap-3 text-nowrap">
+          <Icon className="text-secondary" size={18} />
+          {t(copyLabel)}
+        </div>
+      }
+      onClick={onCopy}
+    />
+  );
+};
+
 interface MessageMobileButtonsProps {
   message: Message;
   realMessageIndex: number;
-  messageCopied: boolean;
   editDisabled: boolean;
   isEditing: boolean;
   isEditTemplatesAvailable: boolean;
@@ -298,16 +323,14 @@ interface MessageMobileButtonsProps {
   isLikesEnabled: boolean;
   isMessageStreaming: boolean;
   isConversationInvalid: boolean;
-  onLike: (likeStatus: LikeState) => void;
+  onLike: onLikeMessageHandler;
   onDelete?: () => void;
   onToggleEditing: (value: boolean) => void;
   onToggleTemplatesEditing: () => void;
-  onCopy: () => void;
   onRegenerate?: () => void;
 }
 
 export const MessageMobileButtons = ({
-  messageCopied,
   editDisabled,
   message,
   realMessageIndex,
@@ -321,7 +344,6 @@ export const MessageMobileButtons = ({
   onDelete,
   onToggleEditing,
   onToggleTemplatesEditing,
-  onCopy,
   onRegenerate,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -335,6 +357,9 @@ export const MessageMobileButtons = ({
   const isAllLastMessageEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
   );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
+  );
 
   const isAssistant = message.role === Role.Assistant;
   const customMessageButtons = useAppSelector((state) =>
@@ -343,6 +368,8 @@ export const MessageMobileButtons = ({
       realMessageIndex,
     ),
   );
+
+  const hasMessageContent = !!message.content.trim();
 
   if (isAssistant) {
     return (
@@ -361,41 +388,37 @@ export const MessageMobileButtons = ({
               }
             />
           ))}
-          {message.content.trim() &&
-            (messageCopied ? (
-              <MenuItem
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconCheck size={20} className="text-secondary" />
-                    <p>{t('Copied')}</p>
-                  </div>
-                }
+          {hasMessageContent && (
+            <>
+              <MobileCopyButton
+                content={message.content}
+                copyLabel="Copy text"
+                copiedLabel="Copied text"
+                convertFromMarkdown
               />
-            ) : (
-              <MenuItem
-                className="hover:bg-accent-primary-alpha"
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconCopy className="text-secondary" size={18} />
-                    {t('Copy')}
-                  </div>
-                }
-                onClick={onCopy}
+              <MobileCopyButton
+                content={message.content}
+                copyLabel="Copy markdown"
+                copiedLabel="Copied markdown"
+                Icon={IconMarkdown}
               />
-            ))}
-          {(isAllLastMessageEnabled ||
-            (isLastMessage && isEditLastMessageEnabled)) && (
-            <MenuItem
-              item={
-                <div className="flex items-center gap-3">
-                  <IconEdit className="text-secondary" size={18} />
-                  {t('Edit')}
-                </div>
-              }
-              data-qa="edit"
-              onClick={() => onToggleEditing(true)}
-            />
+            </>
           )}
+          {!editDisabled &&
+            onToggleEditing &&
+            (isAllLastMessageEnabled ||
+              (isLastMessage && isEditLastMessageEnabled)) && (
+              <MenuItem
+                item={
+                  <div className="flex items-center gap-3">
+                    <IconEdit className="text-secondary" size={18} />
+                    {t('Edit')}
+                  </div>
+                }
+                data-qa="edit"
+                onClick={() => onToggleEditing(true)}
+              />
+            )}
           {onRegenerate && (
             <MenuItem
               item={
@@ -409,69 +432,12 @@ export const MessageMobileButtons = ({
             />
           )}
           {isLikesEnabled &&
-            (message.content.trim() || !!getMessageCustomContent(message)) && (
-              <>
-                {message.like !== LikeState.Disliked && (
-                  <MenuItem
-                    className={classNames(
-                      message.like !== LikeState.Liked &&
-                        'hover:bg-accent-primary-alpha',
-                    )}
-                    item={
-                      <div className="flex items-center gap-3">
-                        <IconThumbUp className="text-secondary" size={18} />
-                        <p
-                          className={classNames(
-                            message.like === LikeState.Liked &&
-                              'text-secondary',
-                          )}
-                        >
-                          {message.like === LikeState.Liked
-                            ? t('Liked')
-                            : t('Like')}
-                        </p>
-                      </div>
-                    }
-                    disabled={message.like === LikeState.Liked}
-                    data-qa="like"
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Liked);
-                      }
-                    }}
-                  />
-                )}
-                {message.like !== LikeState.Liked && (
-                  <MenuItem
-                    disabled={message.like === LikeState.Disliked}
-                    className={classNames(
-                      message.like !== LikeState.Disliked &&
-                        'hover:bg-accent-primary-alpha',
-                    )}
-                    data-qa="dislike"
-                    item={
-                      <div className="flex items-center gap-3">
-                        <IconThumbDown className="text-secondary" size={18} />
-                        <p
-                          className={classNames(
-                            message.like === LikeState.Disliked &&
-                              'text-secondary',
-                          )}
-                        >
-                          {message.like === LikeState.Disliked
-                            ? t('Disliked')
-                            : t('Dislike')}
-                        </p>
-                      </div>
-                    }
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Disliked);
-                      }
-                    }}
-                  />
-                )}
-              </>
+            (hasMessageContent || !!getMessageCustomContent(message)) && (
+              <MessageLikes
+                likeStatus={message.like}
+                onLike={onLike}
+                isMobile
+              />
             )}
         </>
       )
@@ -479,6 +445,7 @@ export const MessageMobileButtons = ({
   }
 
   return (
+    !isReadOnly &&
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>

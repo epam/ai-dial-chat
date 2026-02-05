@@ -50,6 +50,26 @@ export const IMAGE_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
   IMAGE_TYPES,
 );
 
+export const VIDEO_TYPES: ImageMIMEType[] = [
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+];
+
+export const VIDEO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
+  VIDEO_TYPES,
+);
+
+export const AUDIO_TYPES: ImageMIMEType[] = [
+  'audio/mpeg',
+  'audio/ogg',
+  'audio/wav',
+];
+
+export const AUDIO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
+  AUDIO_TYPES,
+);
+
 export const LOCAL_BUCKET = 'local';
 
 export const DEFAULT_AGENT = 'default-agent';
@@ -75,3 +95,38 @@ export const SPECIAL_DEFAULT_MODEL_DIC: Record<string, DialAIEntityModel> = {
   [DEFAULT_AGENT]: DEFAULT_MODEL_OPTION,
   [LAST_USED_AGENT]: LAST_USED_MODEL_OPTION,
 };
+
+// taken from https://developer.mozilla.org/en-US/docs/Web/MathML/Reference/Element
+export const mathMLTags = [
+  'math',
+  'maction',
+  'annotation',
+  'annotation-xml',
+  'menclose',
+  'merror',
+  'mfenced',
+  'mfrac',
+  'mi',
+  'mmultiscripts',
+  'mn',
+  'mo',
+  'mover',
+  'mpadded',
+  'mphantom',
+  'mroot',
+  'mrow',
+  'ms',
+  'semantics',
+  'mspace',
+  'msqrt',
+  'mstyle',
+  'msub',
+  'msup',
+  'msubsup',
+  'mtable',
+  'mtd',
+  'mtext',
+  'mtr',
+  'munder',
+  'munderover',
+];

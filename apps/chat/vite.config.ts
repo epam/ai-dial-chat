@@ -9,10 +9,14 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: __dirname,
-  plugins: [nxViteTsPaths(), react()],
+  plugins: [
+    nxViteTsPaths(),
+    react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
+      'micromark-extension-math': 'micromark-extension-llm-math',
     },
   },
 

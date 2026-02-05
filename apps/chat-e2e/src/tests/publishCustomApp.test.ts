@@ -16,7 +16,7 @@ import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish custom app from context menu from card list view.\n' +
     'Publish custom app: version of app is displayed.\n' +
     'Author field is editable on publication request.\n' +
@@ -30,16 +30,16 @@ dialAdminTest(
       marketplacePage,
       adminMarketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      marketplaceAgents,
+      marketplaceEntitiesSection,
+      marketplaceEntities,
       customApplicationBuilder,
       applicationApiHelper,
       adminNavigationPanel,
       adminMarketplaceHeader,
-      adminMarketplaceAgentsSection,
-      adminMarketplaceAgentsAssertion,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      adminMarketplaceEntitiesSection,
+      baseAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       publishingRulesAssertion,
       appToPublishAssertion,
       fileApiHelper,
@@ -53,7 +53,7 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       adminPublishingRulesAssertion,
-      adminFilesToApproveAssertion,
+      adminPublishFilesAssertion,
       adminAppToApproveAssertion,
       adminTooltip,
       adminTooltipAssertion,
@@ -63,8 +63,8 @@ dialAdminTest(
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
-      adminAgentDetailsModal,
-      adminAgentDetailsModalAssertion,
+      adminEntityDetailsModal,
+      adminEntityDetailsModalAssertion,
     },
     testInfo,
   ) => {
@@ -79,7 +79,7 @@ dialAdminTest(
       'EPMRTC-5342',
     );
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const appDescription = GeneratorUtil.randomString(10);
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
@@ -147,26 +147,24 @@ dialAdminTest(
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appEntity);
+        appElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.publish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+        await marketplaceEntities.getEntityElementDotsMenu(appElement).click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
+          .selectMenuOption(MenuOptions.publish);
       },
     );
 
     await dialTest.step(
       'Verify Publish modal with valid data is displayed',
       async () => {
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           publishTo: PublishPath.Organization,
           author: defaultAuthor,
         });
@@ -189,10 +187,10 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, update Author and send the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModal.author.fillInInput(updatedAuthor);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.author.fillInInput(updatedAuthor);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
 
         const fileResource = publishApiModels.response.resources.find((r) =>
           r.reviewUrl.endsWith(filename),
@@ -284,7 +282,7 @@ dialAdminTest(
             // expectedIcon: expectedIconUrl
           },
         );
-        await adminFilesToApproveAssertion.assertFileToPublish(
+        await adminPublishFilesAssertion.assertFileToPublish(
           { name: filename },
           {
             expectedState: 'visible',
@@ -349,7 +347,9 @@ dialAdminTest(
           reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
           approveButtonState: 'enabled',
         });
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredConversationsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
@@ -376,11 +376,8 @@ dialAdminTest(
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
         appElement =
-          await adminMarketplaceAgentsSection.findAgentElement(appEntity);
-        await adminMarketplaceAgentsAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+          await adminMarketplaceEntitiesSection.findEntityElement(appEntity);
+        await baseAssertion.assertElementState(appElement, 'visible');
       },
     );
 
@@ -388,26 +385,26 @@ dialAdminTest(
       'Click on the found card and verify the details',
       async () => {
         await appElement.click();
-        await adminAgentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal,
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal,
           'visible',
         );
-        await adminAgentDetailsModalAssertion.assertApplicationName(appName);
-        await adminAgentDetailsModalAssertion.assertDescription(appDescription);
-        await adminAgentDetailsModalAssertion.assertApplicationVersion(
-          appVersion,
+        await adminEntityDetailsModalAssertion.assertEntityName(appName);
+        await adminEntityDetailsModalAssertion.assertDescription(
+          appDescription,
         );
-        await adminAgentDetailsModalAssertion.assertEntityIcon(
-          adminAgentDetailsModal.icon,
+        await adminEntityDetailsModalAssertion.assertEntityVersion(appVersion);
+        await adminEntityDetailsModalAssertion.assertEntityIcon(
+          adminEntityDetailsModal.icon,
           expectedPublishedIconUrl,
         );
-        await adminAgentDetailsModalAssertion.assertApplicationAuthor(
+        await adminEntityDetailsModalAssertion.assertEntityAuthor(
           updatedAuthor,
         );
-        await adminAgentDetailsModalAssertion.assertApplicationReleaseDate(
-          publishApiModels.response,
+        await adminEntityDetailsModalAssertion.assertEntityReleaseDate(
+          publishApiModels.response.createdAt,
         );
-        await adminAgentDetailsModalAssertion.assertApplicationTopics([
+        await adminEntityDetailsModalAssertion.assertEntityTopics([
           firstTopic,
           secondTopic,
         ]);

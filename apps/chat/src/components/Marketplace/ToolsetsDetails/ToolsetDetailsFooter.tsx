@@ -6,27 +6,20 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuItems } from '@/src/hooks/useToolsetMenuItems';
 
 import { ScreenState } from '@/src/types/common';
-import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
-
-import { AgentBookmark } from '../AgentBookmark';
-
-interface Props {
-  entity: ToolsetModel;
-  allVersions: ToolsetModel[];
-  onChangeVersion: (entity: ToolsetModel) => void;
-  onBookmarkClick: (entity: ToolsetModel) => void;
-}
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
+import { LoginButton } from '@/src/components/Marketplace/ToolsetsDetails/LoginButton';
+import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 export function ToolsetDetailsFooter({
   entity,
   allVersions,
   onChangeVersion,
   onBookmarkClick,
-}: Props) {
+}: ToolsetDetailsFooterProps) {
   const screenState = useScreenState();
 
   const showContextMenu =
@@ -39,6 +32,7 @@ export function ToolsetDetailsFooter({
         copyLink: screenState !== ScreenState.SM,
         share: !showContextMenu,
         unshare: !entity?.sharedWithMe,
+        login: true,
       },
     }),
     [entity, screenState, showContextMenu],
@@ -56,7 +50,7 @@ export function ToolsetDetailsFooter({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <ToolsetContextMenu
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
@@ -75,12 +69,14 @@ export function ToolsetDetailsFooter({
             )
           )}
 
-          <AgentBookmark
-            entity={entity}
-            size={24}
-            className="icon-button group/bookmark"
-            onBookmarkClick={onBookmarkClick}
-          />
+          {onBookmarkClick && (
+            <MarketplaceEntityBookmark
+              entity={entity}
+              size={24}
+              className="icon-button group/bookmark"
+              onBookmarkClick={onBookmarkClick}
+            />
+          )}
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect
@@ -90,6 +86,8 @@ export function ToolsetDetailsFooter({
             showVersionPrefix
             onSelect={onChangeVersion}
           />
+
+          <LoginButton entity={entity} />
         </div>
       </div>
     </section>

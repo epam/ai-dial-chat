@@ -29,6 +29,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
@@ -68,6 +69,12 @@ export const VisualizerRenderer = ({
   const isAllowedSendMessage = useAppSelector(
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
+
+  const { withoutTitleTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentsSettings,
+  );
+
+  const hideTitle = withoutTitleTypes.includes(mimeType);
 
   const scrollWidth =
     iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;
@@ -146,7 +153,7 @@ export const VisualizerRenderer = ({
     const postMessageListener = (
       event: MessageEvent<VisualizerConnectorRequest>,
     ) => {
-      if (event.origin !== rendererUrl) return;
+      if (!rendererUrl.startsWith(event.origin)) return;
 
       if (
         event.data.type ===
@@ -196,15 +203,14 @@ export const VisualizerRenderer = ({
   return (
     <div>
       <div className="mb-2 flex flex-row justify-between">
-        <h2>{visualizerTitle}</h2>
+        {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
-        <button
-          className="flex gap-2 text-accent-primary"
+        <DialLinkButton
+          className="flex text-accent-primary"
           onClick={() => visualizer.current && sendMessage(visualizer.current)}
-        >
-          <IconRefresh size={18} />
-          <span>{t('Refresh')}</span>
-        </button>
+          iconBefore={<IconRefresh size={18} />}
+          label={t('Refresh')}
+        />
       </div>
       <div
         ref={iframeContainerRef}

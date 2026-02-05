@@ -43,8 +43,8 @@ dialTest(
     baseAssertion,
     shareModal,
     shareModalAssertion,
-    publishingRequestModal,
-    publishingRequestModalAssertion,
+    publishingRequestDialog,
+    publishingRequestDialogAssertion,
     renameConversationModal,
     conversationAssertion,
     renameConversationModalAssertion,
@@ -82,6 +82,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModelWithAttachment,
             true,
+            undefined,
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
@@ -246,11 +247,11 @@ dialTest(
       async () => {
         await chatHeader.dotsMenu.click();
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.cancelButton.click();
+        await publishingRequestDialog.cancelButton.click();
       },
     );
 

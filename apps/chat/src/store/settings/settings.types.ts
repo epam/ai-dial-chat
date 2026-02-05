@@ -18,9 +18,7 @@ export interface SettingsState {
   announcement: string;
   defaultModelReference: string | undefined;
   overlayDefaultModelReference?: string | undefined;
-  defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
-  defaultRecentAddonsIds: string[];
   storageType: StorageType;
   themesHostDefined: boolean;
   isolatedModelId?: string;
@@ -41,4 +39,10 @@ export interface SettingsState {
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;
   widgetsSchemaIds?: string[];
+
+  attachmentsSettings: {
+    expandedTypes: string[];
+    borderlessTypes: string[];
+    withoutTitleTypes: string[];
+  };
 }

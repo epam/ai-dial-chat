@@ -3,6 +3,8 @@ import { ModalState } from '@/src/types/modal';
 import { Modal, Props as ModalProps } from './Modal';
 import { Spinner } from './Spinner';
 
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+
 interface Props {
   onClose: ModalProps['onClose'];
   isOpen: boolean;
@@ -38,13 +40,11 @@ export const FullPageLoader = ({
         <Spinner size={spinnerSize} />
 
         <h4 className="text-xl font-normal leading-6">{loaderLabel}</h4>
-        <button
-          className="text-sm font-medium text-accent-primary focus-visible:outline-none"
+        <DialLinkButton
           onClick={onStop}
           data-qa="stop-loading"
-        >
-          {stopLabel}
-        </button>
+          label={stopLabel}
+        />
       </div>
     </Modal>
   );

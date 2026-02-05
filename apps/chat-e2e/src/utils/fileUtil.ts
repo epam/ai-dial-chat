@@ -71,6 +71,10 @@ export class FileUtil {
     return archiveEntry;
   }
 
+  public static getArchiveEntries(archive: AdmZip) {
+    return archive.getEntries();
+  }
+
   public static parseArchiveEntryJson<T>(archiveEntry: AdmZip.IZipEntry): T {
     let jsonData: T;
     try {
@@ -82,5 +86,19 @@ export class FileUtil {
       );
     }
     return jsonData;
+  }
+
+  public static getFilenameWithoutExtension(filename: string) {
+    const separator = '.';
+    return filename.includes(separator)
+      ? filename.substring(0, filename.lastIndexOf(separator))
+      : filename;
+  }
+
+  public static getFileExtension(filename: string) {
+    const separator = '.';
+    return filename.includes(separator)
+      ? filename.substring(filename.lastIndexOf(separator))
+      : '';
   }
 }

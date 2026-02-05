@@ -3,6 +3,7 @@ import {
   IconFileDescription,
   IconLink,
   IconPencilMinus,
+  IconRefresh,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -16,6 +17,7 @@ import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
 import {
   getApplicationSimpleStatus,
   getPlayerCaption,
+  isApplicationDeployed,
   isApplicationStatusUpdating,
   isExecutableApp,
   isMarketplaceEntityPublic,
@@ -89,6 +91,7 @@ export const useAgentMenuItems = ({
     handlePublish,
     handleUnpublish,
     handleUpdateFunctionStatus,
+    handleRedeploy,
   } = useAgentMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -110,6 +113,8 @@ export const useAgentMenuItems = ({
     canWrite ||
     (isPublicAndAdmin && (!hasCustomEditor || isQuickApp2(entity)));
 
+  const showRedeploy = isExecutable && isApplicationDeployed(entity);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -118,6 +123,15 @@ export const useAgentMenuItems = ({
         display: isPublicApp && disabledActions.copyLink !== true,
         Icon: IconLink,
         onClick: handleCopy,
+      },
+      {
+        name: t('Redeploy'),
+        dataQa: 'redeploy',
+        display: showRedeploy && disabledActions.deploy !== true,
+        Icon: IconRefresh,
+        className: PlayerContextButtonClasses[SimpleApplicationStatus.DEPLOY],
+        iconClassName: PlayerContextIconClasses[SimpleApplicationStatus.DEPLOY],
+        onClick: handleRedeploy,
       },
       {
         name: t(getPlayerCaption(entity)),
@@ -132,6 +146,8 @@ export const useAgentMenuItems = ({
       {
         name: t(isAppIdPublic ? 'View' : 'Edit'),
         dataQa: 'edit',
+        disabled:
+          isExecutable && playerStatus === SimpleApplicationStatus.UPDATING,
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
@@ -186,7 +202,6 @@ export const useAgentMenuItems = ({
         display: isMyAppOrPreview && disabledActions.delete !== true,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
-        iconClassName: 'stroke-error',
         onClick: handleDelete,
       },
     ],
@@ -203,6 +218,8 @@ export const useAgentMenuItems = ({
       disabledActions.logs,
       disabledActions.delete,
       handleCopy,
+      showRedeploy,
+      handleRedeploy,
       entity,
       playerStatus,
       isExecutable,

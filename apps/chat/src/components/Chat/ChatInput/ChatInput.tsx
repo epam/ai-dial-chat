@@ -1,4 +1,4 @@
-import { MutableRefObject, ReactNode, useCallback, useRef } from 'react';
+import { ReactNode, RefObject, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -18,7 +18,7 @@ import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Message } from '@epam/ai-dial-shared';
 
 interface Props {
-  textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
   isShowInput: boolean;
   isWideLayout: boolean;

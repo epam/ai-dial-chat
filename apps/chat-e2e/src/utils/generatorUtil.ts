@@ -4,6 +4,8 @@ import { webcrypto } from 'node:crypto';
 export const publicationRequestPrefix = 'E2EPublish';
 export const unpublishRequestPrefix = 'E2EUnpublish';
 export const applicationNamePrefix = 'E2EApp';
+export const filenamePrefix = 'E2EFile';
+export const toolsetNamePrefix = 'E2EToolset';
 
 export const conversationNamePrefix = 'E2EConversation';
 export const promptNamePrefix = 'E2EPrompt';
@@ -43,10 +45,15 @@ export class GeneratorUtil {
     const chars =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let result = '';
-    const randomValues = new Uint8Array(length);
-    webcrypto.getRandomValues(randomValues);
-    for (let i = 0; i < length; i++) {
-      result += chars[randomValues[i] % chars.length];
+    // Generate random values in chunks to properly handle the 65536 bytes limit of webcrypto.getRandomValues
+    const maxBytes = 65536;
+    for (let i = 0; i < length; i += maxBytes) {
+      const size = Math.min(maxBytes, length - i);
+      const randomValues = new Uint8Array(size);
+      webcrypto.getRandomValues(randomValues);
+      for (let j = 0; j < size; j++) {
+        result += chars[randomValues[j] % chars.length];
+      }
     }
     return result;
   }
@@ -59,8 +66,16 @@ export class GeneratorUtil {
     return unpublishRequestPrefix + GeneratorUtil.randomString(7);
   }
 
+  static randomFilename(extension: string) {
+    return `${filenamePrefix}${GeneratorUtil.randomString(7)}.${extension}`;
+  }
+
   static randomApplicationName() {
     return applicationNamePrefix + GeneratorUtil.randomString(10);
+  }
+
+  static randomToolsetName() {
+    return toolsetNamePrefix + GeneratorUtil.randomString(10);
   }
 
   static randomConversationName() {
@@ -79,17 +94,17 @@ export class GeneratorUtil {
     return `${GeneratorUtil.randomString(7)}${Import.importAttachmentExtension}`;
   }
 
-  static randomApplicationVersion(stringsToExclude?: string[]) {
+  static randomEntityVersion(stringsToExclude?: string[]) {
     const major = GeneratorUtil.randomIntegerNumber();
     const minor = GeneratorUtil.randomIntegerNumber();
     const patch = GeneratorUtil.randomIntegerNumber();
     let version = `${major}.${minor}.${patch}`;
     stringsToExclude = stringsToExclude ?? [];
-    if (!stringsToExclude.includes(ExpectedConstants.defaultAppVersion)) {
+    if (!stringsToExclude.includes(ExpectedConstants.defaultEntityVersion)) {
       stringsToExclude.push();
     }
     while (stringsToExclude.some((s) => s.includes(version))) {
-      version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
+      version = GeneratorUtil.randomEntityVersion(stringsToExclude);
     }
     return version;
   }
@@ -104,5 +119,9 @@ export class GeneratorUtil {
 
   static randomLongDescription() {
     return `long description: ${GeneratorUtil.randomString(150)}`;
+  }
+
+  static randomUrl() {
+    return `http://${GeneratorUtil.randomString(7)}.com`;
   }
 }

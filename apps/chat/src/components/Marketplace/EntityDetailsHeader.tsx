@@ -18,6 +18,7 @@ import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/Marketp
 import { TopicsList } from './TopicsList';
 
 import { FeatureType } from '@epam/ai-dial-shared';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EntityHeaderProps<T> {
   entity: T;
@@ -64,7 +65,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
 
   return (
     <header
-      className="flex items-start justify-between px-3 py-4 md:p-6"
+      className="flex items-start justify-between px-3 py-4 pl-6 md:p-6"
       data-qa={dataQa}
     >
       <div className="flex w-full items-center gap-2 overflow-hidden md:gap-4">
@@ -90,24 +91,24 @@ export function EntityHeader<T extends MarketplaceEntity>({
           <div className="flex shrink-0 justify-between">
             <div
               className={classNames(
-                'flex w-full flex-col',
+                'flex w-full flex-col items-start',
                 entity.topics?.length ? 'gap-2' : '',
               )}
             >
+              <MarketplaceEntityIndicator entity={entity} isDetailedView />
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
                   counterMarginRight={screenState === ScreenState.SM ? 18 : 0}
                 />
               )}
-              <div className="flex items-center gap-[2px] whitespace-nowrap">
+              <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
                 <div
-                  className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+                  className="shrink truncate text-lg font-semibold leading-6 md:text-xl"
                   data-qa="entity-name"
                 >
                   {entity.name}
                 </div>
-                <MarketplaceEntityIndicator entity={entity} />
               </div>
             </div>
           </div>
@@ -116,14 +117,13 @@ export function EntityHeader<T extends MarketplaceEntity>({
 
       {/* Action buttons */}
       {isShareVisible && (
-        <button
-          className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
+        <DialLinkButton
+          className="px-3 py-1.5"
           onClick={shareAction.onShare}
           data-qa="share"
-        >
-          <IconUserShare size={18} />
-          <span>{t('Share')}</span>
-        </button>
+          iconBefore={<IconUserShare size={18} />}
+          label={t('Share')}
+        />
       )}
 
       {isCopyLinkVisible && (

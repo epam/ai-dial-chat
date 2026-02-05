@@ -10,6 +10,7 @@ export enum FileType {
   PLAIN = 'plain',
   JPG = 'jpg',
   SVG = 'svg',
+  ZIP = 'zip',
 }
 type FileReader = (path: string) => string | Buffer | object | undefined;
 
@@ -19,6 +20,7 @@ export class DownloadAssertion {
     [FileType.PLAIN]: FileUtil.readPlainFileData,
     [FileType.JPG]: FileUtil.readPlainFileData,
     [FileType.SVG]: FileUtil.readPlainFileData,
+    [FileType.ZIP]: FileUtil.readPlainFileData,
   };
 
   public async assertDownloadFileExtension(
@@ -98,6 +100,17 @@ export class DownloadAssertion {
     await this.assertFileIsDownloaded(
       downloadedData,
       FileType.JPG,
+      expectedFilename,
+    );
+  }
+
+  public async assertZipFileIsDownloaded(
+    downloadedData: UploadDownloadData,
+    expectedFilename?: string,
+  ) {
+    await this.assertFileIsDownloaded(
+      downloadedData,
+      FileType.ZIP,
       expectedFilename,
     );
   }

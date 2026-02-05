@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,13 +10,24 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
-const PromptDeleteDialogComponent = () => {
+import { PromptInfo } from '@epam/ai-dial-shared';
+
+interface PromptDeleteDialogProps {
+  deletingPromptId: string;
+}
+
+const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
+  deletingPromptId,
+}) => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
-  const deletingPrompt = useAppSelector(PromptsSelectors.selectDeletingPrompt);
+  const deletingPrompt = useAppSelector((state) =>
+    PromptsSelectors.selectPrompt(state, deletingPromptId),
+  ) as PromptInfo;
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
 
   const dialogProps = useMemo(() => {
     if (!deletingPrompt) {
@@ -59,10 +70,16 @@ const PromptDeleteDialogComponent = () => {
         dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
       }
 
-      dispatch(PromptsActions.setDeletingPrompt());
+      dispatch(PromptsActions.setDeletingPromptId());
     },
     [deletingPrompt, dispatch],
   );
+
+  useEffect(() => {
+    if (isSelectMode) {
+      dispatch(PromptsActions.setDeletingPromptId());
+    }
+  }, [dispatch, isSelectMode]);
 
   if (!dialogProps) {
     return null;
@@ -80,6 +97,7 @@ const PromptDeleteDialogComponent = () => {
   );
 };
 
-export const PromptDeleteDialog = withRenderWhen(
-  PromptsSelectors.selectDeletingPrompt,
-)(PromptDeleteDialogComponent);
+export const PromptDeleteDialog =
+  withRenderWhenEntities<PromptDeleteDialogProps>({
+    deletingPromptId: PromptsSelectors.selectDeletingPromptId,
+  })(PromptDeleteDialogComponent);

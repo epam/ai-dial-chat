@@ -18,7 +18,6 @@ import {
   ISOLATED_MODEL_QUERY_PARAM,
 } from '@/src/constants/chat';
 import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
@@ -114,18 +113,12 @@ export const getCommonPageProps: GetServerSideProps = async ({
     : [];
 
   const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
+    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'DIAL',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
     defaultRecentModelsIds: parseCommaSeparatedList(
       process.env.RECENT_MODELS_IDS,
     ),
-    defaultRecentAddonsIds: parseCommaSeparatedList(
-      process.env.RECENT_ADDONS_IDS,
-    ),
     defaultModelReference: DEFAULT_MODEL_ID,
-    defaultAssistantSubmodelId:
-      process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
-      FALLBACK_ASSISTANT_SUBMODEL_ID,
     codeEditorPythonVersions: parseCommaSeparatedList(
       process.env.CODE_EDITOR_PYTHON_VERSIONS,
       ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
@@ -174,6 +167,20 @@ export const getCommonPageProps: GetServerSideProps = async ({
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     providerId: session?.providerId ?? null,
+    attachmentsSettings: {
+      expandedTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_EXPANDED,
+        [],
+      ),
+      borderlessTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_BORDERLESS,
+        [],
+      ),
+      withoutTitleTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_WITHOUT_TITLE,
+        [],
+      ),
+    },
   };
 
   if (isIsolatedView) {

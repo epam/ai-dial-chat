@@ -23,7 +23,6 @@ import {
   takeWhile,
   tap,
   throwError,
-  timeout,
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
@@ -74,7 +73,6 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
@@ -96,7 +94,6 @@ import { HTTPMethod } from '@/src/types/http';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
-  AddonsActions,
   ChatActions,
   ConversationsActions,
   FilesActions,
@@ -108,7 +105,6 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import {
-  AddonsSelectors,
   ConversationsSelectors,
   MarketplaceSelectors,
   ModelsSelectors,
@@ -123,7 +119,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -137,6 +132,7 @@ import {
   ConversationInfo,
   CustomVisualizerData,
   Feature,
+  LikeState,
   Message,
   MessageSettings,
   Role,
@@ -514,13 +510,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 prompt: DefaultsService.get('defaultSystemPrompt', ''),
                 temperature:
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
-                selectedAddons: [],
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
-                assistantModelId: DefaultsService.get(
-                  'assistantSubmodelId',
-                  FALLBACK_ASSISTANT_SUBMODEL_ID,
-                ),
               }),
             );
             const selectedConversationsIds =
@@ -1097,6 +1088,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail({
+            ...payload,
             error: translate(
               'No conversation exists for rating with provided conversation id',
             ),
@@ -1109,6 +1101,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!message || !message.responseId) {
         return of(
           ConversationsActions.rateMessageFail({
+            ...payload,
             error: translate('Message cannot be rated'),
           }),
         );
@@ -1120,6 +1113,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         id: conversation.id,
         reference: conversation.reference,
         value: payload.rate > 0,
+        comment: payload.comment,
       };
 
       return fromFetch('/api/rate', {
@@ -1135,11 +1129,13 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map(() => ConversationsActions.rateMessageSuccess(payload)),
+        switchMap(() => EMPTY),
         catchError((e: Response) => {
+          console.error('Failed to rate message:', e);
           return of(
             ConversationsActions.rateMessageFail({
-              error: e,
+              ...payload,
+              error: translate('Failed to rate message'),
             }),
           );
         }),
@@ -1287,7 +1283,7 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
 
 const rateMessageSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(ConversationsActions.rateMessageSuccess.type),
+    ofType(ConversationsActions.rateMessage.type),
     switchMap(({ payload }) => {
       return of(
         ConversationsActions.updateMessage({
@@ -1297,6 +1293,25 @@ const rateMessageSuccessEpic: AppEpic = (action$) =>
             like: payload.rate,
           },
         }),
+      );
+    }),
+  );
+
+const rateMessageFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ConversationsActions.rateMessageFail.type),
+    switchMap(({ payload }) => {
+      return concat(
+        of(
+          ConversationsActions.updateMessage({
+            conversationId: payload.conversationId,
+            messageIndex: payload.messageIndex,
+            values: {
+              like: LikeState.NoState,
+            },
+          }),
+        ),
+        of(UIActions.showErrorToast(payload.error.toString())),
       );
     }),
   );
@@ -1339,7 +1354,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         payload,
-        modelsMap,
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,
@@ -1347,12 +1361,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       }) => {
         const publicationUrl =
           payload.conversation.publicationInfo?.publicationUrl;
-        if (
-          publicationUrl &&
+        const someAttachmentsAreMy =
           payload.message.custom_content?.attachments?.some((attachment) =>
             isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
-          )
-        ) {
+          );
+        if (publicationUrl && someAttachmentsAreMy) {
           return of(
             PublicationActions.updatePublicationConversationAttachmentsAndSendMessage(
               {
@@ -1370,8 +1383,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         const messageSettings: Message['settings'] = {
           prompt: payload.conversation.prompt,
           temperature: payload.conversation.temperature,
-          selectedAddons: payload.conversation.selectedAddons,
-          assistantModelId: payload.conversation.assistantModelId,
         };
 
         const assistantMessage: Message = {
@@ -1449,19 +1460,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isMessageStreaming: true,
         });
 
-        if (
-          updatedConversation.selectedAddons.length &&
-          modelsMap[updatedConversation.model.id]?.type !==
-            EntityType.Application
-        ) {
-          actions.push(
-            of(
-              AddonsActions.updateRecentAddons({
-                addonIds: updatedConversation.selectedAddons,
-              }),
-            ),
-          );
-        }
         if (!payload.skipRecentModelsUpdate) {
           actions.push(
             of(
@@ -1497,11 +1495,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
-      const selectedAddons = uniq([
-        ...payload.conversation.selectedAddons,
-        ...(lastModel?.selectedAddons ?? []),
-      ]);
-      const assistantModelId = payload.conversation.assistantModelId;
       const conversationModelType = lastModel?.type ?? EntityType.Model;
       let modelAdditionalSettings = {};
 
@@ -1513,16 +1506,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
             : FALLBACK_TEMPERATURE,
-          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
-        };
-      }
-      if (conversationModelType === EntityType.Assistant && assistantModelId) {
-        modelAdditionalSettings = {
-          assistantModel: modelsMap[assistantModelId],
-          temperature: doesModelAllowTemperature(lastModel)
-            ? payload.conversation.temperature
-            : FALLBACK_TEMPERATURE,
-          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
 
@@ -1615,8 +1598,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
-        timeout(120000),
         mergeMap((resp) => {
           if (resp.done) {
             const publicationUrl =
@@ -1701,13 +1682,22 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           }
 
           if (error.message === 'ServerError') {
+            const cause = error.cause as
+              | { status: number; statusText: string; message: string }
+              | undefined;
+
+            const contentTooLargeError =
+              cause?.status === 413 &&
+              translate(errorsMessages.bodyExeededLimit);
+            const message =
+              contentTooLargeError ||
+              cause?.message ||
+              translate(errorsMessages.generalServer);
+
             return of(
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
-                message:
-                  (!!error.cause &&
-                    (error.cause as { message?: string }).message) ||
-                  translate(errorsMessages.generalServer),
+                message,
                 response:
                   error.cause instanceof Response ? error.cause : undefined,
               }),
@@ -1730,7 +1720,9 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
     ofType(ConversationsActions.streamMessageFail.type),
     switchMap(({ payload }) => {
       return (
-        payload.response ? from(payload.response.json()) : of(undefined)
+        payload.response
+          ? from(payload.response.json().catch(() => undefined))
+          : of(undefined)
       ).pipe(
         map((response: { message: string } | undefined) => ({
           payload,
@@ -1963,14 +1955,13 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         activeMessage.model &&
         activeMessage.model.id
       ) {
-        const { prompt, temperature, selectedAddons, assistantModelId } =
-          activeMessage.settings ? activeMessage.settings : conv;
+        const { prompt, temperature } = activeMessage.settings
+          ? activeMessage.settings
+          : conv;
 
         const newConversationSettings: MessageSettings = {
           prompt,
           temperature,
-          selectedAddons,
-          assistantModelId,
         };
 
         const model = {
@@ -2299,8 +2290,9 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
             userMessage,
             assistantMessage,
           );
-          const { prompt, temperature, selectedAddons, assistantModelId } =
-            assistantMessage.settings ? assistantMessage.settings : conv;
+          const { prompt, temperature } = assistantMessage.settings
+            ? assistantMessage.settings
+            : conv;
 
           return concat(
             of(
@@ -2312,8 +2304,6 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
                   model: { ...conv.model, ...assistantMessage.model },
                   prompt,
                   temperature: temperature,
-                  selectedAddons: selectedAddons,
-                  assistantModelId: assistantModelId,
                   playback: {
                     ...conv.playback,
                     activePlaybackIndex: activeIndex + 1,
@@ -2424,8 +2414,9 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
           const model = assistantMessage?.model
             ? { ...conv.model, ...assistantMessage.model }
             : conv.model;
-          const { prompt, temperature, selectedAddons, assistantModelId } =
-            assistantMessage?.settings ? assistantMessage.settings : conv;
+          const { prompt, temperature } = assistantMessage?.settings
+            ? assistantMessage.settings
+            : conv;
           const playbackState = {
             ...conv.playback,
             activePlaybackIndex: activeIndex,
@@ -2448,8 +2439,6 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
                   model,
                   prompt,
                   temperature: temperature,
-                  selectedAddons: selectedAddons,
-                  assistantModelId: assistantModelId,
                   playback: {
                     ...conv.playback,
                     activePlaybackIndex: activeIndex,
@@ -2516,7 +2505,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
         });
       }
 
-      const uploadedConversations$ = zip(
+      const uploadConversations$ = zip(
         conversationIds.map((id) =>
           getOrUploadConversation({ id }, state$.value).pipe(
             map((result) => result.conversation),
@@ -2529,18 +2518,35 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       );
 
       return forkJoin({
-        uploadedConversations: uploadedConversations$,
+        uploadedConversations: uploadConversations$,
         setIds: of(new Set(conversationIds)),
         showLoader: of(showLoader),
       });
     }),
-    map(({ uploadedConversations, setIds, showLoader }) =>
-      ConversationsActions.uploadConversationsByIdsSuccess({
+    map(({ uploadedConversations, setIds, showLoader }) => {
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state$.value);
+      return ConversationsActions.uploadConversationsByIdsSuccess({
         setIds,
-        conversations: uploadedConversations.filter(Boolean) as Conversation[],
+        conversations: uploadedConversations
+          .filter((conv) => conv !== null)
+          .map((conv) => {
+            if (selectedPublicationUrl && conv.playback) {
+              return {
+                ...conv,
+                messages: conv.playback.messagesStack ?? [],
+                playback: {
+                  ...conv.playback,
+                  activePlaybackIndex: conv.playback.messagesStack.length,
+                },
+              };
+            }
+
+            return conv;
+          }),
         showLoader,
-      }),
-    ),
+      });
+    }),
   );
 
 const saveConversationEpic: AppEpic = (action$, state$) =>
@@ -2786,8 +2792,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         values.folderId !== getConversationRootId(LOCAL_BUCKET);
 
       const paths = window.location.pathname.split('/');
-      const isApplicationPreviewConversation =
-        paths[1] === 'apps-editor' && paths[3] === 'settings';
+      const isApplicationPreviewConversation = paths[1] === 'apps-editor';
 
       const saveInStorage = isApplicationPreviewConversation
         ? false
@@ -3174,9 +3179,6 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
                 showLoader: true,
               }),
             ),
-            of(
-              ConversationsActions.uploadConversationsWithContentRecursiveSuccess(),
-            ),
           );
         }),
         catchError((err) => {
@@ -3334,7 +3336,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
       forkJoin({
         selectedModelId: of(payload.selectedModelId),
         modelsMap: of(ModelsSelectors.selectModelsMap(state$.value)),
-        addonsMap: of(AddonsSelectors.selectAddonsMap(state$.value)),
         installedModelIds: of(
           ModelsSelectors.selectInstalledModelIds(state$.value),
         ),
@@ -3359,7 +3360,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
         conversation,
         selectedModelId,
         modelsMap,
-        addonsMap,
         installedModelIds,
         shouldUpload,
       }) => {
@@ -3396,7 +3396,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
                         conversation as Conversation,
                         modelToApply?.reference,
                         modelsMap,
-                        addonsMap,
                       )
                     : {}),
                 },
@@ -3633,6 +3632,7 @@ export const ConversationsEpics = combineEpics(
   regenerateLastMessageEpic,
   rateMessageEpic,
   rateMessageSuccessEpic,
+  rateMessageFailEpic,
   sendMessageEpic,
   sendMessagesEpic,
   stopStreamMessageEpic,

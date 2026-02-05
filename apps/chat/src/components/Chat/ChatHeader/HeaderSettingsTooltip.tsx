@@ -2,18 +2,11 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
-
-import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-
 interface Props {
-  subModel: DialAIEntityModel | undefined;
   systemPrompt: string;
   temperature: number | null;
-  selectedAddons: DialAIEntityAddon[] | null;
   disallowChangeSettings: boolean;
   hasSettings: boolean;
 }
@@ -27,10 +20,8 @@ const SM_HEIGHT_THRESHOLDS = [
 const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
 export const HeaderSettingsTooltip = ({
-  subModel,
   systemPrompt,
   temperature,
-  selectedAddons,
   disallowChangeSettings,
   hasSettings,
 }: Props) => {
@@ -55,21 +46,10 @@ export const HeaderSettingsTooltip = ({
         :
       </div>
       <div className="mt-3 grid max-w-full grid-cols-[auto,1fr] gap-x-4 gap-y-2">
-        {!subModel &&
-          !systemPrompt &&
-          temperature === null &&
-          !selectedAddons?.length && (
-            <span className="text-secondary">
-              {t('There are no conversation settings for this agent ')}
-            </span>
-          )}
-        {subModel && (
-          <>
-            <span className="text-secondary">{t('Assistant model')}:</span>
-            <div data-qa="assistant-info">
-              {getOpenAIEntityFullName(subModel)}
-            </div>
-          </>
+        {!systemPrompt && temperature === null && (
+          <span className="text-secondary">
+            {t('There are no conversation settings for this agent ')}
+          </span>
         )}
         {systemPrompt && (
           <>
@@ -86,23 +66,6 @@ export const HeaderSettingsTooltip = ({
           <>
             <span className="text-secondary">{t('Temperature')}:</span>
             <div data-qa="temp-info">{temperature}</div>
-          </>
-        )}
-        {!!selectedAddons?.length && (
-          <>
-            <span className="text-secondary">{t('Addons')}:</span>
-            <div className="flex max-w-full flex-wrap gap-1">
-              {selectedAddons.map((addon) => (
-                <span
-                  key={addon.id}
-                  className="flex gap-2 whitespace-pre-wrap rounded bg-accent-primary-alpha px-3 py-2"
-                  data-qa="addons-info"
-                >
-                  <ModelIcon entityId={addon.id} entity={addon} size={18} />
-                  {addon.name}
-                </span>
-              ))}
-            </div>
           </>
         )}
       </div>

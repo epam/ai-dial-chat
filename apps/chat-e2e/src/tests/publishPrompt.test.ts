@@ -37,8 +37,8 @@ dialAdminTest(
       dataInjector,
       prompts,
       promptDropdownMenu,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       selectFolderModal,
       adminDialHomePage,
       adminApproveRequiredPromptsAssertion,
@@ -53,8 +53,8 @@ dialAdminTest(
       baseAssertion,
       selectFolders,
       adminPublishedPromptPreviewModal,
-      adminPromptsToApprove,
-      adminPromptToApproveAssertion,
+      adminPromptsToApproveTree,
+      adminPublishPromptsTreeAssertion,
       adminPublishedPromptPreviewModalAssertion,
       promptBarOrganizationFolderAssertion,
       organizationFolderPrompts,
@@ -112,13 +112,16 @@ dialAdminTest(
       await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+      await baseAssertion.assertElementState(
+        publishingRequestDialog,
+        'visible',
+      );
     });
 
     await dialTest.step(
       'User clicks on "Change path", create a new folder, create a child folder and then delete it',
       async () => {
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -154,15 +157,15 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           requestName1WithSpaces,
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           publishTo: `${PublishPath.Organization}/${orgFolderName}`,
           author: author,
         });
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -200,20 +203,20 @@ dialAdminTest(
           requestCreated: publishApiModels.response,
           publicAuthor: author,
         });
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt1.name },
           {
             expectedState: 'visible',
             expectedColor: expectedColor,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedColor,
           },
         );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPromptsToApprove.promptIcon(prompt1.name),
+        await adminPublishPromptsTreeAssertion.assertElementState(
+          adminPromptsToApproveTree.promptIcon(prompt1.name),
           'visible',
         );
-        await adminPromptToApproveAssertion.assertElementState(
+        await adminPublishPromptsTreeAssertion.assertElementState(
           adminPublishingApprovalModal.goToReviewButton,
           'visible',
         );
@@ -335,10 +338,10 @@ dialAdminTest(
         await prompts.openEntityDropdownMenu(prompt2.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.selectFolder(orgFolderName);
@@ -351,9 +354,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName2);
+        await publishingRequestDialog.requestName.fillInInput(requestName2);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -389,12 +392,12 @@ dialAdminTest(
           publishTo: `${PublishPath.Organization}/${orgFolderName}`,
           requestCreated: publishApiModels.response,
         });
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt2.name },
           {
             expectedState: 'visible',
             expectedColor: expectedColor,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedColor,
           },
         );
@@ -459,7 +462,7 @@ dialAdminTest(
       dataInjector,
       prompts,
       promptDropdownMenu,
-      publishingRequestModal,
+      publishingRequestDialog,
       selectFolderModal,
       adminDialHomePage,
       adminApproveRequiredPromptsAssertion,
@@ -473,12 +476,12 @@ dialAdminTest(
       informationModal,
       informationModalAssertion,
       adminPublishedPromptPreviewModal,
-      adminPromptToApproveAssertion,
+      adminPublishPromptsTreeAssertion,
       adminPublishedPromptPreviewModalAssertion,
       promptBarOrganizationFolderAssertion,
       organizationFolderPrompts,
       folderDropdownMenu,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
       tooltipAssertion,
       localStorageManager,
       adminLocalStorageManager,
@@ -532,14 +535,17 @@ dialAdminTest(
       await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestModal, 'visible');
-      await publishingRequestModal.requestName.fillInInput('');
+      await baseAssertion.assertElementState(
+        publishingRequestDialog,
+        'visible',
+      );
+      await publishingRequestDialog.requestName.fillInInput('');
     });
 
     await dialTest.step(
       'User clicks on "Change path, creates new folder structure : Folder1->Folder1.1->Folder1.1.1-Folder1.1.1.1',
       async () => {
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -585,9 +591,11 @@ dialAdminTest(
       await dialTest.step(
         `Type ${requestNames[i]} symbols in the request name and verify error hint is displayed under the field`,
         async () => {
-          await publishingRequestModal.requestName.fillInInput(requestNames[i]);
-          await publishingRequestModalAssertion.assertElementText(
-            publishingRequestModal.requestNameErrorMessage,
+          await publishingRequestDialog.requestName.fillInInput(
+            requestNames[i],
+          );
+          await publishingRequestDialogAssertion.assertElementText(
+            publishingRequestDialog.requestNameErrorMessage,
             i === 0
               ? ExpectedConstants.publishRequestNameMaxLengthErrorMessage
               : ExpectedConstants.publishRequestNameMinLengthErrorMessage,
@@ -597,32 +605,32 @@ dialAdminTest(
     }
 
     await dialTest.step('Check empty publication request name', async () => {
-      await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
-      await publishingRequestModal.sendRequestButton.hoverOver();
+      await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
+      await publishingRequestDialog.sendRequestButton.hoverOver();
       await tooltipAssertion.assertTooltipContent(
         ExpectedConstants.noPublishNameTooltip,
       );
-      await publishingRequestModal.requestName.fillInInput('   ');
-      await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
-      await publishingRequestModal.sendRequestButton.hoverOver();
+      await publishingRequestDialog.requestName.fillInInput('   ');
+      await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
+      await publishingRequestDialog.sendRequestButton.hoverOver();
       await tooltipAssertion.assertTooltipContent(
         ExpectedConstants.noPublishNameTooltip,
       );
-      await publishingRequestModal.requestName.fillInInput(''); // Clear the input field
+      await publishingRequestDialog.requestName.fillInInput(''); // Clear the input field
     });
 
     await dialTest.step(
       'Set publication request name, update author, check prompt to publish and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           requestNameWithTabs,
         );
-        await publishingRequestModal.author.fillInInput(publicAuthor);
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialog.author.fillInInput(publicAuthor);
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           publishTo: publicationPath,
         });
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -655,12 +663,12 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt1.name },
           {
             expectedState: 'visible',
             expectedColor: expectedColor,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedColor,
           },
         );
@@ -760,10 +768,10 @@ dialAdminTest(
     dialHomePage,
     organizationPrompts,
     promptPreviewModalAssertion,
-    promptToPublishAssertion,
+    publishPromptsTreeAssertion,
     promptPreviewModal,
-    publishingRequestModal,
-    publishingRequestModalAssertion,
+    publishingRequestDialog,
+    publishingRequestDialogAssertion,
     tooltipAssertion,
     promptPreviewVersionDropdownMenu,
     adminDialHomePage,
@@ -786,7 +794,7 @@ dialAdminTest(
       'EPMRTC-6104',
     );
     let prompt: Prompt;
-    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const firstVersion = ExpectedConstants.defaultEntityVersion;
     const secondVersion = '0.0.2';
     const currentDate = DateUtil.getCurrentLocalDate();
     const author = GeneratorUtil.randomString(10);
@@ -883,11 +891,11 @@ dialAdminTest(
       'Verify unpublish request modal is opened on click the button',
       async () => {
         await promptPreviewModal.promptUnpublishButton.click();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
@@ -896,7 +904,7 @@ dialAdminTest(
             ),
           },
         );
-        await publishingRequestModal.cancelButton.click();
+        await publishingRequestDialog.cancelButton.click();
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );

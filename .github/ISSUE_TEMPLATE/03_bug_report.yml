@@ -1,7 +1,8 @@
 ---
 name: 🐛 Bug report
-description: Problems and issues with code in EPAM AI DIAL chat
+description: Problems and issues with code in DIAL chat
 labels: ["bug"]
+projects: ["epam/22"]
 body:
   - type: markdown
     attributes:
@@ -9,15 +10,15 @@ body:
         <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40' style='margin-right:10px'>
         Thank you for finding the time to report the problem!
 
-        We really appreciate the community's efforts to improve EPAM AI DIAL chat.
+        We really appreciate the community's efforts to improve DIAL chat.
         <br clear='left'/>"
   - type: input
     validations:
       required: true
     attributes:
-      label: EPAM AI DIAL chat version
+      label: DIAL chat version
       description: >
-        On what version of EPAM AI DIAL chat are you currently experiencing the issue? You can try to find the version in the footer of page (e.g. "Version 0.5.3") or ask your administrator.
+        On what version of DIAL chat are you currently experiencing the issue? You can try to find the version in the footer of page (e.g. "Version 0.5.3") or ask your administrator.
       placeholder: 0.5.3
   - type: textarea
     attributes:

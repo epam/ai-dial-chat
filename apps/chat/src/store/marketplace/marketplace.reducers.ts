@@ -27,7 +27,8 @@ const DEFAULT_FILTERS = {
 };
 
 const initialState: MarketplaceState = {
-  selectedFilters: DEFAULT_FILTERS,
+  selectedAgentsFilters: DEFAULT_FILTERS,
+  selectedToolsetsFilters: DEFAULT_FILTERS,
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
   selectedEntitiesTab: MarketplaceEntitiesTabs.AGENTS,
@@ -55,18 +56,22 @@ export const marketplaceSlice = createSlice({
         payload,
       }: PayloadAction<{ saveFilters: boolean; selectedTab?: MarketplaceTabs }>,
     ) => {
+      const selectedTab = payload.selectedTab ?? state.selectedTab;
+
       if (!payload.saveFilters) {
-        return initialState;
+        return { ...initialState, selectedTab };
       }
 
       return {
         ...initialState,
         searchTerm: state.searchTerm,
-        selectedFilters: state.selectedFilters,
+        selectedAgentsFilters: state.selectedAgentsFilters,
+        selectedToolsetsFilters: state.selectedToolsetsFilters,
         selectedView: state.selectedView,
         tableSort: state.tableSort,
         selectedEntitiesTab: state.selectedEntitiesTab,
-        selectedTab: payload.selectedTab ?? state.selectedTab,
+        selectedTab,
+        detailsEntity: state.detailsEntity,
       };
     },
     initQueryParams: (state) => state,
@@ -76,12 +81,21 @@ export const marketplaceSlice = createSlice({
     ) => {
       return { ...state, ...payload };
     },
-    setSelectedFilters: (
+    setSelectedAgentsFilters: (
       state,
       { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
     ) => {
-      state.selectedFilters[payload.filterType] = xor(
-        state.selectedFilters[payload.filterType],
+      state.selectedAgentsFilters[payload.filterType] = xor(
+        state.selectedAgentsFilters[payload.filterType],
+        [payload.value],
+      );
+    },
+    setSelectedToolsetsFilters: (
+      state,
+      { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
+    ) => {
+      state.selectedToolsetsFilters[payload.filterType] = xor(
+        state.selectedToolsetsFilters[payload.filterType],
         [payload.value],
       );
     },
@@ -157,6 +171,9 @@ export const marketplaceSlice = createSlice({
       { payload }: PayloadAction<ToolsetModel | undefined>,
     ) => {
       state.loginEntity = payload;
+    },
+    setShowLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.showLoader = payload;
     },
   },
 });

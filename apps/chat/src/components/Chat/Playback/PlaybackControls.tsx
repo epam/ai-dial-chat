@@ -39,6 +39,7 @@ import {
   Feature,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -132,8 +133,16 @@ export const PlaybackControls = ({
       getMessageFormValue(currentMessage) ??
       getConfigurationValue(currentMessage);
     const message = attachments.length
-      ? { content, custom_content: { attachments, form_value } }
-      : { content, custom_content: { form_value } };
+      ? {
+          content,
+          custom_content: { attachments, form_value },
+          modelId: currentMessage?.model?.id,
+        }
+      : {
+          content,
+          custom_content: { form_value },
+          modelId: currentMessage?.model?.id,
+        };
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
@@ -256,6 +265,7 @@ export const PlaybackControls = ({
             ChatActions.setFormValue({
               property,
               value: value as MessageFormValueType,
+              modelId: activeMessage?.modelId ?? '',
             }),
           );
         },
@@ -263,13 +273,18 @@ export const PlaybackControls = ({
     } else if (phase === PlaybackPhases.EMPTY) {
       dispatch(ChatActions.resetFormValue());
     }
-  }, [activeMessage?.custom_content?.form_value, dispatch, phase]);
+  }, [
+    activeMessage?.custom_content.form_value,
+    activeMessage?.modelId,
+    dispatch,
+    phase,
+  ]);
 
   return (
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
         className={classNames(
-          'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
+          'relative mx-2 mb-2 flex flex-row md:mx-4 md:mb-0 md:last:mb-6',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
         )}
         data-qa="playback-control"
@@ -279,17 +294,16 @@ export const PlaybackControls = ({
           asChild
           isTriggerClickable
         >
-          <button
+          <DialButton
             data-qa="playback-prev"
             onClick={handlePrevMessage}
             disabled={
               isDisabledPlaybackControls ||
               (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
             }
-            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-          >
-            <IconPlayerPlay size={20} className="rotate-180" />
-          </button>
+            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+            iconBefore={<IconPlayerPlay size={20} className="rotate-180" />}
+          />
         </Tooltip>
         <div
           ref={nextMessageBoxRef}
@@ -329,18 +343,17 @@ export const PlaybackControls = ({
                     isTriggerClickable
                     asChild
                   >
-                    <button
+                    <DialButton
                       data-qa="playback-next"
                       onClick={handlePlayNextMessage}
-                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
                       disabled={
                         isDisabledPlaybackControls ||
                         isMessageStreaming ||
                         !isNextMessageInStack
                       }
-                    >
-                      <IconPlayerPlay size={20} className="shrink-0" />
-                    </button>
+                      iconBefore={<IconPlayerPlay size={20} />}
+                    />
                   </Tooltip>
                 </>
               )}

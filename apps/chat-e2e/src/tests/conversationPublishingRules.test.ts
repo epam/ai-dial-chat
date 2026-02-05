@@ -68,7 +68,7 @@ dialAdminTest(
     additionalSecondShareUserPublicationApiAssertion,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     selectFolders,
     publishingRules,
@@ -101,7 +101,7 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolders.selectFolder(organizationFolderName);
@@ -187,9 +187,9 @@ dialAdminTest(
     );
 
     await dialTest.step('Submit publication request', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
+      await publishingRequestDialog.requestName.fillInInput(requestName);
       publishRequestResponse =
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
     });
 
     await dialAdminTest.step(
@@ -322,7 +322,7 @@ dialAdminTest(
     additionalSecondShareUserPublicationApiAssertion,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     selectFolders,
     publishingRules,
@@ -356,7 +356,7 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolders.selectFolder(organizationFolderName);
@@ -410,9 +410,9 @@ dialAdminTest(
     );
 
     await dialTest.step('Submit publication request', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
+      await publishingRequestDialog.requestName.fillInInput(requestName);
       publishRequestResponse =
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
     });
 
     await dialAdminTest.step(
@@ -489,7 +489,7 @@ dialAdminTest(
     additionalSecondShareUserPublicationApiAssertion,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     selectFolders,
     publishingRules,
@@ -527,7 +527,7 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolders.selectFolder(organizationFolderName);
@@ -579,9 +579,9 @@ dialAdminTest(
     );
 
     await dialTest.step('Submit publication request', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
+      await publishingRequestDialog.requestName.fillInInput(requestName);
       publishRequestResponse =
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
     });
 
     await dialAdminTest.step(
@@ -724,9 +724,9 @@ dialAdminTest(
     additionalShareUserPublicationApiAssertion,
     additionalSecondShareUserPublicationApiAssertion,
     organizationFolderConversations,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -780,8 +780,8 @@ dialAdminTest(
           conversationToPublish.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await publishingRulesAssertion.assertLabels({
@@ -837,9 +837,9 @@ dialAdminTest(
     );
 
     await dialTest.step('Submit unpublish request', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
+      await publishingRequestDialog.requestName.fillInInput(requestName);
       unpublishRequestResponse =
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
     });
 
     await dialAdminTest.step(

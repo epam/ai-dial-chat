@@ -30,9 +30,7 @@ declare global {
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
       DEFAULT_MODEL?: string;
-      NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL?: string;
       RECENT_MODELS_IDS?: string;
-      RECENT_ADDONS_IDS?: string;
       E2E_HOST?: string;
       E2E_USERNAME?: string;
       E2E_PASSWORD?: string;
@@ -53,6 +51,11 @@ declare global {
       TOPICS?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
       WIDGETS_SCHEMA_IDS?: string;
+      NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
+
+      ATTACHMENT_TYPES_EXPANDED?: string;
+      ATTACHMENT_TYPES_BORDERLESS?: string;
+      ATTACHMENT_TYPES_WITHOUT_TITLE?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;

@@ -29,6 +29,7 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isMyEntity } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -238,8 +239,12 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           const modelsToInstall = referencesToInstall.filter(
             (reference: string) => !installedModelIds.has(reference),
           );
+          const isMarketplaceEnabled = SettingsSelectors.isFeatureEnabled(
+            state$.value,
+            Feature.Marketplace,
+          );
 
-          if (modelsToInstall.length) {
+          if (modelsToInstall.length && isMarketplaceEnabled) {
             actions.push(
               of(
                 ModelsActions.addInstalledModels({
@@ -311,12 +316,15 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
 
       const deletedReferences = new Set(
         models
-          .filter((model: DialAIEntityModel) =>
-            modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
-          )
+          .filter((model: DialAIEntityModel) => {
+            if (isMyEntity(model)) {
+              return payload.references.includes(model.reference);
+            }
+
+            return modelGroupKeys.has(getGroupMarketplaceEntityKey(model));
+          })
           .map((model: DialAIEntityModel) => model.reference),
       );
-
       const newInstalledModels = installedModels.filter(
         (model) => !deletedReferences.has(model.id),
       );

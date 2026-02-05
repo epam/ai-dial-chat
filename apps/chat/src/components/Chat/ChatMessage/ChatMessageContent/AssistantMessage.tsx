@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { isSafari } from 'react-device-detect';
 
 import classNames from 'classnames';
 
@@ -18,7 +19,11 @@ import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
@@ -32,27 +37,25 @@ import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 
 import {
   Feature,
-  LikeState,
   Message,
   MessageFormValue,
+  onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
-import { isEqual } from 'lodash-es';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import isEqual from 'lodash-es/isEqual';
+import throttle from 'lodash/throttle';
 
-interface AssistantMessageProps {
+const SAFARI_THROTTLE_TIMEOUT = 100;
+
+interface AssistantMessageEditorProps {
   messageIndex: number;
-  realMessageIndex: number;
   message: Message;
   allMessages: Message[];
   conversation: Conversation;
   isLastMessage: boolean;
-  isLikesEnabled: boolean;
-  isEditing: boolean;
-  withButtons?: boolean;
-  messageCopied?: boolean;
-  onCopy?: () => void;
-  onLike?: (likeStatus: LikeState) => void;
-  onRegenerate?: () => void;
+  shouldScroll: boolean;
   onToggleEditing: (value: boolean) => void;
+  onSetShouldScroll: (value: boolean) => void;
   onEdit?: (
     editedMessage: Message,
     index: number,
@@ -60,23 +63,17 @@ interface AssistantMessageProps {
   ) => void;
 }
 
-export const AssistantMessage = memo(function AssistantMessage({
+const AssistantMessageEditor = memo(function AssistantMessageEditor({
   messageIndex,
-  realMessageIndex,
   message,
   allMessages,
   conversation,
   isLastMessage,
-  isEditing,
-  withButtons,
-  isLikesEnabled,
-  messageCopied,
-  onCopy,
-  onLike,
-  onRegenerate,
+  shouldScroll,
+  onSetShouldScroll,
   onToggleEditing,
   onEdit,
-}: AssistantMessageProps) {
+}: AssistantMessageEditorProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const currentFormValue = useMemo(
@@ -89,33 +86,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   const [messageContent, setMessageContent] = useState(message.content);
   const [formValue, setFormValue] = useState(currentFormValue);
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [shouldScroll, setShouldScroll] = useState(false);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const resourcesToReview = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
-  );
-  const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
-  const isEditLastMessageEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.EditLastAssistantContent),
-  );
-  const isAllLastMessageEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
-  );
-
-  const isShowResponseLoader =
-    !!conversation.isMessageStreaming && isLastMessage;
-  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
-
-  const isReadOnlyConversation = isEntityReadOnly(conversation);
-  const isPublishingConversation = useMemo(
-    () => !!resourcesToReview.find((r) => r.reviewUrl === conversation.id),
-    [conversation.id, resourcesToReview],
-  );
-
-  const codeRegEx =
-    /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
-  const codeDetection = (content: string) => content.match(codeRegEx);
 
   const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
   const isInputHidden = isInputDisabled && !message.content;
@@ -125,14 +97,6 @@ export const AssistantMessage = memo(function AssistantMessage({
       setMessageContent(event.target.value);
     },
     [],
-  );
-
-  const handleToggleEditing = useCallback(
-    (value?: boolean) => {
-      onToggleEditing(value ?? !isEditing);
-      setShouldScroll(true);
-    },
-    [isEditing, onToggleEditing],
   );
 
   const handleEditMessage = useCallback(
@@ -159,110 +123,211 @@ export const AssistantMessage = memo(function AssistantMessage({
           conversation.id,
         );
       }
-      handleToggleEditing(false);
+      onToggleEditing(false);
     },
     [
       message,
       messageContent,
-      handleToggleEditing,
+      onToggleEditing,
       conversation,
       onEdit,
       messageIndex,
     ],
   );
 
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
+
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+      if (!isTyping && allowEnterClick(e)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, messageContent],
+    [allowEnterClick, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleCancelEditing = useCallback(() => {
     setMessageContent(message.content);
-    handleToggleEditing(false);
-  }, [handleToggleEditing, message.content]);
+    onToggleEditing(false);
+  }, [onToggleEditing, message.content]);
 
   useEffect(() => {
     setMessageContent(message.content);
-  }, [message.content]);
-
-  useEffect(() => {
     setFormValue(currentFormValue);
-  }, [currentFormValue, isEditing]);
-
-  useEffect(() => {
-    if (isEditing) {
-      setShouldScroll(true);
-    }
-  }, [isEditing]);
+    onSetShouldScroll(true);
+  }, [currentFormValue, message.content, onSetShouldScroll]);
 
   useEffect(() => {
     if (shouldScroll) {
       anchorRef.current?.scrollIntoView({ block: 'end' });
-      setShouldScroll(false);
+      onSetShouldScroll(false);
     }
-  }, [shouldScroll]);
+  }, [shouldScroll, onSetShouldScroll]);
 
-  if (isEditing)
-    return (
-      <div className="flex w-full flex-col gap-3">
-        <AssistantSchema message={message} isLastMessage={isLastMessage} />
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <AssistantSchema message={message} isLastMessage={isLastMessage} />
 
-        {!isInputHidden && (
-          <div
-            className={classNames(
-              'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
-              !isOverlay && 'text-base',
-            )}
-          >
-            <AdjustedTextarea
-              ref={textareaRef}
-              className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
-              value={messageContent}
-              onChange={handleInputChange}
-              onKeyDown={handlePressEnter}
-              disabled={isInputDisabled}
-              onCompositionStart={() => setIsTyping(true)}
-              onCompositionEnd={() => setIsTyping(false)}
-              style={{
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-                lineHeight: 'inherit',
-                margin: '0',
-                overflow: 'hidden',
-              }}
+      {!isInputHidden && (
+        <div
+          className={classNames(
+            'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+            !isOverlay && 'text-base',
+          )}
+        >
+          <AdjustedTextarea
+            ref={textareaRef}
+            className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+            value={messageContent}
+            onChange={handleInputChange}
+            onKeyDown={handlePressEnter}
+            disabled={isInputDisabled}
+            onCompositionStart={() => setIsTyping(true)}
+            onCompositionEnd={() => setIsTyping(false)}
+            style={{
+              fontFamily: 'inherit',
+              fontSize: 'inherit',
+              lineHeight: 'inherit',
+              margin: '0',
+              overflow: 'hidden',
+            }}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-end">
+        <div className="relative flex gap-3">
+          <DialNeutralButton
+            label={t('Cancel')}
+            onClick={handleCancelEditing}
+            data-qa="cancel"
+          />
+
+          {!isInputHidden && (
+            <DialPrimaryButton
+              label={t('Save & Submit')}
+              onClick={() => handleEditMessage(formValue, messageContent)}
+              disabled={!messageContent}
+              data-qa="save-and-submit"
             />
-          </div>
-        )}
-
-        <div className="flex items-center justify-end">
-          <div className="relative flex gap-3">
-            <button
-              className="button button-secondary"
-              onClick={handleCancelEditing}
-              data-qa="cancel"
-            >
-              {t('Cancel')}
-            </button>
-            {!isInputHidden && (
-              <button
-                className="button button-primary"
-                onClick={() => handleEditMessage(formValue, messageContent)}
-                disabled={!messageContent}
-                data-qa="save-and-submit"
-              >
-                {t('Save & Submit')}
-              </button>
-            )}
-            <div ref={anchorRef} className="absolute bottom-0"></div>
-          </div>
+          )}
+          <div ref={anchorRef} className="absolute bottom-0"></div>
         </div>
       </div>
+    </div>
+  );
+});
+
+interface AssistantMessageProps {
+  messageIndex: number;
+  realMessageIndex: number;
+  message: Message;
+  allMessages: Message[];
+  conversation: Conversation;
+  isLastMessage: boolean;
+  isLikesEnabled: boolean;
+  isEditing: boolean;
+  withButtons?: boolean;
+  onLike?: onLikeMessageHandler;
+  onRegenerate?: () => void;
+  onToggleEditing: (value: boolean) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
+}
+
+export const AssistantMessage = memo(function AssistantMessage({
+  messageIndex,
+  realMessageIndex,
+  message,
+  allMessages,
+  conversation,
+  isLastMessage,
+  isEditing,
+  withButtons,
+  isLikesEnabled,
+  onLike,
+  onRegenerate,
+  onToggleEditing,
+  onEdit,
+}: AssistantMessageProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const resourcesToReview = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
+  const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
+  const isEditLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditLastAssistantContent),
+  );
+  const isAllLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
+  );
+
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  const isShowResponseLoader =
+    !!conversation.isMessageStreaming && isLastMessage;
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
+
+  const isReadOnlyConversation = isEntityReadOnly(conversation);
+  const isPublishingConversation = useMemo(
+    () => !!resourcesToReview.find((r) => r.reviewUrl === conversation.id),
+    [conversation.id, resourcesToReview],
+  );
+
+  const [throttledContent, setThrottledContent] = useState(message.content);
+
+  const updateContent = useMemo(
+    () =>
+      throttle((content: string) => {
+        setThrottledContent(content);
+      }, SAFARI_THROTTLE_TIMEOUT),
+    [],
+  );
+
+  useEffect(() => {
+    if (!isSafari) return;
+
+    if (isShowResponseLoader) {
+      updateContent(message.content);
+    } else {
+      updateContent.cancel();
+      setThrottledContent(message.content);
+    }
+  }, [isShowResponseLoader, message.content, updateContent]);
+
+  const codeRegEx =
+    /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
+  const codeDetection = (content: string) => content.match(codeRegEx);
+
+  const handleToggleEditing = useCallback(
+    (value?: boolean) => {
+      onToggleEditing(value ?? !isEditing);
+      setShouldScroll(true);
+    },
+    [isEditing, onToggleEditing],
+  );
+
+  if (isEditing) {
+    return (
+      <AssistantMessageEditor
+        shouldScroll={shouldScroll}
+        onSetShouldScroll={setShouldScroll}
+        messageIndex={messageIndex}
+        message={message}
+        allMessages={allMessages}
+        conversation={conversation}
+        isLastMessage={isLastMessage}
+        onToggleEditing={onToggleEditing}
+        onEdit={onEdit}
+      />
     );
+  }
 
   return (
     <>
@@ -281,7 +346,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         {!!(message.content || isShowResponseLoader) && (
           <ChatMDComponent
             isShowResponseLoader={isShowResponseLoader}
-            content={message.content}
+            content={isSafari ? throttledContent : message.content}
           />
         )}
         {codeWarning &&
@@ -311,14 +376,13 @@ export const AssistantMessage = memo(function AssistantMessage({
         (!conversation.isMessageStreaming || !isLastMessage) &&
         !isConversationInvalid && (
           <MessageAssistantButtons
-            copyOnClick={() => onCopy?.()}
             isLikesEnabled={isLikesEnabled}
             message={message}
             realMessageIndex={realMessageIndex}
-            messageCopied={messageCopied}
-            onLike={(likeStatus) => onLike?.(likeStatus)}
+            onLike={onLike}
             onRegenerate={onRegenerate}
             onToggleEditing={
+              !isPlaybackConversation(conversation) &&
               (isAllLastMessageEnabled ||
                 (isLastMessage && isEditLastMessageEnabled)) &&
               (!isReadOnlyConversation || isPublishingConversation)

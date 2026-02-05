@@ -3,17 +3,19 @@ import { createSelector } from '@reduxjs/toolkit';
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { orderByType } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
 import {
+  FolderInterface,
   PublishActions,
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -103,9 +105,6 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   },
 );
 
-const selectSelectedItemsToPublish = (state: RootState) =>
-  rootSelector(state).selectedItemsToPublish;
-
 const _selectRules = (state: RootState) => rootSelector(state).rules;
 
 const selectRulesByPath = createSelector(
@@ -113,7 +112,7 @@ const selectRulesByPath = createSelector(
   (rules, path) => {
     return Object.fromEntries(
       Object.entries(rules).filter(
-        ([key]) => path.startsWith(key) && key.split('/').length !== 1,
+        ([key]) => path === key || path.startsWith(`${key}/`),
       ),
     );
   },
@@ -125,42 +124,62 @@ const selectIsRulesLoading = (state: RootState) =>
 const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
   rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
 
-const selectAllSelectedItemsToApprove = (state: RootState) =>
-  rootSelector(state).selectedItemsToApprove;
+const selectAllSelectedPublicationItems = (state: RootState) =>
+  rootSelector(state).selectedPublicationItems;
 
-const selectSelectedItemsToApprove = createSelector(
-  [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
-  (selectedItemsToApprove, selectedPublicationUrl) => {
-    if (!selectedPublicationUrl) {
-      return [];
-    }
+const selectSelectedPublicationItems = createSelector(
+  [
+    selectAllSelectedPublicationItems,
+    (_state, publicationUrl: string) => publicationUrl,
+  ],
+  (selectedPublicationItems, publicationUrl) => {
+    return selectedPublicationItems[publicationUrl] ?? [];
+  },
+);
 
-    return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+const selectAllSelectedCredentialsItems = (state: RootState) =>
+  rootSelector(state).selectedCredentialsItems;
+
+const selectSelectedCredentialsItems = createSelector(
+  [
+    selectAllSelectedCredentialsItems,
+    (_state, publicationUrl: string) => publicationUrl,
+  ],
+  (selectedCredentialsItems, publicationUrl) => {
+    return selectedCredentialsItems[publicationUrl] ?? [];
   },
 );
 
 const selectResourcesToReviewByPublicationUrl = createSelector(
   [
     selectResourcesToReview,
-    selectSelectedItemsToApprove,
+    selectSelectedPublicationItems,
     (_state, id: string) => id,
   ],
-  (resourcesToReview, selectedItemsToApprove, id) => {
-    const itemsToPublish = new Set(selectedItemsToApprove);
-    return resourcesToReview.filter(
+  (resourcesToReview, selectedItems, id) => {
+    const itemsToPublish = new Set(selectedItems);
+    const resources = resourcesToReview.filter(
       (r) =>
         r.publicationUrl === id &&
         (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
     );
+    return sortBy(resources, [
+      (r) => orderByType(r.reviewUrl),
+      (r) => (r.sourceUrl ?? r.reviewUrl).toLowerCase(),
+    ]);
   },
 );
 
-const _selectChosenFolderIds = createSelector(
+const _selectChosenPublicationFolderIds = createSelector(
   [
-    selectSelectedItemsToPublish,
-    (_state, folders: FolderInterface[]) => folders,
-    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
-      itemsShouldBeChosen,
+    selectSelectedPublicationItems,
+    (_state, _publicationUrl: string, folders: FolderInterface[]) => folders,
+    (
+      _state,
+      _publicationUrl: string,
+      _folders: FolderInterface[],
+      itemsShouldBeChosen: ShareEntity[],
+    ) => itemsShouldBeChosen,
   ],
   (selectedItems, folders, itemsShouldBeChosen) => {
     return getPartialAndFullyChosenFolders(
@@ -171,29 +190,10 @@ const _selectChosenFolderIds = createSelector(
   },
 );
 
-const _selectChosenFolderIdsToApprove = createSelector(
-  [
-    selectSelectedItemsToApprove,
-    (_state, folders: FolderInterface[]) => folders,
-    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
-      itemsShouldBeChosen,
-  ],
-  (selectedItems, folders, itemsShouldBeChosen) => {
-    return getPartialAndFullyChosenFolders(
-      folders,
-      itemsShouldBeChosen,
-      selectedItems,
-    );
-  },
-);
-
-const selectChosenFolderIds =
-  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
-    _selectChosenFolderIds(state, folders, items);
-
-const selectChosenFolderIdsToApprove =
-  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
-    _selectChosenFolderIdsToApprove(state, folders, items);
+const selectChosenPublicationFolderIds =
+  (publicationUrl: string, folders: FolderInterface[], items: ShareEntity[]) =>
+  (state: RootState) =>
+    _selectChosenPublicationFolderIds(state, publicationUrl, folders, items);
 
 const selectPublicationsToReviewCount = createSelector(
   [
@@ -299,16 +299,8 @@ const selectEntityEditStateByReviewUrl = createSelector(
   },
 );
 
-const selectRulesOnEdit = (state: RootState) => rootSelector(state).rulesOnEdit;
-
 const selectIsPublicationUpdating = (state: RootState) =>
   rootSelector(state).isPublicationUpdating;
-
-const selectDisplayAuthorEditState = (state: RootState) =>
-  rootSelector(state).displayAuthorEditState;
-
-const selectPublishToUrl = (state: RootState) =>
-  rootSelector(state).publishToUrl;
 
 const selectIsResourceUnpublishing = createSelector(
   [
@@ -325,6 +317,9 @@ const selectIsResourceUnpublishing = createSelector(
   },
 );
 
+const selectCurrentPublicationInvalidEntities = (state: RootState) =>
+  rootSelector(state).currentPublicationInvalidEntities;
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -339,11 +334,10 @@ export const PublicationSelectors = {
   selectRulesByPath,
   selectIsRulesLoading,
   selectIsAllItemsUploaded,
-  selectSelectedItemsToPublish,
-  selectAllSelectedItemsToApprove,
-  selectSelectedItemsToApprove,
-  selectChosenFolderIds,
-  selectChosenFolderIdsToApprove,
+  selectAllSelectedPublicationItems,
+  selectSelectedPublicationItems,
+  selectSelectedCredentialsItems,
+  selectChosenPublicationFolderIds,
   selectPublicationsToReviewCount,
   selectIsFolderContainsResourcesToReview,
   selectIsApplicationReview,
@@ -358,9 +352,7 @@ export const PublicationSelectors = {
   selectEntitiesEditState,
   selectFoldersEditState,
   selectEntityEditStateByReviewUrl,
-  selectRulesOnEdit,
   selectIsPublicationUpdating,
-  selectDisplayAuthorEditState,
-  selectPublishToUrl,
   selectIsResourceUnpublishing,
+  selectCurrentPublicationInvalidEntities,
 };

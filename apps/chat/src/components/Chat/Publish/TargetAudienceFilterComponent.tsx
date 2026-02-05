@@ -1,4 +1,4 @@
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -23,6 +23,12 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
+
+import {
+  DialButton,
+  DialCloseButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 
 const emptySelector = translate('Select');
 
@@ -223,13 +229,11 @@ export function TargetAudienceFilterComponent({
           </div>
           {/* )} */}
           <div className="flex justify-end">
-            <button
+            <DialPrimaryButton
+              label={t('Add filter')}
               onClick={handleSaveFilter}
-              className="button button-primary flex h-[38px] items-center"
               disabled={isSaveBtnDisabled}
-            >
-              {t('Add filter')}
-            </button>
+            />
           </div>
         </div>
       </Modal>
@@ -280,22 +284,26 @@ export function TargetAudienceFilterComponent({
       {/* } */}
       <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
         <div className="flex gap-2">
-          <button
+          <DialButton
             data-qa="save-filter"
             onClick={handleSaveFilter}
-            className={classNames(
-              isSaveBtnDisabled
-                ? 'cursor-not-allowed text-controls-disable'
-                : 'text-secondary hover:text-accent-primary',
-            )}
             disabled={isSaveBtnDisabled}
-          >
-            <IconCheck size={18} />
-          </button>
-          <IconX
-            className="cursor-pointer text-secondary hover:text-accent-primary"
+            iconBefore={
+              <IconCheck
+                size={18}
+                className={classNames(
+                  isSaveBtnDisabled
+                    ? 'text-controls-disable'
+                    : 'text-secondary hover:text-accent-primary',
+                )}
+              />
+            }
+          />
+          <DialCloseButton
+            onClose={onCloseFilter}
+            className="text-secondary hover:text-accent-primary"
             size={18}
-            onClick={onCloseFilter}
+            data-qa="cancel-filter"
           />
         </div>
       </div>

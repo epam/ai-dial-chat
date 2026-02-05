@@ -1,5 +1,5 @@
 import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { CSSProperties, FC, memo, useCallback, useState } from 'react';
+import { CSSProperties, FC, memo, useCallback } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -8,6 +8,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -25,6 +26,7 @@ import { UISelectors } from '@/src/store/selectors';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import Download from '@/public/images/icons/download.svg';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   language: string;
@@ -41,23 +43,11 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
     const { t } = useTranslation(Translation.Markdown);
-    const [isCopied, setIsCopied] = useState<boolean>(false);
 
     const theme = useAppSelector(UISelectors.selectThemeState);
 
-    const copyToClipboard = useCallback(() => {
-      if (!navigator.clipboard || !navigator.clipboard.writeText) {
-        return;
-      }
+    const { copied: isCopied, onCopy: copyToClipboard } = useCopy(value);
 
-      navigator.clipboard.writeText(value).then(() => {
-        setIsCopied(true);
-
-        setTimeout(() => {
-          setIsCopied(false);
-        }, 2000);
-      });
-    }, [value]);
     const lowercaseLanguage = language.toLowerCase();
     const displayLanguage =
       languageNameMapping[lowercaseLanguage] || lowercaseLanguage;
@@ -110,28 +100,28 @@ export const CodeBlock: FC<Props> = memo(
               data-no-context-menu
               className="flex items-center gap-3 text-secondary"
             >
-              <button
+              <DialButton
                 className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
                 onClick={copyToClipboard}
                 disabled={isCopied}
-              >
-                {isCopied ? (
-                  <Tooltip tooltip={t('Copied!')}>
-                    <IconCheck size={18} />
-                  </Tooltip>
-                ) : (
-                  <Tooltip isTriggerClickable tooltip={t('Copy code')}>
-                    <IconCopy size={18} />
-                  </Tooltip>
-                )}
-              </button>
+                iconBefore={
+                  isCopied ? (
+                    <Tooltip tooltip={t('Copied!')}>
+                      <IconCheck size={18} />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip isTriggerClickable tooltip={t('Copy code')}>
+                      <IconCopy size={18} />
+                    </Tooltip>
+                  )
+                }
+              />
               <Tooltip isTriggerClickable tooltip={t('Download')}>
-                <button
+                <DialButton
                   className="flex items-center rounded bg-none hover:text-accent-primary"
                   onClick={downloadAsFile}
-                >
-                  <Download width={18} height={18} />
-                </button>
+                  iconBefore={<Download width={18} height={18} />}
+                />
               </Tooltip>
             </div>
           )}

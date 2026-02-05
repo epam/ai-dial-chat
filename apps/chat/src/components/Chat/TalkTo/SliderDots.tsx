@@ -7,6 +7,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
+import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
 import range from 'lodash-es/range';
 
 const getDotSizeClass = (
@@ -119,14 +120,13 @@ export const SliderDots: React.FC<Props> = ({
           {sliderDotsArray.length > 1 && (
             <>
               {!isMobileOrTablet && (
-                <button
+                <DialButton
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretLeftFilled size={18} />
-                </button>
+                  className="text-secondary hover:enabled:text-accent-primary"
+                  iconBefore={<IconCaretLeftFilled size={18} />}
+                />
               )}
               <div className="flex max-w-[176px] overflow-hidden">
                 <div
@@ -143,9 +143,9 @@ export const SliderDots: React.FC<Props> = ({
                         onClick={() => onSetActiveSlide(slideNumber)}
                         className="flex min-w-2 items-center justify-center"
                       >
-                        <button
+                        <DialLinkButton
                           className={classNames(
-                            'rounded-full bg-controls-disable transition-all duration-200',
+                            'min-w-1 rounded-full bg-controls-disable p-0 transition-all duration-200',
                             getDotSizeClass(
                               slideNumber,
                               activeSlide,
@@ -159,14 +159,13 @@ export const SliderDots: React.FC<Props> = ({
                 </div>
               </div>
               {!isMobileOrTablet && (
-                <button
+                <DialButton
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretRightFilled size={18} />
-                </button>
+                  className="text-secondary hover:enabled:text-accent-primary"
+                  iconBefore={<IconCaretRightFilled size={18} />}
+                />
               )}
             </>
           )}

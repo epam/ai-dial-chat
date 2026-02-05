@@ -1,6 +1,15 @@
+import { translate } from '@/src/utils/app/translation';
+
 export const MIME_FORMAT_REGEX =
   /^([a-zA-Z0-9!*\-.+]+|\*)\/([a-zA-Z0-9!*\-.+]+|\*)$/;
 
 export const BYTES_IN_MB = 1_048_576;
+export const BYTES_IN_KB = 1_024;
 
 export const MAX_FILE_SIZE_IN_BYTES = BYTES_IN_MB * 512;
+
+export const MAX_VISIBLE_NOTIFICATION_ITEMS = 5;
+
+export const MY_FILES_SECTION = translate('My Files');
+export const SHARED_WITH_ME_FILES_SECTION = translate('Shared with Me');
+export const ORGANIZATION_FILES_SECTION = translate('Organization');

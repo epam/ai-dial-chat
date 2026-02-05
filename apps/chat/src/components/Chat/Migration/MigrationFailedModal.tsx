@@ -39,6 +39,11 @@ import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
+import {
+  DialLinkButton,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface ItemsListProps<T> {
   entitiesToRetryIds: string[];
@@ -397,60 +402,59 @@ export const MigrationFailedWindow = ({
             )}
             <div className="mt-3 flex w-full justify-end">
               {!!failedMigratedPrompts.length && (
-                <button
-                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
-                  data-qa="skip-migration"
+                <DialNeutralButton
+                  label={!isScreenSmall ? t('Backup prompts') : t('prompts')}
+                  className="mr-3 flex min-w-[73px] items-center capitalize md:normal-case"
                   onClick={handleBackupPrompts}
-                >
-                  {isPromptsBackedUp ? (
-                    <IconCircleCheck
-                      size={18}
-                      className="mr-3 text-accent-secondary"
-                    />
-                  ) : (
-                    <IconDownload size={18} className="mr-3 text-secondary" />
-                  )}
-                  {!isScreenSmall && t('Backup')} {t('prompts')}
-                </button>
+                  data-qa="skip-migration"
+                  iconBefore={
+                    isPromptsBackedUp ? (
+                      <IconCircleCheck
+                        size={18}
+                        className="mr-3 text-accent-secondary"
+                      />
+                    ) : (
+                      <IconDownload size={18} className="mr-3 text-secondary" />
+                    )
+                  }
+                />
               )}
               {!!failedMigratedConversations.length && (
-                <button
-                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
-                  data-qa="skip-migration"
+                <DialNeutralButton
+                  label={!isScreenSmall ? t('Backup chats') : t('chats')}
+                  className="mr-3 flex min-w-[73px] items-center capitalize md:normal-case"
                   onClick={handleBackupChats}
-                >
-                  {isChatsBackedUp ? (
-                    <IconCircleCheck
-                      size={18}
-                      className="mr-3 text-accent-secondary"
-                    />
-                  ) : (
-                    <IconDownload size={18} className="mr-3 text-secondary" />
-                  )}
-                  {!isScreenSmall && t('Backup')} {t('chats')}
-                </button>
+                  data-qa="skip-migration"
+                  iconBefore={
+                    isChatsBackedUp ? (
+                      <IconCircleCheck
+                        size={18}
+                        className="mr-3 text-accent-secondary"
+                      />
+                    ) : (
+                      <IconDownload size={18} className="mr-3 text-secondary" />
+                    )
+                  }
+                />
               )}
-              <button
-                className="button button-primary mr-3 flex h-[38px] items-center"
-                data-qa="skip-migration"
+              <DialPrimaryButton
+                label={t('Next')}
+                className="mr-3 flex items-center"
                 onClick={retryMigration}
+                data-qa="skip-migration"
                 disabled={!isNextButtonEnabled}
-              >
-                {t('Next')}
-              </button>
+              />
             </div>
           </footer>
         </div>
       </div>
       <p className="mt-6 text-secondary">
         {t('If you have a problem please ')}
-        <button
+        <DialLinkButton
           onClick={() => setIsReportIssueDialogOpen(true)}
-          type="button"
-          className="underline"
-        >
-          {t('contact us.')}
-        </button>
+          className="px-0 underline"
+          label={t('contact us.')}
+        />
       </p>
       {enabledFeatures.has(Feature.ReportAnIssue) &&
         isReportIssueDialogOpen && (

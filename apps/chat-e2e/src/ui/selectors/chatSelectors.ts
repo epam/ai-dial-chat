@@ -22,7 +22,7 @@ export const ChatSettingsSelectors = {
   talkToEntityDescr: '[data-qa="talk-to-entity-descr"]',
   expandTalkToEntity: '[data-qa="expand-talk-to-entity"]',
   selectedTalkToEntity: '.border-accent-primary',
-  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfoContainer: '[data-qa="entity-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
   agentName: '[data-qa="entity-name"]',
   agentDescription: '[data-qa="agent-descr"]',
@@ -103,6 +103,7 @@ export const ToastSelectors = {
 export const ErrorLabelSelectors = {
   noResultFound: '[data-qa="no-data"]',
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
+  changeAgentBtn: '[data-qa="change-agent-btn"]',
   fieldError: '.text-error',
   errorText: '[data-qa="error-text"]',
   errorContainer: '[data-qa="error-message-container"]',
@@ -194,7 +195,6 @@ export const PublishingRulesSelectors = {
   ruleInnerOperator: '[data-qa="inner-operator"]',
   ruleOperator: '[data-qa="rule-operator"]',
   addRuleButton: '[data-qa="add-rule"]',
-  cancelAllRulesIcon: '[name="cancel-all-rules"]',
 };
 
 export const PublishingFilterSelectors = {

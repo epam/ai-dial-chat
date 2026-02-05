@@ -31,7 +31,7 @@ export const Label: FC<LabelProps> = ({
       <Tooltip
         tooltip={info}
         triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-        placement="top-end"
+        contentClassName="z-[2000]"
       >
         <IconHelp size={18} />
       </Tooltip>

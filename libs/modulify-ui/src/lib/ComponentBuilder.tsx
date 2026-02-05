@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Children,
   DependencyList,
@@ -7,7 +6,6 @@ import {
   FC,
   Fragment,
   HTMLAttributes,
-  PropsWithChildren,
   ReactElement,
   ReactNode,
   SetStateAction,
@@ -23,10 +21,9 @@ import { Styles, createGenerateId, createUseStyles } from 'react-jss';
 export const DATA_CUSTOMIZE_ID = 'data-customize-id';
 
 export type CB_State = Record<string, unknown>;
-export type CB_StateFn = (
-  state: CB_State,
-  setState: Dispatch<SetStateAction<CB_State>>,
-) => void;
+export type CB_SetState = Dispatch<SetStateAction<CB_State>>;
+
+export type CB_StateFn = (state: CB_State, setState: CB_SetState) => void;
 
 export interface CB_Styles {
   host?: Styles;
@@ -46,18 +43,20 @@ export interface CB_Effect {
 }
 export type CB_EffectsFn = (
   state?: CB_State,
-  setState?: Dispatch<SetStateAction<CB_State>>,
+  setState?: CB_SetState,
 ) => CB_Effect[];
 
 type CB_HostHandlers = Record<string, (...args: unknown[]) => unknown>;
 type CB_ComponentHandlers = Record<string, (...args: unknown[]) => unknown>;
+
 export interface CB_Handlers {
   host?: CB_HostHandlers;
   component?: CB_ComponentHandlers;
 }
+
 export type CB_HandlersFn = (
   state?: CB_State,
-  setState?: Dispatch<SetStateAction<CB_State>>,
+  setState?: CB_SetState,
 ) => CB_Handlers;
 
 export type CB_HTMLContentFn = (
@@ -66,25 +65,23 @@ export type CB_HTMLContentFn = (
   handlers?: CB_Handlers['component'],
 ) => ReactNode;
 
-type ComponentProps<P> =
-  P extends FC<infer Props> ? PropsWithChildren<Props> : never;
-
 export class ComponentBuilder<
-  Component extends FC<PropsWithChildren<any>>,
-  BlockIds extends string,
-  Props extends ComponentProps<Component> = ComponentProps<Component>,
+  P extends object,
+  Component extends FC<P>,
+  BlockIds extends string = never,
 > {
   private htmlReplacements: Partial<Record<BlockIds, CB_HTMLContentFn>> = {};
+
+  private readonly baseComponent: Component;
 
   private constructor(component: Component) {
     this.baseComponent = component;
   }
 
-  static use<
-    Component extends FC<PropsWithChildren<any>>,
-    BlockIds extends string = '',
-  >(component: Component) {
-    return new ComponentBuilder<Component, BlockIds>(component);
+  static use<BlockIds extends string = never, P extends object = object>(
+    component: FC<P>,
+  ) {
+    return new ComponentBuilder<P, FC<P>, BlockIds>(component);
   }
 
   updateClassNames(
@@ -121,9 +118,12 @@ export class ComponentBuilder<
         children: ReactNode,
         state: CB_State,
         handlers: CB_ComponentHandlers,
-      ) => {
-        return this.applyHTMLReplacements(children, state, handlers);
-      }) as CB_HTMLContentFn;
+      ) =>
+        this.applyHTMLReplacements(
+          children,
+          state,
+          handlers,
+        )) as CB_HTMLContentFn;
     }
     return this;
   }
@@ -132,7 +132,7 @@ export class ComponentBuilder<
     updateFn: (
       handlers: CB_Handlers,
       state?: CB_State,
-      setState?: Dispatch<SetStateAction<CB_State>>,
+      setState?: CB_SetState,
     ) => CB_Handlers,
   ) {
     this.checkIfMethodIsUsed('updateHandlers');
@@ -157,17 +157,20 @@ export class ComponentBuilder<
   }
 
   build(options: { reactMemo?: boolean } = {}) {
-    const Component = (props: Props) => {
+    const BuiltComponent: FC<P> = (props) => {
       const [componentState, setComponentState] = useState<CB_State>({});
       const classNames = this.useClassNames(componentState);
       const handlers = this.useHandlers(componentState, setComponentState);
       const css = this.useStyles(componentState, this.baseComponent.name);
+
       const composeClassNames = (...classNames: (string | string[])[]) =>
         classNames.flat().join(' ').trim();
+
       const composedHostClassNames = composeClassNames(
         classNames.host ?? [],
         css.host ?? '',
       );
+
       const composedComponentClassNames = composeClassNames(
         classNames.component ?? [],
         css.component ?? '',
@@ -185,10 +188,14 @@ export class ComponentBuilder<
           : createElement(this.baseComponent, { ...props })
       ) as ReactElement;
 
-      const renderedChildren = cloneElement(reactElement, {
-        ...reactElement.props,
+      const typedReactElement = reactElement as ReactElement<
+        Record<string, unknown> & { className?: string | string[] }
+      >;
+
+      const renderedChildren = cloneElement(typedReactElement, {
+        ...typedReactElement.props,
         className: composeClassNames(
-          reactElement.props.className,
+          typedReactElement.props.className ?? '',
           composedComponentClassNames,
         ),
       });
@@ -197,6 +204,7 @@ export class ComponentBuilder<
         composedHostClassNames || Object.keys(handlers.host ?? {}).length
           ? 'div'
           : Fragment;
+
       const wrapperProps =
         Wrapper === 'div'
           ? { className: composedHostClassNames, ...handlers.host }
@@ -213,17 +221,15 @@ export class ComponentBuilder<
       );
     };
 
-    Object.defineProperty(Component, 'name', {
+    Object.defineProperty(BuiltComponent, 'name', {
       value: this.baseComponent.name,
       writable: false,
       configurable: true,
       enumerable: false,
     });
 
-    return options?.reactMemo ? memo(Component) : Component;
+    return options?.reactMemo ? memo(BuiltComponent) : BuiltComponent;
   }
-
-  private readonly baseComponent: Component | (() => null) = () => null;
 
   private usedMethods = new Set<string>();
 
@@ -235,7 +241,7 @@ export class ComponentBuilder<
 
   private handlersFn: CB_HandlersFn = () => ({ host: {}, component: {} });
 
-  private stateFn: CB_StateFn = () => ({
+  private stateFn?: CB_StateFn = () => ({
     state: {},
     setState: () => ({}),
   });
@@ -249,6 +255,7 @@ export class ComponentBuilder<
   private useStyles = (componentState: CB_State, componentName?: string) => {
     const { host: hostStyles, component: componentStyles } =
       this.stylesFn?.(componentState) ?? {};
+
     const useCreatedStyles = createUseStyles(
       {
         ...(hostStyles ? { host: hostStyles } : {}),
@@ -265,7 +272,7 @@ export class ComponentBuilder<
 
   private useHandlers = (
     componentState: CB_State,
-    setComponentState: Dispatch<SetStateAction<CB_State>>,
+    setComponentState: CB_SetState,
   ) => {
     return this.handlersFn?.(componentState, setComponentState) ?? {};
   };
@@ -273,7 +280,7 @@ export class ComponentBuilder<
   private useEffectsRunner = (
     effectsFn: CB_EffectsFn,
     componentState: CB_State,
-    setComponentState: Dispatch<SetStateAction<CB_State>>,
+    setComponentState: CB_SetState,
   ) => {
     effectsFn?.(componentState, setComponentState).forEach(
       ({ effect, dependencies }) => {
@@ -292,10 +299,19 @@ export class ComponentBuilder<
         return child;
       }
 
-      const customizeId = child.props[DATA_CUSTOMIZE_ID];
+      // Type assertion after isValidElement check
+      const typedChild = child as ReactElement<
+        Record<string, unknown> & { children?: ReactNode | ReactNode[] }
+      >;
+
+      const customizeId = typedChild.props[DATA_CUSTOMIZE_ID];
 
       if (customizeId && this.htmlReplacements[customizeId as BlockIds]) {
-        const replacedContent = this.htmlReplacements[customizeId as BlockIds]!(
+        const replacementFn = this.htmlReplacements[
+          customizeId as BlockIds
+        ] as CB_HTMLContentFn;
+
+        const replacedContent = replacementFn(
           cloneElement(child, {
             [DATA_CUSTOMIZE_ID]: undefined,
           } as HTMLAttributes<HTMLElement>),
@@ -307,11 +323,16 @@ export class ComponentBuilder<
           return child;
         }
 
+        // Type assertion for replacedContent
+        const typedReplacedContent = replacedContent as ReactElement<
+          Record<string, unknown> & { children?: ReactNode | ReactNode[] }
+        >;
+
         return cloneElement(replacedContent, {
           [DATA_CUSTOMIZE_ID]: customizeId,
-          ...(replacedContent.props.children && {
+          ...(typedReplacedContent.props.children && {
             children: this.applyHTMLReplacements(
-              replacedContent.props.children,
+              typedReplacedContent.props.children,
               state,
               handlers,
             ),
@@ -320,9 +341,9 @@ export class ComponentBuilder<
       }
 
       return cloneElement(child, {
-        ...(child.props.children && {
+        ...(typedChild.props.children && {
           children: this.applyHTMLReplacements(
-            child.props.children,
+            typedChild.props.children,
             state,
             handlers,
           ),

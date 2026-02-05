@@ -1,4 +1,4 @@
-import { IconSpeakerphone, IconX } from '@tabler/icons-react';
+import { IconSpeakerphone } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 import { UIActions } from '@/src/store/actions';
@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import chatAnnouncementBanner from '@/public/images/banners/chat-announcement-banner.webp';
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 export const AnnouncementsBanner = () => {
   const dispatch = useAppDispatch();
@@ -40,14 +41,12 @@ export const AnnouncementsBanner = () => {
         <IconSpeakerphone size={24} strokeWidth={1.5} className="shrink-0" />
         <span dangerouslySetInnerHTML={{ __html: announcement }}></span>
       </div>
-      <button
-        className="absolute right-2 top-[calc(50%_-_12px)] shrink-0"
-        onClick={() => {
+      <DialCloseButton
+        className="absolute right-2 top-[calc(50%_-_12px)] shrink-0 text-controls-permanent"
+        onClose={() => {
           dispatch(UIActions.closeAnnouncement({ announcement }));
         }}
-      >
-        <IconX size={24} strokeWidth={1.5} />
-      </button>
+      />
     </div>
   );
 };

@@ -117,14 +117,8 @@ const selectCodeWarning = (state: RootState) => rootSelector(state).codeWarning;
 const selectDefaultModelReference = (state: RootState) =>
   rootSelector(state).defaultModelReference;
 
-const selectDefaultAssistantSubmodelId = (state: RootState) =>
-  rootSelector(state).defaultAssistantSubmodelId;
-
 const selectDefaultRecentModelsIds = (state: RootState) =>
   rootSelector(state).defaultRecentModelsIds;
-
-const selectDefaultRecentAddonsIds = (state: RootState) =>
-  rootSelector(state).defaultRecentAddonsIds;
 
 const selectStorageType = (state: RootState) => rootSelector(state).storageType;
 
@@ -213,7 +207,6 @@ const selectDefaultSystemPrompt = (state: RootState) =>
 
 const selectDefaults = createSelector(
   [
-    selectDefaultAssistantSubmodelId,
     selectQuickAppsHost,
     selectQuickAppsModel,
     selectQuickAppsSchemaId,
@@ -222,7 +215,6 @@ const selectDefaults = createSelector(
     selectDefaultSystemPrompt,
   ],
   (
-    assistantSubmodelId,
     quickAppsHost,
     quickAppsModel,
     quickAppsSchemaId,
@@ -231,7 +223,6 @@ const selectDefaults = createSelector(
     defaultSystemPrompt,
   ) =>
     ({
-      assistantSubmodelId,
       quickAppsHost,
       quickAppsModel,
       quickAppsSchemaId,
@@ -251,6 +242,9 @@ const selectWidgetsSchemaIds = (state: RootState) =>
 const selectIsAuthDisabled = (state: RootState) =>
   rootSelector(state).isAuthDisabled;
 
+const selectAttachmentsSettings = (state: RootState) =>
+  rootSelector(state).attachmentsSettings;
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -263,7 +257,6 @@ export const SettingsSelectors = {
   selectCodeWarning,
   selectDefaultModelReference,
   selectDefaultRecentModelsIds,
-  selectDefaultRecentAddonsIds,
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,
@@ -285,4 +278,5 @@ export const SettingsSelectors = {
   selectProviderId,
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
+  selectAttachmentsSettings,
 };

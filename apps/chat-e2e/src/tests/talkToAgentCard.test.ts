@@ -55,8 +55,7 @@ dialTest(
     publishRequestBuilder,
     adminFileApiHelper,
     localStorageManager,
-    marketplaceAgentsAssertion,
-    agentVersionsDropdownMenuAssertion,
+    entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds(
       'EPMRTC-1065',
@@ -72,16 +71,17 @@ dialTest(
       'EPMRTC-1056',
     );
 
-    const appFirstVersion = GeneratorUtil.randomApplicationVersion();
-    const appSecondVersion = GeneratorUtil.randomApplicationVersion([
+    const appFirstVersion = GeneratorUtil.randomEntityVersion();
+    const appSecondVersion = GeneratorUtil.randomEntityVersion([
       appFirstVersion,
     ]);
     const appName = GeneratorUtil.randomApplicationName();
     const shortDescriptionHexColor = '#F76464';
     const expectedRgbColor = tinycolor(shortDescriptionHexColor).toRgbString();
     const expectedTarget = 'target="_blank"';
-    const shortDescription = (color: string, target: string) =>
-      `abc<i>Short description</i><span style="color:${color};">Red text</span><a href="https://www.epam.com/"${target}>EPAM</a>`;
+    const expectedRel = 'rel="noopener noreferrer"';
+    const shortDescription = (color: string, target: string, rel = '') =>
+      `abc<i>Short description</i><span style="color:${color};">Red text</span><a href="https://www.epam.com/"${rel}${target}>EPAM</a>`;
     const longDescription = GeneratorUtil.randomString(10);
     const appDescription = shortDescription(shortDescriptionHexColor, '')
       .concat('\n\n')
@@ -154,29 +154,33 @@ dialTest(
         );
         await talkToAgentDialogAssertion.assertAgentState(agent, 'visible');
         talkToAgentDialogAssertion.assertValue(
-          (await talkToAgents.getAgentNames())[0],
+          (await talkToAgents.getEntityNames())[0],
           appName,
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(agent);
-        agentElement = talkToAgents.getAgent(agent);
-        actualIcon = await talkToAgents.getAgentIcon(agentElement);
-        await marketplaceAgentsAssertion.assertEntityIcon(
+        agentElement = talkToAgents.getEntity(agent);
+        actualIcon = await talkToAgents.getEntityIcon(agentElement);
+        await talkToAgentDialogAssertion.assertEntityIcon(
           actualIcon,
           '/api/' + agent.iconUrl,
         );
-        actualNameElement = talkToAgents.getAgentName(agentElement);
+        actualNameElement = talkToAgents.getEntityName(agentElement);
         actualDescriptionElement =
-          talkToAgents.getAgentDescription(agentElement);
-        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
-        await marketplaceAgentsAssertion.assertElementText(
+          talkToAgents.getEntityDescription(agentElement);
+        actualVersionElement = talkToAgents.getEntityVersion(agentElement);
+        await talkToAgentDialogAssertion.assertElementText(
           actualNameElement,
           appName,
         );
-        await marketplaceAgentsAssertion.assertElementInnerHtml(
+        await talkToAgentDialogAssertion.assertElementInnerHtml(
           actualDescriptionElement,
-          shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
+          shortDescription(
+            ` ${expectedRgbColor}`,
+            ` ${expectedTarget}`,
+            ` ${expectedRel}`,
+          ),
         );
-        await marketplaceAgentsAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           actualVersionElement,
           appSecondVersion,
         );
@@ -189,10 +193,11 @@ dialTest(
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualNameElement,
         );
-        await talkToAgentDialogAssertion.assertElementTextIsTruncated(
-          talkToAgents.getAgentDescriptionContainer(agentElement),
+        await talkToAgentDialogAssertion.assertElementMultilineTextIsTruncated(
+          talkToAgents.getEntityDescriptionContainer(agentElement),
+          2,
         );
-        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
+        actualVersionElement = talkToAgents.getEntityVersion(agentElement);
         await talkToAgentDialogAssertion.assertElementTextIsTruncated(
           actualVersionElement,
         );
@@ -203,13 +208,13 @@ dialTest(
       'Verify colorful topics are displayed in the right order, no hidden topics are available',
       async () => {
         const visibleTopicsElement =
-          talkToAgents.getAgentVisibleTopics(agentElement);
+          talkToAgents.getEntityVisibleTopics(agentElement);
         await talkToAgentDialogAssertion.assertElementInnerText(
           visibleTopicsElement,
           topics,
         );
         await talkToAgentDialogAssertion.assertElementState(
-          talkToAgents.getAgentHiddenTopics(agentElement),
+          talkToAgents.getEntityHiddenTopics(agentElement),
           'hidden',
         );
         for (
@@ -219,7 +224,7 @@ dialTest(
         ) {
           await talkToAgentDialogAssertion.assertElementBorderColors(
             visibleTopicsElement.getNthElement(i),
-            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsBgAccent),
           );
         }
       },
@@ -233,7 +238,7 @@ dialTest(
           ExpectedConstants.agentIconTooltip(appName, appSecondVersion),
         );
         await talkToAgentDialogAssertion.assertElementState(
-          talkToAgents.getAgentElementDotsMenu(agentElement),
+          talkToAgents.getEntityElementDotsMenu(agentElement),
           'hidden',
         );
       },
@@ -246,7 +251,7 @@ dialTest(
         const versionsDropdownMenu = talkToAgentDialog.getVersionDropdownMenu();
         const secondVersionMenuOptionElement =
           versionsDropdownMenu.menuOption(appSecondVersion);
-        await agentVersionsDropdownMenuAssertion.assertElementBackgroundColors(
+        await entityVersionsDropdownMenuAssertion.assertElementBackgroundColors(
           secondVersionMenuOptionElement,
           expectedBgColor,
         );
@@ -254,13 +259,13 @@ dialTest(
           talkToAgentDialog.getVersionChevronIcon(agentElement),
           new RegExp(Attributes.rotated180),
         );
-        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([appSecondVersion, appFirstVersion]),
         );
         firstVersionMenuOptionElement =
           versionsDropdownMenu.menuOption(appFirstVersion);
         await firstVersionMenuOptionElement.hover();
-        await agentVersionsDropdownMenuAssertion.assertElementBackgroundColors(
+        await entityVersionsDropdownMenuAssertion.assertElementBackgroundColors(
           firstVersionMenuOptionElement,
           expectedBgColor,
         );
@@ -311,7 +316,8 @@ dialTest(
     '[Select an agent for conversation] Version is shown for custom application. When the application is at the top of recent list (pre-selected already).\n' +
     `[Select an agent for conversation] Three dots menu doesn't exist for models, applications created from config.\n` +
     '[Select an agent for conversation] Version and other items are shown for model when the model was removed from My workspace' +
-    '[Select an agent for conversation] Red warning is shown when selected custom app was unpublished',
+    '[Select an agent for conversation] Red warning is shown when selected custom app was unpublished.\n' +
+    `[First screen] 'Not available agent selected' error instead of input message field, on Select an agent for conversation, on Settings`,
   async ({
     dialHomePage,
     talkToAgentDialog,
@@ -319,12 +325,15 @@ dialTest(
     talkToAgentDialogAssertion,
     modelApiHelper,
     chat,
+    conversationSettingsModal,
+    agentSettings,
+    agentSettingAssertion,
     topicsTooltip,
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgents,
+    marketplaceEntities,
     confirmationDialog,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     agentInfoAssertion,
     navigationPanel,
     setTestIds,
@@ -336,13 +345,14 @@ dialTest(
     publicationApiHelper,
     publishRequestBuilder,
     localStorageManager,
-    marketplaceAgentsAssertion,
     iconApiHelper,
     conversationData,
     dataInjector,
     conversations,
     chatHeader,
     chatAssertion,
+    sendMessage,
+    sendMessageAssertion,
   }) => {
     setTestIds(
       'EPMRTC-5160',
@@ -352,9 +362,10 @@ dialTest(
       'EPMRTC-5155',
       'EPMRTC-1054',
       'EPMRTC-4623',
+      'EPMRTC-5218',
     );
 
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const appName = GeneratorUtil.randomApplicationName();
     const topics = [
       GeneratorUtil.randomString(15),
@@ -440,14 +451,14 @@ dialTest(
           'visible',
         );
         await talkToAgentDialogAssertion.assertAgentState(agent, 'visible');
-        agentElement = talkToAgents.getAgent(agent);
-        const actualIcon = await talkToAgents.getAgentIcon(agentElement);
-        await marketplaceAgentsAssertion.assertEntityIcon(
+        agentElement = talkToAgents.getEntity(agent);
+        const actualIcon = await talkToAgents.getEntityIcon(agentElement);
+        await talkToAgentDialogAssertion.assertEntityIcon(
           actualIcon,
           API.defaultModelIconHost(),
         );
-        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
-        await marketplaceAgentsAssertion.assertElementText(
+        actualVersionElement = talkToAgents.getEntityVersion(agentElement);
+        await talkToAgentDialogAssertion.assertElementText(
           actualVersionElement,
           appVersion,
         );
@@ -457,7 +468,7 @@ dialTest(
     await dialTest.step(
       'Verify topics are displayed in the right order, hidden topics are collapsed',
       async () => {
-        hiddenTopicsElement = talkToAgents.getAgentHiddenTopics(agentElement);
+        hiddenTopicsElement = talkToAgents.getEntityHiddenTopics(agentElement);
         await talkToAgentDialogAssertion.assertElementState(
           hiddenTopicsElement,
           'visible',
@@ -468,7 +479,7 @@ dialTest(
         );
         const hiddenTopicsCount = await hiddenTopicsElement.getElementContent();
         const visibleTopicsElement =
-          talkToAgents.getAgentVisibleTopics(agentElement);
+          talkToAgents.getEntityVisibleTopics(agentElement);
         visibleTopicsCount = await visibleTopicsElement.getElementsCount();
         talkToAgentDialogAssertion.assertValue(
           +hiddenTopicsCount! + visibleTopicsCount,
@@ -497,7 +508,7 @@ dialTest(
         for (let i = 1; i <= tooltipTopicsCount; i++) {
           await tooltipAssertion.assertElementBorderColors(
             topicsTooltip.topic.getNthElement(i),
-            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
           );
         }
       },
@@ -523,10 +534,10 @@ dialTest(
       'Verify dots menu is not available for the model from the config',
       async () => {
         if (randomModel !== undefined) {
-          const configAgentElement = talkToAgents.getAgent(randomModel);
+          const configAgentElement = talkToAgents.getEntity(randomModel);
           await configAgentElement.hoverOver();
           await talkToAgentDialogAssertion.assertElementState(
-            talkToAgents.getAgentElementDotsMenu(configAgentElement),
+            talkToAgents.getEntityElementDotsMenu(configAgentElement),
             'hidden',
           );
         }
@@ -541,12 +552,12 @@ dialTest(
           await marketplacePage.waitForPageLoaded();
           await marketplaceHeader.searchInput.fillInInput(randomModel.name);
           const randomModelElement =
-            await marketplaceAgentsSection.findAgentElement(randomModel, {
-              isWorkspaceAgent: true,
+            await marketplaceEntitiesSection.findEntityElement(randomModel, {
+              isWorkspaceEntity: true,
               isEditable: false,
             });
-          await marketplaceAgents
-            .getAgentElementRemoveBookmarkIcon(randomModelElement)
+          await marketplaceEntities
+            .getEntityElementRemoveBookmarkIcon(randomModelElement)
             .click();
           await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
           await navigationPanel.backToChat();
@@ -569,47 +580,48 @@ dialTest(
             randomModel,
             'visible',
           );
-          const modelElement = talkToAgents.getAgent(randomModel);
+          const modelElement = talkToAgents.getEntity(randomModel);
           const actualVersionElement =
-            talkToAgents.getAgentVersion(modelElement);
+            talkToAgents.getEntityVersion(modelElement);
           const actualDescrElement =
-            talkToAgents.getAgentDescription(modelElement);
-          await marketplaceAgentsAssertion.assertElementText(
-            talkToAgents.getAgentName(modelElement),
+            talkToAgents.getEntityDescription(modelElement);
+          await talkToAgentDialogAssertion.assertElementText(
+            talkToAgents.getEntityName(modelElement),
             randomModel.name,
           );
           randomModel.description
-            ? await marketplaceAgentsAssertion.assertElementText(
+            ? await talkToAgentDialogAssertion.assertElementText(
                 actualDescrElement,
                 randomModel.description.split('\n\n')[0],
               )
-            : await marketplaceAgentsAssertion.assertElementState(
+            : await talkToAgentDialogAssertion.assertElementState(
                 actualDescrElement,
                 'hidden',
               );
           randomModel.version
-            ? await marketplaceAgentsAssertion.assertElementText(
+            ? await talkToAgentDialogAssertion.assertElementText(
                 actualVersionElement,
                 randomModel.version,
               )
-            : await marketplaceAgentsAssertion.assertElementState(
+            : await talkToAgentDialogAssertion.assertElementState(
                 actualVersionElement,
                 'hidden',
               );
-          const actualTopics = talkToAgents.getAgentVisibleTopics(modelElement);
+          const actualTopics =
+            talkToAgents.getEntityVisibleTopics(modelElement);
           randomModel.topics && randomModel.topics.length > 0
-            ? marketplaceAgentsAssertion.assertNumberIsGreaterThan(
+            ? talkToAgentDialogAssertion.assertNumberIsGreaterThan(
                 await actualTopics.getElementsCount(),
                 0,
               )
-            : await marketplaceAgentsAssertion.assertElementState(
+            : await talkToAgentDialogAssertion.assertElementState(
                 actualTopics,
                 'hidden',
               );
           const actualIconElement =
-            await talkToAgents.getAgentIcon(modelElement);
+            await talkToAgents.getEntityIcon(modelElement);
           const expectedIcon = iconApiHelper.getEntityIcon(randomModel);
-          await marketplaceAgentsAssertion.assertEntityIcon(
+          await talkToAgentDialogAssertion.assertEntityIcon(
             actualIconElement,
             expectedIcon,
           );
@@ -624,7 +636,7 @@ dialTest(
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        await marketplaceAgentsSection.findAndUseAgent(agent, {
+        await marketplaceEntitiesSection.findAndUseAgent(agent, {
           isWorkspaceAgent: true,
           isEditable: true,
         });
@@ -642,16 +654,16 @@ dialTest(
           'visible',
         );
         await talkToAgentDialogAssertion.assertAgentState(agent, 'visible');
-        const agentElement = talkToAgents.getAgent(agent);
-        actualVersionElement = talkToAgents.getAgentVersion(agentElement);
-        await marketplaceAgentsAssertion.assertElementText(
+        const agentElement = talkToAgents.getEntity(agent);
+        actualVersionElement = talkToAgents.getEntityVersion(agentElement);
+        await talkToAgentDialogAssertion.assertElementText(
           actualVersionElement,
           appVersion,
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(agent);
 
         const hiddenTopicsElement =
-          talkToAgents.getAgentHiddenTopics(agentElement);
+          talkToAgents.getEntityHiddenTopics(agentElement);
         await talkToAgentDialogAssertion.assertElementState(
           hiddenTopicsElement,
           'visible',
@@ -662,7 +674,7 @@ dialTest(
         );
         const hiddenTopicsCount = await hiddenTopicsElement.getElementContent();
         const visibleTopicsElement =
-          talkToAgents.getAgentVisibleTopics(agentElement);
+          talkToAgents.getEntityVisibleTopics(agentElement);
         visibleTopicsCount = await visibleTopicsElement.getElementsCount();
         talkToAgentDialogAssertion.assertValue(
           +hiddenTopicsCount! + visibleTopicsCount,
@@ -692,6 +704,33 @@ dialTest(
         await chatAssertion.assertNotAllowedModelLabelContent(
           conversation.model.id,
         );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over "change the agent" button and verify it does not change the color',
+      async () => {
+        await chat.changeNotAvailableAgentButton.hoverOver();
+        await chatAssertion.assertElementColor(
+          chat.changeNotAvailableAgentButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Configure settings" button and verify "Agent is not available" label is displayed',
+      async () => {
+        await chatHeader.conversationSettings.click();
+        await agentSettingAssertion.assertElementText(
+          agentSettings,
+          ExpectedConstants.agentIsNotAvailableLabel,
+        );
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 
@@ -704,21 +743,35 @@ dialTest(
           'visible',
         );
         const notAvailableAgentElement =
-          talkToAgents.getNotAvailableAgentElement(agent.reference);
+          talkToAgents.getNotAvailableEntityElement(agent.reference);
+        const errorDescriptionElement = talkToAgents.getEntityDescription(
+          notAvailableAgentElement,
+        );
         await talkToAgentDialogAssertion.assertElementText(
-          talkToAgents.getAgentDescription(notAvailableAgentElement),
+          errorDescriptionElement,
           ExpectedConstants.notAllowedModelError,
         );
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textError,
+        );
+        await talkToAgentDialogAssertion.assertElementColor(
+          errorDescriptionElement,
+          expectedColor,
+        );
+        await talkToAgentDialogAssertion.assertElementBorderColors(
+          notAvailableAgentElement,
+          expectedColor,
+        );
         await talkToAgentDialogAssertion.assertElementState(
-          talkToAgents.getAgentVersion(notAvailableAgentElement),
+          talkToAgents.getEntityVersion(notAvailableAgentElement),
           'hidden',
         );
         await talkToAgentDialogAssertion.assertElementState(
-          talkToAgents.getAgentTopicsContainer(notAvailableAgentElement),
+          talkToAgents.getEntityTopicsContainer(notAvailableAgentElement),
           'hidden',
         );
         talkToAgentDialogAssertion.assertValue(
-          (await talkToAgents.getAgentNames())[0],
+          (await talkToAgents.getEntityNames())[0],
           agent.reference,
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(agent.reference);
@@ -820,22 +873,22 @@ dialTest(
     await dialTest.step(
       'Remove the custom app card from the list and verify error message is displayed on the card',
       async () => {
-        appElement = talkToAgents.getAgent(appModel.display_name);
+        appElement = talkToAgents.getEntity(appModel.display_name);
         await appElement.hoverOver();
         const appDotsMenuElement =
-          talkToAgents.getAgentElementDotsMenu(appElement);
+          talkToAgents.getEntityElementDotsMenu(appElement);
         await appDotsMenuElement.click();
-        const appDropdownMenu = talkToAgents.getAgentDropdownMenu();
+        const appDropdownMenu = talkToAgents.getEntityDropdownMenu();
         await appDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         const notAvailableAgentElement =
-          talkToAgents.getNotAvailableAgentElement(appModel.reference!);
+          talkToAgents.getNotAvailableEntityElement(appModel.reference!);
         await talkToAgentDialogAssertion.assertElementText(
-          talkToAgents.getAgentDescription(notAvailableAgentElement),
+          talkToAgents.getEntityDescription(notAvailableAgentElement),
           ExpectedConstants.notAllowedModelError,
         );
         await talkToAgentDialogAssertion.assertElementState(
-          talkToAgents.getAgentVersion(notAvailableAgentElement),
+          talkToAgents.getEntityVersion(notAvailableAgentElement),
           'hidden',
         );
       },
@@ -847,16 +900,16 @@ dialTest(
         await talkToAgentDialog.allAgentsTab.click();
         const actualVisibleAgentNames = await talkToAgentDialog
           .getAgents()
-          .getAgentNames();
+          .getEntityNames();
         talkToAgentDialogAssertion.assertValue(
           actualVisibleAgentNames[0],
           appModel.reference!,
           ExpectedMessages.elementIsVisible,
         );
         const notAvailableAgentElement =
-          talkToAgents.getNotAvailableAgentElement(appModel.reference!);
+          talkToAgents.getNotAvailableEntityElement(appModel.reference!);
         await talkToAgentDialogAssertion.assertElementText(
-          talkToAgents.getAgentDescription(notAvailableAgentElement),
+          talkToAgents.getEntityDescription(notAvailableAgentElement),
           ExpectedConstants.notAllowedModelError,
         );
         const goToDialMarketplaceBtn =
@@ -990,12 +1043,12 @@ dialTest(
     agentInfoAssertion,
     talkToAgentDialogAssertion,
     chat,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
+    baseAssertion,
     setTestIds,
-    marketplaceAgents,
-    agentDetailsModal,
-    marketplaceAgentsAssertion,
-    agentVersionsDropdownMenuAssertion,
+    marketplaceEntities,
+    entityDetailsModal,
+    entityVersionsDropdownMenuAssertion,
     marketplacePage,
     navigationPanel,
     modelApiHelper,
@@ -1010,6 +1063,9 @@ dialTest(
     let secondConfigAppMinorV: DialAIEntityModel;
     let secondConfigAppMajorV: DialAIEntityModel;
     let sortedVersions: string[];
+    const expectedBorderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await dialTest.step(
       'Publish two custom applications by admin user, the second one has two versions',
@@ -1094,6 +1150,10 @@ dialTest(
           firstConfigApp.name,
           ExpectedMessages.recentEntitiesIsOnTop,
         );
+        await talkToAgentDialogAssertion.assertElementBorderColors(
+          talkToAgentDialog.getTalkToAgent(firstConfigApp),
+          expectedBorderColor,
+        );
       },
     );
 
@@ -1102,12 +1162,12 @@ dialTest(
       async () => {
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        const agentElement = await marketplaceAgentsSection.findAgentElement(
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
           firstConfigApp,
-          { isWorkspaceAgent: true, isEditable: false },
+          { isWorkspaceEntity: true, isEditable: false },
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(agentElement),
+        await talkToAgentDialogAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(agentElement),
           'visible',
         );
       },
@@ -1162,6 +1222,10 @@ dialTest(
           secondConfigAppMinorV.name,
           ExpectedMessages.recentEntitiesIsOnTop,
         );
+        await talkToAgentDialogAssertion.assertElementBorderColors(
+          talkToAgentDialog.getTalkToAgent(secondConfigAppMinorV),
+          expectedBorderColor,
+        );
       },
     );
 
@@ -1170,18 +1234,18 @@ dialTest(
       async () => {
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        const agentElement = await marketplaceAgentsSection.findAgentElement(
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
           secondConfigAppMajorV,
-          { isWorkspaceAgent: true, isEditable: false },
+          { isWorkspaceEntity: true, isEditable: false },
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(agentElement),
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(agentElement),
           'visible',
         );
 
         await agentElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
           sortedVersions,
         );
       },

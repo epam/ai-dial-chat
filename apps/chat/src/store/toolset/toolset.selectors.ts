@@ -83,10 +83,20 @@ const selectAllGroupToolsetsKeySet = (
   return new Set(
     references
       .map((reference) => toolsetsMap[reference])
-      .filter(Boolean)
-      .map((toolset) => getGroupMarketplaceEntityKey(toolset!)),
+      .filter((toolset) => !!toolset)
+      .map((toolset) => getGroupMarketplaceEntityKey(toolset)),
   );
 };
+
+const selectToolsetsTopics = createSelector([selectToolsets], (toolsets) => {
+  return sortBy(
+    uniq(toolsets?.flatMap((toolset) => toolset.topics ?? []) ?? []),
+    (topic) => topic.toLowerCase(),
+  );
+});
+
+const selectIsInstalledToolsetsInitialized = (state: RootState) =>
+  rootSelector(state).isInstalledToolsetsInitialized;
 
 export const ToolsetSelectors = {
   selectInitialized,
@@ -99,8 +109,10 @@ export const ToolsetSelectors = {
   selectToolsetDetailsStatus,
   selectIsToolsetDetailsLoading,
   selectInstalledToolsets,
+  selectIsInstalledToolsetsInitialized,
   selectInstalledToolsetsSet,
   selectEditorStep,
   selectPublishRequestToolsets,
   selectAllGroupToolsetsKeySet,
+  selectToolsetsTopics,
 };

@@ -1,22 +1,39 @@
 import { useCallback, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { constructPath } from '@/src/utils/app/shared-utils';
+
+import { Translation } from '@/src/types/translation';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChangePathDialog } from '../ChangePathDialog';
+import { PublicationRequestFormData, PublishRequestFieldsNames } from './form';
+
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
-  path: string;
   maxDepth: number;
-  onSelect: (folderId?: string) => void;
+  displayPublishToUrl: string;
 }
 
-export const PublishToSection = ({ path, maxDepth, onSelect }: Props) => {
-  const { t } = useTranslation();
+export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
 
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
+
+  const { setValue } = useFormContext<PublicationRequestFormData>();
+  const path = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
+  >({
+    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
+  });
 
   const handleFolderChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -29,18 +46,21 @@ export const PublishToSection = ({ path, maxDepth, onSelect }: Props) => {
 
   const handleSelect = useCallback(
     (folderId?: string) => {
-      onSelect(folderId);
+      setValue(
+        PublishRequestFieldsNames.PUBLISH_TO_URL,
+        constructPath(PUBLIC_URL_PREFIX, folderId),
+      );
       setIsChangeFolderModalOpened(false);
+      if (!folderId) {
+        setValue(PublishRequestFieldsNames.RULES, []);
+      }
     },
-    [onSelect],
+    [setValue],
   );
 
   return (
     <section className="mb-3">
-      <h3
-        className="mb-1 flex text-xs text-secondary"
-        data-qa="publish-to-label"
-      >
+      <h3 className="mb-1 flex text-xs text-secondary" data-qa="publish-label">
         {t('Publish to')}
       </h3>
       <div
@@ -49,21 +69,19 @@ export const PublishToSection = ({ path, maxDepth, onSelect }: Props) => {
       >
         <div className="flex w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
-            tooltip={path}
+            tooltip={displayPublishToUrl}
             triggerClassName="truncate whitespace-pre"
             contentClassName="break-all"
             dataQa="path"
           >
-            {path}
+            {displayPublishToUrl}
           </Tooltip>
 
-          <button
-            className="h-full cursor-pointer text-accent-primary"
+          <DialLinkButton
             data-qa="change-button"
             onClick={handleFolderChange}
-          >
-            {t('Change')}
-          </button>
+            label={t('Change')}
+          />
         </div>
       </div>
       {isChangeFolderModalOpened && (

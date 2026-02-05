@@ -7,6 +7,7 @@ import {
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFolderFromId,
   getNextDefaultName,
   getPartialAndFullyChosenFolders,
   isFolderEmpty,
@@ -14,10 +15,14 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId } from '@/src/utils/app/id';
+import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
-import { DialFile, FileFolderInterface } from '@/src/types/files';
+import { FeatureType, MoveModel } from '@/src/types/common';
+import {
+  DialFile,
+  FileFolderInterface,
+  FileOperationsResult,
+} from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -25,9 +30,27 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialFileNodeType,
+  DialUploadFileItem,
+  DialFile as UIKitDialFile,
+} from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
+
+const invalidateSearchCacheForFile = (state: FilesState, fileId: string) => {
+  const parts = fileId.split('/');
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const folderPath = parts.slice(0, i).join('/');
+    if (folderPath && state.searchListingMetadata[folderPath]) {
+      delete state.searchListingMetadata[folderPath];
+    }
+  }
+};
 
 const initialState: FilesState = {
   initialized: false,
@@ -41,6 +64,22 @@ const initialState: FilesState = {
 
   filesStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
+
+  loadingFileMetadata: false,
+  fileMetadata: null,
+
+  isCopyingFiles: false,
+  isMovingFiles: false,
+  isDeletingFiles: false,
+  isDownloadingArchive: false,
+  isUploadingFiles: false,
+  isUploadingArchive: false,
+  copyingFilesSignal: new AbortController(),
+  movingFilesSignal: new AbortController(),
+
+  isLoadingSearchListing: false,
+  searchListingMetadata: {},
+  sharedWithMeFilesAndFoldersIds: [],
 };
 
 export const filesSlice = createSlice({
@@ -133,6 +172,7 @@ export const filesSlice = createSlice({
       state.files = state.files.map((file) => {
         return file.id === payload.apiResult.id ? payload.apiResult : file;
       });
+      invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
     uploadFileTick: (
       state,
@@ -178,20 +218,48 @@ export const filesSlice = createSlice({
         foldersSet: Set<string>;
       }>,
     ) => {
+      const parentFolderId = Array.from(payload.foldersSet)[0];
       const mappedFiles: DialFile[] = payload.files.map((file) =>
         state.sharedFileIds.includes(file.id)
           ? { ...file, isShared: true }
           : { ...file },
       );
 
-      state.files = mappedFiles.concat(
-        state.files.filter(
-          (stateFile) =>
-            //remove all files from loaded folder to have latest folder update
-            !payload.foldersSet.has(stateFile.folderId),
-        ),
+      const prevById: Record<string, DialFile> = Object.fromEntries(
+        state.files.map((f) => [f.id, f]),
       );
+
+      const mergedMappedFiles: DialFile[] = mappedFiles.map((newFile) => {
+        const oldFile = prevById[newFile.id];
+        if (!oldFile) return newFile;
+
+        const merged: DialFile = {
+          ...oldFile,
+          ...newFile,
+        };
+
+        return merged;
+      });
+
+      const otherFiles = state.files.filter(
+        (f) => !payload.foldersSet.has(f.folderId),
+      );
+
+      state.files = [...mergedMappedFiles, ...otherFiles];
       state.filesStatus = UploadStatus.LOADED;
+
+      if (!isRootId(parentFolderId)) {
+        state.folders = combineEntities(
+          [
+            getFolderFromId(
+              parentFolderId,
+              FeatureType.File,
+              UploadStatus.LOADED,
+            ),
+          ],
+          state.folders,
+        );
+      }
 
       const idsToReselect = state.chosenEmptyFoldersIds.reduce<{
         folderIds: string[];
@@ -224,6 +292,83 @@ export const filesSlice = createSlice({
     getFilesFail: (state) => {
       state.filesStatus = UploadStatus.FAILED;
     },
+    getFileMetadata: (
+      state,
+      _action: PayloadAction<{
+        fileId: string;
+      }>,
+    ) => {
+      state.loadingFileMetadata = true;
+      state.fileMetadata = null;
+    },
+    getFileMetadataSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        metadata: UIKitDialFile;
+      }>,
+    ) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = payload.metadata as UIKitDialFile;
+    },
+    getFileMetadataFail: (state) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = null;
+    },
+    clearFileMetadata: (state) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = null;
+    },
+    getFullListing: (
+      state,
+      _action: PayloadAction<{
+        folderPath?: string;
+      }>,
+    ) => {
+      state.isLoadingSearchListing = true;
+    },
+    getFullListingSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderPath: string;
+        files: DialFile[];
+      }>,
+    ) => {
+      state.isLoadingSearchListing = false;
+
+      const existingFileIds = new Set(state.files.map((f) => f.id));
+      const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
+
+      if (newFiles.length > 0) {
+        state.files = [...state.files, ...newFiles];
+      }
+
+      state.searchListingMetadata[payload.folderPath] = {
+        loadedAt: Date.now(),
+        isFullyLoaded: true,
+        folderPath: payload.folderPath,
+      };
+    },
+    getFullListingFail: (state) => {
+      state.isLoadingSearchListing = false;
+    },
+    invalidateSearchCache: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        bucketRootId?: string;
+      }>,
+    ) => {
+      if (payload.bucketRootId) {
+        delete state.searchListingMetadata[payload.bucketRootId];
+      } else {
+        state.searchListingMetadata = {};
+      }
+    },
     getFolders: (
       state,
       {
@@ -252,9 +397,18 @@ export const filesSlice = createSlice({
     ) => {
       state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.LOADED;
+
+      const incomingIds = new Set(payload.folders.map((f) => f.id));
+      const filteredState = state.folders.filter(
+        (f) =>
+          f.folderId !== payload.folderId ||
+          incomingIds.has(f.id) ||
+          f.temporary,
+      );
+
       state.folders = combineEntities(
         payload.folders,
-        state.folders.map((f) =>
+        filteredState.map((f) =>
           f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
       );
@@ -317,6 +471,7 @@ export const filesSlice = createSlice({
           type: FeatureType.File,
           folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
+          temporary: true,
         }),
       );
       state.newAddedFolderId = newAddedFolderId;
@@ -419,6 +574,7 @@ export const filesSlice = createSlice({
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
+      invalidateSearchCacheForFile(state, payload.fileId);
     },
     deleteFileFail: (
       state,
@@ -479,10 +635,14 @@ export const filesSlice = createSlice({
     },
     addSharedFiles: (
       state,
-      { payload }: PayloadAction<{ files: DialFile[] }>,
+      { payload }: PayloadAction<{ files: DialFile[]; reviewFolder?: string }>,
     ) => {
-      //remove sharedWithMe files from state to have latest state from API
-      const filteredFiles = state.files.filter((file) => !file.sharedWithMe);
+      //remove sharedWithMe files from state except those on review to have the latest state from API
+      const filteredFiles = state.files.filter(
+        (file) =>
+          !file.sharedWithMe ||
+          (payload.reviewFolder && file.id.startsWith(payload.reviewFolder)),
+      );
       state.files = combineEntities(payload.files, filteredFiles);
     },
     resetAllFoldersStatus: (state) => {
@@ -581,6 +741,263 @@ export const filesSlice = createSlice({
         state.chosenEmptyFoldersIds,
         newChosenEmptyFolderIds,
       );
+    },
+
+    copyFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+        destinationFolder: string;
+      }>,
+    ) => {
+      state.isCopyingFiles = true;
+    },
+    copyFilesSuccess: (
+      state,
+      _action: PayloadAction<{
+        result: FileOperationsResult<MoveModel>;
+        request: {
+          files: DialCopiedItem[];
+          sourceFolder?: string;
+          destinationFolder: string;
+        };
+      }>,
+    ) => {
+      state.isCopyingFiles = false;
+    },
+    copyFilesFail: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+        destinationFolder: string;
+      }>,
+    ) => {
+      state.isCopyingFiles = false;
+    },
+    setCopyingFilesSignal: (
+      state,
+      action: PayloadAction<AbortController | null>,
+    ) => {
+      state.copyingFilesSignal = action.payload;
+    },
+    cancelCopyingFiles: (state) => {
+      state.copyingFilesSignal?.abort();
+      state.copyingFilesSignal = null;
+      state.isCopyingFiles = false;
+    },
+
+    moveFiles: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        files: DialCopiedItem[];
+        sourceFolder: string;
+        destinationFolder: string;
+      }>,
+    ) => {
+      state.isMovingFiles = true;
+
+      const movedFoldersSourceUrls = payload.files
+        .filter((f) => f.nodeType === DialFileNodeType.FOLDER)
+        .map((f) => f.sourceUrl);
+
+      state.files = state.files.filter(
+        (f) =>
+          !movedFoldersSourceUrls.some((sourceUrl) =>
+            f.folderId.startsWith(sourceUrl),
+          ),
+      );
+
+      state.folders = state.folders.filter(
+        (f) =>
+          !movedFoldersSourceUrls.some((sourceUrl) =>
+            f.folderId.startsWith(sourceUrl),
+          ),
+      );
+    },
+    moveFilesSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        result: FileOperationsResult<MoveModel>;
+        request: {
+          files: DialCopiedItem[];
+          sourceFolder: string;
+          destinationFolder: string;
+        };
+      }>,
+    ) => {
+      state.isMovingFiles = false;
+      payload.result.results.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.data.sourceUrl);
+        invalidateSearchCacheForFile(state, file.data.destinationUrl);
+      });
+    },
+    moveFilesFail: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+      }>,
+    ) => {
+      state.isMovingFiles = false;
+    },
+    setMovingFilesSignal: (
+      state,
+      action: PayloadAction<AbortController | null>,
+    ) => {
+      state.movingFilesSignal = action.payload;
+    },
+    cancelMovingFiles: (state) => {
+      state.movingFilesSignal?.abort();
+      state.movingFilesSignal = null;
+      state.isMovingFiles = false;
+    },
+
+    deleteFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialDeletedItem[];
+        folderUrl: string;
+      }>,
+    ) => {
+      state.isDeletingFiles = true;
+    },
+    deleteFilesSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        deletedItems: DialDeletedItem[];
+        result: FileOperationsResult<string>;
+        request: {
+          files: DialDeletedItem[];
+          folderUrl: string;
+        };
+      }>,
+    ) => {
+      state.isDeletingFiles = false;
+      payload.deletedItems.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.sourceUrl);
+      });
+    },
+    deleteFilesFail: (
+      state,
+      _action: PayloadAction<{
+        files: DialDeletedItem[];
+      }>,
+    ) => {
+      state.isDeletingFiles = false;
+    },
+
+    downloadFilesAsArchive: (
+      state,
+      _action: PayloadAction<{
+        files: UIKitDialFile[];
+      }>,
+    ) => {
+      state.isDownloadingArchive = true;
+    },
+
+    downloadFilesAsArchiveSuccess: (state) => {
+      state.isDownloadingArchive = false;
+    },
+
+    downloadFilesAsArchiveFail: (state) => {
+      state.isDownloadingArchive = false;
+    },
+
+    createNewFolder: (
+      state,
+      _action: PayloadAction<{
+        files: DialUploadFileItem[];
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingFiles = true;
+    },
+
+    uploadFiles: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        files: DialUploadFileItem[];
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingFiles = true;
+
+      const urlParts = payload.destinationUrl.split('/');
+      const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+      const relativePath =
+        urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
+
+      payload.files.forEach((file) => {
+        const id = constructPath(
+          getFileRootId(bucket),
+          relativePath,
+          file.name,
+        );
+        state.files = state.files.filter((f) => f.id !== id);
+
+        state.files.push({
+          id,
+          name: file.name,
+          relativePath,
+          folderId: constructPath(getFileRootId(bucket), relativePath),
+          status: UploadStatus.LOADING,
+          percent: 0,
+          fileContent: file.fileContent,
+          contentLength: file.fileContent.size,
+          contentType: file.fileContent.type,
+        });
+      });
+    },
+
+    uploadFilesSuccess: (state) => {
+      state.isUploadingFiles = false;
+    },
+    uploadFilesFail: (state) => {
+      state.files = state.files.filter((f) => f.status !== UploadStatus.FAILED);
+      state.isUploadingFiles = false;
+    },
+    cancelUploadFiles: (state, { payload }: PayloadAction<Set<string>>) => {
+      const uploadingIds = payload;
+
+      state.files = state.files.filter(
+        (f) => !uploadingIds.has(f.id) || f.status !== UploadStatus.LOADING,
+      );
+
+      state.isUploadingFiles = false;
+    },
+
+    uploadArchive: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        archive: File;
+        name: string;
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingArchive = true;
+      invalidateSearchCacheForFile(state, payload.destinationUrl);
+    },
+    uploadArchiveSuccess: (state) => {
+      state.isUploadingArchive = false;
+    },
+    uploadArchiveFail: (state) => {
+      state.isUploadingArchive = false;
+    },
+
+    setSharedWithMeFilesAndFoldersIds: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.sharedWithMeFilesAndFoldersIds = payload.ids;
     },
   },
 });

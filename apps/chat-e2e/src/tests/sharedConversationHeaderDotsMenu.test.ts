@@ -148,9 +148,10 @@ dialSharedWithMeTest(
         await additionalShareUserToast.waitForState();
         await additionalShareUserToast.closeToast();
 
-        const exportedConversation = await additionalUserItemApiHelper.getItem(
-          expectedShareUserConversationId,
-        );
+        const exportedConversation =
+          await additionalUserItemApiHelper.getItem<Conversation>(
+            expectedShareUserConversationId,
+          );
         baseAssertion.assertValueIsNotUndefined(exportedConversation);
 
         const exportedFile =
@@ -195,9 +196,10 @@ dialSharedWithMeTest(
         await additionalShareUserToast.waitForState();
         await additionalShareUserToast.closeToast();
 
-        const exportedConversation = await additionalUserItemApiHelper.getItem(
-          expectedShareUserConversationId,
-        );
+        const exportedConversation =
+          await additionalUserItemApiHelper.getItem<Conversation>(
+            expectedShareUserConversationId,
+          );
         baseAssertion.assertValueIsNotUndefined(exportedConversation);
 
         const expectedSharedImage = exportedConversation.messages

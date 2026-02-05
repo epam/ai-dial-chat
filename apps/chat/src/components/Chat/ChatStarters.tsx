@@ -22,9 +22,10 @@ import {
 
 interface ChatStartersViewProps {
   schema: MessageFormSchema;
+  modelId: string;
 }
 
-const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
+const ChatStartersView = ({ schema, modelId }: ChatStartersViewProps) => {
   const dispatch = useAppDispatch();
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -42,10 +43,11 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
           content: populateText,
           value,
           submit,
+          modelId,
         }),
       );
     },
-    [dispatch, schema],
+    [dispatch, schema, modelId],
   );
 
   const schemaWithoutDescription = useMemo(
@@ -77,9 +79,17 @@ export const ChatStarters = memo(function ChatStarters() {
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const schema = useAppSelector(ChatSelectors.selectConfigurationSchema);
-  const isSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
+  const schema = useAppSelector((state) =>
+    ChatSelectors.selectConfigurationSchemaByModelId(
+      state,
+      selectedConversations[0]?.model.id,
+    ),
+  );
+  const isSchemaLoading = useAppSelector((state) =>
+    ChatSelectors.selectIsConfigurationSchemaLoading(
+      state,
+      selectedConversations[0]?.model.id,
+    ),
   );
 
   if (
@@ -92,5 +102,10 @@ export const ChatStarters = memo(function ChatStarters() {
     return null;
   }
 
-  return <ChatStartersView schema={schema} />;
+  return (
+    <ChatStartersView
+      schema={schema}
+      modelId={selectedConversations[0].model.id}
+    />
+  );
 });

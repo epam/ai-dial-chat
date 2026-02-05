@@ -13,6 +13,7 @@ import { Translation } from '@/src/types/translation';
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { FeatureType } from '@epam/ai-dial-shared';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface AddMarketplaceEntityButtonProps {
   menuItems: DisplayMenuItemProps[];
@@ -40,13 +41,13 @@ export function AddMarketplaceEntityButton({
 
   if (visibleActions.length === 1)
     return (
-      <button
+      <DialPrimaryButton
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-2 py-2 xl:flex"
-      >
-        <IconPlus size={18} />
-        <span>{t(`Add ${label}`)}</span>
-      </button>
+        label={t(`Add ${label}`)}
+        iconBefore={<IconPlus size={18} />}
+        className="shrink-0"
+        data-qa={dataQa}
+      />
     );
 
   return (
@@ -57,16 +58,17 @@ export function AddMarketplaceEntityButton({
       onOpenChange={setIsOpen}
       placement="bottom"
       TriggerCustomRenderer={
-        <button
-          className="button button-primary flex items-center gap-2 py-2"
+        <DialPrimaryButton
           data-qa={dataQa}
-        >
-          <span>{isScreenSmall ? t('Add') : t(`Add ${label}`)}</span>
-          <IconChevronDown
-            size={18}
-            className={classNames(isOpen && 'rotate-180')}
-          />
-        </button>
+          label={isScreenSmall ? t('Add') : t(`Add ${label}`)}
+          className="shrink-0"
+          iconAfter={
+            <IconChevronDown
+              size={18}
+              className={classNames(isOpen && 'rotate-180')}
+            />
+          }
+        />
       }
     />
   );

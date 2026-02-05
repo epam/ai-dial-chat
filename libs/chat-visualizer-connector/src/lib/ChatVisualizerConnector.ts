@@ -9,6 +9,7 @@ interface RequestParams {
   requestId: string;
   payload?: unknown;
 }
+
 export interface PostMessageRequestParams extends RequestParams {
   dialHost: string;
 }
@@ -18,21 +19,38 @@ export interface PostMessageRequestParams extends RequestParams {
  */
 export class ChatVisualizerConnector {
   protected dialHost: string;
+
+  /**
+   * List of allowed/target hosts.
+   * All outgoing messages (without explicit dialHost) will be sent to each of them.
+   * All incoming messages must originate from one of them.
+   */
+  protected dialHosts: string[];
+
   protected appName: string;
   protected dataCallback: (visualizerData: AttachmentData) => void;
 
   /**
    * Creates a ChatVisualizerConnector
-   * @param dialHost {string} DIAL CHAT host
+   * @param dialHost {string | string[]} DIAL CHAT host(s)
    * @param appName {string} name of the Visualizer same as in config
    * @param dataCallback {(visualizerData: AttachmentData) => void} callback to get data that will be used in the Visualizer
    */
   constructor(
-    dialHost: string,
+    dialHost: string | string[],
     appName: string,
     dataCallback: (visualizerData: AttachmentData) => void,
   ) {
-    this.dialHost = dialHost;
+    const hosts = Array.isArray(dialHost) ? dialHost : [dialHost];
+
+    if (!hosts.length) {
+      throw new Error('[ChatVisualizerConnector] No dial host(s) provided');
+    }
+
+    this.dialHosts = hosts;
+    // keep old field for backward compatibility
+    this.dialHost = hosts[0];
+
     this.appName = appName;
     this.dataCallback = dataCallback;
     this.postMessageListener = this.postMessageListener.bind(this);
@@ -44,12 +62,12 @@ export class ChatVisualizerConnector {
    * Sends the post message to the DIAL Chat
    * @param type Visualizer Event name
    * @param payload Event payload
-   * @param dialHost host of the DIAL Chat
+   * @param dialHost host of the DIAL Chat (optional) — if provided, message goes ONLY to this host
    */
   public send({
     type,
     payload,
-    dialHost = this.dialHost,
+    dialHost,
   }: {
     type: VisualizerConnectorEvents;
     payload?: unknown;
@@ -61,13 +79,17 @@ export class ChatVisualizerConnector {
       );
     }
 
-    window.parent.postMessage(
-      {
-        type: `${this.appName}/${type}`,
-        payload,
-      },
-      dialHost,
-    );
+    const targets = dialHost ? [dialHost] : this.dialHosts;
+
+    for (const target of targets) {
+      window.parent.postMessage(
+        {
+          type: `${this.appName}/${type}`,
+          payload,
+        },
+        target,
+      );
+    }
   }
 
   /**
@@ -88,9 +110,16 @@ export class ChatVisualizerConnector {
   }
 
   postMessageListener(event: MessageEvent<RequestParams>): void {
-    if (event.origin !== this.dialHost) return;
+    // accept messages only from known hosts
+    if (
+      this.dialHosts[0] !== '*' &&
+      !this.dialHosts.some((allowedHost) =>
+        allowedHost.startsWith(event.origin),
+      )
+    )
+      return;
 
-    //check if there is a payload
+    // check if there is a payload
     if (typeof event.data.payload !== 'object' || event.data.payload === null)
       return;
 

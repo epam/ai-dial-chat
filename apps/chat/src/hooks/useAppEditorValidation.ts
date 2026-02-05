@@ -19,13 +19,20 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { AppsEditorQuery } from '@/src/constants/applications';
 import { Routes } from '@/src/constants/routes';
 
-export const useAppEditorValidation = (isIdRequired: boolean) => {
+export const useAppEditorValidation = () => {
   const router = useRouter();
   const {
-    query: { id = '', slug = '', publicationUrl },
+    query: {
+      [AppsEditorQuery.Id]: id = '',
+      [AppsEditorQuery.Schema]: type = '',
+      [AppsEditorQuery.PublicationUrl]: publicationUrl,
+    },
   } = router;
+
+  const isEditing = !!id?.toString();
 
   const dispatch = useAppDispatch();
 
@@ -61,13 +68,8 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
   }, [appPublication?.resources, appPublication?.url, appPublicationUrl]);
 
   useEffect(() => {
-    if (isIdRequired && !id) {
-      // id is required for this page
-      router.push(Routes.NotFound);
-      return;
-    }
     // if models are not loaded yet or we don't have id, we should not check for applicationId
-    if ((!isIdRequired && !id) || !areModelsLoaded) {
+    if (!isEditing || !areModelsLoaded) {
       return;
     }
     if (
@@ -88,7 +90,7 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
 
     if (
       (application || applicationData) &&
-      decodeURIComponent(slug.toString()) !==
+      decodeURIComponent(type.toString()) !==
         cleanSchemaId(
           getApplicationType(
             (application ?? applicationData) as DialAIEntityModel,
@@ -96,7 +98,11 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
         )
     ) {
       // if slug is not equal to application type)
-      router.push(Routes.NotFound);
+      // eslint-disable-next-line no-console
+      console.log(
+        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId: ${cleanSchemaId(getApplicationType(applicationData as DialAIEntityModel))}`,
+      );
+      void router.push(Routes.NotFound);
       return;
     }
 
@@ -113,7 +119,11 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
       !applicationId ||
       (!isAdmin && isAppPublic) // check if the application is public
     ) {
-      router.push(Routes.NotFound);
+      // eslint-disable-next-line no-console
+      console.log(
+        `application is not found or is not public. applicationId: ${applicationId}, isAppPublic: ${isAppPublic}`,
+      );
+      void router.push(Routes.NotFound);
       return;
     }
     if (!applicationData) {
@@ -127,7 +137,11 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
       !isMyApplication({ id: applicationId }) &&
       !canWriteSharedWithMe(application)
     ) {
-      router.push(Routes.NotFound);
+      // eslint-disable-next-line no-console
+      console.log(
+        `application is not public or not my application or not shared with me. applicationData: ${applicationData}, isAppPublic: ${isAppPublic}, isMyApplication: ${isMyApplication({ id: applicationId })}, canWriteSharedWithMe: ${canWriteSharedWithMe(application)}`,
+      );
+      void router.push(Routes.NotFound);
       return;
     }
   }, [
@@ -137,12 +151,12 @@ export const useAppEditorValidation = (isIdRequired: boolean) => {
     dispatch,
     areModelsLoaded,
     router,
-    isIdRequired,
     isAdmin,
-    slug,
+    type,
     isApplicationLoading,
     appPublicationUrl,
     appPublication,
     reviewApplicationId,
+    isEditing,
   ]);
 };

@@ -1,6 +1,5 @@
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AgentDetailsModal,
   AgentSettings,
   AttachFilesModal,
   Chat,
@@ -12,18 +11,19 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
+  EntityDetailsModal,
   FileDropArea,
   InformationModal,
   Marketplace,
-  MarketplaceAgents,
   MarketplaceContainer,
+  MarketplaceEntities,
   MarketplaceFilter,
   MarketplaceHeader,
   MarketplaceSidebar,
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
-  PublishingRequestModal,
+  PublishingRequestDialog,
   SelectFolderModal,
   SendMessage,
   TalkToAgentDialog,
@@ -38,14 +38,14 @@ import {
   ConversationAssertion,
   DownloadAssertion,
   ManageAttachmentsAssertion,
-  MarketplaceAgentsAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  TooltipAssertion,
 } from '@/src/assertions';
-import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
@@ -76,10 +76,11 @@ import {
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
 import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
-import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
+import { MarketplaceEntitiesSection } from '@/src/ui/webElements/marketplace/marketplaceEntitiesSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
+import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
@@ -102,7 +103,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChatHeader: ChatHeader;
   additionalShareUserModelApiHelper: ModelApiHelper;
   additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
-  additionalShareUserTalkToAgents: MarketplaceAgents;
+  additionalShareUserTalkToAgents: MarketplaceEntities;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
   additionalShareUserModelInfoTooltip: ModelInfoTooltip;
@@ -134,7 +135,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
-  additionalShareUserPublishingRequestModal: PublishingRequestModal;
+  additionalShareUserPublishingRequestDialog: PublishingRequestDialog;
   additionalShareUserInformationModal: InformationModal;
   additionalShareUserInformationModalAssertion: InformationModalAssertion;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
@@ -162,17 +163,18 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserMarketplaceFilter: MarketplaceFilter;
   additionalShareUserMarketplace: Marketplace;
   additionalShareUserMarketplaceHeader: MarketplaceHeader;
-  additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
-  additionalShareUserMarketplaceAgents: MarketplaceAgents;
-  additionalShareUserAgentDetailsModal: AgentDetailsModal;
+  additionalShareUserMarketplaceEntitiesSection: MarketplaceEntitiesSection;
+  additionalShareUserMarketplaceEntities: MarketplaceEntities;
+  additionalShareUserEntityDetailsModal: EntityDetailsModal;
   additionalShareUserSelectFolderModal: SelectFolderModal;
   additionalShareUserSelectFolders: Folders;
   additionalShareUserChatHeaderDropdownMenu: DropdownMenu;
   additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
-  additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
-  additionalShareUserMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
+  additionalShareUserEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
+  additionalShareUserTooltip: Tooltip;
+  additionalShareUserTooltipAssertion: TooltipAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -495,13 +497,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserConversations.getDropdownMenu();
     await use(additionalShareUserConversationDropdownMenu);
   },
-  additionalShareUserPublishingRequestModal: async (
+  additionalShareUserPublishingRequestDialog: async (
     { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserPublishingRequestModal =
-      new PublishingRequestModal(additionalShareUserPage);
-    await use(additionalShareUserPublishingRequestModal);
+    const additionalShareUserPublishingRequestDialog =
+      new PublishingRequestDialog(additionalShareUserPage);
+    await use(additionalShareUserPublishingRequestDialog);
   },
   additionalShareUserInformationModal: async (
     { additionalShareUserPage },
@@ -832,29 +834,29 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserMarketplace.getMarketplaceHeader();
     await use(additionalShareUserMarketplaceHeader);
   },
-  additionalShareUserMarketplaceAgentsSection: async (
+  additionalShareUserMarketplaceEntitiesSection: async (
     { additionalShareUserMarketplace },
     use,
   ) => {
-    const additionalShareUserMarketplaceAgentsSection =
-      additionalShareUserMarketplace.getMarketplaceAgentsSection();
-    await use(additionalShareUserMarketplaceAgentsSection);
+    const additionalShareUserMarketplaceEntitiesSection =
+      additionalShareUserMarketplace.getMarketplaceEntitiesSection();
+    await use(additionalShareUserMarketplaceEntitiesSection);
   },
-  additionalShareUserMarketplaceAgents: async (
-    { additionalShareUserMarketplaceAgentsSection },
+  additionalShareUserMarketplaceEntities: async (
+    { additionalShareUserMarketplaceEntitiesSection },
     use,
   ) => {
-    const additionalShareUserMarketplaceAgents =
-      additionalShareUserMarketplaceAgentsSection.getAgents();
-    await use(additionalShareUserMarketplaceAgents);
+    const additionalShareUserMarketplaceEntities =
+      additionalShareUserMarketplaceEntitiesSection.getEntities();
+    await use(additionalShareUserMarketplaceEntities);
   },
-  additionalShareUserAgentDetailsModal: async (
-    { additionalShareUserMarketplaceAgents },
+  additionalShareUserEntityDetailsModal: async (
+    { additionalShareUserMarketplaceEntities },
     use,
   ) => {
-    const additionalShareUserAgentDetailsModal =
-      additionalShareUserMarketplaceAgents.getAgentDetailsModal();
-    await use(additionalShareUserAgentDetailsModal);
+    const additionalShareUserEntityDetailsModal =
+      additionalShareUserMarketplaceEntities.getEntityDetailsModal();
+    await use(additionalShareUserEntityDetailsModal);
   },
   additionalShareUserSelectFolderModal: async (
     { additionalShareUserPage },
@@ -899,21 +901,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       new SelectFolderModalAssertion(additionalShareUserSelectFolderModal);
     await use(additionalShareUserSelectFolderModalAssertion);
   },
-  additionalShareUserAgentDetailsModalAssertion: async (
-    { additionalShareUserAgentDetailsModal },
+  additionalShareUserEntityDetailsModalAssertion: async (
+    { additionalShareUserEntityDetailsModal },
     use,
   ) => {
-    const additionalShareUserAgentDetailsModalAssertion =
-      new AgentDetailsModalAssertion(additionalShareUserAgentDetailsModal);
-    await use(additionalShareUserAgentDetailsModalAssertion);
-  },
-  additionalShareUserMarketplaceAgentsAssertion: async (
-    { additionalShareUserMarketplaceAgents },
-    use,
-  ) => {
-    const additionalShareUserMarketplaceAgentsAssertion =
-      new MarketplaceAgentsAssertion(additionalShareUserMarketplaceAgents);
-    await use(additionalShareUserMarketplaceAgentsAssertion);
+    const additionalShareUserEntityDetailsModalAssertion =
+      new EntityDetailsModalAssertion(additionalShareUserEntityDetailsModal);
+    await use(additionalShareUserEntityDetailsModalAssertion);
   },
   additionalShareUserConversationDropdownMenuAssertion: async (
     { additionalShareUserConversationDropdownMenu },
@@ -922,6 +916,19 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserConversationDropdownMenuAssertion =
       new MenuAssertion(additionalShareUserConversationDropdownMenu);
     await use(additionalShareUserConversationDropdownMenuAssertion);
+  },
+  additionalShareUserTooltip: async ({ additionalShareUserPage }, use) => {
+    const additionalShareUserTooltip = new Tooltip(additionalShareUserPage);
+    await use(additionalShareUserTooltip);
+  },
+  additionalShareUserTooltipAssertion: async (
+    { additionalShareUserTooltip },
+    use,
+  ) => {
+    const additionalShareUserTooltipAssertion = new TooltipAssertion(
+      additionalShareUserTooltip,
+    );
+    await use(additionalShareUserTooltipAssertion);
   },
 });
 

@@ -37,7 +37,6 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
 import {
-  AddonsSelectors,
   ModelsSelectors,
   SettingsSelectors,
   WidgetsSelectors,
@@ -53,7 +52,6 @@ import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
 import { TalkToNotFound } from '@/src/components/Common/TalkToNotFound';
@@ -105,13 +103,14 @@ const TalkToModalView = ({
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [prevActiveSlide, setPrevActiveSlide] = useState(0);
 
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModelIdsSet = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -264,7 +263,6 @@ const TalkToModalView = ({
                 conversation,
                 entity.reference,
                 modelsMap,
-                addonsMap,
               ),
             },
             publicationUrl: conversation.publicationInfo?.publicationUrl,
@@ -288,14 +286,7 @@ const TalkToModalView = ({
 
       onClose();
     },
-    [
-      addonsMap,
-      conversation,
-      dispatch,
-      installedModelIdsSet,
-      modelsMap,
-      onClose,
-    ],
+    [conversation, dispatch, installedModelIdsSet, modelsMap, onClose],
   );
 
   const handleGoToWorkspace = useCallback(
@@ -376,6 +367,10 @@ const TalkToModalView = ({
           sliderResetDependencies={sliderResetDependencies}
           itemProps={sliderItemProps}
           modalHeaderHeight={headerHeight}
+          activeSlide={activeSlide}
+          prevActiveSlide={prevActiveSlide}
+          onSetActiveSlide={setActiveSlide}
+          onSetPrevActiveSlide={setPrevActiveSlide}
         />
       </div>
       {isMarketplaceEnabled && (
@@ -392,8 +387,6 @@ const TalkToModalView = ({
           {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
         </Link>
       )}
-
-      <AgentDialogs />
     </>
   );
 };

@@ -25,8 +25,8 @@ dialAdminTest(
       adminOrganizationPromptAssertion,
       organizationFolderPromptAssertions,
       folderDropdownMenu,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       publishingRequestFolderPromptAssertion,
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
@@ -95,11 +95,11 @@ dialAdminTest(
           folderPrompt.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           unpublishFrom: PublishPath.Organization,
           authorLabel: 'hidden',
         });
@@ -118,13 +118,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         unpublishRequestName,
       );
       unpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -184,7 +184,7 @@ dialAdminTest(
               expectedState: 'visible',
               expectedColor: expectedErrorColor,
               expectedCheckboxState: CheckboxState.checked,
-              expectedVersion: ExpectedConstants.defaultAppVersion,
+              expectedVersion: ExpectedConstants.defaultEntityVersion,
               expectedVersionColor: expectedErrorColor,
             },
           );

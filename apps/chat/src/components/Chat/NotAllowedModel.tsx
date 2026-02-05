@@ -13,8 +13,11 @@ import { UISelectors } from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+
 const ICON_SIZE = 24;
-const BUTTON_CLASS_NAME = 'underline underline-offset-2 transition-colors';
+const BUTTON_CLASS_NAME =
+  'border-0 px-0 text-primary underline underline-offset-2 transition-colors hover:text-primary';
 const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
 
 interface NotAllowedModelProps {
@@ -57,12 +60,12 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
     return (
       <>
         {beforeText && <span>{beforeText}</span>}
-        <button
+        <DialLinkButton
           onClick={() => handleChangeModel(item.conversationId)}
           className={BUTTON_CLASS_NAME}
-        >
-          {t('change the agent')}
-        </button>
+          data-qa="change-agent-btn"
+          label={t('change the agent')}
+        />
         {afterText && <span>{afterText}</span>}
       </>
     );
@@ -76,21 +79,19 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
   return (
     <>
       {messageParts[0] && <span>{messageParts[0]}</span>}
-      <button
+      <DialLinkButton
         onClick={() => handleChangeModel(firstItem.conversationId)}
         className={BUTTON_CLASS_NAME}
-      >
-        {` "${firstItem.agentName}" `}
-      </button>
+        label={` "${firstItem.agentName}" `}
+      />
       {messageParts[1] && <span>{messageParts[1]}</span>}
       {items.length > 1 && (
         <>
-          <button
+          <DialLinkButton
             onClick={() => handleChangeModel(secondItem.conversationId)}
             className={BUTTON_CLASS_NAME}
-          >
-            {` "${secondItem.agentName}" `}
-          </button>
+            label={` "${secondItem.agentName}" `}
+          />
           {messageParts[2] && <span>{messageParts[2]}</span>}
         </>
       )}

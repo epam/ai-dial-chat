@@ -61,6 +61,9 @@ class BasePathResolver {
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
+  experimental: {
+    reactCompiler: true,
+  },
   devIndicators: false,
   nx: {
     // Set this to true if you would like to use SVGR
@@ -90,6 +93,28 @@ const nextConfig = {
       {
         source: '/models/:slug([A-Za-z0-9@.-]+)',
         destination: '/?isolated-model-id=:slug',
+        permanent: false,
+      },
+      // Support old two route app editor links
+      {
+        source: '/apps-editor/:slug/settings',
+        has: [
+          { type: 'query', key: 'id', value: '(?<id>.*)' }
+        ],
+        destination: '/apps-editor?step=General&schema=:slug&id=:id',
+        permanent: false,
+      },
+      {
+        source: '/apps-editor/:slug',
+        has: [
+          { type: 'query', key: 'id', value: '(?<id>.*)' }
+        ],
+        destination: '/apps-editor?step=General&schema=:slug&id=:id',
+        permanent: false,
+      },
+      {
+        source: '/apps-editor/:slug',
+        destination: '/apps-editor?step=General&schema=:slug',
         permanent: false,
       },
     ];
@@ -145,6 +170,11 @@ const nextConfig = {
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
 
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'micromark-extension-math': 'micromark-extension-llm-math',
+    };
+
     return config;
   },
 
@@ -160,10 +190,6 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',

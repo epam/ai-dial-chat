@@ -6,7 +6,6 @@ import {
   IconFile,
   IconFilePlus,
   IconUpload,
-  IconX,
 } from '@tabler/icons-react';
 import {
   MouseEvent as ReactMouseEvent,
@@ -31,6 +30,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { isHiddenEntity } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
@@ -56,10 +56,11 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
 import * as monaco from 'monaco-editor';
 
-interface CodeEditorFile {
+interface CodeEditorFileProps {
   file: DialFile;
   isHighlighted: boolean;
   level?: number;
@@ -77,7 +78,7 @@ const CodeEditorFile = ({
   onSelectFile,
   onDeleteFile,
   onSave,
-}: CodeEditorFile) => {
+}: CodeEditorFileProps) => {
   const handleDelete = useCallback(
     (_: unknown, fileId: string) => {
       onDeleteFile(fileId);
@@ -117,8 +118,12 @@ interface CodeEditorViewProps {
   readOnly?: boolean;
 }
 
-const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
+export const CodeEditorView = ({
+  selectedFileId,
+  readOnly,
+}: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
+
   const selectFileContentSelector = useMemo(
     () => CodeEditorSelectors.selectFileContent(selectedFileId),
     [selectedFileId],
@@ -128,18 +133,22 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
     CodeEditorSelectors.selectIsFileContentLoading,
   );
 
+  const [isEditorReady, setIsEditorReady] = useState(false);
+
   const debouncedChangeHandlerRef = useRef<DebouncedFunc<
     (content: string) => void
   > | null>(null);
-  const fileContentRef = useRef<typeof fileContent>();
+  const fileContentRef = useRef<typeof fileContent | undefined>(fileContent);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monaco | null>(null);
   const modelCacheRef = useRef<
     Record<string, monaco.editor.ITextModel | undefined>
   >({});
   const contentRef = useRef<string | null>(null);
-
-  const [isEditorReady, setIsEditorReady] = useState(false);
+  const editorAliveRef = useRef<boolean>(false);
+  const lastCursorPosRef = useRef<Record<string, monaco.IPosition | undefined>>(
+    {},
+  );
 
   const editorOptions = useMemo(
     () => (readOnly ? { readOnly: true } : undefined),
@@ -173,6 +182,15 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
     }
   }, [fileContent]);
 
+  const detectLanguageIdFromPath = useCallback((path: string): string => {
+    const ext = path.split('.').pop()?.toLowerCase() ?? '';
+    const langs = monacoRef.current?.languages.getLanguages() ?? [];
+    const found = langs.find((l) =>
+      (l.extensions ?? []).some((e) => e.replace(/^\./, '') === ext),
+    );
+    return found?.id ?? 'plaintext';
+  }, []);
+
   useEffect(() => {
     if (
       isEditorReady &&
@@ -181,6 +199,10 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
       typeof contentRef.current === 'string' &&
       !isContentLoading
     ) {
+      if (!editorAliveRef.current) return;
+
+      const uri = monacoRef.current.Uri.file(selectedFileId);
+      const languageId = detectLanguageIdFromPath(selectedFileId);
       if (
         !modelCacheRef.current[selectedFileId] ||
         modelCacheRef.current[selectedFileId]?.isDisposed()
@@ -188,14 +210,26 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
         modelCacheRef.current[selectedFileId] =
           monacoRef.current.editor.createModel(
             contentRef.current,
-            'python',
-            monacoRef.current.Uri.file(selectedFileId),
+            languageId,
+            uri,
           );
       }
 
-      editorRef.current.setModel(modelCacheRef.current[selectedFileId]!);
+      const model = modelCacheRef.current[selectedFileId]!;
+      editorRef.current.setModel(model);
+
+      const key = uri.toString();
+      const pos = lastCursorPosRef.current[key] ?? { lineNumber: 1, column: 1 };
+      editorRef.current.setPosition(pos);
+      editorRef.current.revealPositionInCenterIfOutsideViewport(pos);
+      editorRef.current.focus();
     }
-  }, [selectedFileId, isEditorReady, isContentLoading]);
+  }, [
+    selectedFileId,
+    isEditorReady,
+    isContentLoading,
+    detectLanguageIdFromPath,
+  ]);
 
   const handleDebouncedChange = useCallback((content: string | undefined) => {
     if (typeof content === 'string' && debouncedChangeHandlerRef.current) {
@@ -217,7 +251,30 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
 
       monacoRef.current.editor.getModels().forEach((model) => model.dispose());
 
-      // use refs inside codeEditor handlers to get actual values
+      editorAliveRef.current = true;
+      codeEditor.onDidDispose(() => {
+        editorAliveRef.current = false;
+      });
+
+      codeEditor.onDidChangeCursorPosition(() => {
+        const model = codeEditor.getModel();
+        if (model) {
+          lastCursorPosRef.current[model.uri.toString()] =
+            codeEditor.getPosition() ?? { lineNumber: 1, column: 1 };
+        }
+      });
+      codeEditor.onDidChangeModel((e) => {
+        const key = e.newModelUrl?.toString();
+        const pos = (key && lastCursorPosRef.current[key]) || {
+          lineNumber: 1,
+          column: 1,
+        };
+
+        codeEditor.setPosition(pos);
+        codeEditor.revealPositionInCenterIfOutsideViewport(pos);
+        codeEditor.focus();
+      });
+
       codeEditor.onKeyDown((e) => {
         if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
           e.preventDefault();
@@ -255,7 +312,6 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
 
   return (
     <MonacoEditor
-      language="python"
       onChange={handleDebouncedChange}
       onMount={handleEditorMount}
       beforeMount={handleBeforeEditorMount}
@@ -267,14 +323,11 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
 interface Props {
   sourcesFolderId: string | undefined;
   readOnly?: boolean;
-  sidebarDefaultOpen?: boolean;
 }
 
-export const CodeEditor = ({
-  sourcesFolderId,
-  readOnly,
-  sidebarDefaultOpen = true,
-}: Props) => {
+const ALLOWED_PRE_UPLOAD_DIALOG_TYPES = ['*/*'];
+
+export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -282,7 +335,7 @@ export const CodeEditor = ({
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
   );
-  const files = useAppSelector(FilesSelectors.selectFiles);
+  const allFiles = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const selectedFileId = useAppSelector(CodeEditorSelectors.selectSelectedFile);
   const modifiedFileIds = useAppSelector(
@@ -296,7 +349,12 @@ export const CodeEditor = ({
   const [uploadFolderId, setUploadFolderId] = useState<string>();
   const [deletingFileId, setDeletingFileId] = useState<string>();
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(sidebarDefaultOpen);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const files = useMemo(
+    () => allFiles.filter((file) => !isHiddenEntity(file)),
+    [allFiles],
+  );
 
   const { rootFiles, rootFolders } = useMemo(() => {
     if (sourcesFolderId) {
@@ -465,6 +523,17 @@ export const CodeEditor = ({
     [],
   );
 
+  const handleUploadFilesClose = useCallback(() => {
+    setUploadFolderId(undefined);
+  }, []);
+
+  const handleSelectFile = useCallback(
+    (file: DialFile) => {
+      dispatch(CodeEditorActions.setSelectedFileId(file.id));
+    },
+    [dispatch],
+  );
+
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
     [isFullScreen],
@@ -475,7 +544,7 @@ export const CodeEditor = ({
   }
 
   return (
-    <div className="z-10 w-full max-w-full">
+    <div className="z-40 w-full max-w-full">
       <div
         className={classNames(
           'grid min-h-[400px] w-full max-w-full grid-rows-[100%]',
@@ -486,12 +555,11 @@ export const CodeEditor = ({
         <div className="flex max-h-full flex-col divide-y divide-tertiary overflow-hidden rounded-l border border-tertiary bg-layer-3">
           <div className="flex w-full shrink-0">
             <Tooltip tooltip={t('Hide file list')} isTriggerClickable>
-              <button
+              <DialButton
                 onClick={handleSidebarToggle}
                 className="border-r border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
-              >
-                <MoveLeftIcon width={18} height={18} />
-              </button>
+                iconBefore={<MoveLeftIcon width={18} height={18} />}
+              />
             </Tooltip>
           </div>
           <div className="grow overflow-y-auto p-3">
@@ -500,7 +568,7 @@ export const CodeEditor = ({
                 <Folder
                   maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                   key={folder.id}
-                  searchTerm={''}
+                  searchTerm=""
                   onFileUpload={handleUploadFile}
                   currentFolder={folder}
                   allFolders={folders}
@@ -513,10 +581,8 @@ export const CodeEditor = ({
                     <CodeEditorFile
                       isModified={modifiedFileIds.includes(props.item.id)}
                       level={props.level}
-                      file={props.item as DialFile}
-                      onSelectFile={(file) =>
-                        dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                      }
+                      file={props.item}
+                      onSelectFile={handleSelectFile}
                       isHighlighted={selectedFileId === props.item.id}
                       onDeleteFile={setDeletingFileId}
                       onSave={handleSaveFiles}
@@ -533,9 +599,7 @@ export const CodeEditor = ({
                 isModified={modifiedFileIds.includes(file.id)}
                 key={file.id}
                 file={file}
-                onSelectFile={(file) =>
-                  dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                }
+                onSelectFile={handleSelectFile}
                 isHighlighted={selectedFileId === file.id}
                 onDeleteFile={setDeletingFileId}
                 onSave={handleSaveFiles}
@@ -564,26 +628,22 @@ export const CodeEditor = ({
                   <SidebarActionButton
                     handleClick={() => handleUploadEmptyFile(newFileName)}
                     dataQA="confirm-edit"
-                  >
-                    <IconCheck
-                      size={18}
-                      className="hover:text-accent-primary"
-                    />
-                  </SidebarActionButton>
-                  <SidebarActionButton
-                    handleClick={() => {
+                    iconBefore={
+                      <IconCheck
+                        size={18}
+                        className="hover:text-accent-primary"
+                      />
+                    }
+                  />
+                  <DialCloseButton
+                    onClose={() => {
                       handleUploadEmptyFile(
                         getNextDefaultName('New file', rootFiles),
                       );
                     }}
-                    dataQA="cancel-edit"
-                  >
-                    <IconX
-                      size={18}
-                      strokeWidth="2"
-                      className="hover:text-accent-primary"
-                    />
-                  </SidebarActionButton>
+                    data-qa="cancel-edit"
+                    size={18}
+                  />
                 </div>
               </div>
             )}
@@ -591,49 +651,41 @@ export const CodeEditor = ({
           {!readOnly && (
             <div className="flex items-center gap-3 px-3 py-2.5">
               <Tooltip tooltip={t('Add new folder')}>
-                <button
-                  type="button"
+                <DialButton
                   onClick={() =>
                     dispatch(
                       FilesActions.addNewFolder({ parentId: sourcesFolderId }),
                     )
                   }
                   className="text-secondary hover:text-accent-primary"
-                >
-                  <FolderPlus height={18} width={18} />
-                </button>
+                  iconBefore={<FolderPlus height={18} width={18} />}
+                />
               </Tooltip>
               <Tooltip tooltip={t('Create file')}>
-                <button
-                  type="button"
+                <DialButton
                   onClick={() => {
                     setNewFileFolder(sourcesFolderId);
                     setNewFileName(getNextDefaultName('New file', rootFiles));
                   }}
                   disabled={!!newFileName}
                   className="text-secondary hover:text-accent-primary"
-                >
-                  <IconFilePlus size={18} />
-                </button>
+                  iconBefore={<IconFilePlus size={18} />}
+                />
               </Tooltip>
               <Tooltip tooltip={t('Upload file')}>
-                <button
-                  type="button"
+                <DialButton
                   onClick={openUploadDialog}
                   className="text-secondary hover:text-accent-primary"
-                >
-                  <IconUpload size={18} />
-                </button>
+                  iconBefore={<IconUpload size={18} />}
+                />
               </Tooltip>
               {!!modifiedFileIds.length && (
                 <Tooltip tooltip={t('Save all')}>
-                  <button
-                    type="button"
+                  <DialButton
                     onClick={() => handleSaveFiles(modifiedFileIds)}
                     className="text-secondary hover:text-accent-primary"
-                  >
-                    <IconDeviceFloppy size={18} />
-                  </button>
+                    iconBefore={<IconDeviceFloppy size={18} />}
+                  />
                 </Tooltip>
               )}
             </div>
@@ -647,26 +699,23 @@ export const CodeEditor = ({
                 isTriggerClickable
                 triggerClassName="mr-auto"
               >
-                <button
+                <DialButton
                   onClick={handleSidebarToggle}
                   className="border-r border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
-                >
-                  <MoveRightIcon width={18} height={18} />
-                </button>
+                  iconBefore={<MoveRightIcon width={18} height={18} />}
+                />
               </Tooltip>
             )}
 
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
-              <button
-                type="button"
+              <DialButton
                 className="border-l border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
                 onClick={(e) => {
                   setIsFullScreen(!isFullScreen);
                   dispatchMouseLeaveEvent(e);
                 }}
-              >
-                <FullScreenIcon size={18} />
-              </button>
+                iconBefore={<FullScreenIcon size={18} />}
+              />
             </Tooltip>
           </div>
           <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
@@ -682,10 +731,10 @@ export const CodeEditor = ({
           <PreUploadDialog
             uploadFolderId={uploadFolderId}
             isOpen
-            allowedTypes={['*/*']}
+            allowedTypes={ALLOWED_PRE_UPLOAD_DIALOG_TYPES}
             initialFilesSelect
             onUploadFiles={handleUploadFiles}
-            onClose={() => setUploadFolderId(undefined)}
+            onClose={handleUploadFilesClose}
             maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
             rootFolderId={sourcesFolderId}
           />

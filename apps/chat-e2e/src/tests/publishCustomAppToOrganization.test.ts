@@ -17,18 +17,17 @@ dialAdminTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      agentDetailsModal,
-      agentDetailsModalAssertion,
+      baseAssertion,
+      marketplaceEntitiesSection,
+      entityDetailsModal,
+      entityDetailsModalAssertion,
       customApplicationBuilder,
       applicationApiHelper,
-      adminMarketplaceAgentsAssertion,
-      publishingRequestModal,
+      publishingRequestDialog,
       selectFolderModal,
       selectFolders,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
       fileApiHelper,
-      dialHomePage,
       adminDialHomePage,
       adminApproveRequiredPrompts,
       adminPublishingApprovalModal,
@@ -38,9 +37,9 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       navigationPanel,
-      organizationFoldersAssertion,
-      chatBar,
-      attachFilesModal,
+      fileManagerToolbar,
+      fileManagerGrid,
+      fileManagerGridAssertion,
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
@@ -48,7 +47,7 @@ dialAdminTest(
       conversationData,
       adminConversations,
       adminConversationDropdownMenu,
-      adminPublishingRequestModal,
+      adminPublishingRequestDialog,
       adminSelectFolderModal,
       adminSelectFoldersAssertion,
     },
@@ -56,7 +55,7 @@ dialAdminTest(
   ) => {
     setTestIds('EPMRTC-4450', 'EPMRTC-4496', 'EPMRTC-5858', 'EPMRTC-5736');
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const orgFolder = GeneratorUtil.randomString(7);
     const publicationPath = `${PublishPath.Organization}/${orgFolder}`;
 
@@ -118,15 +117,16 @@ dialAdminTest(
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appEntity);
+        appElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModal.clickPublishButton();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await entityDetailsModal.publishButton.click();
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
       },
@@ -135,7 +135,7 @@ dialAdminTest(
     await dialTest.step(
       'Click on "Change" link, create a new folder, rename it and select',
       async () => {
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -143,8 +143,8 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.getChangePublishToPath().path,
           publicationPath,
         );
       },
@@ -153,9 +153,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and send the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
 
         const fileResource = publishApiModels.response.resources.find((r) =>
           r.reviewUrl.endsWith(filename),
@@ -198,7 +198,9 @@ dialAdminTest(
       await adminPublishedApplicationReviewModal
         .getPublicationReviewControl()
         .backToPublicationRequest();
-      await adminPublishingApprovalModal.approveRequest();
+      await adminPublishingApprovalModal.approveRequest({
+        isModelsListRetrieved: true,
+      });
       await adminApproveRequiredConversationsAssertion.assertFolderState(
         { name: requestName },
         'hidden',
@@ -215,17 +217,15 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-        appElement = await marketplaceAgentsSection.findAgentElement(
+        appElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
-          { isWorkspaceAgent: false, isEditable: false },
+          { isWorkspaceEntity: false, isEditable: false },
         );
-        await adminMarketplaceAgentsAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(appElement, 'visible');
       },
     );
 
@@ -233,37 +233,34 @@ dialAdminTest(
       'Click on the found card and verify the details',
       async () => {
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModalAssertion.assertEntityIcon(
-          agentDetailsModal.icon,
+        await entityDetailsModalAssertion.assertEntityIcon(
+          entityDetailsModal.icon,
           expectedPublishedIconUrl,
         );
-        await agentDetailsModalAssertion.assertApplicationAuthor(defaultAuthor);
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModalAssertion.assertEntityAuthor(defaultAuthor);
+        await entityDetailsModal.closeButton.click();
       },
     );
 
     await dialAdminTest.step(
-      'Open "Manage Attachments" modal and verify app icon appears under "Organization" in the corresponding folder',
+      'Open File Manager and verify app icon appears under "Organization" in the corresponding folder',
       async () => {
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          orgFolder,
+          'visible',
+        );
+        await fileManagerGrid.openFolder(orgFolder);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          filename,
+          'visible',
+        );
         await navigationPanel.backToChat();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await organizationFoldersAssertion.assertFolderState(
-          { name: orgFolder },
-          'visible',
-        );
-        await attachFilesModal
-          .getOrganizationFoldersTree()
-          .expandFolder(orgFolder);
-        await organizationFoldersAssertion.assertFolderEntityState(
-          { name: orgFolder },
-          { name: filename },
-          'visible',
-        );
       },
     );
 
@@ -274,8 +271,8 @@ dialAdminTest(
         await adminConversationDropdownMenu.selectMenuOption(
           MenuOptions.publish,
         );
-        await adminPublishingRequestModal.waitForState();
-        await adminPublishingRequestModal
+        await adminPublishingRequestDialog.waitForState();
+        await adminPublishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await adminSelectFoldersAssertion.assertFolderState(
@@ -286,9 +283,9 @@ dialAdminTest(
         await adminSelectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await adminPublishingRequestModal.requestName.fillInInput(requestName);
-        await adminPublishingRequestModal.sendPublicationRequest();
-        await adminPublishingRequestModal.waitForState({ state: 'hidden' });
+        await adminPublishingRequestDialog.requestName.fillInInput(requestName);
+        await adminPublishingRequestDialog.sendPublicationRequest();
+        await adminPublishingRequestDialog.waitForState({ state: 'hidden' });
       },
     );
   },

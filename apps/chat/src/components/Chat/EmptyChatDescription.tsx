@@ -35,6 +35,7 @@ import { PlaybackIcon } from './Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
@@ -155,10 +156,10 @@ const EmptyChatDescriptionView = ({
           incorrectModel ? 'text-[40px]' : 'text-sm',
         )}
       >
-        <div className="flex flex-col gap-3" data-qa="agent-info-container">
+        <div className="flex flex-col gap-3" data-qa="entity-info-container">
           <div
             className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
-            data-qa="agent-info"
+            data-qa="entity-info"
           >
             {PseudoIcon ? (
               <PseudoIcon size={modelIconSize} />
@@ -244,22 +245,20 @@ const EmptyChatDescriptionView = ({
       {(!isReadOnly || !isExternal) && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           {!isEmptyChatChangeAgentHidden && (
-            <button
-              className="text-left text-accent-primary"
+            <DialLinkButton
               data-qa="change-agent"
               onClick={handleOpenChangeModel}
-            >
-              {t('Change agent')}
-            </button>
+              label={t('Change agent')}
+              className="px-0"
+            />
           )}
           {!isReplayAsIs && !isPlayback && isEmptyChatSettingsEnabled && (
-            <button
-              className="pl-3 text-left text-accent-primary"
+            <DialLinkButton
               data-qa="configure-settings"
               onClick={handleOpenSettings}
-            >
-              {t('Configure settings')}
-            </button>
+              label={t('Configure settings')}
+              className="rounded-none border-y-0 px-3"
+            />
           )}
         </div>
       )}

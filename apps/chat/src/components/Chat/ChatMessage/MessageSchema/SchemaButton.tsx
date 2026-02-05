@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { FormSchemaButtonOption, MessageFormValue } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   option: FormSchemaButtonOption;
@@ -42,19 +43,18 @@ export const SchemaButton: React.FC<Props> = ({
   }, [option.title, selectedAction, dispatch]);
 
   return (
-    <button
+    <DialButton
       data-no-context-menu
       key={`${option.const}`}
       ref={buttonRef}
       onClick={isPlayback ? undefined : () => onClick(option)}
-      className={classNames('chat-button max-w-full truncate', className, {
+      className={classNames('chat-button max-w-full', className, {
         'button-accent-primary':
           showSelected && Object.values(formValue ?? {}).includes(option.const),
-        'cursor-not-allowed': disabled,
       })}
+      textClassName="truncate"
       disabled={isPlayback ? false : disabled}
-    >
-      {option.title}
-    </button>
+      label={option.title}
+    />
   );
 };

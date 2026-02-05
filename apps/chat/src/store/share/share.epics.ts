@@ -19,6 +19,7 @@ import {
   getApplicationType,
   getQuickAppDocumentUrl,
 } from '@/src/utils/app/application';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import {
@@ -26,7 +27,9 @@ import {
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
+import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
 import {
+  getEntityBucket,
   isApplicationId,
   isConversationId,
   isEntityIdExternal,
@@ -53,6 +56,7 @@ import {
   ShareResource,
 } from '@/src/types/share';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -69,6 +73,7 @@ import { ModelUpdatedValues } from '@/src/store/models/models.types';
 import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
+  CodeEditorSelectors,
   ConversationsSelectors,
   FilesSelectors,
   ModelsSelectors,
@@ -99,6 +104,14 @@ const getInternalResourcesUrls = (
     )
     .filter(Boolean)
     .flat() || []) as string[];
+};
+
+const getSharedParentFolder = (id?: string) => {
+  if (!id || getEntityBucket({ id }) === BucketService.getBucket())
+    return undefined;
+  if (id.split('/').length < 3) return id;
+
+  return getParentFolderIdsFromEntityId(id)[0];
 };
 
 const shareEpic: AppEpic = (action$) =>
@@ -589,12 +602,14 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.me,
+            includeUserInfo: true,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.others,
+            includeUserInfo: true,
           }),
         ),
       );
@@ -644,6 +659,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
           EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
         ],
         with: payload.sharedWith,
+        includeUserInfo: payload.includeUserInfo,
       }).pipe(
         switchMap((entities) => {
           return of(
@@ -912,6 +928,24 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
             state$.value,
           );
+          const sharedWithMeFileIds = payload.resources.entities.map(
+            (res) => res.id,
+          );
+          const sharedWithMeFolderIds = payload.resources.folders.map(
+            (res) => res.id,
+          );
+
+          actions.push(
+            FilesActions.setSharedWithMeFilesAndFoldersIds({
+              ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
+            }),
+          );
+
+          const selectedCodeEditorFileId =
+            CodeEditorSelectors.selectSelectedFile(state$.value);
+          const codeEditorFolderOnReview = getSharedParentFolder(
+            selectedCodeEditorFileId?.split('/')?.slice(0, -1)?.join('/'),
+          );
 
           actions.push(
             FilesActions.addSharedFiles({
@@ -922,6 +956,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   ...res,
                   sharedWithMe: true,
                 })) as DialFile[],
+              reviewFolder: codeEditorFolderOnReview,
             }),
           );
 
@@ -1140,7 +1175,7 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
 const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.discardSharedWithMe.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const resourceUrls = payload.isFolder
         ? payload.resourceIds.map(
             (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
@@ -1150,12 +1185,13 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           );
 
       return ShareService.shareDiscard(resourceUrls).pipe(
-        switchMap(() => {
-          if (!payload.isFolder && payload.featureType === FeatureType.File) {
-            return EMPTY;
-          }
-          const actions: Observable<AppAction>[] = payload.resourceIds.map(
-            (resourceId) =>
+        mergeMap(() => {
+          const actions: Observable<AppAction>[] = [];
+
+          payload.resourceIds.forEach((resourceId) => {
+            const { name } = splitEntityId(resourceId);
+
+            actions.push(
               of(
                 ShareActions.discardSharedWithMeSuccess({
                   resourceId,
@@ -1163,10 +1199,48 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                   isFolder: payload.isFolder,
                 }),
               ),
-          );
+              of(
+                UIActions.showSuccessToast(
+                  translate(
+                    payload.isFolder
+                      ? 'Folder "{{itemName}}" has been unshared successfully'
+                      : '"{{itemName}}" has been unshared successfully',
+                    {
+                      ns: Translation.Common,
+                      itemName: name,
+                    },
+                  ),
+                ),
+              ),
+            );
+          });
+
           return concat(...actions);
         }),
-        catchError(() => of(ShareActions.discardSharedWithMeFail())),
+        catchError(() => {
+          const errorActions: Observable<AppAction>[] = payload.resourceIds.map(
+            (resourceId) => {
+              const { name } = splitEntityId(resourceId);
+              return of(
+                UIActions.showErrorToast(
+                  translate(
+                    payload.isFolder
+                      ? 'Failed to unshare folder "{{itemName}}". Please try again later'
+                      : 'Failed to unshare "{{itemName}}". Please try again later',
+                    {
+                      ns: Translation.Common,
+                      itemName: name,
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+          return concat(
+            ...errorActions,
+            of(ShareActions.discardSharedWithMeFail()),
+          );
+        }),
       );
     }),
   );
