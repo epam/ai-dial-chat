@@ -40,7 +40,7 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
   const { error = 'default' } = router.query;
   const signinPageUrl = `/auth/signin`;
 
-  const errors: Record<string, ErrorView> = {
+  const errors: Record<ErrorType, ErrorView> = {
     default: {
       status: 200,
       heading: 'Error',
@@ -94,7 +94,7 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
 
   const { heading, message } =
     error && typeof error === 'string'
-      ? (errors[error.toLowerCase()] ?? errors.default)
+      ? (errors[error.toLowerCase() as ErrorType] ?? errors.default)
       : errors.default;
 
   const logoImgSrc = useMemo(() => {
