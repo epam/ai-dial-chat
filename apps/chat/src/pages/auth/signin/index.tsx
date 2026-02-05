@@ -33,7 +33,24 @@ import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
 
-const errors: Record<string, string> = {
+/**
+ * The following errors are passed as error query parameters to the default or overridden sign-in page.
+ *
+ * [Documentation](https://next-auth.js.org/configuration/pages#sign-in-page) */
+export type SignInErrorTypes =
+  | 'Signin'
+  | 'OAuthSignin'
+  | 'OAuthCallback'
+  | 'OAuthCreateAccount'
+  | 'EmailCreateAccount'
+  | 'Callback'
+  | 'OAuthAccountNotLinked'
+  | 'EmailSignin'
+  | 'CredentialsSignin'
+  | 'SessionRequired'
+  | 'default';
+
+const errors: Record<SignInErrorTypes, string> = {
   Signin: 'Try signing in with a different account.',
   OAuthSignin: 'Try signing in with a different account.',
   OAuthCallback: 'Try signing in with a different account.',
@@ -77,7 +94,7 @@ export default function Signin({
 
   const errorMessage =
     error && typeof error === 'string'
-      ? t(errors[error] ?? errors.default)
+      ? t(errors[error as SignInErrorTypes] ?? errors.default)
       : undefined;
 
   useEffect(() => {
