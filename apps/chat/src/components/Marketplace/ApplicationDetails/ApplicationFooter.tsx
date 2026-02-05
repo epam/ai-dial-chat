@@ -42,6 +42,7 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYING:
     case ApplicationStatus.DEPLOYING:
+    case ApplicationStatus.REDEPLOYING:
       return `Application is ${entity.functionStatus.toLowerCase()}`;
     case ApplicationStatus.DEPLOYED:
       return `Undeploy application to ${normal.toLowerCase()}`;

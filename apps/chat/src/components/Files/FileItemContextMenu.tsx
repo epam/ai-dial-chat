@@ -96,7 +96,7 @@ export function FileItemContextMenu({
         dataQa: 'save',
         additionalNameNode: isCodeEditorFile ? (
           <span className="pl-2 text-secondary">
-            {isMacOs ? '⌘+S' : 'Ctrl+S'}
+            {isMacOs() ? '⌘+S' : 'Ctrl+S'}
           </span>
         ) : null,
         display: !!onSave,
