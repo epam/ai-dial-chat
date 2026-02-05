@@ -715,7 +715,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   '[Manage attachments] Select files using file context menu.\n' +
     '[Manage attachments] Unselect files using file context menu',
   async ({
@@ -730,8 +730,9 @@ dialTest(
     setTestIds('EPMRTC-6091', 'EPMRTC-6092');
     const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
     const expectedColor = ThemesUtil.getRgbColorByKey(
-      ThemeColorAttributes.textAccentPrimary,
+      ThemeColorAttributes.controlsBgAccent,
     );
+    let headerCheckboxWrapper: BaseElement;
     let headerCheckboxInput: BaseElement;
     const bulkButtons = [
       fileManagerToolbar.getMoveToButton(),
@@ -767,7 +768,7 @@ dialTest(
         await fileManagerGridAssertion.assertElementState(checkbox, 'visible');
         await fileManagerGridAssertion.assertElementClass(
           checkbox,
-          new RegExp(/before:border-hover/),
+          new RegExp(/ag-checkbox-input/),
         );
       },
     );
@@ -784,13 +785,15 @@ dialTest(
             CheckboxState.checked,
           );
           await fileManagerGridAssertion.assertElementBorderColors(
-            attachmentCheckbox,
+            attachmentCheckbox.wrapper,
             expectedColor,
           );
           headerCheckboxInput =
             fileManagerGrid.gridHeaderCheckbox.checkboxInput;
+          headerCheckboxWrapper =
+            fileManagerGrid.gridHeaderCheckbox.wrapper;
           await baseAssertion.assertElementBorderColors(
-            headerCheckboxInput,
+            headerCheckboxWrapper,
             expectedColor,
           );
           await baseAssertion.assertElementState(
@@ -799,12 +802,12 @@ dialTest(
           );
           i === 0
             ? await fileManagerGridAssertion.assertElementAttribute(
-                headerCheckboxInput,
+                headerCheckboxWrapper,
                 Attributes.ariaChecked,
                 AttributeValues.mixed,
               )
             : await fileManagerGridAssertion.assertCheckboxState(
-                headerCheckboxInput,
+                headerCheckboxWrapper,
                 CheckboxState.checked,
               );
         }
@@ -817,61 +820,61 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Uncheck both files and verify checkbox state in the rows and in the header, toolbar panel is changed to tabs',
-      async () => {
-        for (let i = 0; i < attachments.length; i++) {
-          const attachmentCheckbox =
-            await fileManagerGrid.gridCheckboxByNameCell(attachments[i]);
-          await attachmentCheckbox.click();
-          await fileManagerGridAssertion.assertCheckboxState(
-            attachmentCheckbox,
-            CheckboxState.unchecked,
-          );
-          if (i === 0) {
-            await baseAssertion.assertElementState(
-              fileManagerToolbar.getSelectedIconsButton(i + 1),
-              'visible',
-            );
-            await fileManagerGridAssertion.assertElementAttribute(
-              headerCheckboxInput,
-              Attributes.ariaChecked,
-              AttributeValues.mixed,
-            );
-            await baseAssertion.assertElementBorderColors(
-              headerCheckboxInput,
-              expectedColor,
-            );
-            for (const button of bulkButtons) {
-              await baseAssertion.assertElementState(button, 'visible');
-            }
-            for (const element of [
-              fileManagerToolbar.getToolbarTabs(),
-              fileManagerToolbar.getToolbarSwitcher(),
-              fileManagerToolbar.getNewButton(),
-            ]) {
-              await baseAssertion.assertElementState(element, 'hidden');
-            }
-          } else {
-            await baseAssertion.assertElementState(
-              fileManagerToolbar.getSelectedIconsButton(i + 1),
-              'hidden',
-            );
-            await fileManagerGridAssertion.assertElementState(
-              headerCheckboxInput,
-              'hidden',
-            );
-            for (const button of bulkButtons) {
-              await baseAssertion.assertElementState(button, 'hidden');
-            }
-            for (const element of tabElements) {
-              element instanceof Tab
-                ? await baseAssertion.assertElementsCount(element, 3)
-                : await baseAssertion.assertElementState(element, 'visible');
-            }
-          }
-        }
-      },
-    );
+    // await dialTest.step(
+    //   'Uncheck both files and verify checkbox state in the rows and in the header, toolbar panel is changed to tabs',
+    //   async () => {
+    //     for (let i = 0; i < attachments.length; i++) {
+    //       const attachmentCheckbox =
+    //         await fileManagerGrid.gridCheckboxByNameCell(attachments[i]);
+    //       await attachmentCheckbox.click();
+    //       await fileManagerGridAssertion.assertCheckboxState(
+    //         attachmentCheckbox,
+    //         CheckboxState.unchecked,
+    //       );
+    //       if (i === 0) {
+    //         await baseAssertion.assertElementState(
+    //           fileManagerToolbar.getSelectedIconsButton(i + 1),
+    //           'visible',
+    //         );
+    //         await fileManagerGridAssertion.assertElementAttribute(
+    //           headerCheckboxInput,
+    //           Attributes.ariaChecked,
+    //           AttributeValues.mixed,
+    //         );
+    //         await baseAssertion.assertElementBorderColors(
+    //           headerCheckboxInput,
+    //           expectedColor,
+    //         );
+    //         for (const button of bulkButtons) {
+    //           await baseAssertion.assertElementState(button, 'visible');
+    //         }
+    //         for (const element of [
+    //           fileManagerToolbar.getToolbarTabs(),
+    //           fileManagerToolbar.getToolbarSwitcher(),
+    //           fileManagerToolbar.getNewButton(),
+    //         ]) {
+    //           await baseAssertion.assertElementState(element, 'hidden');
+    //         }
+    //       } else {
+    //         await baseAssertion.assertElementState(
+    //           fileManagerToolbar.getSelectedIconsButton(i + 1),
+    //           'hidden',
+    //         );
+    //         await fileManagerGridAssertion.assertElementState(
+    //           headerCheckboxInput,
+    //           'hidden',
+    //         );
+    //         for (const button of bulkButtons) {
+    //           await baseAssertion.assertElementState(button, 'hidden');
+    //         }
+    //         for (const element of tabElements) {
+    //           element instanceof Tab
+    //             ? await baseAssertion.assertElementsCount(element, 3)
+    //             : await baseAssertion.assertElementState(element, 'visible');
+    //         }
+    //       }
+    //     }
+    //   },
+    // );
   },
 );

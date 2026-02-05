@@ -57,7 +57,9 @@ export const GridSelectors = {
   gridViewPort: '.ag-body-viewport',
   gridBody: '.ag-body',
   gridCheckboxInput: 'input.ag-checkbox-input',
+  gridCheckboxWrapper: '.ag-checkbox-input-wrapper',
 };
+
 
 export const CheckboxSelectors = {
   checkboxContainer: '[aria-description="checkbox-container"]',
