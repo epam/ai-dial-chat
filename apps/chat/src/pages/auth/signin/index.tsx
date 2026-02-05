@@ -129,7 +129,7 @@ export default function Signin({
           )}
         </div>
         <div className="flex flex-col gap-4">
-          {Object.values(providers).map((provider: Provider) => (
+          {Object.values(providers ?? []).map((provider: Provider) => (
             <DialNeutralButton
               className="gap-4 p-4"
               onClick={() => {
