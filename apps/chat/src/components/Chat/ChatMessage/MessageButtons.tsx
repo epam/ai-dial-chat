@@ -158,6 +158,7 @@ const CopyButton = ({
         key={`copied${keyPostfix}`}
         placement="top"
         tooltip={t(copiedLabel)}
+        triggerClassName="p-0.5"
       >
         <IconCheck size={18} className="text-secondary" />
       </Tooltip>
