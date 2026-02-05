@@ -60,7 +60,6 @@ export const GridSelectors = {
   gridCheckboxWrapper: '.ag-checkbox-input-wrapper',
 };
 
-
 export const CheckboxSelectors = {
   checkboxContainer: '[aria-description="checkbox-container"]',
   checkbox: '[role="checkbox"]',

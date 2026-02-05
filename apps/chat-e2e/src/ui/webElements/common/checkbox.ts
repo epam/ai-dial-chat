@@ -31,4 +31,3 @@ export class Checkbox extends BaseElement {
     );
   }
 }
-
