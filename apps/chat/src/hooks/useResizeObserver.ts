@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-
 export const useResizeObserver = (
   target: Element | null,
   callback: () => void,
