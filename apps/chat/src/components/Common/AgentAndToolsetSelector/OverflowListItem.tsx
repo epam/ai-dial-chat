@@ -57,7 +57,7 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
       </div>
       <DialCloseButton
         className={classNames(
-          'text-secondary',
+          'flex text-secondary',
           isError && 'hover:enabled:text-error',
         )}
         onClose={handleRemove}
