@@ -30,4 +30,9 @@ export class Checkbox extends BaseElement {
       this.parentLocator,
     );
   }
+
+  // AG-Grid checkbox visibility is controlled by 'dial-row-select' class on the parent cell
+  public get host(): BaseElement {
+    return this.createElementFromLocator(this.parentLocator);
+  }
 }

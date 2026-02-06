@@ -853,9 +853,14 @@ dialTest(
               fileManagerToolbar.getSelectedIconsButton(i + 1),
               'hidden',
             );
-            await fileManagerGridAssertion.assertElementState(
-              headerCheckboxInput,
-              'hidden',
+            await fileManagerGridAssertion.assertCheckboxState(
+              fileManagerGrid.gridHeaderCheckbox,
+              CheckboxState.unchecked,
+            );
+            //TODO assume that this class regulates the visibility of the checkbox
+            await baseAssertion.assertElementClass(
+              fileManagerGrid.gridHeaderCheckbox.host,
+              /dial-row-select/,
             );
             for (const button of bulkButtons) {
               await baseAssertion.assertElementState(button, 'hidden');
