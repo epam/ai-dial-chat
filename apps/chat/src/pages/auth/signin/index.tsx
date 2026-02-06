@@ -175,7 +175,7 @@ export default function Signin({
         />
         <div className="my-4 text-center">{t('Sign in with:')}</div>
         <div className="flex flex-col gap-4">
-          {Object.values(providers).map((provider: Provider) => (
+          {Object.values(providers ?? []).map((provider: Provider) => (
             <DialNeutralButton
               className="gap-4 p-4"
               onClick={() => {
