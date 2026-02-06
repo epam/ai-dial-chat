@@ -27,9 +27,44 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
+
 import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
+
+/**
+ * The following errors are passed as error query parameters to the default or overridden sign-in page.
+ *
+ * [Documentation](https://next-auth.js.org/configuration/pages#sign-in-page) */
+export type SignInErrorTypes =
+  | 'Signin'
+  | 'OAuthSignin'
+  | 'OAuthCallback'
+  | 'OAuthCreateAccount'
+  | 'EmailCreateAccount'
+  | 'Callback'
+  | 'OAuthAccountNotLinked'
+  | 'EmailSignin'
+  | 'CredentialsSignin'
+  | 'SessionRequired'
+  | 'default';
+
+const errors: Record<SignInErrorTypes, string> = {
+  Signin: 'Try signing in with a different account.',
+  OAuthSignin: 'Try signing in with a different account.',
+  OAuthCallback: 'Try signing in with a different account.',
+  OAuthCreateAccount: 'Try signing in with a different account.',
+  EmailCreateAccount: 'Try signing in with a different account.',
+  Callback: 'Try signing in with a different account.',
+  OAuthAccountNotLinked:
+    'To confirm your identity, sign in with the same account you used originally.',
+  EmailSignin: 'The e-mail could not be sent.',
+  CredentialsSignin:
+    'Sign in failed. Check the details you provided are correct.',
+  SessionRequired: 'Please sign in to access this page.',
+  default: 'Unable to sign in.',
+};
 
 interface PageProps {
   providers: Provider[];
@@ -55,6 +90,13 @@ export default function Signin({
     }
   }, [themesHostDefined]);
 
+  const { callbackUrl, error } = router.query;
+
+  const errorMessage =
+    error && typeof error === 'string'
+      ? t(errors[error as SignInErrorTypes] ?? errors.default)
+      : undefined;
+
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -73,8 +115,6 @@ export default function Signin({
       isClientSessionValid(session) &&
       session.data
     ) {
-      const { callbackUrl } = router.query;
-
       let safeUrl = '/';
 
       if (callbackUrl) {
@@ -89,7 +129,7 @@ export default function Signin({
       }
       window.location.href = safeUrl;
     }
-  }, [defaultAuthProvider, router.query, session, status]);
+  }, [callbackUrl, defaultAuthProvider, router.query, session, status]);
 
   useEffect(() => {
     dispatch(SettingsActions.setThemesHostDefined(themesHostDefined));
@@ -128,6 +168,12 @@ export default function Signin({
             <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
           )}
         </div>
+        <ErrorMessage
+          text-sm
+          error={errorMessage}
+          className="my-4 items-center text-sm"
+        />
+        <div className="my-4 text-center">{t('Sign in with:')}</div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
             <DialNeutralButton
@@ -141,12 +187,12 @@ export default function Signin({
                   className="h-6"
                   src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
                   alt="Provider icon"
-                  width={24}
-                  height={24}
+                  width={20}
+                  height={20}
                 />
               }
-              label={`${t('Sign in with')} ${provider.name}`}
-              textClassName="text-lg"
+              label={provider.name}
+              textClassName="font-semibold"
               data-qa={provider.id}
             />
           ))}
