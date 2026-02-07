@@ -317,9 +317,9 @@ export const parseCommaSeparatedList = (
   const guid = nanoid();
   return (
     str
-      ?.replace('\\,', guid)
+      ?.replaceAll('\\,', guid)
       .split(',')
-      .map((str) => str.replace(guid, ',').trim()) ?? defaultValue
+      .map((str) => str.replaceAll(guid, ',').trim()) ?? defaultValue
   );
 };
 
