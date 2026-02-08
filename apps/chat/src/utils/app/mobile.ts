@@ -1,10 +1,23 @@
-import { isMobile as isMobileValue, isTablet } from 'react-device-detect';
+import { getSelectorsByUserAgent } from 'react-device-detect';
 
 import { ScreenState } from '@/src/types/common';
 
-export { isMacOs } from 'react-device-detect';
-export const isMobile = () => isMobileValue && !isTablet;
-export const isTouchable = () => isMobileValue || isTablet;
+export const getDeviceSelectors = () =>
+  getSelectorsByUserAgent(navigator.userAgent);
+
+export const isMacOs = () => {
+  const { isMacOs } = getDeviceSelectors();
+  return isMacOs;
+};
+
+export const isMobile = () => {
+  const { isMobileOnly, isTablet } = getDeviceSelectors();
+  return isMobileOnly && !isTablet;
+};
+export const isTouchable = () => {
+  const { isMobileOnly, isTablet } = getDeviceSelectors();
+  return isMobileOnly || isTablet;
+};
 
 const isScreenSize = (maxWidth: number): boolean =>
   typeof window !== 'undefined' && window.innerWidth < maxWidth;

@@ -40,7 +40,7 @@ export const EnterTypeSelect = ({
         name="enter-type-select"
         label={
           <>
-            <b>{t(`${isMacOs ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
+            <b>{t(`${isMacOs() ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
             {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}
           </>
         }
