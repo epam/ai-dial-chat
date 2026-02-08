@@ -327,9 +327,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     VIDEO_TYPES_SET.has(attachment.type) ||
     AUDIO_TYPES_SET.has(attachment.type);
 
-  const isFullScreenDisabled =
-    VIDEO_TYPES_SET.has(attachment.type) ||
-    AUDIO_TYPES_SET.has(attachment.type);
+  const isFullScreenEnabled =
+    IMAGE_TYPES_SET.has(attachment.type) ||
+    isCustomAttachmentType ||
+    attachment.type === PLOTLY_CONTENT_TYPE;
 
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
@@ -390,7 +391,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             </a>
           )}
 
-          {!isFullScreenDisabled && (
+          {isFullScreenEnabled && (
             <DialButton
               className="text-secondary hover:text-accent-primary"
               iconBefore={<FullScreenIcon size={18} />}
@@ -452,7 +453,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                     <IconDownload size={18} />
                   </a>
                 )}
-                {!isFullScreenDisabled && (
+                {isFullScreenEnabled && (
                   <DialButton
                     className="text-secondary hover:text-accent-primary"
                     iconBefore={<FullScreenIcon size={18} />}
