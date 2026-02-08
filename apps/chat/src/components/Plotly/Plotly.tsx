@@ -6,6 +6,8 @@ import dynamic from 'next/dynamic';
 import isEqual from 'lodash-es/isEqual';
 import { Layout, PlotRelayoutEvent } from 'plotly.js';
 
+const DEFAULT_HEIGHT = 450;
+
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface Props {
@@ -14,10 +16,11 @@ interface Props {
 }
 
 export const PlotlyComponent = memo(
-  ({ plotlyData: { layout, ...data } }: Props) => {
+  ({ plotlyData: { layout, ...data }, isFullScreen }: Props) => {
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const [width, setWidth] = useState(0);
+    const [width, setWidth] = useState<number | undefined>(undefined);
+    const [height, setHeight] = useState<number | undefined>(undefined);
     const [currentLayout, setCurrentLayout] = useState<Partial<Layout>>(layout);
 
     useEffect(() => {
@@ -25,22 +28,24 @@ export const PlotlyComponent = memo(
         return;
       }
 
-      setWidth(containerRef.current.scrollWidth);
-    }, []);
+      setWidth(containerRef.current.clientWidth);
+      setHeight(
+        isFullScreen
+          ? containerRef.current.clientHeight
+          : (currentLayout.height ?? DEFAULT_HEIGHT),
+      );
+    }, [currentLayout.height, isFullScreen]);
 
-    const handleRelayout = useCallback(
-      (newLayout: PlotRelayoutEvent) => {
-        // save layout if changed
-        setCurrentLayout({ ...currentLayout, ...newLayout });
-      },
-      [currentLayout],
-    );
+    const handleRelayout = useCallback((newLayout: PlotRelayoutEvent) => {
+      // save layout if changed
+      setCurrentLayout((prevLayout) => ({ ...prevLayout, ...newLayout }));
+    }, []);
 
     return (
       <div ref={containerRef} className="size-full">
         <Plot
           {...data}
-          layout={{ ...currentLayout, width }}
+          layout={{ ...currentLayout, width, height }}
           onRelayout={handleRelayout}
         />
       </div>

@@ -135,7 +135,12 @@ const AttachmentDataRenderer = ({
     );
   }
   if (attachment.type === PLOTLY_CONTENT_TYPE) {
-    return <PlotlyStringDataRenderer plotlyStringData={attachment.data} />;
+    return (
+      <PlotlyStringDataRenderer
+        plotlyStringData={attachment.data}
+        isFullScreen={isFullScreen}
+      />
+    );
   }
 
   return null;
@@ -143,10 +148,12 @@ const AttachmentDataRenderer = ({
 
 interface ChartAttachmentUrlRendererProps {
   attachmentUrl: string | undefined;
+  isFullScreen?: boolean;
 }
 
 const ChartAttachmentUrlRenderer = ({
   attachmentUrl,
+  isFullScreen,
 }: ChartAttachmentUrlRendererProps) => {
   const dispatch = useAppDispatch();
 
@@ -182,7 +189,7 @@ const ChartAttachmentUrlRenderer = ({
   }
 
   if (chart) {
-    return <PlotlyComponent plotlyData={chart} />;
+    return <PlotlyComponent plotlyData={chart} isFullScreen={isFullScreen} />;
   }
 
   return null;
@@ -227,7 +234,12 @@ const AttachmentRendererComponent = withErrorBoundary(
       attachment.url &&
       mappedAttachmentUrl
     ) {
-      return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+      return (
+        <ChartAttachmentUrlRenderer
+          attachmentUrl={mappedAttachmentUrl}
+          isFullScreen={isFullScreen}
+        />
+      );
     }
 
     return (
