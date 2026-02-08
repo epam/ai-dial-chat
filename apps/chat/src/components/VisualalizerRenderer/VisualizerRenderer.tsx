@@ -1,6 +1,8 @@
 import { IconRefresh } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import classNames from 'classnames';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
@@ -36,12 +38,14 @@ interface Props {
   attachmentUrl: string;
   renderer: CustomVisualizer;
   mimeType: string;
+  isFullScreen?: boolean;
 }
 
 export const VisualizerRenderer = ({
   attachmentUrl,
   renderer,
   mimeType,
+  isFullScreen,
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
@@ -76,8 +80,8 @@ export const VisualizerRenderer = ({
 
   const hideTitle = withoutTitleTypes.includes(mimeType);
 
-  const scrollWidth =
-    iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;
+  const scrollWidth = iframeContainerRef.current?.scrollWidth ?? null;
+  const containerHeight = iframeContainerRef.current?.clientHeight ?? null;
 
   useEffect(() => {
     if (attachmentUrl && !customAttachmentData) {
@@ -97,10 +101,19 @@ export const VisualizerRenderer = ({
         : (customAttachmentData?.layout.width ??
           DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
-        customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+        isFullScreen && containerHeight
+          ? containerHeight
+          : (customAttachmentData?.layout.height ??
+            DEFAULT_CUSTOM_ATTACHMENT_HEIGHT),
       themeId,
     };
-  }, [customAttachmentData?.layout, scrollWidth, themeId]);
+  }, [
+    containerHeight,
+    customAttachmentData?.layout,
+    isFullScreen,
+    scrollWidth,
+    themeId,
+  ]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
@@ -200,8 +213,12 @@ export const VisualizerRenderer = ({
     return null;
   }
 
+  const iframeContainerClassNames = isFullScreen
+    ? 'h-[calc(100%-30px)]'
+    : `h-[${customVisualizerLayout.height}px]`;
+
   return (
-    <div>
+    <div className={classNames(isFullScreen && 'size-full p-2')}>
       <div className="mb-2 flex flex-row justify-between">
         {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
@@ -214,10 +231,7 @@ export const VisualizerRenderer = ({
       </div>
       <div
         ref={iframeContainerRef}
-        className="size-full"
-        style={{
-          height: `${customVisualizerLayout.height}px`,
-        }}
+        className={classNames('size-full', iframeContainerClassNames)}
       >
         {(!ready || attachmentDataLoading) && (
           <div className="absolute z-10 flex size-full items-center bg-layer-1">

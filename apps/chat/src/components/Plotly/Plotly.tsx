@@ -10,6 +10,7 @@ const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface Props {
   plotlyData: PlotParams;
+  isFullScreen?: boolean;
 }
 
 export const PlotlyComponent = memo(
