@@ -361,6 +361,21 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     }
   };
 
+  useEffect(() => {
+    if (!isFullScreen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsFullScreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [isFullScreen]);
+
   return (
     <div
       data-no-context-menu
