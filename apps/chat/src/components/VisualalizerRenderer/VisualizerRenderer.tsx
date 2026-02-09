@@ -25,7 +25,6 @@ import {
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
 
-
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
