@@ -90,11 +90,13 @@ export default function Signin({
     }
   }, [themesHostDefined]);
 
-  const { callbackUrl, error } = router.query;
+  const { callbackUrl, error, Error } = router.query;
+
+  const errorType = error ?? Error;
 
   const errorMessage =
-    error && typeof error === 'string'
-      ? t(errors[error as SignInErrorTypes] ?? errors.default)
+    errorType && typeof errorType === 'string'
+      ? t(errors[errorType as SignInErrorTypes] ?? errors.default)
       : undefined;
 
   useEffect(() => {

@@ -37,7 +37,8 @@ interface PageProps {
 export default function ErrorPage({ themesHostDefined }: PageProps) {
   const { t } = useTranslation(Translation.Common);
   const router = useRouter();
-  const { error = 'default' } = router.query;
+  const { error, Error } = router.query;
+  const errorType = error ?? Error ?? 'default';
   const signinPageUrl = `/auth/signin`;
 
   const errors: Record<ErrorType, ErrorView> = {
@@ -93,8 +94,8 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
   };
 
   const { heading, message } =
-    error && typeof error === 'string'
-      ? (errors[error.toLowerCase() as ErrorType] ?? errors.default)
+    errorType && typeof errorType === 'string'
+      ? (errors[errorType.toLowerCase() as ErrorType] ?? errors.default)
       : errors.default;
 
   const logoImgSrc = useMemo(() => {
