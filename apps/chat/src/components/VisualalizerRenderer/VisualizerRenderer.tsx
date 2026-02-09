@@ -1,4 +1,8 @@
-import { IconRefresh } from '@tabler/icons-react';
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconRefresh,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
@@ -21,6 +25,7 @@ import {
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
 
+
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
@@ -31,7 +36,11 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
-import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonAppearance,
+  DialButton,
+  DialLinkButton,
+} from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
@@ -39,6 +48,7 @@ interface Props {
   renderer: CustomVisualizer;
   mimeType: string;
   isFullScreen?: boolean;
+  onFullScreenClick?: () => void;
 }
 
 export const VisualizerRenderer = ({
@@ -46,6 +56,7 @@ export const VisualizerRenderer = ({
   renderer,
   mimeType,
   isFullScreen,
+  onFullScreenClick,
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
@@ -74,11 +85,12 @@ export const VisualizerRenderer = ({
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
-  const { withoutTitleTypes } = useAppSelector(
+  const { withoutTitleTypes, borderlessTypes } = useAppSelector(
     SettingsSelectors.selectAttachmentsSettings,
   );
 
   const hideTitle = withoutTitleTypes.includes(mimeType);
+  const isBorderless = borderlessTypes.includes(mimeType);
 
   const scrollWidth = iframeContainerRef.current?.scrollWidth ?? null;
   const containerHeight = iframeContainerRef.current?.clientHeight ?? null;
@@ -209,6 +221,11 @@ export const VisualizerRenderer = ({
     isAllowedSendMessage,
   ]);
 
+  const FullScreenIcon = useMemo(
+    () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
+    [isFullScreen],
+  );
+
   if (!attachmentUrl) {
     return null;
   }
@@ -222,12 +239,25 @@ export const VisualizerRenderer = ({
       <div className="mb-2 flex flex-row justify-between">
         {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
-        <DialLinkButton
-          className="flex text-accent-primary"
-          onClick={() => visualizer.current && sendMessage(visualizer.current)}
-          iconBefore={<IconRefresh size={18} />}
-          label={t('Refresh')}
-        />
+        <div className="flex items-center justify-end gap-2">
+          <DialLinkButton
+            className="flex text-accent-primary"
+            onClick={() =>
+              visualizer.current && sendMessage(visualizer.current)
+            }
+            iconBefore={<IconRefresh size={18} />}
+            label={t('Refresh')}
+          />
+
+          {isBorderless && (
+            <DialButton
+              className="text-secondary hover:text-accent-primary"
+              iconBefore={<FullScreenIcon size={18} />}
+              onClick={onFullScreenClick}
+              appearance={ButtonAppearance.Link}
+            />
+          )}
+        </div>
       </div>
       <div
         ref={iframeContainerRef}

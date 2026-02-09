@@ -49,6 +49,7 @@ import { sanitize } from 'isomorphic-dompurify';
 interface AttachmentDataRendererProps {
   attachment: Attachment;
   isFullScreen?: boolean;
+  onFullScreenClick?: () => void;
   isInner?: boolean;
 }
 
@@ -201,7 +202,12 @@ interface Props {
 }
 
 const AttachmentRendererComponent = withErrorBoundary(
-  ({ attachment, isInner, isFullScreen }: AttachmentDataRendererProps) => {
+  ({
+    attachment,
+    isInner,
+    isFullScreen,
+    onFullScreenClick,
+  }: AttachmentDataRendererProps) => {
     const attachmentType: MIMEType = attachment.type;
     const mappedAttachmentUrl = useMemo(
       () => getSourceDataUrl(attachment),
@@ -225,6 +231,7 @@ const AttachmentRendererComponent = withErrorBoundary(
           renderer={mappedVisualizers[attachmentType][0]}
           mimeType={attachmentType}
           isFullScreen={isFullScreen}
+          onFullScreenClick={onFullScreenClick}
         />
       );
     }
@@ -337,8 +344,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     [isFullScreen],
   );
 
-  const handleToggleFullScreen = (e: MouseEvent<HTMLButtonElement>) => {
-    stopBubbling(e);
+  const handleToggleFullScreen = (e?: MouseEvent<HTMLButtonElement>) => {
+    if (e) {
+      stopBubbling(e);
+    }
     setIsFullScreen((prev) => {
       if (!prev) {
         setIsOpened(true);
@@ -393,6 +402,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           className={classNames(
             'flex items-center justify-end gap-2',
             isFullScreen ? 'px-3 py-2' : 'p-1',
+            isCustomAttachmentType && 'hidden',
           )}
         >
           {isDownloadable && !isFolder && (
@@ -446,7 +456,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           >
             <span
               className={classNames(
-                'shrink truncate whitespace-pre text-left text-sm',
+                'shrink truncate whitespace-pre pr-2 text-left text-sm',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
@@ -520,6 +530,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             attachment={attachment}
             isInner={isInner}
             isFullScreen={isFullScreen}
+            onFullScreenClick={handleToggleFullScreen}
           />
           {mappedAttachmentReferenceUrl && (
             <a
