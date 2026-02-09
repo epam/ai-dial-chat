@@ -139,6 +139,8 @@ dialTest(
     fileManagerDeleteItemConfirmationPopupAssertion,
     localStorageManager,
     fileManagerModalGridAssertion,
+    fileManagerToolbar,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -181,6 +183,10 @@ dialTest(
             await fileManagerModalGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
         }
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          attachedFiles.length,
+        );
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
       },
     );
 
