@@ -11,6 +11,8 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
+import capitalize from 'lodash-es/capitalize';
+
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),
@@ -72,10 +74,10 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of filterValues) {
-      expect(screen.getByText(option)).toBeInTheDocument();
+      expect(screen.getByText(capitalize(option))).toBeInTheDocument();
     }
 
-    const selectedFilterOption = screen.getByText(filterValues[1]);
+    const selectedFilterOption = screen.getByText(capitalize(filterValues[1]));
     await userEvent.click(selectedFilterOption);
 
     expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
@@ -98,10 +100,10 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(selectedTargetOption);
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
+    const selectedFilterOption = screen.getByText(capitalize(selectedFilter));
     await userEvent.click(selectedFilterOption);
 
-    expect(screen.getByText(selectedFilter)).toBeInTheDocument();
+    expect(screen.getByText(capitalize(selectedFilter))).toBeInTheDocument();
     expect(screen.getByText(selectedTarget)).toBeInTheDocument();
   });
 
@@ -121,7 +123,7 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(selectedTargetOption);
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
+    const selectedFilterOption = screen.getByText(capitalize(selectedFilter));
     await userEvent.click(selectedFilterOption);
 
     const iconCheck = screen.getByTestId('save-filter');
@@ -145,7 +147,7 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(selectedTargetOption);
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
+    const selectedFilterOption = screen.getByText(capitalize(selectedFilter));
     await userEvent.click(selectedFilterOption);
 
     const combobox = screen.getByRole('combobox');
@@ -157,7 +159,7 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(iconCheck);
 
     expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
+      source: selectedTarget,
       filterFunction: selectedFilter,
       filterParams: ['QA', 'Developer', 'Manager'],
     });
@@ -187,7 +189,7 @@ describe('TargetAudienceFilterComponent', () => {
   //   await userEvent.click(iconCheck);
 
   //   expect(onSaveFilter).toHaveBeenCalledWith({
-  //     id: selectedTarget,
+  //     source: selectedTarget,
   //     filterFunction: selectedFilter,
   //     filterParams: [],
   //   });
@@ -209,7 +211,7 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(selectedTargetOption);
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
+    const selectedFilterOption = screen.getByText(capitalize(selectedFilter));
     await userEvent.click(selectedFilterOption);
 
     const input = screen.getByPlaceholderText('Enter regular expression...');
@@ -219,7 +221,7 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(iconCheck);
 
     expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
+      source: selectedTarget,
       filterFunction: selectedFilter,
       filterParams: ['Developer.*'],
     });
