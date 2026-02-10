@@ -1343,6 +1343,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+      installedModelIds: ModelsSelectors.selectInstalledModelIds(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1354,6 +1355,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         payload,
+        modelsMap,
+        installedModelIds,
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,
@@ -1460,11 +1463,31 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isMessageStreaming: true,
         });
 
+        const isMarketplaceEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.Marketplace,
+        );
+        const model = modelsMap[updatedConversation.model.id];
+
         if (!payload.skipRecentModelsUpdate) {
           actions.push(
             of(
               ModelsActions.updateRecentModels({
                 modelId: updatedConversation.model.id,
+              }),
+            ),
+          );
+        }
+
+        if (
+          !isMarketplaceEnabled &&
+          model &&
+          !installedModelIds.has(model.reference)
+        ) {
+          actions.push(
+            of(
+              ModelsActions.addInstalledModels({
+                references: [model.reference],
               }),
             ),
           );

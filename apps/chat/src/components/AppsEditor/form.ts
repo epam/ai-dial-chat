@@ -33,6 +33,7 @@ import {
   QuickApp2Config,
   QuickAppConfig,
   UnknownToolset,
+  isDialDeploymentSimpleTool,
   isDialDeploymentToolset,
   isMcpToolset,
   isUnknownToolset,
@@ -423,11 +424,12 @@ export const getAgentsAndToolsetsFormValue = (
   );
 
   return sortedItems.map((item) => {
-    const id = isUnknownToolset(item)
-      ? undefined
-      : 'dial_id' in item
-        ? item.dial_id
-        : item.deployment_id;
+    const id =
+      isUnknownToolset(item) && !isDialDeploymentSimpleTool(item)
+        ? undefined
+        : 'dial_id' in item
+          ? item.dial_id
+          : item.deployment_id;
     return {
       id: id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown'),
       tool: item,
