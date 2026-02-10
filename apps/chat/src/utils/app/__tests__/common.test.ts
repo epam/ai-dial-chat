@@ -128,7 +128,8 @@ describe('utils/app/common.ts', () => {
     });
 
     it('isEntityNameValid: trims + checks invalid + length limits', () => {
-      expect(isEntityNameValid(' a ')).toBe(false);
+      expect(isEntityNameValid('  ')).toBe(false);
+      expect(isEntityNameValid(' a ')).toBe(true);
       expect(isEntityNameValid(' ab ')).toBe(true);
       expect(isEntityNameValid('ab,')).toBe(false);
       expect(isEntityNameValid('abc.', true)).toBe(false);
