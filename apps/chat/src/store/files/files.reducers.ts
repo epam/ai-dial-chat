@@ -9,6 +9,7 @@ import {
   addGeneratedFolderId,
   getFolderFromId,
   getNextDefaultName,
+  getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
   isFolderEmpty,
   renameFolderAndMoveEntity,
@@ -25,6 +26,7 @@ import {
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
+import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { FilesState } from './files.types';
@@ -340,10 +342,23 @@ export const filesSlice = createSlice({
       state.isLoadingSearchListing = false;
 
       const existingFileIds = new Set(state.files.map((f) => f.id));
-      const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
+      const existingFolderIds = new Set(state.folders.map((f) => f.id));
+      const newFiles = payload.files.filter(
+        (f) =>
+          !existingFileIds.has(f.id) &&
+          !f.folderId.endsWith(`/${CLIENTDATA_PATH}`),
+      );
+      const newFolders = uniq(
+        newFiles.flatMap((f) => getParentFolderIdsFromFolderId(f.folderId)),
+      )
+        .filter((id) => !existingFolderIds.has(id))
+        .map((id) => getFolderFromId(id, FeatureType.File));
 
       if (newFiles.length > 0) {
         state.files = [...state.files, ...newFiles];
+      }
+      if (newFolders.length > 0) {
+        state.folders = [...state.folders, ...newFolders];
       }
 
       state.searchListingMetadata[payload.folderPath] = {
