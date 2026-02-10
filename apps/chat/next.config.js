@@ -4,6 +4,11 @@ const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
 
+if (!process.env.THEMES_CONFIG_HOST && process.env.NODE_ENV !== 'development') {
+  console.warn('\x1b[33mwarn\x1b[0m  - THEMES_CONFIG_HOST is not provided. Using fallback themes.');
+  console.warn('\x1b[33mwarn\x1b[0m  - THEMES_CONFIG_HOST is not provided. Using fallback themes.');
+}
+
 class BasePathResolver {
   /**
    * @param {'string' | 'number' | unknown} hint

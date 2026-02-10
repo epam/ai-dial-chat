@@ -46,7 +46,7 @@ const getImage = async (
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (!process.env.THEMES_CONFIG_HOST) {
-      return res.status(500).send(errorsMessages.customThemesConfigNotProvided);
+      return res.status(404).send(errorsMessages.customThemesConfigNotProvided);
     }
 
     const name = req.query.name;
