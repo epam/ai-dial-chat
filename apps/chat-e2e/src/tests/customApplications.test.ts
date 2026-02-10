@@ -1890,6 +1890,7 @@ dialTest(
     tooltipAssertion,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
+    fileManagerToolbar,
   }) => {
     setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
@@ -2029,6 +2030,12 @@ dialTest(
             await fileManagerModalGrid.gridCheckboxByNameCell(pdfFile);
           await attachmentCheckbox.click();
         }
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          pdfFilesToUpload.length,
+        );
+
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
+
         await fileManagerModal.getAttachButton().click();
         for (const pdfFile of pdfFilesToUpload) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(

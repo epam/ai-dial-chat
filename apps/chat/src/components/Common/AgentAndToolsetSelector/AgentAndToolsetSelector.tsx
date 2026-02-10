@@ -116,7 +116,7 @@ export const AgentAndToolsetSelector: React.FC<
         {!value.length ? (
           <NoAgentsAndToolsets />
         ) : (
-          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+          <div className="flex flex-wrap gap-1 rounded border border-primary p-2">
             {value.map((id) => (
               <AgentAndToolsetChip
                 key={id}
