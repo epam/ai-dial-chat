@@ -2,7 +2,7 @@ import { JSX, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
+import { useSearchParams } from 'next/navigation';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -36,9 +36,12 @@ interface PageProps {
 /** Renders an error page. */
 export default function ErrorPage({ themesHostDefined }: PageProps) {
   const { t } = useTranslation(Translation.Common);
-  const router = useRouter();
-  const { error, Error } = router.query;
-  const errorType = error ?? Error ?? 'default';
+
+  const searchParams = useSearchParams();
+  const errorKey = searchParams
+    ?.keys()
+    .find((key) => key.toLowerCase() === 'error');
+  const errorType = errorKey ? searchParams.get(errorKey) : 'default';
   const signinPageUrl = `/auth/signin`;
 
   const errors: Record<ErrorType, ErrorView> = {

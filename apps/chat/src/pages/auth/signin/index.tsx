@@ -5,6 +5,7 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -90,9 +91,13 @@ export default function Signin({
     }
   }, [themesHostDefined]);
 
-  const { callbackUrl, error, Error } = router.query;
+  const searchParams = useSearchParams();
+  const errorKey = searchParams
+    ?.keys()
+    .find((key) => key.toLowerCase() === 'error');
+  const errorType = errorKey ? searchParams.get(errorKey) : undefined;
 
-  const errorType = error ?? Error;
+  const callbackUrl = searchParams?.get('callbackUrl');
 
   const errorMessage =
     errorType && typeof errorType === 'string'
