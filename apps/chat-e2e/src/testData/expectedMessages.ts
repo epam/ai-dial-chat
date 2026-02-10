@@ -304,6 +304,7 @@ export const ExpectedMessages = {
   fileExtensionIsValid: 'File extension is valid',
   elementAttributeValueIsValid: 'Element attribute value is valid',
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
+  elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',

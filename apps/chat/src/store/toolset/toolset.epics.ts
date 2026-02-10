@@ -22,7 +22,11 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
-import { getEntityNameFromId, isMyEntity } from '@/src/utils/app/id';
+import {
+  getEntityNameFromId,
+  isMyEntity,
+  isPredefinedEntity,
+} from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
@@ -764,7 +768,9 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
           const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
-          const isPublic = isEntityIdPublic({ id: payload.toolsetId });
+          const isPublic =
+            isEntityIdPublic({ id: payload.toolsetId }) ||
+            isPredefinedEntity({ id: payload.toolsetId });
           const name = getEntityNameFromId(payload.toolsetId, {
             removeVersion: true,
           });
@@ -822,7 +828,9 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
       }).pipe(
         switchMap(() => {
           const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
-          const isPublic = isEntityIdPublic({ id: payload.toolsetId });
+          const isPublic =
+            isEntityIdPublic({ id: payload.toolsetId }) ||
+            isPredefinedEntity({ id: payload.toolsetId });
           const name = getEntityNameFromId(payload.toolsetId, {
             removeVersion: true,
           });

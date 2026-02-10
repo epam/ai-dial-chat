@@ -12,11 +12,7 @@ import {
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import {
-  AttributeValues,
-  Attributes,
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { IconSelectors } from '@/src/ui/selectors';
 import { BaseElement, FileModalSection, Tab } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -143,6 +139,8 @@ dialTest(
     fileManagerDeleteItemConfirmationPopupAssertion,
     localStorageManager,
     fileManagerModalGridAssertion,
+    fileManagerToolbar,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -185,6 +183,10 @@ dialTest(
             await fileManagerModalGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
         }
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          attachedFiles.length,
+        );
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
       },
     );
 
@@ -730,8 +732,9 @@ dialTest(
     setTestIds('EPMRTC-6091', 'EPMRTC-6092');
     const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
     const expectedColor = ThemesUtil.getRgbColorByKey(
-      ThemeColorAttributes.textAccentPrimary,
+      ThemeColorAttributes.controlsBgAccent,
     );
+    let headerCheckboxWrapper: BaseElement;
     let headerCheckboxInput: BaseElement;
     const bulkButtons = [
       fileManagerToolbar.getMoveToButton(),
@@ -767,7 +770,7 @@ dialTest(
         await fileManagerGridAssertion.assertElementState(checkbox, 'visible');
         await fileManagerGridAssertion.assertElementClass(
           checkbox,
-          new RegExp(/before:border-hover/),
+          new RegExp(/ag-checkbox-input/),
         );
       },
     );
@@ -784,13 +787,14 @@ dialTest(
             CheckboxState.checked,
           );
           await fileManagerGridAssertion.assertElementBorderColors(
-            attachmentCheckbox,
+            attachmentCheckbox.wrapper,
             expectedColor,
           );
           headerCheckboxInput =
             fileManagerGrid.gridHeaderCheckbox.checkboxInput;
+          headerCheckboxWrapper = fileManagerGrid.gridHeaderCheckbox.wrapper;
           await baseAssertion.assertElementBorderColors(
-            headerCheckboxInput,
+            headerCheckboxWrapper,
             expectedColor,
           );
           await baseAssertion.assertElementState(
@@ -798,10 +802,9 @@ dialTest(
             'visible',
           );
           i === 0
-            ? await fileManagerGridAssertion.assertElementAttribute(
-                headerCheckboxInput,
-                Attributes.ariaChecked,
-                AttributeValues.mixed,
+            ? await baseAssertion.assertElementClass(
+                headerCheckboxWrapper,
+                /ag-indeterminate/,
               )
             : await fileManagerGridAssertion.assertCheckboxState(
                 headerCheckboxInput,
@@ -833,13 +836,12 @@ dialTest(
               fileManagerToolbar.getSelectedIconsButton(i + 1),
               'visible',
             );
-            await fileManagerGridAssertion.assertElementAttribute(
-              headerCheckboxInput,
-              Attributes.ariaChecked,
-              AttributeValues.mixed,
+            await baseAssertion.assertElementClass(
+              headerCheckboxWrapper,
+              /ag-indeterminate/,
             );
             await baseAssertion.assertElementBorderColors(
-              headerCheckboxInput,
+              headerCheckboxWrapper,
               expectedColor,
             );
             for (const button of bulkButtons) {
@@ -857,9 +859,14 @@ dialTest(
               fileManagerToolbar.getSelectedIconsButton(i + 1),
               'hidden',
             );
-            await fileManagerGridAssertion.assertElementState(
-              headerCheckboxInput,
-              'hidden',
+            await fileManagerGridAssertion.assertCheckboxState(
+              fileManagerGrid.gridHeaderCheckbox,
+              CheckboxState.unchecked,
+            );
+            //TODO assume that this class regulates the visibility of the checkbox
+            await baseAssertion.assertElementClass(
+              fileManagerGrid.gridHeaderCheckbox.host,
+              /dial-row-select/,
             );
             for (const button of bulkButtons) {
               await baseAssertion.assertElementState(button, 'hidden');

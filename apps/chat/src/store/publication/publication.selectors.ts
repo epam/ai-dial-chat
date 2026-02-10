@@ -112,7 +112,7 @@ const selectRulesByPath = createSelector(
   (rules, path) => {
     return Object.fromEntries(
       Object.entries(rules).filter(
-        ([key]) => path.startsWith(key) && key.split('/').length !== 1,
+        ([key]) => path === key || path.startsWith(`${key}/`),
       ),
     );
   },
