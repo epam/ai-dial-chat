@@ -57,6 +57,7 @@ export const Toasts = () => (
             borderWidth: '1px',
             maxWidth: isSmallScreen() ? '100%' : '730px',
             padding: '12px',
+            zIndex: 9999,
           }}
           toast={toast}
         >
