@@ -6,7 +6,8 @@ const { composePlugins, withNx } = require('@nx/next');
 
 if (!process.env.THEMES_CONFIG_HOST && process.env.NODE_ENV !== 'development') {
   console.warn('\x1b[33mwarn\x1b[0m  - THEMES_CONFIG_HOST is not provided. Using fallback themes.');
-  console.warn('\x1b[33m     \x1b[0m  - Set THEMES_CONFIG_HOST in your environment for production themes.');}
+  console.warn('\x1b[33m     \x1b[0m  - Set THEMES_CONFIG_HOST in your environment for production themes.');
+}
 
 class BasePathResolver {
   /**
