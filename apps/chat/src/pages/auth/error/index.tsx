@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
 
 import { Translation } from '@/src/types/translation';
 
@@ -38,10 +39,11 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
   const { t } = useTranslation(Translation.Common);
 
   const searchParams = useSearchParams();
-  const errorKey = searchParams
-    ?.keys()
-    .find((key) => key.toLowerCase() === 'error');
-  const errorType = errorKey ? searchParams.get(errorKey) : 'default';
+  const errorType = getQueryParameterCaseInsensitive(
+    searchParams,
+    'error',
+    'default',
+  );
   const signinPageUrl = `/auth/signin`;
 
   const errors: Record<ErrorType, ErrorView> = {

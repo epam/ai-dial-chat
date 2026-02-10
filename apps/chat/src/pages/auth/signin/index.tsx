@@ -12,6 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
 import {
   DEFAULT_PROVIDER,
   authProviders,
@@ -92,12 +93,11 @@ export default function Signin({
   }, [themesHostDefined]);
 
   const searchParams = useSearchParams();
-  const errorKey = searchParams
-    ?.keys()
-    .find((key) => key.toLowerCase() === 'error');
-  const errorType = errorKey ? searchParams.get(errorKey) : undefined;
-
-  const callbackUrl = searchParams?.get('callbackUrl');
+  const errorType = getQueryParameterCaseInsensitive(searchParams, 'error');
+  const callbackUrl = getQueryParameterCaseInsensitive(
+    searchParams,
+    'callbackUrl',
+  );
 
   const errorMessage =
     errorType && typeof errorType === 'string'
