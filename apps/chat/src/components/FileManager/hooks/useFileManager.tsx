@@ -38,6 +38,7 @@ import {
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
+  GridOptions,
   NavigationPanelOptions,
   ToolbarOptions,
 } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
@@ -54,6 +55,7 @@ import {
   DialFileNodeType,
   DialUploadFileItem,
   FileManagerColumnKey,
+  GridSelectionMode,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -564,13 +566,14 @@ export const useFileManager = ({
     return { navigationPanelOptions: options, isLocalSearch: localSearch };
   }, [currentPath, rootFolder, activeTab]);
 
-  const gridOptions = useMemo(
+  const gridOptions: GridOptions = useMemo(
     () => ({
       filterable: false,
       dateLocale: 'en-US',
       dateOptions: dateOptions,
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
+      selectionMode: GridSelectionMode.MULTIPLE,
     }),
     [gridActionLabels, visibleColumns],
   );
