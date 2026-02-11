@@ -450,7 +450,7 @@ dialAdminTest(
     'Publish prompt into nested folder structure inside Organization section\n' +
     'Publish request name: tab is changed to space if to use it in chat name\n' +
     'Publication request name: ASCII control characters %00-%1F are changed to space if to use them in publication request name.\n' +
-    'Publication request name should be 2 to 160 characters long\n' +
+    'Publication request name should be 1 to 160 characters long\n' +
     'Publication request name can not be blank\n' +
     'Publication request name with hieroglyph, specific letters.\n' +
     `Publish prompt:" Author's public name" is displayed on request form for admin.\n` +
@@ -521,7 +521,7 @@ dialAdminTest(
     const currentDate = DateUtil.getCurrentLocalDate();
     const requestNames = [
       `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(61)}`,
-      '1',
+      '',
     ];
 
     await dialTest.step('Prepare a new prompt', async () => {
