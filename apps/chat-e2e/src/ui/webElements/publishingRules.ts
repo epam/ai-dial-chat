@@ -69,7 +69,7 @@ export class PublishingRules extends BaseElement {
         has: new BaseElement(
           this.page,
           PublishingRulesSelectors.ruleFunction,
-        ).getElementLocatorByText(new RegExp(`^${rule.fnc.toLowerCase()}$`)),
+        ).getElementLocatorByText(new RegExp(`^${rule.fnc}$`, 'i')),
       });
 
     for (let i = 0; i < rule.values.length; i++) {
