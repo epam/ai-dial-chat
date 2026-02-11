@@ -521,6 +521,7 @@ dialAdminTest(
     const currentDate = DateUtil.getCurrentLocalDate();
     const requestNames = [
       `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(61)}`,
+      '1',
       '',
     ];
 
@@ -589,17 +590,24 @@ dialAdminTest(
 
     for (let i = 0; i < requestNames.length; i++) {
       await dialTest.step(
-        `Type ${requestNames[i]} symbols in the request name and verify error hint is displayed under the field`,
+        `Type ${requestNames[i]} symbols in the request name and verify error hint`,
         async () => {
           await publishingRequestDialog.requestName.fillInInput(
             requestNames[i],
           );
-          await publishingRequestDialogAssertion.assertElementText(
-            publishingRequestDialog.requestNameErrorMessage,
-            i === 0
-              ? ExpectedConstants.publishRequestNameMaxLengthErrorMessage
-              : ExpectedConstants.publishRequestNameMinLengthErrorMessage,
-          );
+          if (i === 1) {
+            await baseAssertion.assertElementState(
+              publishingRequestDialog.requestNameErrorMessage,
+              'hidden',
+            );
+          } else {
+            await publishingRequestDialogAssertion.assertElementText(
+              publishingRequestDialog.requestNameErrorMessage,
+              i === 0
+                ? ExpectedConstants.publishRequestNameMaxLengthErrorMessage
+                : ExpectedConstants.publishRequestNameIsRequired,
+            );
+          }
         },
       );
     }
