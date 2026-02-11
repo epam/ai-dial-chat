@@ -94,13 +94,25 @@ export const isEntityNameInvalid = (name: string, checkDotsInTheEnd = true) =>
   notAllowedSymbolsRegex.test(name) ||
   (checkDotsInTheEnd && doesHaveDotsInTheEnd(name));
 
-export const isEntityNameValid = (name: string, checkDotsInTheEnd = true) => {
+export const isEntityNameValid = (
+  name: string,
+  options?: {
+    checkDotsInTheEnd?: boolean;
+    minLength?: number;
+    maxLength?: number;
+  },
+) => {
+  const {
+    checkDotsInTheEnd = true,
+    minLength = MIN_ENTITY_LENGTH,
+    maxLength = MAX_ENTITY_LENGTH,
+  } = options ?? {};
   const trimmedName = name.trim();
 
   return (
     !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
-    trimmedName.length <= MAX_ENTITY_LENGTH &&
-    trimmedName.length >= MIN_ENTITY_LENGTH
+    trimmedName.length <= maxLength &&
+    trimmedName.length >= minLength
   );
 };
 
