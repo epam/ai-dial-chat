@@ -23,6 +23,7 @@ import {
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
+import { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import { ShareActions } from '@/src/store/actions';
@@ -154,18 +155,18 @@ export const useFileManager = ({
   );
 
   const [currentPath, setCurrentPath] = useState<string | undefined>();
+  const [isSearching, setIsSearching] = useState(false);
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
 
-  const searchResults = useAppSelector(
-    useCallback(
-      (state) => {
-        return currentPath
-          ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
-          : [];
-      },
-      [currentPath],
-    ),
+  const searchSelector = useCallback(
+    (state: RootState) =>
+      currentPath && isSearching && !isLoadingSearchListing
+        ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
+        : [],
+    [currentPath, isSearching, isLoadingSearchListing],
   );
+
+  const searchResults = useAppSelector(searchSelector);
 
   const searchResultsUIKit = useMemo(
     () => searchResults.map(convertToUIKitFile),
@@ -425,13 +426,18 @@ export const useFileManager = ({
 
   const handleSearchFiles = useCallback(
     (folder: string) => {
+      setIsSearching(true);
       if (folder !== currentPath) {
         setCurrentPath(folder);
       }
       dispatch(FilesActions.getFullListing({ folderPath: folder }));
     },
-    [dispatch, setCurrentPath, currentPath],
+    [dispatch, currentPath],
   );
+
+  const handleClearSearch = useCallback(() => {
+    setIsSearching(false);
+  }, []);
 
   const operationLoaderModalOptions = useMemo(() => {
     if (!isCopyingFiles && !isMovingFiles) {
@@ -814,6 +820,7 @@ export const useFileManager = ({
     deleteConfirmationOptions,
 
     handleSearchFiles: isLocalSearch ? undefined : handleSearchFiles,
+    handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,
