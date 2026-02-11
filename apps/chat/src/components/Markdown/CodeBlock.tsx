@@ -7,6 +7,11 @@ import {
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 import classNames from 'classnames';
+import dynamic from 'next/dynamic';
+
+const Mermaid = dynamic(() => import('./Mermaid').then((mod) => mod.Mermaid), {
+  ssr: false,
+});
 
 import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -127,23 +132,27 @@ export const CodeBlock: FC<Props> = memo(
           )}
         </div>
 
-        <SyntaxHighlighter
-          language={displayLanguage}
-          style={codeBlockTheme[theme] || oneDark}
-          customStyle={{
-            margin: 0,
-            borderRadius: 0,
-            fontSize: 14,
-            padding: 12,
-            letterSpacing: 0,
-          }}
-          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'} font-codeblock`}
-          codeTagProps={{
-            className: 'font-codeblock',
-          }}
-        >
-          {value}
-        </SyntaxHighlighter>
+        {lowercaseLanguage === 'mermaid' ? (
+          <Mermaid value={value} />
+        ) : (
+          <SyntaxHighlighter
+            language={displayLanguage}
+            style={codeBlockTheme[theme] || oneDark}
+            customStyle={{
+              margin: 0,
+              borderRadius: 0,
+              fontSize: 14,
+              padding: 12,
+              letterSpacing: 0,
+            }}
+            className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'} font-codeblock`}
+            codeTagProps={{
+              className: 'font-codeblock',
+            }}
+          >
+            {value}
+          </SyntaxHighlighter>
+        )}
       </div>
     );
   },
