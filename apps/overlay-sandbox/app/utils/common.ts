@@ -1,6 +1,5 @@
 import { ChatOverlayOptions, Feature } from '@epam/ai-dial-shared';
 
-
 export const parseJsonOptionsString = (jsonString: string) => {
   try {
     return JSON.parse(jsonString) as ChatOverlayOptions;
