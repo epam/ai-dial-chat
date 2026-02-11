@@ -226,8 +226,8 @@ export const UserMessage = memo(function UserMessage({
     () =>
       canAttachFolders
         ? (newEditableAttachments.filter(
-            (f) => f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
-          ) as unknown as FileFolderInterface[])
+          (f) => f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
+        ) as unknown as FileFolderInterface[])
         : undefined,
     [canAttachFolders, newEditableAttachments],
   );
@@ -251,7 +251,7 @@ export const UserMessage = memo(function UserMessage({
       newEditableAttachments.map((f) =>
         f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
           ? ApiUtils.decodeApiUrl(f.id).replace(new RegExp('^metadata/'), '') +
-            '/'
+          '/'
           : ApiUtils.decodeApiUrl(f.id),
       ),
     [newEditableAttachments],
@@ -329,12 +329,12 @@ export const UserMessage = memo(function UserMessage({
                 ...(formValue &&
                   (getConfigurationSchema(message)
                     ? {
-                        configuration_value: formValue,
-                        configuration_schema: getConfigurationSchema(message),
-                      }
+                      configuration_value: formValue,
+                      configuration_schema: getConfigurationSchema(message),
+                    }
                     : {
-                        form_value: formValue,
-                      })),
+                      form_value: formValue,
+                    })),
               },
               templateMapping: getEntitiesFromTemplateMapping(
                 message.templateMapping,
@@ -496,11 +496,11 @@ export const UserMessage = memo(function UserMessage({
         setMessageContent((prev) =>
           selection
             ? replaceStringRange(
-                prev,
-                textContent,
-                selection.start,
-                selection.end,
-              )
+              prev,
+              textContent,
+              selection.start,
+              selection.end,
+            )
             : textContent,
         );
       }
@@ -551,20 +551,20 @@ export const UserMessage = memo(function UserMessage({
 
             {(newEditableAttachments.length > 0 ||
               selectedDialLinks.length > 0) && (
-              <div
-                className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
-                data-qa="attachment-container"
-              >
-                <ChatInputAttachments
-                  files={fileAttachments}
-                  folders={folderAttachments}
-                  links={selectedDialLinks}
-                  onUnselectFile={handleUnselectFile}
-                  onRetryFile={handleRetry}
-                  onUnselectLink={handleUnselectLink}
-                />
-              </div>
-            )}
+                <div
+                  className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                  data-qa="attachment-container"
+                >
+                  <ChatInputAttachments
+                    files={fileAttachments}
+                    folders={folderAttachments}
+                    links={selectedDialLinks}
+                    onUnselectFile={handleUnselectFile}
+                    onRetryFile={handleRetry}
+                    onUnselectLink={handleUnselectLink}
+                  />
+                </div>
+              )}
           </div>
         )}
 
@@ -641,6 +641,7 @@ export const UserMessage = memo(function UserMessage({
                 'leading-[150%]': isMobileOrOverlay,
               },
             )}
+            onDoubleClick={() => !editDisabled && handleToggleEditing(true)}
           >
             {message.content}
           </div>
@@ -659,6 +660,7 @@ export const UserMessage = memo(function UserMessage({
       </div>
       {showUserButtons && !isConversationInvalid && (
         <MessageUserButtons
+          message={message}
           realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
           isEditAvailable={!!onEdit && !editDisabled}

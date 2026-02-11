@@ -49,11 +49,13 @@ interface MessageUserButtonsProps {
   isMessageStreaming: boolean;
   isEditTemplatesAvailable: boolean;
   onToggleEditing: () => void;
+  message: Message;
   onDelete?: () => void;
   onToggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
+  message,
   realMessageIndex,
   isEditAvailable,
   isMessageStreaming,
@@ -116,6 +118,18 @@ export const MessageUserButtons = ({
               />
             </Tooltip>
           )}
+          <CopyButton
+            content={message.content}
+            copyLabel="Copy text"
+            copiedLabel="Text copied"
+            convertFromMarkdown
+          />
+          <CopyButton
+            content={message.content}
+            copyLabel="Copy markdown"
+            copiedLabel="Markdown copied"
+            Icon={IconMarkdown}
+          />
           {onDelete && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
               {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
@@ -476,6 +490,18 @@ export const MessageMobileButtons = ({
             }
           />
         )}
+        <MobileCopyButton
+          content={message.content}
+          copyLabel="Copy text"
+          copiedLabel="Copied text"
+          convertFromMarkdown
+        />
+        <MobileCopyButton
+          content={message.content}
+          copyLabel="Copy markdown"
+          copiedLabel="Copied markdown"
+          Icon={IconMarkdown}
+        />
         {!editDisabled && (
           <MenuItem
             className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
