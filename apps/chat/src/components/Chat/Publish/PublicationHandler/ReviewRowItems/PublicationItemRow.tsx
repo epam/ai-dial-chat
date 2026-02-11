@@ -280,7 +280,6 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       label: `${itemTypeName} name`,
       checkDotsInTheEnd: true,
       isNotUniqName,
-      minLength: 1,
     });
     setErrors(nameErrors);
   }, [editState, inputName, item.folderId, item.id, itemTypeName]);

@@ -19,7 +19,10 @@ import {
 } from '@/src/types/publication';
 import { EntityFilters } from '@/src/types/search';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import {
+  MAX_ENTITY_LENGTH,
+  MIN_ENTITY_LENGTH,
+} from '@/src/constants/default-ui-settings';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
@@ -101,7 +104,7 @@ export const isEntityNameValid = (
 ) => {
   const {
     checkDotsInTheEnd = true,
-    minLength = 1,
+    minLength = MIN_ENTITY_LENGTH,
     maxLength = MAX_ENTITY_LENGTH,
   } = options ?? {};
   const trimmedName = name.trim();
