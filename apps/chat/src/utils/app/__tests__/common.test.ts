@@ -435,6 +435,9 @@ describe('utils/app/common.ts', () => {
       expect(parseCommaSeparatedList('a, b ,c')).toEqual(['a', 'b', 'c']);
       expect(parseCommaSeparatedList(undefined)).toEqual([]);
       expect(parseCommaSeparatedList(undefined, ['x'])).toEqual(['x']);
+      expect(
+        parseCommaSeparatedList('123,234\\,345\\,456,567\\,678,789'),
+      ).toEqual(['123', '234,345,456', '567,678', '789']);
     });
 
     it('arraysHaveSameElements: true when arrays have same multiset of elements', () => {

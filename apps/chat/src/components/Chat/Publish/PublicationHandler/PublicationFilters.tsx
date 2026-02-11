@@ -18,6 +18,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { RuleListItem } from '../RuleListItem';
@@ -47,7 +48,7 @@ const showNoRulesLabel = (
   return isNoRulesToDisplay;
 };
 
-export function PublicationFilters({
+function PublicationFiltersView({
   filteredRuleEntries,
   newRules,
   publication,
@@ -145,3 +146,5 @@ export function PublicationFilters({
     </>
   );
 }
+
+export const PublicationFilters = withErrorMessage(PublicationFiltersView);

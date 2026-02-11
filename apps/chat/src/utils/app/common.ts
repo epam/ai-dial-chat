@@ -313,7 +313,15 @@ export const formatDate = (rawDate: number | string | Date): string => {
 export const parseCommaSeparatedList = (
   str: string | undefined,
   defaultValue: string[] = [],
-): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;
+): string[] => {
+  const guid = nanoid();
+  return (
+    str
+      ?.replaceAll('\\,', guid)
+      .split(',')
+      .map((str) => str.replaceAll(guid, ',').trim()) ?? defaultValue
+  );
+};
 
 export const dispatchMouseLeaveEvent = (e: MouseEvent) => {
   const mouseLeaveEvent = new MouseEvent('mouseleave', {
