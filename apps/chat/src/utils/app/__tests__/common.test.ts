@@ -132,8 +132,12 @@ describe('utils/app/common.ts', () => {
       expect(isEntityNameValid(' a ')).toBe(true);
       expect(isEntityNameValid(' ab ')).toBe(true);
       expect(isEntityNameValid('ab,')).toBe(false);
-      expect(isEntityNameValid('abc.', true)).toBe(false);
-      expect(isEntityNameValid('abc.', false)).toBe(true);
+      expect(isEntityNameValid('abc.', { checkDotsInTheEnd: true })).toBe(
+        false,
+      );
+      expect(isEntityNameValid('abc.', { checkDotsInTheEnd: false })).toBe(
+        true,
+      );
     });
 
     it('hasInvalidNameInPath: checks every path segment', () => {

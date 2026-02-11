@@ -103,6 +103,7 @@ export const PublicationFolderRow = ({
       label: 'Folder name',
       checkDotsInTheEnd: true,
       isNotUniqName,
+      minLength: 1,
     });
     setErrors(nameErrors);
   }, [currentFolder, folderEditState, inputName]);
