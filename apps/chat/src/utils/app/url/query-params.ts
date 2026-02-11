@@ -1,3 +1,4 @@
+import { ReadonlyURLSearchParams } from 'next/navigation';
 import Router from 'next/router';
 
 /**
@@ -66,3 +67,15 @@ export function stripQueryParamsFromUrl(
 
   return newQuery ? `${path}?${newQuery}` : path;
 }
+
+export const getQueryParameterCaseInsensitive = (
+  searchParams: ReadonlyURLSearchParams,
+  name: string,
+  defaultValue?: string,
+) => {
+  const lowerName = name.toLowerCase();
+  const paramKey = searchParams
+    ?.keys()
+    .find((key) => key.toLowerCase() === lowerName);
+  return paramKey ? searchParams.get(paramKey) : defaultValue;
+};
