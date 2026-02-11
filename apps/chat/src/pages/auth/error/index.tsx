@@ -2,12 +2,13 @@ import { JSX, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
+import { useSearchParams } from 'next/navigation';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
 
 import { Translation } from '@/src/types/translation';
 
@@ -36,8 +37,13 @@ interface PageProps {
 /** Renders an error page. */
 export default function ErrorPage({ themesHostDefined }: PageProps) {
   const { t } = useTranslation(Translation.Common);
-  const router = useRouter();
-  const { error = 'default' } = router.query;
+
+  const searchParams = useSearchParams();
+  const errorType = getQueryParameterCaseInsensitive(
+    searchParams,
+    'error',
+    'default',
+  );
   const signinPageUrl = `/auth/signin`;
 
   const errors: Record<ErrorType, ErrorView> = {
@@ -93,8 +99,8 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
   };
 
   const { heading, message } =
-    error && typeof error === 'string'
-      ? (errors[error.toLowerCase() as ErrorType] ?? errors.default)
+    errorType && typeof errorType === 'string'
+      ? (errors[errorType.toLowerCase() as ErrorType] ?? errors.default)
       : errors.default;
 
   const logoImgSrc = useMemo(() => {
