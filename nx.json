@@ -71,6 +71,14 @@
       "options": {
         "commands": ["prettier --write {projectRoot}"]
       }
+    },
+    "unused-exports": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx ts-unused-exports {projectRoot}/tsconfig.json --showLineNumber --excludePathsFromReport='.next;dist;e2e'"
+        ]
+      }
     }
   },
   "namedInputs": {

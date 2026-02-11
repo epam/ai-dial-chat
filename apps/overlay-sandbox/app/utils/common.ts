@@ -1,5 +1,6 @@
 import { ChatOverlayOptions, Feature } from '@epam/ai-dial-shared';
 
+
 export const parseJsonOptionsString = (jsonString: string) => {
   try {
     return JSON.parse(jsonString) as ChatOverlayOptions;
@@ -9,7 +10,7 @@ export const parseJsonOptionsString = (jsonString: string) => {
   }
 };
 
-export const parseCommaSeparatedList = (
+const parseCommaSeparatedList = (
   str: string | undefined,
   defaultValue: string[] = [],
 ): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;

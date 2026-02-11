@@ -35,16 +35,12 @@ const splitFolderId = (folderId: string) => {
   return parentPath;
 };
 
-export const getRelativeParentPath = (folderId: string) => {
+const getRelativeParentPath = (folderId: string) => {
   const parentPath = splitFolderId(folderId);
   return parentPath;
 };
 
-export async function getZippedFile({
-  files,
-  conversations,
-  folders,
-}: GetZippedFile) {
+async function getZippedFile({ files, conversations, folders }: GetZippedFile) {
   const zip = new JSZip();
   files.forEach((file) => {
     const fileBlob = getAttachmentFromApi(file);

@@ -11,7 +11,7 @@ import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ConversationDialogs } from '@/src/components/Chatbar/ConversationDialogs';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
-import { Promptbar } from '@/src/components/Promptbar';
+import { Promptbar } from '@/src/components/Promptbar/Promptbar';
 import { PromptDialogs } from '@/src/components/Promptbar/components/PromptDialogs';
 
 import { Navigation } from './Navigation';
