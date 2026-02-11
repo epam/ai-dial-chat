@@ -5,9 +5,15 @@ import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/marketplace';
+import {
+  filterHiddenEntities,
+  shouldShowHiddenEntities,
+} from '@/src/utils/app/models';
 
 import { RootState } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
@@ -19,22 +25,32 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectToolsetsMap = (state: RootState) => rootSelector(state).toolsetsMap;
 
-const selectToolsets = createSelector([selectToolsetsMap], (toolsetsMap) => {
-  const toolsets = uniq(Object.values(toolsetsMap)) as ToolsetModel[];
-  const sortedToolsets = sortBy(toolsets, (toolset) =>
-    toolset.name.toLowerCase(),
-  );
+const selectToolsets = createSelector(
+  [
+    selectToolsetsMap,
+    SettingsSelectors.selectHiddenEntityTag,
+    (_state, showHidden?: boolean) => showHidden,
+  ],
+  (toolsetsMap, hiddenEntityTag, showHidden) => {
+    const toolsets = uniq(Object.values(toolsetsMap)) as ToolsetModel[];
+    const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
+      ? toolsets
+      : filterHiddenEntities(toolsets, hiddenEntityTag);
+    const sortedToolsets = sortBy(filteredHidden, (toolset) =>
+      toolset.name.toLowerCase(),
+    );
 
-  return groupMarketplaceEntityAndSaveOrder(sortedToolsets).flatMap(
-    ({ entities }) => {
-      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-        sortItemsVersions(entities);
-      }
+    return groupMarketplaceEntityAndSaveOrder(sortedToolsets).flatMap(
+      ({ entities }) => {
+        if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+          sortItemsVersions(entities);
+        }
 
-      return entities;
-    },
-  );
-});
+        return entities;
+      },
+    );
+  },
+);
 
 const selectToolsetsStatus = (state: RootState) =>
   rootSelector(state).toolsetsStatus;
