@@ -53,7 +53,8 @@
       }
     },
     "format": {},
-    "format:fix": {}
+    "format:fix": {},
+    "unused-exports": {}
   },
   "tags": ["production", "publishable"]
 }
