@@ -163,8 +163,12 @@ const AgentAndToolsetModalView = ({
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
-  const allAgents = useAppSelector(ModelsSelectors.selectModels);
-  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const allAgents = useAppSelector((state) =>
+    ModelsSelectors.selectModels(state, true),
+  );
+  const allToolsets = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsets(state, true),
+  );
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
@@ -449,7 +453,7 @@ const AgentAndToolsetModalView = ({
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col px-5 pb-2">
         <div ref={headerRef} className="mb-2">
-          <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse">
+          <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4">
             <div className="relative flex grow">
               <IconSearch
                 className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -464,20 +468,18 @@ const AgentAndToolsetModalView = ({
                 autoFocus={isOverlay || !isSmallScreenOrTouchable()}
               />
             </div>
-            <div className="flex gap-2">
-              <div className="flex gap-2">
-                {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
-                  (tab) => (
-                    <ScopeTabButton
-                      key={tab}
-                      tab={tab}
-                      onSetTab={handleSetScopeTab}
-                      currentTab={scopeTab}
-                      textMap={ChangeMarketplaceTabs}
-                    />
-                  ),
-                )}
-              </div>
+            <div className="flex gap-2 sm:gap-3">
+              {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
+                (tab) => (
+                  <ScopeTabButton
+                    key={tab}
+                    tab={tab}
+                    onSetTab={handleSetScopeTab}
+                    currentTab={scopeTab}
+                    textMap={ChangeMarketplaceTabs}
+                  />
+                ),
+              )}
             </div>
           </div>
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">

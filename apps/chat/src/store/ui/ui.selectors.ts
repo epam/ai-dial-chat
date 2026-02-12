@@ -126,9 +126,8 @@ const selectVisibleSidebarItems = createSelector(
 const selectIsEditorLoader = (state: RootState) =>
   rootSelector(state).isEditorLoader;
 
-const selectAllowEnterToSend = createSelector(
-  [selectEnterType, SettingsSelectors.selectIsOverlay],
-  (enterType, isOverlay) => allowEnterClick(enterType, isOverlay),
+const selectAllowEnterToSend = createSelector([selectEnterType], (enterType) =>
+  allowEnterClick(enterType),
 );
 
 export const UISelectors = {

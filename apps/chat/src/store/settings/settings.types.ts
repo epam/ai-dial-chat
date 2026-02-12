@@ -28,6 +28,7 @@ export interface SettingsState {
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
   topics: string[];
+  hiddenEntityTag?: string;
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
   quickAppsModel?: string;
@@ -39,4 +40,10 @@ export interface SettingsState {
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;
   widgetsSchemaIds?: string[];
+
+  attachmentsSettings: {
+    expandedTypes: string[];
+    borderlessTypes: string[];
+    withoutTitleTypes: string[];
+  };
 }

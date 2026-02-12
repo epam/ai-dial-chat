@@ -43,10 +43,20 @@ export interface CodeInterpreterToolset {
   type: ToolsetTypes.CodeInterpreter;
 }
 
+export interface UnknownTool extends Record<string, unknown> {
+  type?: string;
+}
+
+export interface UnknownToolset extends Record<string, unknown> {
+  type?: string;
+  tools?: UnknownTool[];
+}
+
 export type AnyToolset =
   | DialDeploymentToolset
   | MCPToolset
-  | CodeInterpreterToolset;
+  | CodeInterpreterToolset
+  | UnknownToolset;
 
 export interface QuickApp2Config {
   orchestrator: {
@@ -74,6 +84,12 @@ export function isDialDeploymentToolset(
   return toolset.type === ToolsetTypes.DialDeployment;
 }
 
+export function isDialDeploymentSimpleTool(tool: {
+  type?: unknown;
+}): tool is DialDeploymentSimpleTool {
+  return tool.type === DialDeploymentToolsetToolTypes.DialDeploymentSimple;
+}
+
 export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
   return toolset.type === ToolsetTypes.DialMcp;
 }
@@ -82,4 +98,14 @@ export function isCodeInterpreterToolset(
   toolset: AnyToolset,
 ): toolset is CodeInterpreterToolset {
   return toolset.type === ToolsetTypes.CodeInterpreter;
+}
+
+export function isUnknownToolset(
+  toolset: AnyToolset,
+): toolset is UnknownToolset {
+  return (
+    !isDialDeploymentToolset(toolset) &&
+    !isMcpToolset(toolset) &&
+    !isCodeInterpreterToolset(toolset)
+  );
 }

@@ -96,7 +96,7 @@ export enum FileManagerColumnKey {
   Owner = 'owner',
   Path = 'path',
   Actions = '__actions',
-  Select = '__select',
+  Select = 'ag-Grid-SelectionColumn',
 }
 
 export enum ModelTopic {

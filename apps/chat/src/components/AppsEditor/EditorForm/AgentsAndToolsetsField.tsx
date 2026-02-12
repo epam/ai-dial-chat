@@ -245,19 +245,6 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [],
   );
 
-  const handleRemoveFromDetails = useCallback(
-    (entityToRemove: MarketplaceEntity) => {
-      const currentValue = getValues('agentsAndToolsets') || [];
-      setValue(
-        'agentsAndToolsets',
-        currentValue.filter(({ id }) => id !== entityToRemove.id),
-        { shouldTouch: true, shouldDirty: true },
-      );
-      handleCloseDetails();
-    },
-    [getValues, setValue, handleCloseDetails],
-  );
-
   const handleItemClick = useCallback(
     (id: string) => {
       const entity = allEntitiesMap[id];
@@ -272,10 +259,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     () => ({
       onClose: handleCloseDetails,
       onChangeVersion: handleChangeVersionInDetails,
-      onRemove: handleRemoveFromDetails,
       isPreview: true,
     }),
-    [handleCloseDetails, handleChangeVersionInDetails, handleRemoveFromDetails],
+    [handleCloseDetails, handleChangeVersionInDetails],
   );
 
   const shortEditorError = editorError

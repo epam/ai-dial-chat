@@ -158,6 +158,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.TOPICS ??
         'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
     ),
+    hiddenEntityTag: process.env.HIDDEN_ENTITY_TAG ?? '',
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
@@ -167,6 +168,20 @@ export const getCommonPageProps: GetServerSideProps = async ({
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     providerId: session?.providerId ?? null,
+    attachmentsSettings: {
+      expandedTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_EXPANDED,
+        [],
+      ),
+      borderlessTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_BORDERLESS,
+        [],
+      ),
+      withoutTitleTypes: parseCommaSeparatedList(
+        process.env.ATTACHMENT_TYPES_WITHOUT_TITLE,
+        [],
+      ),
+    },
   };
 
   if (isIsolatedView) {
