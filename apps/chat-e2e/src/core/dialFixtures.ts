@@ -48,6 +48,7 @@ import {
   PublishingFilter,
   PublishingRules,
   SelectFolderModal,
+  SelectFolderManagerModal,
   SendMessage,
   ShareAppModal,
   ToolsetEditorContainer,
@@ -333,6 +334,7 @@ const dialTest = test.extend<{
   attachFilesModal: AttachFilesModal;
   uploadFromDeviceModal: UploadFromDeviceModal;
   selectFolderModal: SelectFolderModal;
+  selectFolderManagerModal: SelectFolderManagerModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
   attachedOrganizationFiles: Folders;
@@ -1168,6 +1170,10 @@ const dialTest = test.extend<{
   selectFolderModal: async ({ page }, use) => {
     const selectFolderModal = new SelectFolderModal(page);
     await use(selectFolderModal);
+  },
+  selectFolderManagerModal: async ({ page }, use) => {
+    const selectFolderManagerModal = new SelectFolderManagerModal(page);
+    await use(selectFolderManagerModal);
   },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();

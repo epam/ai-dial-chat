@@ -107,5 +107,7 @@ export * from './fileManager/fileManagerGrid';
 export * from './fileManager/fileManagerCollapsibleSidebar';
 export * from './fileManager/fileManager';
 export * from './fileManager/fileManagerContainer';
+export * from './fileManager/baseFileManagerModal';
+export * from './fileManager/selectFolderManagerModal';
 export * from './fileManager/fileManagerModal';
 export * from './fileManager/uploadProgressDialog';

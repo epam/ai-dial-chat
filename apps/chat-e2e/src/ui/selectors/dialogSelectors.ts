@@ -149,6 +149,16 @@ export const SelectFolderModalSelectors = {
   searchInput: '[data-qa="search-folder"]',
 };
 
+export const SelectFolderManagerModalSelectors = {
+  /** Main dialog role selector */
+  dialogRole: '[role="dialog"]',
+  /** Heading ID for filtering dialogs */
+  headingId: '#dial-popup-heading',
+  /** Expected heading text */
+  headingText: 'Select folder',
+};
+
+
 export const PublishingDialogSelectors = {
   dialogContainer: '[data-qa="publish-dialog"]',
   requestName: '[data-qa="publishRequestName"]',
