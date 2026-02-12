@@ -40,6 +40,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
@@ -697,7 +698,7 @@ const uploadFilesEpic: AppEpic = (action$) =>
           formData,
           relativePath,
           file.name,
-          undefined,
+          HTTPMethod.PUT,
           bucket,
           { signal: controller.signal },
         ).pipe(

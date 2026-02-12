@@ -689,20 +689,51 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
-      filesToUpload.forEach((file) => (file.name = prepareFileName(file.name)));
+      const existingNames = new Set(
+        files.filter((f) => f.folderId === destinationUrl).map((f) => f.name),
+      );
+
+      const processedFiles = filesToUpload.map((file) => {
+        const initialSanitizedName = prepareFileName(file.name);
+
+        let finalName = initialSanitizedName;
+        let counter = 1;
+
+        const extensionIndex = initialSanitizedName.lastIndexOf('.');
+        const baseName =
+          extensionIndex === -1
+            ? initialSanitizedName
+            : initialSanitizedName.substring(0, extensionIndex);
+        const extension =
+          extensionIndex === -1
+            ? ''
+            : initialSanitizedName.substring(extensionIndex);
+
+        while (existingNames.has(finalName)) {
+          finalName = `${baseName} (${counter})${extension}`;
+          counter++;
+        }
+
+        existingNames.add(finalName);
+
+        return {
+          ...file,
+          name: finalName,
+        };
+      });
 
       dispatch(
         FilesActions.uploadFiles({
-          files: filesToUpload,
+          files: processedFiles,
           destinationUrl,
         }),
       );
 
       setUploadingFilesIds(
-        new Set(filesToUpload.map((f) => getFileId(f.name, destinationUrl))),
+        new Set(processedFiles.map((f) => getFileId(f.name, destinationUrl))),
       );
     },
-    [dispatch, setUploadingFilesIds, getFileId],
+    [dispatch, getFileId, files],
   );
 
   const handleCreateFolder = useCallback(
