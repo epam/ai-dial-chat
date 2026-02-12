@@ -1,9 +1,9 @@
 import {
   doesHaveDotsInTheEnd,
-  isEntityNameInvalid,
   isVersionPartSizeValid,
   isVersionValid,
 } from '@/src/utils/app/common';
+import { notAllowedSpaces, notAllowedSymbols } from '@/src/utils/app/file';
 
 import {
   MAX_ENTITY_LENGTH,
@@ -16,7 +16,12 @@ import {
   versionsErrors,
 } from '@/src/constants/form-errors';
 
+import escapeRegExp from 'lodash-es/escapeRegExp';
 import { z as zodValidation } from 'zod';
+
+const specialCharactersRegex = new RegExp(
+  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
+);
 
 export const getEntityNameSchema = (options: {
   name: string;
@@ -34,7 +39,7 @@ export const getEntityNameSchema = (options: {
     .max(MAX_ENTITY_LENGTH, formErrors.tooLong(options.name, MAX_ENTITY_LENGTH))
     .refine(
       (str) =>
-        options.skipCheckRestrictedSymbols || !isEntityNameInvalid(str, false),
+        options.skipCheckRestrictedSymbols || !specialCharactersRegex.test(str),
       formErrors.hasSpecialCharacters(options.name),
     )
     .refine(
