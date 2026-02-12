@@ -54,9 +54,13 @@ const splitEntityIdMock = vi.hoisted(() =>
   }),
 );
 
-vi.mock('@/src/utils/app/shared-utils', () => ({
-  splitEntityId: splitEntityIdMock,
-}));
+vi.mock('@/src/utils/app/shared-utils', async (importOriginal) => {
+  const actual = (await importOriginal()) as object;
+  return {
+    ...actual,
+    splitEntityId: splitEntityIdMock,
+  };
+});
 
 const myBucket = 'my-bucket';
 

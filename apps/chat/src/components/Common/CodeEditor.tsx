@@ -118,10 +118,7 @@ interface CodeEditorViewProps {
   readOnly?: boolean;
 }
 
-export const CodeEditorView = ({
-  selectedFileId,
-  readOnly,
-}: CodeEditorViewProps) => {
+const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
 
   const selectFileContentSelector = useMemo(

@@ -1,6 +1,6 @@
 import { NextRouter } from 'next/router';
 
-import { Observable, from, mergeMap } from 'rxjs';
+import { Observable, concatMap, from } from 'rxjs';
 
 import { AppAction } from '@/src/types/store';
 
@@ -9,5 +9,5 @@ export const navigateAndThen = (
   to: Parameters<NextRouter['push']>[0],
   after$: Observable<AppAction>,
 ) => {
-  return from(router.push(to, undefined)).pipe(mergeMap(() => after$));
+  return from(router.push(to)).pipe(concatMap(() => after$));
 };

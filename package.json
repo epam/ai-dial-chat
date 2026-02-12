@@ -30,7 +30,8 @@
     "affected:lint": "nx affected -t lint",
     "affected:lint:fix": "nx affected -t lint:fix",
     "affected:format": "nx affected -t format",
-    "affected:format:fix": "nx affected -t format:fix"
+    "affected:format:fix": "nx affected -t format:fix",
+    "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
     "@epam/ai-dial-ui-kit": "^0.7.0-rc.34",
@@ -173,6 +174,7 @@
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.5",
     "ts-node": "10.9.1",
+    "ts-unused-exports": "^11.0.1",
     "typescript": "5.9.3",
     "vite": "7.1.12",
     "vitest": "^3.2.4"

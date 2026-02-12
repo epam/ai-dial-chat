@@ -86,7 +86,7 @@ export type BaseAppForm = zodValidation.infer<
   typeof MarketplaceEntityBaseSchema
 >;
 
-export const CustomAppSchema = zodValidation.object({
+const CustomAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
   inputAttachmentTypes: AttachmentTypesSchema,
   completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
@@ -151,7 +151,7 @@ export const CustomAppSchema = zodValidation.object({
 });
 export type CustomAppForm = zodValidation.infer<typeof CustomAppSchema>;
 
-export const ExternalAppSchema = zodValidation.object({
+const ExternalAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.ExternalApp),
   externalUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
     zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
@@ -159,7 +159,7 @@ export const ExternalAppSchema = zodValidation.object({
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
 
-export const QuickAppSchema = zodValidation.object({
+const QuickAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp),
   instructions: zodValidation.string(),
   temperature: zodValidation.number(),
@@ -195,9 +195,7 @@ const AgentOrToolsetSchema = zodValidation.object({
   isDialDeploymentTool: zodValidation.boolean().optional(), // tool_sets can have both agents from marketplace and custom tools listed in DialDeploymentToolset
 });
 
-export type AgentOrToolsetFormType = zodValidation.infer<
-  typeof AgentOrToolsetSchema
->;
+type AgentOrToolsetFormType = zodValidation.infer<typeof AgentOrToolsetSchema>;
 
 export const QuickApp2Schema = zodValidation
   .object({
@@ -236,7 +234,7 @@ export const QuickApp2Schema = zodValidation
   });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
-export const CodeAppSchema = zodValidation
+const CodeAppSchema = zodValidation
   .object({
     type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
     inputAttachmentTypes: AttachmentTypesSchema,
