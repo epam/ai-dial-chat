@@ -120,7 +120,7 @@ const useTooltipContext = () => {
   return context;
 };
 
-export function TooltipContainer({
+function TooltipContainer({
   children,
   ...options
 }: { children: ReactNode } & TooltipContainerOptions) {
@@ -134,7 +134,7 @@ export function TooltipContainer({
   );
 }
 
-export const TooltipTrigger = forwardRef<
+const TooltipTrigger = forwardRef<
   HTMLElement,
   HTMLProps<HTMLElement> & { asChild?: boolean }
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
@@ -182,42 +182,41 @@ export const TooltipTrigger = forwardRef<
   );
 });
 
-export const TooltipContent = forwardRef<
-  HTMLDivElement,
-  HTMLProps<HTMLDivElement>
->(function TooltipContent({ style, ...props }, propRef) {
-  const context = useTooltipContext();
-  const ref = useMergeRefs([context.refs.setFloating, propRef]);
+const TooltipContent = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
+  function TooltipContent({ style, ...props }, propRef) {
+    const context = useTooltipContext();
+    const ref = useMergeRefs([context.refs.setFloating, propRef]);
 
-  if (!context.open) return null;
+    if (!context.open) return null;
 
-  return (
-    <FloatingPortal id="theme-main">
-      <div
-        ref={ref}
-        style={{
-          ...context.floatingStyles,
-          ...style,
-        }}
-        {...context.getFloatingProps(props)}
-        className={classNames(
-          'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
-          context.getFloatingProps(props).className as string,
-        )}
-        data-qa="tooltip"
-      >
-        {props.children}
-        <FloatingArrow
-          ref={context.arrowRef}
-          context={context.context}
-          fill="currentColor"
-          strokeWidth={1}
-          className="stroke-primary text-[var(--bg-layer-0,_#000000)]"
-        />
-      </div>
-    </FloatingPortal>
-  );
-});
+    return (
+      <FloatingPortal id="theme-main">
+        <div
+          ref={ref}
+          style={{
+            ...context.floatingStyles,
+            ...style,
+          }}
+          {...context.getFloatingProps(props)}
+          className={classNames(
+            'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+            context.getFloatingProps(props).className as string,
+          )}
+          data-qa="tooltip"
+        >
+          {props.children}
+          <FloatingArrow
+            ref={context.arrowRef}
+            context={context.context}
+            fill="currentColor"
+            strokeWidth={1}
+            className="stroke-primary text-[var(--bg-layer-0,_#000000)]"
+          />
+        </div>
+      </FloatingPortal>
+    );
+  },
+);
 
 export interface TooltipOptions extends TooltipContainerOptions {
   hideTooltip?: boolean;
