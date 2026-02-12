@@ -156,7 +156,7 @@ export const notAllowedSymbols = ':;,=/{}%&\\"';
 export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
 export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
-  'gm',
+  'm',
 );
 export const notAllowedSpacesRegex = new RegExp(notAllowedSpaces, 'gm');
 export const doesHaveNotAllowedSymbols = (name: string) =>
