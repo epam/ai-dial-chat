@@ -1,30 +1,30 @@
 import { BaseAssertion } from '@/src/assertions';
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
-import { FilesManagerGrid } from '@/src/ui/webElements';
+import { FileManagerGrid } from '@/src/ui/webElements';
 
-export class FilesManagerGridAssertion extends BaseAssertion {
-  private readonly filesManagerGrid: FilesManagerGrid;
+export class FileManagerGridAssertion extends BaseAssertion {
+  private readonly fileManagerGrid: FileManagerGrid;
 
-  constructor(filesManagerGrid: FilesManagerGrid) {
+  constructor(fileManagerGrid: FileManagerGrid) {
     super();
-    this.filesManagerGrid = filesManagerGrid;
+    this.fileManagerGrid = fileManagerGrid;
   }
 
   public async assertGridRowByNameState(
     name: string,
     expectedState: ElementState,
   ) {
-    await this.filesManagerGrid.loadingIndicator.waitForState({
+    await this.fileManagerGrid.loadingIndicator.waitForState({
       state: 'hidden',
     });
     // check the row is hidden if there is no any data in the grid
-    if (await this.filesManagerGrid.isVisible()) {
+    if (await this.fileManagerGrid.isVisible()) {
       // if the grid is not empty, go on top of the grid and look for the record
-      await this.filesManagerGrid.goTop();
+      await this.fileManagerGrid.goTop();
       // goToGridRowByNameCell throws exception if element is not found after scrolling through all pages
       try {
         const gridRowByNameLocator =
-          await this.filesManagerGrid.goToGridRowByNameCell(name);
+          await this.fileManagerGrid.goToGridRowByNameCell(name);
         await this.assertElementState(
           gridRowByNameLocator,
           expectedState,
@@ -54,21 +54,21 @@ export class FilesManagerGridAssertion extends BaseAssertion {
     expectedState: CheckboxState,
   ) {
     await this.assertCheckboxState(
-      await this.filesManagerGrid.gridCheckboxByNameCell(name),
+      await this.fileManagerGrid.gridCheckboxByNameCell(name),
       expectedState,
     );
   }
 
   public async assertGridRowColor(name: string, expectedColor: string) {
-    await this.filesManagerGrid.goTop();
+    await this.fileManagerGrid.goTop();
     const gridRowByNameLocator =
-      await this.filesManagerGrid.goToGridRowByNameCell(name);
+      await this.fileManagerGrid.goToGridRowByNameCell(name);
     await this.assertElementColor(gridRowByNameLocator, expectedColor);
   }
 
   public async assertGridCheckboxColor(name: string, expectedColor: string) {
     await this.assertElementColor(
-      await this.filesManagerGrid.gridCheckboxByNameCell(name),
+      await this.fileManagerGrid.gridCheckboxByNameCell(name),
       expectedColor,
     );
   }
@@ -78,7 +78,7 @@ export class FilesManagerGridAssertion extends BaseAssertion {
     expectedState: ElementState = 'visible',
   ) {
     await this.assertElementState(
-      this.filesManagerGrid.getRenameInputError(name),
+      this.fileManagerGrid.getRenameInputError(name),
       expectedState,
     );
   }
@@ -88,7 +88,7 @@ export class FilesManagerGridAssertion extends BaseAssertion {
     expectedState: ElementState,
   ) {
     await this.assertElementState(
-      this.filesManagerGrid.getRenameInput(value),
+      this.fileManagerGrid.getRenameInput(value),
       expectedState,
     );
   }

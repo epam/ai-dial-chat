@@ -61,7 +61,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   return (
     <DialCloseButton
       className={classNames(
-        'mr-1 p-1 text-secondary',
+        'mr-1 flex p-1 text-secondary',
         isError && !isCustomTool && 'hover:enabled:text-error',
       )}
       onClose={() => onRemove?.(id)}

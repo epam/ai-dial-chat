@@ -7,12 +7,17 @@ enum MessageType {
   WARNING = 'warning',
 }
 
-export interface Props {
+interface Props {
   error?: string;
   type?: 'error' | 'warning';
+  className?: string;
 }
 
-export const ErrorMessage = ({ error, type = MessageType.ERROR }: Props) => {
+export const ErrorMessage = ({
+  error,
+  type = MessageType.ERROR,
+  className,
+}: Props) => {
   if (!error?.length) {
     return null;
   }
@@ -25,6 +30,7 @@ export const ErrorMessage = ({ error, type = MessageType.ERROR }: Props) => {
       className={classNames(
         'flex w-full gap-3 rounded border p-3',
         isErrorMessage ? 'border-error bg-error' : 'border-warning bg-warning',
+        className,
       )}
       data-qa="error-message-container"
     >

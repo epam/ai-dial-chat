@@ -1,20 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import classNames from 'classnames';
-
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ContextMenu } from './ContextMenu';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialSecondaryIconButton } from '@epam/ai-dial-ui-kit';
 
 const ICON_WIDTH = 24;
-const ITEM_PADDING = 5;
+const ITEM_PADDING = 8;
 const ITEMS_GAP_IN_PIXELS = 8;
 const ITEM_WIDTH = ITEM_PADDING * 2 + ICON_WIDTH + ITEMS_GAP_IN_PIXELS;
-export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
+
+function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
     dataQa,
@@ -26,15 +25,12 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   } = props;
 
   const item = (
-    <DialButton
-      className={classNames(
-        'rounded p-[5px] [&:not(:disabled)]:hover:bg-accent-primary-alpha [&:not(:disabled)]:hover:text-accent-primary',
-        className,
-      )}
+    <DialSecondaryIconButton
+      className={className}
       onClick={!childMenuItems ? onClick : undefined}
       data-qa={dataQa}
       disabled={disabled}
-      iconBefore={
+      icon={
         Icon && (
           <Icon
             size={ICON_WIDTH}

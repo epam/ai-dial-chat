@@ -35,6 +35,7 @@ import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -513,6 +514,11 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
+          // eslint-disable-next-line no-console
+          console.log(
+            'application is not found... payload.applicationId',
+            payload.applicationId,
+          );
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
@@ -884,7 +890,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       actions.push(of(UIActions.setEditorLoader(false)));
 
-      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+      return navigateAndThen(router, route, concat(...actions));
     }),
   );
 

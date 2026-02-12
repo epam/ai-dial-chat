@@ -121,7 +121,7 @@ export const UploadFromDeviceModalSelectors = {
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
-export const FilesManagerModalSelectors = {
+export const FileManagerModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
   title: '[data-qa="modal-title"]',
   supportedAttributesLabel: '[data-qa="supported-attributes"]',

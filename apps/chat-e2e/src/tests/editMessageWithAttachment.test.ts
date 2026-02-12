@@ -251,8 +251,8 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    filesManagerModal,
-    filesManagerModalGrid,
+    fileManagerModal,
+    fileManagerModalGrid,
     fileApiHelper,
     attachmentDropdownMenu,
     conversationData,
@@ -261,7 +261,7 @@ dialTest(
     conversations,
     chat,
     localStorageManager,
-    filesManagerModalGridAssertion,
+    fileManagerModalGridAssertion,
     editMessageInputAttachmentsAssertions,
     editMessageInputAttachments,
   }) => {
@@ -333,14 +333,14 @@ dialTest(
       async () => {
         for (const file of filesToCheck) {
           const attachmentCheckbox =
-            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+            await fileManagerModalGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
-          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+          await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
           );
         }
-        await filesManagerModal.getAttachButton().click();
+        await fileManagerModal.getAttachButton().click();
         for (const file of updatedAttachedFiles) {
           await editMessageInputAttachmentsAssertions.assertAttachedFileState(
             file,

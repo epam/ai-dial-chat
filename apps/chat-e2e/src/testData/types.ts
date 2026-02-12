@@ -82,7 +82,7 @@ export enum OAuthOptions {
   WithLoginAndConfig = 'With login & config',
 }
 
-export enum FilesManagerToolbarTabs {
+export enum FileManagerToolbarTabs {
   MyFiles = 'My Files',
   SharedWithMe = 'Shared with Me',
   Organization = 'Organization',
@@ -96,7 +96,7 @@ export enum FileManagerColumnKey {
   Owner = 'owner',
   Path = 'path',
   Actions = '__actions',
-  Select = '__select',
+  Select = 'ag-Grid-SelectionColumn',
 }
 
 export enum ModelTopic {

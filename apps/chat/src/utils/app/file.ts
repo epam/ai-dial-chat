@@ -1,5 +1,9 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  isFolderId,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -25,7 +29,6 @@ import {
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
-import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';

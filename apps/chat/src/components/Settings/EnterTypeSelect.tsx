@@ -14,10 +14,7 @@ interface EnterTypeSelectProps {
   onValueChange: (value: string) => void;
 }
 
-export const EnterTypeSelect = ({
-  value,
-  onValueChange,
-}: EnterTypeSelectProps) => {
+const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
   return (
     <div className="mt-1 flex flex-col gap-3">
@@ -40,7 +37,7 @@ export const EnterTypeSelect = ({
         name="enter-type-select"
         label={
           <>
-            <b>{t(`${isMacOs ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
+            <b>{t(`${isMacOs() ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
             {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}
           </>
         }

@@ -1,4 +1,9 @@
-import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  isFolderId,
+  isMyBucket,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { pathKeySeparator } from '@/src/utils/server/api';
 
 import { ApiKeys, FeatureType } from '@/src/types/common';
@@ -10,6 +15,8 @@ import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
 import { EnumMapper } from './mappers';
+
+export { isFolderId, isMyBucket, isMyEntity };
 
 export const getRootId = ({
   featureType,
@@ -46,8 +53,6 @@ export const isRootConversationsId = (id?: string) =>
 
 export const isRootPromptId = (id?: string) => isRootId(id) && isPromptId(id);
 
-export const isFolderId = (id: string) => id.endsWith('/');
-
 export const isConversationId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Conversations}/`) ?? false;
 
@@ -83,13 +88,6 @@ export const isEntityIdExternal = (entity: { id: string }) => {
   return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
 };
 
-export const isMyBucket = (bucket: string) => {
-  return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
-};
-
-export const isMyEntity = (entity: { id: string }) =>
-  isMyBucket(getEntityBucket(entity));
-
 export const isMyApplication = (entity: { id: string }) =>
   entity.id === DRAFT_APPLICATION_ID || isMyEntity(entity);
 
@@ -113,6 +111,16 @@ export const filterIdsByFeatureType = (
   }
 
   return [];
+};
+
+export const isPredefinedEntity = (entity: {
+  id: string;
+  reference?: string;
+}) => {
+  if (entity.id === entity.reference) return true;
+  const [key, bucket] = entity.id.split('/');
+
+  return !Object.values(ApiKeys).includes(key as ApiKeys) || !bucket;
 };
 
 export const isRootEntity = (id: string) => {

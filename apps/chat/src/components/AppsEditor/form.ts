@@ -32,8 +32,11 @@ import {
   MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
+  UnknownToolset,
+  isDialDeploymentSimpleTool,
   isDialDeploymentToolset,
   isMcpToolset,
+  isUnknownToolset,
 } from '@/src/types/quick-apps';
 
 import {
@@ -83,7 +86,7 @@ export type BaseAppForm = zodValidation.infer<
   typeof MarketplaceEntityBaseSchema
 >;
 
-export const CustomAppSchema = zodValidation.object({
+const CustomAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
   inputAttachmentTypes: AttachmentTypesSchema,
   completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
@@ -148,7 +151,7 @@ export const CustomAppSchema = zodValidation.object({
 });
 export type CustomAppForm = zodValidation.infer<typeof CustomAppSchema>;
 
-export const ExternalAppSchema = zodValidation.object({
+const ExternalAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.ExternalApp),
   externalUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
     zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
@@ -156,7 +159,7 @@ export const ExternalAppSchema = zodValidation.object({
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
 
-export const QuickAppSchema = zodValidation.object({
+const QuickAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp),
   instructions: zodValidation.string(),
   temperature: zodValidation.number(),
@@ -189,11 +192,10 @@ const AgentOrToolsetSchema = zodValidation.object({
   tool: zodValidation
     .record(zodValidation.string(), zodValidation.any())
     .optional(),
+  isDialDeploymentTool: zodValidation.boolean().optional(), // tool_sets can have both agents from marketplace and custom tools listed in DialDeploymentToolset
 });
 
-export type AgentOrToolsetFormType = zodValidation.infer<
-  typeof AgentOrToolsetSchema
->;
+type AgentOrToolsetFormType = zodValidation.infer<typeof AgentOrToolsetSchema>;
 
 export const QuickApp2Schema = zodValidation
   .object({
@@ -232,7 +234,7 @@ export const QuickApp2Schema = zodValidation
   });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
-export const CodeAppSchema = zodValidation
+const CodeAppSchema = zodValidation
   .object({
     type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
     inputAttachmentTypes: AttachmentTypesSchema,
@@ -382,6 +384,10 @@ const getQuickAppItemNameFromConfig = (
     );
   }
 
+  if ('name' in item && typeof item.name === 'string') {
+    return item.name;
+  }
+
   if (!item.deployment_id) {
     console.error('Dial Tool is missing deployment_id:', item);
     return 'unknown';
@@ -393,24 +399,40 @@ const getQuickAppItemNameFromConfig = (
 export const getAgentsAndToolsetsFormValue = (
   tools?: AnyToolset[],
 ): AgentOrToolsetFormType[] => {
-  const agentToolsets =
+  const deploymentTools =
     tools
       ?.filter(isDialDeploymentToolset)
       ?.flatMap((toolset) => toolset.tools) ?? [];
   const mcpToolsets = tools?.filter(isMcpToolset) ?? [];
+  const unknownToolsets = tools?.filter(isUnknownToolset) ?? [];
 
-  const allItems = [...agentToolsets, ...mcpToolsets].map((item) => ({
+  const markedDeploymentTools = deploymentTools?.map((item) => ({
     ...item,
     name: getQuickAppItemNameFromConfig(item),
+    isDeploymentTool: true,
+  }));
+  const allItems = [...mcpToolsets, ...unknownToolsets].map((item) => ({
+    ...item,
+    name: getQuickAppItemNameFromConfig(item as MCPToolset),
   }));
 
-  const sortedItems = sortBy(allItems, [(item) => item.name.toLowerCase()]);
+  const sortedItems = sortBy(
+    [...markedDeploymentTools, ...allItems],
+    [(item) => item.name.toLowerCase()],
+  );
 
   return sortedItems.map((item) => {
-    const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
+    const id =
+      isUnknownToolset(item) && !isDialDeploymentSimpleTool(item)
+        ? undefined
+        : 'dial_id' in item
+          ? item.dial_id
+          : item.deployment_id;
     return {
       id: id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown'),
       tool: item,
+      isDialDeploymentTool:
+        'isDeploymentTool' in item ? item.isDeploymentTool : false,
     };
   });
 };
@@ -597,7 +619,7 @@ const getActualSourceFolder = (formSources?: string) => {
     : formSources;
 };
 
-export const getAgentOrToolsetOption = (id: string) => {
+export const getAgentOrToolsetOption = (id: string): AgentOrToolsetFormType => {
   const isDeploymentToolset = isApplicationId(id);
 
   return {
@@ -609,6 +631,7 @@ export const getAgentOrToolsetOption = (id: string) => {
       [isDeploymentToolset ? 'deployment_id' : 'dial_id']:
         ApiUtils.encodeApiUrl(id),
     },
+    isDialDeploymentTool: isDeploymentToolset,
   };
 };
 
@@ -620,11 +643,11 @@ export const getQuickApp2Toolsets = ({
   data: QuickApp2Form;
   currentTools?: AnyToolset[];
 }): AnyToolset[] => {
-  const { dialDeploymentsToolsets, dialMCPToolsets } =
+  const { dialDeploymentsToolsets, dialMCPToolsets, otherToolsets } =
     data.agentsAndToolsets.reduce<{
       dialDeploymentsToolsets: DialDeploymentSimpleTool[];
       dialMCPToolsets: MCPToolset[];
-      otherToolsets: AnyToolset[];
+      otherToolsets: UnknownToolset[];
     }>(
       (acc, agentAndToolset) => {
         const entity = allEntitiesMap[agentAndToolset.id];
@@ -639,10 +662,15 @@ export const getQuickApp2Toolsets = ({
               dial_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
               type: ToolsetTypes.DialMcp,
             });
-          } else if (agentAndToolset.tool) {
+          } else if (
+            agentAndToolset.tool &&
+            agentAndToolset.isDialDeploymentTool
+          ) {
             acc.dialDeploymentsToolsets.push(
               agentAndToolset.tool as DialDeploymentSimpleTool,
             );
+          } else if (agentAndToolset.tool) {
+            acc.otherToolsets.push(agentAndToolset.tool);
           }
           return acc;
         }
@@ -671,6 +699,7 @@ export const getQuickApp2Toolsets = ({
       type: ToolsetTypes.DialDeployment,
       tools: [...dialDeploymentsToolsets],
     },
+    ...otherToolsets,
     ...(data.codeInterpreter
       ? [
           {

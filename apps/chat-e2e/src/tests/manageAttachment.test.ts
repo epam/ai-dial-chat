@@ -8,15 +8,11 @@ import {
   ExpectedConfirmationPopupData,
   ExpectedConstants,
   ExpectedMessages,
-  FilesManagerToolbarTabs,
+  FileManagerToolbarTabs,
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import {
-  AttributeValues,
-  Attributes,
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { IconSelectors } from '@/src/ui/selectors';
 import { BaseElement, FileModalSection, Tab } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -34,14 +30,14 @@ dialTest(
   '[Manage attachments] Delete a file through context menu. Cancel.\n' +
     '[Manage attachments] Delete a file though context menu. Delete',
   async ({
-    filesManagerPage,
-    filesManagerGrid,
-    filesManagerGridRowDropdownMenu,
-    filesManagerDeleteItemConfirmationPopup,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerDeleteItemConfirmationPopup,
     setTestIds,
     fileApiHelper,
-    filesManagerDeleteItemConfirmationPopupAssertion,
-    filesManagerGridAssertion,
+    fileManagerDeleteItemConfirmationPopupAssertion,
+    fileManagerGridAssertion,
   }) => {
     setTestIds('EPMRTC-1884', 'EPMRTC-3296');
 
@@ -55,21 +51,21 @@ dialTest(
     await dialTest.step(
       'Open "File manager" page through chat side bar icon',
       async () => {
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded();
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
       },
     );
 
     await dialTest.step(
       'Open attached file dropdown menu and select Delete option',
       async () => {
-        fileRow = filesManagerGrid.gridRowByNameCell(Attachment.sunImageName);
-        fileDotsMenu = await filesManagerGrid.gridDotsMenuByNameCell(
+        fileRow = fileManagerGrid.gridRowByNameCell(Attachment.sunImageName);
+        fileDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.sunImageName,
         );
         await fileRow.hover();
         await fileDotsMenu.click();
-        await filesManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
           isHttpMethodTriggered: false,
         });
       },
@@ -78,14 +74,14 @@ dialTest(
     await dialTest.step(
       'Verify "Confirm Deleting Item" popup with valid text appears',
       async () => {
-        await filesManagerDeleteItemConfirmationPopupAssertion.assertElementState(
-          filesManagerDeleteItemConfirmationPopup,
+        await fileManagerDeleteItemConfirmationPopupAssertion.assertElementState(
+          fileManagerDeleteItemConfirmationPopup,
           'visible',
         );
-        await filesManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupHeader(
+        await fileManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupHeader(
           ExpectedConfirmationPopupData.deleteItemHeader,
         );
-        await filesManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupContent(
+        await fileManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupContent(
           ExpectedConfirmationPopupData.deleteItemContent(
             Attachment.sunImageName,
           ),
@@ -96,8 +92,8 @@ dialTest(
     await dialTest.step(
       'Close popup and verify file is not deleted',
       async () => {
-        await filesManagerDeleteItemConfirmationPopup.getCancelButton().click();
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerDeleteItemConfirmationPopup.getCancelButton().click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',
         );
@@ -109,14 +105,14 @@ dialTest(
       async () => {
         await fileRow.hover();
         await fileDotsMenu.click();
-        await filesManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
           isHttpMethodTriggered: false,
         });
-        await filesManagerDeleteItemConfirmationPopup.confirm({
+        await fileManagerDeleteItemConfirmationPopup.confirm({
           triggeredHttpMethod: 'POST',
           triggeredHttpHost: API.deleteFileHost(),
         });
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'hidden',
         );
@@ -137,12 +133,14 @@ dialTest(
     dataInjector,
     conversations,
     attachmentDropdownMenu,
-    filesManagerModalGrid,
-    filesManagerModalToolbar,
-    filesManagerDeleteItemConfirmationPopup,
-    filesManagerDeleteItemConfirmationPopupAssertion,
+    fileManagerModalGrid,
+    fileManagerModalToolbar,
+    fileManagerDeleteItemConfirmationPopup,
+    fileManagerDeleteItemConfirmationPopupAssertion,
     localStorageManager,
-    filesManagerModalGridAssertion,
+    fileManagerModalGridAssertion,
+    fileManagerToolbar,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -182,24 +180,28 @@ dialTest(
         );
         for (const file of attachedFiles) {
           const attachmentCheckbox =
-            await filesManagerModalGrid.gridCheckboxByNameCell(file);
+            await fileManagerModalGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
         }
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          attachedFiles.length,
+        );
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
       },
     );
 
     await dialTest.step(
       'Click Delete button at the bottom and verify "Confirm deleting items" popup with valid text appears',
       async () => {
-        await filesManagerModalToolbar.getDeleteButton().click();
-        await filesManagerDeleteItemConfirmationPopupAssertion.assertElementState(
-          filesManagerDeleteItemConfirmationPopup,
+        await fileManagerModalToolbar.getDeleteButton().click();
+        await fileManagerDeleteItemConfirmationPopupAssertion.assertElementState(
+          fileManagerDeleteItemConfirmationPopup,
           'visible',
         );
-        await filesManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupHeader(
+        await fileManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupHeader(
           ExpectedConfirmationPopupData.deleteItemsHeader,
         );
-        await filesManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupContent(
+        await fileManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupContent(
           ExpectedConfirmationPopupData.deleteItemsContent(
             attachedFiles.length,
           ),
@@ -210,9 +212,9 @@ dialTest(
     await dialTest.step(
       'Close popup and verify files are not deleted',
       async () => {
-        await filesManagerDeleteItemConfirmationPopup.getCancelButton().click();
+        await fileManagerDeleteItemConfirmationPopup.getCancelButton().click();
         for (const file of attachedFiles) {
-          await filesManagerModalGridAssertion.assertGridRowByNameState(
+          await fileManagerModalGridAssertion.assertGridRowByNameState(
             file,
             'visible',
           );
@@ -223,13 +225,13 @@ dialTest(
     await dialTest.step(
       'Proceed again to "Confirm deleting items" modal, confirm files delete and verify they disappear from files list',
       async () => {
-        await filesManagerModalToolbar.getDeleteButton().click();
-        await filesManagerDeleteItemConfirmationPopup.confirm({
+        await fileManagerModalToolbar.getDeleteButton().click();
+        await fileManagerDeleteItemConfirmationPopup.confirm({
           triggeredHttpMethod: 'POST',
           triggeredHttpHost: API.deleteFileHost(),
         });
         for (const file of attachedFiles) {
-          await filesManagerModalGridAssertion.assertGridRowByNameState(
+          await fileManagerModalGridAssertion.assertGridRowByNameState(
             file,
             'hidden',
           );
@@ -244,21 +246,21 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    filesManagerPage,
-    filesManagerGridAssertion,
+    fileManagerPage,
+    fileManagerGridAssertion,
     uploadProgressDialog,
     localStorageManager,
-    filesManagerToolbar,
+    fileManagerToolbar,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3302');
 
     await dialTest.step(
-      'Open Files manager page by direct URL navigation',
+      'Open file manager page by direct URL navigation',
       async () => {
         await localStorageManager.setShowSideBarPanels();
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded({ isGridVisible: false });
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded({ isGridVisible: false });
       },
     );
 
@@ -272,8 +274,8 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           async () => {
-            await filesManagerToolbar.getNewButton().click();
-            await filesManagerToolbar
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
               .getNewButtonDropdownMenu()
               .selectItem(UploadMenuOptions.uploadFiles);
           },
@@ -326,7 +328,7 @@ dialTest(
       async () => {
         await uploadProgressDialog.getCancelButton().click();
         await baseAssertion.assertElementState(uploadProgressDialog, 'hidden');
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'hidden',
         );
@@ -493,9 +495,9 @@ dialTest(
     'Allowed special chars in the file name while renaming on "Upload from device"',
   async ({
     fileApiHelper,
-    filesManagerPage,
-    filesManagerGrid,
-    filesManagerGridRowDropdownMenu,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
     downloadAssertion,
     setTestIds,
   }) => {
@@ -515,20 +517,19 @@ dialTest(
     await dialTest.step(
       'Open "File manager" page through chat side bar icon',
       async () => {
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded();
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
       },
     );
 
     await dialTest.step(
       'Open attached file dropdown menu, select Download option and verify file is successfully downloaded',
       async () => {
-        await filesManagerGrid.gridRowByNameCell(filename).hover();
-        const dotsMenu =
-          await filesManagerGrid.gridDotsMenuByNameCell(filename);
+        await fileManagerGrid.gridRowByNameCell(filename).hover();
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(filename);
         await dotsMenu.click();
-        const downloadedData = await filesManagerPage.downloadData(() =>
-          filesManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+        const downloadedData = await fileManagerPage.downloadData(() =>
+          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
             isHttpMethodTriggered: false,
           }),
         );
@@ -541,12 +542,12 @@ dialTest(
 dialTest(
   '[Manage attachments] Download several files',
   async ({
-    filesManagerPage,
-    filesManagerGrid,
-    filesManagerToolbar,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerToolbar,
     setTestIds,
     fileApiHelper,
-    filesManagerGridAssertion,
+    fileManagerGridAssertion,
     downloadAssertion,
   }) => {
     setTestIds('EPMRTC-3300');
@@ -560,11 +561,11 @@ dialTest(
     await dialTest.step(
       'Open "File manager" page and check attached files',
       async () => {
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded();
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
         for (const file of attachedFiles) {
           const attachmentCheckbox =
-            await filesManagerGrid.gridCheckboxByNameCell(file);
+            await fileManagerGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
         }
       },
@@ -573,8 +574,8 @@ dialTest(
     await dialTest.step(
       'Click "Download" button and verify files are downloaded as ZIP archive',
       async () => {
-        const downloadedData = await filesManagerPage.downloadMultipleData(
-          () => filesManagerToolbar.clickDownloadButton(false),
+        const downloadedData = await fileManagerPage.downloadMultipleData(
+          () => fileManagerToolbar.clickDownloadButton(false),
           1, // Expect 1 download - ZIP archive containing all files
           'files.zip',
         );
@@ -588,7 +589,7 @@ dialTest(
     await dialTest.step.skip('Verify checkboxes remain checked', async () => {
       // Verify checkboxes remain checked
       for (const file of attachedFiles) {
-        await filesManagerGridAssertion.assertGridCheckboxByNameState(
+        await fileManagerGridAssertion.assertGridCheckboxByNameState(
           file,
           CheckboxState.checked,
         );
@@ -603,12 +604,12 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    filesManagerPage,
-    filesManagerGrid,
-    filesManagerGridAssertion,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
     fileApiHelper,
     localStorageManager,
-    filesManager,
+    fileManager,
     navigationPanel,
   }) => {
     setTestIds('EPMRTC-5396', 'EPMRTC-5526');
@@ -659,27 +660,27 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open Files Manager and verify files appear without page refresh',
+      'Open File Manager and verify files appear without page refresh',
       async () => {
-        await navigationPanel.goToFilesManager();
-        await filesManagerPage.waitForPageLoaded();
+        await navigationPanel.goToFileManager();
+        await fileManagerPage.waitForPageLoaded();
 
         for (const file of filesToTest) {
           // For files in folders, navigate into folder first
           if (file.folderName !== '') {
-            await filesManagerGrid.openFolder(file.folderName);
+            await fileManagerGrid.openFolder(file.folderName);
           }
 
-          await filesManagerGridAssertion.assertGridRowByNameState(
+          await fileManagerGridAssertion.assertGridRowByNameState(
             file.name,
             'visible',
           );
 
           if (file.folderName !== '') {
-            await filesManager
-              .getFilesManagerNavigationPanel()
+            await fileManager
+              .getFileManagerNavigationPanel()
               .getBreadcrumb()
-              .itemByName(FilesManagerToolbarTabs.MyFiles)
+              .itemByName(FileManagerToolbarTabs.MyFiles)
               .click();
           }
         }
@@ -695,19 +696,19 @@ dialTest(
 
           // For files in folders, navigate into folder first
           if (file.folderName !== '') {
-            await filesManagerGrid.openFolder(file.folderName);
+            await fileManagerGrid.openFolder(file.folderName);
           }
 
-          await filesManagerGridAssertion.assertGridRowByNameState(
+          await fileManagerGridAssertion.assertGridRowByNameState(
             file.name,
             'hidden',
           );
 
           if (file.folderName !== '') {
-            await filesManager
-              .getFilesManagerNavigationPanel()
+            await fileManager
+              .getFileManagerNavigationPanel()
               .getBreadcrumb()
-              .itemByName(FilesManagerToolbarTabs.MyFiles)
+              .itemByName(FileManagerToolbarTabs.MyFiles)
               .click();
           }
         },
@@ -720,10 +721,10 @@ dialTest(
   '[Manage attachments] Select files using file context menu.\n' +
     '[Manage attachments] Unselect files using file context menu',
   async ({
-    filesManagerPage,
-    filesManagerGrid,
-    filesManagerToolbar,
-    filesManagerGridAssertion,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
     setTestIds,
     fileApiHelper,
     baseAssertion,
@@ -731,20 +732,21 @@ dialTest(
     setTestIds('EPMRTC-6091', 'EPMRTC-6092');
     const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
     const expectedColor = ThemesUtil.getRgbColorByKey(
-      ThemeColorAttributes.textAccentPrimary,
+      ThemeColorAttributes.controlsBgAccent,
     );
+    let headerCheckboxWrapper: BaseElement;
     let headerCheckboxInput: BaseElement;
     const bulkButtons = [
-      filesManagerToolbar.getMoveToButton(),
-      filesManagerToolbar.getCopyToButton(),
-      filesManagerToolbar.getDuplicateButton(),
-      filesManagerToolbar.getDeleteButton(),
-      filesManagerToolbar.getDownloadButton(),
+      fileManagerToolbar.getMoveToButton(),
+      fileManagerToolbar.getCopyToButton(),
+      fileManagerToolbar.getDuplicateButton(),
+      fileManagerToolbar.getDeleteButton(),
+      fileManagerToolbar.getDownloadButton(),
     ];
     const tabElements = [
-      filesManagerToolbar.getToolbarTabs(),
-      filesManagerToolbar.getToolbarSwitcher(),
-      filesManagerToolbar.getNewButton(),
+      fileManagerToolbar.getToolbarTabs(),
+      fileManagerToolbar.getToolbarSwitcher(),
+      fileManagerToolbar.getNewButton(),
     ];
 
     await dialTest.step('Upload 2 files to app', async () => {
@@ -756,19 +758,19 @@ dialTest(
     await dialTest.step(
       'Open "File manager" page and verify file row includes checkbox on hover over',
       async () => {
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded();
-        const attachmentLocator = await filesManagerGrid.goToGridRowByNameCell(
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        const attachmentLocator = await fileManagerGrid.goToGridRowByNameCell(
           attachments[0],
         );
         await attachmentLocator.hover();
-        const checkbox = await filesManagerGrid.gridCheckboxByNameCell(
+        const checkbox = await fileManagerGrid.gridCheckboxByNameCell(
           attachments[0],
         );
-        await filesManagerGridAssertion.assertElementState(checkbox, 'visible');
-        await filesManagerGridAssertion.assertElementClass(
+        await fileManagerGridAssertion.assertElementState(checkbox, 'visible');
+        await fileManagerGridAssertion.assertElementClass(
           checkbox,
-          new RegExp(/before:border-hover/),
+          new RegExp(/ag-checkbox-input/),
         );
       },
     );
@@ -778,33 +780,33 @@ dialTest(
       async () => {
         for (let i = 0; i < attachments.length; i++) {
           const attachmentCheckbox =
-            await filesManagerGrid.gridCheckboxByNameCell(attachments[i]);
+            await fileManagerGrid.gridCheckboxByNameCell(attachments[i]);
           await attachmentCheckbox.click();
-          await filesManagerGridAssertion.assertCheckboxState(
+          await fileManagerGridAssertion.assertCheckboxState(
             attachmentCheckbox,
             CheckboxState.checked,
           );
-          await filesManagerGridAssertion.assertElementBorderColors(
-            attachmentCheckbox,
+          await fileManagerGridAssertion.assertElementBorderColors(
+            attachmentCheckbox.wrapper,
             expectedColor,
           );
           headerCheckboxInput =
-            filesManagerGrid.gridHeaderCheckbox.checkboxInput;
+            fileManagerGrid.gridHeaderCheckbox.checkboxInput;
+          headerCheckboxWrapper = fileManagerGrid.gridHeaderCheckbox.wrapper;
           await baseAssertion.assertElementBorderColors(
-            headerCheckboxInput,
+            headerCheckboxWrapper,
             expectedColor,
           );
           await baseAssertion.assertElementState(
-            filesManagerToolbar.getSelectedIconsButton(i + 1),
+            fileManagerToolbar.getSelectedIconsButton(i + 1),
             'visible',
           );
           i === 0
-            ? await filesManagerGridAssertion.assertElementAttribute(
-                headerCheckboxInput,
-                Attributes.ariaChecked,
-                AttributeValues.mixed,
+            ? await baseAssertion.assertElementClass(
+                headerCheckboxWrapper,
+                /ag-indeterminate/,
               )
-            : await filesManagerGridAssertion.assertCheckboxState(
+            : await fileManagerGridAssertion.assertCheckboxState(
                 headerCheckboxInput,
                 CheckboxState.checked,
               );
@@ -823,44 +825,48 @@ dialTest(
       async () => {
         for (let i = 0; i < attachments.length; i++) {
           const attachmentCheckbox =
-            await filesManagerGrid.gridCheckboxByNameCell(attachments[i]);
+            await fileManagerGrid.gridCheckboxByNameCell(attachments[i]);
           await attachmentCheckbox.click();
-          await filesManagerGridAssertion.assertCheckboxState(
+          await fileManagerGridAssertion.assertCheckboxState(
             attachmentCheckbox,
             CheckboxState.unchecked,
           );
           if (i === 0) {
             await baseAssertion.assertElementState(
-              filesManagerToolbar.getSelectedIconsButton(i + 1),
+              fileManagerToolbar.getSelectedIconsButton(i + 1),
               'visible',
             );
-            await filesManagerGridAssertion.assertElementAttribute(
-              headerCheckboxInput,
-              Attributes.ariaChecked,
-              AttributeValues.mixed,
+            await baseAssertion.assertElementClass(
+              headerCheckboxWrapper,
+              /ag-indeterminate/,
             );
             await baseAssertion.assertElementBorderColors(
-              headerCheckboxInput,
+              headerCheckboxWrapper,
               expectedColor,
             );
             for (const button of bulkButtons) {
               await baseAssertion.assertElementState(button, 'visible');
             }
             for (const element of [
-              filesManagerToolbar.getToolbarTabs(),
-              filesManagerToolbar.getToolbarSwitcher(),
-              filesManagerToolbar.getNewButton(),
+              fileManagerToolbar.getToolbarTabs(),
+              fileManagerToolbar.getToolbarSwitcher(),
+              fileManagerToolbar.getNewButton(),
             ]) {
               await baseAssertion.assertElementState(element, 'hidden');
             }
           } else {
             await baseAssertion.assertElementState(
-              filesManagerToolbar.getSelectedIconsButton(i + 1),
+              fileManagerToolbar.getSelectedIconsButton(i + 1),
               'hidden',
             );
-            await filesManagerGridAssertion.assertElementState(
-              headerCheckboxInput,
-              'hidden',
+            await fileManagerGridAssertion.assertCheckboxState(
+              fileManagerGrid.gridHeaderCheckbox,
+              CheckboxState.unchecked,
+            );
+            //TODO assume that this class regulates the visibility of the checkbox
+            await baseAssertion.assertElementClass(
+              fileManagerGrid.gridHeaderCheckbox.host,
+              /dial-row-select/,
             );
             for (const button of bulkButtons) {
               await baseAssertion.assertElementState(button, 'hidden');

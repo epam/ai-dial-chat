@@ -118,10 +118,7 @@ interface CodeEditorViewProps {
   readOnly?: boolean;
 }
 
-export const CodeEditorView = ({
-  selectedFileId,
-  readOnly,
-}: CodeEditorViewProps) => {
+const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
 
   const selectFileContentSelector = useMemo(
@@ -544,7 +541,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   }
 
   return (
-    <div className="z-20 w-full max-w-full">
+    <div className="z-40 w-full max-w-full">
       <div
         className={classNames(
           'grid min-h-[400px] w-full max-w-full grid-rows-[100%]',
