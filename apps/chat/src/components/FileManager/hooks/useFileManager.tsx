@@ -20,6 +20,7 @@ import {
   SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
+import { hasWritePermission } from '@/src/utils/app/share';
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
@@ -157,6 +158,12 @@ export const useFileManager = ({
   const [currentPath, setCurrentPath] = useState<string | undefined>();
   const [isSearching, setIsSearching] = useState(false);
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
+
+  const currentFolder = useMemo(() => {
+    return currentPath ? folders.find((f) => f.id === currentPath) : undefined;
+  }, [currentPath, folders]);
+
+  const canWriteCurrentFolder = hasWritePermission(currentFolder?.permissions);
 
   const searchSelector = useCallback(
     (state: RootState) =>
@@ -592,13 +599,22 @@ export const useFileManager = ({
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
-      isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
+      isNewButtonDisabled:
+        activeTab === DialFileManagerTabs.Organization ||
+        (activeTab === DialFileManagerTabs.Shared && !canWriteCurrentFolder),
       disabledNewButtonTooltip: t(
         'You do not have permission to create new items here',
       ),
       ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
+    [
+      filteredTabs,
+      activeTab,
+      handleTabChange,
+      canWriteCurrentFolder,
+      t,
+      externalToolbarOptions,
+    ],
   );
 
   const destinationFolderPopupOptions = useMemo(
