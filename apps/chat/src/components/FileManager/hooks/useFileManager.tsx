@@ -714,32 +714,42 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
-      const existingNames = new Set(
+      const existingInFolder = new Set(
         files.filter((f) => f.folderId === destinationUrl).map((f) => f.name),
       );
 
+      const namesInCurrentBatch = new Set<string>();
+
       const processedFiles = filesToUpload.map((file) => {
-        const initialSanitizedName = prepareFileName(file.name);
+        const sanitizedName = prepareFileName(file.name);
+        let finalName = sanitizedName;
 
-        let finalName = initialSanitizedName;
-        let counter = 1;
+        const isNameModified = sanitizedName !== file.name;
+        const conflictsWithBatch = namesInCurrentBatch.has(finalName);
+        const conflictsWithFolder = existingInFolder.has(finalName);
 
-        const extensionIndex = initialSanitizedName.lastIndexOf('.');
-        const baseName =
-          extensionIndex === -1
-            ? initialSanitizedName
-            : initialSanitizedName.substring(0, extensionIndex);
-        const extension =
-          extensionIndex === -1
-            ? ''
-            : initialSanitizedName.substring(extensionIndex);
+        if (conflictsWithBatch || (isNameModified && conflictsWithFolder)) {
+          let counter = 1;
+          const extensionIndex = sanitizedName.lastIndexOf('.');
+          const baseName =
+            extensionIndex === -1
+              ? sanitizedName
+              : sanitizedName.substring(0, extensionIndex);
+          const extension =
+            extensionIndex === -1
+              ? ''
+              : sanitizedName.substring(extensionIndex);
 
-        while (existingNames.has(finalName)) {
-          finalName = `${baseName} (${counter})${extension}`;
-          counter++;
+          while (
+            existingInFolder.has(finalName) ||
+            namesInCurrentBatch.has(finalName)
+          ) {
+            finalName = `${baseName} (${counter})${extension}`;
+            counter++;
+          }
         }
 
-        existingNames.add(finalName);
+        namesInCurrentBatch.add(finalName);
 
         return {
           ...file,
