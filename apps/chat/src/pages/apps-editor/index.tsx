@@ -26,11 +26,10 @@ import {
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 
-import { getLayout } from '@/src/pages/_app';
-
 import { AppsEditor } from '@/src/components/AppsEditor/AppsEditor';
 import { Spinner } from '@/src/components/Common/Spinner';
 
+import { getLayout } from '@/src/layout';
 import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 function AppsEditorPage() {

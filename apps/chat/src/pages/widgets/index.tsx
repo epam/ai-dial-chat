@@ -12,10 +12,10 @@ import { Translation } from '@/src/types/translation';
 
 import { Routes } from '@/src/constants/routes';
 
-import { getLayout } from '@/src/pages/_app';
-
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { WidgetsHeader } from '@/src/components/WidgetsHeader';
+
+import { getLayout } from '@/src/layout';
 
 function WidgetsPage() {
   const { t } = useTranslation(Translation.SideBar);

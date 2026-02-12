@@ -15,11 +15,10 @@ import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
-import { getLayout } from '@/src/pages/_app';
-
 import { Spinner } from '@/src/components/Common/Spinner';
 import { ToolsetEditor } from '@/src/components/ToolsetEditor/ToolsetEditor';
 
+import { getLayout } from '@/src/layout';
 import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 function ToolsetEditorPage() {

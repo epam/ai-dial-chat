@@ -1,17 +1,9 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { Session } from 'next-auth';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { Session } from 'next-auth';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { isAuthDisabled } from './auth-providers';
-
-export function isClientSessionValid(session: unknown | null) {
-  return (
-    session &&
-    (session as { data?: { error?: string } }).data?.error !==
-      'RefreshAccessTokenError'
-  );
-}
 
 export function isServerSessionValid(
   session: Session | null,

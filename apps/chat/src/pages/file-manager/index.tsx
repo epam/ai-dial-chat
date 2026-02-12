@@ -5,11 +5,10 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { getLayout } from '@/src/pages/_app';
-
 import { FileManager } from '@/src/components/FileManager/FileManager';
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
 
+import { getLayout } from '@/src/layout';
 import { Feature } from '@epam/ai-dial-shared';
 
 function FilesManagerPage() {

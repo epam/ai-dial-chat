@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { isClientSessionValid } from '@/src/utils/auth/session';
+import { isClientSessionValid } from '@/src/utils/auth/client-session';
 import { isUserAdmin } from '@/src/utils/session';
 
 import { RootState } from '@/src/types/store';

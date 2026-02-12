@@ -11,11 +11,11 @@ import { ModelsSelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 
-import { getLayout } from '@/src/pages/_app';
-
 import { WidgetView } from '@/src/components/Chat/WidgetView';
 import { Loader } from '@/src/components/Common/Loader';
 import { WidgetsHeader } from '@/src/components/WidgetsHeader';
+
+import { getLayout } from '@/src/layout';
 
 function SelectedWidgetPage() {
   const router = useRouter();

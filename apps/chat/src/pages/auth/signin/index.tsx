@@ -15,10 +15,7 @@ import {
   DEFAULT_PROVIDER,
   authProviders,
 } from '@/src/utils/auth/auth-providers';
-import {
-  isClientSessionValid,
-  isServerSessionValid,
-} from '@/src/utils/auth/session';
+import { isClientSessionValid } from '@/src/utils/auth/client-session';
 
 import { Translation } from '@/src/types/translation';
 
@@ -162,6 +159,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  const { isServerSessionValid } = await import('@/src/utils/auth/session');
   const session = await getServerSession(req, res, authOptions);
 
   res.setHeader('Cache-Control', 'no-store');

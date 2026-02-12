@@ -5,40 +5,24 @@ import { Provider } from 'react-redux';
 import { NextPage } from 'next';
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
-import { Inconsolata, Inter } from 'next/font/google';
 import Head from 'next/head';
 
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import { Layout } from '@/src/components/Layout';
 import { Toasts } from '@/src/components/Toasts/Toasts';
 
 import { HomeProps } from '.';
+import { getLayout, inter } from '../layout';
+import '../styles/globals.css';
 
 import { createStore } from '@/src/store';
-import '@/src/styles/globals.css';
 import { appWithJss } from '@epam/ai-dial-modulify-ui';
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement, settings: SettingsState) => ReactNode;
 };
-
-export function getLayout(page: ReactElement, settings: SettingsState) {
-  return <Layout settings={settings}>{page}</Layout>;
-}
-
-export const inter = Inter({
-  subsets: ['latin'],
-  weight: 'variable',
-  variable: '--font-inter',
-});
-export const inconsolata = Inconsolata({
-  subsets: ['latin'],
-  weight: 'variable',
-  variable: '--font-inconsolata',
-});
 
 type AppPropsWithLayout = AppProps<SessionProviderProps & HomeProps> & {
   Component: NextPageWithLayout;

@@ -9,8 +9,7 @@ import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { inconsolata, inter } from '@/src/pages/_app';
-
+import { inconsolata, inter } from '@/src/layout';
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
 
