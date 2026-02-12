@@ -19,7 +19,7 @@ import { ServerUtils } from './server';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 
-export const getEntityUrlFromSlugs = ({
+const getEntityUrlFromSlugs = ({
   dialApiHost,
   req,
   pathParameter,

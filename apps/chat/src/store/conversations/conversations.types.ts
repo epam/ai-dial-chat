@@ -52,7 +52,7 @@ export interface ConversationsState {
   exportingConversationId?: string | undefined;
 }
 
-export interface BaseSendMessagePayload {
+interface BaseSendMessagePayload {
   message: Message;
   deleteCount: number;
   activeReplayIndex: number;

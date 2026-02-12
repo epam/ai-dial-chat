@@ -91,7 +91,7 @@ function ShareAccessSection({
   );
 }
 
-export function ShareModalView() {
+function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 

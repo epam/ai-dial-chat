@@ -9,7 +9,7 @@ export const parseJsonOptionsString = (jsonString: string) => {
   }
 };
 
-export const parseCommaSeparatedList = (
+const parseCommaSeparatedList = (
   str: string | undefined,
   defaultValue: string[] = [],
 ): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;

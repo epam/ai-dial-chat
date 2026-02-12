@@ -26,7 +26,7 @@ export function OverflowContainer<T>({
   renderOverflow,
   getKey,
   overflowIndicatorWidth = 50,
-  className = 'flex w-full flex-nowrap items-center gap-2',
+  className = 'flex w-full flex-nowrap items-center gap-1',
   dataQA,
 }: OverflowContainerProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);

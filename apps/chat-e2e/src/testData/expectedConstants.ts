@@ -299,8 +299,7 @@ export const ExpectedConstants = {
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
     'Request name should be at most 160 characters long',
-  publishRequestNameMinLengthErrorMessage:
-    'Request name should be at least 2 characters long',
+  publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,

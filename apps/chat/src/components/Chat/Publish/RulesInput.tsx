@@ -3,7 +3,12 @@ import { Fragment, useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { TargetAudienceFilter } from '@/src/types/publication';
+import { getRuleFilterId } from '@/src/utils/app/publications';
+
+import {
+  TargetAudienceFilter,
+  TargetAudienceFilterData,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
@@ -43,10 +48,8 @@ export const RulesInput = ({
   }, [onSwitchRulesSetter]);
 
   const handleSaveFilter = useCallback(
-    (targetFilter: TargetAudienceFilter) => {
-      setFilters(
-        filters.filter(({ id }) => id !== targetFilter.id).concat(targetFilter),
-      );
+    (targetFilter: TargetAudienceFilterData) => {
+      setFilters(filters.concat({ ...targetFilter, id: getRuleFilterId() }));
       onSwitchRulesSetter(false);
     },
     [filters, onSwitchRulesSetter, setFilters],
@@ -63,7 +66,7 @@ export const RulesInput = ({
             <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
               <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
                 <span className="font-semibold" data-qa="rule-target">
-                  {startCase(toLower(item.id))}
+                  {startCase(toLower(item.source))}
                 </span>
                 <span className="italic" data-qa="rule-function">
                   {toLower(item.filterFunction)}
