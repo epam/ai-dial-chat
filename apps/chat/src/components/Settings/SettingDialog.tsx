@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isTouchable } from '@/src/utils/app/mobile';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { ScreenState } from '@/src/types/common';
@@ -20,6 +21,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { BYTES_IN_MB } from '@/src/constants/file';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { withLabel } from '@/src/components/Common/Forms/Label';
@@ -201,6 +203,7 @@ const SettingDialogView: FC = () => {
                   customLogoLocalStoreName)
             }
             title={t('Custom logo')}
+            maxSelectableFileSize={BYTES_IN_MB * 0.5}
             isFormView
           />
         )}
@@ -223,7 +226,7 @@ const SettingDialogView: FC = () => {
             className="mt-1"
           />
         )}
-        {screenState > ScreenState.MD && (
+        {!isTouchable() && (
           <EnterTypeSelectLabeled
             label={t('Keyboard shortcuts')}
             value={enterType}

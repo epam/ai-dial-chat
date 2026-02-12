@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { getEntityNameFromId } from '@/src/utils/app/id';
+import {
+  getEntityNameFromId,
+  isApplicationId,
+  isToolsetId,
+} from '@/src/utils/app/id';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
@@ -18,14 +22,23 @@ import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
+  isCustomTool?: boolean;
   children: React.ReactNode;
 }
 
-const ChipWrapper: React.FC<ChipWrapperProps> = ({ isError, children }) => (
+const ChipWrapper: React.FC<ChipWrapperProps> = ({
+  isError,
+  isCustomTool,
+  children,
+}) => (
   <div
     className={classNames(
       'flex h-[34px] items-center rounded',
-      isError ? 'bg-error' : 'bg-accent-primary-alpha',
+      isCustomTool
+        ? 'bg-layer-4'
+        : isError
+          ? 'bg-error'
+          : 'bg-accent-primary-alpha',
     )}
   >
     {children}
@@ -42,17 +55,21 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   id,
   isError,
   onRemove,
-}) => (
-  <DialCloseButton
-    className={classNames(
-      'mr-1 p-1 text-secondary',
-      isError && 'hover:enabled:text-error',
-    )}
-    onClose={() => onRemove?.(id)}
-    aria-label="Remove item"
-    size={18}
-  />
-);
+}) => {
+  const isCustomTool = !isApplicationId(id) && !isToolsetId(id);
+
+  return (
+    <DialCloseButton
+      className={classNames(
+        'mr-1 flex p-1 text-secondary',
+        isError && !isCustomTool && 'hover:enabled:text-error',
+      )}
+      onClose={() => onRemove?.(id)}
+      aria-label="Remove item"
+      size={18}
+    />
+  );
+};
 
 interface ChipBodyProps {
   id: string;
@@ -80,6 +97,8 @@ const ChipBody: React.FC<ChipBodyProps> = ({
     onClick?.(id);
   };
 
+  const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
+
   return (
     <div
       className={classNames(
@@ -96,6 +115,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         version={version}
         isError={isError}
         className="max-w-[220px]"
+        isCustomTool={isCustomTool}
       />
     </div>
   );
@@ -124,7 +144,13 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
     : item.name;
-  const version = !item ? getVersionFromId(id) : item.version;
+  const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
+
+  const version = isCustomTool
+    ? ''
+    : !item
+      ? getVersionFromId(id)
+      : item.version;
 
   const tooltipContent = useMemo(() => {
     return (
@@ -137,6 +163,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
         isLoggedOut={isLoggedOut}
         isUndeployed={isUndeployed}
         isInSelectionList={isInSelectionList}
+        isCustomTool={isCustomTool}
         readonly={readonly}
       />
     );
@@ -150,10 +177,11 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
     isUndeployed,
     isInSelectionList,
     readonly,
+    isCustomTool,
   ]);
 
   return (
-    <ChipWrapper isError={isError}>
+    <ChipWrapper isError={isError} isCustomTool={isCustomTool}>
       <Tooltip isTriggerClickable tooltip={tooltipContent}>
         <ChipBody
           id={id}

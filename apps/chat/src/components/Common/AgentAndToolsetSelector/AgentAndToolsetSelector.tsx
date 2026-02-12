@@ -10,6 +10,7 @@ import { Translation } from '@/src/types/translation';
 
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
+import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
@@ -36,6 +37,7 @@ interface AgentAndToolsetSelectorProps {
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   tooltip?: string;
   onItemClick?: (id: string) => void;
+  onJsonSwitchClick?: () => void;
 }
 
 export const AgentAndToolsetSelector: React.FC<
@@ -48,6 +50,7 @@ export const AgentAndToolsetSelector: React.FC<
   allItemsMap,
   onChange,
   onItemClick,
+  onJsonSwitchClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -84,7 +87,7 @@ export const AgentAndToolsetSelector: React.FC<
   return (
     <div className="relative grow space-y-4">
       <div className="flex flex-col">
-        <div className="absolute right-0 top-[-22px]">
+        <div className="absolute right-0 top-[-29px] flex items-center">
           <Tooltip
             tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
           >
@@ -95,11 +98,25 @@ export const AgentAndToolsetSelector: React.FC<
               label={t('Add')}
             />
           </Tooltip>
+          {!!onJsonSwitchClick && (
+            <>
+              <div className="ml-1 mr-3 h-3 w-0 border-l border-primary" />
+              <ToggleSwitch
+                isOn={false}
+                handleSwitch={onJsonSwitchClick}
+                disabled={readonly}
+                switchOFFText={t('OFF')}
+                additionalText={t('JSON')}
+                className="flex w-fit items-center gap-2"
+                tooltip={t('Switch to JSON view for Agents and Toolsets')}
+              />
+            </>
+          )}
         </div>
         {!value.length ? (
           <NoAgentsAndToolsets />
         ) : (
-          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+          <div className="flex flex-wrap gap-1 rounded border border-primary p-2">
             {value.map((id) => (
               <AgentAndToolsetChip
                 key={id}

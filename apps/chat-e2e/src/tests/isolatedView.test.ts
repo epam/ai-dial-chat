@@ -145,8 +145,8 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessage,
-    filesManagerModalGrid,
-    filesManagerModal,
+    fileManagerModalGrid,
+    fileManagerModal,
     chatHeaderAssertion,
     chatMessagesAssertion,
     footerAssertion,
@@ -183,9 +183,9 @@ dialTest(
         UploadMenuOptions.attachUploadedFiles,
       );
       const attachmentCheckbox =
-        await filesManagerModalGrid.gridCheckboxByNameCell(attachmentName);
+        await fileManagerModalGrid.gridCheckboxByNameCell(attachmentName);
       await attachmentCheckbox.click();
-      await filesManagerModal.getAttachButton().click();
+      await fileManagerModal.getAttachButton().click();
       await sendMessage.messageInput.typeInInput(testMessage);
       await dialHomePage.mockChatTextResponse(
         MockedChatApiResponseBodies.simpleTextBody,

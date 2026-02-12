@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, iif, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, first, map, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -74,26 +74,13 @@ const initEpic: AppEpic = (action$, state$) =>
           )) ||
         isShareLink;
 
-      return concat(
-        of(
-          MarketplaceActions.initSuccess({
-            saveFilters: shouldSaveFilters,
-            selectedTab: workSpaceTab
-              ? MarketplaceTabs.MY_WORKSPACE
-              : undefined,
-          }),
-        ),
-        iif(
-          () => !shouldSaveFilters,
-          of(
-            MarketplaceActions.setSelectedTab(
-              workSpaceTab
-                ? MarketplaceTabs.MY_WORKSPACE
-                : MarketplaceTabs.HOME,
-            ),
-          ),
-          EMPTY,
-        ),
+      return of(
+        MarketplaceActions.initSuccess({
+          saveFilters: shouldSaveFilters,
+          selectedTab: workSpaceTab
+            ? MarketplaceTabs.MY_WORKSPACE
+            : MarketplaceTabs.HOME,
+        }),
       );
     }),
   );
@@ -111,7 +98,13 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedView.type,
       MarketplaceActions.setTableSort.type,
     ),
-    filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
+    switchMap((action) =>
+      state$.pipe(
+        filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)), // Wait until true
+        first(),
+        map(() => action), // Emit the stored action
+      ),
+    ),
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));

@@ -135,9 +135,9 @@ export const SliderDots: React.FC<Props> = ({
                   iconBefore={<IconCaretLeftFilled size={18} />}
                 />
               )}
-              <div className="flex max-w-[176px] overflow-hidden">
+              <div className="flex max-w-[122px] overflow-hidden">
                 <div
-                  className="flex items-center gap-4  transition-all duration-200"
+                  className="flex items-center gap-2 transition-all duration-200"
                   style={{
                     transform: `translateX(-${translateXValue}px)`,
                   }}

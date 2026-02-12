@@ -7,16 +7,16 @@ dialTest(
   'Generated in response picture appears in Manage attachments',
   async ({
     dialHomePage,
-    filesManagerPage,
+    fileManagerPage,
     setTestIds,
     navigationPanel,
     conversationData,
     localStorageManager,
     dataInjector,
     fileApiHelper,
-    filesManagerFoldersTree,
-    filesManagerCollapsibleSidebar,
-    filesManagerGridAssertion,
+    fileManagerFoldersTree,
+    fileManagerCollapsibleSidebar,
+    fileManagerGridAssertion,
     chatHeader,
     chat,
     talkToAgentDialog,
@@ -58,11 +58,11 @@ dialTest(
     await dialTest.step(
       'Open "File manager" page and verify image is placed inside nested folders',
       async () => {
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded();
-        await filesManagerCollapsibleSidebar.expandIfCollapsed();
-        await filesManagerFoldersTree.expandFolders(...imagePathSegments);
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        await fileManagerCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerFoldersTree.expandFolders(...imagePathSegments);
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',
         );
@@ -84,10 +84,10 @@ dialTest(
           parentPath: imagePath,
         });
 
-        await navigationPanel.goToFilesManager();
-        await filesManagerCollapsibleSidebar.expandIfCollapsed();
-        await filesManagerFoldersTree.expandFolders(...imagePathSegments);
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await navigationPanel.goToFileManager();
+        await fileManagerCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerFoldersTree.expandFolders(...imagePathSegments);
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.cloudImageName,
           'visible',
         );
@@ -110,10 +110,10 @@ dialTest(
           parentPath: secondImagePath,
         });
 
-        await navigationPanel.goToFilesManager();
-        await filesManagerCollapsibleSidebar.expandIfCollapsed();
-        await filesManagerFoldersTree.expandFolders(...secondImagePathSegments);
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await navigationPanel.goToFileManager();
+        await fileManagerCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerFoldersTree.expandFolders(...secondImagePathSegments);
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.flowerImageName,
           'visible',
         );

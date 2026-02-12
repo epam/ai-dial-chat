@@ -1,5 +1,6 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn, isToolsetWithAuth } from '@/src/utils/app/toolsets';
 
@@ -24,7 +25,7 @@ export const CredentialsStatusIndicator = ({
     entity,
     ToolsetCredentialsLevel.USER,
   );
-  const isPublic = isEntityIdPublic(entity);
+  const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
   const isSignedIn = isSignedInUser || isSignedInGlobal;
 
   const loginLabel = isSignedInUser || !isPublic ? 'MY CREDS' : 'ORG CREDS';

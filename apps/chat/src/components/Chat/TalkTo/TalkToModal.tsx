@@ -325,7 +325,7 @@ const TalkToModalView = ({
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col">
         <div
           ref={headerRef}
-          className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse"
+          className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4"
         >
           <div className="relative flex grow">
             <IconSearch
@@ -341,7 +341,7 @@ const TalkToModalView = ({
               autoFocus={isOverlay || !isSmallScreenOrTouchable()}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:gap-3">
             {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
               (marketplaceTab) => (
                 <AgentsTabButton

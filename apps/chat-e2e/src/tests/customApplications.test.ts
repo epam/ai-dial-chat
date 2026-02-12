@@ -1107,8 +1107,8 @@ dialTest(
       entityEditorGeneralInfoPreviewCard,
       tooltipAssertion,
       customAppEditorViewForm,
-      filesManagerModalGrid,
-      filesManagerModal,
+      fileManagerModalGrid,
+      fileManagerModal,
       entityEditorGeneralInfoPreview,
       fileApiHelper,
       entityEditorHeader,
@@ -1289,11 +1289,11 @@ dialTest(
       await entityEditorGeneralForm.topicsDropdownToggle.click();
       await entityEditorGeneralForm.addIconButton.click();
       const attachmentCheckbox =
-        await filesManagerModalGrid.gridCheckboxByNameCell(
+        await fileManagerModalGrid.gridCheckboxByNameCell(
           Attachment.sunImageName,
         );
       await attachmentCheckbox.click();
-      await filesManagerModal.getSelectButton().click();
+      await fileManagerModal.getSelectButton().click();
     });
 
     await dialTest.step(
@@ -1691,8 +1691,8 @@ dialTest(
     marketplaceEntitiesSection,
     entityDetailsModal,
     entityEditorPage,
-    filesManagerModal,
-    filesManagerModalGrid,
+    fileManagerModal,
+    fileManagerModalGrid,
     entityEditorHeader,
     entityEditorGeneralForm,
     entityEditorGeneralInfoPreview,
@@ -1780,9 +1780,9 @@ dialTest(
         );
         await entityEditorGeneralForm.addIconButton.click();
         const iconCheckbox =
-          await filesManagerModalGrid.gridCheckboxByNameCell(newIconFileName);
+          await fileManagerModalGrid.gridCheckboxByNameCell(newIconFileName);
         await iconCheckbox.click();
-        await filesManagerModal.getSelectButton().click();
+        await fileManagerModal.getSelectButton().click();
       },
     );
 
@@ -1883,13 +1883,14 @@ dialTest(
     agentInfoAssertion,
     sendMessage,
     attachmentDropdownMenu,
-    filesManagerModal,
-    filesManagerModalGrid,
+    fileManagerModal,
+    fileManagerModalGrid,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     tooltipAssertion,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
+    fileManagerToolbar,
   }) => {
     setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
@@ -2005,7 +2006,7 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        const modalHeaderText = await filesManagerModal
+        const modalHeaderText = await fileManagerModal
           .getHeader()
           .getSupportedTypes();
         baseAssertion.assertStringIncludes(
@@ -2026,10 +2027,16 @@ dialTest(
       async () => {
         for (const pdfFile of pdfFilesToUpload) {
           const attachmentCheckbox =
-            await filesManagerModalGrid.gridCheckboxByNameCell(pdfFile);
+            await fileManagerModalGrid.gridCheckboxByNameCell(pdfFile);
           await attachmentCheckbox.click();
         }
-        await filesManagerModal.getAttachButton().click();
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          pdfFilesToUpload.length,
+        );
+
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
+
+        await fileManagerModal.getAttachButton().click();
         for (const pdfFile of pdfFilesToUpload) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             pdfFile,

@@ -11,10 +11,10 @@ dialTest(
   '[Upload from device] Error appears if to load the file with the same name and extension if it already exists in a folder.\n' +
     'Long file name in errors does not break UI on "Upload from device"',
   async ({
-    filesManagerPage,
+    fileManagerPage,
     setTestIds,
-    filesManagerToolbar,
-    filesManagerGridAssertion,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
     fileConflictConfirmationPopup,
     fileConflictConfirmationPopupAssertion,
     fileApiHelper,
@@ -30,17 +30,17 @@ dialTest(
     await dialTest.step(
       'Upload the same file again through File manager',
       async () => {
-        await filesManagerPage.openFilesManagerPage();
-        await filesManagerPage.waitForPageLoaded();
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.longImageName,
           'visible',
         );
-        await filesManagerToolbar.getNewButton().click();
-        await filesManagerPage.uploadData(
+        await fileManagerToolbar.getNewButton().click();
+        await fileManagerPage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
           () =>
-            filesManagerToolbar
+            fileManagerToolbar
               .getNewButtonDropdownMenu()
               .selectItem(UploadMenuOptions.uploadFiles),
         );
@@ -53,7 +53,7 @@ dialTest(
           ),
         );
         await fileConflictConfirmationPopup.getCancelButton().click();
-        await filesManagerGridAssertion.assertGridRowByNameState(
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.longImageName,
           'visible',
         );

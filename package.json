@@ -33,7 +33,7 @@
     "affected:format:fix": "nx affected -t format:fix"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "^0.6.0",
+    "@epam/ai-dial-ui-kit": "^0.7.0-rc.34",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
@@ -71,6 +71,8 @@
     "jszip": "^3.10.1",
     "katex": "^0.16.22",
     "lodash-es": "^4.17.23",
+    "marked": "^17.0.1",
+    "micromark-extension-llm-math": "^3.1.0",
     "mime-types": "^2.1.35",
     "monaco-editor": "0.54.0",
     "nanoid": "^5.1.5",
@@ -104,6 +106,7 @@
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "remove-markdown": "^0.6.3",
     "rxjs": "^7.8.1",
     "stringz": "^2.1.0",
     "tiktoken": "^1.0.17",

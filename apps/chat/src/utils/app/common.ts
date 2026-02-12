@@ -94,13 +94,25 @@ export const isEntityNameInvalid = (name: string, checkDotsInTheEnd = true) =>
   notAllowedSymbolsRegex.test(name) ||
   (checkDotsInTheEnd && doesHaveDotsInTheEnd(name));
 
-export const isEntityNameValid = (name: string, checkDotsInTheEnd = true) => {
+export const isEntityNameValid = (
+  name: string,
+  options?: {
+    checkDotsInTheEnd?: boolean;
+    minLength?: number;
+    maxLength?: number;
+  },
+) => {
+  const {
+    checkDotsInTheEnd = true,
+    minLength = MIN_ENTITY_LENGTH,
+    maxLength = MAX_ENTITY_LENGTH,
+  } = options ?? {};
   const trimmedName = name.trim();
 
   return (
     !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
-    trimmedName.length <= MAX_ENTITY_LENGTH &&
-    trimmedName.length >= MIN_ENTITY_LENGTH
+    trimmedName.length <= maxLength &&
+    trimmedName.length >= minLength
   );
 };
 
@@ -313,7 +325,15 @@ export const formatDate = (rawDate: number | string | Date): string => {
 export const parseCommaSeparatedList = (
   str: string | undefined,
   defaultValue: string[] = [],
-): string[] => str?.split(',').map((str) => str.trim()) ?? defaultValue;
+): string[] => {
+  const guid = nanoid();
+  return (
+    str
+      ?.replaceAll('\\,', guid)
+      .split(',')
+      .map((str) => str.replaceAll(guid, ',').trim()) ?? defaultValue
+  );
+};
 
 export const dispatchMouseLeaveEvent = (e: MouseEvent) => {
   const mouseLeaveEvent = new MouseEvent('mouseleave', {

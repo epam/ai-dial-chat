@@ -21,4 +21,5 @@ export interface ApplicationState {
   logsEntityId: string | undefined;
   editorStep: MarketplaceEditorSteps;
   shouldTriggerEditorAutoUpdate: boolean;
+  editorError?: string;
 }
