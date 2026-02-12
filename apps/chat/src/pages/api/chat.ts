@@ -122,6 +122,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       configurationSchemaValue: configurationValue,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Content-Type', 'application/octet-stream');
 
     const reader = stream.getReader();
 
