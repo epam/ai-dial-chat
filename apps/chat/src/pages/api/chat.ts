@@ -122,7 +122,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       configurationSchemaValue: configurationValue,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
-    res.setHeader('Content-Type', 'text/event-stream');
 
     const reader = stream.getReader();
 
