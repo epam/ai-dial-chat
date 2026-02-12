@@ -49,6 +49,7 @@ declare global {
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
       TOPICS?: string;
+      HIDDEN_ENTITY_TAG?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
       WIDGETS_SCHEMA_IDS?: string;
       NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
