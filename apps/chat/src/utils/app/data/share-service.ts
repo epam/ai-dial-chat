@@ -26,11 +26,10 @@ import {
   ShareRevokeRequestModel,
 } from '@/src/types/share';
 
-import { constructPath } from '../file';
+import { constructPath, getMimeTypeByFileName } from '../file';
 import { EnumMapper } from '../mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
-import { contentType } from 'mime-types';
 
 export const getFolderFromShareResult = (
   folder: BackendChatFolder,
@@ -189,13 +188,13 @@ export class ShareService {
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               const absolutePath = constructPath(apiKey, bucket, parentPath);
-              const mimeType = contentType(file.name);
+              const contentType = getMimeTypeByFileName(file.name);
               entities.push({
                 name: file.name,
                 id,
                 folderId: absolutePath,
                 absolutePath,
-                contentType: mimeType ? mimeType : 'application/octet-stream',
+                contentType,
                 author: file.author,
                 permissions: file.permissions,
               });

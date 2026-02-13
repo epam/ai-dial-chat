@@ -36,7 +36,7 @@ import {
   MY_FILES_SECTION,
   ORGANIZATION_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
-} from '@/src/constants/file';
+} from '@/src/constants/fileManager';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
