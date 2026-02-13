@@ -28,6 +28,7 @@ export interface SettingsState {
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
   topics: string[];
+  hiddenEntityTag?: string;
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
   quickAppsModel?: string;

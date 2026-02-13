@@ -20,9 +20,11 @@ import {
   SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
+import { hasWritePermission } from '@/src/utils/app/share';
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
+import { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import { ShareActions } from '@/src/store/actions';
@@ -34,7 +36,7 @@ import {
   MY_FILES_SECTION,
   ORGANIZATION_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
-} from '@/src/constants/file';
+} from '@/src/constants/fileManager';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
@@ -154,18 +156,24 @@ export const useFileManager = ({
   );
 
   const [currentPath, setCurrentPath] = useState<string | undefined>();
+  const [isSearching, setIsSearching] = useState(false);
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
 
-  const searchResults = useAppSelector(
-    useCallback(
-      (state) => {
-        return currentPath
-          ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
-          : [];
-      },
-      [currentPath],
-    ),
+  const currentFolder = useMemo(() => {
+    return currentPath ? folders.find((f) => f.id === currentPath) : undefined;
+  }, [currentPath, folders]);
+
+  const canWriteCurrentFolder = hasWritePermission(currentFolder?.permissions);
+
+  const searchSelector = useCallback(
+    (state: RootState) =>
+      currentPath && isSearching && !isLoadingSearchListing
+        ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
+        : [],
+    [currentPath, isSearching, isLoadingSearchListing],
   );
+
+  const searchResults = useAppSelector(searchSelector);
 
   const searchResultsUIKit = useMemo(
     () => searchResults.map(convertToUIKitFile),
@@ -425,13 +433,18 @@ export const useFileManager = ({
 
   const handleSearchFiles = useCallback(
     (folder: string) => {
+      setIsSearching(true);
       if (folder !== currentPath) {
         setCurrentPath(folder);
       }
       dispatch(FilesActions.getFullListing({ folderPath: folder }));
     },
-    [dispatch, setCurrentPath, currentPath],
+    [dispatch, currentPath],
   );
+
+  const handleClearSearch = useCallback(() => {
+    setIsSearching(false);
+  }, []);
 
   const operationLoaderModalOptions = useMemo(() => {
     if (!isCopyingFiles && !isMovingFiles) {
@@ -586,13 +599,22 @@ export const useFileManager = ({
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
-      isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
+      isNewButtonDisabled:
+        activeTab === DialFileManagerTabs.Organization ||
+        (activeTab === DialFileManagerTabs.Shared && !canWriteCurrentFolder),
       disabledNewButtonTooltip: t(
         'You do not have permission to create new items here',
       ),
       ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
+    [
+      filteredTabs,
+      activeTab,
+      handleTabChange,
+      canWriteCurrentFolder,
+      t,
+      externalToolbarOptions,
+    ],
   );
 
   const destinationFolderPopupOptions = useMemo(
@@ -814,6 +836,7 @@ export const useFileManager = ({
     deleteConfirmationOptions,
 
     handleSearchFiles: isLocalSearch ? undefined : handleSearchFiles,
+    handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,

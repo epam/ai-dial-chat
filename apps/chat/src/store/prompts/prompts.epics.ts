@@ -312,7 +312,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-export const deletePromptEpic: AppEpic = (action$) =>
+const deletePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.deletePrompt.type),
     switchMap(({ payload }) => {
@@ -332,7 +332,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
     }),
   );
 
-export const clearPromptsEpic: AppEpic = (action$) =>
+const clearPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.clearPrompts.type),
     switchMap(() =>
@@ -818,7 +818,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
-export const uploadPromptEpic: AppEpic = (action$, state$) =>
+const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.uploadPrompt.type),
     switchMap(({ payload }) => {

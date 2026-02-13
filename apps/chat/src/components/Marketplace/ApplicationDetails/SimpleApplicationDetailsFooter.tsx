@@ -28,7 +28,7 @@ interface ActionButtonProps {
   entity: DialAIEntityModel;
 }
 
-export const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
+const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const { handleDeploy, handleUndeploy } = useApplicationStatusActions(
     entity.id,
@@ -76,7 +76,7 @@ export const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   );
 };
 
-export const RedeployButton = ({ entity }: ActionButtonProps) => {
+const RedeployButton = ({ entity }: ActionButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const { handleRedeploy } = useApplicationStatusActions(entity.id);
 

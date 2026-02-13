@@ -6,10 +6,7 @@ interface ItemProps {
   itemLabel: string;
   itemValue: string;
 }
-export const ReviewApplicationPropsItem = ({
-  itemLabel,
-  itemValue,
-}: ItemProps) => {
+const ReviewApplicationPropsItem = ({ itemLabel, itemValue }: ItemProps) => {
   return (
     <div className="flex gap-4 text-primary">
       <span className="w-[122px] shrink-0">{itemLabel}:</span>

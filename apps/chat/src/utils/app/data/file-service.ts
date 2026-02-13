@@ -20,9 +20,10 @@ import {
 import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
+import { FALLBACK_CONTENT_TYPE } from '@/src/constants/file';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
-import { constructPath } from '../file';
+import { constructPath, getMimeTypeByFileName } from '../file';
 import { getFileRootId } from '../id';
 import { BucketService } from './bucket-service';
 
@@ -33,6 +34,14 @@ import {
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
+
+const fixContentType = (file: BackendFile): string => {
+  if (file.contentType !== FALLBACK_CONTENT_TYPE) {
+    return file.contentType;
+  }
+
+  return getMimeTypeByFileName(file.name);
+};
 
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
@@ -47,7 +56,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     relativePath: relativePath,
     folderId: constructPath(getFileRootId(file.bucket), relativePath),
     contentLength: file.contentLength,
-    contentType: file.contentType,
+    contentType: fixContentType(file),
     serverSynced: true,
     updatedAt: file.updatedAt,
     permissions: file.permissions,

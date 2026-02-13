@@ -58,9 +58,7 @@ interface ToolsetLoginDialogProps {
   entity: ToolsetModel;
 }
 
-export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
-  entity,
-}) => {
+const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ entity }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
   const { route } = useRouter();
