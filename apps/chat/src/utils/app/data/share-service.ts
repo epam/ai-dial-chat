@@ -30,7 +30,7 @@ import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
-import { contentType } from 'mime-types';
+import { lookup as contentType } from 'mime-types';
 
 export const getFolderFromShareResult = (
   folder: BackendChatFolder,
