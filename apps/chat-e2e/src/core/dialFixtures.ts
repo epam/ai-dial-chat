@@ -451,6 +451,9 @@ const dialTest = test.extend<{
   fileManagerModalToolbar: FileManagerToolbar;
   fileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
   fileManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalManager: FileManager;
+  selectFolderManagerModalGrid: FileManagerGrid;
+  selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerModalGridAssertion: FileManagerGridAssertion;
@@ -1174,6 +1177,30 @@ const dialTest = test.extend<{
   selectFolderManagerModal: async ({ page }, use) => {
     const selectFolderManagerModal = new SelectFolderManagerModal(page);
     await use(selectFolderManagerModal);
+  },
+  selectFolderManagerModalManager: async (
+    { selectFolderManagerModal },
+    use,
+  ) => {
+    const selectFolderManagerModalManager =
+      selectFolderManagerModal.getFileManager();
+    await use(selectFolderManagerModalManager);
+  },
+  selectFolderManagerModalGrid: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalGrid =
+      selectFolderManagerModalManager.getFileManagerGrid();
+    await use(selectFolderManagerModalGrid);
+  },
+  selectFolderManagerModalGridAssertion: async (
+    { selectFolderManagerModalGrid },
+    use,
+  ) => {
+    const selectFolderManagerModalGridAssertion =
+      new FileManagerGridAssertion(selectFolderManagerModalGrid);
+    await use(selectFolderManagerModalGridAssertion);
   },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();

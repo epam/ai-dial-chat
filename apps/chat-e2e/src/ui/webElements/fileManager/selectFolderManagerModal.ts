@@ -57,4 +57,11 @@ export class SelectFolderManagerModal extends BaseFileManagerModal {
     }
     return this.cancelButton;
   }
+
+  /**
+   * Alias for getSelectFolderButton() - for compatibility with existing tests.
+   */
+  getSelectButton(): Button {
+    return this.getSelectFolderButton();
+  }
 }

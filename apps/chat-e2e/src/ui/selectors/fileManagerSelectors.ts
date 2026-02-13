@@ -1,5 +1,7 @@
 export const FileManagerSelectors = {
   container: '[data-qa="file-manager"]',
+  /** Content area in simplified SelectFolder popup (no data-qa="file-manager") */
+  popupDescription: '[aria-label="popup-description"]',
   toolbarContainer: '[role="toolbar"]',
 };
 

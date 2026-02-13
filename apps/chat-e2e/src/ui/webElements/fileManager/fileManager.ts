@@ -12,7 +12,13 @@ import { Locator, Page } from '@playwright/test';
 
 export class FileManager extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, FileManagerSelectors.container, parentLocator);
+    // Use .or to match both:
+    // - Full FileManager: [data-qa="file-manager"] (inside FileManagerModal)
+    // - Simplified popup: [aria-label="popup-description"] (inside SelectFolderManagerModal)
+    const combinedLocator = parentLocator
+      .locator(FileManagerSelectors.container)
+      .or(parentLocator.locator(FileManagerSelectors.popupDescription));
+    super(page, '', combinedLocator);
   }
 
   private fileManagerToolbar!: FileManagerToolbar;
