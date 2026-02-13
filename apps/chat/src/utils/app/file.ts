@@ -20,6 +20,7 @@ import { FolderInterface } from '@/src/types/folder';
 import {
   BYTES_IN_KB,
   BYTES_IN_MB,
+  FALLBACK_CONTENT_TYPE,
   MAX_FILE_SIZE_IN_BYTES,
 } from '@/src/constants/file';
 import {
@@ -434,8 +435,8 @@ export const isConversationHasExternalAttachments = (
 export const getMimeTypeByFileName = (filename: string): string => {
   const extension = getFileNameExtension(filename);
   return extension
-    ? lookup(extension) || 'application/octet-stream'
-    : 'application/octet-stream';
+    ? lookup(extension) || FALLBACK_CONTENT_TYPE
+    : FALLBACK_CONTENT_TYPE;
 };
 
 export const getFileMimeType = (file: File): string => {
