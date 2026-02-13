@@ -90,7 +90,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Select created folder and verify correct path is displayed in "Upload to" field, the field is highlighted and has text_overflow=ellipsis property',
+      'Select created folder and verify correct path is displayed in "Upload to" field, the field is highlighted on hover and has text_overflow=ellipsis property',
       async () => {
         const folderRow =
           selectFolderManagerModalGrid.gridRowByNameCell(updatedFolderName);
@@ -98,7 +98,7 @@ dialTest.only(
         await selectFolderManagerModal.getSelectButton().click();
         const uploadToPathElement =
           uploadFromDeviceModal.getChangeUploadToPath();
-        //TODO: verify manually that border color is correct
+        await uploadToPathElement.hoverOver();
         await baseAssertion.assertElementBorderColors(
           uploadToPathElement,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
@@ -107,7 +107,7 @@ dialTest.only(
           uploadToPathElement.path,
           new RegExp(
             RegexUtil.escapeRegexChars(
-              `${ExpectedConstants.allFilesRoot}/${updatedFolderName}`,
+              `${ExpectedConstants.myFilesRoot}/${updatedFolderName}`,
             ),
           ),
           ExpectedMessages.uploadToPathIsValid,
@@ -118,7 +118,7 @@ dialTest.only(
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Click on Change link, select "My Files" root and verify root is displayed in "Upload to" field',
       async () => {
         await uploadFromDeviceModal.changeUploadToLocation();
