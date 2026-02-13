@@ -4,7 +4,12 @@ import { FolderInterface } from '@/src/types/folder';
 
 import { AttachmentToUpload } from '@/src/store/import-export/importExport.reducers';
 
-import { constructPath, getNextFileName, triggerDownload } from './file';
+import {
+  constructPath,
+  getMimeTypeByFileName,
+  getNextFileName,
+  triggerDownload,
+} from './file';
 import {
   getCurrentDate,
   getDownloadFileName,
@@ -12,7 +17,6 @@ import {
 } from './import-export';
 
 import JSZip from 'jszip';
-import { contentType } from 'mime-types';
 
 interface GetZippedFile {
   files: DialFile[];
@@ -158,7 +162,7 @@ export const getUnZipAttachments = async ({
     const fileContent = fileContentBlob.type.length
       ? fileContentBlob
       : new File([fileContentBlob], fileName, {
-          type: contentType(fileName) || 'application/octet-stream',
+          type: getMimeTypeByFileName(fileName),
         });
 
     if (!fileContent) {

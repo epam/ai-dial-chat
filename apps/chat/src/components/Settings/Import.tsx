@@ -1,6 +1,8 @@
 import { FC, MouseEvent, useRef } from 'react';
 import toast from 'react-hot-toast';
 
+import { getFileWithType } from '@/src/utils/app/file';
+
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -34,7 +36,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
         onClick={onClickHandler}
         onChange={(e) => {
           if (!e.target.files?.length) return;
-          const file = e.target.files[0];
+          const file = getFileWithType(e.target.files[0]);
 
           if (
             file.type === 'application/zip' ||

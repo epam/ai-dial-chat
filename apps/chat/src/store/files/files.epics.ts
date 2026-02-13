@@ -26,6 +26,7 @@ import { FileService } from '@/src/utils/app/data/file-service';
 import {
   constructPath,
   getDownloadPath,
+  getFileWithType,
   getRootFolderPlaceholderName,
   triggerDownload,
 } from '@/src/utils/app/file';
@@ -77,7 +78,11 @@ const uploadFileEpic: AppEpic = (action$) =>
     ofType(FilesActions.uploadFile.type),
     mergeMap(({ payload }) => {
       const formData = new FormData();
-      formData.append('attachment', payload.fileContent, payload.name);
+      formData.append(
+        'attachment',
+        getFileWithType(payload.fileContent),
+        payload.name,
+      );
 
       return FileService.sendFile(
         formData,
@@ -685,7 +690,11 @@ const uploadFilesEpic: AppEpic = (action$) =>
 
       const uploads$ = payload.files.map((file) => {
         const formData = new FormData();
-        formData.append('attachment', file.fileContent, file.name);
+        formData.append(
+          'attachment',
+          getFileWithType(file.fileContent),
+          file.name,
+        );
 
         const fileId = constructPath(
           getFileRootId(bucket),
