@@ -158,7 +158,6 @@ export const SelectFolderManagerModalSelectors = {
   headingText: 'Select folder',
 };
 
-
 export const PublishingDialogSelectors = {
   dialogContainer: '[data-qa="publish-dialog"]',
   requestName: '[data-qa="publishRequestName"]',

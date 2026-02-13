@@ -1,8 +1,9 @@
+import { BaseFileManagerModal } from './baseFileManagerModal';
+
 import { UploadMenuOptions } from '@/src/testData';
 import { FileManagerModalSelectors } from '@/src/ui/selectors';
 import { Button } from '@/src/ui/webElements/common/button';
 import { Page } from '@playwright/test';
-import { BaseFileManagerModal } from './baseFileManagerModal';
 
 /**
  * Full-featured File Manager Modal.

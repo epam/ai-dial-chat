@@ -1,6 +1,5 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
-  API,
   ExpectedConstants,
   ExpectedMessages,
   FileManagerToolbarTabs,
@@ -8,9 +7,6 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import {
-  Colors,
-  Overflow,
-  Styles,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -79,7 +75,8 @@ dialTest.only(
       async () => {
         let folderInput = selectFolderManagerModalGrid.getRenameInput('');
         await folderInput.fill(updatedFolderName);
-        folderInput = selectFolderManagerModalGrid.getRenameInput(updatedFolderName);
+        folderInput =
+          selectFolderManagerModalGrid.getRenameInput(updatedFolderName);
         await folderInput.press('Enter');
         await baseAssertion.assertElementState(folderInput, 'hidden');
         await baseAssertion.assertElementState(
@@ -107,7 +104,7 @@ dialTest.only(
           uploadToPathElement.path,
           new RegExp(
             RegexUtil.escapeRegexChars(
-              `${ExpectedConstants.myFilesRoot}/${updatedFolderName}`,
+              `${ExpectedConstants.allFilesRoot}/${updatedFolderName}`,
             ),
           ),
           ExpectedMessages.uploadToPathIsValid,
@@ -134,7 +131,7 @@ dialTest.only(
         await selectFolderManagerModal.getSelectButton().click();
         await baseAssertion.assertElementText(
           uploadFromDeviceModal.getChangeUploadToPath().path,
-          FileManagerToolbarTabs.MyFiles,
+          ExpectedConstants.allFilesRoot,
           ExpectedMessages.uploadToPathIsValid,
         );
       },
@@ -511,11 +508,12 @@ dialTest(
     await dialTest.step(
       'Select "Add new folder" option from parent folder dropdown menu, set new child folder name, click cancel edit icon and verify default child folder name is applied',
       async () => {
-         // Open Parent Folder context menu
+        // Open Parent Folder context menu
         const parentName = ExpectedConstants.newFolderWithIndexTitle(1);
         const parentRow = fileManagerModalGrid.gridRowByNameCell(parentName);
         await parentRow.hover();
-        const dots = await fileManagerModalGrid.gridDotsMenuByNameCell(parentName);
+        const dots =
+          await fileManagerModalGrid.gridDotsMenuByNameCell(parentName);
         await dots.click();
 
         // Select 'New folder' from context menu (assuming such option exists in file manager context menu for folders)
@@ -543,7 +541,7 @@ dialTest(
         // If it was a NEW folder, cancelling might remove it or keep default "New folder 1"
         // The old test expects "New folder 1" (nested) to be visible.
         await fileManagerModalGridAssertion.assertGridRowByNameState(
-           ExpectedConstants.newFolderWithIndexTitle(1),
+          ExpectedConstants.newFolderWithIndexTitle(1),
           'visible',
         );
       },
@@ -556,7 +554,8 @@ dialTest(
         const childName = ExpectedConstants.newFolderWithIndexTitle(1);
         const childRow = fileManagerModalGrid.gridRowByNameCell(childName);
         await childRow.hover();
-        const dots = await fileManagerModalGrid.gridDotsMenuByNameCell(childName);
+        const dots =
+          await fileManagerModalGrid.gridDotsMenuByNameCell(childName);
         await dots.click();
 
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
@@ -584,7 +583,8 @@ dialTest(
         const parentName = ExpectedConstants.newFolderWithIndexTitle(1);
         const parentRow = fileManagerModalGrid.gridRowByNameCell(parentName);
         await parentRow.hover();
-        const dots = await fileManagerModalGrid.gridDotsMenuByNameCell(parentName);
+        const dots =
+          await fileManagerModalGrid.gridDotsMenuByNameCell(parentName);
         await dots.click();
 
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
@@ -601,7 +601,7 @@ dialTest(
         // Open it and verify child is still there
         await fileManagerModalGrid.openFolder(newParentFolderName);
         await fileManagerModalGridAssertion.assertGridRowByNameState(
-           newChildFolderName,
+          newChildFolderName,
           'visible',
         );
       },
@@ -699,7 +699,7 @@ dialTest(
         await input.press('Enter');
 
         // Should show error for duplicate name
-         await fileManagerModalGridAssertion.assertRenameInputError(
+        await fileManagerModalGridAssertion.assertRenameInputError(
           folder1Name,
           'visible',
         );
@@ -715,7 +715,7 @@ dialTest(
 
         // Verify error
         await fileManagerModalGridAssertion.assertRenameInputError(
-           `.${GeneratorUtil.randomString(5)}`,
+          `.${GeneratorUtil.randomString(5)}`,
           'visible',
         );
       },

@@ -1,15 +1,16 @@
+import { BaseFileManagerModal } from './baseFileManagerModal';
+
 import { SelectFolderManagerModalSelectors } from '@/src/ui/selectors';
 import { Button } from '@/src/ui/webElements/common/button';
 import { Page } from '@playwright/test';
-import { BaseFileManagerModal } from './baseFileManagerModal';
 
 /**
  * Simplified folder selection modal (new FileManager-based UI).
  * Used when selecting destination folder for upload/move operations.
  * Appears via "Upload from device" → "Change location" flow.
- * 
+ *
  * Root selector: [role="dialog"] with heading "Select folder"
- * 
+ *
  * NOTE: This is the NEW class for the refactored FileManager modal.
  * The old SelectFolderModal class still exists for backward compatibility.
  */
@@ -23,7 +24,7 @@ export class SelectFolderManagerModal extends BaseFileManagerModal {
       .locator(SelectFolderManagerModalSelectors.dialogRole)
       .filter({
         has: page.locator(
-          `${SelectFolderManagerModalSelectors.headingId}:has-text("${SelectFolderManagerModalSelectors.headingText}")`
+          `${SelectFolderManagerModalSelectors.headingId}:has-text("${SelectFolderManagerModalSelectors.headingText}")`,
         ),
       });
     super(page, '', dialogLocator);
@@ -49,11 +50,7 @@ export class SelectFolderManagerModal extends BaseFileManagerModal {
    */
   getCancelButton(): Button {
     if (!this.cancelButton) {
-      this.cancelButton = new Button(
-        this.page,
-        'Cancel',
-        this.rootLocator,
-      );
+      this.cancelButton = new Button(this.page, 'Cancel', this.rootLocator);
     }
     return this.cancelButton;
   }

@@ -47,8 +47,8 @@ import {
   PromptBar,
   PublishingFilter,
   PublishingRules,
-  SelectFolderModal,
   SelectFolderManagerModal,
+  SelectFolderModal,
   SendMessage,
   ShareAppModal,
   ToolsetEditorContainer,
@@ -1198,8 +1198,9 @@ const dialTest = test.extend<{
     { selectFolderManagerModalGrid },
     use,
   ) => {
-    const selectFolderManagerModalGridAssertion =
-      new FileManagerGridAssertion(selectFolderManagerModalGrid);
+    const selectFolderManagerModalGridAssertion = new FileManagerGridAssertion(
+      selectFolderManagerModalGrid,
+    );
     await use(selectFolderManagerModalGridAssertion);
   },
   selectFolders: async ({ selectFolderModal }, use) => {

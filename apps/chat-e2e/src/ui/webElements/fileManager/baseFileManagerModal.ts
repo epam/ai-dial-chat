@@ -1,7 +1,7 @@
 import { FileManager, FileManagerModalHeader } from '@/src/ui/webElements';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Button } from '@/src/ui/webElements/common/button';
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 /**
  * Abstract base class for File Manager modals.
@@ -15,7 +15,11 @@ export abstract class BaseFileManagerModal extends BaseElement {
 
   constructor(page: Page, selector: string);
   constructor(page: Page, selector: string, locator: Locator);
-  constructor(page: Page, selectorOrLocator: string | Locator, locator?: Locator) {
+  constructor(
+    page: Page,
+    selectorOrLocator: string | Locator,
+    locator?: Locator,
+  ) {
     // If first param is Locator, pass empty string + locator to BaseElement
     if (typeof selectorOrLocator !== 'string') {
       super(page, '', selectorOrLocator);
