@@ -92,6 +92,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
           key={attachment.url || attachment.title}
           attachment={attachment}
           isInner={isInner}
+          forceDefaultView={isInner}
         />
       ))}
     </div>
