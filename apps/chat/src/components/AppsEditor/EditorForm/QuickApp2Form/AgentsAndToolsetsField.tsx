@@ -335,7 +335,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                 switchOnText={t('ON')}
                 additionalText={t('JSON')}
                 className="mb-2 flex w-fit items-center gap-2"
-                tooltip={t('Switch to marketplace Agents and Toolsets view')}
+                tooltip={t(
+                  'Switch to marketplace view for Agents and Toolsets',
+                )}
               />
             </div>
 
