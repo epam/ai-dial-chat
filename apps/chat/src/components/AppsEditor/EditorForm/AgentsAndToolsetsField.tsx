@@ -313,7 +313,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
               hidden: !isJsonView,
             })}
           >
-            <div className="absolute right-0 top-[-5px]">
+            <div className="absolute right-0 top-[-9px]">
               <ToggleSwitch
                 disabled={
                   !!errors.agentsAndToolsetsJson ||

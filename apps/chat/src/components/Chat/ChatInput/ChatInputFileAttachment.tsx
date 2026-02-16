@@ -8,8 +8,10 @@ import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
@@ -70,10 +72,9 @@ export const ChatInputFileAttachment = ({
             />
           )}
           {onUnselectFile && (
-            <DialCloseButton
-              onClose={() => onUnselectFile(file.id)}
-              ariaLabel="remove-file"
-              size={18}
+            <CloseButtonSmall
+              onClick={() => onUnselectFile(file.id)}
+              aria-label="remove-file"
             />
           )}
         </div>

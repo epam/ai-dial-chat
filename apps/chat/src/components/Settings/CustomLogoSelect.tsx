@@ -8,12 +8,13 @@ import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Label } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
-import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
@@ -149,10 +150,9 @@ export const CustomLogoSelect = ({
               label={localLogo ? t('Change') : t('Add')}
             />
             {localLogo && (
-              <DialCloseButton
-                onClose={handleDeleteLogo}
+              <CloseButtonSmall
+                onClick={handleDeleteLogo}
                 disabled={disabled}
-                size={18}
               />
             )}
           </div>

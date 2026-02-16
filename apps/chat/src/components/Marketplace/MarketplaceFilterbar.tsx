@@ -99,7 +99,7 @@ const FilterSection = ({
     <div className="px-5 py-2.5" data-qa="marketplace-filter">
       <DialButton
         onClick={() => onToggleFilterSection(filterType)}
-        className="flex !min-h-0 w-full justify-between"
+        className="flex h-fit w-full justify-between px-0"
         data-qa="filter-property"
         aria-expanded={openedSections[filterType]}
         label={sectionName}
