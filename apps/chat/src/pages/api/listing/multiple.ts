@@ -42,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     searchParams.set('limit', limit);
     searchParams.set('permissions', 'true');
 
-    const token = await getToken({ req });
+    const jwt = await getToken({ req });
 
     const apiUrls = body.urls
       .map((url) => {
@@ -60,7 +60,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const fetchPromises = apiUrls.map(async (url) => {
       const response = await fetch(url, {
-        headers: getApiHeaders({ jwt: token }),
+        headers: getApiHeaders({ jwt }),
       });
 
       if (response.status === 404) {

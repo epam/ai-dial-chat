@@ -24,7 +24,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   try {
     const { invitationId } = req.body;
@@ -35,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}`,
       {
         method: HTTPMethod.GET,
-        headers: getApiHeaders({ jwt: token }),
+        headers: getApiHeaders({ jwt }),
       },
     );
 

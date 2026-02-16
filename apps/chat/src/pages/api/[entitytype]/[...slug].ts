@@ -94,7 +94,7 @@ interface PutOptions {
 }
 async function handlePutRequest(
   req: NextApiRequest,
-  token: string | undefined,
+  jwt: string | undefined,
   res: NextApiResponse,
   options?: PutOptions,
 ) {
@@ -104,7 +104,7 @@ async function handlePutRequest(
     method: HTTPMethod.PUT,
     headers: {
       ...getApiHeaders({
-        jwt: token,
+        jwt,
         ifNoneMatch: options?.ifNoneMatch,
       }),
       'Content-Type': req.headers['content-type'] as string,
@@ -138,12 +138,12 @@ async function handlePutRequest(
 
 async function handleGetRequest(
   req: NextApiRequest,
-  token: string | undefined,
+  jwt: string | undefined,
   res: NextApiResponse,
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    headers: getApiHeaders({ jwt: token }),
+    headers: getApiHeaders({ jwt }),
   });
 
   if (!proxyRes.ok) {
@@ -168,13 +168,13 @@ async function handleGetRequest(
 
 async function handleDeleteRequest(
   req: NextApiRequest,
-  token: string | undefined,
+  jwt: string | undefined,
   res: NextApiResponse,
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: HTTPMethod.DELETE,
-    headers: getApiHeaders({ jwt: token }),
+    headers: getApiHeaders({ jwt }),
   });
 
   if (!proxyRes.ok) {

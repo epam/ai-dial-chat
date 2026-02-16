@@ -23,14 +23,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   try {
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/ops/resource/share/revoke`,
       {
         method: HTTPMethod.POST,
-        headers: getApiHeaders({ jwt: token }),
+        headers: getApiHeaders({ jwt }),
         body: JSON.stringify(req.body),
       },
     );

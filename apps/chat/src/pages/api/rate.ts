@@ -51,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     await fetch(url, {
       headers: getApiHeaders({
         chatReference: reference ?? id,
-        jwt: token?.access_token as string,
+        jwt: token?.token as string,
         jobTitle: token?.jobTitle as string,
       }),
       method: HTTPMethod.POST,
