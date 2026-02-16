@@ -6,6 +6,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
+
 import { MessageAttachment } from './MessageAttachment';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
@@ -19,11 +22,30 @@ interface Props {
 
 export const MessageAttachments = ({ attachments, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-  const isUnderSection = useMemo(() => {
-    return !!attachments && attachments.length > 3;
-  }, [attachments]);
 
-  const [isSectionOpened, setIsSectionOpened] = useState(false);
+  const { expandedTypes, borderlessTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentsSettings,
+  );
+
+  const { hasBorderlessAttachments, hasExpandedAttachments } = useMemo(
+    () => ({
+      hasBorderlessAttachments: !!attachments?.some((a) =>
+        borderlessTypes.includes(a.type),
+      ),
+      hasExpandedAttachments: !!attachments?.some((a) =>
+        expandedTypes.includes(a.type),
+      ),
+    }),
+    [attachments, borderlessTypes, expandedTypes],
+  );
+
+  const isUnderSection = useMemo(() => {
+    return !!attachments && attachments.length > 3 && !hasBorderlessAttachments;
+  }, [attachments, hasBorderlessAttachments]);
+
+  const [isSectionOpened, setIsSectionOpened] = useState(
+    hasExpandedAttachments,
+  );
 
   if (!attachments?.length) {
     return null;
@@ -70,6 +92,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
           key={attachment.url || attachment.title}
           attachment={attachment}
           isInner={isInner}
+          forceDefaultView={isInner}
         />
       ))}
     </div>
