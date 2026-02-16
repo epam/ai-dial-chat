@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
+import { getFullToken } from '@/src/utils/server/server';
 
 import { authOptions } from './auth/[...nextauth]';
 
@@ -15,10 +15,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const token = await getFullToken({ req });
 
   try {
-    const entities = await getSortedEntities(token);
+    const entities = await getSortedEntities(
+      token?.token ?? '',
+      token?.jobTitle ?? '',
+    );
 
     return res.status(200).json(entities);
   } catch (error) {

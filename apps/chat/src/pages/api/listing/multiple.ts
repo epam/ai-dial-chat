@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
@@ -7,6 +6,7 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { BackendChatEntity, BackendChatFolder } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
@@ -60,7 +60,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const fetchPromises = apiUrls.map(async (url) => {
       const response = await fetch(url, {
-        headers: getApiHeaders({ jwt: token?.access_token }),
+        headers: getApiHeaders({ jwt: token }),
       });
 
       if (response.status === 404) {

@@ -1,12 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import {
   BackendChatEntity,
@@ -42,7 +41,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       limit?: string;
       permissions?: string;
     };
-    const authToken = await getToken({ req });
+    const jwt = await getToken({ req });
     const slugs = Array.isArray(req.query.listing)
       ? req.query.listing
       : [req.query.listing];
@@ -78,7 +77,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           : url;
 
         const response = await fetch(paginatedUrl, {
-          headers: getApiHeaders({ jwt: authToken?.access_token as string }),
+          headers: getApiHeaders({ jwt }),
         });
 
         if (response.status === 404) {
@@ -108,7 +107,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const response = await fetch(url, {
-      headers: getApiHeaders({ jwt: authToken?.access_token as string }),
+      headers: getApiHeaders({ jwt }),
     });
 
     if (response.status === 404) {

@@ -1,11 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -31,12 +30,12 @@ export const createApiHandler = ({
     const session = await getServerSession(req, res, authOptions);
     if (!validateServerSession(session, req, res)) return;
 
-    const token = await getToken({ req });
+    const jwt = await getToken({ req });
 
     try {
       const proxyRes = await fetch(`${process.env.DIAL_API_HOST}${endpoint}`, {
         method,
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
+        headers: getApiHeaders({ jwt }),
         ...((method === HTTPMethod.PUT || method === HTTPMethod.POST) &&
           req.body && {
             body: JSON.stringify(req.body),

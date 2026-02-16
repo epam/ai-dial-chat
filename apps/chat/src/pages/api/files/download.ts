@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
@@ -9,6 +8,7 @@ import {
   waitForStream,
 } from '@/src/utils/server/file-download-utils';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 
@@ -82,7 +82,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           if (item.nodeType === 'folder') {
             const folderFiles = await fetchAllFilesForDownload(
               item.path,
-              authToken?.access_token as string,
+              authToken ?? '',
               item.name,
             );
             filesToDownload.push(...folderFiles);
@@ -103,7 +103,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           try {
             const fileStream = await downloadFileAsStream(
               file.url,
-              authToken?.access_token as string,
+              authToken ?? '',
             );
 
             archive.append(fileStream, { name: file.path });

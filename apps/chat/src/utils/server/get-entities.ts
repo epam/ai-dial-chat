@@ -12,7 +12,7 @@ import fetch from 'node-fetch';
 export async function getEntities<T>(
   type: EntityType,
   jwt: string,
-  jobTitle: string | undefined,
+  jobTitle: string,
 ): Promise<T> {
   const url = `${DIAL_API_HOST}/openai/${type}s?api-version=${DIAL_API_VERSION}`;
   const errMsg = `Request for ${type}s returned an error`;

@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import NextClient from '@/src/utils/auth/nextauth-client';
 import { logger } from '@/src/utils/server/logger';
+import { getFullToken } from '@/src/utils/server/server';
 
 const DEFAULT_LOGOUT_REDIRECT_URI =
   process.env.NEXTAUTH_URL || 'http://localhost:3000/';
@@ -26,7 +26,7 @@ const handler = async (
   res: NextApiResponse,
 ): Promise<void> => {
   try {
-    const token = await getToken({ req });
+    const token = await getFullToken({ req });
 
     if (!token || typeof token.providerId !== 'string') {
       logger.warn('Token is missing or providerId not found.');

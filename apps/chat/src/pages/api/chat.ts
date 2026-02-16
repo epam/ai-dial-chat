@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import {
@@ -18,6 +17,7 @@ import {
   getUserMessageCustomContent,
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
+import { getFullToken } from '@/src/utils/server/server';
 
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -44,7 +44,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     req.body as ChatBody;
 
   try {
-    const token = await getToken({ req });
+    const token = await getFullToken({ req });
 
     if (!id || !model || (!prompt && !messages?.length)) {
       return res.status(400).send(errorsMessages[400]);
@@ -113,9 +113,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       temperature: temperatureToUse,
       messages: messagesToSend,
-      userJWT: token?.access_token as string,
+      userJWT: token?.token ?? '',
       chatReference: reference ?? id,
-      jobTitle: token?.jobTitle as string,
+      jobTitle: token?.jobTitle,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,

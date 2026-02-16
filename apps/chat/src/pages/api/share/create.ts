@@ -1,11 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -25,7 +24,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   try {
     const body = req.body as ShareRequestModel;
@@ -34,7 +33,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       `${process.env.DIAL_API_HOST}/v1/ops/resource/share/create`,
       {
         method: HTTPMethod.POST,
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
+        headers: getApiHeaders({ jwt }),
         body: JSON.stringify(body),
       },
     );

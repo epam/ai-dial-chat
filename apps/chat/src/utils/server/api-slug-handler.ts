@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -106,7 +106,7 @@ export const createDialApiSlugsHandler = (
         if (!isSessionValid) return;
       }
 
-      const token = requireAuth ? await getToken({ req }) : null;
+      const jwt = requireAuth ? await getToken({ req }) : undefined;
       const { url, pathOptions } = getEntityUrlFromSlugs({
         dialApiHost,
         req,
@@ -118,7 +118,7 @@ export const createDialApiSlugsHandler = (
       const reqMethod = method ?? (req.method as HTTPMethod);
       const fetchResult = await fetch(url, {
         method: reqMethod,
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
+        headers: getApiHeaders({ jwt }),
         body:
           reqMethod !== HTTPMethod.GET ? JSON.stringify(req.body) : undefined,
         signal: AbortSignal.timeout(timeout),

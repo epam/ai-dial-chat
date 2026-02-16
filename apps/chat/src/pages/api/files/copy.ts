@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
@@ -8,6 +7,7 @@ import {
   fetchAllFilesRecursive,
 } from '@/src/utils/server/file-copy-utils';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { MoveModel } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
@@ -49,7 +49,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const parentDest = item.destinationUrl;
         const folderFiles = await fetchAllFilesRecursive(
           item.sourceUrl,
-          authToken?.access_token as string,
+          authToken ?? '',
           parentDest,
         );
         allFilesToCopy = allFilesToCopy.concat(folderFiles);
@@ -79,7 +79,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { succeeded, errors } = await copyFilesInBatches(
       allFilesToCopy,
-      authToken?.access_token as string,
+      authToken ?? '',
       100,
     );
 

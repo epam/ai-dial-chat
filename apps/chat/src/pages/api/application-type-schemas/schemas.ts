@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { ApiApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIError } from '@/src/types/error';
@@ -24,7 +24,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const token = await getToken({ req });
+    const jwt = await getToken({ req });
 
     const url = `${constructPath(
       process.env.DIAL_API_HOST,
@@ -34,7 +34,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     )}`;
 
     const response = await fetch(url, {
-      headers: getApiHeaders({ jwt: token?.access_token as string }),
+      headers: getApiHeaders({ jwt }),
     });
 
     if (response.status === 404) {
