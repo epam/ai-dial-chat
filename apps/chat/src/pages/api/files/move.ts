@@ -27,7 +27,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
-    return res.status(401).send('Unauthorized');
+    return;
   }
 
   try {
