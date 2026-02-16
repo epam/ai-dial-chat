@@ -17,9 +17,9 @@ import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
 
-const safeDecodeJwt = (accessToken: string) => {
+const safeDecodeJwt = (jwtToken: string) => {
   try {
-    return decodeJwt(accessToken);
+    return decodeJwt(jwtToken);
   } catch (err) {
     console.error("Token couldn't be parsed as JWT", err);
     // TODO: read roles from GCP token format
@@ -27,7 +27,11 @@ const safeDecodeJwt = (accessToken: string) => {
   }
 };
 
-const getUser = (accessToken: string | undefined, providerId: string) => {
+const getUser = (
+  accessToken: string | undefined,
+  idToken: string | undefined,
+  providerId: string,
+) => {
   const rolesFieldName =
     process.env[
       `AUTH_${snakeCase(providerId).toUpperCase()}_DIAL_ROLES_FIELD`
@@ -40,9 +44,12 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     ] ?? process.env.ADMIN_ROLE_NAMES,
     ['admin'],
   );
-  // Google tokens are not JWTs, so we shouldn't try to decode them
-  const decodedPayload =
-    accessToken && providerId !== 'google' ? safeDecodeJwt(accessToken) : {};
+
+  const listProviders = parseCommaSeparatedList(process.env.AUTH_PASS_IDTOKEN);
+
+  const token = listProviders.includes(providerId) ? idToken : accessToken;
+
+  const decodedPayload = token ? safeDecodeJwt(token) : {};
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
@@ -153,7 +160,11 @@ async function refreshAccessToken(token: Token) {
 
     const returnToken = {
       ...token,
-      user: getUser(refreshedTokens.access_token, token.providerId),
+      user: getUser(
+        refreshedTokens.access_token,
+        refreshedTokens.id_token,
+        token.providerId,
+      ),
       access_token: refreshedTokens.access_token,
       accessTokenExpires: refreshedTokens.expires_in
         ? Date.now() + refreshedTokens.expires_in * 1000
@@ -188,7 +199,11 @@ export const callbacks: Partial<
     if (options.account) {
       return {
         ...options.token,
-        user: getUser(options.account.access_token, options.account.provider),
+        user: getUser(
+          options.account.access_token,
+          options.account.id_token,
+          options.account.provider,
+        ),
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -212,6 +227,7 @@ export const callbacks: Partial<
         ...options.token,
         user: getUser(
           options.token.access_token,
+          options.token.idToken,
           typeof options.token.providerId === 'string'
             ? options.token.providerId
             : '',
