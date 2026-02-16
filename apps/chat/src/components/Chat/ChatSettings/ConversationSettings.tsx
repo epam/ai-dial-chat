@@ -35,7 +35,7 @@ interface Props {
   onChangeTemperature: (temperature: number) => void;
 }
 
-export function FieldContainer({ children }: SettingContainerProps) {
+function FieldContainer({ children }: SettingContainerProps) {
   if (!children) {
     return null;
   }
@@ -43,7 +43,7 @@ export function FieldContainer({ children }: SettingContainerProps) {
   return <div className="px-3 py-4 md:px-6">{children}</div>;
 }
 
-export function SettingContainer({ children }: SettingContainerProps) {
+function SettingContainer({ children }: SettingContainerProps) {
   if (!children) {
     return <EmptySettings />;
   }

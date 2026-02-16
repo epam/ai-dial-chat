@@ -128,11 +128,16 @@ describe('utils/app/common.ts', () => {
     });
 
     it('isEntityNameValid: trims + checks invalid + length limits', () => {
-      expect(isEntityNameValid(' a ')).toBe(false);
+      expect(isEntityNameValid('  ')).toBe(false);
+      expect(isEntityNameValid(' a ')).toBe(true);
       expect(isEntityNameValid(' ab ')).toBe(true);
       expect(isEntityNameValid('ab,')).toBe(false);
-      expect(isEntityNameValid('abc.', true)).toBe(false);
-      expect(isEntityNameValid('abc.', false)).toBe(true);
+      expect(isEntityNameValid('abc.', { checkDotsInTheEnd: true })).toBe(
+        false,
+      );
+      expect(isEntityNameValid('abc.', { checkDotsInTheEnd: false })).toBe(
+        true,
+      );
     });
 
     it('hasInvalidNameInPath: checks every path segment', () => {
@@ -434,6 +439,9 @@ describe('utils/app/common.ts', () => {
       expect(parseCommaSeparatedList('a, b ,c')).toEqual(['a', 'b', 'c']);
       expect(parseCommaSeparatedList(undefined)).toEqual([]);
       expect(parseCommaSeparatedList(undefined, ['x'])).toEqual(['x']);
+      expect(
+        parseCommaSeparatedList('123,234\\,345\\,456,567\\,678,789'),
+      ).toEqual(['123', '234,345,456', '567,678', '789']);
     });
 
     it('arraysHaveSameElements: true when arrays have same multiset of elements', () => {

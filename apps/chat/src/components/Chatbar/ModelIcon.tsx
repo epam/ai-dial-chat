@@ -40,7 +40,7 @@ interface FallbackIconProps {
   size: number;
 }
 
-export function FallbackIcon({ entityType, size }: FallbackIconProps) {
+function FallbackIcon({ entityType, size }: FallbackIconProps) {
   const Icon = entityType === EntityType.Toolset ? IconBlocks : IconMessage2;
   return (
     <Icon

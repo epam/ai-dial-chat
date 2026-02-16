@@ -11,7 +11,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ModalState } from '@/src/types/modal';
 import {
   PublicationFunctions,
-  TargetAudienceFilter,
+  TargetAudienceFilterData,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -34,7 +34,7 @@ import {
 const emptySelector = translate('Select');
 
 interface Props {
-  onSaveFilter: (filter: TargetAudienceFilter) => void;
+  onSaveFilter: (filter: TargetAudienceFilterData) => void;
   onCloseFilter: () => void;
 }
 
@@ -100,7 +100,7 @@ export function TargetAudienceFilterComponent({
     );
 
     onSaveFilter({
-      id: selectedTarget,
+      source: selectedTarget,
       filterFunction: filterFunction as PublicationFunctions,
       filterParams: preparedFilterParams,
     });
@@ -201,6 +201,7 @@ export function TargetAudienceFilterComponent({
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
                 id="filterFns"
+                capitalizeFirstLetters
               />
             </div>
             {/* TODO: uncomment when it will be supported on core */}
@@ -262,6 +263,7 @@ export function TargetAudienceFilterComponent({
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
+        capitalizeFirstLetters
       />
       {/* TODO: uncomment when it will be supported on core */}
       {/* {!isTrueOrFalseFilterSelected && */}

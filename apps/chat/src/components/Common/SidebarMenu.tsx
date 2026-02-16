@@ -16,7 +16,8 @@ const ICON_WIDTH = 24;
 const ITEM_PADDING = 8;
 const ITEMS_GAP_IN_PIXELS = 8;
 const ITEM_WIDTH = ITEM_PADDING * 2 + ICON_WIDTH + ITEMS_GAP_IN_PIXELS;
-export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
+
+function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
     dataQa,

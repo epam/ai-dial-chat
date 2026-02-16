@@ -436,7 +436,7 @@ const PromptSectionView = ({
   );
 };
 
-export const PromptSection = memo(PromptSectionView);
+const PromptSection = memo(PromptSectionView);
 
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
