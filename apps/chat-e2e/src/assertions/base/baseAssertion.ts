@@ -34,7 +34,6 @@ export class BaseAssertion {
     );
   }
 
-
   public async assertEntityIcon(
     icon: Locator | BaseElement,
     expectedIconSource?: string,
