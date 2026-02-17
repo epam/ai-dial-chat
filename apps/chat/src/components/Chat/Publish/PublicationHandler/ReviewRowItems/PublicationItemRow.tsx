@@ -18,9 +18,7 @@ import {
 } from '@/src/utils/app/forms';
 import {
   isApplicationId,
-  isConversationId,
   isFileId,
-  isPromptId,
   isToolsetId,
   replaceVersionFromId,
 } from '@/src/utils/app/id';
@@ -36,7 +34,11 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  PublicationSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
@@ -115,6 +117,18 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       publicVersionGroupId ?? '',
     ),
   );
+  const modelsVersionGroup = useAppSelector((state) =>
+    ModelsSelectors.selectModelsVersionGroupByGroupId(
+      state,
+      publicVersionGroupId ?? '',
+    ),
+  );
+  const toolsetVersionGroup = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsetVersionGroupByGroupId(
+      state,
+      publicVersionGroupId ?? '',
+    ),
+  );
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
@@ -122,7 +136,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const [inputVersion, setInputVersion] = useState(defaultVersion);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const isApplication = useMemo(() => isApplicationId(item.id), [item.id]);
+  const isApplicationOrToolset = useMemo(
+    () => isApplicationId(item.id) || isToolsetId(item.id),
+    [item.id],
+  );
 
   useEffect(() => {
     setInputVersion(defaultVersion);
@@ -142,13 +159,13 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       const validationErrors = getVersionValidationErrors(
         inputVersion,
         isExistVersion,
-        isApplication,
+        isApplicationOrToolset,
       );
       setErrors(validationErrors);
     }
   }, [
     inputVersion,
-    isApplication,
+    isApplicationOrToolset,
     isDeleteAction,
     isEditMode,
     item.id,
@@ -208,17 +225,18 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const itemVersionsSelected = selectedPublicationItems.filter((id) =>
     id.startsWith(getIdWithoutVersionFromApiKey(item.id)),
   );
-  const overrideTriggerText = isDeleteAction
-    ? versionGroup?.allVersions.length === itemVersionsSelected.length
-      ? t('All')
-      : itemVersionsSelected.length > 1
-        ? t('Few')
-        : undefined
-    : undefined;
+  const overrideTriggerText =
+    isDeleteAction && itemVersionsSelected.length > 1
+      ? versionGroup?.allVersions.length === itemVersionsSelected.length ||
+        modelsVersionGroup.length === itemVersionsSelected.length ||
+        toolsetVersionGroup.length === itemVersionsSelected.length
+        ? t('All')
+        : t('Few')
+      : undefined;
 
   return (
     <div className="flex shrink-0 items-center gap-2">
-      {publicVersionGroupId && !isApplication && (
+      {publicVersionGroupId && (
         <PublicVersionSelector
           overrideTriggerText={overrideTriggerText}
           publicVersionGroupId={publicVersionGroupId}
@@ -240,10 +258,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         )}
         data-qa="version"
       >
-        {!(
-          isDeleteAction &&
-          (isPromptId(item.id) || isConversationId(item.id))
-        ) && (
+        {!isDeleteAction && (
           <EditableField
             value={inputVersion}
             isEditMode={

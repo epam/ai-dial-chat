@@ -6,11 +6,16 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupAllVersions } from '@/src/utils/app/common';
+import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  PublicationSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -56,7 +61,26 @@ export function PublicVersionSelector({
       publicVersionGroupId,
     ),
   );
+  const modelsVersionGroup = useAppSelector((state) =>
+    ModelsSelectors.selectModelsVersionGroupByGroupId(
+      state,
+      publicVersionGroupId,
+    ),
+  );
+  const toolsetsVersionGroup = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsetVersionGroupByGroupId(
+      state,
+      publicVersionGroupId,
+    ),
+  );
   const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
+
+  const mappedModelsAndToolsetsVersionGroup = useMemo(() => {
+    return [...modelsVersionGroup, ...toolsetsVersionGroup].map((model) => ({
+      id: model.id,
+      version: model.version,
+    }));
+  }, [modelsVersionGroup, toolsetsVersionGroup]);
 
   useEffect(() => {
     setSelectedId(
@@ -114,38 +138,41 @@ export function PublicVersionSelector({
     return groupAllVersions(currentVersionGroup.allVersions);
   }, [currentVersionGroup?.allVersions, groupVersions]);
 
-  if (!currentVersionGroup) {
+  if (!currentVersionGroup && !mappedModelsAndToolsetsVersionGroup.length) {
     return null;
   }
 
-  const currentVersion = currentVersionGroup?.selectedVersion?.version;
-  const isAllSelected =
-    selectedCheckboxVersionIds?.length === allVersions.length;
-  const publishModelFolder = publishModel?.entity.folderId
-    .split('/')
-    .slice(2)
-    .join('/');
-  const mappedAllVersions = allVersions.map(({ id, version }) => {
+  const publishModelFolder =
+    publishModel && getIdWithoutRootPathSegments(publishModel.entity.folderId);
+  const mappedAllVersions = [
+    ...allVersions,
+    ...mappedModelsAndToolsetsVersionGroup,
+  ].map(({ id, version }) => {
     return {
       id: publishModelFolder ? id.replace(`${publishModelFolder}/`, '') : id,
       version,
     };
   });
+  const isAllSelected =
+    selectedCheckboxVersionIds?.length === mappedAllVersions.length;
+  const currentVersion =
+    currentVersionGroup?.selectedVersion?.version ??
+    mappedAllVersions.at(0)?.version;
 
   return (
     <Menu
       onOpenChange={setIsVersionSelectOpen}
       dropdownWidth={82}
       className="flex shrink-0 items-center"
-      disabled={allVersions.length <= 1}
+      disabled={mappedAllVersions.length <= 1}
       placement="bottom-end"
       trigger={
         <DialLinkButton
           onClick={(e) => stopBubbling(e)}
-          disabled={allVersions.length <= 1}
+          disabled={mappedAllVersions.length <= 1}
           className={classNames(
             'flex px-0 text-primary hover:text-primary',
-            allVersions.length <= 1 &&
+            mappedAllVersions.length <= 1 &&
               '!cursor-default !text-controls-permanent',
             btnClassNames,
             readonly && 'text-xs !text-secondary',
@@ -157,7 +184,7 @@ export function PublicVersionSelector({
             `${textBeforeSelector ?? t('v.')} ${currentVersion}`
           }
           iconAfter={
-            allVersions.length > 1 && (
+            mappedAllVersions.length > 1 && (
               <IconChevronDown
                 className={classNames(
                   'shrink-0 transition-all',
@@ -205,7 +232,7 @@ export function PublicVersionSelector({
 
         return (
           <li
-            key={id}
+            key={version ?? id}
             className={classNames(
               'flex items-center gap-1 hover:bg-accent-primary-alpha',
               isSelected && 'bg-accent-primary-alpha',
@@ -214,7 +241,7 @@ export function PublicVersionSelector({
           >
             {onSelectCheckboxVersion && (
               <DialCheckbox
-                id={id}
+                id={version ?? id}
                 className="shrink-0"
                 checked={!!selectedCheckboxVersionIds?.includes(id)}
                 onChange={() => onSelectCheckboxVersion(id)}
