@@ -111,9 +111,9 @@ dialTest(
     await dialTest.step(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
-        await shareModal.closeButton.hoverOver();
+        await shareModal.closeButtonIcon.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
-          shareModal.closeButton,
+          shareModal.closeButtonIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await shareModal.copyLinkButton.hoverOver();
