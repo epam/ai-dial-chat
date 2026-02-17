@@ -1,4 +1,4 @@
-import { IconPlus, IconX } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { Fragment, useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -12,8 +12,9 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
@@ -58,13 +59,13 @@ export const RulesInput = ({
   return (
     <>
       <div
-        className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border border-primary px-1 py-[3px] pr-10"
+        className="relative mb-2 flex h-auto min-h-[38px] w-full flex-wrap items-center gap-1 rounded border border-primary p-1 pr-10"
         data-qa="rules-list"
       >
         {filters.map((item) => (
           <div className="flex items-center gap-1" key={item.id} data-qa="rule">
-            <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
-              <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
+            <div className="flex min-h-[30px] items-center justify-center gap-2 break-all rounded bg-accent-primary-alpha px-3 text-xs">
+              <div className="flex flex-wrap gap-1 py-2 leading-3">
                 <span className="font-semibold" data-qa="rule-target">
                   {startCase(toLower(item.source))}
                 </span>
@@ -84,12 +85,7 @@ export const RulesInput = ({
                   </Fragment>
                 ))}
               </div>
-              <IconX
-                size={18}
-                stroke="1"
-                onClick={() => handleRemoveFilter(item.id)}
-                className="mr-3 shrink-0 cursor-pointer text-secondary"
-              />
+              <CloseButtonSmall onClick={() => handleRemoveFilter(item.id)} />
             </div>
             <span
               className="text-xs italic text-secondary"
@@ -100,19 +96,21 @@ export const RulesInput = ({
           </div>
         ))}
         {!isOpen && (
-          <DialButton
-            onClick={() => onSwitchRulesSetter(true)}
-            className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
-            data-qa="add-rule"
-            iconBefore={<IconPlus stroke="1" size={18} />}
-          />
+          <div className="flex h-[30px] w-12 items-center justify-center rounded bg-accent-primary-alpha">
+            <DialGhostIconButton
+              size={ButtonSize.Small}
+              onClick={() => onSwitchRulesSetter(true)}
+              data-qa="add-rule"
+              icon={<IconPlus stroke={1.5} size={18} />}
+            />
+          </div>
         )}
         {!!filters.length && (
-          <DialCloseButton
-            onClose={handleClear}
-            className="absolute right-3 top-[10.5px] text-secondary"
-            ariaLabel="cancel-all-rules"
-            size={18}
+          <CloseButtonSmall
+            onClick={handleClear}
+            className="absolute right-3 top-[7px]"
+            aria-label="cancel-all-rules"
+            iconSize={16}
           />
         )}
       </div>
