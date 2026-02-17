@@ -38,7 +38,7 @@ export class PublishingRequestDialogAssertion extends BaseAssertion {
       await this.assertElementBackgroundColors(
         this.publishingRequestDialog.sendRequestButton,
         ThemesUtil.getRgbColorByKey(
-          ThemeColorAttributes.controlsBgSolidDisable,
+          ThemeColorAttributes.controlsBgDisableAccent,
         ),
       );
     } else {

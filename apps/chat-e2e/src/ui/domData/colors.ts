@@ -62,8 +62,8 @@ export enum ThemeColorAttributes {
   textSecondary = 'text-secondary',
   textInfo = 'text-info',
   // Solid button colors (primary action buttons)
-  controlsBgSolidPrimary = 'controls-bg-solid-primary',
-  controlsBgSolidPrimaryHover = 'controls-bg-solid-primary-hover',
-  controlsBgSolidDisable = 'controls-bg-solid-disable',
-  controlsBgOutlinedNeutralHover = 'controls-bg-outlined-neutral-hover',
+  controlsBgAccentPrimary = 'controls-bg-accent-primary',
+  controlsBgAccentPrimaryHover = 'controls-bg-accent-primary-hover',
+  controlsBgDisableAccent = 'controls-bg-disable-accent',
+  controlsBgNeutralHover = 'controls-bg-neutral-hover',
 }

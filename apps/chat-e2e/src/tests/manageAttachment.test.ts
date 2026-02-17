@@ -317,7 +317,7 @@ dialTest(
         await baseAssertion.assertElementBackgroundColors(
           cancelButton,
           ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.controlsBgOutlinedNeutralHover,
+            ThemeColorAttributes.controlsBgNeutralHover,
           ),
         );
       },
