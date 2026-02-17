@@ -714,20 +714,61 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
-      filesToUpload.forEach((file) => (file.name = prepareFileName(file.name)));
+      const existingInFolder = new Set(
+        files.filter((f) => f.folderId === destinationUrl).map((f) => f.name),
+      );
+
+      const namesInCurrentBatch = new Set<string>();
+
+      const processedFiles = filesToUpload.map((file) => {
+        const sanitizedName = prepareFileName(file.name);
+        let finalName = sanitizedName;
+
+        const isNameModified = sanitizedName !== file.name;
+        const conflictsWithBatch = namesInCurrentBatch.has(finalName);
+        const conflictsWithFolder = existingInFolder.has(finalName);
+
+        if (conflictsWithBatch || (isNameModified && conflictsWithFolder)) {
+          let counter = 1;
+          const extensionIndex = sanitizedName.lastIndexOf('.');
+          const baseName =
+            extensionIndex === -1
+              ? sanitizedName
+              : sanitizedName.substring(0, extensionIndex);
+          const extension =
+            extensionIndex === -1
+              ? ''
+              : sanitizedName.substring(extensionIndex);
+
+          while (
+            existingInFolder.has(finalName) ||
+            namesInCurrentBatch.has(finalName)
+          ) {
+            finalName = `${baseName} (${counter})${extension}`;
+            counter++;
+          }
+        }
+
+        namesInCurrentBatch.add(finalName);
+
+        return {
+          ...file,
+          name: finalName,
+        };
+      });
 
       dispatch(
         FilesActions.uploadFiles({
-          files: filesToUpload,
+          files: processedFiles,
           destinationUrl,
         }),
       );
 
       setUploadingFilesIds(
-        new Set(filesToUpload.map((f) => getFileId(f.name, destinationUrl))),
+        new Set(processedFiles.map((f) => getFileId(f.name, destinationUrl))),
       );
     },
-    [dispatch, setUploadingFilesIds, getFileId],
+    [dispatch, getFileId, files],
   );
 
   const handleCreateFolder = useCallback(
