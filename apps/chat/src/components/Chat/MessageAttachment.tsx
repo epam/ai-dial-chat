@@ -94,8 +94,10 @@ const AttachmentDataRenderer = ({
       <img
         src={getSourceDataUrl(attachment)}
         className={classNames(
-          'm-0 aspect-auto w-full',
-          isFullScreen && '!h-full !w-auto',
+          'm-0',
+          isFullScreen
+            ? 'size-auto max-h-full max-w-full object-contain'
+            : 'aspect-auto w-full',
         )}
         alt="Attachment image"
       />
