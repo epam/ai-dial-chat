@@ -122,8 +122,9 @@ export const publicationSlice = createSlice({
     },
     uploadAllPublishedWithMeItemsFail: (state) => state,
     uploadPublishedWithMeItemsFail: (state) => state,
-    approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
-      state,
+    approvePublication: (state, _actions: PayloadAction<{ url: string }>) => {
+      state.isPublicationUpdating = true;
+    },
     approvePublicationSuccess: (
       state,
       {
@@ -134,11 +135,14 @@ export const publicationSlice = createSlice({
         triggerPublicFilesListing: boolean;
       }>,
     ) => {
+      state.isPublicationUpdating = false;
       state.publications = state.publications.filter(
         (p) => p.url !== payload.url,
       );
     },
-    approvePublicationFail: (state) => state,
+    approvePublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     rejectPublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
     rejectPublicationSuccess: (
