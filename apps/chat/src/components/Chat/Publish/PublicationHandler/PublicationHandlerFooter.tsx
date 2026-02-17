@@ -562,6 +562,7 @@ export const PublicationHandlerFooter = ({
                     )
                   }
                   data-qa="reject"
+                  disabled={isPublicationUpdating}
                 />
               </>
             )}
