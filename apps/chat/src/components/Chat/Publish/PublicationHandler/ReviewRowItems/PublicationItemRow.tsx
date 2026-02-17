@@ -50,12 +50,10 @@ import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: ShareEntity;
-  publicItemId: string;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
-  publicItemId,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -80,6 +78,25 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       selectedPublicationUrl ?? '',
     ),
   );
+
+  const publishToUrl = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
+  >({
+    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
+  });
+
+  const publicItemId = useMemo(() => {
+    let itemId = item.id;
+    if (publicationModel) {
+      const parts = item.id.split('/');
+      if (parts.length > 1) {
+        parts[1] = publishToUrl;
+        itemId = parts.join('/');
+      }
+    }
+    return itemId;
+  }, [item.id, publicationModel, publishToUrl]);
 
   const entity = useMemo(
     () => ({
@@ -287,25 +304,6 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     PublicationSelectors.selectEntitiesEditState,
   );
 
-  const publishToUrl = useWatch<
-    PublicationRequestFormData,
-    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
-  >({
-    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
-  });
-
-  const publicItemId = useMemo(() => {
-    let itemId = item.id;
-    if (publicationModel) {
-      const parts = item.id.split('/');
-      if (parts.length > 1) {
-        parts[1] = publishToUrl;
-        itemId = parts.join('/');
-      }
-    }
-    return itemId;
-  }, [item.id, publicationModel, publishToUrl]);
-
   const isSelected = useMemo(
     () =>
       selectedPublicationItems.some((id) =>
@@ -450,7 +448,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           dataQA="entity-input"
         />
       </span>
-      <PublicationVersionInfo publicItemId={publicItemId} item={item} />
+      <PublicationVersionInfo item={item} />
     </div>
   );
 };
