@@ -26,6 +26,7 @@ function Marketplace() {
 
   useEffect(() => {
     if (!isMarketplaceEnabled) {
+      console.error('NotFound', 'Marketplace feature is not enabled');
       router.push(Routes.NotFound);
     }
   }, [isMarketplaceEnabled, router]);
