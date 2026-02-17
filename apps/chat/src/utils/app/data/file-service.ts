@@ -173,7 +173,9 @@ export class FileService {
       map((folders: BackendFileFolder[]) => {
         return folders
           .filter(
-            (folder) => !!folder.parentPath || folder.name !== CLIENTDATA_PATH,
+            (folder) =>
+              !!folder.parentPath ||
+              (!!folder.name && folder.name !== CLIENTDATA_PATH),
           )
           .map((folder): FileFolderInterface => {
             const relativePath = folder.parentPath
@@ -187,7 +189,7 @@ export class FileService {
                 relativePath,
                 folder.name,
               ),
-              name: folder.name,
+              name: folder.name!,
               type: FeatureType.File,
               absolutePath: constructPath(
                 ApiKeys.Files,

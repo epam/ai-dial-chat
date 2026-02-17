@@ -51,7 +51,9 @@ export interface BackendChatEntity extends BackendEntity {
   author?: string;
 }
 
-export interface BackendFolder<ItemType> extends BackendDataEntity {
+export interface BackendFolder<ItemType>
+  extends Omit<BackendDataEntity, 'name'> {
+  name: string | null;
   nodeType: BackendDataNodeType.FOLDER;
   items: ItemType[];
 }
