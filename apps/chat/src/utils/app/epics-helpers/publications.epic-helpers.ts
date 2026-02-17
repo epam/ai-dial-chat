@@ -31,6 +31,22 @@ import { getFolderIdFromEntityId } from '../folders';
 
 import { Message, PublishActions } from '@epam/ai-dial-shared';
 
+export const getDeletedEntities = <
+  T extends { id: string; publicationInfo?: unknown },
+>(
+  entities: T[],
+  resourcesToDelete: Set<string>,
+) =>
+  entities
+    .filter((entity) => resourcesToDelete.has(entity.id))
+    .map((entity) => ({
+      ...entity,
+      publicationInfo: {
+        ...(entity.publicationInfo || {}),
+        action: PublishActions.DELETE,
+      },
+    }));
+
 export const getSetUpdatedItemsToApproveAction$ = (
   state: RootState,
   oldPublicationResources: PublicationResource[],

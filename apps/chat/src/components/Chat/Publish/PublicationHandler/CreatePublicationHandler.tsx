@@ -46,41 +46,42 @@ export function CreatePublicationHandler({
 
   const handleSubmit = useCallback(
     (
-      resources: PublicationResource[],
+      _resources: PublicationResource[],
       formData?: PublicationRequestFormData,
     ) => {
-      const mappedResources = resources.map((resource) => {
-        if (publicationModel.action === PublishActions.DELETE) {
-          return { ...resource, sourceUrl: resource.sourceUrl ?? '' };
-        }
-
-        if (isFileId(resource.reviewUrl)) {
+      const resources = selectedPublicationItems.map((id) => {
+        if (isFileId(id)) {
           return {
-            ...resource,
-            sourceUrl: resource.sourceUrl ?? '',
+            action: publicationModel.action,
+            sourceUrl: id,
             targetUrl: constructPath(
               ApiKeys.Files,
               formData?.publishToUrl ?? '',
-              ...resource.targetUrl.split('/').slice(2),
+              ...id.split('/').slice(2),
             ),
           };
         }
 
         return {
-          ...resource,
-          sourceUrl: resource.sourceUrl ?? '',
-          targetUrl: getNewTargetUrlFromEditState(
-            resource.reviewUrl,
-            entitiesEditState[resource.reviewUrl],
-            foldersEditState,
-            publication.targetFolder,
-            formData?.publishToUrl ?? '',
-            publicationModel.action,
-          ),
-          ...(isToolsetId(resource.reviewUrl) && {
-            publishCredentials: selectedPublishCredentials.includes(
-              resource.reviewUrl,
-            ),
+          action: publicationModel.action,
+          sourceUrl: id,
+          targetUrl:
+            publicationModel.action === PublishActions.DELETE
+              ? constructPath(
+                  id.split('/')[0],
+                  formData?.publishToUrl ?? '',
+                  ...id.split('/').slice(2),
+                )
+              : getNewTargetUrlFromEditState(
+                  id,
+                  entitiesEditState[id],
+                  foldersEditState,
+                  publication.targetFolder,
+                  formData?.publishToUrl ?? '',
+                  publicationModel.action,
+                ),
+          ...(isToolsetId(id) && {
+            publishCredentials: selectedPublishCredentials.includes(id),
           }),
         };
       });
@@ -88,9 +89,7 @@ export function CreatePublicationHandler({
       dispatch(
         PublicationActions.publish({
           name: formData?.publishRequestName.trim(),
-          resources: mappedResources.filter((resource) =>
-            selectedPublicationItems.includes(resource.reviewUrl),
-          ),
+          resources,
           targetFolder: formData?.publishToUrl ?? '',
           displayAuthor: formData?.publicationAuthor?.trim() ?? '',
           rules: formData?.rules ?? [],

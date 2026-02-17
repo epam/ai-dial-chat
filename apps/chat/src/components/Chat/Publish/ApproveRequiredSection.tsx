@@ -53,7 +53,6 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       publication.url,
     ),
   );
-
   const isMessageStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -114,10 +113,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <div
           className={classNames(
             'group/button flex size-full items-center gap-1 py-2 pr-3',
-            {
-              'cursor-pointer': !isMessageStreaming,
-              'cursor-not-allowed': isMessageStreaming,
-            },
+            isMessageStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
           )}
         >
           <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />

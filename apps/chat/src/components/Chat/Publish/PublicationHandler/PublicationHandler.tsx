@@ -26,6 +26,7 @@ import {
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
+import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
 import { BackendResourceType, FeatureType } from '@/src/types/common';
 import {
@@ -73,6 +74,7 @@ import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import isEqual from 'lodash-es/isEqual';
+import uniqBy from 'lodash-es/uniqBy';
 
 const AUTHOR_PUBLIC_NAME_TOOLTIP =
   "This name will be displayed instead of the author's name for this publication.";
@@ -596,13 +598,23 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           ItemComponent,
                           featureType,
                         }) => {
-                          const filteredResources =
-                            publication.resources.filter(({ reviewUrl }) => {
+                          let filteredResources = publication.resources.filter(
+                            ({ reviewUrl }) => {
                               const { apiKey } = splitEntityId(reviewUrl);
                               const itemFeatureType =
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
-                            });
+                            },
+                          );
+
+                          if (isReview) {
+                            filteredResources = uniqBy(
+                              filteredResources,
+                              ({ reviewUrl }) =>
+                                getIdWithoutVersionFromApiKey(reviewUrl),
+                            );
+                          }
+
                           const isConversationSectionAndNoFiles =
                             !isReview &&
                             featureType === FeatureType.File &&

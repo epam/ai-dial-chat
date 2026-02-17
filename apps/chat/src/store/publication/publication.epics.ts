@@ -29,6 +29,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import {
   addMessageAttachmentsToPublication$,
+  getDeletedEntities,
   getPublicationResourceEntityData,
   getSetUpdatedItemsToApproveAction$,
   getUpdateApplicationGeneralInfoAction$,
@@ -2064,15 +2065,29 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
           state,
           selectedPublication.url,
         );
-      const filteredResources = selectedPublication.resources
-        .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
-        .map((resource) => ({
-          ...resource,
-          publishCredentials:
-            resource.publishCredentials &&
-            selectedCredentialsItems.includes(resource.reviewUrl),
-          sourceUrl: resource.sourceUrl ?? '',
-        }));
+      const filteredResources = selectedPublicationItems.map((reviewUrl) => {
+        const resource = selectedPublication.resources.find(
+          (r) => r.reviewUrl === reviewUrl,
+        );
+
+        if (resource) {
+          return {
+            ...resource,
+            publishCredentials:
+              resource.publishCredentials &&
+              selectedCredentialsItems.includes(resource.reviewUrl),
+            sourceUrl: resource.sourceUrl ?? '',
+          };
+        }
+
+        // if new resources were added while unpublishing
+        return {
+          reviewUrl,
+          action: PublishActions.DELETE,
+          targetUrl: reviewUrl,
+          sourceUrl: reviewUrl,
+        };
+      });
 
       return PublicationService.updatePublicationRequest({
         url: selectedPublication.url,
@@ -2082,6 +2097,72 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
         },
       }).pipe(
         switchMap((response) => {
+          const resourcesIds = selectedPublication.resources.map(
+            (resource) => resource.reviewUrl,
+          );
+          if (
+            selectedPublicationItems.some(
+              (item) => !resourcesIds.includes(item),
+            )
+          ) {
+            const existingReviewedResources =
+              PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+                state$.value,
+                selectedPublication.url,
+              );
+
+            const prompts = PromptsSelectors.selectPublicPrompts(state);
+            const conversations =
+              ConversationsSelectors.selectPublicConversations(state);
+
+            const resourcesToDelete = new Set(
+              response.resources
+                .filter((resource) => resource.action === PublishActions.DELETE)
+                .map((resource) => resource.reviewUrl),
+            );
+
+            return concat(
+              of(
+                UIActions.showInfoToast(
+                  'New items were added to the publication, please review them before approving',
+                ),
+              ),
+              of(
+                PublicationActions.uploadPublicationSuccess({
+                  publication: response,
+                }),
+              ),
+              of(
+                ConversationsActions.addConversations({
+                  conversations: getDeletedEntities(
+                    conversations,
+                    resourcesToDelete,
+                  ),
+                }),
+              ),
+              of(
+                PromptsActions.addPrompts({
+                  prompts: getDeletedEntities(prompts, resourcesToDelete),
+                }),
+              ),
+              of(
+                PublicationActions.setPublicationsToReview({
+                  items: response.resources.map((resource) => {
+                    const matched = existingReviewedResources.find(
+                      (r) => r.sourceUrl === resource.sourceUrl,
+                    );
+                    return {
+                      reviewed: matched?.reviewed ?? false,
+                      reviewUrl: resource.reviewUrl,
+                      sourceUrl: resource.sourceUrl ?? '',
+                    };
+                  }),
+                  publicationUrl: response.url,
+                }),
+              ),
+            );
+          }
+
           return of(
             PublicationActions.approvePublication({
               url: response.url,

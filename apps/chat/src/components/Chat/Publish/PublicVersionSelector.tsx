@@ -16,7 +16,7 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialCheckbox, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   publicVersionGroupId: string;
@@ -26,7 +26,10 @@ interface Props {
   textBeforeSelector?: string | null;
   selectedEntityId?: string;
   excludeEntityId?: string;
+  selectedCheckboxVersionIds?: string[];
+  overrideTriggerText?: string;
   onChangeSelectedVersion?: (newVersionId: string) => void;
+  onSelectCheckboxVersion?: (versionId: string) => void;
 }
 
 export function PublicVersionSelector({
@@ -37,7 +40,10 @@ export function PublicVersionSelector({
   textBeforeSelector,
   selectedEntityId,
   excludeEntityId,
+  selectedCheckboxVersionIds,
+  overrideTriggerText,
   onChangeSelectedVersion,
+  onSelectCheckboxVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -74,7 +80,7 @@ export function PublicVersionSelector({
           : versionGroup.allVersions,
         selectedVersion: versionGroup.allVersions.find(
           (v) => v.id === selectedId,
-        )!,
+        ),
       };
     }
     if (
@@ -89,7 +95,7 @@ export function PublicVersionSelector({
         allVersions: excludeEntityId
           ? versionGroup.allVersions.filter((v) => v.id !== excludeEntityId)
           : versionGroup.allVersions,
-        selectedVersion: selected!,
+        selectedVersion: selected,
       };
     }
     return versionGroup;
@@ -111,32 +117,41 @@ export function PublicVersionSelector({
     return null;
   }
 
+  const currentVersion = currentVersionGroup?.selectedVersion?.version;
+  const isAllSelected =
+    selectedCheckboxVersionIds?.length === allVersions.length;
+
   return (
     <Menu
       onOpenChange={setIsVersionSelectOpen}
       dropdownWidth={82}
       className="flex shrink-0 items-center"
       disabled={allVersions.length <= 1}
+      placement="bottom-end"
       trigger={
         <DialLinkButton
           onClick={(e) => stopBubbling(e)}
           disabled={allVersions.length <= 1}
           className={classNames(
             'flex px-0 text-primary hover:text-primary',
-            allVersions.length <= 1 && 'cursor-default',
+            allVersions.length <= 1 &&
+              '!cursor-default !text-controls-permanent',
             btnClassNames,
-            readonly && 'text-xs text-secondary',
+            readonly && 'text-xs !text-secondary',
           )}
           data-qa="version"
           textClassName="font-normal whitespace-nowrap leading-normal"
-          label={`${textBeforeSelector ? textBeforeSelector : t('v.')} ${currentVersionGroup.selectedVersion.version}`}
+          label={
+            overrideTriggerText ??
+            `${textBeforeSelector ?? t('v.')} ${currentVersion}`
+          }
           iconAfter={
             allVersions.length > 1 && (
               <IconChevronDown
                 className={classNames(
                   'shrink-0 transition-all',
                   isVersionSelectOpen && 'rotate-180',
-                  readonly && 'text-secondary',
+                  readonly && '!text-secondary',
                 )}
                 size={readonly ? 16 : 18}
               />
@@ -145,38 +160,65 @@ export function PublicVersionSelector({
         />
       }
     >
+      {onSelectCheckboxVersion && (
+        <li
+          className={classNames(
+            'flex items-center gap-1 py-[6.5px] pl-2 hover:bg-accent-primary-alpha',
+            isAllSelected && 'bg-accent-primary-alpha',
+          )}
+        >
+          <DialCheckbox
+            id={'all'}
+            className="mr-3 shrink-0"
+            checked={isAllSelected}
+            onChange={() => {
+              if (!isAllSelected) {
+                allVersions.forEach((v) => {
+                  if (!selectedCheckboxVersionIds?.includes(v.id)) {
+                    onSelectCheckboxVersion(v.id);
+                  }
+                });
+                return;
+              }
+
+              allVersions.forEach((v) => {
+                onSelectCheckboxVersion(v.id);
+              });
+            }}
+          />
+          <p>{t('All')}</p>
+        </li>
+      )}
       {allVersions.map(({ version, id }) => {
-        if (onChangeSelectedVersion && !readonly) {
-          return (
+        const isSelected = currentVersion === version;
+
+        return (
+          <li
+            key={id}
+            className={classNames(
+              'flex items-center gap-1 hover:bg-accent-primary-alpha',
+              isSelected && 'bg-accent-primary-alpha',
+              onSelectCheckboxVersion && 'pl-2',
+            )}
+          >
+            {onSelectCheckboxVersion && (
+              <DialCheckbox
+                id={id}
+                className="shrink-0"
+                checked={!!selectedCheckboxVersionIds?.includes(id)}
+                onChange={() => onSelectCheckboxVersion(id)}
+              />
+            )}
             <MenuItem
-              disabled={currentVersionGroup.selectedVersion.version === version}
+              disabled={isSelected}
               onClick={(e) => {
                 stopBubbling(e);
                 setIsVersionSelectOpen(false);
 
-                return onChangeSelectedVersion(id);
+                return onChangeSelectedVersion?.(id);
               }}
-              className={classNames(
-                'hover:bg-accent-primary-alpha',
-                currentVersionGroup.selectedVersion.version === version &&
-                  'bg-accent-primary-alpha',
-              )}
               item={<span>{version}</span>}
-              key={id}
             />
-          );
-        }
-
-        return (
-          <li
-            className={classNames(
-              'cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha',
-              currentVersionGroup.selectedVersion.version === version &&
-                'bg-accent-primary-alpha',
-            )}
-            key={id}
-          >
-            {version}
           </li>
         );
       })}

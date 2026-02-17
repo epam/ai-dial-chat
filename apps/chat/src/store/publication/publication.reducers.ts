@@ -257,6 +257,15 @@ export const publicationSlice = createSlice({
         payload.ids,
       );
     },
+    unselectPublicationItems: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedPublicationItems[payload.publicationUrl] =
+        state.selectedPublicationItems[payload.publicationUrl]?.filter(
+          (id) => !payload.ids.includes(id),
+        );
+    },
     selectCredentialsItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,

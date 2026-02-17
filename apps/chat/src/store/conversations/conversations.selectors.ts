@@ -516,6 +516,15 @@ const selectPublicFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
 
+const selectPublicConversations = createSelector(
+  [selectConversations],
+  (conversations) => {
+    return conversations.filter((conversation) =>
+      isEntityIdPublic({ id: conversation.id }),
+    );
+  },
+);
+
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
 
@@ -863,6 +872,7 @@ export const ConversationsSelectors = {
   selectCanAttachFolders,
   selectCanAttachFile,
   selectPublicFolders,
+  selectPublicConversations,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   selectIsCompareLoading,
