@@ -25,7 +25,7 @@ import { CustomAppForm } from '@/src/components/AppsEditor/EditorForm/CustomAppF
 import { CustomViewerForm } from '@/src/components/AppsEditor/EditorForm/CustomViewerForm';
 import { ExternalAppForm } from '@/src/components/AppsEditor/EditorForm/ExternalAppForm';
 import { GeneralForm } from '@/src/components/AppsEditor/EditorForm/GeneralForm';
-import { QuickApp2Form } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form';
+import { QuickApp2Form } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/QuickApp2Form';
 import { QuickAppForm } from '@/src/components/AppsEditor/EditorForm/QuickAppForm';
 
 interface EditorFormProps {
