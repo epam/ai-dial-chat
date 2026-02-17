@@ -607,13 +607,11 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                             },
                           );
 
-                          if (isReview) {
-                            filteredResources = uniqBy(
-                              filteredResources,
-                              ({ reviewUrl }) =>
-                                getIdWithoutVersionFromApiKey(reviewUrl),
-                            );
-                          }
+                          filteredResources = uniqBy(
+                            filteredResources,
+                            ({ reviewUrl }) =>
+                              getIdWithoutVersionFromApiKey(reviewUrl),
+                          );
 
                           const isConversationSectionAndNoFiles =
                             !isReview &&

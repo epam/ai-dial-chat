@@ -18,7 +18,9 @@ import {
 } from '@/src/utils/app/forms';
 import {
   isApplicationId,
+  isConversationId,
   isFileId,
+  isPromptId,
   isToolsetId,
   replaceVersionFromId,
 } from '@/src/utils/app/id';
@@ -231,14 +233,17 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           readonly={!isDeleteAction}
         />
       )}
-      {!isDeleteAction && (
-        <span
-          className={classNames(
-            'relative shrink-0 text-xs',
-            isDeleteAction && 'text-error',
-          )}
-          data-qa="version"
-        >
+      <span
+        className={classNames(
+          'relative shrink-0 text-xs',
+          isDeleteAction && 'text-error',
+        )}
+        data-qa="version"
+      >
+        {!(
+          isDeleteAction &&
+          (isPromptId(item.id) || isConversationId(item.id))
+        ) && (
           <EditableField
             value={inputVersion}
             isEditMode={
@@ -262,8 +267,8 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             tooltipIconClassName="ml-1"
             dataQA="version"
           />
-        </span>
-      )}
+        )}
+      </span>
     </div>
   );
 };
