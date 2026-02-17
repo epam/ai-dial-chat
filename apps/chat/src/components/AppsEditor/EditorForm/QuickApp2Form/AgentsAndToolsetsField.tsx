@@ -25,9 +25,11 @@ import { ApplicationActions } from '@/src/store/actions';
 import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
+import { ToolsetTypes } from '@/src/constants/quick-apps';
 
 import {
   QuickApp2Form as QuickApp2FormType,
@@ -45,6 +47,7 @@ import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/App
 import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
+import { Feature } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
   ButtonSize,
@@ -68,6 +71,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
+  const isCodeInterpreterEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
+  );
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
@@ -139,17 +145,20 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   );
 
   const switchToSimpleView = useCallback(() => {
-    setValue(
-      'agentsAndToolsets',
-      getAgentsAndToolsetsFormValue(
-        JSON.parse(agentsAndToolsetsJson) as AnyToolset[],
-      ),
-    );
+    const toolsets = JSON.parse(agentsAndToolsetsJson) as AnyToolset[];
+    setValue('agentsAndToolsets', getAgentsAndToolsetsFormValue(toolsets));
+    if (isCodeInterpreterEnabled) {
+      const withCodeInterpreter = !!toolsets.find(
+        ({ type }) => type === ToolsetTypes.CodeInterpreter,
+      );
+
+      setValue('codeInterpreter', withCodeInterpreter, { shouldDirty: false });
+    }
     setValue('isJsonView', !isJsonView, {
       shouldDirty: false,
       shouldValidate: true,
     });
-  }, [agentsAndToolsetsJson, isJsonView, setValue]);
+  }, [agentsAndToolsetsJson, isJsonView, setValue, isCodeInterpreterEnabled]);
 
   const handleJsonViewChange = useCallback(() => {
     if (isJsonView) {
@@ -313,7 +322,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
               hidden: !isJsonView,
             })}
           >
-            <div className="absolute right-0 top-[-5px]">
+            <div className="absolute right-0 top-[-9px]">
               <ToggleSwitch
                 disabled={
                   !!errors.agentsAndToolsetsJson ||
@@ -326,7 +335,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                 switchOnText={t('ON')}
                 additionalText={t('JSON')}
                 className="mb-2 flex w-fit items-center gap-2"
-                tooltip={t('Switch to marketplace Agents and Toolsets view')}
+                tooltip={t(
+                  'Switch to marketplace view for Agents and Toolsets',
+                )}
               />
             </div>
 
