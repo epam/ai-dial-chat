@@ -143,17 +143,21 @@ export const publicationSlice = createSlice({
     approvePublicationFail: (state) => {
       state.isPublicationUpdating = false;
     },
-    rejectPublication: (state, _actions: PayloadAction<{ url: string }>) =>
-      state,
+    rejectPublication: (state, _actions: PayloadAction<{ url: string }>) => {
+      state.isPublicationUpdating = true;
+    },
     rejectPublicationSuccess: (
       state,
       { payload }: PayloadAction<{ url: string }>,
     ) => {
+      state.isPublicationUpdating = false;
       state.publications = state.publications.filter(
         (p) => p.url !== payload.url,
       );
     },
-    rejectPublicationFail: (state) => state,
+    rejectPublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     selectPublication: (state, { payload }: PayloadAction<string | null>) => {
       state.selectedPublicationUrl = payload;
     },
