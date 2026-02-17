@@ -33,6 +33,7 @@ interface Props {
   excludeEntityId?: string;
   selectedCheckboxVersionIds?: string[];
   overrideTriggerText?: string;
+  triggerTextClassName?: string;
   onChangeSelectedVersion?: (newVersionId: string) => void;
   onSelectCheckboxVersion?: (versionId: string) => void;
 }
@@ -47,6 +48,7 @@ export function PublicVersionSelector({
   excludeEntityId,
   selectedCheckboxVersionIds,
   overrideTriggerText,
+  triggerTextClassName,
   onChangeSelectedVersion,
   onSelectCheckboxVersion,
 }: Props) {
@@ -178,7 +180,10 @@ export function PublicVersionSelector({
             readonly && 'text-xs !text-secondary',
           )}
           data-qa="version"
-          textClassName="font-normal whitespace-nowrap leading-normal"
+          textClassName={classNames(
+            'whitespace-nowrap font-normal leading-normal',
+            triggerTextClassName,
+          )}
           label={
             overrideTriggerText ??
             `${textBeforeSelector ?? t('v.')} ${currentVersion}`

@@ -240,6 +240,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         <PublicVersionSelector
           overrideTriggerText={overrideTriggerText}
           publicVersionGroupId={publicVersionGroupId}
+          triggerTextClassName={classNames(
+            isDeleteAction && 'text-xs text-error',
+          )}
           textBeforeSelector={!isDeleteAction ? t('Last: ') : undefined}
           btnClassNames={classNames(
             'shrink-0',
