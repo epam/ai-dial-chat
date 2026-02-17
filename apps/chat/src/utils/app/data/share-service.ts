@@ -109,7 +109,10 @@ export class ShareService {
       body: JSON.stringify(sharedListingData),
     }).pipe(
       map((resp: { resources: BackendDataEntity[] }) => {
-        const folders: FolderInterface[] = [];
+        const folders: (Omit<FolderInterface, 'name'> & {
+          name: string | null;
+        })[] = [];
+
         const entities: (
           | ConversationInfo
           | PromptInfo
@@ -241,7 +244,9 @@ export class ShareService {
         });
 
         return {
-          folders,
+          folders: folders.filter(
+            (folder) => !!folder.name,
+          ) as FolderInterface[],
           entities,
         };
       }),
