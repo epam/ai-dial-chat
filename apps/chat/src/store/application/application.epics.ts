@@ -514,10 +514,9 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
-          // eslint-disable-next-line no-console
-          console.log(
-            'application is not found... payload.applicationId',
-            payload.applicationId,
+          console.error(
+            'NotFound',
+            `Application is not found: ${payload.applicationId}`,
           );
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
