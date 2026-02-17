@@ -125,6 +125,12 @@ export function PublicVersionSelector({
     .split('/')
     .slice(2)
     .join('/');
+  const mappedAllVersions = allVersions.map(({ id, version }) => {
+    return {
+      id: publishModelFolder ? id.replace(`${publishModelFolder}/`, '') : id,
+      version,
+    };
+  });
 
   return (
     <Menu
@@ -178,37 +184,28 @@ export function PublicVersionSelector({
             checked={isAllSelected}
             onChange={() => {
               if (!isAllSelected) {
-                allVersions.forEach(({ id }) => {
-                  const selectId = publishModelFolder
-                    ? id.replace(`${publishModelFolder}/`, '')
-                    : id;
-                  if (!selectedCheckboxVersionIds?.includes(selectId)) {
-                    onSelectCheckboxVersion(selectId);
+                mappedAllVersions.forEach(({ id }) => {
+                  if (!selectedCheckboxVersionIds?.includes(id)) {
+                    onSelectCheckboxVersion(id);
                   }
                 });
                 return;
               }
 
-              allVersions.forEach(({ id }) => {
-                const selectId = publishModelFolder
-                  ? id.replace(`${publishModelFolder}/`, '')
-                  : id;
-                onSelectCheckboxVersion(selectId);
+              mappedAllVersions.forEach(({ id }) => {
+                onSelectCheckboxVersion(id);
               });
             }}
           />
           <p>{t('All')}</p>
         </li>
       )}
-      {allVersions.map(({ version, id }) => {
+      {mappedAllVersions.map(({ id, version }) => {
         const isSelected = currentVersion === version;
-        const selectId = publishModelFolder
-          ? id.replace(`${publishModelFolder}/`, '')
-          : id;
 
         return (
           <li
-            key={selectId}
+            key={id}
             className={classNames(
               'flex items-center gap-1 hover:bg-accent-primary-alpha',
               isSelected && 'bg-accent-primary-alpha',
@@ -217,10 +214,10 @@ export function PublicVersionSelector({
           >
             {onSelectCheckboxVersion && (
               <DialCheckbox
-                id={selectId}
+                id={id}
                 className="shrink-0"
-                checked={!!selectedCheckboxVersionIds?.includes(selectId)}
-                onChange={() => onSelectCheckboxVersion(selectId)}
+                checked={!!selectedCheckboxVersionIds?.includes(id)}
+                onChange={() => onSelectCheckboxVersion(id)}
               />
             )}
             <MenuItem
@@ -229,7 +226,7 @@ export function PublicVersionSelector({
                 stopBubbling(e);
                 setIsVersionSelectOpen(false);
 
-                return onChangeSelectedVersion?.(selectId);
+                return onChangeSelectedVersion?.(id);
               }}
               item={<span>{version}</span>}
             />
