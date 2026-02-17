@@ -52,11 +52,13 @@ import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import { Folder } from '@/src/components/Folder/Folder';
 
+import { CloseButtonSmall } from './CloseButtons';
+
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
 import * as monaco from 'monaco-editor';
 
@@ -550,12 +552,12 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
         )}
       >
         <div className="flex max-h-full flex-col divide-y divide-tertiary overflow-hidden rounded-l border border-tertiary bg-layer-3">
-          <div className="flex w-full shrink-0">
+          <div className="flex w-fit shrink-0 border-r border-tertiary px-3 py-2">
             <Tooltip tooltip={t('Hide file list')} isTriggerClickable>
-              <DialButton
+              <DialGhostIconButton
+                size={ButtonSize.Small}
                 onClick={handleSidebarToggle}
-                className="border-r border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
-                iconBefore={<MoveLeftIcon width={18} height={18} />}
+                icon={<MoveLeftIcon />}
               />
             </Tooltip>
           </div>
@@ -632,14 +634,13 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                       />
                     }
                   />
-                  <DialCloseButton
-                    onClose={() => {
+                  <CloseButtonSmall
+                    onClick={() => {
                       handleUploadEmptyFile(
                         getNextDefaultName('New file', rootFiles),
                       );
                     }}
                     data-qa="cancel-edit"
-                    size={18}
                   />
                 </div>
               </div>
@@ -648,40 +649,40 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           {!readOnly && (
             <div className="flex items-center gap-3 px-3 py-2.5">
               <Tooltip tooltip={t('Add new folder')}>
-                <DialButton
+                <DialGhostIconButton
+                  size={ButtonSize.Small}
                   onClick={() =>
                     dispatch(
                       FilesActions.addNewFolder({ parentId: sourcesFolderId }),
                     )
                   }
-                  className="text-secondary hover:text-accent-primary"
-                  iconBefore={<FolderPlus height={18} width={18} />}
+                  icon={<FolderPlus width={16} height={16} />}
                 />
               </Tooltip>
               <Tooltip tooltip={t('Create file')}>
-                <DialButton
+                <DialGhostIconButton
+                  size={ButtonSize.Small}
                   onClick={() => {
                     setNewFileFolder(sourcesFolderId);
                     setNewFileName(getNextDefaultName('New file', rootFiles));
                   }}
                   disabled={!!newFileName}
-                  className="text-secondary hover:text-accent-primary"
-                  iconBefore={<IconFilePlus size={18} />}
+                  icon={<IconFilePlus size={16} />}
                 />
               </Tooltip>
               <Tooltip tooltip={t('Upload file')}>
-                <DialButton
+                <DialGhostIconButton
+                  size={ButtonSize.Small}
                   onClick={openUploadDialog}
-                  className="text-secondary hover:text-accent-primary"
-                  iconBefore={<IconUpload size={18} />}
+                  icon={<IconUpload size={16} />}
                 />
               </Tooltip>
               {!!modifiedFileIds.length && (
                 <Tooltip tooltip={t('Save all')}>
-                  <DialButton
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
                     onClick={() => handleSaveFiles(modifiedFileIds)}
-                    className="text-secondary hover:text-accent-primary"
-                    iconBefore={<IconDeviceFloppy size={18} />}
+                    icon={<IconDeviceFloppy size={16} />}
                   />
                 </Tooltip>
               )}
@@ -689,31 +690,40 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           )}
         </div>
         <div className="flex max-h-full min-w-0 flex-col divide-y divide-tertiary rounded-r border border-tertiary bg-layer-3">
-          <div className="flex w-full shrink-0 justify-end">
+          <div
+            className={classNames(
+              'flex w-full shrink-0',
+              isSidebarOpen ? 'justify-end' : 'justify-between',
+            )}
+          >
             {!isSidebarOpen && (
-              <Tooltip
-                tooltip={t('Show file list')}
-                isTriggerClickable
-                triggerClassName="mr-auto"
-              >
-                <DialButton
-                  onClick={handleSidebarToggle}
-                  className="border-r border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
-                  iconBefore={<MoveRightIcon width={18} height={18} />}
-                />
-              </Tooltip>
+              <div className="flex w-fit border-r border-tertiary px-3 py-2">
+                <Tooltip
+                  tooltip={t('Show file list')}
+                  isTriggerClickable
+                  triggerClassName="mr-auto"
+                >
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
+                    onClick={handleSidebarToggle}
+                    icon={<MoveRightIcon />}
+                  />
+                </Tooltip>
+              </div>
             )}
 
-            <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
-              <DialButton
-                className="border-l border-tertiary px-3 py-2 text-secondary hover:text-accent-primary"
-                onClick={(e) => {
-                  setIsFullScreen(!isFullScreen);
-                  dispatchMouseLeaveEvent(e);
-                }}
-                iconBefore={<FullScreenIcon size={18} />}
-              />
-            </Tooltip>
+            <div className="flex w-fit border-l border-tertiary px-3 py-2">
+              <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
+                <DialGhostIconButton
+                  size={ButtonSize.Small}
+                  onClick={(e) => {
+                    setIsFullScreen(!isFullScreen);
+                    dispatchMouseLeaveEvent(e);
+                  }}
+                  icon={<FullScreenIcon />}
+                />
+              </Tooltip>
+            </div>
           </div>
           <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
             {selectedFileId && (
