@@ -31,7 +31,11 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
-import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonSize,
+  DialGhostIconButton,
+  DialLinkButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -254,15 +258,11 @@ function ShareModalView() {
                 </Tooltip>
               ) : (
                 <Tooltip tooltip={t('Copy URL')}>
-                  <DialButton
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
                     onClick={handleCopy}
                     aria-label="copy-link"
-                    iconBefore={
-                      <IconCopy
-                        size={20}
-                        className="text-secondary hover:text-accent-primary"
-                      />
-                    }
+                    icon={<IconCopy size={16} />}
                   />
                 </Tooltip>
               )}
