@@ -17,6 +17,19 @@ import fetch from 'node-fetch';
 let cachedTheme = '';
 let cachedThemeExpiration: number | undefined;
 
+function generateNumberCssVariables(
+  variables: Record<string, number | undefined>,
+  unit: 'rem' | 'px' = 'px',
+) {
+  let cssContent = '';
+  Object.entries(variables).forEach(([variable, value]) => {
+    if (Number.isFinite(value)) {
+      cssContent += `--${cssEscape(variable)}: ${value}${unit};\n`;
+    }
+  });
+  return cssContent;
+}
+
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
 ) {
@@ -135,6 +148,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             'theme-font': theme['font-family'],
             'codeblock-font':
               theme['font-codeblock'] ?? inconsolata.style.fontFamily,
+          }),
+          generateNumberCssVariables({
+            'border-radius': theme['border-radius'],
           }),
         ]),
       ),
