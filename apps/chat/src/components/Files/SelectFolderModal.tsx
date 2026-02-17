@@ -65,6 +65,7 @@ export const SelectFolderModal = ({
     navigationPanelOptions,
     handleCreateFolder,
     handleMoveFiles,
+    handleRenameValidation,
   } = useFileManager({
     actionLabelsOptions: {
       actionsByTab: {
@@ -168,6 +169,7 @@ export const SelectFolderModal = ({
       actionsRef={fileManagerActionRef}
       onCreateFolder={handleCreateFolder}
       onMoveToFiles={handleMoveFiles}
+      onCreateFolderValidate={handleRenameValidation}
       uploadEnabled={false}
       alertProps={
         warningMessage
