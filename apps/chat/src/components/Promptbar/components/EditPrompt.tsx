@@ -29,11 +29,12 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -182,9 +183,9 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   return (
     <>
-      <DialCloseButton
+      <CloseButtonSmall
         className="absolute right-2 top-2"
-        onClose={handleEditClose}
+        onClick={handleEditClose}
       />
 
       <div className="flex flex-col gap-4 overflow-y-auto px-3 md:px-6">
