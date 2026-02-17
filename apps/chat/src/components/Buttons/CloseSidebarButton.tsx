@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
 interface Props {
   onClose: () => void;
@@ -18,10 +18,10 @@ export const CloseSidebarButton: React.FC<Props> = ({
         isLeftSide ? 'right-0 translate-x-full' : 'left-0 -translate-x-full',
       )}
     >
-      <DialCloseButton
-        onClose={onClose}
+      <CloseButtonSmall
+        onClick={onClose}
         data-qa="close-sidebar"
-        className="rounded-full bg-layer-3 p-[6px]"
+        className="rounded-full bg-layer-3"
       />
     </div>
   );
