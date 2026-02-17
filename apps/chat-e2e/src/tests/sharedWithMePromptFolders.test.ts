@@ -173,7 +173,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Shared with me. Share prompt Folder in the middle.\n' +
     'Shared with me. Folder with folder/prompt inside is unshared.\n' +
     'Shared with me. Prompt structure creates again if it was unshared if to open the same link',
