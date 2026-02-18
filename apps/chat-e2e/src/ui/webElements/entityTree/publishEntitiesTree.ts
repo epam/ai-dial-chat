@@ -8,7 +8,8 @@ export class PublishEntitiesTree extends EntitiesTree {
       .locator('..')
       .locator(`${EntitySelectors.version}`)
       .last()
-      .locator(Tags.span);
+      .locator(Tags.span)
+      .first();
   }
 
   public getEntityVersionElement(entityName: string, entityIndex?: number) {
