@@ -163,7 +163,7 @@ export const AppsEditor = () => {
         data,
         allEntitiesMap: marketplaceEntities,
         currentApp: appDetails,
-        keepCurrentToolsets: isSimpleViewSwitchRef.current,
+        keepCurrentToolsets: !isSimpleViewSwitchRef.current,
       });
 
       if (!appDetails) {
@@ -222,15 +222,17 @@ export const AppsEditor = () => {
         );
       }
 
+      const shouldKeepJsonFieldDirty =
+        !isSimpleViewSwitchRef.current && isQuickAppJsonDirty;
+
       formMethods.reset(
         {
           ...formMethods.getValues(),
-          ...(!isSimpleViewSwitchRef.current &&
-            isQuickAppJsonDirty && {
-              agentsAndToolsetsJson: (
-                lastSubmittedValuesRef.current as QuickApp2Form
-              ).agentsAndToolsetsJson,
-            }),
+          ...(shouldKeepJsonFieldDirty && {
+            agentsAndToolsetsJson: (
+              lastSubmittedValuesRef.current as QuickApp2Form
+            ).agentsAndToolsetsJson,
+          }),
         },
         {
           keepIsValid: true,
@@ -238,7 +240,7 @@ export const AppsEditor = () => {
         },
       );
       // Make agentsAndToolsetsJson dirty if it was not saved manually
-      if (!isSimpleViewSwitchRef.current && isQuickAppJsonDirty) {
+      if (shouldKeepJsonFieldDirty) {
         formMethods.setValue(
           'agentsAndToolsetsJson',
           (data as QuickApp2Form).agentsAndToolsetsJson as string,
