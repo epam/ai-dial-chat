@@ -34,6 +34,8 @@ const mockStore = configureStore({
     }),
     settings: () => ({
       isOverlay: false,
+      enabledFeatures: [],
+      enabledFeaturesData: {},
     }),
   },
 });
