@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 
@@ -22,12 +22,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const token = await getToken({ req });
+    const jwt = await getToken({ req });
 
     const url = `${process.env.DIAL_API_HOST}/v1/bucket`;
     const response = await fetch(url, {
       headers: getApiHeaders({
-        jwt: token?.access_token ?? '',
+        jwt,
       }),
     });
 
