@@ -56,7 +56,9 @@ export const getFullToken = async (
   if (!token) return;
   const providerId =
     typeof token.providerId === 'string' ? token.providerId : '';
-  const listProviders = parseCommaSeparatedList(process.env.AUTH_PASS_IDTOKEN);
+  const listProviders = parseCommaSeparatedList(
+    process.env.AUTH_IDTOKEN_PROVIDERS,
+  );
   const tokenToReturn =
     listProviders.length && listProviders.includes(providerId)
       ? token.idToken

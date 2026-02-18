@@ -31,7 +31,9 @@ const getJWTPayload = (
   accessToken: string | undefined,
   idToken: string | undefined,
 ): JWTPayload => {
-  const listProviders = parseCommaSeparatedList(process.env.AUTH_PASS_IDTOKEN);
+  const listProviders = parseCommaSeparatedList(
+    process.env.AUTH_IDTOKEN_PROVIDERS,
+  );
   const token = listProviders.length ? idToken : accessToken;
   return token ? safeDecodeJwt(token) : {};
 };
