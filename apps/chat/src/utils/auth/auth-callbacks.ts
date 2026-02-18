@@ -10,7 +10,7 @@ import { safeParseJSON } from '../json';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { decodeJwt } from 'jose';
+import { JWTPayload, decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
 import snakeCase from 'lodash-es/snakeCase';
@@ -18,9 +18,9 @@ import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
 
-const safeDecodeJwt = (accessToken: string) => {
+const safeDecodeJwt = (jwtToken: string) => {
   try {
-    return decodeJwt(accessToken);
+    return decodeJwt(jwtToken);
   } catch (err) {
     console.error("Token couldn't be parsed as JWT", err);
     // TODO: read roles from GCP token format
@@ -28,7 +28,28 @@ const safeDecodeJwt = (accessToken: string) => {
   }
 };
 
-const getUser = (accessToken: string | undefined, providerId: string) => {
+const providersWithNotJWTToken = ['gitlab', 'google'];
+
+const getJWTPayload = (
+  accessToken: string | undefined,
+  idToken: string | undefined,
+  providerId: string,
+): JWTPayload => {
+  const useIdTokenForProviders = parseCommaSeparatedList(
+    process.env.AUTH_IDTOKEN_PROVIDERS,
+  );
+  const useIdToken = useIdTokenForProviders.includes(providerId);
+  const token = useIdToken ? idToken : accessToken;
+  const skipDecoding =
+    !useIdToken && providersWithNotJWTToken.includes(providerId);
+  return token && !skipDecoding ? safeDecodeJwt(token) : {};
+};
+
+const getUser = (
+  accessToken: string | undefined,
+  idToken: string | undefined,
+  providerId: string,
+) => {
   const rolesFieldName =
     process.env[
       `AUTH_${snakeCase(providerId).toUpperCase()}_DIAL_ROLES_FIELD`
@@ -41,7 +62,8 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     ] ?? process.env.ADMIN_ROLE_NAMES,
     ['admin'],
   );
-  const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
+
+  const decodedPayload = getJWTPayload(accessToken, idToken, providerId);
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
@@ -173,14 +195,27 @@ async function refreshAccessToken(token: Token) {
     if (!refreshedTokens.refresh_token && !token.refreshToken) {
       throw new Error('No refresh tokens exists');
     }
-
+    const idToken = refreshedTokens.id_token ?? token.idToken;
+    const access_token = refreshedTokens.access_token;
+    const decodedPayload = getJWTPayload(
+      access_token,
+      idToken,
+      token.providerId,
+    );
     const returnToken = {
       ...token,
-      user: getUser(refreshedTokens.access_token, token.providerId),
-      access_token: refreshedTokens.access_token,
-      accessTokenExpires: refreshedTokens.expires_in
-        ? Date.now() + refreshedTokens.expires_in * 1000
-        : (refreshedTokens.expires_at as number) * 1000,
+      user: getUser(
+        refreshedTokens.access_token,
+        refreshedTokens.id_token,
+        token.providerId,
+      ),
+      access_token,
+      accessTokenExpires: decodedPayload.exp
+        ? decodedPayload.exp * 1000
+        : refreshedTokens.expires_in
+          ? Date.now() + refreshedTokens.expires_in * 1000
+          : (refreshedTokens.expires_at as number) * 1000,
+      idToken,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
 
@@ -209,19 +244,28 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
+      const idToken = options.account.id_token;
+      const access_token = options.account.access_token;
+      const providerId = options.account.provider;
+      const decodedPayload = getJWTPayload(access_token, idToken, providerId);
       return {
         ...options.token,
-        user: getUser(options.account?.access_token, options.account.provider),
+        user: getUser(
+          options.account.access_token,
+          options.account.id_token,
+          options.account.provider,
+        ),
         jobTitle: options.profile?.job_title,
-        access_token: options.account.access_token,
-        accessTokenExpires:
-          typeof options.account.expires_in === 'number'
+        access_token,
+        accessTokenExpires: decodedPayload.exp
+          ? decodedPayload.exp * 1000
+          : typeof options.account.expires_in === 'number'
             ? Date.now() + options.account.expires_in * 1000
             : (options.account.expires_at as number) * 1000,
         refreshToken: options.account.refresh_token,
-        providerId: options.account.provider,
+        providerId,
         userId: options.user.id,
-        idToken: options.account.id_token,
+        idToken,
       };
     }
 
@@ -235,6 +279,7 @@ export const callbacks: Partial<
         ...options.token,
         user: getUser(
           options.token.access_token,
+          options.token.idToken,
           typeof options.token.providerId === 'string'
             ? options.token.providerId
             : '',

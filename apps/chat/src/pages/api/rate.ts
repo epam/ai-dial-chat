@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
+import { getFullToken } from '@/src/utils/server/server';
 
 import { RateBody } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
@@ -32,10 +32,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).send(errorsMessages[400]);
     }
 
-    const token = await getToken({ req });
+    const token = await getFullToken({ req });
 
-    const entities = await getSortedEntities(token);
-    if (!entities.some((entity) => entity.id === modelId)) {
+    const entities = await getSortedEntities(
+      token?.token ?? '',
+      token?.jobTitle ?? '',
+    );
+    const model = entities.find(
+      (entity) => entity.id === modelId || entity.reference === modelId,
+    );
+    if (!model) {
       throw new Error(`Rated model not exists - ${modelId}`);
     }
 
@@ -44,7 +50,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     await fetch(url, {
       headers: getApiHeaders({
         chatReference: reference ?? id,
-        jwt: token?.access_token as string,
+        jwt: token?.token as string,
         jobTitle: token?.jobTitle as string,
       }),
       method: HTTPMethod.POST,

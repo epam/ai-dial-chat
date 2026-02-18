@@ -318,6 +318,9 @@ export const promptsSlice = createSlice({
     uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
       state.isPromptLoading = true;
     },
+    uploadPromptFail: (state) => {
+      state.isPromptLoading = false;
+    },
     uploadPromptSuccess: (
       state,
       { payload }: PayloadAction<{ prompt: Prompt | null }>,
@@ -433,7 +436,9 @@ export const promptsSlice = createSlice({
       state,
     selectPrompt: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         promptId: string | undefined;
         selectInEditMode?: boolean;
         isApproveRequiredResource?: boolean;

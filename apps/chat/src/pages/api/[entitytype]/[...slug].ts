@@ -1,13 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { JWT, getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -95,7 +94,7 @@ interface PutOptions {
 }
 async function handlePutRequest(
   req: NextApiRequest,
-  token: JWT | null,
+  jwt: string | undefined,
   res: NextApiResponse,
   options?: PutOptions,
 ) {
@@ -105,7 +104,7 @@ async function handlePutRequest(
     method: HTTPMethod.PUT,
     headers: {
       ...getApiHeaders({
-        jwt: token?.access_token as string,
+        jwt,
         ifNoneMatch: options?.ifNoneMatch,
       }),
       'Content-Type': req.headers['content-type'] as string,
@@ -133,12 +132,12 @@ async function handlePutRequest(
 
 async function handleGetRequest(
   req: NextApiRequest,
-  token: JWT | null,
+  jwt: string | undefined,
   res: NextApiResponse,
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    headers: getApiHeaders({ jwt: token?.access_token as string }),
+    headers: getApiHeaders({ jwt }),
   });
 
   if (!proxyRes.ok) {
@@ -163,13 +162,13 @@ async function handleGetRequest(
 
 async function handleDeleteRequest(
   req: NextApiRequest,
-  token: JWT | null,
+  jwt: string | undefined,
   res: NextApiResponse,
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: HTTPMethod.DELETE,
-    headers: getApiHeaders({ jwt: token?.access_token as string }),
+    headers: getApiHeaders({ jwt }),
   });
 
   if (!proxyRes.ok) {
