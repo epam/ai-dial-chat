@@ -73,8 +73,12 @@ const selectPromptbarWidth = (state: RootState) =>
 const selectIsChatFullWidth = createSelector(
   [rootSelector, SettingsSelectors.selectEnabledFeatures],
   (state, enabledFeatures) => {
-    return enabledFeatures.has(Feature.ChatFullWidthByDefault) || state.isChatFullWidth;
-  });
+    return (
+      enabledFeatures.has(Feature.ChatFullWidthByDefault) ||
+      state.isChatFullWidth
+    );
+  },
+);
 
 const selectCustomLogo = (state: RootState) => rootSelector(state).customLogo;
 
