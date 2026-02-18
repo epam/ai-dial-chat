@@ -21,6 +21,7 @@ export class ShareModal extends BaseElement {
     this.rootLocator,
   );
   public copyLinkIcon = this.copyLinkButton.getChildElementBySelector(Tags.svg);
+  public closeButtonIcon = this.closeButton.getChildElementBySelector(Tags.svg);
   public shareLinkInput = this.getChildElementBySelector(
     ShareModalSelectors.shareLink,
   );

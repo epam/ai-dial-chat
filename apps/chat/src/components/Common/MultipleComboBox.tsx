@@ -21,9 +21,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CloseButtonSmall } from './CloseButtons';
 import { Tooltip } from './Tooltip';
 
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 import { useCombobox, useMultipleSelection } from 'downshift';
 
 interface getFilteredItemsArgs<T> {
@@ -266,8 +266,8 @@ export function MultipleComboBox<T>({
                   >
                     <span
                       className={classNames(
-                        'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
-                        itemHeightClassName ? itemHeightClassName : 'h-[23px]',
+                        'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha p-1 pr-0',
+                        itemHeightClassName ? itemHeightClassName : 'h-[24px]',
                       )}
                       data-qa="combobox-pill"
                       {...getSelectedItemProps({
@@ -284,17 +284,16 @@ export function MultipleComboBox<T>({
                           {getItemLabel(selectedItemForRender)}
                         </span>
                       )}
-                      <DialCloseButton
+                      <CloseButtonSmall
                         data-qa={`unselect-item-${getItemValue(
                           selectedItemForRender,
                         )}`}
                         disabled={disabled}
-                        onClose={(e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
                           removeSelectedItem(selectedItemForRender);
                         }}
-                        size={14}
                       />
                     </span>
                   </Tooltip>
@@ -361,15 +360,14 @@ export function MultipleComboBox<T>({
           </ul>
         </div>
         {hasDeleteAll && selectedItems.length > 0 ? (
-          <DialCloseButton
-            className="py-2 text-primary"
+          <CloseButtonSmall
+            className="text-primary"
             disabled={disabled}
-            onClose={(e) => {
+            onClick={(e) => {
               e.stopPropagation();
               setSelectedItems([]);
               onChangeSelectedItems([]);
             }}
-            size={18}
           />
         ) : null}
       </div>

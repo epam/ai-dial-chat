@@ -111,9 +111,9 @@ dialTest(
     await dialTest.step(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
-        await shareModal.closeButton.hoverOver();
+        await shareModal.closeButtonIcon.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
-          shareModal.closeButton,
+          shareModal.closeButtonIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await shareModal.copyLinkButton.hoverOver();
@@ -807,7 +807,7 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
     'Share folder with chats via QR code.\n' +

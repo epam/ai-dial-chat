@@ -231,10 +231,6 @@ export const VisualizerRenderer = ({
     return null;
   }
 
-  const iframeContainerClassNames = isFullScreen
-    ? 'h-[calc(100%-30px)]'
-    : `h-[${customVisualizerLayout.height}px]`;
-
   return (
     <div className={classNames(isFullScreen && 'size-full p-2')}>
       <div className="mb-2 flex flex-row justify-between">
@@ -262,7 +258,13 @@ export const VisualizerRenderer = ({
       </div>
       <div
         ref={iframeContainerRef}
-        className={classNames('size-full', iframeContainerClassNames)}
+        className={classNames(
+          'size-full',
+          isFullScreen && 'h-[calc(100%-30px)]',
+        )}
+        style={{
+          height: !isFullScreen ? customVisualizerLayout.height : undefined,
+        }}
       >
         {(!ready || attachmentDataLoading) && (
           <div className="absolute z-10 flex size-full items-center bg-layer-1">
