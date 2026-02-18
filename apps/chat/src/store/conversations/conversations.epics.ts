@@ -12,6 +12,7 @@ import {
   filter,
   forkJoin,
   from,
+  groupBy,
   ignoreElements,
   iif,
   map,
@@ -3271,22 +3272,27 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
 const getCustomAttachmentDataEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.getCustomAttachmentData.type),
-    switchMap(({ payload }) =>
-      FileService.getFileContent<CustomVisualizerData>(
-        payload.pathToAttachment,
-      ).pipe(
-        switchMap((params) => {
-          return of(
-            ConversationsActions.getCustomAttachmentDataSuccess({
-              params,
-              url: payload.pathToAttachment,
+    groupBy(({ payload }) => payload.pathToAttachment),
+    mergeMap((group$) =>
+      group$.pipe(
+        switchMap(({ payload }) =>
+          FileService.getFileContent<CustomVisualizerData>(
+            payload.pathToAttachment,
+          ).pipe(
+            switchMap((params) => {
+              return of(
+                ConversationsActions.getCustomAttachmentDataSuccess({
+                  params,
+                  url: payload.pathToAttachment,
+                }),
+              );
             }),
-          );
-        }),
-        catchError(() =>
-          of(
-            UIActions.showErrorToast(
-              translate('Error while uploading chart data'),
+            catchError(() =>
+              of(
+                UIActions.showErrorToast(
+                  translate('Error while uploading chart data'),
+                ),
+              ),
             ),
           ),
         ),
