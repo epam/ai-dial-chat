@@ -243,7 +243,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           triggerTextClassName={classNames(
             isDeleteAction && 'text-xs text-error',
           )}
-          textBeforeSelector={!isDeleteAction ? t('Last: ') : undefined}
+          textBeforeSelector={!isDeleteAction ? t('Last: ') : ''}
           btnClassNames={classNames(
             'shrink-0',
             isDeleteAction && 'text-error hover:text-error',
@@ -254,14 +254,14 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           readonly={!isDeleteAction}
         />
       )}
-      <span
-        className={classNames(
-          'relative shrink-0 text-xs',
-          isDeleteAction && 'text-error',
-        )}
-        data-qa="version"
-      >
-        {!isDeleteAction && (
+      {!isDeleteAction && (
+        <span
+          className={classNames(
+            'relative shrink-0 text-xs',
+            isDeleteAction && 'text-error',
+          )}
+          data-qa="version"
+        >
           <EditableField
             value={inputVersion}
             isEditMode={
@@ -285,8 +285,8 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             tooltipIconClassName="ml-1"
             dataQA="version"
           />
-        )}
-      </span>
+        </span>
+      )}
     </div>
   );
 };

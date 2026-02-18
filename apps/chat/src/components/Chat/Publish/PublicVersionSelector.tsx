@@ -164,13 +164,13 @@ export function PublicVersionSelector({
   return (
     <Menu
       onOpenChange={setIsVersionSelectOpen}
-      dropdownWidth={82}
-      className="flex shrink-0 items-center"
+      className="flex min-w-fit shrink-0 items-center"
+      listClassName="min-w-fit"
       disabled={mappedAllVersions.length <= 1}
       placement="bottom-end"
       trigger={
         <DialLinkButton
-          onClick={(e) => stopBubbling(e)}
+          onClick={stopBubbling}
           disabled={mappedAllVersions.length <= 1}
           className={classNames(
             'flex px-0 text-primary hover:text-primary',
@@ -214,6 +214,9 @@ export function PublicVersionSelector({
             id={'all'}
             className="mr-3 shrink-0"
             checked={isAllSelected}
+            indeterminate={
+              !isAllSelected && !!selectedCheckboxVersionIds?.length
+            }
             onChange={() => {
               if (!isAllSelected) {
                 mappedAllVersions.forEach(({ id }) => {
