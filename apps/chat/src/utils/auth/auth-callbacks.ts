@@ -9,7 +9,7 @@ import { safeParseJSON } from '../json';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { decodeJwt } from 'jose';
+import { JWTPayload, decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
 import snakeCase from 'lodash-es/snakeCase';
