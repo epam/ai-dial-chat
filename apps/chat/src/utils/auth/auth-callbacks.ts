@@ -27,6 +27,15 @@ const safeDecodeJwt = (jwtToken: string) => {
   }
 };
 
+const getJWTPayload = (
+  accessToken: string | undefined,
+  idToken: string | undefined,
+): JWTPayload => {
+  const listProviders = parseCommaSeparatedList(process.env.AUTH_PASS_IDTOKEN);
+  const token = listProviders.length ? idToken : accessToken;
+  return token ? safeDecodeJwt(token) : {};
+};
+
 const getUser = (
   accessToken: string | undefined,
   idToken: string | undefined,
@@ -45,11 +54,7 @@ const getUser = (
     ['admin'],
   );
 
-  const listProviders = parseCommaSeparatedList(process.env.AUTH_PASS_IDTOKEN);
-
-  const token = listProviders.includes(providerId) ? idToken : accessToken;
-
-  const decodedPayload = token ? safeDecodeJwt(token) : {};
+  const decodedPayload = getJWTPayload(accessToken, idToken);
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
@@ -157,7 +162,9 @@ async function refreshAccessToken(token: Token) {
     if (!refreshedTokens.refresh_token && !token.refreshToken) {
       throw new Error('No refresh tokens exists');
     }
-
+    const idToken = refreshedTokens.id_token ?? token.idToken;
+    const access_token = refreshedTokens.access_token;
+    const decodedPayload = getJWTPayload(access_token, idToken);
     const returnToken = {
       ...token,
       user: getUser(
@@ -165,11 +172,13 @@ async function refreshAccessToken(token: Token) {
         refreshedTokens.id_token,
         token.providerId,
       ),
-      access_token: refreshedTokens.access_token,
-      accessTokenExpires: refreshedTokens.expires_in
-        ? Date.now() + refreshedTokens.expires_in * 1000
-        : (refreshedTokens.expires_at as number) * 1000,
-      idToken: refreshedTokens.id_token ?? token.idToken,
+      access_token,
+      accessTokenExpires: decodedPayload.exp
+        ? decodedPayload.exp * 1000
+        : refreshedTokens.expires_in
+          ? Date.now() + refreshedTokens.expires_in * 1000
+          : (refreshedTokens.expires_at as number) * 1000,
+      idToken,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
 
@@ -198,6 +207,9 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
+      const idToken = options.account.id_token;
+      const access_token = options.account.access_token;
+      const decodedPayload = getJWTPayload(access_token, idToken);
       return {
         ...options.token,
         user: getUser(
@@ -206,15 +218,16 @@ export const callbacks: Partial<
           options.account.provider,
         ),
         jobTitle: options.profile?.job_title,
-        access_token: options.account.access_token,
-        accessTokenExpires:
-          typeof options.account.expires_in === 'number'
+        access_token,
+        accessTokenExpires: decodedPayload.exp
+          ? decodedPayload.exp * 1000
+          : typeof options.account.expires_in === 'number'
             ? Date.now() + options.account.expires_in * 1000
             : (options.account.expires_at as number) * 1000,
         refreshToken: options.account.refresh_token,
         providerId: options.account.provider,
         userId: options.user.id,
-        idToken: options.account.id_token,
+        idToken,
       };
     }
 
