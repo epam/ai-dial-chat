@@ -82,9 +82,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       | BackendChatFolder
     )[] = json.items || [];
 
-    if (filter) {
-      result = result.filter((item) => item.nodeType === filter);
-    }
+    // Filtering needed to avoid DIAL Chat crashing in case of name === null || name === ''
+    result = result.filter(
+      (item) => (!filter || item.nodeType === filter) && !!item.name,
+    );
 
     return res.status(200).send(result);
   } catch (error) {
