@@ -58,7 +58,16 @@ export interface BackendFolder<ItemType>
   items: ItemType[];
 }
 
+export interface BackendFolderWithDefName<ItemType>
+  extends BackendFolder<ItemType> {
+  name: string;
+}
+
 export type BackendChatFolder = BackendFolder<
+  BackendChatEntity | BackendChatFolder
+>;
+
+export type BackendChatFolderWithDefName = BackendFolderWithDefName<
   BackendChatEntity | BackendChatFolder
 >;
 

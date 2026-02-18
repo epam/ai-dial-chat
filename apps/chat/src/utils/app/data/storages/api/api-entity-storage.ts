@@ -11,6 +11,7 @@ import {
   ApiKeys,
   BackendChatEntity,
   BackendChatFolder,
+  BackendChatFolderWithDefName,
   BackendDataNodeType,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
@@ -26,9 +27,7 @@ export abstract class ApiEntityStorage<
   APIModel = APIResponse,
 > implements EntityStorage<TEntityInfo, TEntity>
 {
-  private mapFolder(
-    folder: BackendChatFolder & { name: string },
-  ): FolderInterface {
+  private mapFolder(folder: BackendChatFolderWithDefName): FolderInterface {
     const id = ApiUtils.decodeApiUrl(
       folder.url.slice(0, folder.url.length - 1),
     );
@@ -88,7 +87,7 @@ export abstract class ApiEntityStorage<
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
         const folders = items.filter(
           (item) => item.nodeType === BackendDataNodeType.FOLDER && !!item.name,
-        ) as (BackendChatFolder & { name: string })[];
+        ) as BackendChatFolderWithDefName[];
         const entities = items.filter(
           (item) => item.nodeType === BackendDataNodeType.ITEM,
         ) as BackendChatEntity[];
@@ -113,7 +112,7 @@ export abstract class ApiEntityStorage<
       map((folders: BackendChatFolder[]) => {
         const filteredFolders = folders.filter(
           (folder) => !!folder.name,
-        ) as (BackendChatFolder & { name: string })[];
+        ) as BackendChatFolderWithDefName[];
         return filteredFolders.map((folder) => this.mapFolder(folder));
       }),
     );

@@ -13,6 +13,7 @@ import {
 import {
   BackendFile,
   BackendFileFolder,
+  BackendFileFolderWithDefName,
   DialFile,
   FileFolderInterface,
   FileOperationsResult,
@@ -171,40 +172,37 @@ export class FileService {
       this.getListingUrl({ path: parentPath, resultQuery }),
     ).pipe(
       map((folders: BackendFileFolder[]) => {
-        return folders
-          .filter(
+        return (
+          folders.filter(
             (folder) =>
               !!folder.parentPath ||
               (!!folder.name && folder.name !== CLIENTDATA_PATH),
-          )
-          .map((folder): FileFolderInterface => {
-            const relativePath = folder.parentPath
-              ? ApiUtils.decodeApiUrl(folder.parentPath)
-              : undefined;
+          ) as BackendFileFolderWithDefName[]
+        ).map((folder): FileFolderInterface => {
+          const relativePath = folder.parentPath
+            ? ApiUtils.decodeApiUrl(folder.parentPath)
+            : undefined;
 
-            return {
-              id: constructPath(
-                ApiKeys.Files,
-                folder.bucket,
-                relativePath,
-                folder.name,
-              ),
-              name: folder.name!,
-              type: FeatureType.File,
-              absolutePath: constructPath(
-                ApiKeys.Files,
-                folder.bucket,
-                relativePath,
-              ),
-              relativePath: relativePath,
-              folderId: constructPath(
-                getFileRootId(folder.bucket),
-                relativePath,
-              ),
-              serverSynced: true,
-              permissions: folder.permissions,
-            };
-          });
+          return {
+            id: constructPath(
+              ApiKeys.Files,
+              folder.bucket,
+              relativePath,
+              folder.name,
+            ),
+            name: folder.name,
+            type: FeatureType.File,
+            absolutePath: constructPath(
+              ApiKeys.Files,
+              folder.bucket,
+              relativePath,
+            ),
+            relativePath: relativePath,
+            folderId: constructPath(getFileRootId(folder.bucket), relativePath),
+            serverSynced: true,
+            permissions: folder.permissions,
+          };
+        });
       }),
     );
   }

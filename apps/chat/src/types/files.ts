@@ -1,6 +1,7 @@
 import {
   BackendEntity,
   BackendFolder,
+  BackendFolderWithDefName,
   BaseDialEntity,
 } from '@/src/types/common';
 
@@ -16,6 +17,9 @@ export interface BackendFile extends BackendEntity {
 }
 
 export type BackendFileFolder = BackendFolder<BackendFile | BackendFileFolder>;
+export type BackendFileFolderWithDefName = BackendFolderWithDefName<
+  BackendFile | BackendFileFolder
+>;
 
 export type DialFile = Omit<
   BackendFile,
