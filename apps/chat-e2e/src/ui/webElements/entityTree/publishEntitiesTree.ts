@@ -6,7 +6,9 @@ export class PublishEntitiesTree extends EntitiesTree {
   public getEntityVersion(entityName: string, entityIndex?: number) {
     return this.getEntityByName(entityName, entityIndex)
       .locator('..')
-      .locator(`${EntitySelectors.version}`).last();
+      .locator(`${EntitySelectors.version}`)
+      .last()
+      .locator(Tags.span);
   }
 
   public getEntityVersionElement(entityName: string, entityIndex?: number) {
