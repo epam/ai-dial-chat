@@ -838,9 +838,12 @@ const uploadPromptEpic: AppEpic = (action$, state$) =>
     }),
     catchError((err) => {
       console.error('An error occurred while uploading the prompt:', err);
-      return of(
-        UIActions.showErrorToast(
-          translate('An error occurred while uploading the prompt'),
+      return concat(
+        of(PromptsActions.uploadPromptFail()),
+        of(
+          UIActions.showErrorToast(
+            translate('An error occurred while uploading the prompt'),
+          ),
         ),
       );
     }),
