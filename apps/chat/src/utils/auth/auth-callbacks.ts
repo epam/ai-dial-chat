@@ -27,15 +27,21 @@ const safeDecodeJwt = (jwtToken: string) => {
   }
 };
 
+const providersWithNotJWTToken = ['gitlab', 'google'];
+
 const getJWTPayload = (
   accessToken: string | undefined,
   idToken: string | undefined,
+  providerId: string,
 ): JWTPayload => {
-  const listProviders = parseCommaSeparatedList(
+  const useIdTokenForProviders = parseCommaSeparatedList(
     process.env.AUTH_IDTOKEN_PROVIDERS,
   );
-  const token = listProviders.length ? idToken : accessToken;
-  return token ? safeDecodeJwt(token) : {};
+  const useIdToken = useIdTokenForProviders.includes(providerId);
+  const token = useIdToken ? idToken : accessToken;
+  const skipDecoding =
+    !useIdToken && providersWithNotJWTToken.includes(providerId);
+  return token && !skipDecoding ? safeDecodeJwt(token) : {};
 };
 
 const getUser = (
@@ -56,7 +62,7 @@ const getUser = (
     ['admin'],
   );
 
-  const decodedPayload = getJWTPayload(accessToken, idToken);
+  const decodedPayload = getJWTPayload(accessToken, idToken, providerId);
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
@@ -166,7 +172,11 @@ async function refreshAccessToken(token: Token) {
     }
     const idToken = refreshedTokens.id_token ?? token.idToken;
     const access_token = refreshedTokens.access_token;
-    const decodedPayload = getJWTPayload(access_token, idToken);
+    const decodedPayload = getJWTPayload(
+      access_token,
+      idToken,
+      token.providerId,
+    );
     const returnToken = {
       ...token,
       user: getUser(
@@ -211,7 +221,8 @@ export const callbacks: Partial<
     if (options.account) {
       const idToken = options.account.id_token;
       const access_token = options.account.access_token;
-      const decodedPayload = getJWTPayload(access_token, idToken);
+      const providerId = options.account.provider;
+      const decodedPayload = getJWTPayload(access_token, idToken, providerId);
       return {
         ...options.token,
         user: getUser(
@@ -227,7 +238,7 @@ export const callbacks: Partial<
             ? Date.now() + options.account.expires_in * 1000
             : (options.account.expires_at as number) * 1000,
         refreshToken: options.account.refresh_token,
-        providerId: options.account.provider,
+        providerId,
         userId: options.user.id,
         idToken,
       };
