@@ -83,7 +83,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     results.forEach((res) => {
       if ('items' in res) {
-        combinedItems.push(...res.items);
+        // Filtering needed to avoid DIAL Chat crashing in case of name === null || name === ''
+        combinedItems.push(...res.items.filter((item) => !!item.name));
       }
     });
 
