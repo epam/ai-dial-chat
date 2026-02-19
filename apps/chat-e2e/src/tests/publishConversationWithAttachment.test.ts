@@ -22,11 +22,13 @@ import {
 } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let modelsWithInputAttachments: DialAIEntityModel[];
+let modelWithInputAttachments: DialAIEntityModel;
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
-  modelsWithInputAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  modelWithInputAttachments = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getLatestModelsWithAttachment(),
+  );
 });
 
 dialAdminTest(
@@ -87,9 +89,6 @@ dialAdminTest(
       'EPMRTC-4704',
       'EPMRTC-3457',
       'EPMRTC-5652',
-    );
-    const modelWithInputAttachments = GeneratorUtil.randomArrayElement(
-      modelsWithInputAttachments,
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
