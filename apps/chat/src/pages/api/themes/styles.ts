@@ -17,14 +17,15 @@ import fetch from 'node-fetch';
 let cachedTheme = '';
 let cachedThemeExpiration: number | undefined;
 
-function generateNumberCssVariables(
-  variables: Record<string, number | undefined>,
-  unit: 'rem' | 'px' = 'px',
+function generateUnitCssVariables(
+  variables: Record<string, string | undefined>,
 ) {
   let cssContent = '';
+  const unitRegex =
+    /^-?\d*\.?\d+(px|em|rem|vh|vw|%|cm|mm|in|pt|pc|vmin|vmax|ch|ex)?$/i;
   Object.entries(variables).forEach(([variable, value]) => {
-    if (Number.isFinite(value)) {
-      cssContent += `--${cssEscape(variable)}: ${value}${unit};\n`;
+    if (value && unitRegex.test(value)) {
+      cssContent += `--${cssEscape(variable)}: ${value};\n`;
     }
   });
   return cssContent;
@@ -149,7 +150,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             'codeblock-font':
               theme['font-codeblock'] ?? inconsolata.style.fontFamily,
           }),
-          generateNumberCssVariables({
+          generateUnitCssVariables({
             'border-radius': theme['border-radius'],
           }),
         ]),

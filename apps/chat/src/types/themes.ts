@@ -8,7 +8,7 @@ export interface Theme {
   'app-logo': string;
   'font-family'?: string;
   'font-codeblock'?: string;
-  'border-radius'?: number;
+  'border-radius'?: string;
   id: string;
 }
 
