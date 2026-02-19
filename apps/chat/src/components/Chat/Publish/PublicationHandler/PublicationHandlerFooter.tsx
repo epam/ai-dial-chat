@@ -530,6 +530,7 @@ export const PublicationHandlerFooter = ({
           <DialLinkButton
             className="px-0"
             onClick={handlePublicationReview}
+            disabled={isPublicationUpdating}
             data-qa="go-to-review"
             label={t(
               resourcesToReview.some((r) => r.reviewed)
@@ -550,6 +551,7 @@ export const PublicationHandlerFooter = ({
                     dataQa="edit"
                     onClick={handleToggleEditMode}
                     Icon={IconPencil}
+                    disabled={isPublicationUpdating}
                   />
                 )}
                 <DialNeutralButton
