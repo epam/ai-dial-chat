@@ -64,7 +64,7 @@ export const VisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle } = renderer;
+  const { url: rendererUrl, title: visualizerTitle, requestTimeout } = renderer;
 
   const dispatch = useAppDispatch();
 
@@ -157,6 +157,7 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: visualizerTitle,
         loaderStyles: { display: 'none' },
+        requestTimeout,
       });
 
       return () => {
@@ -164,7 +165,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, visualizerTitle]);
+  }, [requestTimeout, rendererUrl, visualizerTitle]);
 
   useEffect(() => {
     if (
