@@ -4,9 +4,12 @@ import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
 
 export class PublishEntitiesTree extends EntitiesTree {
   public getEntityVersion(entityName: string, entityIndex?: number) {
-    return this.getEntityByName(entityName, entityIndex).locator(
-      `~*${EntitySelectors.version}, ~* > ${EntitySelectors.version}`,
-    );
+    return this.getEntityByName(entityName, entityIndex)
+      .locator('..')
+      .locator(`${EntitySelectors.version}`)
+      .last()
+      .locator(Tags.span)
+      .first();
   }
 
   public getEntityVersionElement(entityName: string, entityIndex?: number) {
