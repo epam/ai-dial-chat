@@ -32,11 +32,12 @@ export class Grid extends BaseElement {
     });
 
   public gridRowColumn = (columnId: string) =>
-    this.gridRows.getChildElementBySelector(GridSelectors.gridCell(columnId)).getElementLocator();
+    this.gridRows
+      .getChildElementBySelector(GridSelectors.gridCell(columnId))
+      .getElementLocator();
 
   public gridRowColumnByCellValue = (columnId: string, value: string) =>
-    this.gridRowColumn(columnId)
-      .filter({
-        hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
-      });
+    this.gridRowColumn(columnId).filter({
+      hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
+    });
 }
