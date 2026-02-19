@@ -1,5 +1,4 @@
-# node:24-alpine vulnerabilities: <https://hub.docker.com/layers/library/node/24-alpine>
-
+# node:24-alpine vulnerabilities in https://hub.docker.com/layers/library/node/24-alpine
 CVE-2026-25547 exp:2026-05-20
 CVE-2026-26996 exp:2026-05-20
 CVE-2026-24842 exp:2026-05-20
