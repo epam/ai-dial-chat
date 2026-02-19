@@ -116,8 +116,10 @@ export const VisualizerRenderer = ({
       height:
         isFullScreen && containerHeight
           ? containerHeight
-          : (customAttachmentData?.layout.height ??
-            DEFAULT_CUSTOM_ATTACHMENT_HEIGHT),
+          : Number(
+              customAttachmentData?.layout.height ??
+                DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+            ),
       themeId,
     };
   }, [
