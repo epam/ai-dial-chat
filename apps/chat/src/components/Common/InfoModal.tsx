@@ -42,7 +42,7 @@ function InfoRow({ dataQa, infoLabel, children }: infoRowProps) {
   );
 }
 
-export function InfoModalView() {
+function InfoModalView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 

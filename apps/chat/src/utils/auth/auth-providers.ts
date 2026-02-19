@@ -27,7 +27,7 @@ import PingId from './ping-identity';
 const DEFAULT_NAME = 'SSO';
 
 // Need to be set for all providers
-export const tokenConfig: TokenEndpointHandler = {
+const tokenConfig: TokenEndpointHandler = {
   request: async (context) => {
     let tokens;
 

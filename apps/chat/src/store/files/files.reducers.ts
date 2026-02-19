@@ -4,7 +4,7 @@ import {
   addTrailingSlashIfAbsent,
   combineEntities,
 } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getFolderFromId,
@@ -107,6 +107,7 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
+      const fileContent = getFileWithType(payload.fileContent);
       state.files.push({
         id: payload.id,
         name: payload.name,
@@ -115,9 +116,9 @@ export const filesSlice = createSlice({
 
         status: UploadStatus.LOADING,
         percent: 0,
-        fileContent: payload.fileContent,
+        fileContent,
         contentLength: payload.fileContent.size,
-        contentType: payload.fileContent.type,
+        contentType: fileContent.type,
       });
     },
     uploadFileCancel: (
@@ -957,6 +958,7 @@ export const filesSlice = createSlice({
         );
         state.files = state.files.filter((f) => f.id !== id);
 
+        const fileContent = getFileWithType(file.fileContent);
         state.files.push({
           id,
           name: file.name,
@@ -964,9 +966,9 @@ export const filesSlice = createSlice({
           folderId: constructPath(getFileRootId(bucket), relativePath),
           status: UploadStatus.LOADING,
           percent: 0,
-          fileContent: file.fileContent,
+          fileContent,
           contentLength: file.fileContent.size,
-          contentType: file.fileContent.type,
+          contentType: fileContent.type,
         });
       });
     },

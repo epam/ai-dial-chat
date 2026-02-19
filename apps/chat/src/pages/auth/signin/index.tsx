@@ -5,12 +5,14 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
 import {
   DEFAULT_PROVIDER,
   authProviders,
@@ -90,11 +92,16 @@ export default function Signin({
     }
   }, [themesHostDefined]);
 
-  const { callbackUrl, error } = router.query;
+  const searchParams = useSearchParams();
+  const errorType = getQueryParameterCaseInsensitive(searchParams, 'error');
+  const callbackUrl = getQueryParameterCaseInsensitive(
+    searchParams,
+    'callbackUrl',
+  );
 
   const errorMessage =
-    error && typeof error === 'string'
-      ? t(errors[error as SignInErrorTypes] ?? errors.default)
+    errorType && typeof errorType === 'string'
+      ? t(errors[errorType as SignInErrorTypes] ?? errors.default)
       : undefined;
 
   useEffect(() => {
@@ -177,7 +184,7 @@ export default function Signin({
         <div className="flex flex-col gap-4">
           {Object.values(providers ?? []).map((provider: Provider) => (
             <DialNeutralButton
-              className="gap-4 p-4"
+              className="gap-4"
               onClick={() => {
                 void handleSignIn(provider);
               }}

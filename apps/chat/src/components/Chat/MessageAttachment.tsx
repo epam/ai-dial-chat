@@ -51,6 +51,7 @@ interface AttachmentDataRendererProps {
   isFullScreen?: boolean;
   onFullScreenClick?: () => void;
   isInner?: boolean;
+  forceDefaultView?: boolean;
 }
 
 const getSourceDataUrl = (attachment: Attachment): string | undefined => {
@@ -93,8 +94,10 @@ const AttachmentDataRenderer = ({
       <img
         src={getSourceDataUrl(attachment)}
         className={classNames(
-          'm-0 aspect-auto w-full',
-          isFullScreen && '!h-full !w-auto',
+          'm-0',
+          isFullScreen
+            ? 'size-auto max-h-full max-w-full object-contain'
+            : 'aspect-auto w-full',
         )}
         alt="Attachment image"
       />
@@ -199,6 +202,7 @@ const ChartAttachmentUrlRenderer = ({
 interface Props {
   attachment: Attachment;
   isInner?: boolean;
+  forceDefaultView?: boolean;
 }
 
 const AttachmentRendererComponent = withErrorBoundary(
@@ -207,6 +211,7 @@ const AttachmentRendererComponent = withErrorBoundary(
     isInner,
     isFullScreen,
     onFullScreenClick,
+    forceDefaultView,
   }: AttachmentDataRendererProps) => {
     const attachmentType: MIMEType = attachment.type;
     const mappedAttachmentUrl = useMemo(
@@ -232,6 +237,7 @@ const AttachmentRendererComponent = withErrorBoundary(
           mimeType={attachmentType}
           isFullScreen={isFullScreen}
           onFullScreenClick={onFullScreenClick}
+          forceDefaultView={forceDefaultView}
         />
       );
     }
@@ -259,7 +265,11 @@ const AttachmentRendererComponent = withErrorBoundary(
   },
 );
 
-export const MessageAttachment = ({ attachment, isInner }: Props) => {
+export const MessageAttachment = ({
+  attachment,
+  isInner,
+  forceDefaultView,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -276,9 +286,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const isBorderless = borderlessTypes.includes(attachment.type);
+  const isBorderless =
+    borderlessTypes.includes(attachment.type) && !forceDefaultView;
   const isExpandedByDefault =
-    isBorderless || expandedTypes.includes(attachment.type);
+    (isBorderless || expandedTypes.includes(attachment.type)) &&
+    !forceDefaultView;
 
   const [isOpened, setIsOpened] = useState(isExpandedByDefault);
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
@@ -531,6 +543,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             isInner={isInner}
             isFullScreen={isFullScreen}
             onFullScreenClick={handleToggleFullScreen}
+            forceDefaultView={forceDefaultView}
           />
           {mappedAttachmentReferenceUrl && (
             <a

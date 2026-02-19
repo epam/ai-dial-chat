@@ -239,7 +239,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         rules[rulesPath] ?? [],
       );
     }
-  }, [formMethods, rulesPath, rules]);
+  }, [formMethods, rulesPath, rules, isReview]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -578,6 +578,11 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       newRules={newRules}
                       publication={publication}
                       editedPublishToUrl={editedPublishToUrl}
+                      error={
+                        formMethods.formState.errors.rules
+                          ? t('Please fix the rules to proceed')
+                          : undefined
+                      }
                     />
                   </section>
                 </div>

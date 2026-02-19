@@ -52,6 +52,9 @@ const SettingDialogView: FC = () => {
   const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
+  const isChatFullWidthByDefault: boolean = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ChatFullWidthByDefault),
+  );
   const savedDefaultModelReference = useAppSelector(
     ModelsSelectors.selectDefaultModelOption,
   );
@@ -213,7 +216,7 @@ const SettingDialogView: FC = () => {
           onModelChange={onModelChange}
         />
 
-        {screenState > ScreenState.SM && (
+        {screenState > ScreenState.SM && !isChatFullWidthByDefault && (
           <ToggleSwitchLabel
             label={t('Chat width')}
             isOn={isChatFullWidthLocal}

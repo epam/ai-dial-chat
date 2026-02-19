@@ -55,6 +55,7 @@ import {
 
 import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
+import { nanoid } from 'nanoid';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -400,19 +401,24 @@ export const getDefaultAllEditEntities = (
   };
 };
 
+export const getRuleFilterId = () => {
+  return nanoid();
+};
+
 export const mapRuleToFilter = (
   rule: PublicationRule,
 ): TargetAudienceFilter => ({
   filterFunction: rule.function,
   filterParams: rule.targets,
-  id: rule.source,
+  source: rule.source,
+  id: getRuleFilterId(),
 });
 
 export const mapFilterToRule = (
   filter: TargetAudienceFilter,
 ): PublicationRule => ({
   function: filter.filterFunction,
-  source: filter.id,
+  source: filter.source,
   targets: filter.filterParams,
 });
 

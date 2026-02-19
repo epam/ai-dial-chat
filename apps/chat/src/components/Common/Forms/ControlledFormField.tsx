@@ -36,7 +36,7 @@ interface ControlledFormFieldProps<T extends FieldValues, K extends Path<T>> {
   defaultValue?: PathValue<T, K>;
 }
 
-export const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
+const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
   control,
   name,
   children,

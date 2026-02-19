@@ -299,9 +299,6 @@ export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
   return getModelIdWithoutVersion(id);
 };
 
-export const addVersionToId = (id: string, version: string) =>
-  [id, version].join(pathKeySeparator);
-
 export const isValidEntityApiType = (apiKey: string): boolean => {
   return (
     Object.values(ApiKeys).includes(apiKey as ApiKeys) ||

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -116,6 +116,8 @@ export const AppsEditorView = ({
     [onAutoSave],
   );
 
+  const handlePureAutoSave = useCallback(() => onAutoSave(), [onAutoSave]);
+
   useEffect(() => {
     if (
       editorStep === MarketplaceEditorSteps.Settings &&
@@ -135,7 +137,7 @@ export const AppsEditorView = ({
       closedPreviewLabel={`${t('Preview')}: ${name} v. ${version}`}
       leftTabLabel={t(mobileTabLabels[editorStep])}
       rightQa="entity-preview-settings"
-      onLeftMouseLeave={onAutoSave}
+      onLeftMouseLeave={handlePureAutoSave}
     />
   );
 };

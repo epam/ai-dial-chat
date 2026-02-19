@@ -10,7 +10,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { ToastType } from '@/src/types/toasts';
 
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { CloseButton } from '@/src/components/Common/CloseButtons';
 
 const getToastConfigByType = (toastType: ToastType) => {
   switch (toastType) {
@@ -76,10 +76,9 @@ export const Toasts = () => (
               >
                 {message}
               </div>
-              <DialCloseButton
+              <CloseButton
                 className="mt-0.5 self-start"
-                onClose={() => hotToast.dismiss(toast.id)}
-                size={24}
+                onClick={() => hotToast.dismiss(toast.id)}
               />
             </>
           )}

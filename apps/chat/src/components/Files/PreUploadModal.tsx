@@ -15,6 +15,7 @@ import {
   constructPath,
   getFileNameExtension,
   getFileNameWithoutExtension,
+  getFileWithType,
   getRelativePath,
   getShortExtensionsListFromMimeType,
   notAllowedSymbolsRegex,
@@ -133,7 +134,7 @@ export const PreUploadDialog = ({
         oldFiles.concat(
           validFiles.map((file) => {
             return {
-              fileContent: file,
+              fileContent: getFileWithType(file),
               id: constructPath(
                 getFileRootId(bucket),
                 folderPath,

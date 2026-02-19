@@ -6,6 +6,7 @@ import {
   DialAIEntityModel,
   ModelsMap,
 } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { Conversation, Role } from '@epam/ai-dial-shared';
 
@@ -98,3 +99,19 @@ export const mergeFeatures = (
     ...otherFeatures,
   };
 };
+
+export const filterHiddenEntities = <
+  T extends DialAIEntityModel | ToolsetModel,
+>(
+  entities: T[],
+  hiddenEntityTag?: string,
+): T[] => {
+  return entities.filter(
+    (entity) => !entity.topics?.some((topic) => topic === hiddenEntityTag),
+  );
+};
+
+export const shouldShowHiddenEntities = (
+  hiddenEntityTag?: string,
+  showHidden?: boolean,
+) => !hiddenEntityTag || !hiddenEntityTag.length || showHidden;

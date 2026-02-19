@@ -3,11 +3,9 @@ import {
   Observable,
   catchError,
   concat,
-  concatMap,
   defer,
   filter,
   forkJoin,
-  from,
   iif,
   map,
   mergeMap,
@@ -21,6 +19,7 @@ import { getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import {
   getEntityNameFromId,
@@ -256,6 +255,10 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
     ofType(ToolsetActions.getToolsetDetailsFailed.type),
     switchMap(({ payload }) => {
       if (window.location.pathname === Routes.ToolsetEditor) {
+        console.error(
+          'NotFound',
+          `Toolset with id ${payload?.id} is not found`,
+        );
         void router.push(Routes.NotFound);
       }
 
@@ -998,7 +1001,7 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
 
       actions.push(of(UIActions.setEditorLoader(false)));
 
-      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+      return navigateAndThen(router, route, concat(...actions));
     }),
   );
 

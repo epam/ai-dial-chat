@@ -16,10 +16,8 @@ import { formErrors, versionsErrors } from '@/src/constants/form-errors';
 
 import {
   doesHaveDotsInTheEnd,
-  isEntityNameInvalid,
   isVersionPartSizeValid,
   isVersionValid,
-  replaceSpacesFromString,
 } from './common';
 import { doesHaveNotAllowedSymbols } from './file';
 
@@ -103,41 +101,6 @@ export const getValidFormFields = <T extends object>(
 
   return validValues;
 };
-
-export function createFormValidationRules(
-  fields: { name: string; label: string; checkDotsInTheEnd?: boolean }[],
-) {
-  const result: Record<string, object> = {};
-
-  fields.forEach(({ name, label, checkDotsInTheEnd }) => {
-    result[name] = {
-      required: formErrors.required,
-      validate: (valueToValidate: string) => {
-        if (isEntityNameInvalid(valueToValidate, false)) {
-          return formErrors.hasSpecialCharacters(label);
-        }
-
-        if (checkDotsInTheEnd && doesHaveDotsInTheEnd(valueToValidate)) {
-          return formErrors.noDotInTheEnd(label);
-        }
-
-        return true;
-      },
-      maxLength: {
-        value: MAX_ENTITY_LENGTH,
-        message: formErrors.tooLong(label),
-      },
-      minLength: {
-        value: MIN_ENTITY_LENGTH,
-        message: formErrors.tooShort(label),
-      },
-      setValueAs: (valueToValidate: string) =>
-        replaceSpacesFromString(valueToValidate.trim()),
-    };
-  });
-
-  return result;
-}
 
 export const getStringValidationErrors = ({
   value,

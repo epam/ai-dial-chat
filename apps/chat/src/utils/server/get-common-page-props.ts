@@ -158,6 +158,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.TOPICS ??
         'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
     ),
+    hiddenEntityTag: process.env.HIDDEN_ENTITY_TAG ?? '',
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
