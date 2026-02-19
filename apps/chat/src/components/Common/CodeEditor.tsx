@@ -557,7 +557,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
               <DialGhostIconButton
                 size={ButtonSize.Small}
                 onClick={handleSidebarToggle}
-                icon={<MoveLeftIcon />}
+                icon={<MoveLeftIcon size={16} />}
               />
             </Tooltip>
           </div>
@@ -706,7 +706,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   <DialGhostIconButton
                     size={ButtonSize.Small}
                     onClick={handleSidebarToggle}
-                    icon={<MoveRightIcon />}
+                    icon={<MoveRightIcon size={16} />}
                   />
                 </Tooltip>
               </div>
@@ -720,7 +720,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                     setIsFullScreen(!isFullScreen);
                     dispatchMouseLeaveEvent(e);
                   }}
-                  icon={<FullScreenIcon />}
+                  icon={<FullScreenIcon size={16} />}
                 />
               </Tooltip>
             </div>

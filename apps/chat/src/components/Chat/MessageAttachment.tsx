@@ -43,7 +43,7 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
-import { ButtonAppearance, DialButton } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
 interface AttachmentDataRendererProps {
@@ -397,6 +397,9 @@ export const MessageAttachment = ({
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [isFullScreen]);
 
+  const linkClassName =
+    'flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline';
+
   return (
     <div
       data-no-context-menu
@@ -422,18 +425,17 @@ export const MessageAttachment = ({
               download={attachment.title}
               href={mappedAttachmentUrl}
               target="_blank"
-              className="text-secondary hover:text-accent-primary"
+              className={linkClassName}
             >
-              <IconDownload size={18} />
+              <IconDownload size={16} />
             </a>
           )}
 
           {isFullScreenEnabled && (
-            <DialButton
-              className="text-secondary hover:text-accent-primary"
-              iconBefore={<FullScreenIcon size={18} />}
+            <DialGhostIconButton
+              size={ButtonSize.Small}
+              icon={<FullScreenIcon size={16} />}
               onClick={handleToggleFullScreen}
-              appearance={ButtonAppearance.Link}
             />
           )}
         </div>
@@ -445,18 +447,14 @@ export const MessageAttachment = ({
                 <a
                   href={mappedAttachmentReferenceUrl}
                   target="_blank"
-                  className="shrink-0"
+                  className={linkClassName}
                   rel="noopener noreferrer"
                 >
-                  <LinkIcon
-                    height={18}
-                    width={18}
-                    className="text-secondary hover:text-accent-primary"
-                  />
+                  <LinkIcon height={16} width={16} />
                 </a>
               </Tooltip>
             ) : (
-              <Icon size={18} className="shrink-0 text-secondary" />
+              <Icon size={16} className="shrink-0 text-secondary" />
             )}
           </div>
           <button
@@ -485,27 +483,31 @@ export const MessageAttachment = ({
                     download={attachment.title}
                     href={mappedAttachmentUrl}
                     onClick={stopBubbling}
-                    className="text-secondary hover:text-accent-primary"
+                    className={linkClassName}
                   >
-                    <IconDownload size={18} />
+                    <IconDownload size={16} />
                   </a>
                 )}
                 {isFullScreenEnabled && (
-                  <DialButton
-                    className="text-secondary hover:text-accent-primary"
-                    iconBefore={<FullScreenIcon size={18} />}
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
+                    icon={<FullScreenIcon size={16} />}
                     onClick={handleToggleFullScreen}
-                    appearance={ButtonAppearance.Link}
                   />
                 )}
                 {!isFullScreen && (
-                  <ChevronDown
-                    height={18}
-                    width={18}
-                    className={classNames(
-                      'shrink-0 text-secondary transition',
-                      isOpened && 'rotate-180',
-                    )}
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
+                    icon={
+                      <ChevronDown
+                        height={16}
+                        width={16}
+                        className={classNames(
+                          'shrink-0 transition',
+                          isOpened && 'rotate-180',
+                        )}
+                      />
+                    }
                   />
                 )}
               </div>
@@ -517,9 +519,9 @@ export const MessageAttachment = ({
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
                   target="_blank"
-                  className="text-secondary hover:text-accent-primary"
+                  className={linkClassName}
                 >
-                  <IconDownload size={18} />
+                  <IconDownload size={16} />
                 </a>
               )
             )}

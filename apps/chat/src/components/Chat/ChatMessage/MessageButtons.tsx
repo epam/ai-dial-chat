@@ -78,7 +78,7 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full select-none items-center justify-end gap-2',
+        'flex h-[24px] w-full select-none items-center justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
@@ -167,9 +167,9 @@ const CopyButton = ({
         disabled={copied}
         icon={
           copied ? (
-            <IconCheck size={18} className="text-secondary" />
+            <IconCheck size={16} className="text-secondary" />
           ) : (
-            <Icon size={18} stroke={1.5} />
+            <Icon size={16} stroke={1.5} />
           )
         }
       />

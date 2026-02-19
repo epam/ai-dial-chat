@@ -164,7 +164,7 @@ export const ChatHeader = Inversify.register(
       [dispatch],
     );
 
-    const iconSize = screenState === ScreenState.SM ? 20 : 18;
+    const iconSize = 16;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent =
@@ -256,7 +256,7 @@ export const ChatHeader = Inversify.register(
                         <ModelIcon
                           entityId={conversation.model.id}
                           entity={model}
-                          size={iconSize}
+                          size={screenState === ScreenState.SM ? 20 : 18}
                           isCustomTooltip
                         />
                       }

@@ -332,7 +332,7 @@ export function ItemContextMenu({
       isLoading={isLoading}
       TriggerIcon={TriggerIcon ?? IconDots}
       hideTriggerIcon={hideTriggerIcon}
-      triggerIconSize={18}
+      triggerIconSize={16}
       className={className}
       featureType={featureType}
       isOpen={isOpen}

@@ -292,7 +292,7 @@ export function TargetAudienceFilterComponent({
           disabled={isSaveBtnDisabled}
           icon={
             <IconCheck
-              size={18}
+              size={16}
               className={classNames(
                 isSaveBtnDisabled && 'hover:text-controls-disable',
               )}

@@ -101,7 +101,7 @@ export const RulesInput = ({
               size={ButtonSize.Small}
               onClick={() => onSwitchRulesSetter(true)}
               data-qa="add-rule"
-              icon={<IconPlus stroke={1.5} size={18} />}
+              icon={<IconPlus stroke={1.5} size={16} />}
             />
           </div>
         )}
@@ -110,7 +110,6 @@ export const RulesInput = ({
             onClick={handleClear}
             className="absolute right-3 top-[7px]"
             aria-label="cancel-all-rules"
-            iconSize={16}
           />
         )}
       </div>
