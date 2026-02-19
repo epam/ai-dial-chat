@@ -253,6 +253,8 @@ const PublishDialogContainer = ({
     publishCredentials,
   ]);
 
+  console.log(publication.resources);
+
   useEffect(() => {
     if (publication.resources.length) {
       dispatch(

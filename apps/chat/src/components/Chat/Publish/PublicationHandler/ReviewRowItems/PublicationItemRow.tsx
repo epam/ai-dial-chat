@@ -207,6 +207,38 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [item.id, dispatch, selectedPublicationUrl],
   );
 
+  const itemVersionsSelected = useMemo(
+    () =>
+      selectedPublicationItems.filter((id) =>
+        id.startsWith(getIdWithoutVersionFromApiKey(item.id)),
+      ),
+    [item.id, selectedPublicationItems],
+  );
+
+  const overrideTriggerText = useMemo(() => {
+    if (isDeleteAction && itemVersionsSelected.length > 1) {
+      const isAllVersionsSelected =
+        versionGroup?.allVersions.length === itemVersionsSelected.length ||
+        modelsVersionGroup.length === itemVersionsSelected.length ||
+        toolsetVersionGroup.length === itemVersionsSelected.length;
+
+      return t(isAllVersionsSelected ? 'All' : 'Few');
+    }
+
+    if (itemVersionsSelected.length === 1) {
+      return getVersionFromId(itemVersionsSelected[0]);
+    }
+
+    return undefined;
+  }, [
+    isDeleteAction,
+    itemVersionsSelected,
+    modelsVersionGroup.length,
+    t,
+    toolsetVersionGroup.length,
+    versionGroup?.allVersions.length,
+  ]);
+
   if (isFileId(item.id)) {
     return (
       <a
@@ -221,18 +253,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       </a>
     );
   }
-
-  const itemVersionsSelected = selectedPublicationItems.filter((id) =>
-    id.startsWith(getIdWithoutVersionFromApiKey(item.id)),
-  );
-  const overrideTriggerText =
-    isDeleteAction && itemVersionsSelected.length > 1
-      ? versionGroup?.allVersions.length === itemVersionsSelected.length ||
-        modelsVersionGroup.length === itemVersionsSelected.length ||
-        toolsetVersionGroup.length === itemVersionsSelected.length
-        ? t('All')
-        : t('Few')
-      : undefined;
 
   return (
     <div className="flex shrink-0 items-center gap-2">
