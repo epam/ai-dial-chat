@@ -392,6 +392,7 @@ export const PublicationHandlerFooter = ({
 
       const isValidVersion =
         resource?.action === PublishActions.DELETE ||
+        publishModel?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
           !isVersionExists(

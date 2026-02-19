@@ -226,6 +226,10 @@ const selectPublicFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
 
+const selectPublicPrompts = createSelector([selectPrompts], (prompts) => {
+  return prompts.filter((prompt) => isEntityIdPublic({ id: prompt.id }));
+});
+
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
 
@@ -366,6 +370,7 @@ export const PromptsSelectors = {
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
   selectPublicFolders,
+  selectPublicPrompts,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   arePromptsUploaded,

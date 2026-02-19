@@ -9,6 +9,7 @@ import {
   filterHiddenEntities,
   shouldShowHiddenEntities,
 } from '@/src/utils/app/models';
+import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
 import { RootState } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -50,6 +51,20 @@ const selectToolsets = createSelector(
       },
     );
   },
+);
+
+const selectToolsetVersionGroupByGroupId = createSelector(
+  [
+    (state) => selectToolsets(state),
+    (_state, versionGroupId: string) => versionGroupId,
+  ],
+  (toolsets, versionGroupId) =>
+    toolsets.reduce((acc, toolset) => {
+      if (getIdWithoutVersionFromApiKey(toolset.id) === versionGroupId) {
+        return [...acc, toolset];
+      }
+      return acc;
+    }, [] as ToolsetModel[]),
 );
 
 const selectToolsetsStatus = (state: RootState) =>
@@ -118,6 +133,7 @@ export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
   selectToolsets,
+  selectToolsetVersionGroupByGroupId,
   selectToolsetsStatus,
   selectIsLoading,
   selectAreToolsetsLoaded,
