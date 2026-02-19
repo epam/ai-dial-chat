@@ -231,7 +231,7 @@ dialTest(
         await promptPreviewModalAssertion.assertElementBackgroundColors(
           promptPreviewModal.usePromptButton,
           ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.controlsBgSolidPrimary,
+            ThemeColorAttributes.controlsBgAccentPrimary,
           ),
         );
         await promptPreviewModalAssertion.assertElementTextWrap(
@@ -248,7 +248,7 @@ dialTest(
         await promptPreviewModalAssertion.assertElementBackgroundColors(
           promptPreviewModal.usePromptButton,
           ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.controlsBgSolidPrimaryHover,
+            ThemeColorAttributes.controlsBgAccentPrimaryHover,
           ),
         );
       },

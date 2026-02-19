@@ -7,6 +7,7 @@ export enum Feature {
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
   ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
+  ChatFullWidthByDefault = 'chat-full-width-by-default', // Enforce chat full-width
 
   // Conversation Header
   HideNewConversation = 'hide-new-conversation', // hide "New conversation" button

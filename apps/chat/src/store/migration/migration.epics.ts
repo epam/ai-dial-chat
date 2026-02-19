@@ -203,7 +203,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
+const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(MigrationActions.skipFailedMigratedConversations.type),
     switchMap(({ payload }) =>
@@ -367,7 +367,7 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
+const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(MigrationActions.skipFailedMigratedPrompts.type),
     switchMap(({ payload }) =>

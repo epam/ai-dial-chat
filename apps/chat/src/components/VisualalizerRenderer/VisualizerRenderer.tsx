@@ -47,6 +47,7 @@ interface Props {
   renderer: CustomVisualizer;
   mimeType: string;
   isFullScreen?: boolean;
+  forceDefaultView?: boolean;
   onFullScreenClick?: () => void;
 }
 
@@ -55,6 +56,7 @@ export const VisualizerRenderer = ({
   renderer,
   mimeType,
   isFullScreen,
+  forceDefaultView,
   onFullScreenClick,
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
@@ -88,8 +90,8 @@ export const VisualizerRenderer = ({
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const hideTitle = withoutTitleTypes.includes(mimeType);
-  const isBorderless = borderlessTypes.includes(mimeType);
+  const hideTitle = withoutTitleTypes.includes(mimeType) && !forceDefaultView;
+  const isBorderless = borderlessTypes.includes(mimeType) && !forceDefaultView;
 
   const scrollWidth = iframeContainerRef.current?.scrollWidth ?? null;
   const containerHeight = iframeContainerRef.current?.clientHeight ?? null;
@@ -229,10 +231,6 @@ export const VisualizerRenderer = ({
     return null;
   }
 
-  const iframeContainerClassNames = isFullScreen
-    ? 'h-[calc(100%-30px)]'
-    : `h-[${customVisualizerLayout.height}px]`;
-
   return (
     <div className={classNames(isFullScreen && 'size-full p-2')}>
       <div className="mb-2 flex flex-row justify-between">
@@ -260,7 +258,13 @@ export const VisualizerRenderer = ({
       </div>
       <div
         ref={iframeContainerRef}
-        className={classNames('size-full', iframeContainerClassNames)}
+        className={classNames(
+          'size-full',
+          isFullScreen && 'h-[calc(100%-30px)]',
+        )}
+        style={{
+          height: !isFullScreen ? customVisualizerLayout.height : undefined,
+        }}
       >
         {(!ready || attachmentDataLoading) && (
           <div className="absolute z-10 flex size-full items-center bg-layer-1">

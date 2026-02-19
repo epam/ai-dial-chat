@@ -13,12 +13,11 @@ import { getVersionFromId } from '@/src/utils/server/api';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
-
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -59,14 +58,13 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   const isCustomTool = !isApplicationId(id) && !isToolsetId(id);
 
   return (
-    <DialCloseButton
+    <CloseButtonSmall
       className={classNames(
-        'mr-1 flex p-1 text-secondary',
+        'mr-1',
         isError && !isCustomTool && 'hover:enabled:text-error',
       )}
-      onClose={() => onRemove?.(id)}
+      onClick={() => onRemove?.(id)}
       aria-label="Remove item"
-      size={18}
     />
   );
 };

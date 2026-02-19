@@ -50,6 +50,7 @@ export const FileManager: React.FC = () => {
     deleteConfirmationOptions,
 
     handleSearchFiles,
+    handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,
@@ -107,8 +108,10 @@ export const FileManager: React.FC = () => {
           onUploadArchive={handleUploadArchive}
           onUnshareFiles={handleUnshareFiles}
           onRenameValidate={handleRenameValidation}
+          onCreateFolderValidate={handleRenameValidation}
           sharedWithMeIds={sharedWithMeIds}
           uploadEnabled={uploadEnabled}
+          clearSearchResults={handleClearSearch}
         />
       )}
       {isAnyOperationInProgress && (

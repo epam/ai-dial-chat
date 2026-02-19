@@ -7,7 +7,7 @@ enum MessageType {
   WARNING = 'warning',
 }
 
-export interface Props {
+interface Props {
   error?: string;
   type?: 'error' | 'warning';
   className?: string;

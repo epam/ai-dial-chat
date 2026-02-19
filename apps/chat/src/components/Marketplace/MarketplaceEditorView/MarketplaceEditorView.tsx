@@ -1,4 +1,10 @@
-import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  MouseEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -21,7 +27,7 @@ interface MarketplaceEditorViewProps {
   onPreviewModeChange: (mode: PreviewMode) => void;
 
   defaultPreviewMode?: PreviewMode;
-  onLeftMouseLeave?: () => void;
+  onLeftMouseLeave?: (e?: MouseEvent<HTMLDivElement>) => void;
   rightQa?: string;
   closedPreviewLabel?: string;
   leftTabLabel?: string;

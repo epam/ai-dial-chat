@@ -6,6 +6,7 @@ import { prepareEntityName } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
+  getFileMimeType,
   getNextFileName,
   getRelativePath,
   prepareFileName,
@@ -88,7 +89,7 @@ export const useUploadFilesHandler = (
         return file.name === cleanName
           ? file
           : new File([file], cleanName, {
-              type: file.type,
+              type: getFileMimeType(file),
               lastModified: file.lastModified,
             });
       });

@@ -22,7 +22,7 @@ import {
 } from '@epam/ai-dial-shared';
 import pickBy from 'lodash-es/pickBy';
 
-export const parseToolsetApiAuthStatus = (data?: Toolset) => {
+const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
     [ToolsetCredentialsLevel.GLOBAL]:
       data?.auth_settings?.global_auth_status ?? ToolsetAuthStatus.SIGNED_OUT,
@@ -74,7 +74,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
   };
 };
 
-export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
+const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
   switch (data.authSettings.authenticationType) {
     case ToolsetAuthTypes.API_KEY:
       return {
@@ -130,7 +130,7 @@ export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
   auth_settings: convertToolsetAuthSettingsToApi(data),
 });
 
-export const getGeneratedToolsetId = (
+const getGeneratedToolsetId = (
   toolset: PartialBy<ToolsetModel, 'id'>,
 ): string => {
   if (toolset.folderId) {

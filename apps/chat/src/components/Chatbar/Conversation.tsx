@@ -61,7 +61,7 @@ interface ViewProps {
   isContextMenu: boolean;
 }
 
-export function ConversationView({
+function ConversationView({
   conversation,
   isHighlighted,
   isChosen = false,

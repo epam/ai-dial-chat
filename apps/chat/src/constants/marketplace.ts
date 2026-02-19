@@ -6,8 +6,6 @@ import {
 } from '@/src/types/applications';
 import { EntityType, ScreenState } from '@/src/types/common';
 
-import { Loader } from '@/src/components/Common/Loader';
-
 import LoaderIcon from '@/public/images/icons/loader.svg';
 
 export enum MarketplaceQueryParams {
@@ -111,14 +109,9 @@ export const PlayerContextButtonClasses = {
   [SimpleApplicationStatus.UPDATING]: '',
 };
 
-export const StatusIcons = {
+export const PlayerContextIcons = {
   [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
   [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
-  [SimpleApplicationStatus.UPDATING]: Loader,
-};
-
-export const PlayerContextIcons = {
-  ...StatusIcons,
   [SimpleApplicationStatus.UPDATING]: LoaderIcon,
 };
 

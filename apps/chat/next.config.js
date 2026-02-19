@@ -62,7 +62,7 @@ class BasePathResolver {
  **/
 const nextConfig = {
   experimental: {
-    reactCompiler: true,
+    reactCompiler: false,
   },
   devIndicators: false,
   nx: {

@@ -36,8 +36,6 @@ export type FileFolderAttachment = FileFolderInterface & {
   contentType: typeof FOLDER_ATTACHMENT_CONTENT_TYPE;
 };
 
-export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
-
 export interface DialLink {
   title?: string;
   href: string;

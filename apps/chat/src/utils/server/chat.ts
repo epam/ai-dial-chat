@@ -13,7 +13,7 @@ import { Message, Role } from '@epam/ai-dial-shared';
 import { Tiktoken, TiktokenEncoding, get_encoding } from 'tiktoken';
 
 // This is a very conservative calculation of tokens (1 token = 1 byte)
-export const getBytesTokensSize = (str: string): number => {
+const getBytesTokensSize = (str: string): number => {
   return new Blob([str]).size;
 };
 

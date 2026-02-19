@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { EntitySelectors, FolderSelectors } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
 
@@ -13,7 +14,11 @@ export class PublishFolder extends Folders {
       entityName,
       folderIndex,
       entityIndex,
-    ).locator(`~*${EntitySelectors.version}, ~* > ${EntitySelectors.version}`);
+    )
+      .locator('..')
+      .locator(`${EntitySelectors.version}`)
+      .last()
+      .locator(Tags.span);
   }
 
   public getFolderEntityVersionElement(

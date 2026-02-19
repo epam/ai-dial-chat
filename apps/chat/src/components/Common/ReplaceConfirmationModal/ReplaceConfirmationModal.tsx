@@ -33,7 +33,7 @@ import { ReplaceSelector } from './ReplaceSelector';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
-export function ReplaceConfirmationModalView() {
+function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
