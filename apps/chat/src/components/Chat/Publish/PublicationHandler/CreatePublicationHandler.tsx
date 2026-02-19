@@ -51,13 +51,17 @@ export function CreatePublicationHandler({
     ) => {
       const resources = selectedPublicationItems.map((id) => {
         if (isFileId(id)) {
+          const fileTargetUrl =
+            publication.resources.find((r) => r.sourceUrl === id)?.targetUrl ??
+            id;
+
           return {
             action: publicationModel.action,
             sourceUrl: id,
             targetUrl: constructPath(
               ApiKeys.Files,
               formData?.publishToUrl ?? '',
-              ...id.split('/').slice(2),
+              ...fileTargetUrl.split('/').slice(2),
             ),
           };
         }
@@ -101,6 +105,7 @@ export function CreatePublicationHandler({
       dispatch,
       entitiesEditState,
       foldersEditState,
+      publication.resources,
       publication.targetFolder,
       publicationModel.action,
       selectedPublicationItems,

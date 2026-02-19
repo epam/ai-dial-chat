@@ -215,14 +215,14 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [item.id, selectedPublicationItems],
   );
 
-  const overrideTriggerText = useMemo(() => {
+  const overrideTriggerText = (() => {
     if (isDeleteAction && itemVersionsSelected.length > 1) {
       const isAllVersionsSelected =
         versionGroup?.allVersions.length === itemVersionsSelected.length ||
         modelsVersionGroup.length === itemVersionsSelected.length ||
         toolsetVersionGroup.length === itemVersionsSelected.length;
 
-      return t(isAllVersionsSelected ? 'All' : 'Few');
+      return isAllVersionsSelected ? t('All') : t('Few');
     }
 
     if (itemVersionsSelected.length === 1) {
@@ -230,14 +230,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     }
 
     return undefined;
-  }, [
-    isDeleteAction,
-    itemVersionsSelected,
-    modelsVersionGroup.length,
-    t,
-    toolsetVersionGroup.length,
-    versionGroup?.allVersions.length,
-  ]);
+  })();
 
   if (isFileId(item.id)) {
     return (
