@@ -4,6 +4,7 @@ export interface CustomVisualizer {
   icon: string;
   contentType: string;
   url: string;
+  requestTimeout?: number;
 }
 
 export type MappedVisualizers = Record<string, CustomVisualizer[]>;

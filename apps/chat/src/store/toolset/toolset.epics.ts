@@ -255,6 +255,10 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
     ofType(ToolsetActions.getToolsetDetailsFailed.type),
     switchMap(({ payload }) => {
       if (window.location.pathname === Routes.ToolsetEditor) {
+        console.error(
+          'NotFound',
+          `Toolset with id ${payload?.id} is not found`,
+        );
         void router.push(Routes.NotFound);
       }
 

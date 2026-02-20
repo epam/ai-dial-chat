@@ -22,10 +22,9 @@ import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';
 
+import { CloseButtonSmall } from './CloseButtons';
 import { Spinner } from './Spinner';
 import { Tooltip } from './Tooltip';
-
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
@@ -117,10 +116,10 @@ function ModalView({
               {...(form && { ...form })}
             >
               {!hideClose && (
-                <DialCloseButton
-                  onClose={handleClose}
+                <CloseButtonSmall
+                  onClick={handleClose}
                   className="absolute right-2 top-2 z-50"
-                  ariaLabel="close"
+                  aria-label="close"
                 />
               )}
               {heading && typeof heading === 'string' ? (

@@ -42,6 +42,7 @@ import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { AppsEditorView } from '@/src/components/AppsEditor/AppsEditorView';
 import {
   AppsEditorFormType,
+  QuickApp2Form,
   getApplicationPayload,
   getDefaultFormData,
   getValidationSchema,
@@ -137,6 +138,12 @@ export const AppsEditor = () => {
     }),
   );
   const isDirty = formMethods.formState.isDirty;
+  const isQuickAppJsonDirty = (
+    formMethods.formState.dirtyFields as Record<keyof QuickApp2Form, boolean>
+  )['agentsAndToolsetsJson'];
+  const onlyQuickAppJsonChanged =
+    Object.keys(formMethods.formState.dirtyFields).length === 1 &&
+    isQuickAppJsonDirty;
 
   const marketplaceEntities = useMemo(
     () =>
@@ -156,6 +163,7 @@ export const AppsEditor = () => {
         data,
         allEntitiesMap: marketplaceEntities,
         currentApp: appDetails,
+        keepCurrentToolsets: !isSimpleViewSwitchRef.current,
       });
 
       if (!appDetails) {
@@ -214,21 +222,44 @@ export const AppsEditor = () => {
         );
       }
 
-      isSimpleViewSwitchRef.current = false;
-      changeEditorTabRef.current = null;
-      saveAndExitRef.current = false;
-      redirectToChatRef.current = false;
-      formMethods.reset(formMethods.getValues(), {
-        keepIsValid: true,
-        keepErrors: true,
-      });
+      const shouldKeepJsonFieldDirty =
+        !isSimpleViewSwitchRef.current && isQuickAppJsonDirty;
+
+      formMethods.reset(
+        {
+          ...formMethods.getValues(),
+          ...(shouldKeepJsonFieldDirty && {
+            agentsAndToolsetsJson: (
+              lastSubmittedValuesRef.current as QuickApp2Form
+            ).agentsAndToolsetsJson,
+          }),
+        },
+        {
+          keepIsValid: true,
+          keepErrors: true,
+        },
+      );
+      // Make agentsAndToolsetsJson dirty if it was not saved manually
+      if (shouldKeepJsonFieldDirty) {
+        formMethods.setValue(
+          'agentsAndToolsetsJson',
+          (data as QuickApp2Form).agentsAndToolsetsJson as string,
+          { shouldDirty: true, shouldTouch: true, shouldValidate: true },
+        );
+      }
+
       lastSubmittedValuesRef.current = getDefaultFormData({
         app: payload,
         type,
         runtime: pythonVersions[0],
       });
+      isSimpleViewSwitchRef.current = false;
+      changeEditorTabRef.current = null;
+      saveAndExitRef.current = false;
+      redirectToChatRef.current = false;
     },
     [
+      isQuickAppJsonDirty,
       appDetails,
       dispatch,
       formMethods,
@@ -345,10 +376,12 @@ export const AppsEditor = () => {
       if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
       if (isSimpleViewSwitch) {
         isSimpleViewSwitchRef.current = true;
+      } else if (onlyQuickAppJsonChanged) {
+        return;
       }
       void handleSubmit(undefined, true, true);
     },
-    [editorStep, handleSubmit, isAppPublic],
+    [editorStep, handleSubmit, isAppPublic, onlyQuickAppJsonChanged],
   );
 
   useEffect(() => {

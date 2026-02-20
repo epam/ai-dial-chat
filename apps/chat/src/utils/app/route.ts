@@ -35,6 +35,12 @@ export const getPageName = ({ route, query }: BaseRouter) => {
         : 'Marketplace';
     case Routes.AppsEditor:
       return 'App Editor';
+    case Routes.ToolsetEditor:
+      return 'Toolset Editor';
+    case Routes.ToolsetSignIn:
+      return 'Toolset Sign In';
+    case Routes.FileManager:
+      return 'Files';
     case Routes.Widgets:
       return 'Widgets';
     case Routes.SelectedWidget:

@@ -17,18 +17,15 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  ApplicationSelectors,
-  ModelsSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+import { ApplicationSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import {
   CONFIRM_DOCUMENT_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 
-import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/AgentsAndToolsetsField';
+import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentsAndToolsetsField';
+import { CodeInterpreterField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/CodeInterpreterField';
 import {
   QuickApp2Form as QuickApp2FormType,
   getAttachmentTypeErrorHandlers,
@@ -42,15 +39,12 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
-import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 
-import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
-const ToggleSwitchField = withLabel(ToggleSwitch);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 
@@ -72,10 +66,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const toolSupportingModels = useMemo(
     () => modelTypeAgents.filter((model) => model.features?.tools),
     [modelTypeAgents],
-  );
-
-  const isCodeInterpreterEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
   const { control, register, setError, clearErrors } =
@@ -198,28 +188,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         dataQa={'max-attachment-number-field'}
       />
 
-      {isCodeInterpreterEnabled && (
-        <Controller
-          name="codeInterpreter"
-          control={control}
-          render={({ field }) => (
-            <ToggleSwitchField
-              label={t('Code Interpreter')}
-              info={t(
-                'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
-              )}
-              isOn={field.value}
-              handleSwitch={field.onChange}
-              switchOnText={t('ON')}
-              switchOFFText={t('OFF')}
-              additionalText={t('Use to execute custom Python code')}
-              className="mt-1 flex w-fit items-center gap-2"
-              disabled={isAppPublic}
-              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-            />
-          )}
-        />
-      )}
+      <CodeInterpreterField />
 
       {showTemperatureSlider && (
         <Controller
