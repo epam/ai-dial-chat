@@ -603,6 +603,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
                             });
+
                           const isConversationSectionAndNoFiles =
                             !isReview &&
                             featureType === FeatureType.File &&

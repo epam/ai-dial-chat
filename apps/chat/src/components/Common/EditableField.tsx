@@ -68,7 +68,10 @@ export const EditableField: React.FC<Props> = ({
   return (
     <Tooltip
       tooltip={value}
-      triggerClassName={classNames('w-full truncate whitespace-pre', className)}
+      triggerClassName={classNames(
+        'w-full truncate whitespace-pre leading-normal',
+        className,
+      )}
       contentClassName="break-all"
       dataQa="entity-name"
     >
