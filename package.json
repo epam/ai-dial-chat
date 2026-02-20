@@ -177,8 +177,7 @@
     "ts-unused-exports": "^11.0.1",
     "typescript": "5.9.3",
     "vite": "7.1.12",
-    "vitest": "4.0.9",
-    "vitest-fetch-mock": "^0.4.5"
+    "vitest": "4.0.9"
   },
   "optionalDependencies": {
     "@nx/playwright": "21.6.5",
