@@ -2,6 +2,8 @@ import { IconArrowDown } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -15,7 +17,7 @@ export const ScrollDownButton = ({ onScrollDownClick, className }: Props) => {
         data-qa="scroll-down-button"
         className="rounded-full bg-layer-3 p-2 hover:bg-layer-4"
         onClick={onScrollDownClick}
-        iconBefore={<IconArrowDown size={24} />}
+        iconBefore={<IconArrowDown size={DEFAULT_ICON_SIZES.STANDARD} />}
       />
     </div>
   );

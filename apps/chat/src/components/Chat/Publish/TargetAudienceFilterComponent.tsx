@@ -18,6 +18,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Modal } from '@/src/components/Common/Modal';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
@@ -292,7 +294,7 @@ export function TargetAudienceFilterComponent({
           disabled={isSaveBtnDisabled}
           icon={
             <IconCheck
-              size={16}
+              size={DEFAULT_ICON_SIZES.SMALL}
               className={classNames(
                 isSaveBtnDisabled && 'hover:text-controls-disable',
               )}

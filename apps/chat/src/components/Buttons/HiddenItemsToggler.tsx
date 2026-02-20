@@ -5,6 +5,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
@@ -39,7 +41,10 @@ export const HiddenItemsToggler = ({
       className={className}
       icon={
         <Tooltip tooltip={t(tooltip)} isTriggerClickable>
-          <Icon height={24} width={24} />
+          <Icon
+            height={DEFAULT_ICON_SIZES.STANDARD}
+            width={DEFAULT_ICON_SIZES.STANDARD}
+          />
         </Tooltip>
       }
     />

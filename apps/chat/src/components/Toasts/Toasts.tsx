@@ -10,6 +10,8 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { ToastType } from '@/src/types/toasts';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { CloseButton } from '@/src/components/Common/CloseButtons';
 
 const getToastConfigByType = (toastType: ToastType) => {
@@ -65,7 +67,11 @@ export const Toasts = () => (
             <>
               <span>
                 {!toast.icon ? (
-                  <Icon size={24} className={iconClass} stroke={1.5} />
+                  <Icon
+                    size={DEFAULT_ICON_SIZES.STANDARD}
+                    className={iconClass}
+                    stroke={1.5}
+                  />
                 ) : (
                   toast.icon
                 )}

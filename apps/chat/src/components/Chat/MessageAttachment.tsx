@@ -31,6 +31,7 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -397,8 +398,8 @@ export const MessageAttachment = ({
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [isFullScreen]);
 
-  const linkClassName =
-    'flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline';
+  // const linkClassName =
+  //   'flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline';
 
   return (
     <div
@@ -425,16 +426,16 @@ export const MessageAttachment = ({
               download={attachment.title}
               href={mappedAttachmentUrl}
               target="_blank"
-              className={linkClassName}
+              className="link-icon-button-small"
             >
-              <IconDownload size={16} />
+              <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
             </a>
           )}
 
           {isFullScreenEnabled && (
             <DialGhostIconButton
               size={ButtonSize.Small}
-              icon={<FullScreenIcon size={16} />}
+              icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
               onClick={handleToggleFullScreen}
             />
           )}
@@ -447,14 +448,20 @@ export const MessageAttachment = ({
                 <a
                   href={mappedAttachmentReferenceUrl}
                   target="_blank"
-                  className={linkClassName}
+                  className="link-icon-button-small"
                   rel="noopener noreferrer"
                 >
-                  <LinkIcon height={16} width={16} />
+                  <LinkIcon
+                    height={DEFAULT_ICON_SIZES.SMALL}
+                    width={DEFAULT_ICON_SIZES.SMALL}
+                  />
                 </a>
               </Tooltip>
             ) : (
-              <Icon size={16} className="shrink-0 text-secondary" />
+              <Icon
+                size={DEFAULT_ICON_SIZES.SMALL}
+                className="shrink-0 text-secondary"
+              />
             )}
           </div>
           <button
@@ -483,15 +490,15 @@ export const MessageAttachment = ({
                     download={attachment.title}
                     href={mappedAttachmentUrl}
                     onClick={stopBubbling}
-                    className={linkClassName}
+                    className="link-icon-button-small"
                   >
-                    <IconDownload size={16} />
+                    <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                   </a>
                 )}
                 {isFullScreenEnabled && (
                   <DialGhostIconButton
                     size={ButtonSize.Small}
-                    icon={<FullScreenIcon size={16} />}
+                    icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                     onClick={handleToggleFullScreen}
                   />
                 )}
@@ -500,8 +507,8 @@ export const MessageAttachment = ({
                     size={ButtonSize.Small}
                     icon={
                       <ChevronDown
-                        height={16}
-                        width={16}
+                        height={DEFAULT_ICON_SIZES.SMALL}
+                        width={DEFAULT_ICON_SIZES.SMALL}
                         className={classNames(
                           'shrink-0 transition',
                           isOpened && 'rotate-180',
@@ -519,9 +526,9 @@ export const MessageAttachment = ({
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
                   target="_blank"
-                  className={linkClassName}
+                  className="link-icon-button-small"
                 >
-                  <IconDownload size={16} />
+                  <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                 </a>
               )
             )}

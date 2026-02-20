@@ -34,6 +34,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ContextMenu } from './ContextMenu';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
@@ -332,7 +334,7 @@ export function ItemContextMenu({
       isLoading={isLoading}
       TriggerIcon={TriggerIcon ?? IconDots}
       hideTriggerIcon={hideTriggerIcon}
-      triggerIconSize={16}
+      triggerIconSize={DEFAULT_ICON_SIZES.SMALL}
       className={className}
       featureType={featureType}
       isOpen={isOpen}

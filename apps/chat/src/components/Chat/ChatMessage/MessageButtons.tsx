@@ -25,6 +25,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -102,7 +104,12 @@ export const MessageUserButtons = ({
                 appearance={ButtonAppearance.Ghost}
                 size={ButtonSize.Small}
                 onClick={onToggleTemplatesEditing}
-                icon={<IconListDetails size={16} stroke={1.5} />}
+                icon={
+                  <IconListDetails
+                    size={DEFAULT_ICON_SIZES.SMALL}
+                    stroke={1.5}
+                  />
+                }
               />
             </Tooltip>
           )}
@@ -112,7 +119,7 @@ export const MessageUserButtons = ({
                 appearance={ButtonAppearance.Ghost}
                 size={ButtonSize.Small}
                 onClick={onToggleEditing}
-                icon={<IconEdit size={16} stroke={1.5} />}
+                icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
               />
             </Tooltip>
           )}
@@ -123,7 +130,9 @@ export const MessageUserButtons = ({
                 appearance={ButtonAppearance.Ghost}
                 size={ButtonSize.Small}
                 onClick={onDelete}
-                icon={<IconTrashX size={16} stroke={1.5} />}
+                icon={
+                  <IconTrashX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+                }
               />
             </Tooltip>
           )}
@@ -167,9 +176,12 @@ const CopyButton = ({
         disabled={copied}
         icon={
           copied ? (
-            <IconCheck size={16} className="text-secondary" />
+            <IconCheck
+              size={DEFAULT_ICON_SIZES.SMALL}
+              className="text-secondary"
+            />
           ) : (
-            <Icon size={16} stroke={1.5} />
+            <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
           )
         }
       />
@@ -227,7 +239,7 @@ export const MessageAssistantButtons = ({
             appearance={ButtonAppearance.Ghost}
             size={ButtonSize.Small}
             onClick={onRegenerate}
-            icon={<IconRefresh size={16} stroke={1.5} />}
+            icon={<IconRefresh size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
             data-qa="regenerate"
           />
         </Tooltip>
@@ -255,7 +267,7 @@ export const MessageAssistantButtons = ({
             size={ButtonSize.Small}
             onClick={onToggleEditing}
             data-qa="edit"
-            icon={<IconEdit size={16} stroke={1.5} />}
+            icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
           />
         </Tooltip>
       )}
