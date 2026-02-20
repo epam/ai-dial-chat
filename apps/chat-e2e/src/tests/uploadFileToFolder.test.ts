@@ -1,5 +1,5 @@
 import dialTest from '@/src/core/dialFixtures';
-import { Attachment, MenuOptions, UploadMenuOptions } from '@/src/testData';
+import { Attachment, ExpectedMessages, MenuOptions, UploadMenuOptions } from '@/src/testData';
 import { StyleValues } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -119,7 +119,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open to "File manager" page and verify tooltip with name is shown on hover the folder',
+      'Open "File manager" page and verify tooltip with name is shown on hover the folder',
       async () => {
         await fileManagerPage.openFileManagerPage();
         await fileManagerPage.waitForPageLoaded();
@@ -131,7 +131,7 @@ dialTest(
           tooltipPortal,
           StyleValues.breakWord,
         );
-        await baseAssertion.assertElementText(tooltipPortal, folderName);
+        await baseAssertion.assertElementText(tooltipPortal, folderName, ExpectedMessages.tooltipContentIsValid);
       },
     );
 
@@ -147,7 +147,7 @@ dialTest(
           tooltipPortal,
           StyleValues.breakWord,
         );
-        await baseAssertion.assertElementText(tooltipPortal, imageName);
+        await baseAssertion.assertElementText(tooltipPortal, imageName, ExpectedMessages.tooltipContentIsValid);
       },
     );
 

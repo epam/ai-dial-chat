@@ -1,5 +1,5 @@
 import { BaseAssertion } from '@/src/assertions';
-import { ElementState } from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { FoldersTree } from '@/src/ui/webElements';
 
@@ -18,6 +18,9 @@ export class FoldersTreeAssertion extends BaseAssertion {
     await this.assertElementState(
       this.foldersTree.folderByPath(...path),
       expectedState,
+      expectedState === 'visible'
+        ? ExpectedMessages.folderIsVisible
+        : ExpectedMessages.folderIsNotVisible,
     );
   }
 
@@ -29,6 +32,9 @@ export class FoldersTreeAssertion extends BaseAssertion {
       this.foldersTree.folderGroupByPath(...path),
       Attributes.ariaSelected,
       String(isSelected),
+      isSelected
+        ? ExpectedMessages.folderIsSelected
+        : ExpectedMessages.folderIsNotSelected,
     );
   }
 }

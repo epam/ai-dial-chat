@@ -83,6 +83,7 @@ export class FileManagerGridAssertion extends BaseAssertion {
     await this.assertElementState(
       this.fileManagerGrid.gridNameCellInput.alertIcon,
       expectedState,
+      ExpectedMessages.errorMessageIsShown
     );
   }
 
