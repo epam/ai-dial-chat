@@ -1,7 +1,6 @@
 import { DefaultSession } from 'next-auth';
 import { DefaultJWT } from 'next-auth/jwt';
 
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module '*.svg' {
   const content: any;

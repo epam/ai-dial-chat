@@ -436,9 +436,7 @@ export const promptsSlice = createSlice({
       state,
     selectPrompt: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         promptId: string | undefined;
         selectInEditMode?: boolean;
         isApproveRequiredResource?: boolean;
