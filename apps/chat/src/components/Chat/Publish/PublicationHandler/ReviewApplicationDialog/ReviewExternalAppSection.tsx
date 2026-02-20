@@ -12,6 +12,8 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 interface ReviewExternalAppSectionProps {
   application: CustomApplicationModel;
 }
@@ -43,7 +45,8 @@ export const ReviewExternalAppSection = ({
         className="flex max-w-[414px] flex-nowrap items-center gap-1 break-all text-accent-primary"
         data-qa="app-external-url"
       >
-        {externalUrl} <IconExternalLink size={16}></IconExternalLink>
+        {externalUrl}{' '}
+        <IconExternalLink size={DEFAULT_ICON_SIZES.SMALL}></IconExternalLink>
       </Link>
     </div>
   );

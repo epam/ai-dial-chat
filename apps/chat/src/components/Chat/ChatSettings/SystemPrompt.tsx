@@ -18,6 +18,8 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { PromptList } from '@/src/components/Chat/ChatInput/PromptList';
 import { PromptVariablesDialog } from '@/src/components/Chat/ChatInput/PromptVariablesDialog';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
@@ -165,7 +167,7 @@ export const SystemPrompt: FC<Props> = ({
         />
         {isLoading && (
           <span className="absolute bottom-2 right-3 rounded bg-layer-2 p-[3px]">
-            <Spinner size={24} />
+            <Spinner size={DEFAULT_ICON_SIZES.STANDARD} />
           </span>
         )}
       </div>

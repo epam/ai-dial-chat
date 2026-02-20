@@ -42,6 +42,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -557,7 +558,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
               <DialGhostIconButton
                 size={ButtonSize.Small}
                 onClick={handleSidebarToggle}
-                icon={<MoveLeftIcon />}
+                icon={<MoveLeftIcon size={DEFAULT_ICON_SIZES.SMALL} />}
               />
             </Tooltip>
           </div>
@@ -656,7 +657,12 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                       FilesActions.addNewFolder({ parentId: sourcesFolderId }),
                     )
                   }
-                  icon={<FolderPlus width={16} height={16} />}
+                  icon={
+                    <FolderPlus
+                      width={DEFAULT_ICON_SIZES.SMALL}
+                      height={DEFAULT_ICON_SIZES.SMALL}
+                    />
+                  }
                 />
               </Tooltip>
               <Tooltip tooltip={t('Create file')}>
@@ -667,14 +673,14 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                     setNewFileName(getNextDefaultName('New file', rootFiles));
                   }}
                   disabled={!!newFileName}
-                  icon={<IconFilePlus size={16} />}
+                  icon={<IconFilePlus size={DEFAULT_ICON_SIZES.SMALL} />}
                 />
               </Tooltip>
               <Tooltip tooltip={t('Upload file')}>
                 <DialGhostIconButton
                   size={ButtonSize.Small}
                   onClick={openUploadDialog}
-                  icon={<IconUpload size={16} />}
+                  icon={<IconUpload size={DEFAULT_ICON_SIZES.SMALL} />}
                 />
               </Tooltip>
               {!!modifiedFileIds.length && (
@@ -682,7 +688,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   <DialGhostIconButton
                     size={ButtonSize.Small}
                     onClick={() => handleSaveFiles(modifiedFileIds)}
-                    icon={<IconDeviceFloppy size={16} />}
+                    icon={<IconDeviceFloppy size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
                 </Tooltip>
               )}
@@ -706,7 +712,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   <DialGhostIconButton
                     size={ButtonSize.Small}
                     onClick={handleSidebarToggle}
-                    icon={<MoveRightIcon />}
+                    icon={<MoveRightIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
                 </Tooltip>
               </div>
@@ -720,7 +726,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                     setIsFullScreen(!isFullScreen);
                     dispatchMouseLeaveEvent(e);
                   }}
-                  icon={<FullScreenIcon />}
+                  icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                 />
               </Tooltip>
             </div>
