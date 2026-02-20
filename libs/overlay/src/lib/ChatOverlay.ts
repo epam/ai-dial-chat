@@ -239,7 +239,6 @@ export class ChatOverlay {
    * @param event {MessageEvent} post message event
    */
   protected process = (event: MessageEvent<OverlayRequest>): void => {
-
     // Only process messages from this specific iframe instance
     if (event.source !== this.iframe.contentWindow) {
       return;
