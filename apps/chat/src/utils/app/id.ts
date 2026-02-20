@@ -164,3 +164,8 @@ export const replaceIdWithBucket = (id: string, bucket: string) => {
   splittedId[1] = bucket;
   return splittedId.join('/');
 };
+
+export const replaceVersionFromId = (id: string, version: string) => {
+  const splittedId = id.split(pathKeySeparator);
+  return [...splittedId.slice(0, -1), version].join(pathKeySeparator);
+};
