@@ -6,15 +6,13 @@ import {
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import {
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, RegexUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   '[Select folder] Create new folder on the root level.\n' +
     '[Select folder] Rename new folder just after its creation on Enter.\n' +
     '[Select folder] Allowed special characters.\n' +
@@ -41,9 +39,6 @@ dialTest.only(
       'EPMRTC-3238',
     );
     const updatedFolderName = `New folder 1    ${ExpectedConstants.allowedSpecialChars}`;
-    const expectedColor = ThemesUtil.getRgbColorByKey(
-      ThemeColorAttributes.bgAccentPrimaryAlpha,
-    );
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
@@ -61,12 +56,11 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Click "Create new folder" icon and verify new folder is created in the root in edit mode, folder background is blue',
+      'Click "Create new folder" icon and verify new folder is created in the root in edit mode',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
         const folderInput = selectFolderManagerModalGrid.getRenameInput('');
         await baseAssertion.assertElementState(folderInput, 'visible');
-        // TODO: Verify folder background color if needed
       },
     );
 
@@ -152,10 +146,11 @@ dialTest(
     selectFolderManagerModalGrid,
     page,
     localStorageManager,
-    baseAssertion,
+    selectFolderManagerModalGridAssertion,
   }) => {
     setTestIds('EPMRTC-3248', 'EPMRTC-3249');
     const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}name`;
+    let folderInput: Locator;
 
     await dialTest.step(
       'Copy restricted symbols into buffer, open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
@@ -178,27 +173,29 @@ dialTest(
       'Click "Create new folder" icon, type one by one restricted symbols and verify nothing is displayed in the input field',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        const folderInput = selectFolderManagerModalGrid.getRenameInput('');
+        folderInput = selectFolderManagerModalGrid.getRenameInput('');
         await folderInput.fill(ExpectedConstants.restrictedNameChars);
-        await baseAssertion.assertInputValue(folderInput, '');
+        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+          ExpectedConstants.restrictedNameChars,
+        );
       },
     );
 
     await dialTest.step(
-      'Paste restricted symbols from buffer and verify nothing is displayed in the input field',
+      'Paste restricted symbols from buffer and verify error',
       async () => {
-        const folderInput = selectFolderManagerModalGrid.getRenameInput('');
-        await page.keyboard.press(keys.ctrlPlusA);
+        for (const __ of ExpectedConstants.restrictedNameChars) {
+          await page.keyboard.press(keys.backspace);
+        }
+        //TODO ctrl+a doesn't work here
+        // await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
+        folderInput = selectFolderManagerModalGrid.getRenameInput(
+          nameWithRestrictedChars,
+        );
         await folderInput.press('Enter');
-        await baseAssertion.assertElementState(
-          selectFolderManagerModalGrid.gridRowByNameCell(
-            nameWithRestrictedChars.replace(
-              ExpectedConstants.restrictedNameChars,
-              '',
-            ),
-          ),
-          'visible',
+        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+          nameWithRestrictedChars,
         );
       },
     );
@@ -667,7 +664,7 @@ dialTest(
 
         // Error should be visible (likely inline error or toast)
         // Based on other tests, invalid names might show inline error
-        await fileManagerModalGridAssertion.assertRenameInputError(
+        await fileManagerModalGridAssertion.assertNameInputErrorState(
           `${GeneratorUtil.randomString(10)}.`, // Note: verify logic for error locator
           'visible',
         );
@@ -699,7 +696,7 @@ dialTest(
         await input.press('Enter');
 
         // Should show error for duplicate name
-        await fileManagerModalGridAssertion.assertRenameInputError(
+        await fileManagerModalGridAssertion.assertNameInputErrorState(
           folder1Name,
           'visible',
         );
@@ -714,7 +711,7 @@ dialTest(
         await input.press('Enter');
 
         // Verify error
-        await fileManagerModalGridAssertion.assertRenameInputError(
+        await fileManagerModalGridAssertion.assertNameInputErrorState(
           `.${GeneratorUtil.randomString(5)}`,
           'visible',
         );
