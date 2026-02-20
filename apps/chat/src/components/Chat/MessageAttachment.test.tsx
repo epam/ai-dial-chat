@@ -88,15 +88,6 @@ vi.mock('@/src/components/Common/ErrorBoundary', () => ({
 describe('MessageAttachment', () => {
   const customType = 'application/vnd.custom';
 
-  beforeEach(() => {
-    // Mock ResizeObserver
-    global.ResizeObserver = vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn(),
-    }));
-  });
-
   it('Scenario A: Renders Custom Visualizer when URL is present', () => {
     const attachment: Attachment = {
       title: 'test attachment',
