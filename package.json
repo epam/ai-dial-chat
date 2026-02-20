@@ -156,7 +156,7 @@
     "dotenv": "^16.3.1",
     "endent": "^2.1.0",
     "eslint": "^8.49.0",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "15.3.2",
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-jsx-a11y": "6.7.1",
