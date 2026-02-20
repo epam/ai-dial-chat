@@ -1,5 +1,10 @@
 import dialTest from '@/src/core/dialFixtures';
-import { Attachment, ExpectedMessages, MenuOptions, UploadMenuOptions } from '@/src/testData';
+import {
+  Attachment,
+  ExpectedMessages,
+  MenuOptions,
+  UploadMenuOptions,
+} from '@/src/testData';
 import { StyleValues } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -131,7 +136,11 @@ dialTest(
           tooltipPortal,
           StyleValues.breakWord,
         );
-        await baseAssertion.assertElementText(tooltipPortal, folderName, ExpectedMessages.tooltipContentIsValid);
+        await baseAssertion.assertElementText(
+          tooltipPortal,
+          folderName,
+          ExpectedMessages.tooltipContentIsValid,
+        );
       },
     );
 
@@ -147,7 +156,11 @@ dialTest(
           tooltipPortal,
           StyleValues.breakWord,
         );
-        await baseAssertion.assertElementText(tooltipPortal, imageName, ExpectedMessages.tooltipContentIsValid);
+        await baseAssertion.assertElementText(
+          tooltipPortal,
+          imageName,
+          ExpectedMessages.tooltipContentIsValid,
+        );
       },
     );
 
