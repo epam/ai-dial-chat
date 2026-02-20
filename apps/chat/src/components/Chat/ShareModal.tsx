@@ -23,6 +23,7 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -262,7 +263,7 @@ function ShareModalView() {
                     size={ButtonSize.Small}
                     onClick={handleCopy}
                     aria-label="copy-link"
-                    icon={<IconCopy size={16} />}
+                    icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
                 </Tooltip>
               )}

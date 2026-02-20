@@ -59,6 +59,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
@@ -506,7 +507,7 @@ export const PublicationHandlerFooter = ({
       {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
-            size={24}
+            size={DEFAULT_ICON_SIZES.STANDARD}
             className="shrink-0 text-error"
             stroke="1.5"
           />

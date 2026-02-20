@@ -1,5 +1,7 @@
 import { IconX } from '@tabler/icons-react';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { DialIconButtonProps } from '@epam/ai-dial-ui-kit/dist/src/components/IconButton/IconButton';
 
 import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
@@ -12,7 +14,7 @@ interface CloseButtonProps
 
 export function CloseButton({
   iconClassName,
-  iconSize = 24,
+  iconSize = DEFAULT_ICON_SIZES.STANDARD,
   ...props
 }: CloseButtonProps) {
   return (
@@ -25,7 +27,7 @@ export function CloseButton({
 
 export function CloseButtonSmall({
   iconClassName,
-  iconSize = 16,
+  iconSize = DEFAULT_ICON_SIZES.SMALL,
   ...props
 }: CloseButtonProps) {
   return (

@@ -11,6 +11,8 @@ import {
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
@@ -101,7 +103,8 @@ export const RulesInput = ({
               size={ButtonSize.Small}
               onClick={() => onSwitchRulesSetter(true)}
               data-qa="add-rule"
-              icon={<IconPlus stroke={1.5} size={18} />}
+              icon={<IconPlus stroke={1.5} size={DEFAULT_ICON_SIZES.SMALL} />}
+              className="hover:bg-transparent"
             />
           </div>
         )}
@@ -110,7 +113,6 @@ export const RulesInput = ({
             onClick={handleClear}
             className="absolute right-3 top-[7px]"
             aria-label="cancel-all-rules"
-            iconSize={16}
           />
         )}
       </div>

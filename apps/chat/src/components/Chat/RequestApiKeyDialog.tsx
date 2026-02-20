@@ -23,6 +23,8 @@ import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ServiceSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -478,9 +480,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -504,9 +506,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -532,9 +534,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -556,9 +558,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>

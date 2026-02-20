@@ -45,6 +45,7 @@ import {
 } from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
@@ -583,9 +584,9 @@ export const UserMessage = memo(function UserMessage({
                 <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
                   <IconPaperclip
                     strokeWidth="1.5"
-                    size={24}
-                    width={24}
-                    height={24}
+                    size={DEFAULT_ICON_SIZES.STANDARD}
+                    width={DEFAULT_ICON_SIZES.STANDARD}
+                    height={DEFAULT_ICON_SIZES.STANDARD}
                   />
                 </div>
               }

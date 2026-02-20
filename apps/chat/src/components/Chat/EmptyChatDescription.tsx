@@ -25,6 +25,8 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -124,7 +126,7 @@ const EmptyChatDescriptionView = ({
   if (models.length === 0) {
     return (
       <div className="flex w-full items-center justify-center rounded-t p-4">
-        <Spinner size={16} className="mx-auto" />
+        <Spinner size={DEFAULT_ICON_SIZES.SMALL} className="mx-auto" />
       </div>
     );
   }

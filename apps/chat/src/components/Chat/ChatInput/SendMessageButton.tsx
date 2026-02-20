@@ -17,6 +17,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -65,7 +67,7 @@ export const SendMessageButton = Inversify.register(
           data-qa="regenerate"
           iconBefore={
             <Tooltip tooltip={tooltip} isTriggerClickable>
-              <IconRefresh size={24} stroke="1.5" />
+              <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
             </Tooltip>
           }
         />
@@ -96,7 +98,7 @@ export const SendMessageButton = Inversify.register(
             {isSpinner ? (
               <Spinner size={20} />
             ) : (
-              <Icon size={24} stroke="1.5" />
+              <Icon size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
             )}
           </Tooltip>
         }

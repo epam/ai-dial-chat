@@ -8,6 +8,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -124,7 +125,11 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
           )}
           item={
             <div className="flex w-full items-center gap-2">
-              <ModelIcon entityId={entity.id} entity={entity} size={16} />
+              <ModelIcon
+                entityId={entity.id}
+                entity={entity}
+                size={DEFAULT_ICON_SIZES.SMALL}
+              />
               <Tooltip
                 tooltip={getDisplayValue(entity)}
                 triggerClassName="truncate"
