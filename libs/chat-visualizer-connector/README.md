@@ -18,9 +18,15 @@ _Note: For development purposes you can set `*`_
 ALLOWED_IFRAME_SOURCES=http://localhost:8000
 ```
 
-Moreover, it needs to be configured some **Visualizer** properties:
+## Visualizer Configuration
 
-- `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ title, description, icon, contentType, url }`.
+There are two ways to configure visualizers:
+
+### 1. CUSTOM_VISUALIZERS (Single Attachment Mode)
+
+Each attachment is rendered in its own iframe based on MIME type.
+
+- `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties.
 
 ```typescript
 interface CustomVisualizer {
@@ -35,27 +41,58 @@ interface CustomVisualizer {
 ```json
 CUSTOM_VISUALIZERS=[
                     {
-                      "title":"CUSTOM_VISUALIZER", // Visualizer title
-                      "description": "CUSTOM VISUALIZER to render images", // Short description for the Visualizer
-                      "icon":"data:image/svg+xml;base64,some-base64-image", // Icon for the Visualizer
-                      "contentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
-                      "url":"http://localhost:8000" // Visualizer host
-                    },
-                    {
-                      //Other Visualizer
+                      "title":"CUSTOM_VISUALIZER",
+                      "description": "CUSTOM VISUALIZER to render images",
+                      "icon":"data:image/svg+xml;base64,some-base64-image",
+                      "contentType":"image/png,image/jpg",
+                      "url":"http://localhost:8000"
                     }
-
                   ]
-
 ```
 
-Futhermore, model or application should send data in **json**-like format which should include layout property. This layout object should have **width**, **height** and **themeId** properties. All other properties could be set to anything you need for your **Visualizer**.
+### 2. APPLICATION_VISUALIZERS (Grouped Attachments Mode)
+
+All attachments from the same application are grouped and rendered in a single iframe.
+
+- `APPLICATION_VISUALIZERS` - JSON dictionary mapping application IDs to visualizer configurations.
 
 ```typescript
+interface ApplicationVisualizerConfig {
+  title: string;
+  description?: string;
+  icon?: string;
+  contentType: string;
+  url: string;
+}
+```
+
+```json
+APPLICATION_VISUALIZERS={
+  "applicationId": {
+    "title": "GROUPED_VISUALIZER",
+    "description": "Visualizer for grouped attachments",
+    "contentType": "application/vnd.custom+json",
+    "url": "http://localhost:8000"
+  }
+}
+```
+
+**Key difference:** The key in `APPLICATION_VISUALIZERS` must match the `applicationId` (from `message.model.id`) that generates the attachments.
+
+## Data Structures
+
+### Single Attachment Data (CUSTOM_VISUALIZERS)
+
+```typescript
+export interface AttachmentData {
+  mimeType: string;
+  visualizerData: CustomVisualizerData;
+}
+
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
-  themeId: string;
+  themeId?: string;
 }
 
 export interface CustomVisualizerData {
@@ -63,88 +100,59 @@ export interface CustomVisualizerData {
 }
 ```
 
-## To integrate **Visualizer** with _DIAL CHAT_
+### Grouped Attachments Data (APPLICATION_VISUALIZERS)
 
-1. Install library
+```typescript
+export interface GroupedAttachmentsData {
+  attachments: AttachmentItem[];
+  layout: CustomVisualizerDataLayout;
+}
+
+export interface AttachmentItem {
+  url: string;
+  mimeType: string;
+  contentType: string;
+  visualizerData: CustomVisualizerData;
+}
+```
+
+## Integration Guide
+
+### 1. Install library
 
 ```bash
 npm i @epam/ai-dial-chat-visualizer-connector
 ```
 
-2. Add file to serving folder in your application or just import it in code
+### 2. Import required modules
 
 ```typescript
-import { AttachmentData, ChatVisualizerConnector, CustomVisualizerDataLayout } from '@epam/ai-dial-chat-visualizer-connector';
+import { AttachmentData, ChatVisualizerConnector, CustomVisualizerDataLayout, GroupedAttachmentsData } from '@epam/ai-dial-chat-visualizer-connector';
 ```
 
-`ChatVisualizerConnector` - class which provides needed methods for the **Visualizer**(rendered in the iframe) to interact with **DIAL Chat** (receive data to visualize).
-Expects following required arguments:
+### 3. Configure host and app name
 
 ```typescript
-/**
- * Params for a ChatVisualizerConnector
- * @param dialHost {string | string[]} DIAL CHAT host
- * @param appName {string} name of the Visualizer same as in config
- * @param dataCallback {(visualizerData: AttachmentData) => void} callback to get data that will be used in the Visualizer
- */
-
-//instance example with single host
-new ChatVisualizerConnector('https://hosted-dial-chat-domain.com', 'CUSTOM_VISUALIZER', setData);
-
-//instance example with multiple hosts
-new ChatVisualizerConnector(['https://hosted-dial-chat-domain.com', 'https://backup-dial-chat-domain.com'], 'CUSTOM_VISUALIZER', setData);
-```
-
-`AttachmentData` - interface for the payload you will get from the _DIAL CHAT_
-
-```typescript
-export interface AttachmentData {
-  mimeType: string;
-  visualizerData: CustomVisualizerData;
-}
-```
-
-`CustomVisualizerDataLayout` - interface for the layout you will get from the _DIAL CHAT_.
-Properties **width**, **height** and **themeId** is needed for the proper rendering in the _DIAL CHAT_.
-
-```typescript
-export interface CustomVisualizerDataLayout {
-  width: number;
-  height: number;
-  themeId: string;
-}
-```
-
-3. Set `dialHost` to the _DIAL CHAT_ host you want to connect:
-
-```typescript
+// DIAL CHAT host (one or multiple)
 const dialHost = 'https://hosted-dial-chat-domain.com';
-```
+// Or multiple hosts:
+// const dialHost = ['https://hosted-dial-chat-domain.com', 'https://backup-dial-chat-domain.com'];
 
-Or (new):
-
-```typescript
-const dialHost = ['https://hosted-dial-chat-domain.com', 'https://backup-dial-chat-domain.com'];
-```
-
-4. Set `appName` same as `title` in the _DIAL CHAT_ configuration in the `CUSTOM_VISUALIZERS` environmental variable:
-
-```typescript
+// Visualizer title - must match 'title' in CUSTOM_VISUALIZERS or APPLICATION_VISUALIZERS
 const appName = 'CUSTOM_VISUALIZER';
 ```
 
-5. Create an instance of `ChatVisualizerConnector` in your code.
+### 4. Create ChatVisualizerConnector instance
 
-`ChatVisualizerConnector:`
+#### Option A: Single Attachment Mode (backward compatible)
 
 ```typescript
-//Here you store your data which you get from the DIAL CHAT
 const [data, setData] = useState<AttachmentData>();
-
 const chatVisualizerConnector = useRef<ChatVisualizerConnector | null>(null);
 
 useEffect(() => {
   if (!chatVisualizerConnector.current && dialHost && appName) {
+    // Pass callback function directly (original API)
     chatVisualizerConnector.current = new ChatVisualizerConnector(dialHost, appName, setData);
 
     return () => {
@@ -155,69 +163,99 @@ useEffect(() => {
 }, [appName, dialHost]);
 ```
 
-6. Send 'READY' event via `sendReady()` to the _DIAL CHAT_ to inform that your **Visualizer** is ready (this action will hide loader). Then you could do some preparation (login, etc.) and, after that, send 'READY TO INTERACT' event via `sendReadyToInteract()` to inform _DIAL CHAT_ that **Visualizer** is ready to receive data.
+#### Option B: Support Both Single and Grouped Attachments
+
+```typescript
+const [data, setData] = useState<AttachmentData>();
+const [groupedData, setGroupedData] = useState<GroupedAttachmentsData>();
+const chatVisualizerConnector = useRef<ChatVisualizerConnector | null>(null);
+
+useEffect(() => {
+  if (!chatVisualizerConnector.current && dialHost && appName) {
+    // Pass callbacks object to handle both modes
+    chatVisualizerConnector.current = new ChatVisualizerConnector(dialHost, appName, {
+      onData: setData, // Called for CUSTOM_VISUALIZERS (single attachment)
+      onGroupedData: setGroupedData, // Called for APPLICATION_VISUALIZERS (grouped)
+    });
+
+    return () => {
+      chatVisualizerConnector.current?.destroy();
+      chatVisualizerConnector.current = null;
+    };
+  }
+}, [appName, dialHost]);
+```
+
+### 5. Send ready events
 
 ```typescript
 useEffect(() => {
   if (appName && dialHost) {
     chatVisualizerConnector.current?.sendReady();
-    //Make some actions if needed
+    // Make some actions if needed (login, etc.)
     chatVisualizerConnector.current?.sendReadyToInteract();
   }
 }, [dialHost, appName]);
 ```
 
-7. Make needed type assertion for the data from the _DIAL CHAT_
-
-_Note: Data send by model/application from DIAL CHAT should be the same type as you expect._
+### 6. Process received data
 
 ```typescript
-//layout should include width, height and themeId properties
-interface YourVisualizerLayout extends CustomVisualizerDataLayout {
-  //any other layout properties expected from the model/application output
-}
-data.visualizerData as { dataToRender: string; layout: YourVisualizerLayout };
+const content = useMemo(() => {
+  // Handle grouped attachments (APPLICATION_VISUALIZERS)
+  if (groupedData?.attachments) {
+    return groupedData.attachments.map((att) => ({
+      url: att.url,
+      mimeType: att.mimeType,
+      contentType: att.contentType,
+      data: att.visualizerData,
+    }));
+  }
+
+  // Handle single attachment (CUSTOM_VISUALIZERS)
+  if (data?.visualizerData) {
+    return [data];
+  }
+
+  return [];
+}, [data, groupedData]);
 ```
 
-8. Render data in your **Visualizer**;
+### 7. Render data
 
 ```tsx
-<div>{typedVisualizerData.dataToRender}</div>
+<div>
+  {content.map((item, index) => (
+    <div key={index}>{/* Render your visualization */}</div>
+  ))}
+</div>
 ```
 
-### Sending to a particular host when multiple were passed
+## Full React Example (Supporting Both Modes)
 
 ```typescript
-chatVisualizerConnector.current?.send({
-  type: VisualizerConnectorEvents.sendMessage,
-  payload: { message: 'hello from visualizer' },
-  dialHost: 'https://hosted-dial-chat-domain.com',
-});
-```
+import { FC, useState, useRef, useEffect, useMemo } from 'react';
+import {
+  AttachmentData,
+  GroupedAttachmentsData,
+  ChatVisualizerConnector,
+  CustomVisualizerDataLayout
+} from '@epam/ai-dial-chat-visualizer-connector';
 
-If `dialHost` is **not** provided in `send(...)`, the connector will send the message to **all** hosts passed in the constructor.
-
-### Full React code example to connect your custom visualizer
-
-```typescript
-
-import { AttachmentData, ChatVisualizerConnector, CustomVisualizerDataLayout } from '@epam/ai-dial-chat-visualizer-connector';
-
+interface YourVisualizerLayout extends CustomVisualizerDataLayout {
+  // Add any additional layout properties
+}
 
 export const Module: FC = () => {
   const [data, setData] = useState<AttachmentData>();
+  const [groupedData, setGroupedData] = useState<GroupedAttachmentsData>();
 
-  const chatVisualizerConnector = useRef<ChatVisualizerConnector | null>(
-    null
-  );
+  const chatVisualizerConnector = useRef<ChatVisualizerConnector | null>(null);
 
-  //DIAL CHAT host (one or multiple)
-  const dialHost = [
-    'https://hosted-dial-chat-domain.com',
-    'https://backup-dial-chat-domain.com'
-  ];
+  // DIAL CHAT host
+  const dialHost = 'https://hosted-dial-chat-domain.com';
 
-  //Visualizer title. Should be same as in the DIAL CHAT configuration in CUSTOM_VISUALIZERS
+  // Visualizer title - must match configuration
   const appName = 'CUSTOM_VISUALIZER';
 
   useEffect(() => {
@@ -225,7 +263,16 @@ export const Module: FC = () => {
       chatVisualizerConnector.current = new ChatVisualizerConnector(
         dialHost,
         appName,
-        setData
+        {
+          onData: (payload) => {
+            console.log('[Visualizer] Received single attachment:', payload);
+            setData(payload);
+          },
+          onGroupedData: (payload) => {
+            console.log('[Visualizer] Received grouped attachments:', payload);
+            setGroupedData(payload);
+          }
+        }
       );
 
       return () => {
@@ -242,32 +289,131 @@ export const Module: FC = () => {
     }
   }, [dialHost, appName]);
 
-  const typedVisualizerData = useMemo(() => {
-    return (
-      data?.visualizerData && (data.visualizerData as unknown as { dataToRender: string; layout: YourVisualizerLayout })
-    );
-  }, [data?.visualizerData]);
+  // Process data from either mode
+  const items = useMemo(() => {
+    // Grouped mode (APPLICATION_VISUALIZERS)
+    if (groupedData?.attachments) {
+      return groupedData.attachments.map(att => ({
+        mimeType: att.mimeType,
+        visualizerData: att.visualizerData as unknown as {
+          dataToRender: string;
+          layout: YourVisualizerLayout;
+        }
+      }));
+    }
+
+    // Single mode (CUSTOM_VISUALIZERS)
+    if (data?.visualizerData) {
+      return [{
+        mimeType: data.mimeType,
+        visualizerData: data.visualizerData as unknown as {
+          dataToRender: string;
+          layout: YourVisualizerLayout;
+        }
+      }];
+    }
+
+    return [];
+  }, [data, groupedData]);
 
   return (
     <div>
-      {!!typedVisualizerData?.dataToRender && (
-          <div>
-            {typedVisualizerData.dataToRender}
-          </div>
-      )}
+      {items.map((item, index) => (
+        <div key={index}>
+          {item.visualizerData?.dataToRender && (
+            <div>{item.visualizerData.dataToRender}</div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
-
 ```
 
-`index.ts`
+## API Reference
+
+### ChatVisualizerConnector
+
+#### Constructor
 
 ```typescript
-//...other imports
-import { Module } from "./Module.tsx";
+constructor(
+  dialHost: string | string[],
+  appName: string,
+  dataCallback: ((visualizerData: AttachmentData) => void) | ChatVisualizerCallbacks
+)
+```
 
-const root = createRoot(document.getElementById("root"));
-root.render(<Module />);
+**Parameters:**
+
+- `dialHost` - DIAL CHAT host URL(s)
+- `appName` - Visualizer name (must match `title` in configuration)
+- `dataCallback` - Either a single callback function or a `ChatVisualizerCallbacks` object
+
+#### ChatVisualizerCallbacks
+
+```typescript
+interface ChatVisualizerCallbacks {
+  onData?: (visualizerData: AttachmentData) => void;
+  onGroupedData?: (groupedData: GroupedAttachmentsData) => void;
+}
+```
+
+#### Methods
+
+| Method                               | Description                                               |
+| ------------------------------------ | --------------------------------------------------------- |
+| `sendReady()`                        | Notify DIAL Chat that visualizer is loaded (hides loader) |
+| `sendReadyToInteract()`              | Notify DIAL Chat that visualizer is ready to receive data |
+| `sendMessage(content: string)`       | Send a message to the chat                                |
+| `send({ type, payload, dialHost? })` | Send custom event to DIAL Chat                            |
+| `destroy()`                          | Clean up event listeners                                  |
+
+### Sending to a particular host when multiple were passed
+
+```typescript
+chatVisualizerConnector.current?.send({
+  type: VisualizerConnectorEvents.sendMessage,
+  payload: { message: 'hello from visualizer' },
+  dialHost: 'https://hosted-dial-chat-domain.com',
+});
+```
+
+If `dialHost` is **not** provided in `send(...)`, the connector will send the message to **all** hosts passed in the constructor.
+
+## Troubleshooting
+
+### Timeout Error
 
 ```
+[VisualizerConnector] Request APP_NAME/SEND_GROUPED_VISUALIZE_DATA failed. Timeout 10000
+```
+
+**Cause:** The visualizer is not responding to the data request.
+
+**Solutions:**
+
+1. Ensure `appName` matches the `title` in your configuration
+2. Verify you're using the callbacks object format with `onGroupedData` for grouped mode
+3. Check browser console for any errors in the visualizer
+
+### PostMessage Origin Error
+
+```
+Failed to execute 'postMessage' on 'DOMWindow': The target origin provided does not match...
+```
+
+**Cause:** The `dialHost` parameter doesn't match the actual DIAL Chat origin.
+
+**Solutions:**
+
+1. Ensure `dialHost` is set to the DIAL Chat URL (not the visualizer URL)
+2. Verify the visualizer is running inside an iframe from DIAL Chat
+
+### No Data Received
+
+**Checklist:**
+
+1. `appName` must match `title` in `CUSTOM_VISUALIZERS` or `APPLICATION_VISUALIZERS`
+2. For `APPLICATION_VISUALIZERS`, the key must match the `applicationId` from messages
+3. `sendReady()` and `sendReadyToInteract()` must be called after connector creation

@@ -131,6 +131,9 @@ const selectThemeHostDefined = (state: RootState) =>
 const selectCustomVisualizers = (state: RootState) =>
   rootSelector(state).customRenderers;
 
+const selectApplicationVisualizers = (state: RootState) =>
+  rootSelector(state).applicationVisualizers;
+
 const selectMappedVisualizers = createSelector(
   [selectCustomVisualizers],
   (customVisualizers) => {
@@ -159,6 +162,11 @@ const selectIsCustomAttachmentType = (attachmentType: string) =>
       mappedVisualizers &&
       Object.prototype.hasOwnProperty.call(mappedVisualizers, attachmentType)
     );
+  });
+
+const selectApplicationVisualizerConfig = (applicationId: string) =>
+  createSelector([selectApplicationVisualizers], (applicationVisualizers) => {
+    return applicationVisualizers?.[applicationId];
   });
 
 const selectPublicationFilters = (state: RootState) =>
@@ -269,6 +277,8 @@ export const SettingsSelectors = {
   selectPreselectedAction,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
+  selectApplicationVisualizers,
+  selectApplicationVisualizerConfig,
   selectPublicationFilters,
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
