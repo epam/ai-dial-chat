@@ -236,3 +236,9 @@ pre:has(div.codeblock) {
 span.katex-mathml {
   display: none;
 }
+
+@layer components {
+  .link-icon-button-small {
+    @apply flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline;
+  }
+}

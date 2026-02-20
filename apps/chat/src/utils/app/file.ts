@@ -20,6 +20,7 @@ import { FolderInterface } from '@/src/types/folder';
 import {
   BYTES_IN_KB,
   BYTES_IN_MB,
+  FALLBACK_CONTENT_TYPE,
   MAX_FILE_SIZE_IN_BYTES,
 } from '@/src/constants/file';
 import {
@@ -33,7 +34,7 @@ import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
-import { extensions } from 'mime-types';
+import { extensions, lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -153,7 +154,9 @@ export const getFilesWithInvalidFileType = (
 ): File[] => {
   return allowedFileTypes.includes('*/*')
     ? []
-    : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
+    : files.filter(
+        (file) => !isAllowedMimeType(allowedFileTypes, getFileMimeType(file)),
+      );
 };
 export const notAllowedSymbols = ':;,=/{}%&\\"';
 export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
@@ -429,6 +432,24 @@ export const isConversationHasExternalAttachments = (
   });
 };
 
+export const getMimeTypeByFileName = (filename: string): string => {
+  const extension = getFileNameExtension(filename);
+  return extension
+    ? lookup(extension) || FALLBACK_CONTENT_TYPE
+    : FALLBACK_CONTENT_TYPE;
+};
+
+export const getFileMimeType = (file: File): string => {
+  return file.type || getMimeTypeByFileName(file.name);
+};
+
+export const getFileWithType = (file: File): File => {
+  return new File([file], file.name, {
+    type: getFileMimeType(file),
+    lastModified: file.lastModified,
+  });
+};
+
 export const validatePreUploadFiles = (
   files: File[],
   allowedTypes: string[] = [],
@@ -444,7 +465,7 @@ export const validatePreUploadFiles = (
       ];
       return;
     }
-    if (!isAllowedMimeType(allowedTypes, file.type)) {
+    if (!isAllowedMimeType(allowedTypes, getFileMimeType(file))) {
       byError[FileValidationErrors.IncorrectType] = [
         ...(byError[FileValidationErrors.IncorrectType] ?? []),
         file.name,
@@ -491,7 +512,7 @@ export const validateUploadFiles = <T extends File | { name: string }>(
 
     if (file instanceof File) {
       const renamedFile = new File([file], sanitizedName, {
-        type: file.type,
+        type: getFileMimeType(file),
         lastModified: file.lastModified,
       });
       validFiles.push(renamedFile as T);

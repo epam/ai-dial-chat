@@ -6,7 +6,11 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ContextMenu } from './ContextMenu';
 
-import { DialSecondaryIconButton } from '@epam/ai-dial-ui-kit';
+import { FeatureType } from '@epam/ai-dial-shared';
+import {
+  DialSecondaryIconButton,
+  DialTertiaryIconButton,
+} from '@epam/ai-dial-ui-kit';
 
 const ICON_WIDTH = 24;
 const ITEM_PADDING = 8;
@@ -24,8 +28,13 @@ function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     childMenuItems,
   } = props;
 
+  const ItemComponent =
+    featureType === FeatureType.Chat
+      ? DialSecondaryIconButton
+      : DialTertiaryIconButton;
+
   const item = (
-    <DialSecondaryIconButton
+    <ItemComponent
       className={className}
       onClick={!childMenuItems ? onClick : undefined}
       data-qa={dataQa}
@@ -144,7 +153,7 @@ export function SidebarMenu({
       })}
 
       <ContextMenu
-        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
+        triggerIconClassName="flex w-[40px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
         menuItems={hiddenItems}
         isOpen={isOpen}
         featureType={featureType}

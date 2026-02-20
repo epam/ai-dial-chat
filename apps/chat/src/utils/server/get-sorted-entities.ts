@@ -1,5 +1,3 @@
-import { JWT } from 'next-auth/jwt';
-
 import { isAbsoluteUrl } from '@/src/utils/app/file';
 import { mergeFeatures } from '@/src/utils/app/models';
 
@@ -76,10 +74,11 @@ async function getAllEntities(accessToken: string, jobTitle: string) {
 
 const fixDate = (date: number) => (date === 1672534800 ? 1740006000000 : date); // 1/20/1970 -> 2/20/2025
 
-export const getSortedEntities = async (token: JWT | null) => {
+export const getSortedEntities = async (
+  accessToken: string,
+  jobTitle: string,
+) => {
   const entities: DialAIEntityModel[] = [];
-  const accessToken = token?.access_token as string;
-  const jobTitle = token?.jobTitle as string;
   const { models, applications } = await getAllEntities(accessToken, jobTitle);
 
   const preProcessedEntities = [...models, ...applications];

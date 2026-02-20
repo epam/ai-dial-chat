@@ -715,10 +715,12 @@ export const getApplicationPayload = ({
   data,
   currentApp,
   allEntitiesMap,
+  keepCurrentToolsets,
 }: {
   data: AppsEditorFormType;
   allEntitiesMap: Record<string, MarketplaceEntity>;
   currentApp?: CustomApplicationModel;
+  keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
   const generalData = {
     id: '',
@@ -825,9 +827,10 @@ export const getApplicationPayload = ({
               url,
               type: 'file',
             })) ?? [],
-          tool_sets: data.isJsonView
-            ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
-            : getQuickApp2Toolsets({ data, allEntitiesMap }),
+          tool_sets:
+            data.isJsonView && !keepCurrentToolsets
+              ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
+              : getQuickApp2Toolsets({ data, allEntitiesMap }),
         },
       };
     }

@@ -61,6 +61,7 @@ class BasePathResolver {
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
+  reactCompiler: false,
   devIndicators: false,
   productionBrowserSourceMaps: process.env.NODE_ENV !== 'production',
 

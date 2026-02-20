@@ -6,17 +6,22 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupAllVersions } from '@/src/utils/app/common';
+import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  PublicationSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialCheckbox, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   publicVersionGroupId: string;
@@ -26,7 +31,11 @@ interface Props {
   textBeforeSelector?: string | null;
   selectedEntityId?: string;
   excludeEntityId?: string;
+  selectedCheckboxVersionIds?: string[];
+  overrideTriggerText?: string;
+  triggerTextClassName?: string;
   onChangeSelectedVersion?: (newVersionId: string) => void;
+  onSelectCheckboxVersion?: (versionId: string) => void;
 }
 
 export function PublicVersionSelector({
@@ -37,7 +46,11 @@ export function PublicVersionSelector({
   textBeforeSelector,
   selectedEntityId,
   excludeEntityId,
+  selectedCheckboxVersionIds,
+  overrideTriggerText,
+  triggerTextClassName,
   onChangeSelectedVersion,
+  onSelectCheckboxVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -50,6 +63,26 @@ export function PublicVersionSelector({
       publicVersionGroupId,
     ),
   );
+  const modelsVersionGroup = useAppSelector((state) =>
+    ModelsSelectors.selectModelsVersionGroupByGroupId(
+      state,
+      publicVersionGroupId,
+    ),
+  );
+  const toolsetsVersionGroup = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsetVersionGroupByGroupId(
+      state,
+      publicVersionGroupId,
+    ),
+  );
+  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
+
+  const mappedModelsAndToolsetsVersionGroup = useMemo(() => {
+    return [...modelsVersionGroup, ...toolsetsVersionGroup].map((model) => ({
+      id: model.id,
+      version: model.version,
+    }));
+  }, [modelsVersionGroup, toolsetsVersionGroup]);
 
   useEffect(() => {
     setSelectedId(
@@ -74,7 +107,7 @@ export function PublicVersionSelector({
           : versionGroup.allVersions,
         selectedVersion: versionGroup.allVersions.find(
           (v) => v.id === selectedId,
-        )!,
+        ),
       };
     }
     if (
@@ -89,7 +122,7 @@ export function PublicVersionSelector({
         allVersions: excludeEntityId
           ? versionGroup.allVersions.filter((v) => v.id !== excludeEntityId)
           : versionGroup.allVersions,
-        selectedVersion: selected!,
+        selectedVersion: selected,
       };
     }
     return versionGroup;
@@ -107,36 +140,61 @@ export function PublicVersionSelector({
     return groupAllVersions(currentVersionGroup.allVersions);
   }, [currentVersionGroup?.allVersions, groupVersions]);
 
-  if (!currentVersionGroup) {
+  if (!currentVersionGroup && !mappedModelsAndToolsetsVersionGroup.length) {
     return null;
   }
+
+  const publishModelFolder =
+    publishModel && getIdWithoutRootPathSegments(publishModel.entity.folderId);
+  const mappedAllVersions = [
+    ...allVersions,
+    ...mappedModelsAndToolsetsVersionGroup,
+  ].map(({ id, version }) => {
+    return {
+      id: publishModelFolder ? id.replace(`${publishModelFolder}/`, '') : id,
+      version,
+    };
+  });
+  const isAllSelected =
+    selectedCheckboxVersionIds?.length === mappedAllVersions.length;
+  const currentVersion =
+    currentVersionGroup?.selectedVersion?.version ??
+    mappedAllVersions.at(0)?.version;
 
   return (
     <Menu
       onOpenChange={setIsVersionSelectOpen}
-      dropdownWidth={82}
-      className="flex shrink-0 items-center"
-      disabled={allVersions.length <= 1}
+      className="flex min-w-fit shrink-0 items-center"
+      listClassName="min-w-fit"
+      disabled={mappedAllVersions.length <= 1}
+      placement="bottom-end"
       trigger={
         <DialLinkButton
-          onClick={(e) => stopBubbling(e)}
-          disabled={allVersions.length <= 1}
+          onClick={stopBubbling}
+          disabled={mappedAllVersions.length <= 1}
           className={classNames(
-            'flex px-0 text-primary hover:text-primary',
-            allVersions.length <= 1 && 'cursor-default',
+            'flex px-0 text-primary enabled:hover:text-primary',
+            mappedAllVersions.length <= 1 &&
+              '!cursor-default text-controls-permanent',
             btnClassNames,
             readonly && 'text-xs text-secondary',
           )}
           data-qa="version"
-          textClassName="font-normal whitespace-nowrap leading-normal"
-          label={`${textBeforeSelector ? textBeforeSelector : t('v.')} ${currentVersionGroup.selectedVersion.version}`}
+          textClassName={classNames(
+            'whitespace-nowrap font-normal leading-normal',
+            triggerTextClassName,
+          )}
+          label={
+            overrideTriggerText ??
+            `${textBeforeSelector ?? t('v.')} ${currentVersion}`
+          }
           iconAfter={
-            allVersions.length > 1 && (
+            mappedAllVersions.length > 1 && (
               <IconChevronDown
                 className={classNames(
                   'shrink-0 transition-all',
                   isVersionSelectOpen && 'rotate-180',
-                  readonly && 'text-secondary',
+                  readonly && '!text-secondary',
                 )}
                 size={readonly ? 16 : 18}
               />
@@ -145,38 +203,68 @@ export function PublicVersionSelector({
         />
       }
     >
-      {allVersions.map(({ version, id }) => {
-        if (onChangeSelectedVersion && !readonly) {
-          return (
+      {onSelectCheckboxVersion && (
+        <li
+          className={classNames(
+            'flex items-center gap-1 py-[6.5px] pl-2 hover:bg-accent-primary-alpha',
+            isAllSelected && 'bg-accent-primary-alpha',
+          )}
+        >
+          <DialCheckbox
+            id={'all'}
+            className="mr-3 shrink-0"
+            checked={isAllSelected}
+            indeterminate={
+              !isAllSelected && !!selectedCheckboxVersionIds?.length
+            }
+            onChange={() => {
+              if (!isAllSelected) {
+                mappedAllVersions.forEach(({ id }) => {
+                  if (!selectedCheckboxVersionIds?.includes(id)) {
+                    onSelectCheckboxVersion(id);
+                  }
+                });
+                return;
+              }
+
+              mappedAllVersions.forEach(({ id }) => {
+                onSelectCheckboxVersion(id);
+              });
+            }}
+          />
+          <p>{t('All')}</p>
+        </li>
+      )}
+      {mappedAllVersions.map(({ id, version }) => {
+        const isSelected = currentVersion === version;
+
+        return (
+          <li
+            key={version ?? id}
+            className={classNames(
+              'flex items-center gap-1 hover:bg-accent-primary-alpha',
+              isSelected && 'bg-accent-primary-alpha',
+              onSelectCheckboxVersion && 'pl-2',
+            )}
+          >
+            {onSelectCheckboxVersion && (
+              <DialCheckbox
+                id={version ?? id}
+                className="shrink-0"
+                checked={!!selectedCheckboxVersionIds?.includes(id)}
+                onChange={() => onSelectCheckboxVersion(id)}
+              />
+            )}
             <MenuItem
-              disabled={currentVersionGroup.selectedVersion.version === version}
+              disabled={isSelected}
               onClick={(e) => {
                 stopBubbling(e);
                 setIsVersionSelectOpen(false);
 
-                return onChangeSelectedVersion(id);
+                return onChangeSelectedVersion?.(id);
               }}
-              className={classNames(
-                'hover:bg-accent-primary-alpha',
-                currentVersionGroup.selectedVersion.version === version &&
-                  'bg-accent-primary-alpha',
-              )}
               item={<span>{version}</span>}
-              key={id}
             />
-          );
-        }
-
-        return (
-          <li
-            className={classNames(
-              'cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha',
-              currentVersionGroup.selectedVersion.version === version &&
-                'bg-accent-primary-alpha',
-            )}
-            key={id}
-          >
-            {version}
           </li>
         );
       })}

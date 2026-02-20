@@ -2,6 +2,8 @@ import { IconAlertTriangle, IconExclamationCircle } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 enum MessageType {
   ERROR = 'error',
   WARNING = 'warning',
@@ -40,7 +42,7 @@ export const ErrorMessage = ({
           isErrorMessage ? 'text-error' : 'text-warning',
         )}
       >
-        <Icon size={24} />
+        <Icon size={DEFAULT_ICON_SIZES.STANDARD} />
       </span>
       <span className="truncate whitespace-pre-wrap" data-qa="error-text">
         {error}

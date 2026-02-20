@@ -59,6 +59,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
@@ -392,6 +393,7 @@ export const PublicationHandlerFooter = ({
 
       const isValidVersion =
         resource?.action === PublishActions.DELETE ||
+        publishModel?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
           !isVersionExists(
@@ -505,7 +507,7 @@ export const PublicationHandlerFooter = ({
       {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
-            size={24}
+            size={DEFAULT_ICON_SIZES.STANDARD}
             className="shrink-0 text-error"
             stroke="1.5"
           />
@@ -530,6 +532,7 @@ export const PublicationHandlerFooter = ({
           <DialLinkButton
             className="px-0"
             onClick={handlePublicationReview}
+            disabled={isPublicationUpdating}
             data-qa="go-to-review"
             label={t(
               resourcesToReview.some((r) => r.reviewed)
@@ -550,6 +553,7 @@ export const PublicationHandlerFooter = ({
                     dataQa="edit"
                     onClick={handleToggleEditMode}
                     Icon={IconPencil}
+                    disabled={isPublicationUpdating}
                   />
                 )}
                 <DialNeutralButton
@@ -562,6 +566,7 @@ export const PublicationHandlerFooter = ({
                     )
                   }
                   data-qa="reject"
+                  disabled={isPublicationUpdating}
                 />
               </>
             )}

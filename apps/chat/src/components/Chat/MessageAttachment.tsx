@@ -31,6 +31,7 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -43,7 +44,7 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
-import { ButtonAppearance, DialButton } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
 interface AttachmentDataRendererProps {
@@ -51,6 +52,7 @@ interface AttachmentDataRendererProps {
   isFullScreen?: boolean;
   onFullScreenClick?: () => void;
   isInner?: boolean;
+  forceDefaultView?: boolean;
 }
 
 const getSourceDataUrl = (attachment: Attachment): string | undefined => {
@@ -93,8 +95,10 @@ const AttachmentDataRenderer = ({
       <img
         src={getSourceDataUrl(attachment)}
         className={classNames(
-          'm-0 aspect-auto w-full',
-          isFullScreen && '!h-full !w-auto',
+          'm-0',
+          isFullScreen
+            ? 'size-auto max-h-full max-w-full object-contain'
+            : 'aspect-auto w-full',
         )}
         alt="Attachment image"
       />
@@ -199,6 +203,7 @@ const ChartAttachmentUrlRenderer = ({
 interface Props {
   attachment: Attachment;
   isInner?: boolean;
+  forceDefaultView?: boolean;
 }
 
 const AttachmentRendererComponent = withErrorBoundary(
@@ -207,6 +212,7 @@ const AttachmentRendererComponent = withErrorBoundary(
     isInner,
     isFullScreen,
     onFullScreenClick,
+    forceDefaultView,
   }: AttachmentDataRendererProps) => {
     const attachmentType: MIMEType = attachment.type;
     const mappedAttachmentUrl = useMemo(
@@ -232,6 +238,7 @@ const AttachmentRendererComponent = withErrorBoundary(
           mimeType={attachmentType}
           isFullScreen={isFullScreen}
           onFullScreenClick={onFullScreenClick}
+          forceDefaultView={forceDefaultView}
         />
       );
     }
@@ -259,7 +266,11 @@ const AttachmentRendererComponent = withErrorBoundary(
   },
 );
 
-export const MessageAttachment = ({ attachment, isInner }: Props) => {
+export const MessageAttachment = ({
+  attachment,
+  isInner,
+  forceDefaultView,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -276,9 +287,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const isBorderless = borderlessTypes.includes(attachment.type);
+  const isBorderless =
+    borderlessTypes.includes(attachment.type) && !forceDefaultView;
   const isExpandedByDefault =
-    isBorderless || expandedTypes.includes(attachment.type);
+    (isBorderless || expandedTypes.includes(attachment.type)) &&
+    !forceDefaultView;
 
   const [isOpened, setIsOpened] = useState(isExpandedByDefault);
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
@@ -385,6 +398,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [isFullScreen]);
 
+  // const linkClassName =
+  //   'flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline';
+
   return (
     <div
       data-no-context-menu
@@ -410,18 +426,17 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               download={attachment.title}
               href={mappedAttachmentUrl}
               target="_blank"
-              className="text-secondary hover:text-accent-primary"
+              className="link-icon-button-small"
             >
-              <IconDownload size={18} />
+              <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
             </a>
           )}
 
           {isFullScreenEnabled && (
-            <DialButton
-              className="text-secondary hover:text-accent-primary"
-              iconBefore={<FullScreenIcon size={18} />}
+            <DialGhostIconButton
+              size={ButtonSize.Small}
+              icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
               onClick={handleToggleFullScreen}
-              appearance={ButtonAppearance.Link}
             />
           )}
         </div>
@@ -433,18 +448,20 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 <a
                   href={mappedAttachmentReferenceUrl}
                   target="_blank"
-                  className="shrink-0"
+                  className="link-icon-button-small"
                   rel="noopener noreferrer"
                 >
                   <LinkIcon
-                    height={18}
-                    width={18}
-                    className="text-secondary hover:text-accent-primary"
+                    height={DEFAULT_ICON_SIZES.SMALL}
+                    width={DEFAULT_ICON_SIZES.SMALL}
                   />
                 </a>
               </Tooltip>
             ) : (
-              <Icon size={18} className="shrink-0 text-secondary" />
+              <Icon
+                size={DEFAULT_ICON_SIZES.SMALL}
+                className="shrink-0 text-secondary"
+              />
             )}
           </div>
           <button
@@ -473,27 +490,31 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                     download={attachment.title}
                     href={mappedAttachmentUrl}
                     onClick={stopBubbling}
-                    className="text-secondary hover:text-accent-primary"
+                    className="link-icon-button-small"
                   >
-                    <IconDownload size={18} />
+                    <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                   </a>
                 )}
                 {isFullScreenEnabled && (
-                  <DialButton
-                    className="text-secondary hover:text-accent-primary"
-                    iconBefore={<FullScreenIcon size={18} />}
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
+                    icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                     onClick={handleToggleFullScreen}
-                    appearance={ButtonAppearance.Link}
                   />
                 )}
                 {!isFullScreen && (
-                  <ChevronDown
-                    height={18}
-                    width={18}
-                    className={classNames(
-                      'shrink-0 text-secondary transition',
-                      isOpened && 'rotate-180',
-                    )}
+                  <DialGhostIconButton
+                    size={ButtonSize.Small}
+                    icon={
+                      <ChevronDown
+                        height={DEFAULT_ICON_SIZES.SMALL}
+                        width={DEFAULT_ICON_SIZES.SMALL}
+                        className={classNames(
+                          'shrink-0 transition',
+                          isOpened && 'rotate-180',
+                        )}
+                      />
+                    }
                   />
                 )}
               </div>
@@ -505,9 +526,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
                   target="_blank"
-                  className="text-secondary hover:text-accent-primary"
+                  className="link-icon-button-small"
                 >
-                  <IconDownload size={18} />
+                  <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                 </a>
               )
             )}
@@ -531,6 +552,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             isInner={isInner}
             isFullScreen={isFullScreen}
             onFullScreenClick={handleToggleFullScreen}
+            forceDefaultView={forceDefaultView}
           />
           {mappedAttachmentReferenceUrl && (
             <a

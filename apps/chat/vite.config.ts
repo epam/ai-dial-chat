@@ -9,10 +9,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: __dirname,
-  plugins: [
-    nxViteTsPaths(),
-    react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
-  ],
+  plugins: [nxViteTsPaths(), react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
