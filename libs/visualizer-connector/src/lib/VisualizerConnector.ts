@@ -196,7 +196,6 @@ export class VisualizerConnector {
   protected process = (
     event: MessageEvent<VisualizerConnectorRequest>,
   ): void => {
-
     // Only process messages from this specific iframe instance
     if (event.source !== this.iframe.contentWindow) {
       return;
