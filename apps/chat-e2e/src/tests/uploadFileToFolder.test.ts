@@ -119,7 +119,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open "File manager" page and verify tooltip with name is shown on hover the folder',
+      'Open to "File manager" page and verify tooltip with name is shown on hover the folder',
       async () => {
         await fileManagerPage.openFileManagerPage();
         await fileManagerPage.waitForPageLoaded();
