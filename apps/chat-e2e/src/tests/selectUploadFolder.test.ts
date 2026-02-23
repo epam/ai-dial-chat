@@ -218,12 +218,7 @@ dialTest(
     baseAssertion,
     localStorageManager,
   }) => {
-    setTestIds(
-      'EPMRTC-3271',
-      'EPMRTC-1801',
-      'EPMRTC-3245',
-      'EPMRTC-3255',
-    );
+    setTestIds('EPMRTC-3271', 'EPMRTC-1801', 'EPMRTC-3245', 'EPMRTC-3255');
     const longFolderName = GeneratorUtil.randomString(150);
     let folderInput: Locator;
 
@@ -248,7 +243,8 @@ dialTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         folderInput = selectFolderManagerModalGrid.getRenameInput('');
         await folderInput.fill(longFolderName);
-        folderInput = selectFolderManagerModalGrid.getRenameInput(longFolderName);
+        folderInput =
+          selectFolderManagerModalGrid.getRenameInput(longFolderName);
         await folderInput.press('Enter');
         await baseAssertion.assertElementTextIsTruncated(
           selectFolderManagerModalGrid.gridNameCellValue(longFolderName),
@@ -263,7 +259,8 @@ dialTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         let childInput = selectFolderManagerModalGrid.getRenameInput('');
         await childInput.fill(longFolderName);
-        childInput = selectFolderManagerModalGrid.getRenameInput(longFolderName);
+        childInput =
+          selectFolderManagerModalGrid.getRenameInput(longFolderName);
         await childInput.press('Enter');
         await baseAssertion.assertElementTextIsTruncated(
           selectFolderManagerModalGrid.gridNameCellValue(longFolderName),
@@ -411,7 +408,8 @@ dialTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         let input = selectFolderManagerModalGrid.getRenameInput('');
         await input.fill(nameWithTrailingDot);
-        input = selectFolderManagerModalGrid.getRenameInput(nameWithTrailingDot);
+        input =
+          selectFolderManagerModalGrid.getRenameInput(nameWithTrailingDot);
         await input.press('Enter');
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           nameWithTrailingDot,
@@ -454,7 +452,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Select folder] Folder name can not be blank or with spaces only',
   async ({
     dialHomePage,
@@ -485,7 +483,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Set new folder name empty or to spaces, confirm and verify default name is applied',
+      'Set new folder name empty or to spaces, confirm and verify inline error is shown',
       async () => {
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderManagerModal.getAddFolderButton().click();
@@ -493,9 +491,8 @@ dialTest.only(
         await input.fill(nameWithSpaces);
         input = selectFolderManagerModalGrid.getRenameInput(nameWithSpaces);
         await input.press('Enter');
-        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-          'visible',
+        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+          nameWithSpaces,
         );
       },
     );
