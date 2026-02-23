@@ -392,6 +392,7 @@ export enum MenuOptions {
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
+  newFolder = 'New folder',
   upload = 'Upload',
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
@@ -496,8 +497,10 @@ export const API = {
   fileHost: () => `/api/${API.filesHostSegment}`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
   deleteFileHost: () => `${API.fileHost()}/delete`,
-  folderFilesListingHost: (folderName: string) =>
-    `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`,
+  folderFilesListingHost: (folderName?: string) =>
+    folderName
+      ? `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`
+      : '?filter=ITEM',
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
