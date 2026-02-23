@@ -12,11 +12,11 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialAdminTest.skip(
+dialAdminTest(
   'Publish custom app from context menu from card list view.\n' +
     'Publish custom app: version of app is displayed.\n' +
     'Author field is editable on publication request.\n' +
@@ -35,6 +35,8 @@ dialAdminTest.skip(
       customApplicationBuilder,
       applicationApiHelper,
       adminNavigationPanel,
+      adminFileManagerGridAssertion,
+      adminFileManagerToolbar,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
       baseAssertion,
@@ -57,9 +59,6 @@ dialAdminTest.skip(
       adminAppToApproveAssertion,
       adminTooltip,
       adminTooltipAssertion,
-      adminManageAttachmentsAssertion,
-      adminChatBar,
-      adminAttachFilesModal,
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
@@ -359,13 +358,12 @@ dialAdminTest.skip(
           'hidden',
         );
 
-        await adminChatBar.openManageAttachmentsModal();
-        await adminManageAttachmentsAssertion.assertEntityState(
-          { name: filename },
-          FileModalSection.Organization,
+        await adminNavigationPanel.goToFileManager();
+        await adminFileManagerToolbar.organizationTab.click();
+        await adminFileManagerGridAssertion.assertGridRowByNameState(
+          filename,
           'visible',
         );
-        await adminAttachFilesModal.closeButton.click();
       },
     );
 
