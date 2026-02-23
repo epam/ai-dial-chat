@@ -3,6 +3,7 @@ import {
   IconArrowsMinimize,
   IconRefresh,
 } from '@tabler/icons-react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
@@ -64,9 +65,20 @@ export const VisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle, requestTimeout } = renderer;
+  const { data: session } = useSession();
+  const { url: rendererUrl, title: visualizerTitle, requestTimeout, isAuth } = renderer;
 
   const dispatch = useAppDispatch();
+
+  const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    if (!isAuth || !session) return {};
+    const email = session.user?.email ?? undefined;
+    const providerId = (session as { providerId?: string }).providerId;
+    return {
+      ...(email != null && { logInHint: email }),
+      ...(providerId != null && { providerId }),
+    };
+  }, [isAuth, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
@@ -121,6 +133,7 @@ export const VisualizerRenderer = ({
                 DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
             ),
       themeId,
+      ...authLayoutFields,
     };
   }, [
     containerHeight,
@@ -128,6 +141,7 @@ export const VisualizerRenderer = ({
     isFullScreen,
     scrollWidth,
     themeId,
+    authLayoutFields,
   ]);
 
   const sendMessage = useCallback(

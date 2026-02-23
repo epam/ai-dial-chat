@@ -3,6 +3,7 @@ import {
   IconArrowsMinimize,
   IconRefresh,
 } from '@tabler/icons-react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
@@ -68,8 +69,12 @@ export const GroupedVisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle = 'Visualizer' } =
-    visualizerConfig;
+  const { data: session } = useSession();
+  const {
+    url: rendererUrl,
+    title: visualizerTitle = 'Visualizer',
+    isAuth,
+  } = visualizerConfig;
 
   const dispatch = useAppDispatch();
 
@@ -78,6 +83,16 @@ export const GroupedVisualizerRenderer = ({
   );
 
   const themeId = useAppSelector(UISelectors.selectThemeState);
+
+  const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    if (!isAuth || !session) return {};
+    const email = session.user?.email ?? undefined;
+    const providerId = (session as { providerId?: string }).providerId;
+    return {
+      ...(email != null && { logInHint: email }),
+      ...(providerId != null && { providerId }),
+    };
+  }, [isAuth, session]);
 
   const loadedCustomAttachmentsData = useAppSelector(
     ConversationsSelectors.selectLoadedCustomAttachmentsData,
@@ -148,6 +163,7 @@ export const GroupedVisualizerRenderer = ({
           ? containerHeight
           : DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
       themeId,
+      ...authLayoutFields,
     };
 
     return {
@@ -158,6 +174,7 @@ export const GroupedVisualizerRenderer = ({
     allAttachmentsLoaded,
     attachments,
     loadedCustomAttachmentsData,
+    authLayoutFields,
     scrollWidth,
     containerHeight,
     isFullScreen,
