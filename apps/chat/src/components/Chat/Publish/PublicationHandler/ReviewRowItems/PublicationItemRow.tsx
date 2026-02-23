@@ -216,17 +216,17 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   );
 
   const overrideTriggerText = useMemo(() => {
-    if (isDeleteAction && itemVersionsSelected.length > 1) {
-      const isAllVersionsSelected =
-        versionGroup?.allVersions.length === itemVersionsSelected.length ||
-        modelsVersionGroup.length === itemVersionsSelected.length ||
-        toolsetVersionGroup.length === itemVersionsSelected.length;
+    if (isDeleteAction) {
+      if (itemVersionsSelected.length > 1) {
+        const isAllVersionsSelected =
+          versionGroup?.allVersions.length === itemVersionsSelected.length ||
+          modelsVersionGroup.length === itemVersionsSelected.length ||
+          toolsetVersionGroup.length === itemVersionsSelected.length;
 
-      return t(isAllVersionsSelected ? 'All' : 'Few');
-    }
-
-    if (itemVersionsSelected.length === 1) {
-      return getVersionFromId(itemVersionsSelected[0]);
+        return t(isAllVersionsSelected ? 'All' : 'Few');
+      } else if (itemVersionsSelected.length === 1) {
+        return getVersionFromId(itemVersionsSelected[0]);
+      }
     }
 
     return undefined;
