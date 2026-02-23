@@ -156,6 +156,8 @@ export const SelectFolderManagerModalSelectors = {
   headingId: '#dial-popup-heading',
   /** Expected heading text */
   headingText: 'Select folder',
+  /** Differs from FileManagerModal ('close') — this dialog uses 'Close dialog' (UI kit pattern). */
+  closeButton: 'Close dialog',
 };
 
 export const PublishingDialogSelectors = {

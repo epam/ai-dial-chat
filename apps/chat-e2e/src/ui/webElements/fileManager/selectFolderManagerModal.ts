@@ -17,6 +17,22 @@ import { Page } from '@playwright/test';
 export class SelectFolderManagerModal extends BaseFileManagerModal {
   private selectFolderButton!: Button;
   private cancelButton!: Button;
+  private closeDialogButton!: Button;
+
+  /**
+   * Overrides base close button because SelectFolderManagerModal uses
+   * aria-label="Close dialog" instead of aria-label="close" (FileManagerModal).
+   */
+  override getCloseButton(): Button {
+    if (!this.closeDialogButton) {
+      this.closeDialogButton = new Button(
+        this.page,
+        SelectFolderManagerModalSelectors.closeButton,
+        this.rootLocator,
+      );
+    }
+    return this.closeDialogButton;
+  }
 
   constructor(page: Page) {
     // Find dialog with specific heading text
