@@ -3,7 +3,11 @@ import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getQuickApp2Config, isQuickApp2 } from '@/src/utils/app/application';
+import {
+  getQuickApp2Config,
+  getQuickAppItemNameFromConfig,
+  isQuickApp2,
+} from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { isApplicationId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -14,6 +18,7 @@ import {
   DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
+  UnknownToolset,
   isCodeInterpreterToolset,
   isDialDeploymentToolset,
   isMcpToolset,
@@ -31,6 +36,7 @@ import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSele
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Feature } from '@epam/ai-dial-shared';
+import groupBy from 'lodash-es/groupBy';
 
 interface DocumentFieldProps {
   url?: string;
@@ -90,44 +96,58 @@ const ReviewQuickApp2SectionView = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
-  const { agents, toolsets, isCodeInterpreter } = useMemo(
+  const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
       (config.tool_sets ?? []).reduce<{
         agents: (DialDeploymentSimpleTool & { name: string })[];
         toolsets: (MCPToolset & { name: string })[];
+        unknownToolsets: (UnknownToolset & { name: string })[];
         isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
           if (isDialDeploymentToolset(toolset)) {
-            acc.agents = toolset.tools.map((tool) => ({
+            const { appTools = [], otherTools = [] } = groupBy(
+              toolset.tools,
+              (t) =>
+                modelsMap[ApiUtils.decodeApiUrl(t.deployment_id)]
+                  ? 'appTools'
+                  : 'otherTools',
+            );
+            acc.agents = appTools.map((tool) => ({
               ...tool,
-              name: isApplicationId(tool.deployment_id)
-                ? ApiUtils.decodeApiUrl(
-                    parseEntityApiKey(splitEntityId(tool.deployment_id).name, {
-                      parseVersion: true,
-                    }).name,
-                  )
-                : tool.deployment_id,
+              name: getQuickAppItemNameFromConfig(tool),
             }));
+            acc.unknownToolsets.concat(
+              otherTools.map((tool) => ({
+                ...tool,
+                name: getQuickAppItemNameFromConfig(tool),
+              })),
+            );
           } else if (isMcpToolset(toolset)) {
             acc.toolsets.push({
               ...toolset,
-              name:
-                toolset.name ||
-                ApiUtils.decodeApiUrl(
-                  parseEntityApiKey(splitEntityId(toolset.dial_id).name, {
-                    parseVersion: true,
-                  }).name,
-                ),
+              name: getQuickAppItemNameFromConfig(toolset),
             });
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
+          } else {
+            acc.unknownToolsets.push({
+              ...toolset,
+              name: getQuickAppItemNameFromConfig(
+                toolset as unknown as MCPToolset,
+              ),
+            });
           }
           return acc;
         },
-        { agents: [], toolsets: [], isCodeInterpreter: false },
+        {
+          agents: [],
+          toolsets: [],
+          unknownToolsets: [],
+          isCodeInterpreter: false,
+        },
       ),
-    [config.tool_sets],
+    [config.tool_sets, modelsMap],
   );
 
   const orchestratorModel = modelsMap[config.orchestrator.deployment.name];
@@ -232,6 +252,14 @@ const ReviewQuickApp2SectionView = ({
                 />
               );
             })}
+            {unknownToolsets.map((toolset) => (
+              <AgentAndToolsetChip
+                id={toolset.name}
+                item={undefined}
+                key={toolset.name}
+                readonly
+              />
+            ))}
           </div>
         </div>
       )}
