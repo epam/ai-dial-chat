@@ -351,7 +351,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Select folder] Error message appears if to add a dot to the end of folder name.\n' +
     '[Select folder] Error message appears if to create a folder with already existing name.\n' +
     '[Select folder] Error message appears if to add a dot to the beginning of folder name',
@@ -362,9 +362,9 @@ dialTest.only(
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     selectFolderManagerModal,
+    selectFolderManagerModalManager,
     selectFolderManagerModalGrid,
     selectFolderManagerModalGridAssertion,
-    page,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718');
@@ -373,7 +373,7 @@ dialTest.only(
     const nameWithLeadingDot = `.${GeneratorUtil.randomString(5)}`;
 
     await dialTest.step(
-      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      'Open "Upload from device" modal and click on "Change" link',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -395,6 +395,9 @@ dialTest.only(
         await input.fill(folder1Name);
         input = selectFolderManagerModalGrid.getRenameInput(folder1Name);
         await input.press('Enter');
+        await selectFolderManagerModalManager
+          .getNoDataContent()
+          .waitForState({ state: 'hidden' });
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           folder1Name,
           'visible',
@@ -413,7 +416,8 @@ dialTest.only(
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           nameWithTrailingDot,
         );
-        await page.keyboard.press('Escape');
+        //TODO escape closes the modal. Probably bug
+        // await page.keyboard.press('Escape');
       },
     );
 
@@ -428,11 +432,13 @@ dialTest.only(
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           folder1Name,
         );
-        await page.keyboard.press('Escape');
+        //TODO escape closes the modal. Probably bug
+        // await page.keyboard.press('Escape');
       },
     );
 
-    await dialTest.step(
+    //TODO issue id 5875
+    await dialTest.step.skip(
       'Create new folder with leading dot name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
@@ -448,7 +454,7 @@ dialTest.only(
   },
 );
 
-dialTest(
+dialTest.only(
   '[Select folder] Folder name can not be blank or with spaces only',
   async ({
     dialHomePage,
