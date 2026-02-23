@@ -171,7 +171,7 @@ export function PublicVersionSelector({
       trigger={
         <DialLinkButton
           onClick={stopBubbling}
-          disabled={mappedAllVersions.length <= 1}
+          disabled={mappedAllVersions.length <= 1 && readonly}
           className={classNames(
             'flex px-0 text-primary enabled:hover:text-primary',
             mappedAllVersions.length <= 1 &&
