@@ -52,6 +52,7 @@ import {
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  TooltipPortal,
   TopicsTooltip,
   UploadProgressDialog,
 } from '../ui/webElements';
@@ -74,6 +75,7 @@ import {
   EntityTreeAssertion,
   FileManagerGridAssertion,
   FolderAssertion,
+  FoldersTreeAssertion,
   FooterAssertion,
   MenuAssertion,
   PlaybackAssertion,
@@ -451,10 +453,12 @@ const dialTest = test.extend<{
   fileManagerModalFoldersTree: FoldersTree;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
+  fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
   fileManagerModalGridAssertion: FileManagerGridAssertion;
   fileConflictConfirmationPopup: ConfirmationPopup;
   fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
   uploadProgressDialog: UploadProgressDialog;
+  tooltipPortal: TooltipPortal;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1856,6 +1860,12 @@ const dialTest = test.extend<{
     );
     await use(fileManagerGridAssertion);
   },
+  fileManagerFoldersTreeAssertion: async ({ fileManagerFoldersTree }, use) => {
+    const fileManagerFoldersTreeAssertion = new FoldersTreeAssertion(
+      fileManagerFoldersTree,
+    );
+    await use(fileManagerFoldersTreeAssertion);
+  },
   fileManagerModalGridAssertion: async ({ fileManagerModalGrid }, use) => {
     const fileManagerModalGridAssertion = new FileManagerGridAssertion(
       fileManagerModalGrid,
@@ -1880,6 +1890,10 @@ const dialTest = test.extend<{
   uploadProgressDialog: async ({ page }, use) => {
     const uploadProgressDialog = new UploadProgressDialog(page);
     await use(uploadProgressDialog);
+  },
+  tooltipPortal: async ({ page }, use) => {
+    const tooltipPortal = new TooltipPortal(page);
+    await use(tooltipPortal);
   },
 });
 

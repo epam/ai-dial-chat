@@ -17,8 +17,10 @@ export const ExpectedMessages = {
   conversationsCountIsValid: 'Conversations count is valid',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
-  folderIsNotVisible: 'Folder is not visible in chat bar',
+  folderIsNotVisible: 'Folder is not visible',
   folderIsVisible: 'Folder is visible',
+  folderIsSelected: 'Folder is selected',
+  folderIsNotSelected: 'Folder is not selected',
   newFolderCreated: 'New folder is created',
   folderCollapsed: 'Folder is collapsed',
   folderExpanded: 'Folder is expanded',

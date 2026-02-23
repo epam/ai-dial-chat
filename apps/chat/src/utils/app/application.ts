@@ -24,7 +24,12 @@ import {
 import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
-import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
+import {
+  DialDeploymentSimpleTool,
+  MCPToolset,
+  QuickApp2Config,
+  QuickAppConfig,
+} from '@/src/types/quick-apps';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
@@ -42,7 +47,7 @@ import { AppsEditorSchemaTypes } from '@/src/components/AppsEditor/form';
 
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
-import { getApplicationRootId, getEntityBucket } from './id';
+import { getApplicationRootId, getEntityBucket, isApplicationId } from './id';
 import { isEntityIdPublic } from './publications';
 import { splitEntityId } from './shared-utils';
 import { translate } from './translation';
@@ -480,4 +485,45 @@ export const getEntityDisplayName = (
       parseVersion: true,
     }).name,
   );
+};
+
+export const getQuickAppItemNameFromConfig = (
+  item: MCPToolset | DialDeploymentSimpleTool,
+): string => {
+  if ('dial_id' in item) {
+    return (
+      item.name ||
+      ApiUtils.decodeApiUrl(
+        parseEntityApiKey(splitEntityId(item.dial_id).name, {
+          parseVersion: true,
+        }).name,
+      )
+    );
+  }
+
+  if (isApplicationId(item.deployment_id)) {
+    return ApiUtils.decodeApiUrl(
+      parseEntityApiKey(splitEntityId(item.deployment_id).name, {
+        parseVersion: true,
+      }).name,
+    );
+  }
+
+  if ('open_ai_tool' in item) {
+    return (
+      (item.open_ai_tool as { function?: { name?: string } })?.function?.name ||
+      'OpenAI Tool'
+    );
+  }
+
+  if ('name' in item && typeof item.name === 'string') {
+    return item.name;
+  }
+
+  if (!item.deployment_id) {
+    console.error('Dial Tool is missing deployment_id:', item);
+    return 'unknown';
+  }
+
+  return item.deployment_id;
 };
