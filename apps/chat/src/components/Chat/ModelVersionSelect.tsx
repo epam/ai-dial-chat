@@ -18,7 +18,6 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import { en } from 'zod/v4/locales';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
