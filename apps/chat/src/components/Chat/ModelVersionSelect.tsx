@@ -4,6 +4,9 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { getVersionFromId } from '@/src/utils/server/api';
+
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
@@ -15,6 +18,7 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import { en } from 'zod/v4/locales';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -27,9 +31,15 @@ const VersionPrefix = () => {
   );
 };
 
-const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
-  entity.version || entity.id;
-
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
+  if (entity.version) {
+    return entity.version;
+  }
+  if (isEntityIdPublic(entity) || entity.id !== entity.reference) {
+    return getVersionFromId(entity.id);
+  }
+  return entity.id;
+};
 interface EntityVersionSelectProps<T extends MarketplaceEntity> {
   entities: T[];
   currentEntity: T;

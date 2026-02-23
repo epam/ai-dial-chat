@@ -1,6 +1,12 @@
 import { ServerSlugs } from '@/src/types/slugs-types';
 
-import { decodeModelId, encodeModelId, getOpsApiUrl } from '../api';
+import {
+  decodeModelId,
+  encodeModelId,
+  getModelIdWithoutVersion,
+  getOpsApiUrl,
+  getVersionFromId,
+} from '../api';
 
 describe('decodeModelId and encodeModelId', () => {
   it.each([
@@ -43,5 +49,31 @@ describe('getOpsApiUrl', () => {
     expect(
       getOpsApiUrl(ServerSlugs.PUBLICATION_REJECT, 'test app', 'v1.0.0'),
     ).toBe('/api/ops/publication/reject/test app/v1.0.0');
+  });
+});
+
+describe('getModelIdWithoutVersion', () => {
+  it.each([
+    ['gpt_4', 'gpt_4'],
+    ['gpt_4__0.1.1', 'gpt_4'],
+    ['gpt_4__1', 'gpt_4__1'],
+    ['gpt_4___1', 'gpt_4___1'],
+    ['gpt_4____1', 'gpt_4____1'],
+    ['gpt_4__100.1000.11', 'gpt_4'],
+    ['gpt_4___0.0.1', 'gpt_4_'],
+    ['gpt_4____0.0.1', 'gpt_4__'],
+  ])('getModelIdWithoutVersion(%s) = %s', (id: string, expected: string) => {
+    expect(getModelIdWithoutVersion(id)).toBe(expected);
+  });
+});
+
+describe('getVersionFromId', () => {
+  it.each([
+    ['gpt_4', 'N/A'],
+    ['gpt_4__0.1.1', '0.1.1'],
+    ['gpt_4__100.1000.11', '100.1000.11'],
+    ['gpt_4__1', 'N/A'],
+  ])('getVersionFromId(%s) = %s', (id: string, expected: string) => {
+    expect(getVersionFromId(id)).toBe(expected);
   });
 });
