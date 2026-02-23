@@ -50,25 +50,28 @@ export function CreatePublicationHandler({
       formData?: PublicationRequestFormData,
     ) => {
       const resources = selectedPublicationItems.map((id) => {
-        if (isFileId(id)) {
-          const fileTargetUrl =
-            publication.resources.find((r) => r.sourceUrl === id)?.targetUrl ??
-            id;
+        const currentResource =
+          publication.resources.find((resource) => resource.reviewUrl === id) ??
+          null;
+        const targetUrl = currentResource?.targetUrl ?? id;
+        const sourceUrl = currentResource?.sourceUrl ?? id;
+        const reviewUrl = currentResource?.reviewUrl ?? id;
 
+        if (isFileId(id)) {
           return {
             action: publicationModel.action,
             sourceUrl: id,
             targetUrl: constructPath(
               ApiKeys.Files,
               formData?.publishToUrl ?? '',
-              ...fileTargetUrl.split('/').slice(2),
+              ...targetUrl.split('/').slice(2),
             ),
           };
         }
 
         return {
           action: publicationModel.action,
-          sourceUrl: id,
+          sourceUrl,
           targetUrl:
             publicationModel.action === PublishActions.DELETE
               ? constructPath(
@@ -77,8 +80,8 @@ export function CreatePublicationHandler({
                   ...id.split('/').slice(2),
                 )
               : getNewTargetUrlFromEditState(
-                  id,
-                  entitiesEditState[id],
+                  reviewUrl,
+                  entitiesEditState[reviewUrl],
                   foldersEditState,
                   publication.targetFolder,
                   formData?.publishToUrl ?? '',
