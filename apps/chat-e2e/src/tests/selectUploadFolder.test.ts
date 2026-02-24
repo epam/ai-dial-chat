@@ -216,7 +216,7 @@ dialTest(
     selectFolderManagerModalManager,
   }) => {
     setTestIds('EPMRTC-3271', 'EPMRTC-1801', 'EPMRTC-3245', 'EPMRTC-3255');
-    const longFolderName = GeneratorUtil.randomString(4);
+    const longFolderName = GeneratorUtil.randomString(150);
 
     await dialTest.step(
       'Open "Upload from device" modal and click on "Change" link',
