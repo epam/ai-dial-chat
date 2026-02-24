@@ -242,9 +242,3 @@ span.katex-mathml {
     @apply flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline;
   }
 }
-
-@layer components {
-  .bg-text-secondary {
-    background-color: var(--text-secondary);
-  }
-}

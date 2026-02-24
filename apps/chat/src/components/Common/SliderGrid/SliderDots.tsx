@@ -7,7 +7,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialButton } from '@epam/ai-dial-ui-kit';
 import range from 'lodash-es/range';
 
 const getDotSizeClass = (
@@ -128,10 +128,11 @@ export const SliderDots: React.FC<Props> = ({
             <>
               {!isMobileOrTablet && (
                 <DialButton
+                  size={ButtonSize.Small}
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="text-secondary hover:enabled:text-accent-primary"
+                  className="flex w-[24px] items-center p-0 text-secondary hover:enabled:text-accent-primary"
                   iconBefore={<IconCaretLeftFilled size={18} />}
                 />
               )}
@@ -152,7 +153,7 @@ export const SliderDots: React.FC<Props> = ({
                       >
                         <button
                           className={classNames(
-                            'bg-text-secondary rounded-full transition-all duration-200',
+                            'rounded-full bg-text-secondary transition-all duration-200',
                             getDotSizeClass(
                               slideNumber,
                               activeSlide,
@@ -167,10 +168,11 @@ export const SliderDots: React.FC<Props> = ({
               </div>
               {!isMobileOrTablet && (
                 <DialButton
+                  size={ButtonSize.Small}
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-secondary hover:enabled:text-accent-primary"
+                  className="flex w-[24px] items-center p-0 text-secondary hover:enabled:text-accent-primary"
                   iconBefore={<IconCaretRightFilled size={18} />}
                 />
               )}
