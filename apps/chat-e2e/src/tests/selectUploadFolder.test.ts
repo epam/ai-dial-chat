@@ -16,8 +16,8 @@ dialTest(
     '[Select folder] Rename new folder just after its creation on Enter.\n' +
     '[Select folder] Allowed special characters.\n' +
     '[Select folder] Spaces in the middle of folder name stay.\n' +
-    '[Upload from device] Change upload to folder with long name which is cut at the end with three dots.\n' +
-    '[Upload from device] Change upload to root folder',
+    '[Upload from device] Change upload to folder with long name which is cut at the end with three dots.',
+  // '[Upload from device] Change upload to root folder',
   async ({
     dialHomePage,
     setTestIds,
@@ -35,7 +35,8 @@ dialTest(
       'EPMRTC-3247',
       'EPMRTC-3250',
       'EPMRTC-3237',
-      'EPMRTC-3238',
+      //TODO the case is not actual with the new select folder manager
+      // 'EPMRTC-3238',
     );
     const updatedFolderName = `New folder 1    ${ExpectedConstants.allowedSpecialChars}`;
 
@@ -217,6 +218,7 @@ dialTest(
     selectFolderManagerModalGridAssertion,
     baseAssertion,
     localStorageManager,
+    selectFolderManagerModalManager,
   }) => {
     setTestIds('EPMRTC-3271', 'EPMRTC-1801', 'EPMRTC-3245', 'EPMRTC-3255');
     const longFolderName = GeneratorUtil.randomString(150);
@@ -273,6 +275,10 @@ dialTest(
       async () => {
         await selectFolderManagerModal.getCloseButton().click();
         await uploadFromDeviceModal.changeUploadToLocation();
+        await selectFolderManagerModalManager
+          .getFileManagerNavigationPanel()
+          .getBreadcrumb()
+          .clickBreadcrumbByName(FileManagerToolbarTabs.MyFiles);
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',

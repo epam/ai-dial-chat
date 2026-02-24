@@ -1,6 +1,10 @@
 import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
-import { GridSelectors, IconSelectors } from '@/src/ui/selectors';
+import {
+  GridSelectors,
+  IconSelectors,
+  InputSelectors,
+} from '@/src/ui/selectors';
 import { Checkbox, Dropdown, Grid, Input } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -130,16 +134,13 @@ export class FileManagerGrid extends Grid {
     }
   }
 
-  public getNameInputError(name: string) {
-    return this.getElementLocator().locator(
-      InputSelectors.inputErrorIcon(name),
-    );
+  public getNameInputError(_name: string) {
+    return this.gridNameCellInput.alertIcon.getElementLocator();
   }
 
   public getRenameInput(value: string) {
     return this.getElementLocator().locator(InputSelectors.value(value));
   }
-
 
   public async goToGridRowByNameCell(
     name: string,

@@ -79,18 +79,20 @@ export class FileManagerGridAssertion extends BaseAssertion {
     );
   }
 
-<<<<<<< feat/e2e-tetst-new-file-manager-4
   public async assertNameInputErrorState(
     name: string,
     expectedState: ElementState = 'visible',
   ) {
     await this.assertElementState(
       this.fileManagerGrid.getNameInputError(name),
-=======
+      expectedState,
+      ExpectedMessages.errorMessageIsShown,
+    );
+  }
+
   public async assertInputError(expectedState: ElementState = 'visible') {
     await this.assertElementState(
       this.fileManagerGrid.gridNameCellInput.alertIcon,
->>>>>>> development
       expectedState,
       ExpectedMessages.errorMessageIsShown,
     );
