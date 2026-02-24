@@ -8,7 +8,7 @@ import {
 import { Checkbox, Dropdown, Grid, Input } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-export const scrollingTimeout = 10000;
+export const scrollingTimeout = 1000;
 
 export class FileManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
@@ -147,7 +147,7 @@ export class FileManagerGrid extends Grid {
     pageNumber = 1,
   ): Promise<Locator> {
     await this.loadingIndicator.waitForState({ state: 'hidden' });
-    // await this.gridNameCellInput.waitForState({ state: 'hidden' });
+    await this.gridRows.getNthElement(1).waitFor();
     const gridRowByNameCellLocator = this.gridRowByNameCell(name);
     const scrollFullHeight = await this.gridViewPort
       .getElementLocator()
@@ -157,6 +157,7 @@ export class FileManagerGrid extends Grid {
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
     //try to scroll into grid record if it is visible on the page
+    await this.page.waitForTimeout(500);
     try {
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
         timeout: scrollingTimeout,

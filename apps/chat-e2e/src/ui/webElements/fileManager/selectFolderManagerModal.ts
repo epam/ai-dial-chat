@@ -1,6 +1,7 @@
+import { PopupSelectors } from '@/src/ui/selectors';
 import { BaseFileManagerModal } from '@/src/ui/webElements';
 import { Button } from '@/src/ui/webElements/common/button';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 /**
  * Simplified folder selection modal (new FileManager-based UI).
@@ -15,6 +16,14 @@ export class SelectFolderManagerModal extends BaseFileManagerModal {
 
   constructor(page: Page) {
     super(page);
+  }
+
+  /**
+   * SelectFolderManagerModal uses [aria-label="popup-description"] as content container
+   * (no [data-qa="file-manager"] wrapper).
+   */
+  protected override getFileManagerContentLocator(): Locator {
+    return this.rootLocator.locator(PopupSelectors.popupContent);
   }
 
   /**

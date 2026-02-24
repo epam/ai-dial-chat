@@ -1,4 +1,3 @@
-import { FileManagerSelectors, PopupSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
   FileManagerCollapsibleSidebar,
@@ -12,13 +11,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class FileManager extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    // Use .or to match both:
-    // - Full FileManager: [data-qa="file-manager"] (inside FileManagerModal)
-    // - Simplified popup: [aria-label="popup-description"] (inside SelectFolderManagerModal)
-    const combinedLocator = parentLocator
-      .locator(FileManagerSelectors.container)
-      .or(parentLocator.locator(PopupSelectors.popupContent));
-    super(page, '', combinedLocator);
+    super(page, '', parentLocator);
   }
 
   private fileManagerToolbar!: FileManagerToolbar;
