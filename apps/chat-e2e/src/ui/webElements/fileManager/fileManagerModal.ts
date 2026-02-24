@@ -1,7 +1,6 @@
-import { BaseFileManagerModal } from './baseFileManagerModal';
-
 import { UploadMenuOptions } from '@/src/testData';
 import { FileManagerModalSelectors } from '@/src/ui/selectors';
+import { BaseFileManagerModal } from '@/src/ui/webElements';
 import { Button } from '@/src/ui/webElements/common/button';
 import { Page } from '@playwright/test';
 
