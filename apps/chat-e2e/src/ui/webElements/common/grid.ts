@@ -31,11 +31,13 @@ export class Grid extends BaseElement {
       }),
     });
 
-  public gridRowColumnByCellValue = (columnId: string, value: string) =>
+  public gridRowColumn = (columnId: string) =>
     this.gridRows
       .getChildElementBySelector(GridSelectors.gridCell(columnId))
-      .getElementLocator()
-      .filter({
-        hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
-      });
+      .getElementLocator();
+
+  public gridRowColumnByCellValue = (columnId: string, value: string) =>
+    this.gridRowColumn(columnId).filter({
+      hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
+    });
 }
