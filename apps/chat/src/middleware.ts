@@ -23,13 +23,6 @@ export function middleware(request: NextRequest) {
 
   // Replace newline characters and spaces
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeader);
-  // eslint-disable-next-line no-console
-  console.log(
-    '-----for request path:',
-    path,
-    '-----Content Security Policy Header Value:',
-    contentSecurityPolicyHeaderValue,
-  );
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
