@@ -7,7 +7,6 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
-import { ButtonSize, DialButton } from '@epam/ai-dial-ui-kit';
 import range from 'lodash-es/range';
 
 const getDotSizeClass = (
@@ -127,18 +126,18 @@ export const SliderDots: React.FC<Props> = ({
           {sliderDotsArray.length > 1 && (
             <>
               {!isMobileOrTablet && (
-                <DialButton
-                  size={ButtonSize.Small}
+                <button
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="flex w-[24px] items-center p-0 text-secondary hover:enabled:text-accent-primary"
-                  iconBefore={<IconCaretLeftFilled size={18} />}
-                />
+                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable disabled:hover:text-secondary"
+                >
+                  <IconCaretLeftFilled size={18} />
+                </button>
               )}
-              <div className="flex max-w-[122px] overflow-hidden">
+              <div className="flex max-w-[176px] overflow-hidden">
                 <div
-                  className="flex items-center gap-2 transition-all duration-200"
+                  className="flex items-center gap-4 transition-all duration-200"
                   style={{
                     transform: `translateX(-${translateXValue}px)`,
                   }}
@@ -146,10 +145,10 @@ export const SliderDots: React.FC<Props> = ({
                   {sliderDotsArray.map((slideNumber) => {
                     return (
                       <div
-                        className="flex min-w-2 items-center justify-center"
                         key={slideNumber}
                         data-qa={`slider-dot-${slideNumber}`}
                         onClick={() => onSetActiveSlide(slideNumber)}
+                        className="flex min-w-2 items-center justify-center"
                       >
                         <button
                           className={classNames(
@@ -167,14 +166,14 @@ export const SliderDots: React.FC<Props> = ({
                 </div>
               </div>
               {!isMobileOrTablet && (
-                <DialButton
-                  size={ButtonSize.Small}
+                <button
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="flex w-[24px] items-center p-0 text-secondary hover:enabled:text-accent-primary"
-                  iconBefore={<IconCaretRightFilled size={18} />}
-                />
+                  className="text-controls-disable hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-controls-disable"
+                >
+                  <IconCaretRightFilled size={18} />
+                </button>
               )}
             </>
           )}
