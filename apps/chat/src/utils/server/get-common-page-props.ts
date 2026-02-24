@@ -2,41 +2,45 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
+
+
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 
+
+
 import { StorageType } from '@/src/types/storage';
 import { Translation } from '@/src/types/translation';
 
+
+
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import {
-  ACTION_QUERY_PARAM,
-  CONVERSATION_QUERY_PARAM,
-  ISOLATED_MODEL_QUERY_PARAM,
-} from '@/src/constants/chat';
+
+
+import { ACTION_QUERY_PARAM, CONVERSATION_QUERY_PARAM, ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
 import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
-import {
-  DEFAULT_QUICK_APPS_HOST,
-  DEFAULT_QUICK_APPS_MODEL,
-  DEFAULT_QUICK_APPS_SCHEMA_ID,
-} from '@/src/constants/quick-apps';
+import { DEFAULT_QUICK_APPS_HOST, DEFAULT_QUICK_APPS_MODEL, DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { HeadersNames } from '@/src/constants/server';
+
+
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+
+
 import { safeParseJSON } from '../json';
-import {
-  cleanHeaderDirectives,
-  getFrameContentSecurityPolicyDirectives,
-} from './headers-helpers';
+import { cleanHeaderDirectives, getFrameContentSecurityPolicyDirectives } from './headers-helpers';
+
+
 
 import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
+
 
 const disabledFeaturesForIsolatedView = new Set([
   Feature.ConversationsSection,
@@ -59,7 +63,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
 }) => {
   const requestCSPHeaders = req.headers[HeadersNames.CONTENT_SECURITY_POLICY];
 
-  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives(process.env.ALLOWED_IFRAME_ORIGINS, process.env.ALLOWED_IFRAME_SOURCES)}`;
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives()}`;
 
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
