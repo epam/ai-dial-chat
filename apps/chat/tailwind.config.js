@@ -53,7 +53,6 @@ module.exports = {
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
       'controls-disable': 'var(--controls-bg-disable, #7F8792)',
       'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
-      'text-secondary': 'var(--text-secondary, #9AA2AD)',
     },
     borderColor: commonBorderColors,
     stroke: commonBorderColors,
