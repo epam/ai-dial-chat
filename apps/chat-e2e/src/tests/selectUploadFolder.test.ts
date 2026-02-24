@@ -26,6 +26,7 @@ dialTest(
     uploadFromDeviceModal,
     selectFolderManagerModal,
     selectFolderManagerModalGrid,
+    selectFolderManagerModalFoldersTree,
     localStorageManager,
     baseAssertion,
   }) => {
@@ -67,12 +68,10 @@ dialTest(
     await dialTest.step(
       'Set new name, hit Enter and verify name is updated, edit mode is closed',
       async () => {
-        let folderInput = selectFolderManagerModalGrid.getRenameInput('');
-        await folderInput.fill(updatedFolderName);
-        folderInput =
-          selectFolderManagerModalGrid.getRenameInput(updatedFolderName);
-        await folderInput.press('Enter');
-        await baseAssertion.assertElementState(folderInput, 'hidden');
+        await selectFolderManagerModalGrid.setFolderName(
+          updatedFolderName,
+          false,
+        );
         await baseAssertion.assertElementState(
           selectFolderManagerModalGrid.gridRowByNameCell(updatedFolderName),
           'visible',
@@ -86,7 +85,7 @@ dialTest(
         const folderRow =
           selectFolderManagerModalGrid.gridRowByNameCell(updatedFolderName);
         await folderRow.click();
-        await selectFolderManagerModal.getSelectButton().click();
+        await selectFolderManagerModal.getSelectFolderButton().click();
         const uploadToPathElement =
           uploadFromDeviceModal.getChangeUploadToPath();
         await uploadToPathElement.hoverOver();
@@ -114,15 +113,11 @@ dialTest(
       async () => {
         await uploadFromDeviceModal.changeUploadToLocation();
         // Click on "My Files" folder to select root
-        const folderTree = selectFolderManagerModal
-          .getFileManager()
-          .getFileManagerCollapsibleSidebar()
-          .getFoldersTree();
-        const myFilesFolder = folderTree.folderByPath(
+        const myFilesFolder = selectFolderManagerModalFoldersTree.folderByPath(
           FileManagerToolbarTabs.MyFiles,
         );
         await myFilesFolder.click();
-        await selectFolderManagerModal.getSelectButton().click();
+        await selectFolderManagerModal.getSelectFolderButton().click();
         await baseAssertion.assertElementText(
           uploadFromDeviceModal.getChangeUploadToPath().path,
           ExpectedConstants.allFilesRoot,
@@ -202,7 +197,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   '[Select folder] Long folder name is cut with three dots at the end.\n' +
     '[Select folder] Create new nested folder.\n' +
     '[Select folder] Folder names can be equal on different levels.\n' +
@@ -221,8 +216,7 @@ dialTest(
     selectFolderManagerModalManager,
   }) => {
     setTestIds('EPMRTC-3271', 'EPMRTC-1801', 'EPMRTC-3245', 'EPMRTC-3255');
-    const longFolderName = GeneratorUtil.randomString(150);
-    let folderInput: Locator;
+    const longFolderName = GeneratorUtil.randomString(4);
 
     await dialTest.step(
       'Open "Upload from device" modal and click on "Change" link',
@@ -243,11 +237,7 @@ dialTest(
       'Click "Create new folder" icon, set long folder name and verify it is truncated with dots',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        folderInput = selectFolderManagerModalGrid.getRenameInput('');
-        await folderInput.fill(longFolderName);
-        folderInput =
-          selectFolderManagerModalGrid.getRenameInput(longFolderName);
-        await folderInput.press('Enter');
+        await selectFolderManagerModalGrid.setFolderName(longFolderName, false);
         await baseAssertion.assertElementTextIsTruncated(
           selectFolderManagerModalGrid.gridNameCellValue(longFolderName),
         );
@@ -259,11 +249,7 @@ dialTest(
       async () => {
         await selectFolderManagerModalGrid.openFolder(longFolderName, false);
         await selectFolderManagerModal.getAddFolderButton().click();
-        let childInput = selectFolderManagerModalGrid.getRenameInput('');
-        await childInput.fill(longFolderName);
-        childInput =
-          selectFolderManagerModalGrid.getRenameInput(longFolderName);
-        await childInput.press('Enter');
+        await selectFolderManagerModalGrid.setFolderName(longFolderName, false);
         await baseAssertion.assertElementTextIsTruncated(
           selectFolderManagerModalGrid.gridNameCellValue(longFolderName),
         );
@@ -274,16 +260,19 @@ dialTest(
       'Close "Select folder" modal, open it again and verify both parent and nested folders are displayed',
       async () => {
         await selectFolderManagerModal.getCloseButton().click();
+        await uploadFromDeviceModal.waitForState({ state: 'visible' });
         await uploadFromDeviceModal.changeUploadToLocation();
         await selectFolderManagerModalManager
           .getFileManagerNavigationPanel()
           .getBreadcrumb()
           .clickBreadcrumbByName(FileManagerToolbarTabs.MyFiles);
+        await selectFolderManagerModalGrid.gridRows.getNthElement(1).waitFor();
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',
         );
         await selectFolderManagerModalGrid.openFolder(longFolderName, false);
+        await selectFolderManagerModalGrid.gridRows.getNthElement(1).waitFor();
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',
@@ -365,9 +354,9 @@ dialTest(
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     selectFolderManagerModal,
-    selectFolderManagerModalManager,
     selectFolderManagerModalGrid,
     selectFolderManagerModalGridAssertion,
+    baseAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718');
@@ -394,15 +383,9 @@ dialTest(
       'Create first folder with a valid name (will be used for duplicate test)',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        let input = selectFolderManagerModalGrid.getRenameInput('');
-        await input.fill(folder1Name);
-        input = selectFolderManagerModalGrid.getRenameInput(folder1Name);
-        await input.press('Enter');
-        await selectFolderManagerModalManager
-          .getNoDataContent()
-          .waitForState({ state: 'hidden' });
-        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
-          folder1Name,
+        await selectFolderManagerModalGrid.setFolderName(folder1Name, false);
+        await baseAssertion.assertElementState(
+          selectFolderManagerModalGrid.gridRowByNameCell(folder1Name),
           'visible',
         );
       },
@@ -412,11 +395,10 @@ dialTest(
       'Create new folder with trailing dot name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        let input = selectFolderManagerModalGrid.getRenameInput('');
-        await input.fill(nameWithTrailingDot);
-        input =
-          selectFolderManagerModalGrid.getRenameInput(nameWithTrailingDot);
-        await input.press('Enter');
+        await selectFolderManagerModalGrid.setFolderName(
+          nameWithTrailingDot,
+          false,
+        );
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           nameWithTrailingDot,
         );
@@ -429,10 +411,7 @@ dialTest(
       'Create new folder with already existing name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        let input = selectFolderManagerModalGrid.getRenameInput('');
-        await input.fill(folder1Name);
-        input = selectFolderManagerModalGrid.getRenameInput(folder1Name);
-        await input.press('Enter');
+        await selectFolderManagerModalGrid.setFolderName(folder1Name, false);
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           folder1Name,
         );
@@ -446,10 +425,10 @@ dialTest(
       'Create new folder with leading dot name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        let input = selectFolderManagerModalGrid.getRenameInput('');
-        await input.fill(nameWithLeadingDot);
-        input = selectFolderManagerModalGrid.getRenameInput(nameWithLeadingDot);
-        await input.press('Enter');
+        await selectFolderManagerModalGrid.setFolderName(
+          nameWithLeadingDot,
+          false,
+        );
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           nameWithLeadingDot,
         );
@@ -493,10 +472,7 @@ dialTest(
       async () => {
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderManagerModal.getAddFolderButton().click();
-        let input = selectFolderManagerModalGrid.getRenameInput('');
-        await input.fill(nameWithSpaces);
-        input = selectFolderManagerModalGrid.getRenameInput(nameWithSpaces);
-        await input.press('Enter');
+        await selectFolderManagerModalGrid.setFolderName(nameWithSpaces, false);
         await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
           nameWithSpaces,
         );

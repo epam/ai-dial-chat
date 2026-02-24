@@ -149,17 +149,6 @@ export const SelectFolderModalSelectors = {
   searchInput: '[data-qa="search-folder"]',
 };
 
-export const SelectFolderManagerModalSelectors = {
-  /** Main dialog role selector */
-  dialogRole: '[role="dialog"]',
-  /** Heading ID for filtering dialogs */
-  headingId: '#dial-popup-heading',
-  /** Expected heading text */
-  headingText: 'Select folder',
-  /** Differs from FileManagerModal ('close') — this dialog uses 'Close dialog' (UI kit pattern). */
-  closeButton: 'Close dialog',
-};
-
 export const PublishingDialogSelectors = {
   dialogContainer: '[data-qa="publish-dialog"]',
   requestName: '[data-qa="publishRequestName"]',

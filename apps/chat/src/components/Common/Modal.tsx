@@ -1,30 +1,20 @@
-import {
-  FloatingFocusManager,
-  FloatingOverlay,
-  FloatingPortal,
-  UseDismissProps,
-  useDismiss,
-  useFloating,
-  useInteractions,
-  useRole,
-} from '@floating-ui/react';
-import {
-  FormEvent,
-  FormHTMLAttributes,
-  KeyboardEventHandler,
-  MouseEvent,
-  MutableRefObject,
-  ReactNode,
-  useCallback,
-} from 'react';
+import { FloatingFocusManager, FloatingOverlay, FloatingPortal, UseDismissProps, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
+import { FormEvent, FormHTMLAttributes, KeyboardEventHandler, MouseEvent, MutableRefObject, ReactNode, useCallback } from 'react';
+
+
 
 import classNames from 'classnames';
 
+
+
 import { ModalState } from '@/src/types/modal';
+
+
 
 import { CloseButtonSmall } from './CloseButtons';
 import { Spinner } from './Spinner';
 import { Tooltip } from './Tooltip';
+
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
@@ -114,6 +104,7 @@ function ModalView({
               {...getFloatingProps()}
               data-qa={dataQa}
               {...(form && { ...form })}
+              aria-modal="true"
             >
               {!hideClose && (
                 <CloseButtonSmall

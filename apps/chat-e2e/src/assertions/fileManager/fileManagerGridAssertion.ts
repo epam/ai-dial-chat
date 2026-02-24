@@ -22,24 +22,24 @@ export class FileManagerGridAssertion extends BaseAssertion {
       // if the grid is not empty, go on top of the grid and look for the record
       await this.fileManagerGrid.goTop();
       // goToGridRowByNameCell throws exception if element is not found after scrolling through all pages
-      try {
-        const gridRowByNameLocator =
-          await this.fileManagerGrid.goToGridRowByNameCell(name);
-        await this.assertElementState(
-          gridRowByNameLocator,
-          expectedState,
-          expectedState === 'visible'
-            ? ExpectedMessages.gridRowIsVisible
-            : ExpectedMessages.gridRowIsNotVisible,
-        );
-      } catch {
-        // Element not found - assert this matches expected hidden state
-        this.assertBooleanCondition(
-          true,
-          expectedState === 'hidden',
-          ExpectedMessages.gridRowIsNotVisible,
-        );
-      }
+      // try {
+      const gridRowByNameLocator =
+        await this.fileManagerGrid.goToGridRowByNameCell(name);
+      await this.assertElementState(
+        gridRowByNameLocator,
+        expectedState,
+        expectedState === 'visible'
+          ? ExpectedMessages.gridRowIsVisible
+          : ExpectedMessages.gridRowIsNotVisible,
+      );
+      // } catch {
+      //   // Element not found - assert this matches expected hidden state
+      //   this.assertBooleanCondition(
+      //     true,
+      //     expectedState === 'hidden',
+      //     ExpectedMessages.gridRowIsNotVisible,
+      //   );
+      // }
     } else {
       this.assertBooleanCondition(
         true,

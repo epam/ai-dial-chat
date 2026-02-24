@@ -1,4 +1,4 @@
-import { FileManagerSelectors } from '@/src/ui/selectors';
+import { FileManagerSelectors, PopupSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
   FileManagerCollapsibleSidebar,
@@ -17,7 +17,7 @@ export class FileManager extends BaseElement {
     // - Simplified popup: [aria-label="popup-description"] (inside SelectFolderManagerModal)
     const combinedLocator = parentLocator
       .locator(FileManagerSelectors.container)
-      .or(parentLocator.locator(FileManagerSelectors.popupDescription));
+      .or(parentLocator.locator(PopupSelectors.popupContent));
     super(page, '', combinedLocator);
   }
 
