@@ -73,6 +73,8 @@ describe('getVersionFromId', () => {
     ['gpt_4__0.1.1', '0.1.1'],
     ['gpt_4__100.1000.11', '100.1000.11'],
     ['gpt_4__1', 'N/A'],
+    ['conversations/bucket/echo__4', 'N/A'],
+    ['conversations/bucket/echo__4__0.1.1', '0.1.1'],
   ])('getVersionFromId(%s) = %s', (id: string, expected: string) => {
     expect(getVersionFromId(id)).toBe(expected);
   });
