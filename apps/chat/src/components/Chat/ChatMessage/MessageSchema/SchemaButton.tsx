@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { FormSchemaButtonOption, MessageFormValue } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   option: FormSchemaButtonOption;
@@ -43,7 +43,7 @@ export const SchemaButton: React.FC<Props> = ({
   }, [option.title, selectedAction, dispatch]);
 
   return (
-    <DialButton
+    <DialNeutralButton
       data-no-context-menu
       key={`${option.const}`}
       ref={buttonRef}
