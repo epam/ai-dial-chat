@@ -156,9 +156,11 @@ export class FileManagerGrid extends Grid {
       .getElementLocator()
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
-    //try to scroll into grid record if it is visible on the page
+    // Hours wasted here: 5
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for ag grid to finish rendering and animation, etc
     await this.page.waitForTimeout(500);
     try {
+      //try to scroll into grid record if it is visible on the page
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
         timeout: scrollingTimeout,
       });

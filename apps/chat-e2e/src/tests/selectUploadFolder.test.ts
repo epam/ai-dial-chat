@@ -197,7 +197,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Select folder] Long folder name is cut with three dots at the end.\n' +
     '[Select folder] Create new nested folder.\n' +
     '[Select folder] Folder names can be equal on different levels.\n' +
