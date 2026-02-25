@@ -65,7 +65,7 @@ export function ConversationCompareItem({
 
       {conv.publicationInfo?.version && (
         <PublicVersionSelector
-          btnClassNames="cursor-pointer h-[34px] flex items-center"
+          btnClassNames="cursor-pointer h-[34px] !text-primary flex items-center"
           publicVersionGroupId={getPublicItemIdWithoutVersion(
             conv.publicationInfo.version,
             conv.id,

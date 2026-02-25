@@ -155,6 +155,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 <PublicVersionSelector
                   publicVersionGroupId={publicVersionGroupId}
                   onChangeSelectedVersion={handleChangeSelectedVersion}
+                  btnClassNames="!text-primary"
                 />
               )}
               <DialPrimaryButton
