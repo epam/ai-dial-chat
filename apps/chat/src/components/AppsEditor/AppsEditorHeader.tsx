@@ -216,7 +216,7 @@ export const AppsEditorHeader = ({
   );
 
   const saveLabel =
-    isExistingApp && !hasCustomEditor && agent && !isPublicApp
+    isExistingApp && !hasCustomEditor && !isPublicApp
       ? 'Save and exit'
       : 'Exit';
 
