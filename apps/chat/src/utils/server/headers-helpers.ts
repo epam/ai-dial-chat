@@ -28,7 +28,8 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
       ? `frame-src 'self' ${frameSrc.replace("'self'", '')}`
       : "frame-src 'none'";
 
-  return `
+  return [
+    `
     object-src 'none';
     base-uri 'self';
     script-src 'self' ${allowedScriptsSrc}
@@ -37,5 +38,7 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
      worker-src 'self' blob:;
     ${ancestorsDirective};
     ${frameSrcDirective};
-`;
+`,
+    nonce,
+  ];
 };

@@ -10,14 +10,12 @@ import { HeadersNames } from './constants/server';
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-
   const shouldIgnoreFrameOptions =
     (!process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
       process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false') &&
     (path === '/auth/signin' || path === '/api/auth/signin');
 
-  const cspHeader = getFrameContentSecurityPolicyDirectives(
+  const [cspHeader, nonce] = getFrameContentSecurityPolicyDirectives(
     shouldIgnoreFrameOptions,
   );
 
