@@ -262,17 +262,19 @@ dialTest(
         await selectFolderManagerModal.getCloseButton().click();
         await uploadFromDeviceModal.waitForState({ state: 'visible' });
         await uploadFromDeviceModal.changeUploadToLocation();
-        await selectFolderManagerModalManager
+        const breadcrumb = selectFolderManagerModalManager
           .getFileManagerNavigationPanel()
-          .getBreadcrumb()
-          .clickBreadcrumbByName(FileManagerToolbarTabs.MyFiles);
-        await selectFolderManagerModalGrid.gridRows.getNthElement(1).waitFor();
+          .getBreadcrumb();
+        await breadcrumb.clickBreadcrumbByName(FileManagerToolbarTabs.MyFiles);
+        // Wait for navigation to root: folder item disappears from breadcrumb
+        await breadcrumb.itemByName(longFolderName).waitFor({ state: 'detached' });
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',
         );
         await selectFolderManagerModalGrid.openFolder(longFolderName, false);
-        await selectFolderManagerModalGrid.gridRows.getNthElement(1).waitFor();
+        // Wait for navigation into folder: folder item appears in breadcrumb
+        await breadcrumb.itemByName(longFolderName).waitFor({ state: 'visible' });
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',
