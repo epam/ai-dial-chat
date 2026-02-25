@@ -219,6 +219,7 @@ export const ChatHeader = Inversify.register(
                       publicVersionGroupId={publicVersionGroupId}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
                       selectedEntityId={conversation.id}
+                      btnClassNames="!text-primary"
                     />
                   ) : (
                     <p
