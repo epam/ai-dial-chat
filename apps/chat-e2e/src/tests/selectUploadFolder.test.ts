@@ -267,14 +267,18 @@ dialTest(
           .getBreadcrumb();
         await breadcrumb.clickBreadcrumbByName(FileManagerToolbarTabs.MyFiles);
         // Wait for navigation to root: folder item disappears from breadcrumb
-        await breadcrumb.itemByName(longFolderName).waitFor({ state: 'detached' });
+        await breadcrumb
+          .itemByName(longFolderName)
+          .waitFor({ state: 'detached' });
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',
         );
         await selectFolderManagerModalGrid.openFolder(longFolderName, false);
         // Wait for navigation into folder: folder item appears in breadcrumb
-        await breadcrumb.itemByName(longFolderName).waitFor({ state: 'visible' });
+        await breadcrumb
+          .itemByName(longFolderName)
+          .waitFor({ state: 'visible' });
         await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
           longFolderName,
           'visible',

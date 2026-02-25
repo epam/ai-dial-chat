@@ -6,26 +6,26 @@ import { Page } from '@playwright/test';
 
 /**
  * Full-featured File Manager Modal.
- * Used for file/folder selection and management with complete toolbar.
+ * Uses [data-qa="file-manager-modal"] as unique selector (from Modal.tsx).
  */
 export class FileManagerModal extends BaseFileManagerModal {
   private attachButton!: Button;
   private selectButton!: Button;
-  private closeBtn!: Button;
+  private closeModalBtn!: Button;
 
   constructor(page: Page) {
-    super(page);
+    super(page, FileManagerModalSelectors.modalContainer);
   }
 
   /**
    * Override: FileManagerModal uses aria-label="close" (Modal.tsx),
-   * while Popup uses aria-label="Close dialog" (UI kit).
+   * while default is aria-label="Close dialog" (UI kit).
    */
   override getCloseButton(): Button {
-    if (!this.closeBtn) {
-      this.closeBtn = new Button(this.page, 'close', this.rootLocator);
+    if (!this.closeModalBtn) {
+      this.closeModalBtn = new Button(this.page, 'close', this.rootLocator);
     }
-    return this.closeBtn;
+    return this.closeModalBtn;
   }
 
   /**

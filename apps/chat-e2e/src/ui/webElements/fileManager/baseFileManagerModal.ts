@@ -6,13 +6,17 @@ import { Locator, Page } from '@playwright/test';
 /**
  * Abstract base class for File Manager like modals.
  * Provides shared functionality for both full FileManagerModal and SelectFolderManagerModal.
+ *
+ * Each subclass provides a unique selector via super(page, selector) to avoid
+ * strict mode violations when multiple dialogs are open simultaneously
+ * (e.g. FileManager + ConfirmationPopup).
  */
 export abstract class BaseFileManagerModal extends Popup {
   private _header!: FileManagerModalHeader;
   private fileManager!: FileManager;
 
-  protected constructor(page: Page) {
-    super(page);
+  protected constructor(page: Page, selector: string) {
+    super(page, selector);
   }
 
   /**
