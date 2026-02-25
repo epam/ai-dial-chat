@@ -130,7 +130,7 @@ export const SliderDots: React.FC<Props> = ({
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable disabled:hover:text-secondary"
+                  className="text-controls-disable enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
                   <IconCaretLeftFilled size={18} />
                 </button>
@@ -170,7 +170,7 @@ export const SliderDots: React.FC<Props> = ({
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-controls-disable hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-controls-disable"
+                  className="text-controls-disable enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
                   <IconCaretRightFilled size={18} />
                 </button>
