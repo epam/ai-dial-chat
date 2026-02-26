@@ -59,11 +59,17 @@ export class FileManagerGridAssertion extends BaseAssertion {
     );
   }
 
-  public async assertGridRowColor(name: string, expectedColor: string) {
+  public async assertGridRowBackgroundColor(
+    name: string,
+    expectedColor: string,
+  ) {
     await this.fileManagerGrid.goTop();
     const gridRowByNameLocator =
       await this.fileManagerGrid.goToGridRowByNameCell(name);
-    await this.assertElementColor(gridRowByNameLocator, expectedColor);
+    await this.assertElementBackgroundColors(
+      gridRowByNameLocator,
+      expectedColor,
+    );
   }
 
   public async assertGridCheckboxColor(name: string, expectedColor: string) {
@@ -73,23 +79,25 @@ export class FileManagerGridAssertion extends BaseAssertion {
     );
   }
 
-  public async assertRenameInputError(
-    name: string,
-    expectedState: ElementState = 'visible',
-  ) {
+  public async assertInputError(expectedState: ElementState = 'visible') {
     await this.assertElementState(
-      this.fileManagerGrid.getRenameInputError(name),
+      this.fileManagerGrid.gridNameCellInput.alertIcon,
+      expectedState,
+      ExpectedMessages.errorMessageIsShown,
+    );
+  }
+
+  public async assertGridNameCellInputState(expectedState: ElementState) {
+    await this.assertElementState(
+      this.fileManagerGrid.gridNameCellInput,
       expectedState,
     );
   }
 
-  public async assertRenameInputState(
-    value: string,
-    expectedState: ElementState,
-  ) {
-    await this.assertElementState(
-      this.fileManagerGrid.getRenameInput(value),
-      expectedState,
+  public async assertGridNameCellInputValue(expectedValue: string) {
+    await this.assertInputValue(
+      this.fileManagerGrid.gridNameCellInput.inputField,
+      expectedValue,
     );
   }
 }
