@@ -66,7 +66,12 @@ export const VisualizerRenderer = ({
 
   const [ready, setReady] = useState<boolean>();
   const { data: session } = useSession();
-  const { url: rendererUrl, title: visualizerTitle, requestTimeout, isAuth } = renderer;
+  const {
+    url: rendererUrl,
+    title: visualizerTitle,
+    requestTimeout,
+    isAuth,
+  } = renderer;
 
   const dispatch = useAppDispatch();
 
