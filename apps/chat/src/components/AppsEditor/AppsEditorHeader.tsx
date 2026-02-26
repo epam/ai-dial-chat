@@ -147,9 +147,10 @@ export const AppsEditorHeader = ({
 
   useEffect(() => {
     if (isPublicApp && !isAppLoading) {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         trigger();
       });
+      return () => clearTimeout(timerId);
     }
   }, [dispatch, isPublicApp, isAppLoading, trigger]);
 

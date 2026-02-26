@@ -72,9 +72,10 @@ export const ToolsetEditorHeader = ({
 
   useEffect(() => {
     if (isPublicToolset && !isToolsetDetailsLoading) {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         trigger();
       });
+      return () => clearTimeout(timerId);
     }
   }, [dispatch, isPublicToolset, isToolsetDetailsLoading, trigger]);
 
