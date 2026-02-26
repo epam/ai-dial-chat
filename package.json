@@ -194,7 +194,7 @@
     "esbuild": "0.27.3",
     "tmp": "0.2.5",
     "koa": "3.1.2",
-    "@module-federation/node": "2.7.32",
+    "@module-federation/node": "2.7.14",
     "prismjs": "1.30.0",
     "nodemailer": "7.0.10",
     "dompurify": "3.3.1",
