@@ -59,6 +59,7 @@ const initEpic: AppEpic = (action$, state$) =>
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
+        marketplaceFilterbarWidth: DataService.getMarketplaceFilterbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
         customLogo: DataService.getCustomLogo(),
         chatCollapsedSections: DataService.getChatCollapsedSections(),
@@ -75,6 +76,7 @@ const initEpic: AppEpic = (action$, state$) =>
         textOfClosedAnnouncement,
         chatbarWidth,
         promptbarWidth,
+        marketplaceFilterbarWidth,
         isChatFullWidth,
         customLogo,
         chatCollapsedSections,
@@ -101,6 +103,9 @@ const initEpic: AppEpic = (action$, state$) =>
         );
         actions.push(UIActions.setChatbarWidth(chatbarWidth));
         actions.push(UIActions.setPromptbarWidth(promptbarWidth));
+        actions.push(
+          UIActions.setMarketplaceFilterbarWidth(marketplaceFilterbarWidth),
+        );
         actions.push(UIActions.setIsChatFullWidth(isChatFullWidth));
         actions.push(
           UIActions.setCollapsedSections({
@@ -344,6 +349,15 @@ const savePromptbarWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const saveMarketplaceFilterbarWidthEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setMarketplaceFilterbarWidth.type),
+    switchMap(({ payload }) =>
+      DataService.setMarketplaceFilterbarWidth(payload),
+    ),
+    ignoreElements(),
+  );
+
 const saveIsChatFullWidthEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(UIActions.setIsChatFullWidth.type),
@@ -443,6 +457,7 @@ export const UIEpics = combineEpics(
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
+  saveMarketplaceFilterbarWidthEpic,
   saveIsChatFullWidthEpic,
   setCustomLogoEpic,
   setCollapsedSectionsEpic,

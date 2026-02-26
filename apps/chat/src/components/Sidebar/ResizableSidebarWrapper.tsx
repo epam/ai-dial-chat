@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -20,6 +22,7 @@ import {
   MOBILE_SIDEBAR_MIN_WIDTH,
   SIDEBAR_MIN_WIDTH,
 } from '@/src/constants/default-ui-settings';
+import { Routes } from '@/src/constants/routes';
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 
@@ -43,17 +46,24 @@ export function ResizableSidebarWrapper({
   handleClose,
 }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const sideBarElementRef = useRef<Resizable>(null);
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+  const marketplaceFilterbarWidth = useAppSelector(
+    UISelectors.selectMarketplaceFilterbarWidth,
+  );
   const isChatbarOpen = useAppSelector(UISelectors.selectShowChatbar);
   const isPromptbarOpen = useAppSelector(UISelectors.selectShowPromptbar);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isNavigationVisible = useAppSelector(
     UISelectors.selectIsNavigationVisible,
   );
+
+  const isMarketplaceFilterbar =
+    isLeftSidebar && router.route === Routes.Marketplace;
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -80,9 +90,20 @@ export function ResizableSidebarWrapper({
     if (windowWidth && isSmallScreen()) {
       return MOBILE_SIDEBAR_MIN_WIDTH;
     } else {
-      return isLeftSidebar ? chatbarWidth : promptbarWidth;
+      return isLeftSidebar
+        ? isMarketplaceFilterbar
+          ? marketplaceFilterbarWidth
+          : chatbarWidth
+        : promptbarWidth;
     }
-  }, [windowWidth, isLeftSidebar, chatbarWidth, promptbarWidth]);
+  }, [
+    windowWidth,
+    isLeftSidebar,
+    chatbarWidth,
+    promptbarWidth,
+    marketplaceFilterbarWidth,
+    isMarketplaceFilterbar,
+  ]);
 
   const centralChatMinWidth =
     windowWidth && isTabletScreen()
@@ -118,7 +139,7 @@ export function ResizableSidebarWrapper({
   }, [windowWidth, centralChatMinWidth, oppositeSidebarMinWidth]);
 
   const onResize: ResizeCallback = useCallback(() => {
-    if (!windowWidth) return;
+    if (!windowWidth || isMarketplaceFilterbar) return;
 
     const sidebarCurrentWidth =
       sideBarElementRef.current?.resizable?.getClientRects()[0].width;
@@ -164,6 +185,7 @@ export function ResizableSidebarWrapper({
     promptbarWidth,
     chatbarWidth,
     dispatch,
+    isMarketplaceFilterbar,
   ]);
 
   const onResizeStop = useCallback(() => {
@@ -176,6 +198,11 @@ export function ResizableSidebarWrapper({
 
     const width = resizableWidth ?? sidebarMinWidth;
 
+    if (isMarketplaceFilterbar) {
+      dispatch(UIActions.setMarketplaceFilterbarWidth(width));
+      return;
+    }
+
     if (isLeftSidebar) {
       dispatch(UIActions.setChatbarWidth(width));
     }
@@ -183,7 +210,7 @@ export function ResizableSidebarWrapper({
     if (!isLeftSidebar) {
       dispatch(UIActions.setPromptbarWidth(width));
     }
-  }, [dispatch, isLeftSidebar, sidebarMinWidth]);
+  }, [dispatch, isLeftSidebar, isMarketplaceFilterbar, sidebarMinWidth]);
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
