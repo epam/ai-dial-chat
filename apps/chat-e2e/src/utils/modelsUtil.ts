@@ -110,7 +110,9 @@ export class ModelsUtil {
 
   public static getModelsWithoutAttachment() {
     return ModelsUtil.getModels().filter(
-      (m) => m.inputAttachmentTypes === undefined,
+      (m) =>
+        m.inputAttachmentTypes === undefined ||
+        m.inputAttachmentTypes.length === 0,
     );
   }
 
