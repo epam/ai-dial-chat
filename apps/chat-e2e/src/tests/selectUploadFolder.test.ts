@@ -289,7 +289,7 @@ dialTest(
 );
 
 dialTest(
-  `[Select folder] Window changes it's height and Scroll appears`,
+  `[Select folder] Window changes it's height and Scroll doesn't appear`,
   async ({
     dialHomePage,
     setTestIds,
