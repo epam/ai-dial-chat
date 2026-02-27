@@ -36,7 +36,7 @@ export const MessageAttachments = ({
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const applicationVisualizerConfig = useAppSelector((state)=>
+  const applicationVisualizerConfig = useAppSelector((state) =>
     SettingsSelectors.selectApplicationVisualizerConfig(state, applicationId),
   );
 
