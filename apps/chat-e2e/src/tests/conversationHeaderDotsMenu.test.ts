@@ -171,7 +171,9 @@ dialTest(
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
         await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
-        const conversationJson = FileUtil.readJsonFileData(exportedData.path as string);
+        const conversationJson = FileUtil.readJsonFileData(
+          exportedData.path as string,
+        );
         baseAssertion.assertValue(
           conversationJson.history[0].id,
           conversation.id,
