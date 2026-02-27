@@ -98,7 +98,7 @@ const UserSchemaView = memo(function UserSchemaView({
       />
     );
 
-  return schemaPropertiesWithUserResponse ? (
+  return schemaPropertiesWithUserResponse.length ? (
     <div className="flex flex-col gap-6">
       {schemaPropertiesWithUserResponse.map((row) => (
         <div key={row.property}>
