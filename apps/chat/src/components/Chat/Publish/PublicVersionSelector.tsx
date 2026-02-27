@@ -173,11 +173,12 @@ export function PublicVersionSelector({
           onClick={stopBubbling}
           disabled={mappedAllVersions.length <= 1}
           className={classNames(
-            'flex px-0 text-primary enabled:hover:text-primary',
-            mappedAllVersions.length <= 1 &&
-              '!cursor-default text-controls-permanent',
+            'flex px-0',
+            mappedAllVersions.length <= 1 && 'cursor-default',
             btnClassNames,
-            readonly && 'text-xs text-secondary',
+            readonly
+              ? 'text-xs text-secondary'
+              : 'text-primary hover:text-primary',
           )}
           data-qa="version"
           textClassName={classNames(

@@ -464,9 +464,9 @@ export const MessageAttachment = ({
               />
             )}
           </div>
-          <button
+          <div
             onClick={handleDropdownClick}
-            className="flex grow items-center justify-between overflow-hidden"
+            className="flex grow cursor-pointer items-center justify-between overflow-hidden"
             data-qa={
               isExpanded ? 'attachment-expanded' : 'attachment-collapsed'
             }
@@ -532,7 +532,7 @@ export const MessageAttachment = ({
                 </a>
               )
             )}
-          </button>
+          </div>
         </div>
       )}
 

@@ -8,11 +8,10 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest.skip(
+dialTest(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file\n' +
@@ -29,13 +28,14 @@ dialTest.skip(
     sendMessage,
     chat,
     localStorageManager,
-    attachFilesModal,
     attachmentDropdownMenu,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     chatBar,
     compare,
     sendMessageInputAttachments,
+    fileManagerModalGrid,
+    fileManagerModal,
   }) => {
     setTestIds(
       'EPMRTC-5486',
@@ -44,12 +44,8 @@ dialTest.skip(
       'EPMRTC-5512',
       'EPMRTC-5497',
     );
-    // Select a model that allows file attachments
-    //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment().filter(
-        (m) => m.features?.configuration !== true,
-      ),
+      ModelsUtil.getLatestModelsWithAttachment(),
     );
     await localStorageManager.setRecentModelsIdsAndUseLastModel(
       modelWithAttachment,
@@ -118,11 +114,12 @@ dialTest.skip(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(
-          Attachment.sunImageName,
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
+        const attachmentCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.sunImageName,
+          );
+        await attachmentCheckbox.click();
+        await fileManagerModal.getAttachButton().click();
         await sendMessage.messageInput.fillInInput(initialMessage);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.use);
@@ -153,7 +150,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Use prompt with parameters for chat',
   async ({
     dialHomePage,
@@ -208,7 +205,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Use prompt option is not available for Chat in Replay mode\n' +
     'Use prompt is available for chat in Replay mode when response generation was stopped\n' +
     'Use prompt option is not available for Chat in Playback mode',
@@ -317,7 +314,7 @@ dialTest.skip(
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest.skip(
+dialAdminTest(
   'Use prompt not available for chat from Organization\n' +
     'Use prompt not available for chat from Approve required.\n' +
     'Use prompt option is not available when publication request is selected.\n' +
@@ -461,7 +458,7 @@ dialAdminTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Use prompt is not available for chat with not available agent\n' +
     'Use prompt is not available for chat with agent which not added to My workspace',
   async ({
@@ -558,7 +555,7 @@ dialTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Use prompt not available for chat from Shared with me\n' +
     `View prompt: 'Use prompt' button is disabled for just created new prompt if there is a chat without available input field selected.\n` +
     'Use prompt from "Shared with me" section for chat with history',
@@ -661,7 +658,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Use prompt from Organization for chat',
   async ({
     dialHomePage,
