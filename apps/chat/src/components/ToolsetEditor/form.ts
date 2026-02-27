@@ -165,7 +165,7 @@ export const getDefaultFormData = (
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
-    version: toolset?.version ?? DEFAULT_VERSION,
+    version: toolset ? toolset.version : DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
 
     ...getDefaultLoginFormData(
