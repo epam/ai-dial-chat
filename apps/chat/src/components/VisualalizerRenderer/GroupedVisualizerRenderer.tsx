@@ -70,7 +70,7 @@ export const GroupedVisualizerRenderer = ({
   const {
     url: rendererUrl,
     title: visualizerTitle = 'Visualizer',
-    isAuth,
+    passAuthInfo,
   } = visualizerConfig;
 
   const dispatch = useAppDispatch();
@@ -82,14 +82,14 @@ export const GroupedVisualizerRenderer = ({
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
-    if (!isAuth || !session) return {};
+    if (!passAuthInfo || !session) return {};
     const email = session.user?.email ?? undefined;
     const providerId = (session as { providerId?: string }).providerId;
     return {
       ...(email != null && { logInHint: email }),
       ...(providerId != null && { providerId }),
     };
-  }, [isAuth, session]);
+  }, [passAuthInfo, session]);
 
   const loadedCustomAttachmentsData = useAppSelector(
     ConversationsSelectors.selectLoadedCustomAttachments,

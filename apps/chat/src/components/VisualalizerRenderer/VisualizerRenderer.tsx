@@ -70,20 +70,20 @@ export const VisualizerRenderer = ({
     url: rendererUrl,
     title: visualizerTitle,
     requestTimeout,
-    isAuth,
+    passAuthInfo,
   } = renderer;
 
   const dispatch = useAppDispatch();
 
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
-    if (!isAuth || !session) return {};
+    if (!passAuthInfo || !session) return {};
     const email = session.user?.email ?? undefined;
     const providerId = (session as { providerId?: string }).providerId;
     return {
       ...(email != null && { logInHint: email }),
       ...(providerId != null && { providerId }),
     };
-  }, [isAuth, session]);
+  }, [passAuthInfo, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,

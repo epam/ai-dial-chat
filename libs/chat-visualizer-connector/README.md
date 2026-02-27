@@ -35,6 +35,7 @@ interface CustomVisualizer {
   icon: string;
   contentType: string;
   url: string;
+  passAuthInfo?: boolean;
 }
 ```
 
@@ -63,6 +64,7 @@ interface ApplicationVisualizerConfig {
   icon?: string;
   contentType: string;
   url: string;
+  passAuthInfo?: boolean;
 }
 ```
 
@@ -93,6 +95,8 @@ export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
   themeId?: string;
+  logInHint?: string;
+  providerId?: string;
 }
 
 export interface CustomVisualizerData {
