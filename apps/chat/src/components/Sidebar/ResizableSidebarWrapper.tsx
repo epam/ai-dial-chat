@@ -212,11 +212,16 @@ export function ResizableSidebarWrapper({
     }
   }, [dispatch, isLeftSidebar, isMarketplaceFilterbar, sidebarMinWidth]);
 
+  const sidebarThemeClassname = isMarketplaceFilterbar
+    ? undefined
+    : isLeftSidebar
+      ? 'sidebar-left'
+      : 'sidebar-right';
+
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
-    isLeftSidebar
-      ? 'sidebar-left left-0 border-r xl:left-0'
-      : 'sidebar-right right-0 border-l',
+    isLeftSidebar ? 'left-0 border-r xl:left-0' : 'right-0 border-l',
+    sidebarThemeClassname,
     isLeftSidebar &&
       isNavigationVisible &&
       (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
