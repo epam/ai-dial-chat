@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -56,14 +56,28 @@ export const ToolsetEditorHeader = ({
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
   const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  const isPublicToolset = currentToolset && isEntityIdPublic(currentToolset);
 
   const isExistingToolset = !!currentToolset;
+
+  const isToolsetDetailsLoading = useAppSelector(
+    ToolsetSelectors.selectIsToolsetDetailsLoading,
+  );
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
 
   const { trigger, control } = useFormContext<ToolsetEditorForm>();
   const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
+
+  useEffect(() => {
+    if (isPublicToolset && !isToolsetDetailsLoading) {
+      const timerId = setTimeout(() => {
+        trigger();
+      });
+      return () => clearTimeout(timerId);
+    }
+  }, [dispatch, isPublicToolset, isToolsetDetailsLoading, trigger]);
 
   const errorSteps = useMemo(() => {
     return stepFields.reduce<Set<ToolsetEditorSteps>>(
@@ -99,7 +113,7 @@ export const ToolsetEditorHeader = ({
       if (isExistingToolset) {
         const isValid = await trigger();
 
-        if (!isValid) {
+        if (!isValid && !isPublicToolset) {
           setSaveDraftDialog(true);
           setRedirectToChat(true);
           return;
@@ -107,7 +121,7 @@ export const ToolsetEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isExistingToolset, onSave, trigger],
+    [isExistingToolset, isPublicToolset, onSave, trigger],
   );
 
   const handleTabClick = useCallback(
@@ -122,13 +136,13 @@ export const ToolsetEditorHeader = ({
     if (isExistingToolset) {
       const isValid = await trigger();
 
-      if (!isValid) {
+      if (!isValid && !isPublicToolset) {
         setSaveDraftDialog(true);
         return;
       }
     }
     onSave();
-  }, [isExistingToolset, onSave, trigger]);
+  }, [isExistingToolset, isPublicToolset, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -151,10 +165,7 @@ export const ToolsetEditorHeader = ({
   );
 
   const saveLabel =
-    isExistingToolset &&
-    (currentToolset ? !isEntityIdPublic(currentToolset) : false)
-      ? 'Save and exit'
-      : 'Exit';
+    isExistingToolset && !isPublicToolset ? 'Save and exit' : 'Exit';
 
   return (
     <>

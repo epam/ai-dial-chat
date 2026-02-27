@@ -29,4 +29,5 @@ export const IconSelectors = {
   chevronsRightIcon: '.tabler-icon-chevrons-right',
   fileTypeIcon: (extension: string) =>
     `tabler-icon tabler-icon-file-type-${extension} `,
+  alertIcon: '.tabler-icon-alert-circle-filled.text-error',
 };
