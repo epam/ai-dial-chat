@@ -13,4 +13,4 @@ misconfiguration:
   checks-bundle-repository: public.ecr.aws/aquasecurity/trivy-checks
 scan:
   skip-dirs:
-    - '**/__tests__/**'
+    - '**/__tests__'
