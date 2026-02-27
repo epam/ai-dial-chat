@@ -164,10 +164,8 @@ const selectIsCustomAttachmentType = (attachmentType: string) =>
     );
   });
 
-const selectApplicationVisualizerConfig = (applicationId: string) =>
-  createSelector([selectApplicationVisualizers], (applicationVisualizers) => {
-    return applicationVisualizers?.[applicationId];
-  });
+const selectApplicationVisualizerConfig = (state: RootState, applicationId: string | undefined) =>
+    return applicationId ? selectApplicationVisualizers(state)?.[applicationId] : undefined;
 
 const selectPublicationFilters = (state: RootState) =>
   rootSelector(state).publicationFilters;
