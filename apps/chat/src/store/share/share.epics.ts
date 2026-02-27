@@ -88,7 +88,6 @@ import {
   DeleteType,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 
@@ -477,14 +476,31 @@ const acceptInvitationEpic: AppEpic = (action$) =>
     }),
   );
 
-const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
+const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitationSuccess.type),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
-        router.push(Routes.Marketplace, undefined, { shallow: true });
-        //TODO make request for the shared applications to add them into the state when share invitation is accepted.
-        return of(ModelsActions.getModels());
+        const { acceptedId } = payload;
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const applicationFromState = modelsMap[acceptedId];
+
+        if (!applicationFromState) {
+          return of(
+            ApplicationActions.get({
+              applicationId: acceptedId,
+              showCard: true,
+            }),
+          );
+        } else {
+          return of(
+            MarketplaceActions.setDetailsEntity({
+              reference: applicationFromState.reference,
+              type: MarketplaceEntitiesTabs.AGENTS,
+              isSuggested: false,
+            }),
+          );
+        }
       } else {
         router.push('/', undefined, { shallow: true });
       }
@@ -1024,17 +1040,27 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               state$.value,
             );
 
-            const acceptedApplication =
-              (acceptedId && modelsMap[acceptedId]) || undefined;
+            if (acceptedId) {
+              const acceptedApplication =
+                (acceptedId && modelsMap[acceptedId]) || undefined;
 
-            if (acceptedApplication) {
-              updateSharedActions.push(
-                MarketplaceActions.setDetailsEntity({
-                  reference: acceptedApplication.reference,
-                  type: MarketplaceEntitiesTabs.AGENTS,
-                  isSuggested: false,
-                }),
-              );
+              if (acceptedApplication) {
+                updateSharedActions.push(
+                  MarketplaceActions.setDetailsEntity({
+                    reference: acceptedApplication.reference,
+                    type: MarketplaceEntitiesTabs.AGENTS,
+                    isSuggested: false,
+                  }),
+                );
+              } else {
+                updateSharedActions.push(
+                  ApplicationActions.get({
+                    applicationId: acceptedId,
+                    showCard: true,
+                  }),
+                );
+              }
+
               updateSharedActions.push(ShareActions.resetAcceptedEntityInfo());
             }
 

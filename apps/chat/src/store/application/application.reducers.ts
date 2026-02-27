@@ -131,7 +131,11 @@ export const applicationSlice = createSlice({
     },
     get: (
       state,
-      _action: PayloadAction<{ applicationId: string; isForSharing?: boolean }>,
+      _action: PayloadAction<{
+        applicationId: string;
+        isForSharing?: boolean;
+        showCard?: boolean;
+      }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
     },

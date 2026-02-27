@@ -497,6 +497,18 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             actions.push(of(ModelsActions.addModelToMap(application)));
           }
 
+          if (payload.showCard) {
+            actions.push(
+              of(
+                MarketplaceActions.setDetailsEntity({
+                  reference: application.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }),
+              ),
+            );
+          }
+
           if (payload.isForSharing) {
             const permissionsFromState = ShareSelectors.selectSharePermissions(
               state$.value,

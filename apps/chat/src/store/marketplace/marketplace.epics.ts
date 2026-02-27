@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, first, map, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -98,17 +98,17 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedView.type,
       MarketplaceActions.setTableSort.type,
     ),
-    switchMap((action) =>
-      state$.pipe(
-        filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)), // Wait until true
-        first(),
-        map(() => action), // Emit the stored action
-      ),
-    ),
-    switchMap(() => {
+    filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
+    switchMap((action) => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
+
+      // remove 'share' from query after application sharing link accepted
+      if (action.type === MarketplaceActions.setDetailsEntity.type) {
+        // addToQuery(query, referenceQuery, detailsEntity?.reference);
+        addToQuery(query, 'share', undefined);
+      }
       // workspace tab
       const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
 
