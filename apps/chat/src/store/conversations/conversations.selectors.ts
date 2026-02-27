@@ -634,8 +634,6 @@ const selectCustomAttachmentLoading = (state: RootState) =>
 const selectLoadedCustomAttachments = (state: RootState) =>
   rootSelector(state).loadedCustomAttachmentsData;
 
-const selectLoadedCustomAttachmentsData = selectLoadedCustomAttachments;
-
 const selectCustomAttachmentData = createSelector(
   [
     selectLoadedCustomAttachments,
@@ -881,7 +879,7 @@ export const ConversationsSelectors = {
   selectDuplicatedConversation,
   selectCustomAttachmentLoading,
   selectCustomAttachmentData,
-  selectLoadedCustomAttachmentsData,
+  selectLoadedCustomAttachments,
   selectIsSelectMode,
   selectSelectedItems,
   selectChosenFolderIds,

@@ -65,20 +65,24 @@ export const MessageAttachments = ({
     }
 
     if (applicationVisualizerConfig) {
-      const attachmentsWithUrls = attachments
-        .filter((a) => a.url)
-        .map((a) => ({
-          url: getMappedAttachmentUrl(a.url)!,
-          mimeType: a.type,
-        }));
+      const visualizerContentType = applicationVisualizerConfig.contentType;
+      const visualizerAttachments = attachments.filter(
+        (a) => a.type === visualizerContentType && a.url,
+      );
+      const groupedVisualizerItems = visualizerAttachments.map((a) => ({
+        url: getMappedAttachmentUrl(a.url)!,
+        mimeType: a.type,
+      }));
 
-      if (attachmentsWithUrls.length > 0) {
+      if (groupedVisualizerItems.length > 0) {
         return {
           groupedAttachments: {
             config: applicationVisualizerConfig,
-            attachments: attachmentsWithUrls,
+            attachments: groupedVisualizerItems,
           },
-          regularAttachments: attachments.filter((a) => !a.url),
+          regularAttachments: attachments.filter(
+            (a) => a.type !== visualizerContentType,
+          ),
         };
       }
     }
@@ -87,11 +91,7 @@ export const MessageAttachments = ({
   }, [attachments, applicationVisualizerConfig]);
 
   const isUnderSection = useMemo(() => {
-    return (
-      !!regularAttachments &&
-      regularAttachments.length > 3 &&
-      !hasBorderlessAttachments
-    );
+    return regularAttachments.length > 3 && !hasBorderlessAttachments;
   }, [regularAttachments, hasBorderlessAttachments]);
 
   const [isSectionOpened, setIsSectionOpened] = useState(

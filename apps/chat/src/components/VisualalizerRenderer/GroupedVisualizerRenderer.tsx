@@ -52,23 +52,20 @@ interface AttachmentInfo {
 interface Props {
   attachments: AttachmentInfo[];
   visualizerConfig: ApplicationVisualizerConfig;
-  isFullScreen?: boolean;
   forceDefaultView?: boolean;
-  onFullScreenClick?: () => void;
 }
 
 export const GroupedVisualizerRenderer = ({
   attachments,
   visualizerConfig,
-  isFullScreen,
   forceDefaultView,
-  onFullScreenClick,
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const { data: session } = useSession();
   const {
     url: rendererUrl,
@@ -95,7 +92,7 @@ export const GroupedVisualizerRenderer = ({
   }, [isAuth, session]);
 
   const loadedCustomAttachmentsData = useAppSelector(
-    ConversationsSelectors.selectLoadedCustomAttachmentsData,
+    ConversationsSelectors.selectLoadedCustomAttachments,
   );
 
   const currentConversations = useAppSelector(
@@ -269,6 +266,25 @@ export const GroupedVisualizerRenderer = ({
     isAllowedSendMessage,
   ]);
 
+  const handleToggleFullScreen = useCallback(() => {
+    setIsFullScreen((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (!isFullScreen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsFullScreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [isFullScreen]);
+
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
     [isFullScreen],
@@ -283,39 +299,52 @@ export const GroupedVisualizerRenderer = ({
     : `h-[${groupedAttachmentsData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT}px]`;
 
   return (
-    <div className={classNames(isFullScreen && 'size-full p-2')}>
-      <div className="mb-2 flex flex-row justify-between">
-        {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
+    <div
+      data-no-context-menu
+      className={classNames(
+        isFullScreen && 'fixed left-0 top-0 z-[9999] size-full bg-layer-3',
+        isFullScreen && isBorderless && '!bg-layer-1',
+      )}
+    >
+      <div
+        className={classNames(
+          isFullScreen && 'size-full p-2',
+          !isFullScreen && 'mb-3',
+        )}
+      >
+        <div className="mb-2 flex flex-row justify-between">
+          {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
-        <div className="flex items-center justify-end gap-2">
-          <DialLinkButton
-            className="flex text-accent-primary"
-            onClick={() =>
-              visualizer.current && sendMessage(visualizer.current)
-            }
-            iconBefore={<IconRefresh size={18} />}
-            label={t('Refresh')}
-          />
-
-          {isBorderless && (
-            <DialButton
-              className="text-secondary hover:text-accent-primary"
-              iconBefore={<FullScreenIcon size={18} />}
-              onClick={onFullScreenClick}
-              appearance={ButtonAppearance.Link}
+          <div className="flex items-center justify-end gap-2">
+            <DialLinkButton
+              className="flex text-accent-primary"
+              onClick={() =>
+                visualizer.current && sendMessage(visualizer.current)
+              }
+              iconBefore={<IconRefresh size={18} />}
+              label={t('Refresh')}
             />
+
+            {isBorderless && (
+              <DialButton
+                className="text-secondary hover:text-accent-primary"
+                iconBefore={<FullScreenIcon size={18} />}
+                onClick={handleToggleFullScreen}
+                appearance={ButtonAppearance.Link}
+              />
+            )}
+          </div>
+        </div>
+        <div
+          ref={iframeContainerRef}
+          className={classNames('size-full', iframeContainerClassNames)}
+        >
+          {(!ready || attachmentDataLoading || !allAttachmentsLoaded) && (
+            <div className="absolute z-10 flex size-full items-center bg-layer-1">
+              <Spinner className="mx-auto" size={30} />
+            </div>
           )}
         </div>
-      </div>
-      <div
-        ref={iframeContainerRef}
-        className={classNames('size-full', iframeContainerClassNames)}
-      >
-        {(!ready || attachmentDataLoading || !allAttachmentsLoaded) && (
-          <div className="absolute z-10 flex size-full items-center bg-layer-1">
-            <Spinner className="mx-auto" size={30} />
-          </div>
-        )}
       </div>
     </div>
   );
