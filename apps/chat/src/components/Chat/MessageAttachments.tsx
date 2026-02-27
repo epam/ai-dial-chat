@@ -36,15 +36,8 @@ export const MessageAttachments = ({
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const applicationVisualizerConfigSelector = useMemo(
-    () =>
-      applicationId
-        ? SettingsSelectors.selectApplicationVisualizerConfig(applicationId)
-        : () => undefined,
-    [applicationId],
-  );
-  const applicationVisualizerConfig = useAppSelector(
-    applicationVisualizerConfigSelector,
+  const applicationVisualizerConfig = useAppSelector((state)=>
+    SettingsSelectors.selectApplicationVisualizerConfig(state, applicationId),
   );
 
   const { hasBorderlessAttachments, hasExpandedAttachments } = useMemo(
