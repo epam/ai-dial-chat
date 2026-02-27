@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.43.0-rc",
+  "version": "0.44.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -108,6 +108,7 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "remove-markdown": "^0.6.3",
+    "rollup": "^4.59.0",
     "rxjs": "^7.8.1",
     "stringz": "^2.1.0",
     "tiktoken": "^1.0.17",
@@ -190,18 +191,19 @@
     "playwright-chromium": "^1.55.1"
   },
   "overrides": {
-    "esbuild": "0.27.0",
+    "esbuild": "0.27.3",
     "tmp": "0.2.5",
-    "koa": "3.0.3",
+    "koa": "3.1.2",
     "@module-federation/node": "2.7.14",
     "prismjs": "1.30.0",
     "nodemailer": "7.0.10",
-    "dompurify": "3.3.0",
+    "dompurify": "3.3.1",
     "js-yaml": "4.1.1",
     "glob": "11.1.0",
-    "@modern-js/utils": "2.69.5",
-    "qs": "6.14.2",
-    "diff": "8.0.3"
+    "@modern-js/utils": "2.70.8",
+    "qs": "6.15.0",
+    "diff": "8.0.3",
+    "minimatch": "10.2.4"
   },
   "engines": {
     "node": ">=24.11.1",
