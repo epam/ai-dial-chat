@@ -1,22 +1,17 @@
 import { FileManagerSelectors } from '@/src/ui/selectors';
-import { FileManager, FileManagerModalHeader } from '@/src/ui/webElements';
+import { FileManager } from '@/src/ui/webElements';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { Locator, Page } from '@playwright/test';
 
 /**
  * Abstract base class for File Manager like modals.
  * Provides shared functionality for both full FileManagerModal and SelectFolderManagerModal.
- *
- * Each subclass provides a unique selector via super(page, selector) to avoid
- * strict mode violations when multiple dialogs are open simultaneously
- * (e.g. FileManager + ConfirmationPopup).
  */
 export abstract class BaseFileManagerModal extends Popup {
-  private _header!: FileManagerModalHeader;
   private fileManager!: FileManager;
 
-  protected constructor(page: Page, selector: string) {
-    super(page, selector);
+  protected constructor(page: Page) {
+    super(page);
   }
 
   /**
@@ -26,16 +21,6 @@ export abstract class BaseFileManagerModal extends Popup {
    */
   protected getFileManagerContentLocator(): Locator {
     return this.rootLocator.locator(FileManagerSelectors.container);
-  }
-
-  /**
-   * Gets the modal header component.
-   */
-  getHeader(): FileManagerModalHeader {
-    if (!this._header) {
-      this._header = new FileManagerModalHeader(this.page, this.rootLocator);
-    }
-    return this._header;
   }
 
   /**

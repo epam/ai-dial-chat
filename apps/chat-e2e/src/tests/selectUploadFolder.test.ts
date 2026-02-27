@@ -60,7 +60,7 @@ dialTest(
       'Click "Create new folder" icon and verify new folder is created in the root in edit mode',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        const folderInput = selectFolderManagerModalGrid.getRenameInput('');
+        const folderInput = selectFolderManagerModalGrid.getRenameInput();
         await baseAssertion.assertElementState(folderInput, 'visible');
       },
     );
@@ -168,9 +168,12 @@ dialTest(
       'Click "Create new folder" icon, type one by one restricted symbols and verify nothing is displayed in the input field',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        folderInput = selectFolderManagerModalGrid.getRenameInput('');
+        folderInput = selectFolderManagerModalGrid
+          .getRenameInput()
+          .getElementLocator();
         await folderInput.fill(ExpectedConstants.restrictedNameChars);
-        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
           ExpectedConstants.restrictedNameChars,
         );
       },
@@ -185,11 +188,12 @@ dialTest(
         //TODO ctrl+a doesn't work here
         // await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
-        folderInput = selectFolderManagerModalGrid.getRenameInput(
-          nameWithRestrictedChars,
-        );
+        folderInput = selectFolderManagerModalGrid
+          .getRenameInput()
+          .getElementLocator();
         await folderInput.press('Enter');
-        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
           nameWithRestrictedChars,
         );
       },
@@ -327,7 +331,9 @@ dialTest(
         // Therefore, clicking many times should not stack up folders and should not cause a scroll to appear.
         for (let i = 1; i <= 20; i++) {
           await selectFolderManagerModal.getAddFolderButton().click();
-          const input = selectFolderManagerModalGrid.getRenameInput('');
+          const input = selectFolderManagerModalGrid
+            .getRenameInput()
+            .getElementLocator();
           await input.press('Enter');
         }
         const selectFolderBounding =
@@ -405,7 +411,8 @@ dialTest(
           nameWithTrailingDot,
           false,
         );
-        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
           nameWithTrailingDot,
         );
         //TODO escape closes the modal. Probably bug
@@ -418,7 +425,8 @@ dialTest(
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(folder1Name, false);
-        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
           folder1Name,
         );
         //TODO escape closes the modal. Probably bug
@@ -435,7 +443,8 @@ dialTest(
           nameWithLeadingDot,
           false,
         );
-        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
           nameWithLeadingDot,
         );
       },
@@ -479,7 +488,8 @@ dialTest(
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(nameWithSpaces, false);
-        await selectFolderManagerModalGridAssertion.assertNameInputErrorState(
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
           nameWithSpaces,
         );
       },

@@ -1,4 +1,3 @@
-import { PopupSelectors } from '@/src/ui/selectors';
 import { Button, Popup } from '@/src/ui/webElements';
 import { Page } from '@playwright/test';
 import { Response } from 'playwright-core';
@@ -7,7 +6,7 @@ export class ConfirmationPopup extends Popup {
   private confirmButton: Button;
 
   constructor(page: Page, confirmButtonAreaLabel: string) {
-    super(page, PopupSelectors.popupLabelledContainer);
+    super(page);
     this.confirmButton = new Button(
       this.page,
       confirmButtonAreaLabel,

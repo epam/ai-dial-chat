@@ -1,31 +1,23 @@
 import { UploadMenuOptions } from '@/src/testData';
 import { FileManagerModalSelectors } from '@/src/ui/selectors';
-import { BaseFileManagerModal } from '@/src/ui/webElements';
+import {
+  BaseFileManagerModal,
+  FileManagerModalHeader,
+} from '@/src/ui/webElements';
 import { Button } from '@/src/ui/webElements/common/button';
 import { Page } from '@playwright/test';
 
 /**
  * Full-featured File Manager Modal.
- * Uses [data-qa="file-manager-modal"] as unique selector (from Modal.tsx).
+ * Used for file/folder selection and management with complete toolbar.
  */
 export class FileManagerModal extends BaseFileManagerModal {
   private attachButton!: Button;
   private selectButton!: Button;
-  private closeModalBtn!: Button;
+  private _header!: FileManagerModalHeader;
 
   constructor(page: Page) {
-    super(page, FileManagerModalSelectors.modalContainer);
-  }
-
-  /**
-   * Override: FileManagerModal uses aria-label="close" (Modal.tsx),
-   * while default is aria-label="Close dialog" (UI kit).
-   */
-  override getCloseButton(): Button {
-    if (!this.closeModalBtn) {
-      this.closeModalBtn = new Button(this.page, 'close', this.rootLocator);
-    }
-    return this.closeModalBtn;
+    super(page);
   }
 
   /**
@@ -50,6 +42,13 @@ export class FileManagerModal extends BaseFileManagerModal {
       );
     }
     return this.selectButton;
+  }
+
+  getHeader(): FileManagerModalHeader {
+    if (!this._header) {
+      this._header = new FileManagerModalHeader(this.page, this.rootLocator);
+    }
+    return this._header;
   }
 
   public title = this.getChildElementBySelector(

@@ -120,7 +120,7 @@ function ModalView({
                 <CloseButtonSmall
                   onClick={handleClose}
                   className="absolute right-2 top-2 z-50"
-                  aria-label="close"
+                  aria-label="Close dialog"
                 />
               )}
               {heading && typeof heading === 'string' ? (
