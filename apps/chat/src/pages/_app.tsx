@@ -58,21 +58,22 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
           name="viewport"
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
         />
-        {process.env.NODE_ENV !== 'development' && (
-          <>
-            <link
-              rel="icon"
-              href={getThemeIconUrl('favicon')}
-              sizes="any"
-              type="image/png"
-            />
-            <link
-              rel="apple-touch-icon"
-              href={getThemeIconUrl('favicon')}
-              type="image/png"
-            />
-          </>
-        )}
+        {process.env.NODE_ENV !== 'development' &&
+          process.env.THEMES_CONFIG_HOST && (
+            <>
+              <link
+                rel="icon"
+                href={getThemeIconUrl('favicon')}
+                sizes="any"
+                type="image/png"
+              />
+              <link
+                rel="apple-touch-icon"
+                href={getThemeIconUrl('favicon')}
+                type="image/png"
+              />
+            </>
+          )}
       </Head>
       <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
         <Provider store={store}>
