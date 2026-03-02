@@ -165,7 +165,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click "Create new folder" icon, type one by one restricted symbols and verify nothing is displayed in the input field',
+      'Click "Create new folder" icon, type one by one restricted symbols and verify error is displayed',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
         folderInput = selectFolderManagerModalGrid
