@@ -1,11 +1,16 @@
-import { IconExternalLink, IconPlayerPlay } from '@tabler/icons-react';
-import { useEffect, useMemo } from 'react';
+import {
+  IconCloudUpload,
+  IconExternalLink,
+  IconPlayerPlay,
+} from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 
 import classNames from 'classnames';
 
 import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
+import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -40,6 +45,92 @@ import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/Marketpl
 
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
+const useApplicationDeployment = (entity: DialAIEntityModel) => {
+  const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const { handleDeploy } = useApplicationStatusActions(entity.id);
+
+  const [wasDeployClicked, setWasDeployClicked] = useState(false);
+
+  const simpleStatus = getApplicationSimpleStatus(entity);
+  const isDeployed = simpleStatus === SimpleApplicationStatus.UNDEPLOY;
+  const isUpdating = simpleStatus === SimpleApplicationStatus.UPDATING;
+  const isUndeploying = entity.functionStatus === ApplicationStatus.UNDEPLOYING;
+
+  const isExecutable = isExecutableApp(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
+
+  const showAsUseButton =
+    !isUndeploying && (isDeployed || isUpdating || wasDeployClicked);
+
+  const isButtonDisabled =
+    isUpdating ||
+    isUndeploying ||
+    (wasDeployClicked && !isDeployed) ||
+    (isExecutable && !isDeployed && isPublicApp && !isAdmin);
+
+  const buttonTooltip = useMemo(() => {
+    if (isUpdating || isUndeploying) {
+      return t(`Application is ${entity.functionStatus?.toLowerCase()}`);
+    }
+    if (isButtonDisabled && isExecutable) {
+      return t(
+        isPublicApp && !isAdmin
+          ? 'Ask your administrator to deploy this application to be able to use it'
+          : 'Ask author to deploy the application to be able to use it',
+      );
+    }
+    return '';
+  }, [
+    isUpdating,
+    isUndeploying,
+    isButtonDisabled,
+    isExecutable,
+    isPublicApp,
+    isAdmin,
+    t,
+    entity.functionStatus,
+  ]);
+
+  const handleButtonClick = useCallback(
+    (onUseEntity?: () => void) => (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isDeployed) {
+        onUseEntity?.();
+      } else {
+        setWasDeployClicked(true);
+        handleDeploy();
+      }
+    },
+    [isDeployed, handleDeploy],
+  );
+
+  useEffect(() => {
+    if (isUndeploying || (!isDeployed && !isUpdating)) {
+      setWasDeployClicked(false);
+    }
+  }, [isUndeploying, isDeployed, isUpdating]);
+
+  useEffect(() => {
+    if (isExternalApp(entity)) {
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
+    }
+  }, [dispatch, entity.id]);
+
+  return {
+    isExecutable,
+    isPublicApp,
+    isDeployed,
+    isUpdating,
+    isUndeploying,
+    showAsUseButton,
+    isButtonDisabled,
+    buttonTooltip,
+    handleButtonClick,
+  };
+};
+
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYING:
@@ -61,21 +152,22 @@ export const ApplicationDetailsFooter = ({
   onBookmarkClick,
 }: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-
-  const dispatch = useAppDispatch();
-
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isAppLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-
   const screenState = useScreenState();
   const isScreenSmall = screenState === ScreenState.SM;
-
   const showContextMenu = entity.reference !== entity.id && isScreenSmall;
+
+  const {
+    showAsUseButton,
+    isButtonDisabled,
+    buttonTooltip,
+    handleButtonClick,
+  } = useApplicationDeployment(entity);
 
   const agentMenuItemsParams = useMemo(
     () => ({
@@ -84,6 +176,7 @@ export const ApplicationDetailsFooter = ({
         copyLink: !isScreenSmall,
         share: !showContextMenu,
         unshare: !entity?.sharedWithMe,
+        deploy: ApplicationStatus.DEPLOYED !== entity.functionStatus,
       },
     }),
     [entity, isScreenSmall, showContextMenu],
@@ -95,14 +188,14 @@ export const ApplicationDetailsFooter = ({
     [menuItems],
   );
 
-  const isPublicApp = isMarketplaceEntityPublic(entity);
-  const playerStatus = getApplicationSimpleStatus(entity);
-
-  useEffect(() => {
-    if (isExternalApp(entity)) {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-    }
-  }, [dispatch, entity]);
+  const buttonLabel = showAsUseButton
+    ? isScreenSmall
+      ? t('Use')
+      : t('Use {{modelType}}', {
+          ns: Translation.Marketplace,
+          modelType: entity.type,
+        })
+    : t('Deploy');
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -147,34 +240,23 @@ export const ApplicationDetailsFooter = ({
             onSelect={onChangeVersion}
           />
           <Tooltip
-            hideTooltip={
-              !isExecutableApp(entity) ||
-              playerStatus === SimpleApplicationStatus.UNDEPLOY
-            }
+            hideTooltip={!buttonTooltip}
             triggerClassName="shrink-0"
-            tooltip={t(
-              isPublicApp && !isAdmin
-                ? 'Ask your administrator to deploy this application to be able to use it'
-                : 'Deploy the application to be able to use it',
-            )}
+            tooltip={buttonTooltip}
           >
             {!isExternalApp(entity) ? (
               <DialPrimaryButton
-                onClick={onUseEntity}
+                onClick={handleButtonClick(onUseEntity)}
                 data-qa="use-button"
-                disabled={
-                  isExecutableApp(entity) &&
-                  playerStatus !== SimpleApplicationStatus.UNDEPLOY
+                disabled={isButtonDisabled}
+                iconBefore={
+                  showAsUseButton ? (
+                    <IconPlayerPlay size={18} />
+                  ) : (
+                    <IconCloudUpload size={18} />
+                  )
                 }
-                iconBefore={<IconPlayerPlay size={18} />}
-                label={
-                  isScreenSmall
-                    ? t('Use')
-                    : t('Use {{modelType}}', {
-                        ns: Translation.Marketplace,
-                        modelType: entity.type,
-                      })
-                }
+                label={buttonLabel}
               />
             ) : (
               <Link

@@ -125,15 +125,6 @@ export const useAgentMenuItems = ({
         onClick: handleCopy,
       },
       {
-        name: t('Redeploy'),
-        dataQa: 'redeploy',
-        display: showRedeploy && disabledActions.deploy !== true,
-        Icon: IconRefresh,
-        className: PlayerContextButtonClasses[SimpleApplicationStatus.DEPLOY],
-        iconClassName: PlayerContextIconClasses[SimpleApplicationStatus.DEPLOY],
-        onClick: handleRedeploy,
-      },
-      {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
@@ -142,6 +133,16 @@ export const useAgentMenuItems = ({
         className: PlayerContextButtonClasses[playerStatus],
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
+      },
+      {
+        name: t('Redeploy'),
+        dataQa: 'redeploy',
+        display: showRedeploy && disabledActions.deploy !== true,
+        Icon: IconRefresh,
+        className: PlayerContextButtonClasses[SimpleApplicationStatus.REDEPLOY],
+        iconClassName:
+          PlayerContextIconClasses[SimpleApplicationStatus.REDEPLOY],
+        onClick: handleRedeploy,
       },
       {
         name: t(isAppIdPublic ? 'View' : 'Edit'),
