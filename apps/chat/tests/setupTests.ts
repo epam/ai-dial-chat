@@ -16,8 +16,8 @@ beforeAll(() => {
     document.elementFromPoint = vi.fn(() => document.createElement('div'));
   }
 
-  originalIntersectionObserver = globalThis.IntersectionObserver;
-  originalResizeObserver = globalThis.ResizeObserver;
+  originalIntersectionObserver = global.IntersectionObserver;
+  originalResizeObserver = global.ResizeObserver;
 
   class IntersectionObserverMock implements IntersectionObserver {
     readonly root: Element | Document | null = null;
@@ -44,15 +44,15 @@ beforeAll(() => {
     disconnect = vi.fn();
   }
 
-  globalThis.IntersectionObserver =
+  global.IntersectionObserver =
     IntersectionObserverMock as unknown as typeof IntersectionObserver;
 
-  globalThis.ResizeObserver =
+  global.ResizeObserver =
     ResizeObserverMock as unknown as typeof ResizeObserver;
 });
 
 afterAll(() => {
   vi.restoreAllMocks();
-  globalThis.IntersectionObserver = originalIntersectionObserver;
-  globalThis.ResizeObserver = originalResizeObserver;
+  global.IntersectionObserver = originalIntersectionObserver;
+  global.ResizeObserver = originalResizeObserver;
 });
