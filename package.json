@@ -204,7 +204,8 @@
     "@modern-js/utils": "2.70.8",
     "qs": "6.15.0",
     "diff": "8.0.3",
-    "minimatch": "10.2.4"
+    "minimatch": "10.2.4",
+    "serialize-javascript": "7.0.3"
   },
   "engines": {
     "node": ">=24.11.1",
