@@ -20,6 +20,7 @@ declare global {
       ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME?: string;
       ALLOWED_IFRAME_SOURCES?: string;
       CUSTOM_VISUALIZERS?: string;
+      APPLICATION_VISUALIZERS?: string;
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
       ENABLED_FEATURES?: string;
       PUBLICATION_FILTERS?: string;

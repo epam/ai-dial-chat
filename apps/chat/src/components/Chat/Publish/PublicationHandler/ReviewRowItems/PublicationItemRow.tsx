@@ -54,10 +54,12 @@ import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: ShareEntity;
+  publicationUrl: string;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -73,14 +75,8 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
-  );
   const selectedPublicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectSelectedPublicationItems(
-      state,
-      selectedPublicationUrl ?? '',
-    ),
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
   );
 
   const publishToUrl = useWatch<
@@ -199,12 +195,12 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
       dispatch(
         PublicationActions.selectPublicationItems({
-          publicationUrl: selectedPublicationUrl ?? '',
+          publicationUrl,
           ids: [itemIdWithNewVersion],
         }),
       );
     },
-    [item.id, dispatch, selectedPublicationUrl],
+    [item.id, dispatch, publicationUrl],
   );
 
   const itemVersionsSelected = useMemo(
@@ -491,7 +487,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           dataQA="entity-input"
         />
       </span>
-      <PublicationVersionInfo item={item} />
+      <PublicationVersionInfo publicationUrl={publicationUrl} item={item} />
     </div>
   );
 };
