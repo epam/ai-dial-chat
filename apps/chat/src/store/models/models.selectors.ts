@@ -9,8 +9,10 @@ import {
   filterHiddenEntities,
   shouldShowHiddenEntities,
 } from '@/src/utils/app/models';
+import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
@@ -66,6 +68,20 @@ const selectModels = createSelector(
     });
     return sortedAgents;
   },
+);
+
+const selectModelsVersionGroupByGroupId = createSelector(
+  [
+    (state) => selectModels(state),
+    (_state, versionGroupId: string) => versionGroupId,
+  ],
+  (models, versionGroupId) =>
+    models.reduce((acc, model) => {
+      if (getIdWithoutVersionFromApiKey(model.id) === versionGroupId) {
+        return [...acc, model];
+      }
+      return acc;
+    }, [] as DialAIEntityModel[]),
 );
 
 const selectModelTopics = createSelector(
@@ -155,6 +171,7 @@ const selectDefaultModelReference = createSelector(
 
 export const ModelsSelectors = {
   selectModels,
+  selectModelsVersionGroupByGroupId,
   selectModelsMap,
   selectModelById,
   selectModelsError,

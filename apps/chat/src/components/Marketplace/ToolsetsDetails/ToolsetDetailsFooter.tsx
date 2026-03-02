@@ -7,6 +7,8 @@ import { useToolsetMenuItems } from '@/src/hooks/useToolsetMenuItems';
 
 import { ScreenState } from '@/src/types/common';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
@@ -52,7 +54,7 @@ export function ToolsetDetailsFooter({
             <button className="icon-button">
               <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
-                triggerIconSize={24}
+                triggerIconSize={DEFAULT_ICON_SIZES.STANDARD}
                 entity={entity}
               />
             </button>
@@ -72,7 +74,7 @@ export function ToolsetDetailsFooter({
           {onBookmarkClick && (
             <MarketplaceEntityBookmark
               entity={entity}
-              size={24}
+              size={DEFAULT_ICON_SIZES.STANDARD}
               className="icon-button group/bookmark"
               onBookmarkClick={onBookmarkClick}
             />

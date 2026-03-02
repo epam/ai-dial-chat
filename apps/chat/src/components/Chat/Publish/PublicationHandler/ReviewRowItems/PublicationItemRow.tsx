@@ -2,11 +2,10 @@ import { IconDownload } from '@tabler/icons-react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useWatch } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isVersionExists,
@@ -17,16 +16,29 @@ import {
   getStringValidationErrors,
   getVersionValidationErrors,
 } from '@/src/utils/app/forms';
-import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isFileId,
+  isToolsetId,
+  replaceVersionFromId,
+} from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
-import { ApiUtils } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getIdWithoutVersionFromApiKey,
+  getVersionFromId,
+} from '@/src/utils/server/api';
 
 import { BackendResourceTypeName } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  PublicationSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
@@ -42,10 +54,12 @@ import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: ShareEntity;
+  publicationUrl: string;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
+  publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -61,6 +75,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
+  );
 
   const publishToUrl = useWatch<
     PublicationRequestFormData,
@@ -68,17 +85,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   >({
     name: PublishRequestFieldsNames.PUBLISH_TO_URL,
   });
-
-  const defaultVersion =
-    editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
-  const [inputVersion, setInputVersion] = useState(defaultVersion);
-  const [errors, setErrors] = useState<string[]>([]);
-
-  const isApplication = useMemo(() => isApplicationId(item.id), [item.id]);
-
-  useEffect(() => {
-    setInputVersion(defaultVersion);
-  }, [defaultVersion, isEditMode]);
 
   const publicItemId = useMemo(() => {
     let itemId = item.id;
@@ -92,11 +98,53 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     return itemId;
   }, [item.id, publicationModel, publishToUrl]);
 
+  const entity = useMemo(
+    () => ({
+      ...item,
+      id: publicItemId,
+    }),
+    [item, publicItemId],
+  );
+
+  const publicVersionGroupId = usePublicVersionGroupId(entity);
+  const versionGroup = useAppSelector((state) =>
+    PublicationSelectors.selectPublicVersionGroupById(
+      state,
+      publicVersionGroupId ?? '',
+    ),
+  );
+  const modelsVersionGroup = useAppSelector((state) =>
+    ModelsSelectors.selectModelsVersionGroupByGroupId(
+      state,
+      publicVersionGroupId ?? '',
+    ),
+  );
+  const toolsetVersionGroup = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsetVersionGroupByGroupId(
+      state,
+      publicVersionGroupId ?? '',
+    ),
+  );
+
+  const defaultVersion =
+    editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
+
+  const [inputVersion, setInputVersion] = useState(defaultVersion);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const isApplicationOrToolset = useMemo(
+    () => isApplicationId(item.id) || isToolsetId(item.id),
+    [item.id],
+  );
+
   useEffect(() => {
-    if (
-      publicationModel ||
-      (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE)
-    ) {
+    setInputVersion(defaultVersion);
+  }, [defaultVersion, isEditMode]);
+
+  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
+
+  useEffect(() => {
+    if (publicationModel || (isEditMode && !isDeleteAction)) {
       const isExistVersion = isVersionExists(
         inputVersion,
         publicItemId,
@@ -107,21 +155,20 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       const validationErrors = getVersionValidationErrors(
         inputVersion,
         isExistVersion,
-        isApplication,
+        isApplicationOrToolset,
       );
       setErrors(validationErrors);
     }
   }, [
     inputVersion,
-    isApplication,
+    isApplicationOrToolset,
+    isDeleteAction,
     isEditMode,
     item.id,
     item.name,
-    item.publicationInfo?.action,
     publicItemId,
     publicVersionGroups,
     publicationModel,
-    publishToUrl,
   ]);
 
   const handleChangeVersion = useCallback(
@@ -139,17 +186,54 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [dispatch, editState?.name, item.id, item.name],
   );
 
-  const usePublicVersionGroupIdParams = useMemo(
-    () => ({
-      ...item,
-      id: publicItemId,
-    }),
-    [item, publicItemId],
+  const handleSelectCheckboxVersion = useCallback(
+    (versionId: string) => {
+      const itemIdWithNewVersion = replaceVersionFromId(
+        item.id,
+        getVersionFromId(versionId),
+      );
+
+      dispatch(
+        PublicationActions.selectPublicationItems({
+          publicationUrl,
+          ids: [itemIdWithNewVersion],
+        }),
+      );
+    },
+    [item.id, dispatch, publicationUrl],
   );
 
-  const publicVersionGroupId = usePublicVersionGroupId(
-    usePublicVersionGroupIdParams,
+  const itemVersionsSelected = useMemo(
+    () =>
+      selectedPublicationItems.filter((id) =>
+        id.startsWith(getIdWithoutVersionFromApiKey(item.id)),
+      ),
+    [item.id, selectedPublicationItems],
   );
+
+  const overrideTriggerText = useMemo(() => {
+    if (isDeleteAction) {
+      if (itemVersionsSelected.length > 1) {
+        const isAllVersionsSelected =
+          versionGroup?.allVersions.length === itemVersionsSelected.length ||
+          modelsVersionGroup.length === itemVersionsSelected.length ||
+          toolsetVersionGroup.length === itemVersionsSelected.length;
+
+        return t(isAllVersionsSelected ? 'All' : 'Few');
+      } else if (itemVersionsSelected.length === 1) {
+        return getVersionFromId(itemVersionsSelected[0]);
+      }
+    }
+
+    return undefined;
+  }, [
+    isDeleteAction,
+    itemVersionsSelected,
+    modelsVersionGroup.length,
+    t,
+    toolsetVersionGroup.length,
+    versionGroup?.allVersions.length,
+  ]);
 
   if (isFileId(item.id)) {
     return (
@@ -166,50 +250,59 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     );
   }
 
-  const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
-
   return (
     <div className="flex shrink-0 items-center gap-2">
-      {!isDeleteAction && publicVersionGroupId && !isApplication && (
+      {publicVersionGroupId && (
         <PublicVersionSelector
+          overrideTriggerText={overrideTriggerText}
           publicVersionGroupId={publicVersionGroupId}
-          textBeforeSelector={t('Last: ')}
-          btnClassNames="shrink-0"
-          groupVersions
-          readonly
+          triggerTextClassName={classNames(
+            isDeleteAction && 'text-xs text-error',
+          )}
+          textBeforeSelector={!isDeleteAction ? t('Last: ') : ''}
+          btnClassNames={classNames(
+            'shrink-0',
+            isDeleteAction && 'text-error hover:text-error',
+          )}
+          selectedCheckboxVersionIds={itemVersionsSelected}
+          onSelectCheckboxVersion={handleSelectCheckboxVersion}
+          groupVersions={!isDeleteAction}
+          readonly={!isDeleteAction}
         />
       )}
-      <span
-        className={classNames(
-          'relative shrink-0 text-xs',
-          isDeleteAction && 'text-error',
-        )}
-        data-qa="version"
-      >
-        <EditableField
-          value={inputVersion}
-          isEditMode={
-            publicationModel &&
-            !isToolsetId(publicationModel.entity.id) &&
-            !isApplicationId(publicationModel.entity.id) &&
-            publicationModel.action !== PublishActions.DELETE
-              ? true
-              : isDeleteAction || isToolsetId(item.id)
-                ? false
-                : isEditMode
-          }
-          onChange={handleChangeVersion}
-          inputClassName={classNames(
-            'w-[70px] text-right text-xs',
-            (errors.length || inputVersion === NA_VERSION) && '!border-b-error',
-            errors.length && 'pl-5',
+      {!isDeleteAction && (
+        <span
+          className={classNames(
+            'relative shrink-0 text-xs',
+            isDeleteAction && 'text-error',
           )}
-          placeholder={DEFAULT_VERSION}
-          errors={errors}
-          tooltipIconClassName="ml-1"
-          dataQA="version"
-        />
-      </span>
+          data-qa="version"
+        >
+          <EditableField
+            value={inputVersion}
+            isEditMode={
+              publicationModel &&
+              !isToolsetId(publicationModel.entity.id) &&
+              !isApplicationId(publicationModel.entity.id)
+                ? true
+                : isDeleteAction || isToolsetId(item.id)
+                  ? false
+                  : isEditMode
+            }
+            onChange={handleChangeVersion}
+            inputClassName={classNames(
+              'w-[70px] text-right text-xs',
+              (errors.length || inputVersion === NA_VERSION) &&
+                '!border-b-error',
+              errors.length && 'pl-5',
+            )}
+            placeholder={DEFAULT_VERSION}
+            errors={errors}
+            tooltipIconClassName="ml-1"
+            dataQA="version"
+          />
+        </span>
+      )}
     </div>
   );
 };
@@ -251,7 +344,10 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   );
 
   const isSelected = useMemo(
-    () => selectedPublicationItems.includes(item.id),
+    () =>
+      selectedPublicationItems.some((id) =>
+        id.startsWith(getIdWithoutVersionFromApiKey(item.id)),
+      ),
     [item.id, selectedPublicationItems],
   );
 
@@ -300,6 +396,22 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   );
 
   const handleSelect = useCallback(() => {
+    const sameGroupSelectedPublicationItems = selectedPublicationItems.filter(
+      (selectedId) =>
+        selectedId.startsWith(getIdWithoutVersionFromApiKey(item.id)) &&
+        item.id.split('/').length === selectedId.split('/').length &&
+        selectedId !== item.id,
+    );
+
+    if (sameGroupSelectedPublicationItems.length) {
+      dispatch(
+        PublicationActions.unselectPublicationItems({
+          publicationUrl,
+          ids: sameGroupSelectedPublicationItems,
+        }),
+      );
+    }
+
     dispatch(
       PublicationActions.selectPublicationItems({
         publicationUrl,
@@ -324,10 +436,10 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     }
   }, [
     dispatch,
+    publicationUrl,
     item.id,
     item.publicationInfo?.publishCredentials,
     selectedCredentialsItems,
-    publicationUrl,
     selectedPublicationItems,
   ]);
 
@@ -375,7 +487,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           dataQA="entity-input"
         />
       </span>
-      <PublicationVersionInfo item={item} />
+      <PublicationVersionInfo publicationUrl={publicationUrl} item={item} />
     </div>
   );
 };

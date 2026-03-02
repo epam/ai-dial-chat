@@ -5,6 +5,7 @@ import {
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  getQuickAppItemNameFromConfig,
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   safeStringifyApplicationFeatures,
@@ -14,8 +15,7 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   CustomApplicationModel,
@@ -312,7 +312,7 @@ const getBaseFormData = ({
   name:
     app?.name ??
     getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-  version: app?.version ?? DEFAULT_VERSION,
+  version: app ? app.version : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: app?.description ?? '',
   topics: app?.topics ?? [],
@@ -353,47 +353,6 @@ const getQuickAppFormData = (app?: CustomApplicationModel): QuickAppForm => {
         mcp_toolset: appProperties?.mcp_toolset ?? [],
       } as QuickAppConfig) ?? '',
   };
-};
-
-const getQuickAppItemNameFromConfig = (
-  item: MCPToolset | DialDeploymentSimpleTool,
-): string => {
-  if ('dial_id' in item) {
-    return (
-      item.name ||
-      ApiUtils.decodeApiUrl(
-        parseEntityApiKey(splitEntityId(item.dial_id).name, {
-          parseVersion: true,
-        }).name,
-      )
-    );
-  }
-
-  if (isApplicationId(item.deployment_id)) {
-    return ApiUtils.decodeApiUrl(
-      parseEntityApiKey(splitEntityId(item.deployment_id).name, {
-        parseVersion: true,
-      }).name,
-    );
-  }
-
-  if ('open_ai_tool' in item) {
-    return (
-      (item.open_ai_tool as { function?: { name?: string } })?.function?.name ||
-      'OpenAI Tool'
-    );
-  }
-
-  if ('name' in item && typeof item.name === 'string') {
-    return item.name;
-  }
-
-  if (!item.deployment_id) {
-    console.error('Dial Tool is missing deployment_id:', item);
-    return 'unknown';
-  }
-
-  return item.deployment_id;
 };
 
 export const getAgentsAndToolsetsFormValue = (

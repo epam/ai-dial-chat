@@ -17,6 +17,20 @@ import fetch from 'node-fetch';
 let cachedTheme = '';
 let cachedThemeExpiration: number | undefined;
 
+function generateUnitCssVariables(
+  variables: Record<string, string | undefined>,
+) {
+  let cssContent = '';
+  const unitRegex =
+    /^-?\d*\.?\d+(px|em|rem|vh|vw|%|cm|mm|in|pt|pc|vmin|vmax|ch|ex)?$/i;
+  Object.entries(variables).forEach(([variable, value]) => {
+    if (value && unitRegex.test(value)) {
+      cssContent += `--${cssEscape(variable)}: ${value};\n`;
+    }
+  });
+  return cssContent;
+}
+
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
 ) {
@@ -135,6 +149,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             'theme-font': theme['font-family'],
             'codeblock-font':
               theme['font-codeblock'] ?? inconsolata.style.fontFamily,
+          }),
+          generateUnitCssVariables({
+            'border-radius': theme['border-radius'],
           }),
         ]),
       ),

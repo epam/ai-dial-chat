@@ -14,6 +14,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -91,8 +93,8 @@ export const ChatControls: FC<Props> = ({
           isTriggerClickable
         >
           <Icon
-            height={24}
-            width={24}
+            height={DEFAULT_ICON_SIZES.STANDARD}
+            width={DEFAULT_ICON_SIZES.STANDARD}
             className={classNames(
               'shrink-0 hover:text-accent-primary',
               isError ? 'text-error' : 'text-secondary',

@@ -2,6 +2,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
@@ -32,7 +34,12 @@ export const SelectFolderFooter = ({
         <DialGhostIconButton
           onClick={() => onCreateNewFolder()}
           data-qa="new-folder"
-          icon={<FolderPlus width={24} height={24} />}
+          icon={
+            <FolderPlus
+              width={DEFAULT_ICON_SIZES.STANDARD}
+              height={DEFAULT_ICON_SIZES.STANDARD}
+            />
+          }
         />
 
         {!!onToggleHiddenFolders && (

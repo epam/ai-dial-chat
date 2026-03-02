@@ -1,18 +1,14 @@
 /// <reference types='vitest' />
-import { configDefaults } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 import react from '@vitejs/plugin-react';
 
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import path from 'path';
-import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: __dirname,
-  plugins: [
-    nxViteTsPaths(),
-    react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
-  ],
+  plugins: [nxViteTsPaths(), react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),

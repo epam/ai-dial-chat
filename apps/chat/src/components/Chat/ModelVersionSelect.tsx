@@ -4,10 +4,14 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { getVersionFromId } from '@/src/utils/server/api';
+
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -26,9 +30,15 @@ const VersionPrefix = () => {
   );
 };
 
-const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
-  entity.version || entity.id;
-
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
+  if (entity.version) {
+    return entity.version;
+  }
+  if (isEntityIdPublic(entity) || entity.id !== entity.reference) {
+    return getVersionFromId(entity.id);
+  }
+  return entity.id;
+};
 interface EntityVersionSelectProps<T extends MarketplaceEntity> {
   entities: T[];
   currentEntity: T;
@@ -124,7 +134,11 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
           )}
           item={
             <div className="flex w-full items-center gap-2">
-              <ModelIcon entityId={entity.id} entity={entity} size={16} />
+              <ModelIcon
+                entityId={entity.id}
+                entity={entity}
+                size={DEFAULT_ICON_SIZES.SMALL}
+              />
               <Tooltip
                 tooltip={getDisplayValue(entity)}
                 triggerClassName="truncate"

@@ -9,6 +9,7 @@ import { fakeCallback } from '@/src/utils/app/common';
 import { SortOrder } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -51,7 +52,7 @@ export const HeaderItem: React.FC<Props> = ({
                 ? 'text-primary'
                 : 'invisible text-secondary group-hover:visible'
             }
-            size={16}
+            size={DEFAULT_ICON_SIZES.SMALL}
           />
         )
       }

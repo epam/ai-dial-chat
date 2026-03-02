@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from './Tooltip';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -65,7 +67,7 @@ export function DropdownSelector({
             >
               <IconX
                 className="cursor-pointer text-secondary group-hover:text-accent-primary"
-                size={16}
+                size={DEFAULT_ICON_SIZES.SMALL}
               />
             </components.MultiValueRemove>
           ),
