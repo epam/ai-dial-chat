@@ -15,7 +15,7 @@ export class SelectFolderManagerModal extends BaseFileManagerModal {
   private addFolderButton!: Button;
 
   constructor(page: Page) {
-    super(page);
+    super(page, PopupSelectors.popupLabelledContainer);
   }
 
   /**

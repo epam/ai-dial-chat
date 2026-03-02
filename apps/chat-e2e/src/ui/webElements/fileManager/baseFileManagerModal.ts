@@ -10,8 +10,8 @@ import { Locator, Page } from '@playwright/test';
 export abstract class BaseFileManagerModal extends Popup {
   private fileManager!: FileManager;
 
-  protected constructor(page: Page) {
-    super(page);
+  protected constructor(page: Page, selector?: string) {
+    super(page, selector);
   }
 
   /**

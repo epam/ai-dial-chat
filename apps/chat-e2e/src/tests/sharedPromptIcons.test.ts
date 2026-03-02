@@ -5,7 +5,7 @@ import { ExpectedConstants, MenuOptions } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 
-dialTest(
+dialTest.only(
   'Shared icon does not appear in prompt icon if to click on copy icon.\n' +
     'Share form text differs for prompt and folder.\n' +
     'Share single prompt via QR code.\n' +
