@@ -473,6 +473,7 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
         }
         const folderName = (value[EDITED_FOLDER_NAME_KEY] as string).trim();
 
+        // TODO: remove when double encoding in appdata is fixed on core
         if (!isEntityNameValidWithDecode(folderName)) {
           return false;
         }
