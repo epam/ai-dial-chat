@@ -96,7 +96,7 @@ function wrapCssContents(wrapper: string, contents: string[]): string {
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!process.env.THEMES_CONFIG_HOST) {
-    return res.status(200).send('');
+    return res.status(500).send(errorsMessages.customThemesConfigNotProvided);
   }
 
   if (
