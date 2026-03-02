@@ -42,7 +42,6 @@ interface Manifest {
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'DIAL';
-  const iconUrl = getThemeIconUrl('favicon');
   res.setHeader('Content-Type', 'application/json');
 
   const response: Manifest = {
@@ -70,6 +69,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   };
 
   if (process.env.THEMES_CONFIG_HOST) {
+    const iconUrl = getThemeIconUrl('favicon');
     response.icons.push({
       src: iconUrl,
       sizes: '192x192',
