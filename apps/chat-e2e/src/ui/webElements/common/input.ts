@@ -10,4 +10,14 @@ export class Input extends BaseElement {
 
   public inputField = this.getChildElementBySelector(Tags.input);
   public alertIcon = this.getChildElementBySelector(IconSelectors.alertIcon);
+
+  public inputContainerByValue(value: string) {
+    return this.rootLocator.filter({
+      has: this.page.locator(`${Tags.input}${InputSelectors.value(value)}`),
+    });
+  }
+
+  public alertIconByValue(value: string) {
+    return this.inputContainerByValue(value).locator(IconSelectors.alertIcon);
+  }
 }
