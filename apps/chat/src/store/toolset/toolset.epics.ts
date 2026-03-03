@@ -727,7 +727,7 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
               );
             }
             url.searchParams.set('state', encodeToolsetRedirectState(state));
-            if (authSettings.scopesSupported) {
+            if (authSettings.scopesSupported?.length) {
               url.searchParams.set(
                 'scope',
                 authSettings.scopesSupported?.join(' '),

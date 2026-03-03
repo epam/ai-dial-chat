@@ -70,6 +70,9 @@ const selectChatbarWidth = (state: RootState) =>
 const selectPromptbarWidth = (state: RootState) =>
   rootSelector(state).promptbarWidth;
 
+const selectMarketplaceFilterbarWidth = (state: RootState) =>
+  rootSelector(state).marketplaceFilterbarWidth;
+
 const selectIsChatFullWidth = createSelector(
   [rootSelector, SettingsSelectors.selectEnabledFeatures],
   (state, enabledFeatures) => {
@@ -166,4 +169,5 @@ export const UISelectors = {
   selectVisibleSidebarItems,
   selectIsEditorLoader,
   selectAllowEnterToSend,
+  selectMarketplaceFilterbarWidth,
 };

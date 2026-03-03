@@ -74,6 +74,12 @@ export const uiSlice = createSlice({
     setPromptbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.promptbarWidth = payload;
     },
+    setMarketplaceFilterbarWidth: (
+      state,
+      { payload }: PayloadAction<number>,
+    ) => {
+      state.marketplaceFilterbarWidth = payload;
+    },
     setShowChatbar: (
       state,
       { payload }: PayloadAction<UIState['showChatbar']>,
