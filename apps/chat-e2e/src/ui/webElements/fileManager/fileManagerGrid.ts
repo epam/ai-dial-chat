@@ -130,11 +130,23 @@ export class FileManagerGrid extends Grid {
     }
   }
 
+  public getRowInputError(name?: string) {
+    if (name) {
+      return this.gridNameCellInput.alertIconByValue(name);
+    }
+    return this.gridNameCellInput.alertIcon.getElementLocator();
+  }
+
+  public getRenameInput() {
+    return this.gridNameCellInput.inputField;
+  }
+
   public async goToGridRowByNameCell(
     name: string,
     pageNumber = 1,
   ): Promise<Locator> {
     await this.loadingIndicator.waitForState({ state: 'hidden' });
+    await this.gridRows.getNthElement(1).waitFor();
     const gridRowByNameCellLocator = this.gridRowByNameCell(name);
     const scrollFullHeight = await this.gridViewPort
       .getElementLocator()
@@ -143,8 +155,11 @@ export class FileManagerGrid extends Grid {
       .getElementLocator()
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
-    //try to scroll into grid record if it is visible on the page
+    // Hours wasted here: 5
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for ag grid to finish rendering and animation, etc
+    await this.page.waitForTimeout(500);
     try {
+      //try to scroll into grid record if it is visible on the page
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
         timeout: scrollingTimeout,
       });

@@ -47,6 +47,7 @@ import {
   PromptBar,
   PublishingFilter,
   PublishingRules,
+  SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
   ShareAppModal,
@@ -335,6 +336,7 @@ const dialTest = test.extend<{
   attachFilesModal: AttachFilesModal;
   uploadFromDeviceModal: UploadFromDeviceModal;
   selectFolderModal: SelectFolderModal;
+  selectFolderManagerModal: SelectFolderManagerModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
   attachedOrganizationFiles: Folders;
@@ -451,6 +453,11 @@ const dialTest = test.extend<{
   fileManagerModalToolbar: FileManagerToolbar;
   fileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
   fileManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalManager: FileManager;
+  selectFolderManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  selectFolderManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalGrid: FileManagerGrid;
+  selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
@@ -1172,6 +1179,51 @@ const dialTest = test.extend<{
   selectFolderModal: async ({ page }, use) => {
     const selectFolderModal = new SelectFolderModal(page);
     await use(selectFolderModal);
+  },
+  selectFolderManagerModal: async ({ page }, use) => {
+    const selectFolderManagerModal = new SelectFolderManagerModal(page);
+    await use(selectFolderManagerModal);
+  },
+  selectFolderManagerModalManager: async (
+    { selectFolderManagerModal },
+    use,
+  ) => {
+    const selectFolderManagerModalManager =
+      selectFolderManagerModal.getFileManager();
+    await use(selectFolderManagerModalManager);
+  },
+  selectFolderManagerModalCollapsibleSidebar: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalCollapsibleSidebar =
+      selectFolderManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(selectFolderManagerModalCollapsibleSidebar);
+  },
+  selectFolderManagerModalFoldersTree: async (
+    { selectFolderManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const selectFolderManagerModalFoldersTree =
+      selectFolderManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(selectFolderManagerModalFoldersTree);
+  },
+  selectFolderManagerModalGrid: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalGrid =
+      selectFolderManagerModalManager.getFileManagerGrid();
+    await use(selectFolderManagerModalGrid);
+  },
+  selectFolderManagerModalGridAssertion: async (
+    { selectFolderManagerModalGrid },
+    use,
+  ) => {
+    const selectFolderManagerModalGridAssertion = new FileManagerGridAssertion(
+      selectFolderManagerModalGrid,
+    );
+    await use(selectFolderManagerModalGridAssertion);
   },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();

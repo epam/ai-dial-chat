@@ -15,7 +15,10 @@ let cachedThemesExpiration: number | undefined;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!process.env.THEMES_CONFIG_HOST) {
-    return res.status(500).send(errorsMessages.customThemesConfigNotProvided);
+    return res
+      .status(200)
+      .setHeader('Content-Type', 'application/json')
+      .send(FALLBACK_THEME_CONFIG);
   }
 
   if (
