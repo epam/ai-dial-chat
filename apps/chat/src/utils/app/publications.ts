@@ -34,7 +34,7 @@ import {
 } from '@/src/constants/publication';
 
 import {
-  isEntityNameValid,
+  isEntityNameValidWithDecode,
   prepareEntityName,
   sortItemsVersions,
 } from './common';
@@ -473,7 +473,8 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
         }
         const folderName = (value[EDITED_FOLDER_NAME_KEY] as string).trim();
 
-        if (!isEntityNameValid(folderName)) {
+        // TODO: remove when double encoding in appdata is fixed on core
+        if (!isEntityNameValidWithDecode(folderName)) {
           return false;
         }
       }
