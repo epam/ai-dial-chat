@@ -1,4 +1,8 @@
-import { IconMessages, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
+import {
+  IconCloudUpload,
+  IconMessages,
+  IconRefresh,
+} from '@tabler/icons-react';
 import { FocusEvent, useCallback, useEffect, useMemo } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
 
@@ -117,8 +121,15 @@ const ChatPreview = () => {
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-4">
             <div className="flex items-center justify-center text-secondary">
-              <IconMessages size={45} />
+              <IconMessages size={60} stroke={0.5} />
             </div>
+            <DialLinkButton
+              label={t('Deploy code app')}
+              onClick={handleDeploy}
+              disabled={!isApplicationValid}
+              data-qa="deploy-code-app"
+              iconBefore={<IconCloudUpload size={18} />}
+            />
             <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
               {t(
                 'Please fill the mandatory fields and deploy the application to enable preview. To keep your preview up-to-date,',
@@ -128,13 +139,6 @@ const ChatPreview = () => {
               </span>
               {t('after making changes.')}
             </div>
-            <DialLinkButton
-              label={t('Deploy code app')}
-              onClick={handleDeploy}
-              disabled={!isApplicationValid}
-              data-qa="deploy-code-app"
-              iconBefore={<IconPlayerPlay size={18} />}
-            />
           </div>
         )
       ) : (

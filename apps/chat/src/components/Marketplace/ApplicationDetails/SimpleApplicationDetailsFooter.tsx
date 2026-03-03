@@ -1,6 +1,6 @@
 import {
-  IconPlayerPlay,
-  IconPlaystationSquare,
+  IconCloudDownload,
+  IconCloudUpload,
   IconRefresh,
 } from '@tabler/icons-react';
 
@@ -59,7 +59,7 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
     return (
       <DialNeutralButton
         label={t('Undeploy')}
-        iconBefore={<IconPlaystationSquare size={18} />}
+        iconBefore={<IconCloudDownload size={18} />}
         onClick={handleUndeploy}
         data-qa="undeploy-in-details"
       />
@@ -69,7 +69,7 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   return (
     <DialPrimaryButton
       label={t('Deploy')}
-      iconBefore={<IconPlayerPlay size={18} />}
+      iconBefore={<IconCloudUpload size={18} />}
       onClick={handleDeploy}
       data-qa="deploy-in-details"
     />

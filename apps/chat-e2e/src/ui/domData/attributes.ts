@@ -34,7 +34,7 @@ export enum AttributeValues {
   sendRequest = 'Send request',
   change = 'Change',
   copyLink = 'copy-link',
-  close = 'close',
+  close = 'Close dialog',
   removeFile = 'remove-file',
   mixed = 'mixed',
   truncate = 'truncate',
