@@ -11,11 +11,11 @@ import {
   isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 
-import { DialAIEntityModel } from '../types/models';
 import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/actions';
