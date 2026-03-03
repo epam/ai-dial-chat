@@ -65,12 +65,19 @@ const useApplicationDeployment = (entity: DialAIEntityModel) => {
     !isUndeploying && (isDeployed || isUpdating || wasDeployClicked);
 
   const isButtonDisabled =
-    isUpdating ||
-    isUndeploying ||
-    (wasDeployClicked && !isDeployed) ||
-    (isExecutable && !isDeployed && isPublicApp && !isAdmin);
+    isExecutable &&
+    ((!isDeployed && isPublicApp && !isAdmin) ||
+      isUpdating ||
+      isUndeploying ||
+      (wasDeployClicked && !isDeployed));
 
   const buttonTooltip = useMemo(() => {
+    if (!isExecutable) {
+      return;
+    }
+    if (wasDeployClicked && !isDeployed) {
+      return t(`Application is deploying`);
+    }
     if (isUpdating || isUndeploying) {
       return t(`Application is ${entity.functionStatus?.toLowerCase()}`);
     }
@@ -96,11 +103,11 @@ const useApplicationDeployment = (entity: DialAIEntityModel) => {
   const handleButtonClick = useCallback(
     (onUseEntity?: () => void) => (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (isDeployed) {
-        onUseEntity?.();
-      } else {
+      if (isExecutable && !isDeployed) {
         setWasDeployClicked(true);
         handleDeploy();
+      } else {
+        onUseEntity?.();
       }
     },
     [isDeployed, handleDeploy],
