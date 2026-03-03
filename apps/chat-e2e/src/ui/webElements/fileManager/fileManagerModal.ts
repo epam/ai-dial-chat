@@ -1,27 +1,28 @@
 import { UploadMenuOptions } from '@/src/testData';
 import { FileManagerModalSelectors } from '@/src/ui/selectors';
-import { FileManager, FileManagerModalHeader } from '@/src/ui/webElements';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
+import {
+  BaseFileManagerModal,
+  FileManagerModalHeader,
+} from '@/src/ui/webElements';
 import { Button } from '@/src/ui/webElements/common/button';
 import { Page } from '@playwright/test';
 
-export class FileManagerModal extends BaseElement {
-  constructor(page: Page) {
-    super(page, FileManagerModalSelectors.modalContainer);
-  }
-  private closeButton!: Button;
+/**
+ * Full-featured File Manager Modal.
+ * Used for file/folder selection and management with complete toolbar.
+ */
+export class FileManagerModal extends BaseFileManagerModal {
   private attachButton!: Button;
   private selectButton!: Button;
-  private header!: FileManagerModalHeader;
-  private fileManager!: FileManager;
+  private _header!: FileManagerModalHeader;
 
-  getCloseButton(): Button {
-    if (!this.closeButton) {
-      this.closeButton = new Button(this.page, 'close', this.rootLocator);
-    }
-    return this.closeButton;
+  constructor(page: Page) {
+    super(page);
   }
 
+  /**
+   * Gets the "Attach" button (specific to full FileManagerModal).
+   */
   getAttachButton(): Button {
     if (!this.attachButton) {
       this.attachButton = new Button(this.page, 'Attach', this.rootLocator);
@@ -29,6 +30,9 @@ export class FileManagerModal extends BaseElement {
     return this.attachButton;
   }
 
+  /**
+   * Gets the "Select file" button (specific to full FileManagerModal).
+   */
   getSelectButton(): Button {
     if (!this.selectButton) {
       this.selectButton = new Button(
@@ -41,17 +45,10 @@ export class FileManagerModal extends BaseElement {
   }
 
   getHeader(): FileManagerModalHeader {
-    if (!this.header) {
-      this.header = new FileManagerModalHeader(this.page, this.rootLocator);
+    if (!this._header) {
+      this._header = new FileManagerModalHeader(this.page, this.rootLocator);
     }
-    return this.header;
-  }
-
-  getFileManager(): FileManager {
-    if (!this.fileManager) {
-      this.fileManager = new FileManager(this.page, this.rootLocator);
-    }
-    return this.fileManager;
+    return this._header;
   }
 
   public title = this.getChildElementBySelector(
