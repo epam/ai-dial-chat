@@ -25,8 +25,8 @@ import {
   SourceType,
 } from '@/src/constants/marketplace';
 
-import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { Loader } from '@/src/components/Common/Loader';
+import { ResizableSidebarWrapper } from '@/src/components/Sidebar/ResizableSidebarWrapper';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
 import { capitalize } from 'lodash';
@@ -168,7 +168,7 @@ function FiltersRenderer({
   }
 
   return (
-    <>
+    <div className="flex grow flex-col divide-y divide-tertiary overflow-y-auto">
       {showEntityTypesSection && (
         <FilterSection
           sectionName={t('Type')}
@@ -201,7 +201,7 @@ function FiltersRenderer({
           onApplyFilter={handleApplyFilter}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -280,54 +280,52 @@ export const MarketplaceFilterbar = memo(() => {
     );
   }, [areModelsLoaded, areToolsetsLoaded, isAgentsTab, modelsMap, toolsetsMap]);
 
+  if (!showFilterbar) {
+    return null;
+  }
+
   return (
-    <nav
-      className={classNames(
-        showFilterbar ? 'w-[320px] xl:w-[260px]' : 'invisible',
-        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3  xl:sticky xl:left-0 xl:z-0',
-        isOverlay ? 'md:left-[44px]' : 'md:left-[60px]',
-      )}
-      data-qa="marketplace-sidebar"
+    <ResizableSidebarWrapper
+      dataQa="marketplace-sidebar"
+      isLeftSidebar
+      handleClose={handleClose}
     >
-      <CloseSidebarButton isLeftSide onClose={handleClose} />
-      {showFilterbar && (
-        <div className="flex h-full flex-col divide-y divide-tertiary overflow-y-auto">
-          <div
-            className={classNames(
-              'flex items-center justify-between px-5',
-              isOverlay ? 'min-h-[35px]' : 'min-h-12',
-            )}
-          >
-            <p className="text-base font-semibold">{t('Filters')}</p>
-          </div>
-          {noEntities ? (
-            <div className="flex grow flex-col items-center justify-center gap-3">
-              <IconClipboardX
-                size={60}
-                strokeWidth={0.5}
-                className="text-secondary"
-              />
-              <p className="text-center text-sm leading-[24px] text-primary">
-                {t(
-                  `No filters as you currently have no ${isAgentsTab ? 'agents' : 'toolsets'}`,
-                )}
-              </p>
-            </div>
-          ) : (
-            <FiltersRenderer
-              showEntityTypesSection={isAgentsTab}
-              showLoader={showLoader}
-              openedSections={openedSections}
-              selectedFilters={selectedFilters}
-              topics={topicsFilters}
-              sourceTypes={sourcesFilters}
-              handleToggleFilterSection={handleToggleFilterSection}
-              handleApplyFilter={handleApplyFilter}
-            />
+      <>
+        <div
+          className={classNames(
+            'flex items-center justify-between px-5',
+            isOverlay ? 'min-h-[35px]' : 'min-h-12',
           )}
+        >
+          <p className="text-base font-semibold">{t('Filters')}</p>
         </div>
-      )}
-    </nav>
+        {noEntities ? (
+          <div className="flex grow flex-col items-center justify-center gap-3">
+            <IconClipboardX
+              size={60}
+              strokeWidth={0.5}
+              className="text-secondary"
+            />
+            <p className="text-center text-sm leading-[24px] text-primary">
+              {t(
+                `No filters as you currently have no ${isAgentsTab ? 'agents' : 'toolsets'}`,
+              )}
+            </p>
+          </div>
+        ) : (
+          <FiltersRenderer
+            showEntityTypesSection={isAgentsTab}
+            showLoader={showLoader}
+            openedSections={openedSections}
+            selectedFilters={selectedFilters}
+            topics={topicsFilters}
+            sourceTypes={sourcesFilters}
+            handleToggleFilterSection={handleToggleFilterSection}
+            handleApplyFilter={handleApplyFilter}
+          />
+        )}
+      </>
+    </ResizableSidebarWrapper>
   );
 });
 
