@@ -106,7 +106,6 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
 
       // remove 'share' from query after application sharing link accepted
       if (action.type === MarketplaceActions.setDetailsEntity.type) {
-        // addToQuery(query, referenceQuery, detailsEntity?.reference);
         addToQuery(query, 'share', undefined);
       }
       // workspace tab
