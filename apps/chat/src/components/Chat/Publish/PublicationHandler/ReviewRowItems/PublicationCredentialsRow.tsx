@@ -1,5 +1,5 @@
 import { IconKey } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 

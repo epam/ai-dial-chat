@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useState } from 'react';
+import React, { MouseEvent, useCallback, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 

@@ -6,8 +6,10 @@ import { DialIconButtonProps } from '@epam/ai-dial-ui-kit/dist/src/components/Ic
 
 import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 
-interface CloseButtonProps
-  extends Omit<DialIconButtonProps, 'appearance' | 'icon' | 'size'> {
+interface CloseButtonProps extends Omit<
+  DialIconButtonProps,
+  'appearance' | 'icon' | 'size'
+> {
   iconClassName?: string;
   iconSize?: number;
 }
