@@ -163,6 +163,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-tailwindcss": "^3.18.2",
+    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-testing-library": "^7.16.0",
     "gpt-3-encoder": "^1.1.4",
     "jsdom": "^27.0.1",
