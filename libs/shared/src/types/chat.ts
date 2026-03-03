@@ -147,8 +147,10 @@ export interface FolderInterface extends ShareEntity {
   serverSynced?: boolean;
 }
 
-export interface TemporaryFolderInterface
-  extends Omit<FolderInterface, 'type'> {
+export interface TemporaryFolderInterface extends Omit<
+  FolderInterface,
+  'type'
+> {
   temporary: true;
   type?: FeatureType;
 }
