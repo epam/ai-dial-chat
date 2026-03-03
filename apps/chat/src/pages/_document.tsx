@@ -26,7 +26,9 @@ function Document(props: Props) {
           name="apple-mobile-web-app-title"
           content={process.env.NEXT_PUBLIC_APP_NAME || 'DIAL'}
         ></meta>
-        <link rel="stylesheet" href={'/api/themes/styles'} />
+        {!!process.env.THEMES_CONFIG_HOST && (
+          <link rel="stylesheet" href={'/api/themes/styles'} />
+        )}
         <link rel="manifest" href="/api/manifest" />
       </Head>
       <body>

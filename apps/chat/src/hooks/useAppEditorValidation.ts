@@ -97,10 +97,10 @@ export const useAppEditorValidation = () => {
           ),
         )
     ) {
-      // if slug is not equal to application type)
+      // if slug is not equal to application type
       console.error(
         'NotFound',
-        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId: ${cleanSchemaId(getApplicationType(applicationData as DialAIEntityModel))}`,
+        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? applicationData) as DialAIEntityModel))}`,
       );
       void router.push(Routes.NotFound);
       return;
