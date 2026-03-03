@@ -234,12 +234,22 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
 
       if (isAgentsTab) {
         // set model details
-        const modelsMap = ModelsSelectors.selectModelsMap(state);
-        detailsEntity = getDetailsEntity({
-          entitiesMap: modelsMap,
-          reference: modelReference,
-          type: selectedEntitiesTab,
-        });
+        if (modelReference) {
+          const modelsMap = ModelsSelectors.selectModelsMap(state);
+
+          detailsEntity = getDetailsEntity({
+            entitiesMap: modelsMap,
+            reference: modelReference,
+            type: selectedEntitiesTab,
+          });
+        } else {
+          const stateDetailsEntity =
+            MarketplaceSelectors.selectDetailsEntity(state);
+          detailsEntity =
+            stateDetailsEntity?.type === MarketplaceEntitiesTabs.AGENTS
+              ? stateDetailsEntity
+              : undefined;
+        }
 
         // agents filters
         statePropertyName = 'selectedAgentsFilters';
@@ -249,13 +259,21 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         filters = getFilters(query, existingAgentsTopics, sourceTypes);
       } else {
         // set toolset details
-
-        const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
-        detailsEntity = getDetailsEntity({
-          entitiesMap: toolsetsMap,
-          reference: toolsetReference,
-          type: selectedEntitiesTab!,
-        });
+        if (toolsetReference) {
+          const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+          detailsEntity = getDetailsEntity({
+            entitiesMap: toolsetsMap,
+            reference: toolsetReference,
+            type: selectedEntitiesTab!,
+          });
+        } else {
+          const stateDetailsEntity =
+            MarketplaceSelectors.selectDetailsEntity(state);
+          detailsEntity =
+            stateDetailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+              ? stateDetailsEntity
+              : undefined;
+        }
 
         // toolsets filters
         statePropertyName = 'selectedToolsetsFilters';

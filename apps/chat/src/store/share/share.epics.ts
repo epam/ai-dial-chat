@@ -451,10 +451,12 @@ const acceptInvitationEpic: AppEpic = (action$) =>
               );
 
               const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
+              const permissions = acceptedIds[0].permissions;
 
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
+                  permissions,
                   isFolder: isFolderId(acceptedIds[0].url),
                   isConversation: isConversationId(acceptedIds[0].url),
                   isPrompt: isPromptId(acceptedIds[0].url),
@@ -481,7 +483,7 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
     ofType(ShareActions.acceptShareInvitationSuccess.type),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
-        const { acceptedId } = payload;
+        const { acceptedId, permissions } = payload;
         const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
         const applicationFromState = modelsMap[acceptedId];
 
@@ -490,15 +492,32 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
             ApplicationActions.get({
               applicationId: acceptedId,
               showCard: true,
+              acceptSharePermissions: permissions,
             }),
           );
         } else {
-          return of(
-            MarketplaceActions.setDetailsEntity({
-              reference: applicationFromState.reference,
-              type: MarketplaceEntitiesTabs.AGENTS,
-              isSuggested: false,
-            }),
+          return concat(
+            of(
+              ModelsActions.updateLocalModels({
+                modelsToUpdate: [
+                  {
+                    reference: applicationFromState.reference,
+                    updatedValues: {
+                      sharedWithMe: true,
+                      permissions,
+                    },
+                  },
+                ],
+              }),
+            ),
+
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: applicationFromState.reference,
+                type: MarketplaceEntitiesTabs.AGENTS,
+                isSuggested: false,
+              }),
+            ),
           );
         }
       } else {

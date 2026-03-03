@@ -17,7 +17,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
 const initialState: ApplicationState = {
@@ -135,6 +135,7 @@ export const applicationSlice = createSlice({
         applicationId: string;
         isForSharing?: boolean;
         showCard?: boolean;
+        acceptSharePermissions?: SharePermission[];
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
