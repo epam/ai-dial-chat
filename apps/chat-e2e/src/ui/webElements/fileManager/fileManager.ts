@@ -1,4 +1,3 @@
-import { FileManagerSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
   FileManagerCollapsibleSidebar,
@@ -12,7 +11,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class FileManager extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, FileManagerSelectors.container, parentLocator);
+    super(page, '', parentLocator);
   }
 
   private fileManagerToolbar!: FileManagerToolbar;

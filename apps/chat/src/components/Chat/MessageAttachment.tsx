@@ -495,7 +495,7 @@ export const MessageAttachment = ({
                     <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                   </a>
                 )}
-                {isFullScreenEnabled && (
+                {isFullScreenEnabled && isOpened && (
                   <DialGhostIconButton
                     size={ButtonSize.Small}
                     icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
