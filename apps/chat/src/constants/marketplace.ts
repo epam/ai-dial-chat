@@ -1,4 +1,8 @@
-import { IconCloudDownload, IconCloudUpload } from '@tabler/icons-react';
+import {
+  IconCloudDownload,
+  IconCloudUpload,
+  IconRefresh,
+} from '@tabler/icons-react';
 
 import {
   ApplicationType,
@@ -115,6 +119,7 @@ export const PlayerContextIcons = {
   [SimpleApplicationStatus.DEPLOY]: IconCloudUpload,
   [SimpleApplicationStatus.UNDEPLOY]: IconCloudDownload,
   [SimpleApplicationStatus.UPDATING]: LoaderIcon,
+  [SimpleApplicationStatus.REDEPLOY]: IconRefresh,
 };
 
 export enum ViewTypes {

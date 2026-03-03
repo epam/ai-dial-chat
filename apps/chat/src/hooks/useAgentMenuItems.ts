@@ -3,7 +3,6 @@ import {
   IconFileDescription,
   IconLink,
   IconPencilMinus,
-  IconRefresh,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -138,7 +137,7 @@ export const useAgentMenuItems = ({
         name: t('Redeploy'),
         dataQa: 'redeploy',
         display: showRedeploy && disabledActions.deploy !== true,
-        Icon: IconRefresh,
+        Icon: PlayerContextIcons[SimpleApplicationStatus.REDEPLOY],
         className: PlayerContextButtonClasses[SimpleApplicationStatus.REDEPLOY],
         iconClassName:
           PlayerContextIconClasses[SimpleApplicationStatus.REDEPLOY],
