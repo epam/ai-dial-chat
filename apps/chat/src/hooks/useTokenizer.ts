@@ -18,9 +18,8 @@ export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
       if (!cancelled && tokenizer?.encoding) {
         // Dynamic import is required to keep this hook HMR-safe.
         // Static import of tiktoken (WebAssembly) would break React Fast Refresh.
-        const { getOrCreateEncoding } = await import(
-          '@/src/utils/app/tokenizer'
-        );
+        const { getOrCreateEncoding } =
+          await import('@/src/utils/app/tokenizer');
 
         if (!cancelled) {
           encodingRef.current = getOrCreateEncoding(tokenizer.encoding);

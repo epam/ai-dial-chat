@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useState } from 'react';
+import React, { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 

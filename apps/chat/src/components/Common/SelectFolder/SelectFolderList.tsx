@@ -19,8 +19,10 @@ import { NoData } from '@/src/components/Common/NoData';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import { Folder, FolderProps } from '@/src/components/Folder/Folder';
 
-interface Props<T, P = unknown>
-  extends Omit<FolderProps<T, P>, 'currentFolder' | 'featureType'> {
+interface Props<T, P = unknown> extends Omit<
+  FolderProps<T, P>,
+  'currentFolder' | 'featureType'
+> {
   isAllEntitiesOpened: boolean;
   rootFolderName: string;
   rootFolderId: string;

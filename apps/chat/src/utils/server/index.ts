@@ -107,7 +107,7 @@ export const OpenAIStream = async ({
       let result: DialAIErrorResponse;
       try {
         result = JSON.parse(await res.text()) as DialAIErrorResponse;
-      } catch (e) {
+      } catch {
         throw new DialAIError(res.statusText, res.status, url, {
           displayMessage: res.statusText,
         });

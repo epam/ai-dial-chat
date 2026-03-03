@@ -465,7 +465,6 @@ dialTest(
     await dialTest.step(
       'Click on the model icon and verify model change is not available',
       async () => {
-        // eslint-disable-next-line playwright/no-force-option
         await chatHeader.chatModelIcon.click({ force: true });
         await baseAssertion.assertElementState(
           talkToAgentDialog.getElementLocator(),

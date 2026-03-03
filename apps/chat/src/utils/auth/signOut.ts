@@ -21,7 +21,7 @@ export const customSignOut = async (): Promise<void> => {
       const parsedUrl = parseUrl(url);
       window.location.href = parsedUrl.href;
     }
-  } catch (error) {
+  } catch {
     await signOut({ redirect: true });
   }
 };

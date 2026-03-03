@@ -29,6 +29,7 @@ export default [
       '**/**.config.js',
       '**/**.config.mjs',
       '**/jest.config.ts',
+      '**/setupTests.ts',
     ],
   },
   {

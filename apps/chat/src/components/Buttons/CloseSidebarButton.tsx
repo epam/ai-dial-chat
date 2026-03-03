@@ -1,3 +1,5 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
