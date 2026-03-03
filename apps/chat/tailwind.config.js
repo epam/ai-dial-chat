@@ -90,7 +90,7 @@ module.exports = {
         '5xl': '2560px',
       },
       borderRadius: {
-        DEFAULT: '3px',
+        DEFAULT: 'var(--border-radius, 3px)',
       },
       opacity: {
         15: '15%',

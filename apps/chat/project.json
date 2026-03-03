@@ -10,7 +10,8 @@
       "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/chat",
-        "useLegacyTypescriptPlugin": false
+        "useLegacyTypescriptPlugin": false,
+        "webpack": true
       },
       "configurations": {
         "development": {
@@ -25,7 +26,8 @@
       "options": {
         "buildTarget": "chat:build",
         "dev": true,
-        "port": 3000
+        "port": 3000,
+        "webpack": true
       },
       "inputs": ["default"],
       "configurations": {

@@ -29,6 +29,8 @@ import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -110,7 +112,7 @@ export const ApplicationDetailsFooter = ({
             <button className="icon-button">
               <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
-                triggerIconSize={24}
+                triggerIconSize={DEFAULT_ICON_SIZES.STANDARD}
                 entity={entity}
               />
             </button>
@@ -130,7 +132,7 @@ export const ApplicationDetailsFooter = ({
           {onBookmarkClick && (
             <MarketplaceEntityBookmark
               entity={entity}
-              size={24}
+              size={DEFAULT_ICON_SIZES.STANDARD}
               className="icon-button group/bookmark"
               onBookmarkClick={onBookmarkClick}
             />

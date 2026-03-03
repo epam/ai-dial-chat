@@ -3,6 +3,7 @@ import {
   IconArrowsMinimize,
   IconRefresh,
 } from '@tabler/icons-react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
@@ -64,9 +65,25 @@ export const VisualizerRenderer = ({
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle } = renderer;
+  const { data: session } = useSession();
+  const {
+    url: rendererUrl,
+    title: visualizerTitle,
+    requestTimeout,
+    passAuthInfo,
+  } = renderer;
 
   const dispatch = useAppDispatch();
+
+  const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    if (!passAuthInfo || !session) return {};
+    const email = session.user?.email ?? undefined;
+    const providerId = (session as { providerId?: string }).providerId;
+    return {
+      ...(email != null && { logInHint: email }),
+      ...(providerId != null && { providerId }),
+    };
+  }, [passAuthInfo, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
@@ -116,9 +133,12 @@ export const VisualizerRenderer = ({
       height:
         isFullScreen && containerHeight
           ? containerHeight
-          : (customAttachmentData?.layout.height ??
-            DEFAULT_CUSTOM_ATTACHMENT_HEIGHT),
+          : Number(
+              customAttachmentData?.layout.height ??
+                DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+            ),
       themeId,
+      ...authLayoutFields,
     };
   }, [
     containerHeight,
@@ -126,6 +146,7 @@ export const VisualizerRenderer = ({
     isFullScreen,
     scrollWidth,
     themeId,
+    authLayoutFields,
   ]);
 
   const sendMessage = useCallback(
@@ -155,6 +176,7 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: visualizerTitle,
         loaderStyles: { display: 'none' },
+        requestTimeout,
       });
 
       return () => {
@@ -162,7 +184,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, visualizerTitle]);
+  }, [requestTimeout, rendererUrl, visualizerTitle]);
 
   useEffect(() => {
     if (

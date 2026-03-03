@@ -96,6 +96,22 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.PromptbarWidth, promptBarWidth);
   }
 
+  public static getMarketplaceFilterbarWidth(): Observable<number> {
+    return BrowserStorage.getData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      SIDEBAR_MIN_WIDTH,
+    );
+  }
+
+  public static setMarketplaceFilterbarWidth(
+    filterbarWidth: number,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      filterbarWidth,
+    );
+  }
+
   public static getIsChatFullWidth(): Observable<boolean> {
     return BrowserStorage.getData(UIStorageKeys.IsChatFullWidth, false);
   }

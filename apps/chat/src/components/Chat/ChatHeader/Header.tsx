@@ -35,6 +35,7 @@ import {
 } from '@/src/store/selectors';
 
 import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
@@ -164,7 +165,6 @@ export const ChatHeader = Inversify.register(
       [dispatch],
     );
 
-    const iconSize = screenState === ScreenState.SM ? 20 : 18;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent =
@@ -219,6 +219,7 @@ export const ChatHeader = Inversify.register(
                       publicVersionGroupId={publicVersionGroupId}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
                       selectedEntityId={conversation.id}
+                      btnClassNames="!text-primary"
                     />
                   ) : (
                     <p
@@ -256,7 +257,7 @@ export const ChatHeader = Inversify.register(
                         <ModelIcon
                           entityId={conversation.model.id}
                           entity={model}
-                          size={iconSize}
+                          size={screenState === ScreenState.SM ? 20 : 18}
                           isCustomTooltip
                         />
                       }
@@ -296,7 +297,7 @@ export const ChatHeader = Inversify.register(
                     onClick={() => setShowSettings(!isShowSettings)}
                     data-qa="conversation-setting"
                     disabled={isMessageStreaming || disallowChangeSettings}
-                    icon={<IconSettings size={iconSize} />}
+                    icon={<IconSettings size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
                 </Tooltip>
               )}
@@ -314,7 +315,7 @@ export const ChatHeader = Inversify.register(
                       onClick={() => setIsClearConversationModalOpen(true)}
                       data-qa="clear-conversation"
                       disabled={isMessageStreaming}
-                      icon={<IconEraser size={iconSize} />}
+                      icon={<IconEraser size={DEFAULT_ICON_SIZES.SMALL} />}
                     />
                   </Tooltip>
                 )}

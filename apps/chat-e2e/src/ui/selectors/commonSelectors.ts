@@ -25,6 +25,7 @@ export const FolderTreeSelectors = {
   foldersTreeContainer: '[aria-label="folders-tree"]',
   folder: '[aria-label="folder"]',
   folderName: '#name',
+  folderGroup: '.dial-small.group\\/item',
 };
 
 export const NoDataContentSelectors = {
@@ -67,6 +68,7 @@ export const CheckboxSelectors = {
 
 export const PopupSelectors = {
   popupContainer: '[role="dialog"][aria-modal="true"]',
+  popupLabelledContainer: '[aria-labelledby="dial-popup-heading"]',
   popupHeader: '#dial-popup-heading',
   popupContent: '[aria-label="popup-description"]',
 };
@@ -76,7 +78,10 @@ export const LoaderSelectors = {
 };
 
 export const InputSelectors = {
+  inputContainer: '[aria-label="input-container"]',
   value: (value: string) => `[value="${RegexUtil.escapeSelectorValue(value)}"]`,
-  inputErrorIcon: (value: string) =>
-    `.dial-input-error:has(input[value="${RegexUtil.escapeSelectorValue(value)}"]) svg[aria-label="alert"]`,
+};
+
+export const TooltipSelectors = {
+  tooltipContainer: '[role="tooltip"]',
 };

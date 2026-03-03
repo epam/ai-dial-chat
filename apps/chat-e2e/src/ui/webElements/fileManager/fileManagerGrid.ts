@@ -1,12 +1,7 @@
 import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
-import {
-  GridSelectors,
-  IconSelectors,
-  InputSelectors,
-} from '@/src/ui/selectors';
-import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
-import { FileUtil } from '@/src/utils';
+import { GridSelectors, IconSelectors } from '@/src/ui/selectors';
+import { Checkbox, Dropdown, Grid, Input } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export const scrollingTimeout = 1000;
@@ -28,6 +23,11 @@ export class FileManagerGrid extends Grid {
   public gridHeaderCheckbox = new Checkbox(
     this.page,
     this.gridHeaderColumn(FileManagerColumnKey.Select).getElementLocator(),
+  );
+
+  public gridNameCellInput = new Input(
+    this.page,
+    this.gridRowColumn(FileManagerColumnKey.Name),
   );
 
   public gridRowByNameCell = (name: string) =>
@@ -80,28 +80,65 @@ export class FileManagerGrid extends Grid {
     }
   }
 
-  public async renameFile(currentName: string, newName: string) {
+  public async setFolderName(folderName: string, waitForRequest = true) {
+    await this.gridNameCellInput.inputField.fillInInput(folderName);
+    if (waitForRequest) {
+      const requestPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().endsWith(API.folderFilesListingHost(folderName)) &&
+          resp.request().method() === 'GET' &&
+          resp.ok(),
+      );
+      await this.page.keyboard.press(keys.enter);
+      await requestPromise;
+    } else {
+      await this.page.keyboard.press(keys.enter);
+    }
+  }
+
+  public async renameFile(
+    currentName: string,
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
     // eslint-disable-next-line playwright/no-force-option
     await dotsMenu.click({ force: true });
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
-    const nameWithoutExtension =
-      FileUtil.getFilenameWithoutExtension(currentName);
-    const input = this.getElementLocator().locator(
-      InputSelectors.value(nameWithoutExtension),
-    );
-    await input.fill(newName);
-    await this.click();
+    await this.gridNameCellInput.inputField.fillInInput(newName);
+    if (isHttpMethodTriggered) {
+      const hostsMap = new Map([
+        [API.moveHost, 'POST'],
+        [API.folderFilesListingHost(), 'GET'],
+      ]);
+      const responses = [];
+      for (const [host, method] of hostsMap) {
+        const resp = this.page.waitForResponse(
+          (response) =>
+            response.url().includes(host) &&
+            response.request().method() === method &&
+            response.status() === 200,
+        );
+        responses.push(resp);
+      }
+      await this.click();
+      for (const resp of responses) {
+        await resp;
+      }
+    } else {
+      await this.click();
+    }
   }
 
-  public getRenameInputError(name: string) {
-    return this.getElementLocator().locator(
-      InputSelectors.inputErrorIcon(name),
-    );
+  public getRowInputError(name?: string) {
+    if (name) {
+      return this.gridNameCellInput.alertIconByValue(name);
+    }
+    return this.gridNameCellInput.alertIcon.getElementLocator();
   }
 
-  public getRenameInput(value: string) {
-    return this.getElementLocator().locator(InputSelectors.value(value));
+  public getRenameInput() {
+    return this.gridNameCellInput.inputField;
   }
 
   public async goToGridRowByNameCell(
@@ -109,6 +146,7 @@ export class FileManagerGrid extends Grid {
     pageNumber = 1,
   ): Promise<Locator> {
     await this.loadingIndicator.waitForState({ state: 'hidden' });
+    await this.gridRows.getNthElement(1).waitFor();
     const gridRowByNameCellLocator = this.gridRowByNameCell(name);
     const scrollFullHeight = await this.gridViewPort
       .getElementLocator()
@@ -117,8 +155,11 @@ export class FileManagerGrid extends Grid {
       .getElementLocator()
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
-    //try to scroll into grid record if it is visible on the page
+    // Hours wasted here: 5
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for ag grid to finish rendering and animation, etc
+    await this.page.waitForTimeout(500);
     try {
+      //try to scroll into grid record if it is visible on the page
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
         timeout: scrollingTimeout,
       });
