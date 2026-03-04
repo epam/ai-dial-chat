@@ -15,8 +15,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
-  ButtonSize,
   DialPrimaryIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface LikeItemProps {
@@ -39,7 +39,7 @@ const DesktopLikeView = ({
   <Tooltip placement="top" isTriggerClickable={!wasClicked} tooltip={label}>
     <DialPrimaryIconButton
       appearance={ButtonAppearance.Ghost}
-      size={ButtonSize.Small}
+      size={ElementSize.Small}
       onClick={() => {
         if (!wasClicked) {
           onLike(targetStatus);

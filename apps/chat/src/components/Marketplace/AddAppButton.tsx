@@ -49,7 +49,6 @@ export function AddAppButton() {
   const openEditor = useCallback(
     (type: string) => {
       void router.push(getAppEditorCreateModeRoute(type));
-      dispatch(ApplicationActions.setAppDetails(undefined));
       dispatch(
         ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
       );

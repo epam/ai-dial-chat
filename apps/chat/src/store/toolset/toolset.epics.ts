@@ -1000,6 +1000,7 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
       }
 
       actions.push(of(UIActions.setEditorLoader(false)));
+      actions.push(of(ToolsetActions.clearToolsetDetails()));
 
       return navigateAndThen(router, route, concat(...actions));
     }),
