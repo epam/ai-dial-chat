@@ -1,4 +1,8 @@
-import { IconPlayerPlay, IconPlaystationSquare } from '@tabler/icons-react';
+import {
+  IconCloudDownload,
+  IconCloudUpload,
+  IconRefresh,
+} from '@tabler/icons-react';
 
 import {
   ApplicationType,
@@ -99,20 +103,23 @@ export const HeaderIconSizes: Record<ScreenState, IconSize> = {
 
 export const PlayerContextIconClasses = {
   [SimpleApplicationStatus.DEPLOY]: 'text-accent-secondary',
-  [SimpleApplicationStatus.UNDEPLOY]: 'text-error',
+  [SimpleApplicationStatus.UNDEPLOY]: '!text-error',
   [SimpleApplicationStatus.UPDATING]: 'animate-spin-steps',
+  [SimpleApplicationStatus.REDEPLOY]: '!text-accent-secondary',
 };
 
 export const PlayerContextButtonClasses = {
   [SimpleApplicationStatus.DEPLOY]: 'button-accent-secondary',
-  [SimpleApplicationStatus.UNDEPLOY]: 'button-error',
+  [SimpleApplicationStatus.UNDEPLOY]: '!button-error',
   [SimpleApplicationStatus.UPDATING]: '',
+  [SimpleApplicationStatus.REDEPLOY]: '!button-accent-secondary',
 };
 
 export const PlayerContextIcons = {
-  [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
-  [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
+  [SimpleApplicationStatus.DEPLOY]: IconCloudUpload,
+  [SimpleApplicationStatus.UNDEPLOY]: IconCloudDownload,
   [SimpleApplicationStatus.UPDATING]: LoaderIcon,
+  [SimpleApplicationStatus.REDEPLOY]: IconRefresh,
 };
 
 export enum ViewTypes {
