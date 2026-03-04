@@ -93,11 +93,7 @@ export const useToolsetEditorValidation = () => {
       return;
     }
 
-    if (
-      !toolsetDetails &&
-      !isToolsetLoadingFailed &&
-      !isToolsetDetailsLoading
-    ) {
+    if (!toolsetDetails && !isToolsetLoadingFailed) {
       dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
     }
 
