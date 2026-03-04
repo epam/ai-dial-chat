@@ -90,7 +90,7 @@ export default [
       'tailwindcss/no-custom-classname': 'off',
       'testing-library/no-node-access': 'warn',
       'testing-library/prefer-presence-queries': 'warn',
-      'tailwindcss/classnames-order': 'off',
+      'tailwindcss/classnames-order': 'off',      
       'testing-library/render-result-naming-convention': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'error',
