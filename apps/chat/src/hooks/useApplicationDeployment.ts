@@ -1,5 +1,5 @@
 import { IconCloudUpload, IconPlayerPlay } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
 import { useTranslation } from '@/src/hooks/useTranslation';
