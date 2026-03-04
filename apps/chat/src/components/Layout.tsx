@@ -68,8 +68,7 @@ export function Layout({
 
   const [loading, setLoading] = useState(isApplyingModel);
 
-  const showFloatingOverlay =
-    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
+  const showFloatingOverlay = isAnyMenuOpen && !isIsolatedView;
 
   const handleCloseOverlay = useCallback(() => {
     dispatch(UIActions.closeAllPanels());
@@ -151,7 +150,7 @@ export function Layout({
         >
           {showFloatingOverlay && (
             <FloatingOverlay
-              className="z-30 bg-blackout"
+              className="z-30 bg-blackout sidebar-overlay:hidden"
               onClick={handleCloseOverlay}
             />
           )}
