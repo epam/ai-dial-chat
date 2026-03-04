@@ -22,6 +22,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 export const useToolsetEditorValidation = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+
   const {
     [ToolsetEditorQuery.Id]: toolsetRef = '',
     [ToolsetEditorQuery.PublicationUrl]: publicationUrlQuery,
@@ -92,10 +93,7 @@ export const useToolsetEditorValidation = () => {
       return;
     }
 
-    if (
-      (!toolsetDetails || !toolsetDetails?.endpoint) &&
-      !isToolsetLoadingFailed
-    ) {
+    if (!toolsetDetails && !isToolsetLoadingFailed) {
       dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
     }
 

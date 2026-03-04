@@ -44,7 +44,7 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
-import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
 interface AttachmentDataRendererProps {
@@ -434,7 +434,7 @@ export const MessageAttachment = ({
 
           {isFullScreenEnabled && (
             <DialGhostIconButton
-              size={ButtonSize.Small}
+              size={ElementSize.Small}
               icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
               onClick={handleToggleFullScreen}
             />
@@ -497,14 +497,14 @@ export const MessageAttachment = ({
                 )}
                 {isFullScreenEnabled && isOpened && (
                   <DialGhostIconButton
-                    size={ButtonSize.Small}
+                    size={ElementSize.Small}
                     icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                     onClick={handleToggleFullScreen}
                   />
                 )}
                 {!isFullScreen && (
                   <DialGhostIconButton
-                    size={ButtonSize.Small}
+                    size={ElementSize.Small}
                     icon={
                       <ChevronDown
                         height={DEFAULT_ICON_SIZES.SMALL}
