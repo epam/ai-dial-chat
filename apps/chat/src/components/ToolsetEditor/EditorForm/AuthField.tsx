@@ -42,7 +42,7 @@ const authTypeOptions: Record<
   string,
   {
     name: string;
-    Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
+    Icon: ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>;
   }
 > = {
   [ToolsetAuthTypes.OAUTH]: {

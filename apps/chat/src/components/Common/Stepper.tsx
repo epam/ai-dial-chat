@@ -1,9 +1,8 @@
 import {
-  Icon,
   IconAlertSmall,
   IconCheck,
   IconPointFilled,
-  IconProps,
+  IconProps
 } from '@tabler/icons-react';
 import {
   ForwardRefExoticComponent,
@@ -16,7 +15,7 @@ import classNames from 'classnames';
 
 const getIcon = (
   active: boolean,
-  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>,
+  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>,
   iconStyles: string,
   wrapperStyles: string,
   size?: number,
