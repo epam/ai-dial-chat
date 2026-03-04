@@ -116,6 +116,22 @@ export const isEntityNameValid = (
   );
 };
 
+export const isEntityNameValidWithDecode = (
+  name: string,
+  options?: {
+    checkDotsInTheEnd?: boolean;
+    minLength?: number;
+    maxLength?: number;
+  },
+) => {
+  const decoded = decodeURIComponent(name);
+
+  return isEntityNameValid(
+    decoded.length !== name.length ? decoded : name,
+    options,
+  );
+};
+
 export const hasInvalidNameInPath = (path: string) =>
   path.split('/').some((part) => isEntityNameInvalid(part));
 
