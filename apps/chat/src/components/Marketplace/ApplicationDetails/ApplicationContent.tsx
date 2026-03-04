@@ -19,7 +19,9 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
   const content = useMemo(
     () => ({
       ...entity,
-      author: !isMyApplication(entity) ? entity?.owner : userName,
+      author: !isMyApplication(entity)
+        ? (entity?.author ?? entity?.owner)
+        : userName,
     }),
     [entity, userName],
   );

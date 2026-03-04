@@ -88,7 +88,6 @@ import {
   DeleteType,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 
@@ -452,10 +451,12 @@ const acceptInvitationEpic: AppEpic = (action$) =>
               );
 
               const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
+              const permissions = acceptedIds[0].permissions;
 
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
+                  permissions,
                   isFolder: isFolderId(acceptedIds[0].url),
                   isConversation: isConversationId(acceptedIds[0].url),
                   isPrompt: isPromptId(acceptedIds[0].url),
@@ -477,14 +478,48 @@ const acceptInvitationEpic: AppEpic = (action$) =>
     }),
   );
 
-const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
+const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitationSuccess.type),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
-        router.push(Routes.Marketplace, undefined, { shallow: true });
-        //TODO make request for the shared applications to add them into the state when share invitation is accepted.
-        return of(ModelsActions.getModels());
+        const { acceptedId, permissions } = payload;
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const applicationFromState = modelsMap[acceptedId];
+
+        if (!applicationFromState) {
+          return of(
+            ApplicationActions.get({
+              applicationId: acceptedId,
+              showCard: true,
+              acceptSharePermissions: permissions,
+            }),
+          );
+        } else {
+          return concat(
+            of(
+              ModelsActions.updateLocalModels({
+                modelsToUpdate: [
+                  {
+                    reference: applicationFromState.reference,
+                    updatedValues: {
+                      sharedWithMe: true,
+                      permissions,
+                    },
+                  },
+                ],
+              }),
+            ),
+
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: applicationFromState.reference,
+                type: MarketplaceEntitiesTabs.AGENTS,
+                isSuggested: false,
+              }),
+            ),
+          );
+        }
       } else {
         router.push('/', undefined, { shallow: true });
       }
@@ -1024,17 +1059,27 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               state$.value,
             );
 
-            const acceptedApplication =
-              (acceptedId && modelsMap[acceptedId]) || undefined;
+            if (acceptedId) {
+              const acceptedApplication =
+                (acceptedId && modelsMap[acceptedId]) || undefined;
 
-            if (acceptedApplication) {
-              updateSharedActions.push(
-                MarketplaceActions.setDetailsEntity({
-                  reference: acceptedApplication.reference,
-                  type: MarketplaceEntitiesTabs.AGENTS,
-                  isSuggested: false,
-                }),
-              );
+              if (acceptedApplication) {
+                updateSharedActions.push(
+                  MarketplaceActions.setDetailsEntity({
+                    reference: acceptedApplication.reference,
+                    type: MarketplaceEntitiesTabs.AGENTS,
+                    isSuggested: false,
+                  }),
+                );
+              } else {
+                updateSharedActions.push(
+                  ApplicationActions.get({
+                    applicationId: acceptedId,
+                    showCard: true,
+                  }),
+                );
+              }
+
               updateSharedActions.push(ShareActions.resetAcceptedEntityInfo());
             }
 
