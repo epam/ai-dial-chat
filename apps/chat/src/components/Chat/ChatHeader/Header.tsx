@@ -50,10 +50,10 @@ import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 import {
-  ButtonSize,
   DialButton,
   DialGhostIconButton,
   DialLinkButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -293,7 +293,7 @@ export const ChatHeader = Inversify.register(
                   }
                 >
                   <DialGhostIconButton
-                    size={ButtonSize.Small}
+                    size={ElementSize.Small}
                     onClick={() => setShowSettings(!isShowSettings)}
                     data-qa="conversation-setting"
                     disabled={isMessageStreaming || disallowChangeSettings}
@@ -311,7 +311,7 @@ export const ChatHeader = Inversify.register(
                     tooltip={t('Clear conversation messages')}
                   >
                     <DialGhostIconButton
-                      size={ButtonSize.Small}
+                      size={ElementSize.Small}
                       onClick={() => setIsClearConversationModalOpen(true)}
                       data-qa="clear-conversation"
                       disabled={isMessageStreaming}

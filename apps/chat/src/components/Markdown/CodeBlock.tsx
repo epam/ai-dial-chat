@@ -28,7 +28,7 @@ import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import Download from '@/public/images/icons/download.svg';
-import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   language: string;
@@ -103,7 +103,7 @@ export const CodeBlock: FC<Props> = memo(
               className="flex items-center gap-3 text-secondary"
             >
               <DialGhostIconButton
-                size={ButtonSize.Small}
+                size={ElementSize.Small}
                 onClick={copyToClipboard}
                 disabled={isCopied}
                 icon={
@@ -120,7 +120,7 @@ export const CodeBlock: FC<Props> = memo(
               />
               <Tooltip isTriggerClickable tooltip={t('Download')}>
                 <DialGhostIconButton
-                  size={ButtonSize.Small}
+                  size={ElementSize.Small}
                   className="flex items-center rounded bg-none hover:text-accent-primary"
                   onClick={downloadAsFile}
                   icon={

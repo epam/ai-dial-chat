@@ -19,9 +19,9 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
-  ButtonSize,
   DialButton,
   DialNeutralButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 const LogsHeader = () => {
@@ -112,7 +112,7 @@ const LogsFooter = () => {
         <Tooltip tooltip={t('Download logs')}>
           <DialNeutralButton
             label={t('Download')}
-            size={ButtonSize.Small}
+            size={ElementSize.Small}
             onClick={() => downloadApplicationLogs(applicationLogs)}
             data-qa="application-download-logs"
             disabled={isLogsLoading}
