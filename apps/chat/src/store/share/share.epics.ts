@@ -94,7 +94,7 @@ import {
 import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
