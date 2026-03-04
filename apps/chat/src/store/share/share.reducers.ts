@@ -195,6 +195,7 @@ export const shareSlice = createSlice({
         payload,
       }: PayloadAction<{
         acceptedId: string;
+        permissions: SharePermission[];
         isFolder: boolean;
         isConversation?: boolean;
         isPrompt?: boolean;

@@ -33,9 +33,9 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
 import {
-  ButtonSize,
   DialGhostIconButton,
   DialLinkButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
@@ -260,7 +260,7 @@ function ShareModalView() {
               ) : (
                 <Tooltip tooltip={t('Copy URL')}>
                   <DialGhostIconButton
-                    size={ButtonSize.Small}
+                    size={ElementSize.Small}
                     onClick={handleCopy}
                     aria-label="copy-link"
                     icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
