@@ -2,6 +2,7 @@
 export const cleanHeaderDirectives = (directives: string) =>
   directives.replace(/\s{2,}/g, ' ').trim();
 
+const insertSelf = (str: string) => `'self' ${str.replaceAll("'self'", '')}`;
 /**
  *
  * @param frameAncestors sources for the 'frame-ancestors' directive from the 'process.env.ALLOWED_IFRAME_ORIGINS'
@@ -12,32 +13,28 @@ export const cleanHeaderDirectives = (directives: string) =>
 export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
   const frameAncestors = process.env.ALLOWED_IFRAME_ORIGINS;
   const frameSrc = process.env.ALLOWED_IFRAME_SOURCES;
+  const scriptSrc = process.env.ALLOWED_SCRIPT_SOURCES;
+  const objectSrc = process.env.ALLOWED_OBJECT_SOURCES;
   const isDev = process.env.NODE_ENV === 'development';
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const allowedScriptsSrc = `${frameAncestors ?? ''} ${frameSrc ?? ''}`.replace(
-    "'self'",
-    '',
+  const allowedScriptsSrc = insertSelf(
+    scriptSrc ?? `${frameAncestors ?? ''} ${frameSrc ?? ''}`,
   );
+  const allowedObjectSrc = objectSrc ? insertSelf(objectSrc) : "'none'";
   const ancestorsDirective =
-    frameAncestors && !disabled
-      ? `frame-ancestors 'self' ${frameAncestors.replace("'self'", '')}`
-      : "frame-ancestors 'none'";
+    frameAncestors && !disabled ? insertSelf(frameAncestors) : "'none'";
 
   const frameSrcDirective =
-    frameSrc && !disabled
-      ? `frame-src 'self' ${frameSrc.replace("'self'", '')}`
-      : "frame-src 'none'";
+    frameSrc && !disabled ? insertSelf(frameSrc) : "'none'";
 
   return [
     `
-    object-src 'none';
+    object-src ${allowedObjectSrc};
     base-uri 'self';
-    script-src 'self' ${allowedScriptsSrc}
-     https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/
-     'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
-     worker-src 'self' blob:;
-    ${ancestorsDirective};
-    ${frameSrcDirective};
+    script-src ${allowedScriptsSrc} https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/ 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ''};
+    worker-src 'self' blob:;
+    frame-ancestors ${ancestorsDirective};
+    frame-src ${frameSrcDirective};
 `,
     nonce,
   ];
