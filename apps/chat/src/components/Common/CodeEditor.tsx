@@ -59,7 +59,7 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
 import * as monaco from 'monaco-editor';
 
@@ -556,7 +556,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           <div className="flex w-fit shrink-0 border-r border-tertiary px-3 py-2">
             <Tooltip tooltip={t('Hide file list')} isTriggerClickable>
               <DialGhostIconButton
-                size={ButtonSize.Small}
+                size={ElementSize.Small}
                 onClick={handleSidebarToggle}
                 icon={<MoveLeftIcon size={DEFAULT_ICON_SIZES.SMALL} />}
               />
@@ -651,7 +651,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
             <div className="flex items-center gap-3 px-3 py-2.5">
               <Tooltip tooltip={t('Add new folder')}>
                 <DialGhostIconButton
-                  size={ButtonSize.Small}
+                  size={ElementSize.Small}
                   onClick={() =>
                     dispatch(
                       FilesActions.addNewFolder({ parentId: sourcesFolderId }),
@@ -667,7 +667,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
               </Tooltip>
               <Tooltip tooltip={t('Create file')}>
                 <DialGhostIconButton
-                  size={ButtonSize.Small}
+                  size={ElementSize.Small}
                   onClick={() => {
                     setNewFileFolder(sourcesFolderId);
                     setNewFileName(getNextDefaultName('New file', rootFiles));
@@ -678,7 +678,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
               </Tooltip>
               <Tooltip tooltip={t('Upload file')}>
                 <DialGhostIconButton
-                  size={ButtonSize.Small}
+                  size={ElementSize.Small}
                   onClick={openUploadDialog}
                   icon={<IconUpload size={DEFAULT_ICON_SIZES.SMALL} />}
                 />
@@ -686,7 +686,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
               {!!modifiedFileIds.length && (
                 <Tooltip tooltip={t('Save all')}>
                   <DialGhostIconButton
-                    size={ButtonSize.Small}
+                    size={ElementSize.Small}
                     onClick={() => handleSaveFiles(modifiedFileIds)}
                     icon={<IconDeviceFloppy size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
@@ -710,7 +710,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   triggerClassName="mr-auto"
                 >
                   <DialGhostIconButton
-                    size={ButtonSize.Small}
+                    size={ElementSize.Small}
                     onClick={handleSidebarToggle}
                     icon={<MoveRightIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
@@ -721,7 +721,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
             <div className="flex w-fit border-l border-tertiary px-3 py-2">
               <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
                 <DialGhostIconButton
-                  size={ButtonSize.Small}
+                  size={ElementSize.Small}
                   onClick={(e) => {
                     setIsFullScreen(!isFullScreen);
                     dispatchMouseLeaveEvent(e);
