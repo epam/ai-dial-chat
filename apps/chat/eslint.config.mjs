@@ -3,9 +3,6 @@ import baseConfig from '../../eslint.config.mjs';
 export default [
   ...baseConfig,
   {
-    ignores: ['next-env.d.ts', '.next/**/*'],
-  },
-  {
     files: ['**/*.{ts,tsx,js,jsx}'],
     settings: {
       tailwindcss: {

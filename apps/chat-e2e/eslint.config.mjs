@@ -1,6 +1,6 @@
-import playwrightPlugin from 'eslint-plugin-playwright';
-
 import baseConfig from '../../eslint.config.mjs';
+
+import playwrightPlugin from 'eslint-plugin-playwright';
 
 export default [
   ...baseConfig,

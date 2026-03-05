@@ -2,7 +2,7 @@ import {
   IconBrandOauth,
   IconKey,
   IconLockOff,
-  IconProps
+  IconProps,
 } from '@tabler/icons-react';
 import {
   ChangeEvent,

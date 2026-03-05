@@ -4,10 +4,6 @@ import nx from '@nx/eslint-plugin';
 import jsoncParser from 'jsonc-eslint-parser';
 
 export default [
-  {
-    ignores: ['**/dist'],
-  },
-
   ...baseConfig,
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
