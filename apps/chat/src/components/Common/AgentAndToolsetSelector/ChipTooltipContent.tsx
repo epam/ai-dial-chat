@@ -10,9 +10,6 @@ interface ChipTooltipContentProps {
   item?: MarketplaceEntity;
   name: string;
   version?: string;
-  isInvalid: boolean;
-  isLoggedOut: boolean;
-  isUndeployed: boolean;
   isInSelectionList?: boolean;
   isCustomTool?: boolean;
   readonly?: boolean;
@@ -23,9 +20,6 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
   item,
   name,
   version,
-  isInvalid,
-  isLoggedOut,
-  isUndeployed,
   isInSelectionList,
   isCustomTool,
   readonly,
@@ -37,9 +31,6 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
       <StatusMessage
         id={id}
         item={item}
-        isInvalid={isInvalid}
-        isLoggedOut={isLoggedOut}
-        isUndeployed={isUndeployed}
         isInSelectionList={isInSelectionList}
         isCustomTool={isCustomTool}
         readonly={readonly}
