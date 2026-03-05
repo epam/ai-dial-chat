@@ -1,6 +1,7 @@
 import { useTranslation } from 'next-i18next';
 
 import { isToolsetId } from '@/src/utils/app/id';
+import { getEntityStatus } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -8,9 +9,6 @@ import { Translation } from '@/src/types/translation';
 interface StatusMessageProps {
   id: string;
   item?: MarketplaceEntity;
-  isInvalid: boolean;
-  isLoggedOut: boolean;
-  isUndeployed: boolean;
   isInSelectionList?: boolean;
   isCustomTool?: boolean;
   readonly?: boolean;
@@ -18,14 +16,21 @@ interface StatusMessageProps {
 
 export const StatusMessage: React.FC<StatusMessageProps> = ({
   id,
-  isInvalid,
-  isLoggedOut,
-  isUndeployed,
+  item,
   isInSelectionList,
   isCustomTool,
   readonly,
 }) => {
   const { t } = useTranslation(Translation.Common);
+
+  const {
+    isInvalid,
+    isLoggedOut,
+    isUndeployed,
+    isDeploying,
+    isUndeploying,
+    isRedeploying,
+  } = getEntityStatus(item);
 
   let entityTypeKey: 'agent' | 'toolset' = 'agent';
   if (isToolsetId(id)) {
@@ -79,6 +84,36 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
       ? 'Click to scroll to the {{entityType}}.'
       : 'Click on the {{entityType}} to see details.'
     : '';
+
+  if (isDeploying) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Deploying app.')}
+        {textTemplate &&
+          ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
+      </div>
+    );
+  }
+
+  if (isUndeploying) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Undeploying app.')}
+        {textTemplate &&
+          ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
+      </div>
+    );
+  }
+
+  if (isRedeploying) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Redeploying app.')}
+        {textTemplate &&
+          ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
+      </div>
+    );
+  }
 
   return (
     <div className="text-sm text-secondary">
