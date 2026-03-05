@@ -283,6 +283,7 @@ export const useFileManager = ({
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
         pathRootAlias = SHARED_WITH_ME_FILES_SECTION;
         visibleColumns.push(FileManagerColumnKey.Author);
+        uploadEnabled = false;
         break;
       case DialFileManagerTabs.Organization:
         filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
@@ -317,7 +318,6 @@ export const useFileManager = ({
 
       rootFolder.id = currentSharedRootId;
       rootFolder.path = currentSharedRootId;
-      uploadEnabled = isRootId(currentPath) && currentPath ? false : true;
     }
 
     if (
