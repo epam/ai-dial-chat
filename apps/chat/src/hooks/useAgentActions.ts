@@ -111,7 +111,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
       dispatch(
         ApplicationActions.enterEditMode({
-          entity: entity,
+          entity,
           applicationType,
           detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
         }),

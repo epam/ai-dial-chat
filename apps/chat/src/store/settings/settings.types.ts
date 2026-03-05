@@ -1,6 +1,9 @@
 import { OAuthProviderType } from 'next-auth/providers';
 
-import { CustomVisualizer } from '@/src/types/custom-visualizers';
+import {
+  ApplicationVisualizers,
+  CustomVisualizer,
+} from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
 import { Feature, FeatureData, UploadStatus } from '@epam/ai-dial-shared';
@@ -25,6 +28,7 @@ export interface SettingsState {
   preselectedConversationId?: string;
   preselectedAction?: string;
   customRenderers?: CustomVisualizer[];
+  applicationVisualizers?: ApplicationVisualizers;
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
   topics: string[];

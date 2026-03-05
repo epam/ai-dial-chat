@@ -879,6 +879,7 @@ export const ConversationsSelectors = {
   selectDuplicatedConversation,
   selectCustomAttachmentLoading,
   selectCustomAttachmentData,
+  selectLoadedCustomAttachments,
   selectIsSelectMode,
   selectSelectedItems,
   selectChosenFolderIds,

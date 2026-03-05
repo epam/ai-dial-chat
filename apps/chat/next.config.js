@@ -4,6 +4,11 @@ const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
 
+if (!process.env.THEMES_CONFIG_HOST && process.env.NODE_ENV !== 'development') {
+  console.warn('\x1b[33mwarn\x1b[0m  - THEMES_CONFIG_HOST is not provided. Using fallback themes.');
+  console.warn('\x1b[33m     \x1b[0m  - Set THEMES_CONFIG_HOST in your environment for production themes.');
+}
+
 class BasePathResolver {
   /**
    * @param {'string' | 'number' | unknown} hint
@@ -34,7 +39,7 @@ class BasePathResolver {
    * @param {string} str
    */
   startsWith(str) {
-    return this.valueOf().startsWith(str)
+    return this.valueOf().startsWith(str);
   }
 
   /**
@@ -49,7 +54,7 @@ class BasePathResolver {
    * @param {string} str
    */
   endsWith(str) {
-    return this.valueOf().endsWith(str)
+    return this.valueOf().endsWith(str);
   }
 
   toJSON() {
@@ -61,22 +66,17 @@ class BasePathResolver {
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
-  experimental: {
-    reactCompiler: false,
-  },
+  reactCompiler: false,
   devIndicators: false,
-  nx: {
-    // Set this to true if you would like to use SVGR
-    // See: https://github.com/gregberge/svgr
-    svgr: false,
-  },
+  nx: {},
   productionBrowserSourceMaps: process.env.NODE_ENV !== 'production',
 
   i18n,
   poweredByHeader: false,
   reactStrictMode: true,
   // @ts-ignore
-  basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
+  basePath:
+    process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
 
   async redirects() {
     return [
@@ -98,17 +98,13 @@ const nextConfig = {
       // Support old two route app editor links
       {
         source: '/apps-editor/:slug/settings',
-        has: [
-          { type: 'query', key: 'id', value: '(?<id>.*)' }
-        ],
+        has: [{ type: 'query', key: 'id', value: '(?<id>.*)' }],
         destination: '/apps-editor?step=General&schema=:slug&id=:id',
         permanent: false,
       },
       {
         source: '/apps-editor/:slug',
-        has: [
-          { type: 'query', key: 'id', value: '(?<id>.*)' }
-        ],
+        has: [{ type: 'query', key: 'id', value: '(?<id>.*)' }],
         destination: '/apps-editor?step=General&schema=:slug&id=:id',
         permanent: false,
       },
@@ -136,8 +132,9 @@ const nextConfig = {
 
     //SVGR config
     // Grab the existing rule that handles SVG imports
-    const fileLoaderRule = config.module.rules.find((/** @type {{ test: { test: (arg0: string) => any; }; }} */ rule) =>
-      rule.test?.test?.('.svg'),
+    const fileLoaderRule = config.module.rules.find(
+      (/** @type {{ test: { test: (arg0: string) => any; }; }} */ rule) =>
+        rule.test?.test?.('.svg'),
     );
 
     config.module.rules.push(
@@ -198,7 +195,6 @@ const nextConfig = {
       },
     ];
   },
-
 };
 
 const plugins = [

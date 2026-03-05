@@ -104,6 +104,10 @@ export const getCommonPageProps: GetServerSideProps = async ({
     process.env.CUSTOM_VISUALIZERS &&
     JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
+  const applicationVisualizers =
+    process.env.APPLICATION_VISUALIZERS &&
+    JSON.parse(process.env.APPLICATION_VISUALIZERS);
+
   const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
   const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
   const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
@@ -156,6 +160,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
+    applicationVisualizers: applicationVisualizers || {},
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
     topics: parseCommaSeparatedList(
       process.env.TOPICS ??

@@ -727,7 +727,7 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
               );
             }
             url.searchParams.set('state', encodeToolsetRedirectState(state));
-            if (authSettings.scopesSupported) {
+            if (authSettings.scopesSupported?.length) {
               url.searchParams.set(
                 'scope',
                 authSettings.scopesSupported?.join(' '),
@@ -1000,6 +1000,7 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
       }
 
       actions.push(of(UIActions.setEditorLoader(false)));
+      actions.push(of(ToolsetActions.clearToolsetDetails()));
 
       return navigateAndThen(router, route, concat(...actions));
     }),
