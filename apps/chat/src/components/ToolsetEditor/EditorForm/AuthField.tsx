@@ -1,9 +1,8 @@
 import {
-  Icon,
   IconBrandOauth,
   IconKey,
   IconLockOff,
-  IconProps,
+  IconProps
 } from '@tabler/icons-react';
 import {
   ChangeEvent,
