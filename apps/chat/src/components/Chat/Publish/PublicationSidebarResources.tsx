@@ -161,7 +161,9 @@ export const ConversationPublicationSidebarResources = ({
     (folderId: string) => {
       dispatch(ConversationsActions.toggleFolder({ id: folderId }));
 
-      const folder = allPublicationFolders.find((f) => f.id === folderId);
+      const folder = allPublicationFolders.find(
+        (folder) => folder.id === folderId,
+      );
       if (folder?.status !== UploadStatus.LOADED) {
         dispatch(
           ConversationsActions.uploadConversationsWithFoldersRecursive({
