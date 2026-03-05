@@ -46,6 +46,9 @@ export interface EntityStatus {
   isInvalid: boolean;
   isLoggedOut: boolean;
   isUndeployed: boolean;
+  isDeploying: boolean;
+  isUndeploying: boolean;
+  isRedeploying: boolean;
   isError: boolean;
 }
 
@@ -58,12 +61,18 @@ export const getEntityStatus = (
       isInvalid,
       isLoggedOut: false,
       isUndeployed: false,
+      isDeploying: false,
+      isUndeploying: false,
+      isRedeploying: false,
       isError: true,
     };
   }
 
   let isLoggedOut = false;
   let isUndeployed = false;
+  let isDeploying = false;
+  let isUndeploying = false;
+  let isRedeploying = false;
 
   if (isToolsetEntityModel(entity)) {
     if (entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE) {
@@ -77,9 +86,15 @@ export const getEntityStatus = (
   }
 
   if (isDialAiEntityModel(entity)) {
+    isDeploying = entity.functionStatus === ApplicationStatus.DEPLOYING;
+    isUndeploying = entity.functionStatus === ApplicationStatus.UNDEPLOYING;
+    isRedeploying = entity.functionStatus === ApplicationStatus.REDEPLOYING;
     isUndeployed =
       !!entity.functionStatus &&
-      entity.functionStatus !== ApplicationStatus.DEPLOYED;
+      entity.functionStatus !== ApplicationStatus.DEPLOYED &&
+      !isDeploying &&
+      !isUndeploying &&
+      !isRedeploying;
   }
 
   const isError = isInvalid || isLoggedOut || isUndeployed;
@@ -88,6 +103,9 @@ export const getEntityStatus = (
     isInvalid,
     isLoggedOut,
     isUndeployed,
+    isDeploying,
+    isUndeploying,
+    isRedeploying,
     isError,
   };
 };

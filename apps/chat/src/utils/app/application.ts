@@ -426,6 +426,8 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
       return 'Deploy';
     case ApplicationStatus.UNDEPLOYING:
       return 'Undeploying';
+    case ApplicationStatus.REDEPLOYING:
+      return 'Redeploying';
     case ApplicationStatus.DEPLOYING:
     default:
       return 'Deploying';

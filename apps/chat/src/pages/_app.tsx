@@ -45,8 +45,9 @@ type AppPropsWithLayout = AppProps<SessionProviderProps & HomeProps> & {
 };
 
 function App({ Component, ...rest }: AppPropsWithLayout) {
+  const initialSettingsState = rest.pageProps.initialState?.settings;
   const store = createStore({
-    settings: rest.pageProps.initialState?.settings,
+    settings: initialSettingsState,
   });
 
   const getPage = Component.getLayout ?? ((page) => page);
@@ -59,7 +60,7 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
         />
         {process.env.NODE_ENV !== 'development' &&
-          process.env.THEMES_CONFIG_HOST && (
+          initialSettingsState?.themesHostDefined && (
             <>
               <link
                 rel="icon"
