@@ -12,7 +12,6 @@ import { Translation } from '@/src/types/translation';
 import {
   MarketplaceActions,
   PublicationActions,
-  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -65,7 +64,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(ToolsetActions.setToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
         query: {
@@ -76,7 +74,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         },
       });
     },
-    [dispatch, router, toolset.reference],
+    [router, toolset.reference],
   );
 
   const handlePublish = useCallback(

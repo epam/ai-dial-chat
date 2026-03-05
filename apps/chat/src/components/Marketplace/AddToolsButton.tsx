@@ -34,7 +34,6 @@ export function AddToolsButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.General));
-            dispatch(ToolsetActions.clearToolsetDetails());
             void router.push({
               pathname: Routes.ToolsetEditor,
               query: {

@@ -109,7 +109,6 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.preventDefault();
       e.stopPropagation();
       const applicationType = getApplicationType(entity);
-      dispatch(ApplicationActions.setAppDetails(undefined));
       dispatch(
         ApplicationActions.enterEditMode({
           entity,

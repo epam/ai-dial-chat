@@ -16,7 +16,7 @@ import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
-import { ButtonSize, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
@@ -100,7 +100,7 @@ export const RulesInput = ({
         {!isOpen && (
           <div className="flex h-[30px] w-12 items-center justify-center rounded bg-accent-primary-alpha">
             <DialGhostIconButton
-              size={ButtonSize.Small}
+              size={ElementSize.Small}
               onClick={() => onSwitchRulesSetter(true)}
               data-qa="add-rule"
               icon={<IconPlus stroke={1.5} size={DEFAULT_ICON_SIZES.SMALL} />}
