@@ -93,7 +93,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
-import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -968,10 +968,18 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const files = payload.resources.entities as DialFile[];
-          const folders = uniq([
-            ...payload.resources.folders,
-            ...getEntitiesFoldersFromEntities(files, FeatureType.File),
-          ]);
+          const folders = uniqBy(
+            [
+              ...payload.resources.folders,
+              ...getEntitiesFoldersFromEntities(files, FeatureType.File).map(
+                (folder) => ({
+                  ...folder,
+                  status: UploadStatus.LOADED,
+                }),
+              ),
+            ],
+            'id',
+          );
           const sharedWithMeFileIds = files.map((res) => res.id);
 
           const sharedWithMeFolderIds = folders.map((res) => res.id);
@@ -1005,7 +1013,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             FilesActions.addFolders({
               folders: folders.map((res) => ({
                 ...res,
-                status: UploadStatus.LOADED,
                 sharedWithMe: true,
               })) as FolderInterface[],
             }),
