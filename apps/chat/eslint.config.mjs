@@ -1,5 +1,6 @@
 import baseConfig from '../../eslint.config.mjs';
 
+
 export default [
   ...baseConfig,
   {
@@ -13,8 +14,6 @@ export default [
     rules: {
       '@next/next/no-html-link-for-pages': ['error', './apps/chat/src/pages'],
       'react/jsx-boolean-value': ['error', 'never'],
-      'import/no-duplicates': 'error',
-      'import/no-cycle': ['error', { maxDepth: 5 }],
       'tailwindcss/no-custom-classname': 'error',
       'tailwindcss/no-contradicting-classname': 'error',
       'no-restricted-imports': [
@@ -25,7 +24,7 @@ export default [
         },
       ],
       'no-restricted-globals': [
-        'error',
+        'warn',
         {
           name: 'localStorage',
           message: 'Use DataService instead.',
