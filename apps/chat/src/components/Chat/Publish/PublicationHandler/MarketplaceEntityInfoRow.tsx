@@ -19,7 +19,10 @@ export function MarketplaceEntityInfoRow({
 
   return (
     <div className={wrapperClassName}>
-      <span className={labelClassName}>{`${label}:`}</span>
+      <span
+        className={labelClassName}
+        data-qa={dataQa ? `${dataQa}-label` : undefined}
+      >{`${label}:`}</span>
       <div className={valueClassName} data-qa={dataQa}>
         {value}
       </div>

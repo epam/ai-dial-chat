@@ -392,7 +392,10 @@ dialAdminTest(
         });
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(appName),
+          ExpectedConstants.duplicatedUnpublishingError({
+            name: appName,
+            version: appVersion,
+          }),
         );
       },
     );
