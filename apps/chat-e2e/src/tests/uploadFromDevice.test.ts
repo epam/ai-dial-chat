@@ -139,8 +139,6 @@ dialTest(
     setTestIds,
     uploadFromDeviceModal,
     sendMessageInputAttachmentsAssertions,
-    conversationData,
-    dataInjector,
     baseAssertion,
     page,
     localStorageManager,
@@ -151,27 +149,15 @@ dialTest(
     const expectedExtensionClassAttribute = 'absolute right-2';
     let uploadedFileInput: BaseElement;
     let uploadedFileExtension: BaseElement;
-    let conversation: Conversation;
-
-    await dialTest.step(
-      'Prepare a conversation that allows attachments in the request',
-      async () => {
-        conversation = conversationData.prepareDefaultConversation(
-          randomModelWithImageAttachment,
-        );
-        await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithImageAttachment,
-        );
-      },
-    );
 
     await dialTest.step(
       'Upload from device 2 files and verify file with long name is cut with dots, file extension is separated from file name',
       async () => {
-        await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModelWithImageAttachment,
+        );
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.uploadFromDevice,
@@ -291,14 +277,15 @@ dialTest(
     sendMessageInputAttachmentsAssertions,
   }) => {
     setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
-    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments.filter(
-        (m) =>
-          m.inputAttachmentTypes?.length == 1 &&
-          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension &&
-          !m.maxInputAttachments,
-      ),
-    );
+    const randomModelWithUnlimitedImageAttachment =
+      GeneratorUtil.randomArrayElement(
+        modelsWithAttachments.filter(
+          (m) =>
+            m.inputAttachmentTypes?.length == 1 &&
+            m.inputAttachmentTypes[0] === Attachment.imageTypesExtension &&
+            !m.maxInputAttachments,
+        ),
+      );
     const attachmentsCount = 15;
     const attachments: string[] = [];
     for (let i = 1; i <= attachmentsCount; i++) {
@@ -310,11 +297,11 @@ dialTest(
       'Create empty conversation that allow input attachments',
       async () => {
         conversation = conversationData.prepareEmptyConversation(
-          randomModelWithImageAttachment,
+          randomModelWithUnlimitedImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithImageAttachment,
+          randomModelWithUnlimitedImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
       },
@@ -367,7 +354,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click on "Upload" -> "Attach" buttons and verify files are attached to request',
+      'Click on "Upload" button and verify files are attached to request',
       async () => {
         await uploadFromDeviceModal.uploadFiles();
         for (const attachment of attachments) {
