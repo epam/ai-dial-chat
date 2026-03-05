@@ -336,7 +336,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Click on "Back to publication request", approve it and verify app icon appears under "Organization" section on "Manage Attachments" modal',
+      'Click on "Back to publication request", approve it and verify app icon appears under "Organization" section on File Manager page',
       async () => {
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
