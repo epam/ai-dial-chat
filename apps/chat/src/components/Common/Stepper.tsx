@@ -2,7 +2,7 @@ import {
   IconAlertSmall,
   IconCheck,
   IconPointFilled,
-  IconProps
+  IconProps,
 } from '@tabler/icons-react';
 import {
   ForwardRefExoticComponent,

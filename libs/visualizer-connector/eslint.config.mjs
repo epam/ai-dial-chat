@@ -1,10 +1,7 @@
 import baseConfig from '../../eslint.config.mjs';
 
-
-
 import nx from '@nx/eslint-plugin';
 import jsoncParser from 'jsonc-eslint-parser';
-
 
 export default [
   {
