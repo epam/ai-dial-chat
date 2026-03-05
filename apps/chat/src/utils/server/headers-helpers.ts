@@ -14,13 +14,11 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
   const frameAncestors = process.env.ALLOWED_IFRAME_ORIGINS;
   const frameSrc = process.env.ALLOWED_IFRAME_SOURCES;
   const scriptSrc = process.env.ALLOWED_SCRIPT_SOURCES;
-  const objectSrc = process.env.ALLOWED_OBJECT_SOURCES;
   const isDev = process.env.NODE_ENV === 'development';
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const allowedScriptsSrc = insertSelf(
     scriptSrc ?? `${frameAncestors ?? ''} ${frameSrc ?? ''}`,
   );
-  const allowedObjectSrc = objectSrc ? insertSelf(objectSrc) : "'none'";
   const ancestorsDirective =
     frameAncestors && !disabled ? insertSelf(frameAncestors) : "'none'";
 
@@ -29,7 +27,7 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
 
   return [
     `
-    object-src ${allowedObjectSrc};
+    object-src 'none';
     base-uri 'self';
     script-src ${allowedScriptsSrc} https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/ 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ''};
     worker-src 'self' blob:;
