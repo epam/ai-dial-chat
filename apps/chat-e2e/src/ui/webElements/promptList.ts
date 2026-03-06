@@ -40,7 +40,7 @@ export class PromptList extends BaseElement {
         const respPromise = this.page.waitForResponse(
           (resp) => resp.request().method() === triggeredHttpMethod,
         );
-        // eslint-disable-next-line playwright/no-wait-for-timeout
+
         await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
         await method();
         await respPromise;
@@ -104,7 +104,6 @@ export class PromptList extends BaseElement {
         optionIndex++;
       }
     }
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 
@@ -131,7 +130,6 @@ export class PromptList extends BaseElement {
         optionIndex++;
       }
     }
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 }

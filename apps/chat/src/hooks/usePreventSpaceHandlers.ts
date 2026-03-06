@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 export const usePreventSpaceHandlers = () => {
   const onBeforeInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {

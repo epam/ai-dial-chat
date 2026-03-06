@@ -1,5 +1,5 @@
 import { IconBlocks, IconMessage2 } from '@tabler/icons-react';
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 

@@ -6,7 +6,7 @@ import ComponentBuilder, {
 } from '../ComponentBuilder';
 
 import '@testing-library/jest-dom/vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { PropsWithChildren } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -24,8 +24,8 @@ const MockComponent: React.FC<PropsWithChildren<{ text: string }>> = ({
 describe('ComponentBuilder', () => {
   it('should render the base component', () => {
     const Component = ComponentBuilder.use(MockComponent).build();
-    const { getByText } = render(<Component text="Hello" />);
-    expect(getByText('Hello')).toBeInTheDocument();
+    render(<Component text="Hello" />);
+    expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 
   it('should apply custom class names', () => {
@@ -80,14 +80,14 @@ describe('ComponentBuilder', () => {
       })
       .build();
 
-    const { queryByText } = render(
+    render(
       <Component text="Hello">
         <div data-customize-id="block1">Original Content</div>
       </Component>,
     );
 
-    expect(queryByText('Original Content')).not.toBeInTheDocument();
-    expect(queryByText('Replaced Content')).toBeInTheDocument();
+    expect(screen.queryByText('Original Content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Replaced Content')).toBeInTheDocument();
   });
 
   it('should update text on button click using state and effects', async () => {
@@ -142,8 +142,8 @@ describe('ComponentBuilder', () => {
       ))
       .build();
 
-    const { getByText } = render(<Component text="Hello" />);
-    const button = getByText('Click me');
+    render(<Component text="Hello" />);
+    const button = screen.getByText('Click me');
 
     await userEvent.click(button);
 
@@ -151,6 +151,6 @@ describe('ComponentBuilder', () => {
     expect(onClickFn).toHaveBeenCalled();
     expect(stateFn).toHaveBeenCalled();
     expect(effectFn).toHaveBeenCalled();
-    expect(getByText('Clicked!')).toBeInTheDocument();
+    expect(screen.getByText('Clicked!')).toBeInTheDocument();
   });
 });

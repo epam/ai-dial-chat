@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 /**
  * Hook to synchronize horizontal scrolling between two elements

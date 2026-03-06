@@ -1,3 +1,5 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';

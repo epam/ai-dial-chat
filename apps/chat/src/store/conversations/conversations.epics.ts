@@ -1604,7 +1604,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           const observable = subj.asObservable();
           const observer = async () => {
             try {
-              // eslint-disable-next-line no-constant-condition
               while (true) {
                 const val = await reader.read();
 

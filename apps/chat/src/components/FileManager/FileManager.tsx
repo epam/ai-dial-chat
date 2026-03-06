@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';

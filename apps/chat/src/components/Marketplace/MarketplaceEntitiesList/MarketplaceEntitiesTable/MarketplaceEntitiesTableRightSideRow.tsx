@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 

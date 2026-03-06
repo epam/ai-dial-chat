@@ -1,7 +1,7 @@
 import { Feature } from '../../types/features';
 import { validateFeature } from '../features';
 
-import { test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 describe('validateFeature', () => {
   test('should return true when feature is available', () => {

@@ -149,7 +149,6 @@ dialAdminTest(
               adminModelInfoTooltip.versionInfo,
               'hidden',
             );
-        // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
         await baseAssertion.assertElementState(
           adminTalkToAgentDialog,
@@ -174,7 +173,6 @@ dialAdminTest(
         await adminTooltipAssertion.assertTooltipContains(
           ExpectedConstants.settingsTooltipWithoutChanges(agent.type),
         );
-        // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.conversationSettings.click({ force: true });
         await baseAssertion.assertElementState(
           adminConversationSettings,

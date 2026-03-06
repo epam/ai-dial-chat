@@ -23,12 +23,10 @@ export class NavigationPanel extends BaseElement {
     button.getChildElementBySelector(NavigationPanelSelectors.buttonLabel);
 
   public async goToMarketplaceHome() {
-    // eslint-disable-next-line playwright/no-force-option
     await this.marketplaceHomeButton.click({ force: true });
   }
 
   public async goToMyWorkspace() {
-    // eslint-disable-next-line playwright/no-force-option
     await this.myWorkspaceButton.click({ force: true });
   }
 
@@ -60,7 +58,6 @@ export class NavigationPanel extends BaseElement {
       );
       responses.push(resp);
     }
-    // eslint-disable-next-line playwright/no-force-option
     await this.filesButton.click({ force: true });
     for (const resp of responses) {
       await resp;

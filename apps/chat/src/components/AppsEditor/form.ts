@@ -139,7 +139,7 @@ const CustomAppSchema = zodValidation.object({
           });
           return;
         }
-      } catch (error) {
+      } catch {
         ctx.addIssue({
           code: 'custom',
           path: ['features'],

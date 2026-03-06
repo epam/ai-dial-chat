@@ -4,7 +4,7 @@ import {
   IconArrowsMinimize,
   IconExclamationCircleFilled,
 } from '@tabler/icons-react';
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 

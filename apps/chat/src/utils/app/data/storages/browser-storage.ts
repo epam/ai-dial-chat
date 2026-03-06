@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import toast from 'react-hot-toast';
 
 import {
@@ -51,7 +50,6 @@ const isLocalStorageEnabled = () => {
       toast.error(errorsMessages.localStorageQuotaExceeded);
       return true;
     } else {
-      // eslint-disable-next-line no-console
       console.info(
         'Local storage is unavailable and session storage is used for data instead',
       );
