@@ -65,8 +65,8 @@ const getPreparedFilterParams = (
 const getItemLabel = (item: string) => item;
 
 const filterFunctionValues = [
-  PublicationFunctions.Contain,
-  PublicationFunctions.Equal,
+  PublicationFunctions.Contains,
+  PublicationFunctions.Equals,
   PublicationFunctions.Regex,
   // TODO: uncomment when it will be supported on core
   // PublicationFunctions.True,

@@ -11,8 +11,8 @@ import {
 
 // Dial Core uses and returns uppercase function names, so we need to keep PublicationFunctions in sync with it to fix validation
 export enum PublicationFunctions {
-  Equal = 'EQUAL',
-  Contain = 'CONTAIN',
+  Equals = 'EQUALS',
+  Contains = 'CONTAINS',
   Regex = 'REGEX',
   // TODO: uncomment when it will be supported on core
   // True = 'TRUE',

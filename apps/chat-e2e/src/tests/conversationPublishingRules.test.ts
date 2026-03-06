@@ -155,20 +155,20 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(PublicationFunctions.Contains);
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: PublicationFunctions.Contains,
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
         await publishingRulesAssertion.assertRule(
           {
             target: PublishingRulesFilterTarget.dialRoles,
-            fnc: PublicationFunctions.Contain,
+            fnc: PublicationFunctions.Contains,
             values: [filterValue],
           },
           'visible',
@@ -219,7 +219,7 @@ dialAdminTest(
         await adminPublishingRulesAssertion.assertRule(
           {
             target: PublishingRulesFilterTarget.dialRoles,
-            fnc: PublicationFunctions.Contain,
+            fnc: PublicationFunctions.Contains,
             values: [filterValue],
           },
           'visible',
@@ -284,7 +284,7 @@ dialTest(
           )
           .withRule({
             source: ExpectedConstants.dialRolesField,
-            function: PublicationFunctions.Equal,
+            function: PublicationFunctions.Equals,
             targets: [filterValue],
           })
           .build();
@@ -371,14 +371,14 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(PublicationFunctions.Contains);
         await publishingFilter.setFilterValue(firstFilterValue);
         await publishingFilter.setFilterValue(secondFilterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: PublicationFunctions.Contains,
           filterValues: [firstFilterValue, secondFilterValue],
         });
       },
@@ -391,7 +391,7 @@ dialAdminTest(
         await publishingRulesAssertion.assertRule(
           {
             target: PublishingRulesFilterTarget.dialRoles,
-            fnc: PublicationFunctions.Contain,
+            fnc: PublicationFunctions.Contains,
             values: [firstFilterValue, secondFilterValue],
           },
           'visible',
@@ -442,7 +442,7 @@ dialAdminTest(
         await adminPublishingRulesAssertion.assertRule(
           {
             target: PublishingRulesFilterTarget.dialRoles,
-            fnc: PublicationFunctions.Contain,
+            fnc: PublicationFunctions.Contains,
             values: [firstFilterValue, secondFilterValue],
           },
           'visible',
@@ -549,13 +549,13 @@ dialAdminTest(
           await publishingFilter.filterFunction.click();
           await publishingFilter
             .getFilterFunctionDropdownMenu()
-            .selectMenuOption(PublicationFunctions.Contain);
+            .selectMenuOption(PublicationFunctions.Contains);
           await publishingFilter.setFilterValue(value);
           await publishingFilter.saveFilterButton.click();
           await publishingRulesAssertion.assertRule(
             {
               target: target as PublishingRulesFilterTarget,
-              fnc: PublicationFunctions.Contain,
+              fnc: PublicationFunctions.Contains,
               values: [value],
             },
             'visible',
@@ -613,7 +613,7 @@ dialAdminTest(
           await adminPublishingRulesAssertion.assertRule(
             {
               target: target as PublishingRulesFilterTarget,
-              fnc: PublicationFunctions.Contain,
+              fnc: PublicationFunctions.Contains,
               values: [value],
             },
             'visible',
@@ -680,12 +680,12 @@ dialTest(
           )
           .withRule({
             source: ExpectedConstants.dialRolesField,
-            function: PublicationFunctions.Equal,
+            function: PublicationFunctions.Equals,
             targets: [firstFilterValue],
           })
           .withRule({
             source: ExpectedConstants.dialRolesField,
-            function: PublicationFunctions.Equal,
+            function: PublicationFunctions.Equals,
             targets: [secondFilterValue],
           })
           .build();
@@ -805,20 +805,20 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Equal);
+          .selectMenuOption(PublicationFunctions.Equals);
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Equal,
+          filterFunctionValue: PublicationFunctions.Equals,
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
         await publishingRulesAssertion.assertRule(
           {
             target: PublishingRulesFilterTarget.dialRoles,
-            fnc: PublicationFunctions.Equal,
+            fnc: PublicationFunctions.Equals,
             values: [filterValue],
           },
           'visible',
@@ -869,7 +869,7 @@ dialAdminTest(
         await adminPublishingRulesAssertion.assertRule(
           {
             target: PublishingRulesFilterTarget.dialRoles,
-            fnc: PublicationFunctions.Equal,
+            fnc: PublicationFunctions.Equals,
             values: [filterValue],
           },
           'visible',

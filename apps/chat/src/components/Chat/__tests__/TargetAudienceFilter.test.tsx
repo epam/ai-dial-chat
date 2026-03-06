@@ -33,8 +33,8 @@ vi.mock('@/src/store/selectors', async () => {
 describe('TargetAudienceFilterComponent', () => {
   const targetValues = ['Title', 'Dial Roles', 'Job Title'];
   const filterValues = [
-    PublicationFunctions.Contain,
-    PublicationFunctions.Equal,
+    PublicationFunctions.Contains,
+    PublicationFunctions.Equals,
     PublicationFunctions.Regex,
     // TODO: uncomment when it will be supported on core
     // PublicationFunctions.True,
