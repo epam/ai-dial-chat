@@ -1,11 +1,16 @@
 import React from 'react';
 
+import { isExecutableApp } from '@/src/utils/app/application';
 import { getEntityBaseId } from '@/src/utils/app/common';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
+import { getEntityStatus } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
-import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
+import {
+  DisabledActions,
+  ItemCardView,
+} from '@/src/components/Chat/TalkTo/ItemCardView';
 
 export interface AgentAndToolsetSelectItemProps {
   groupItem: MarketplaceEntity;
@@ -13,20 +18,36 @@ export interface AgentAndToolsetSelectItemProps {
   onToggleSelectItem: (item: MarketplaceEntity) => void;
 }
 
+const disabledAgentActions: DisabledActions = {
+  edit: true,
+  share: true,
+  unshare: true,
+  publish: true,
+  logs: true,
+  delete: true,
+};
+
+const hasEntityContextMenu = (entity: MarketplaceEntity): boolean => {
+  return isToolsetEntityModel(entity) || isExecutableApp(entity);
+};
+
 export const AgentAndToolsetSelectItem: React.FC<
   AgentAndToolsetSelectItemProps
 > = ({ groupItem, selectedBaseIdsSet, onToggleSelectItem }) => {
   const currentBaseId = getEntityBaseId(groupItem.id);
   const isSelected = selectedBaseIdsSet.has(currentBaseId);
+  const { isError } = getEntityStatus(groupItem);
 
   return (
     <ItemCardView
       entity={groupItem}
       isSelected={isSelected}
+      hasError={isError}
       onClick={onToggleSelectItem}
-      hasContextMenu={isToolsetEntityModel(groupItem)}
+      hasContextMenu={hasEntityContextMenu(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
       className="bg-layer-2 hover:bg-layer-3"
+      overrideDisabledActions={disabledAgentActions}
     />
   );
 };

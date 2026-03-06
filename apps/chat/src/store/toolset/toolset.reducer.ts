@@ -216,6 +216,7 @@ export const toolsetSlice = createSlice({
         code?: string;
         apiKey?: string;
         callbackUrl?: string;
+        isAdmin?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;

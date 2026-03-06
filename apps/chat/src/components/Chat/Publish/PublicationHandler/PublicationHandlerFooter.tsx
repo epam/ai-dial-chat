@@ -1,11 +1,11 @@
 import { IconExclamationCircle, IconPencil } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isEntityNameValid,
@@ -59,8 +59,13 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+} from '@/src/components/Chat/Publish/form';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -70,16 +75,25 @@ import {
   PublishActions,
   ShareEntity,
 } from '@epam/ai-dial-shared';
+import {
+  DialLinkButton,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
+
+const formErrors = {
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]:
+    'Enter a valid name for the publish request',
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: 'Enter an author name',
+};
 
 interface Props {
   initialState: PublicationHandlerState;
   publication: Publication;
   isFormChanged: boolean;
   areRulesChanged: boolean;
-  isFormErrors: boolean;
-  displayAuthorEditState: string;
 }
 
 export const PublicationHandlerFooter = ({
@@ -87,8 +101,6 @@ export const PublicationHandlerFooter = ({
   publication,
   isFormChanged,
   areRulesChanged,
-  isFormErrors,
-  displayAuthorEditState,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -133,6 +145,16 @@ export const PublicationHandlerFooter = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+
+  const { control } = useFormContext<PublicationRequestFormData>();
+  const { errors, isValid } = useFormState({ control });
+
+  const formError =
+    formErrors[
+      Object.keys(errors)[0] as
+        | PublishRequestFieldsNames.PUBLICATION_AUTHOR
+        | PublishRequestFieldsNames.PUBLISH_REQUEST_NAME
+    ];
 
   const dispatch = useAppDispatch();
 
@@ -371,6 +393,7 @@ export const PublicationHandlerFooter = ({
 
       const isValidVersion =
         resource?.action === PublishActions.DELETE ||
+        publishModel?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
           !isVersionExists(
@@ -386,18 +409,25 @@ export const PublicationHandlerFooter = ({
     },
   );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
-  const isDisplayAuthorInvalid = !isEntityNameValid(
-    displayAuthorEditState,
-    false,
-  );
 
   const isEditInvalid =
-    isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+    isNamesOrVersionsInvalid || isFoldersInvalid || !isValid;
   const someReviewedConversationHasNoMessages =
-    uploadedPublicationConversations.some(
-      ({ messages, playback }) =>
-        !messages.length && !playback?.messagesStack.length,
-    );
+    uploadedPublicationConversations.some((conversation) => {
+      const isEmpty =
+        !conversation.messages.length &&
+        !conversation.playback?.messagesStack.length;
+
+      if (!isEmpty) {
+        return false;
+      }
+
+      const resource = publication.resources.find(
+        (res) => res.reviewUrl === conversation.id,
+      );
+
+      return resource?.action !== PublishActions.DELETE;
+    });
   const areNoChanges =
     !selectedPublicationItems.length &&
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
@@ -409,25 +439,25 @@ export const PublicationHandlerFooter = ({
       ),
     [invalidEntities, selectedPublicationItems],
   );
+
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!selectedInvalidEntities.length ||
     someReviewedConversationHasNoMessages ||
     isPublicationUpdating ||
     areNoChanges;
+
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
-      return isFormErrors
-        ? 'Enter a valid name for the publish request'
-        : isDisplayAuthorInvalid
-          ? 'Enter a valid name for the author'
-          : !selectedPublicationItems.length
+      return !isValid
+        ? formError
+        : !selectedPublicationItems.length
+          ? 'Nothing is selected and rules have not changed'
+          : areNoChanges
             ? 'Nothing is selected and rules have not changed'
-            : areNoChanges
-              ? 'Nothing is selected and rules have not changed'
-              : "Request can't be published as some items are invalid";
+            : "Request can't be published as some items are invalid";
     }
 
     return selectedInvalidEntities.length
@@ -445,14 +475,15 @@ export const PublicationHandlerFooter = ({
     someReviewedConversationHasNoMessages,
     isPublicationUpdating,
     areNoChanges,
-    isFormErrors,
-    isDisplayAuthorInvalid,
+    isValid,
+    formError,
     selectedPublicationItems.length,
   ]);
+
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
     (publishModel &&
-      (isEditInvalid || isFormErrors || !selectedPublicationItems.length));
+      (isEditInvalid || !isValid || !selectedPublicationItems.length));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {
@@ -476,7 +507,7 @@ export const PublicationHandlerFooter = ({
       {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
-            size={24}
+            size={DEFAULT_ICON_SIZES.STANDARD}
             className="shrink-0 text-error"
             stroke="1.5"
           />
@@ -498,18 +529,17 @@ export const PublicationHandlerFooter = ({
       ) : (
         !isOnlyFilesPublication &&
         !!resourcesToReview.length && (
-          <button
-            className="text-accent-primary"
+          <DialLinkButton
+            className="px-0"
             onClick={handlePublicationReview}
+            disabled={isPublicationUpdating}
             data-qa="go-to-review"
-            type="button"
-          >
-            {t(
+            label={t(
               resourcesToReview.some((r) => r.reviewed)
                 ? 'Continue review'
                 : 'Go to a review',
             )}
-          </button>
+          />
         )
       )}
       <div className="flex items-center gap-3">
@@ -523,10 +553,11 @@ export const PublicationHandlerFooter = ({
                     dataQa="edit"
                     onClick={handleToggleEditMode}
                     Icon={IconPencil}
+                    disabled={isPublicationUpdating}
                   />
                 )}
-                <button
-                  className="button button-secondary"
+                <DialNeutralButton
+                  label={t('Reject')}
                   onClick={() =>
                     dispatch(
                       PublicationActions.rejectPublication({
@@ -534,38 +565,33 @@ export const PublicationHandlerFooter = ({
                       }),
                     )
                   }
-                  type="button"
                   data-qa="reject"
-                >
-                  {t('Reject')}
-                </button>
+                  disabled={isPublicationUpdating}
+                />
               </>
             )}
             <Tooltip
               hideTooltip={!isApproveOrSendDisabled}
               tooltip={t(getSubmitTooltipText())}
             >
-              <button
-                className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={isApproveOrSendDisabled}
-                type={publishModel ? 'submit' : 'button'}
+              <DialPrimaryButton
+                label={t(getSubmitBtnText())}
+                textClassName="whitespace-nowrap"
                 onClick={publishModel ? undefined : handleApprovePublication}
+                type={publishModel ? 'submit' : 'button'}
+                disabled={isApproveOrSendDisabled}
                 data-qa="submit"
-              >
-                {t(getSubmitBtnText())}
-              </button>
+              />
             </Tooltip>
           </>
         ) : (
           <>
-            <button
-              className="button button-secondary"
+            <DialNeutralButton
+              label={t('Cancel')}
               onClick={handleToggleEditMode}
               data-qa="cancel"
-              type="button"
-            >
-              {t('Cancel')}
-            </button>
+            />
+
             <Tooltip
               hideTooltip={!isEditDisabled}
               tooltip={t(
@@ -574,14 +600,13 @@ export const PublicationHandlerFooter = ({
                   : 'Make any changes to update the request',
               )}
             >
-              <button
-                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              <DialPrimaryButton
+                label={t('Update request')}
+                textClassName="whitespace-nowrap"
                 disabled={isEditDisabled}
                 type="submit"
                 data-qa="update"
-              >
-                {t('Update request')}
-              </button>
+              />
             </Tooltip>
           </>
         )}

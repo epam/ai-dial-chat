@@ -3,13 +3,12 @@ import {
   Observable,
   catchError,
   concat,
-  concatMap,
   defer,
   filter,
   forkJoin,
-  from,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -20,15 +19,22 @@ import { getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
-import { isMyEntity } from '@/src/utils/app/id';
+import {
+  getEntityNameFromId,
+  isMyEntity,
+  isPredefinedEntity,
+} from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   encodeToolsetRedirectState,
   getToolsetRedirectUri,
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
+import { getVersionFromId } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
 import {
@@ -44,6 +50,7 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
+import { AuthSelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -87,6 +94,37 @@ const getMyWorkspaceUrl = (
   }
 
   return route;
+};
+
+const getLoginSuccessMessage = (
+  isAdminAndPublic: boolean,
+  authLevel: ToolsetCredentialsLevel,
+) => {
+  switch (authLevel) {
+    case ToolsetCredentialsLevel.GLOBAL:
+      return isAdminAndPublic
+        ? 'Successful login\nYou have successfully logged into the "{{name}}" version {{version}} with credentials to entire organization.'
+        : 'Successful login\nYou have successfully logged into the "{{name}}" version {{version}}.';
+    case ToolsetCredentialsLevel.USER:
+      return 'Successful login\nYou have successfully logged into the "{{name}}" version {{version}} with personal credentials.';
+    default:
+      return '';
+  }
+};
+const getLogoutSuccessMessage = (
+  isAdminAndPublic: boolean,
+  authLevel: ToolsetCredentialsLevel,
+) => {
+  switch (authLevel) {
+    case ToolsetCredentialsLevel.GLOBAL:
+      return isAdminAndPublic
+        ? 'Successful logout\nYou have successfully logged out of the "{{name}}" version {{version}} with credentials to entire organization.'
+        : 'Successful logout\nYou have successfully logged out of the "{{name}}" version {{version}}.';
+    case ToolsetCredentialsLevel.USER:
+      return 'Successful logout\nYou have successfully logged out of the "{{name}}" version {{version}} using your personal credentials.';
+    default:
+      return '';
+  }
 };
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -217,6 +255,10 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
     ofType(ToolsetActions.getToolsetDetailsFailed.type),
     switchMap(({ payload }) => {
       if (window.location.pathname === Routes.ToolsetEditor) {
+        console.error(
+          'NotFound',
+          `Toolset with id ${payload?.id} is not found`,
+        );
         void router.push(Routes.NotFound);
       }
 
@@ -297,6 +339,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   }
 
                   const actions: Observable<AppAction>[] = [
+                    of(UIActions.setEditorLoader(false)),
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
@@ -318,7 +361,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   } else {
                     if (payload.tabToOpen) {
                       actions.push(
-                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen)),
                       );
                     }
                   }
@@ -614,7 +657,7 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const startSignInProcessEpic: AppEpic = (action$) =>
+const startSignInProcessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.startSignInProcess.type),
     switchMap(({ payload }) => {
@@ -658,11 +701,13 @@ const startSignInProcessEpic: AppEpic = (action$) =>
             authSettings?.authorizationEndpoint &&
             typeof window !== 'undefined'
           ) {
+            const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
             const callbackUrl = `${window.location.pathname}${window.location.search}`;
             const state = {
               callbackUrl,
               toolsetId: payload.toolset.id,
               credentialsLevel: payload.authLevel,
+              isAdmin,
             };
 
             const url = new URL(authSettings.authorizationEndpoint);
@@ -682,7 +727,7 @@ const startSignInProcessEpic: AppEpic = (action$) =>
               );
             }
             url.searchParams.set('state', encodeToolsetRedirectState(state));
-            if (authSettings.scopesSupported) {
+            if (authSettings.scopesSupported?.length) {
               url.searchParams.set(
                 'scope',
                 authSettings.scopesSupported?.join(' '),
@@ -721,30 +766,40 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           : { apiKey: payload.apiKey as string }),
       };
 
-      let callbackUrl = '/';
-      if (payload.authType === ToolsetAuthTypes.OAUTH) {
-        try {
-          const url = new URL(
-            payload.callbackUrl ?? '',
-            window.location.origin,
-          );
-          if (url.origin === window.location.origin) {
-            callbackUrl = url.href;
-          }
-        } catch {
-          console.error('Invalid callback url');
-        }
-      }
+      const callbackUrl = payload.callbackUrl ?? '/';
 
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
-          if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            void router.push(new URL(callbackUrl));
+          const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+          const isPublic =
+            isEntityIdPublic({ id: payload.toolsetId }) ||
+            isPredefinedEntity({ id: payload.toolsetId });
+          const name = getEntityNameFromId(payload.toolsetId, {
+            removeVersion: true,
+          });
+          const version = getVersionFromId(payload.toolsetId);
 
-            return EMPTY;
+          const toastAction$ = of(
+            UIActions.showSuccessToast(
+              translate(
+                getLoginSuccessMessage(
+                  (payload.isAdmin ?? isAdmin) && isPublic,
+                  payload.authLevel,
+                ),
+                { name, version },
+              ),
+            ),
+          );
+
+          if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
+            void router.push(callbackUrl);
+
+            return toastAction$;
           }
 
-          return refreshToolset$(payload.toolsetId, state$.value);
+          return refreshToolset$(payload.toolsetId, state$.value).pipe(
+            mergeMap((actions) => concat(of(actions), toastAction$)),
+          );
         }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
@@ -775,7 +830,33 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
         credentialsLevel: payload.authLevel,
       }).pipe(
         switchMap(() => {
-          return refreshToolset$(payload.toolsetId, state$.value);
+          const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+          const isPublic =
+            isEntityIdPublic({ id: payload.toolsetId }) ||
+            isPredefinedEntity({ id: payload.toolsetId });
+          const name = getEntityNameFromId(payload.toolsetId, {
+            removeVersion: true,
+          });
+          const version = getVersionFromId(payload.toolsetId);
+
+          return refreshToolset$(payload.toolsetId, state$.value).pipe(
+            mergeMap((actions) =>
+              concat(
+                of(actions),
+                of(
+                  UIActions.showSuccessToast(
+                    translate(
+                      getLogoutSuccessMessage(
+                        isAdmin && isPublic,
+                        payload.authLevel,
+                      ),
+                      { name, version },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
         }),
         catchError((err) => {
           console.error('Failed to sign out toolset', err);
@@ -919,8 +1000,9 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
       }
 
       actions.push(of(UIActions.setEditorLoader(false)));
+      actions.push(of(ToolsetActions.clearToolsetDetails()));
 
-      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+      return navigateAndThen(router, route, concat(...actions));
     }),
   );
 

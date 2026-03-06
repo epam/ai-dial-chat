@@ -36,8 +36,6 @@ export type FileFolderAttachment = FileFolderInterface & {
   contentType: typeof FOLDER_ATTACHMENT_CONTENT_TYPE;
 };
 
-export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
-
 export interface DialLink {
   title?: string;
   href: string;
@@ -54,4 +52,22 @@ export enum FileValidationErrors {
   IncorrectSize = 'incorrectSize',
   IncorrectType = 'incorrectType',
   IncorrectName = 'incorrectName',
+}
+
+export interface OperationData<T> {
+  index: number;
+  data: T;
+}
+
+export interface OperationDataError<T> extends OperationData<T> {
+  error: string;
+}
+
+export interface FileOperationsResult<T> {
+  success: boolean;
+  succeeded: number;
+  failed: number;
+  total: number;
+  results: OperationData<T>[];
+  errors?: OperationDataError<T>[];
 }

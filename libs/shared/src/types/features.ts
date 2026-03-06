@@ -7,6 +7,7 @@ export enum Feature {
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
   ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
+  ChatFullWidthByDefault = 'chat-full-width-by-default', // Enforce chat full-width
 
   // Conversation Header
   HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
@@ -67,6 +68,7 @@ export enum Feature {
   // User settings
   HideUserSettings = 'hide-user-settings', // Hide user settings
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
+  HideUserMenu = 'hide-user-menu', // Hide user menu button from top header
 
   // Applications
   CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)

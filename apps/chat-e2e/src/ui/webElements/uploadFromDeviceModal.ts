@@ -1,14 +1,15 @@
 import { BaseElement } from './baseElement';
 
 import { Attachment, ExpectedConstants } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
+import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
 import {
   FileSelectors,
   IconSelectors,
   UploadFromDeviceModalSelectors,
 } from '@/src/ui/selectors';
 import { ChangePath } from '@/src/ui/webElements/changePath';
-import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { Button } from '@/src/ui/webElements/common/button';
+import { FileManagerModalHeader } from '@/src/ui/webElements/fileManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 
@@ -17,13 +18,16 @@ export class UploadFromDeviceModal extends BaseElement {
     super(page, UploadFromDeviceModalSelectors.modalContainer);
   }
 
-  private modalHeader!: FilesModalHeader;
+  private modalHeader!: FileManagerModalHeader;
   private changeUploadToPath!: ChangePath;
   public modalError!: ModalError;
 
-  getModalHeader(): FilesModalHeader {
+  getModalHeader(): FileManagerModalHeader {
     if (!this.modalHeader) {
-      this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
+      this.modalHeader = new FileManagerModalHeader(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.modalHeader;
   }
@@ -41,6 +45,8 @@ export class UploadFromDeviceModal extends BaseElement {
     }
     return this.modalError;
   }
+
+  public removeFileButton = new Button(this.page, AttributeValues.removeFile);
 
   public uploadedFiles = this.getChildElementBySelector(
     UploadFromDeviceModalSelectors.uploadedFiles,
@@ -109,11 +115,11 @@ export class UploadFromDeviceModal extends BaseElement {
     );
   }
 
-  public getDeleteUploadedFileIcon(filename: string) {
-    return this.createElementFromLocator(
-      this.getUploadedFile(filename).locator(
-        UploadFromDeviceModalSelectors.deleteUploadedFileIcon,
-      ),
+  public getDeleteUploadedFileButtonIcon(filename: string) {
+    return this.getUploadedFile(filename).locator(
+      this.removeFileButton
+        .getChildElementBySelector(Tags.svg)
+        .getElementLocator(),
     );
   }
 

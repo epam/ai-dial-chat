@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -92,13 +97,9 @@ interface SettingsFormProps {
 export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
-  const {
-    register,
-    formState: { errors },
-    clearErrors,
-    setValue,
-    control,
-  } = useFormContext<ToolsetEditorForm>();
+  const { register, clearErrors, setValue, control } =
+    useFormContext<ToolsetEditorForm>();
+  const { errors } = useFormState<ToolsetEditorForm>({ control });
   const endpointField = useWatch<ToolsetEditorForm>({
     name: 'endpoint',
     control,

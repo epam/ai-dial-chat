@@ -17,18 +17,21 @@ import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
-function ConversationMoveToDialogComponent() {
+interface ConversationMoveToDialogProps {
+  moveToConversationId: string;
+}
+
+function ConversationMoveToDialogComponent({
+  moveToConversationId,
+}: ConversationMoveToDialogProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
-  const moveToConversationId = useAppSelector(
-    ConversationsSelectors.selectMoveToConversationId,
-  ) as string;
   const moveToConversation = useAppSelector((state) =>
     ConversationsSelectors.selectConversationById(state, moveToConversationId),
   ) as ConversationInfo;
@@ -112,6 +115,7 @@ function ConversationMoveToDialogComponent() {
   );
 }
 
-export const ConversationMoveToDialog = withRenderWhen(
-  ConversationsSelectors.selectMoveToConversationId,
-)(ConversationMoveToDialogComponent);
+export const ConversationMoveToDialog =
+  withRenderWhenEntities<ConversationMoveToDialogProps>({
+    moveToConversationId: ConversationsSelectors.selectMoveToConversationId,
+  })(ConversationMoveToDialogComponent);

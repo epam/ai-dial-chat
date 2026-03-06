@@ -1,5 +1,12 @@
-import { IconRefresh } from '@tabler/icons-react';
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconRefresh,
+} from '@tabler/icons-react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -29,27 +36,54 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
+import {
+  ButtonAppearance,
+  DialButton,
+  DialLinkButton,
+} from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
   attachmentUrl: string;
   renderer: CustomVisualizer;
   mimeType: string;
+  isFullScreen?: boolean;
+  forceDefaultView?: boolean;
+  onFullScreenClick?: () => void;
 }
 
 export const VisualizerRenderer = ({
   attachmentUrl,
   renderer,
   mimeType,
+  isFullScreen,
+  forceDefaultView,
+  onFullScreenClick,
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle } = renderer;
+  const { data: session } = useSession();
+  const {
+    url: rendererUrl,
+    title: visualizerTitle,
+    requestTimeout,
+    passAuthInfo,
+  } = renderer;
 
   const dispatch = useAppDispatch();
+
+  const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    if (!passAuthInfo || !session) return {};
+    const email = session.user?.email ?? undefined;
+    const providerId = (session as { providerId?: string }).providerId;
+    return {
+      ...(email != null && { logInHint: email }),
+      ...(providerId != null && { providerId }),
+    };
+  }, [passAuthInfo, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
@@ -69,8 +103,15 @@ export const VisualizerRenderer = ({
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
-  const scrollWidth =
-    iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;
+  const { withoutTitleTypes, borderlessTypes } = useAppSelector(
+    SettingsSelectors.selectAttachmentsSettings,
+  );
+
+  const hideTitle = withoutTitleTypes.includes(mimeType) && !forceDefaultView;
+  const isBorderless = borderlessTypes.includes(mimeType) && !forceDefaultView;
+
+  const scrollWidth = iframeContainerRef.current?.scrollWidth ?? null;
+  const containerHeight = iframeContainerRef.current?.clientHeight ?? null;
 
   useEffect(() => {
     if (attachmentUrl && !customAttachmentData) {
@@ -90,10 +131,23 @@ export const VisualizerRenderer = ({
         : (customAttachmentData?.layout.width ??
           DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
-        customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+        isFullScreen && containerHeight
+          ? containerHeight
+          : Number(
+              customAttachmentData?.layout.height ??
+                DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+            ),
       themeId,
+      ...authLayoutFields,
     };
-  }, [customAttachmentData?.layout, scrollWidth, themeId]);
+  }, [
+    containerHeight,
+    customAttachmentData?.layout,
+    isFullScreen,
+    scrollWidth,
+    themeId,
+    authLayoutFields,
+  ]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
@@ -122,6 +176,7 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: visualizerTitle,
         loaderStyles: { display: 'none' },
+        requestTimeout,
       });
 
       return () => {
@@ -129,7 +184,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, visualizerTitle]);
+  }, [requestTimeout, rendererUrl, visualizerTitle]);
 
   useEffect(() => {
     if (
@@ -146,7 +201,7 @@ export const VisualizerRenderer = ({
     const postMessageListener = (
       event: MessageEvent<VisualizerConnectorRequest>,
     ) => {
-      if (event.origin !== rendererUrl) return;
+      if (!rendererUrl.startsWith(event.origin)) return;
 
       if (
         event.data.type ===
@@ -189,28 +244,48 @@ export const VisualizerRenderer = ({
     isAllowedSendMessage,
   ]);
 
+  const FullScreenIcon = useMemo(
+    () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
+    [isFullScreen],
+  );
+
   if (!attachmentUrl) {
     return null;
   }
 
   return (
-    <div>
+    <div className={classNames(isFullScreen && 'size-full p-2')}>
       <div className="mb-2 flex flex-row justify-between">
-        <h2>{visualizerTitle}</h2>
+        {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
-        <button
-          className="flex gap-2 text-accent-primary"
-          onClick={() => visualizer.current && sendMessage(visualizer.current)}
-        >
-          <IconRefresh size={18} />
-          <span>{t('Refresh')}</span>
-        </button>
+        <div className="flex items-center justify-end gap-2">
+          <DialLinkButton
+            className="flex text-accent-primary"
+            onClick={() =>
+              visualizer.current && sendMessage(visualizer.current)
+            }
+            iconBefore={<IconRefresh size={18} />}
+            label={t('Refresh')}
+          />
+
+          {isBorderless && (
+            <DialButton
+              className="text-secondary hover:text-accent-primary"
+              iconBefore={<FullScreenIcon size={18} />}
+              onClick={onFullScreenClick}
+              appearance={ButtonAppearance.Link}
+            />
+          )}
+        </div>
       </div>
       <div
         ref={iframeContainerRef}
-        className="size-full"
+        className={classNames(
+          'size-full',
+          isFullScreen && 'h-[calc(100%-30px)]',
+        )}
         style={{
-          height: `${customVisualizerLayout.height}px`,
+          height: !isFullScreen ? customVisualizerLayout.height : undefined,
         }}
       >
         {(!ready || attachmentDataLoading) && (

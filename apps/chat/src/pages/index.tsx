@@ -1,13 +1,6 @@
-import { FloatingOverlay } from '@floating-ui/react';
-
-import { useScreenState } from '@/src/hooks/useScreenState';
-
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ScreenState } from '@/src/types/common';
-
-import { UIActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import {
   MigrationSelectors,
   SettingsSelectors,
@@ -36,7 +29,6 @@ export interface HomeProps {
 function Home() {
   useCustomizations();
 
-  const dispatch = useAppDispatch();
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -59,17 +51,6 @@ function Home() {
   const showSelectToMigrateWindow = useAppSelector(
     UISelectors.selectShowSelectToMigrateWindow,
   );
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-
-  const screenState = useScreenState();
-
-  const showFloatingOverlay =
-    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
-
-  const handleCloseOverlay = () => {
-    dispatch(UIActions.closeAllPanels());
-  };
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
     if (
@@ -101,12 +82,6 @@ function Home() {
           {enabledFeatures.has(Feature.Header) && <Header />}
           <div className="flex w-full grow overflow-auto">
             <div className="flex min-w-0 grow flex-col">
-              {showFloatingOverlay && (
-                <FloatingOverlay
-                  className="z-30 bg-blackout"
-                  onClick={handleCloseOverlay}
-                />
-              )}
               <AnnouncementsBanner />
               <Chat />
               <ImportExportLoader />

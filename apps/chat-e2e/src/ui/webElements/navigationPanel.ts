@@ -1,6 +1,7 @@
 import { API } from '@/src/testData';
 import { NavigationPanelSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Button } from '@/src/ui/webElements/common/button';
 import { Locator, Page } from '@playwright/test';
 
 export class NavigationPanel extends BaseElement {
@@ -17,6 +18,7 @@ export class NavigationPanel extends BaseElement {
   public myWorkspaceButton = this.getChildElementBySelector(
     NavigationPanelSelectors.myWorkspaceButton,
   );
+  public filesButton = new Button(this.page, 'Files', this.rootLocator);
   public buttonLabel = (button: BaseElement) =>
     button.getChildElementBySelector(NavigationPanelSelectors.buttonLabel);
 
@@ -43,6 +45,25 @@ export class NavigationPanel extends BaseElement {
       await responsePromise;
     } else {
       await this.backToChatButton.click();
+    }
+  }
+
+  public async goToFileManager() {
+    const hostsArray = [API.filePropsHost, API.filesListingHost()];
+    const responses = [];
+    for (const host of hostsArray) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.url().includes(host) &&
+          response.request().method() === 'GET' &&
+          response.status() === 200,
+      );
+      responses.push(resp);
+    }
+    // eslint-disable-next-line playwright/no-force-option
+    await this.filesButton.click({ force: true });
+    for (const resp of responses) {
+      await resp;
     }
   }
 }

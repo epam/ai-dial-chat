@@ -1,22 +1,28 @@
 import { MouseEventHandler, ReactElement } from 'react';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 interface Props {
   handleClick: MouseEventHandler<HTMLButtonElement>;
-  children: ReactElement;
+  iconBefore?: ReactElement;
+  iconAfter?: ReactElement;
+  label?: string;
   dataQA?: string;
 }
 
 export const SidebarActionButton = ({
   handleClick,
-  children,
+  iconBefore,
+  iconAfter,
+  label,
   dataQA,
 }: Props) => (
-  <button
+  <DialButton
     className="min-w-[20px] p-1 text-secondary"
     onClick={handleClick}
+    iconBefore={iconBefore}
+    iconAfter={iconAfter}
+    label={label}
     data-qa={dataQA ?? 'action-button'}
-    type="button"
-  >
-    {children}
-  </button>
+  />
 );

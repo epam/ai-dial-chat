@@ -33,9 +33,10 @@ function SelectedWidgetPage() {
 
   useEffect(() => {
     if (!widget && !areModelsLoading) {
+      console.error('NotFound', `Widget with id ${widgetId} is not found`);
       router.push(Routes.NotFound);
     }
-  }, [areModelsLoading, router, widget]);
+  }, [areModelsLoading, router, widget, widgetId]);
 
   return (
     <div className="flex size-full flex-col divide-y divide-tertiary bg-layer-1">

@@ -1,4 +1,4 @@
-import { Tags } from '@/src/ui/domData';
+import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
 
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
@@ -117,13 +117,14 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
-export const AttachFilesModalSelectors = {
+export const FileManagerModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
+  title: '[data-qa="modal-title"]',
+  supportedAttributesLabel: '[data-qa="supported-attributes"]',
   organizationFilesContainer: '[data-qa="organization-files-container"]',
   sharedWithMeFilesContainer: '[data-qa="shared-with-me-files-container"]',
   allFilesContainer: '[data-qa="all-files-container"]',
@@ -136,10 +137,6 @@ export const AttachFilesModalSelectors = {
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   rootFolder: '[data-qa="section-root"]',
   fileSection: '[data-qa="file-section-content"]',
-};
-
-export const FilesModalSelectors = {
-  supportedAttributesLabel: '[data-qa="supported-attributes"]',
 };
 
 export const SelectFolderModalSelectors = {
@@ -170,7 +167,6 @@ export const PublishingDialogSelectors = {
 export const ChangePathElement = {
   changePathContainer: '[data-qa="change-path-container"]',
   path: '[data-qa="path"]',
-  changeButton: '[data-qa="change-button"]',
 };
 
 export const PublishingApprovalModalSelectors = {
@@ -194,7 +190,7 @@ export const PublishingApprovalModalSelectors = {
   updateRequestButton: '[data-qa="update"]',
   version: '[data-qa="version"]',
   entityRow: '[data-qa="entity-publication-row"]',
-  fieldValue: (name: string) => `[value="${name}"]`,
+  fieldValue: (name: string) => InputSelectors.value(name),
 };
 
 export const PublishingTreeSelectors = {
@@ -343,7 +339,7 @@ export const AddToolsetSettingsFormSelector = {
   oauthContainer: '[data-qa="oauth"]',
   oauthLabel: '[data-qa="oauth-label"]',
   authDetailsContainer: '[data-qa="auth-details-container"]',
-  signInButton: '[data-qa="sign-in-button"]',
+  authLoginOption: '#auth-login-option',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',
@@ -376,4 +372,12 @@ export const ReplaceConfirmationModalSelectors = {
   dropdownMenu: '[data-qa="dropdown-menu"]',
   menuItem: '[data-qa="menu-item"]',
   iconContainer: '[data-qa="icon-container"]',
+};
+
+export const UploadProgressDialogSelectors = {
+  title: 'div:has-text("Uploading items")',
+  itemName: '#name',
+  fileTypeIcon: '[aria-label="File type icon"]',
+  uploadingIndicator: '[data-qa="uploading-indicator"]',
+  uploadingItemsCount: '[data-qa="uploading-items-count"]',
 };

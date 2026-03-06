@@ -8,7 +8,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from './Tooltip';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
@@ -36,18 +40,18 @@ export function DropdownSelector({
         menuPortalTarget={document.body}
         components={{
           ClearIndicator: (props) => (
-            <button
-              type="button"
-              className="group cursor-pointer p-2"
+            <DialButton
+              className="group p-2"
               onClick={() => props.clearValue()}
               onTouchEnd={() => props.clearValue()}
-            >
-              <IconX
-                className="shrink-0 text-secondary group-hover:text-accent-primary"
-                data-qa="clear-dropdown-selection"
-                size={18}
-              />
-            </button>
+              iconBefore={
+                <IconX
+                  className="shrink-0 text-secondary group-hover:text-accent-primary"
+                  data-qa="clear-dropdown-selection"
+                  size={18}
+                />
+              }
+            />
           ),
           MultiValueRemove: (props) => (
             <components.MultiValueRemove
@@ -63,7 +67,7 @@ export function DropdownSelector({
             >
               <IconX
                 className="cursor-pointer text-secondary group-hover:text-accent-primary"
-                size={16}
+                size={DEFAULT_ICON_SIZES.SMALL}
               />
             </components.MultiValueRemove>
           ),

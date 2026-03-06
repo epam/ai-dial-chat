@@ -45,6 +45,7 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
     onBookmarkClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
+
     const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();
@@ -91,7 +92,11 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
           ) : (
             <>
               {visibleTopics.map((topic) => (
-                <MarketplaceEntityTopic key={topic} topic={topic} />
+                <MarketplaceEntityTopic
+                  key={topic}
+                  topic={topic}
+                  className="max-w-full truncate"
+                />
               ))}
               {!!hiddenTopics.length && (
                 <Tooltip
@@ -99,7 +104,11 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
                   tooltip={
                     <div className="my-1 flex max-w-48 flex-wrap gap-2">
                       {hiddenTopics.map((topic) => (
-                        <MarketplaceEntityTopic key={topic} topic={topic} />
+                        <MarketplaceEntityTopic
+                          key={topic}
+                          topic={topic}
+                          className="max-w-full truncate"
+                        />
                       ))}
                     </div>
                   }

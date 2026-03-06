@@ -22,6 +22,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 export const useToolsetEditorValidation = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+
   const {
     [ToolsetEditorQuery.Id]: toolsetRef = '',
     [ToolsetEditorQuery.PublicationUrl]: publicationUrlQuery,
@@ -84,14 +85,15 @@ export const useToolsetEditorValidation = () => {
     }
 
     if (!toolsetId || (!isAdmin && isToolsetPublic)) {
+      console.error(
+        'NotFound',
+        `toolset is not found or is not public. toolsetId: ${toolsetId}, isToolsetPublic: ${isToolsetPublic}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }
 
-    if (
-      (!toolsetDetails || !toolsetDetails?.endpoint) &&
-      !isToolsetLoadingFailed
-    ) {
+    if (!toolsetDetails && !isToolsetLoadingFailed) {
       dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
     }
 
@@ -101,6 +103,10 @@ export const useToolsetEditorValidation = () => {
       !isMyEntity(toolset) &&
       !canWriteSharedWithMe(toolset)
     ) {
+      console.error(
+        'NotFound',
+        `toolset is not public or not my toolset or not shared with me. toolset: ${toolset}, isToolsetPublic: ${isToolsetPublic}, isMyEntity: ${isMyEntity(toolset)}, canWriteSharedWithMe: ${canWriteSharedWithMe(toolset)}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }

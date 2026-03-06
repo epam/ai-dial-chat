@@ -17,6 +17,11 @@ export class EntityEditorUrlBuilder extends BaseUrlBuilder {
     return this;
   }
 
+  withId(id: string): EntityEditorUrlBuilder {
+    this.addParam('id', id);
+    return this;
+  }
+
   withReturnUrl(returnUrl: string): EntityEditorUrlBuilder {
     this.addParam('returnUrl', returnUrl);
     return this;

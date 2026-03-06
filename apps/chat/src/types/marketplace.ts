@@ -15,9 +15,9 @@ export interface MarketplaceFilters {
 }
 
 export enum PreviewMode {
-  half,
-  full,
-  closed,
+  half = 'half',
+  full = 'full',
+  closed = 'closed',
 }
 
 export type MarketplaceEntity = DialAIEntityModel | ToolsetModel;

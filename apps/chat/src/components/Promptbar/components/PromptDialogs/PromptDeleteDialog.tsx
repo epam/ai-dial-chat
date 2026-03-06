@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,17 +10,20 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 import { PromptInfo } from '@epam/ai-dial-shared';
 
-const PromptDeleteDialogComponent = () => {
+interface PromptDeleteDialogProps {
+  deletingPromptId: string;
+}
+
+const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
+  deletingPromptId,
+}) => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
-  const deletingPromptId = useAppSelector(
-    PromptsSelectors.selectDeletingPromptId,
-  ) as string;
   const deletingPrompt = useAppSelector((state) =>
     PromptsSelectors.selectPrompt(state, deletingPromptId),
   ) as PromptInfo;
@@ -94,6 +97,7 @@ const PromptDeleteDialogComponent = () => {
   );
 };
 
-export const PromptDeleteDialog = withRenderWhen(
-  PromptsSelectors.selectDeletingPromptId,
-)(PromptDeleteDialogComponent);
+export const PromptDeleteDialog =
+  withRenderWhenEntities<PromptDeleteDialogProps>({
+    deletingPromptId: PromptsSelectors.selectDeletingPromptId,
+  })(PromptDeleteDialogComponent);

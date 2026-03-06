@@ -424,7 +424,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open response stage and verify "Scroll dawn" button is displayed',
+      'Open response stage and verify "Scroll down" button is displayed',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -440,7 +440,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Close response stage and verify "Scroll dawn" button disappears',
+      'Close response stage and verify "Scroll down" button disappears',
       async () => {
         await chatMessages.closeMessageStage(2, 1);
         await expect
@@ -486,7 +486,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Expand generated image and verify "Scroll dawn" button is displayed',
+      'Expand generated image and verify "Scroll down" button is displayed',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -504,7 +504,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Collapse response image and verify "Scroll dawn" button disappears',
+      'Collapse response image and verify "Scroll down" button disappears',
       async () => {
         await chatMessages.collapseChatMessageAttachment(
           2,

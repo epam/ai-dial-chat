@@ -3,18 +3,22 @@ import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getQuickApp2Config, isQuickApp2 } from '@/src/utils/app/application';
+import {
+  getQuickApp2Config,
+  getQuickAppItemNameFromConfig,
+  isQuickApp2,
+} from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { isApplicationId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
 import {
   DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
+  UnknownToolset,
   isCodeInterpreterToolset,
   isDialDeploymentToolset,
   isMcpToolset,
@@ -22,12 +26,17 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  SettingsSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Feature } from '@epam/ai-dial-shared';
+import groupBy from 'lodash-es/groupBy';
 
 interface DocumentFieldProps {
   url?: string;
@@ -81,41 +90,64 @@ const ReviewQuickApp2SectionView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+
   const isCodeInterpreterEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
-  // TODO: when uploading application also upload toolsets from config to get full data
-  const { agents, toolsets, isCodeInterpreter } = useMemo(
+  const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
       (config.tool_sets ?? []).reduce<{
         agents: (DialDeploymentSimpleTool & { name: string })[];
-        toolsets: MCPToolset[];
+        toolsets: (MCPToolset & { name: string })[];
+        unknownToolsets: (UnknownToolset & { name: string })[];
         isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
           if (isDialDeploymentToolset(toolset)) {
-            acc.agents = toolset.tools.map((tool) => ({
+            const { appTools = [], otherTools = [] } = groupBy(
+              toolset.tools,
+              (t) =>
+                modelsMap[ApiUtils.decodeApiUrl(t.deployment_id)]
+                  ? 'appTools'
+                  : 'otherTools',
+            );
+            acc.agents = appTools.map((tool) => ({
               ...tool,
-              name: isApplicationId(tool.deployment_id)
-                ? ApiUtils.decodeApiUrl(
-                    parseEntityApiKey(splitEntityId(tool.deployment_id).name, {
-                      parseVersion: true,
-                    }).name,
-                  )
-                : tool.deployment_id,
+              name: getQuickAppItemNameFromConfig(tool),
             }));
+            acc.unknownToolsets.concat(
+              otherTools.map((tool) => ({
+                ...tool,
+                name: getQuickAppItemNameFromConfig(tool),
+              })),
+            );
           } else if (isMcpToolset(toolset)) {
-            acc.toolsets = [...acc.toolsets, toolset];
+            acc.toolsets.push({
+              ...toolset,
+              name: getQuickAppItemNameFromConfig(toolset),
+            });
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
+          } else {
+            acc.unknownToolsets.push({
+              ...toolset,
+              name: getQuickAppItemNameFromConfig(
+                toolset as unknown as MCPToolset,
+              ),
+            });
           }
-
           return acc;
         },
-        { agents: [], toolsets: [], isCodeInterpreter: false },
+        {
+          agents: [],
+          toolsets: [],
+          unknownToolsets: [],
+          isCodeInterpreter: false,
+        },
       ),
-    [config.tool_sets],
+    [config.tool_sets, modelsMap],
   );
 
   const orchestratorModel = modelsMap[config.orchestrator.deployment.name];
@@ -188,21 +220,17 @@ const ReviewQuickApp2SectionView = ({
             {t('Agents: ')}
           </span>
           <div className="flex flex-wrap gap-2 text-primary">
-            {agents.map((agent) => (
-              <AgentAndToolsetChip
-                key={agent.deployment_id}
-                item={{
-                  id: agent.deployment_id,
-                  description: '',
-                  name: agent.name,
-                  type: EntityType.Model,
-                  reference: agent.deployment_id,
-                  isDefault: false,
-                }}
-                id={agent.deployment_id}
-                readonly
-              />
-            ))}
+            {agents.map((agent) => {
+              const decodedId = ApiUtils.decodeApiUrl(agent.deployment_id);
+              return (
+                <AgentAndToolsetChip
+                  key={decodedId}
+                  item={modelsMap[decodedId]}
+                  id={decodedId}
+                  readonly
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -213,18 +241,22 @@ const ReviewQuickApp2SectionView = ({
             {t('Toolsets: ')}
           </span>
           <div className="flex flex-wrap gap-2 text-primary">
-            {toolsets.map((toolset) => (
+            {toolsets.map((toolset) => {
+              const decodedId = ApiUtils.decodeApiUrl(toolset.dial_id);
+              return (
+                <AgentAndToolsetChip
+                  key={decodedId}
+                  item={toolsetsMap[decodedId]}
+                  id={decodedId}
+                  readonly
+                />
+              );
+            })}
+            {unknownToolsets.map((toolset) => (
               <AgentAndToolsetChip
-                id={toolset.dial_id}
-                key={toolset.dial_id}
-                item={{
-                  id: toolset.dial_id,
-                  description: toolset.description,
-                  name: toolset.name ?? splitEntityId(toolset.dial_id).name,
-                  type: EntityType.Toolset,
-                  reference: toolset.dial_id,
-                  isDefault: false,
-                }}
+                id={toolset.name}
+                item={undefined}
+                key={toolset.name}
                 readonly
               />
             ))}

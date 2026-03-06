@@ -6,30 +6,31 @@ import { getModelDescription } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
 import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
-function ReviewToolsetDialogContent() {
+interface ReviewToolsetDialogContentProps {
+  toolset: ToolsetModel;
+}
+
+function ReviewToolsetDialogContent({
+  toolset,
+}: ReviewToolsetDialogContentProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const toolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-
   const controlsEntity = useMemo(
-    () =>
-      toolset
-        ? {
-            id: ApiUtils.decodeApiUrl(toolset.id),
-            name: toolset.name,
-            folderId: getFolderIdFromEntityId(toolset.id),
-          }
-        : null,
+    () => ({
+      id: ApiUtils.decodeApiUrl(toolset.id),
+      name: toolset.name,
+      folderId: getFolderIdFromEntityId(toolset.id),
+    }),
     [toolset],
   );
 
@@ -42,22 +43,20 @@ function ReviewToolsetDialogContent() {
         <div className="flex gap-4">
           <span className="w-[135px] text-secondary">{t('Name: ')}</span>
           <span className="max-w-[414px] text-primary" data-qa="app-name">
-            {toolset?.name}
+            {toolset.name}
           </span>
         </div>
         <div className="flex gap-4">
           <span className="w-[135px] text-secondary">{t('Version: ')}</span>
           <span className="max-w-[414px] text-primary" data-qa="app-version">
-            {toolset?.version}
+            {toolset.version}
           </span>
         </div>
         <div className="flex gap-4">
           <span className="w-[135px] text-secondary">{t('Icon: ')}</span>
-          {toolset && (
-            <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
-          )}
+          <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
         </div>
-        {!!(toolset && getModelDescription(toolset)) && (
+        {!!getModelDescription(toolset) && (
           <div className="flex gap-4">
             <span className="w-[135px] shrink-0 text-secondary">
               {t('Description: ')}
@@ -67,7 +66,7 @@ function ReviewToolsetDialogContent() {
             </span>
           </div>
         )}
-        {!!toolset?.topics?.length && (
+        {!!toolset.topics?.length && (
           <div className="flex gap-4">
             <span className="w-[135px] text-secondary">{t('Topics: ')}</span>
             <div className="flex max-w-[414px] flex-wrap gap-1">
@@ -77,7 +76,7 @@ function ReviewToolsetDialogContent() {
             </div>
           </div>
         )}
-        {toolset?.endpoint && (
+        {toolset.endpoint && (
           <div className="flex gap-4">
             <span className="w-[135px] text-secondary">{t('Endpoint: ')}</span>
             <span className="max-w-[414px] text-primary" data-qa="app-endpoint">
@@ -85,7 +84,7 @@ function ReviewToolsetDialogContent() {
             </span>
           </div>
         )}
-        {toolset?.transport && (
+        {toolset.transport && (
           <div className="flex gap-4">
             <span className="w-[135px] text-secondary">
               {t('Transport protocol: ')}
@@ -98,7 +97,7 @@ function ReviewToolsetDialogContent() {
             </span>
           </div>
         )}
-        {toolset?.authSettings?.authenticationType && (
+        {toolset.authSettings?.authenticationType && (
           <div className="flex gap-4">
             <span className="w-[135px] text-secondary">
               {t('Authentication type: ')}
@@ -111,7 +110,7 @@ function ReviewToolsetDialogContent() {
             </span>
           </div>
         )}
-        {!!toolset?.allowedTools?.length && (
+        {!!toolset.allowedTools?.length && (
           <div className="flex gap-4">
             <span className="w-[135px] text-secondary">
               {t('Allowed tools: ')}
@@ -126,17 +125,16 @@ function ReviewToolsetDialogContent() {
         )}
       </div>
       <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
-        {controlsEntity && (
-          <PublicationControls
-            entity={controlsEntity}
-            controlsClassNames="text-sm"
-          />
-        )}
+        <PublicationControls
+          entity={controlsEntity}
+          controlsClassNames="text-sm"
+        />
       </div>
     </>
   );
 }
 
-export const ReviewToolsetDialogView = withRenderWhen(
-  ToolsetSelectors.selectToolsetDetails,
-)(ReviewToolsetDialogContent);
+export const ReviewToolsetDialogView =
+  withRenderWhenEntities<ReviewToolsetDialogContentProps>({
+    toolset: ToolsetSelectors.selectToolsetDetails,
+  })(ReviewToolsetDialogContent);

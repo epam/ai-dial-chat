@@ -11,6 +11,8 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
+import capitalize from 'lodash-es/capitalize';
+
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),
@@ -37,7 +39,7 @@ describe('TargetAudienceFilterComponent', () => {
     // TODO: uncomment when it will be supported on core
     // PublicationFunctions.True,
     // PublicationFunctions.False,
-  ];
+  ].map((v) => capitalize(v));
 
   const defaultFilterOption = 'Select';
 
@@ -157,8 +159,8 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(iconCheck);
 
     expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
-      filterFunction: selectedFilter,
+      source: selectedTarget,
+      filterFunction: selectedFilter.toUpperCase(),
       filterParams: ['QA', 'Developer', 'Manager'],
     });
   });
@@ -187,7 +189,7 @@ describe('TargetAudienceFilterComponent', () => {
   //   await userEvent.click(iconCheck);
 
   //   expect(onSaveFilter).toHaveBeenCalledWith({
-  //     id: selectedTarget,
+  //     source: selectedTarget,
   //     filterFunction: selectedFilter,
   //     filterParams: [],
   //   });
@@ -219,8 +221,8 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(iconCheck);
 
     expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
-      filterFunction: selectedFilter,
+      source: selectedTarget,
+      filterFunction: selectedFilter.toUpperCase(),
       filterParams: ['Developer.*'],
     });
   });

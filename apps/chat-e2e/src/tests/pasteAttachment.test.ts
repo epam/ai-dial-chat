@@ -9,7 +9,6 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
-import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
@@ -38,9 +37,10 @@ dialTest(
     localStorageManager,
     sendMessage,
     attachmentDropdownMenu,
-    attachedAllFiles,
-    attachFilesModal,
-    manageAttachmentsAssertion,
+    fileManagerModal,
+    fileManagerModalCollapsibleSidebar,
+    fileManagerModalFoldersTree,
+    fileManagerGridAssertion,
     baseAssertion,
     conversationData,
     dataInjector,
@@ -125,20 +125,16 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await attachedAllFiles.expandFolder(
+        await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerModalFoldersTree.expandFolders(
           ExpectedConstants.fileUploadFolder,
-          { isHttpMethodTriggered: true, httpHost: API.filesListingHost() },
+          yearMonthSubfolder,
         );
-        await attachedAllFiles.expandFolder(yearMonthSubfolder, {
-          isHttpMethodTriggered: true,
-          httpHost: API.filesListingHost(),
-        });
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.fileToCopyName },
-          FileModalSection.AllFiles,
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.fileToCopyName,
           'visible',
         );
-        await attachFilesModal.closeButton.click();
+        await fileManagerModal.getCloseButton().click();
       },
     );
 

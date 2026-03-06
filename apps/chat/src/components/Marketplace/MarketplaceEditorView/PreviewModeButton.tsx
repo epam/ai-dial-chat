@@ -1,7 +1,7 @@
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
-  IconLayoutSidebarRightCollapse,
+  IconLayoutSidebarLeftCollapse,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
@@ -15,10 +15,12 @@ import { Translation } from '@/src/types/translation';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 const previewModeIcons = {
   [PreviewMode.full]: IconArrowsMaximize,
   [PreviewMode.closed]: IconArrowsMinimize,
-  [PreviewMode.half]: IconLayoutSidebarRightCollapse,
+  [PreviewMode.half]: IconLayoutSidebarLeftCollapse,
 };
 const previewModeTooltips = {
   [PreviewMode.full]: 'Expand preview',
@@ -43,21 +45,26 @@ export const PreviewModeButton = ({
 
   const Icon = useMemo(() => previewModeIcons[mode], [mode]);
 
-  const handlePreviewModeChange = useCallback(() => {
-    changePreviewMode(mode);
-  }, [mode, changePreviewMode]);
+  const handlePreviewModeChange = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      changePreviewMode(mode);
+    },
+    [mode, changePreviewMode],
+  );
 
   return (
-    <button
+    <DialButton
       className={classNames(
         'text-secondary hover:text-accent-primary',
         className,
       )}
       onClick={handlePreviewModeChange}
-    >
-      <Tooltip tooltip={t(previewModeTooltips[mode])}>
-        <Icon size={size} />
-      </Tooltip>
-    </button>
+      iconBefore={
+        <Tooltip tooltip={t(previewModeTooltips[mode])} isTriggerClickable>
+          <Icon size={size} />
+        </Tooltip>
+      }
+    />
   );
 };

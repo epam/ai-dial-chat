@@ -35,6 +35,7 @@ import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -359,6 +360,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       isExitingAfterSave: payload.isSaveAndExit,
                     }),
                   ),
+                  of(ApplicationActions.setEditorError()),
                 ];
 
                 if (payload.isSaveAndExit) {
@@ -383,12 +385,26 @@ const updateApplicationEpic: AppEpic = (action$) =>
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
-                return of(
-                  ApplicationActions.updateFail({
-                    oldApplication: payload.oldApplication,
-                  }),
-                  UIActions.showErrorToast(
-                    translate('Failed to update application'),
+                return concat(
+                  of(
+                    ApplicationActions.updateFail({
+                      oldApplication: payload.oldApplication,
+                    }),
+                  ),
+                  of(
+                    UIActions.showErrorToast(
+                      translate('Failed to update application'),
+                    ),
+                  ),
+                  iif(
+                    () => !!payload.shouldSetEditorError,
+                    of(
+                      ApplicationActions.setEditorError(
+                        err.message ??
+                          translate('App settings are not matching the schema'),
+                      ),
+                    ),
+                    EMPTY,
                   ),
                 );
               }),
@@ -466,19 +482,59 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           const modelFromState = modelsMap[application.reference];
 
+          const isAcceptSharePermissions =
+            !!payload.acceptSharePermissions?.length;
+
           actions.push(
             of(
               ApplicationActions.getSuccess({
                 ...application,
-                sharedWithMe: modelFromState?.sharedWithMe,
-                permissions: modelFromState?.permissions,
+                sharedWithMe:
+                  isAcceptSharePermissions ?? modelFromState?.sharedWithMe,
+                permissions:
+                  payload.acceptSharePermissions ?? modelFromState?.permissions,
                 isShared: modelFromState?.isShared,
               }),
             ),
           );
 
           if (!modelFromState) {
-            actions.push(of(ModelsActions.addModelToMap(application)));
+            actions.push(
+              of(
+                ModelsActions.addModels({
+                  models: [
+                    {
+                      ...application,
+                      owner: application.owner ?? application.author,
+                      sharedWithMe: isAcceptSharePermissions,
+                      permissions: payload.acceptSharePermissions,
+                    },
+                  ],
+                }),
+              ),
+            );
+          }
+
+          if (payload.acceptSharePermissions) {
+            actions.push(
+              of(
+                ModelsActions.addInstalledModels({
+                  references: [application.reference],
+                }),
+              ),
+            );
+          }
+
+          if (payload.showCard) {
+            actions.push(
+              of(
+                MarketplaceActions.setDetailsEntity({
+                  reference: application.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }),
+              ),
+            );
           }
 
           if (payload.isForSharing) {
@@ -498,6 +554,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
+          console.error(
+            'NotFound',
+            `Application is not found: ${payload.applicationId}`,
+          );
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
@@ -868,8 +928,9 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       }
 
       actions.push(of(UIActions.setEditorLoader(false)));
+      actions.push(of(ApplicationActions.setAppDetails()));
 
-      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+      return navigateAndThen(router, route, concat(...actions));
     }),
   );
 

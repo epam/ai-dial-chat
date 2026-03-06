@@ -26,7 +26,7 @@ export function OverflowContainer<T>({
   renderOverflow,
   getKey,
   overflowIndicatorWidth = 50,
-  className = 'flex w-full flex-nowrap items-center gap-2',
+  className = 'flex w-full flex-nowrap items-center gap-1',
   dataQA,
 }: OverflowContainerProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,17 +79,9 @@ export function OverflowContainer<T>({
       }
     });
 
-    setVisibleItems((currentVisible) => {
-      const newKeys = newVisibleItems.map(getKey).join(',');
-      const currentKeys = currentVisible.map(getKey).join(',');
-      return newKeys === currentKeys ? currentVisible : newVisibleItems;
-    });
-    setHiddenItems((currentHidden) => {
-      const newKeys = newHiddenItems.map(getKey).join(',');
-      const currentKeys = currentHidden.map(getKey).join(',');
-      return newKeys === currentKeys ? currentHidden : newHiddenItems;
-    });
-  }, [items, overflowIndicatorWidth, getKey]);
+    setVisibleItems(newVisibleItems);
+    setHiddenItems(newHiddenItems);
+  }, [items, overflowIndicatorWidth]);
 
   useResizeObserver(containerRef.current, recalculateItems);
   useLayoutEffect(() => {

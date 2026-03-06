@@ -1,4 +1,4 @@
-import type { AuthOptions, CookiesOptions } from 'next-auth';
+import type { AuthOptions, CookieOption, CookiesOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
@@ -13,65 +13,44 @@ function defaultCookies(
   sameSite = 'lax',
 ): CookiesOptions {
   const cookiePrefix = useSecureCookies ? '__Secure-' : '';
+  type Options = CookieOption['options'];
+  const options: Options = {
+    httpOnly: true,
+    sameSite,
+    path: '/',
+    secure: useSecureCookies,
+  };
+  const optionsWithLongExpiry: Options = {
+    ...options,
+    maxAge: 60 * 15, // 15 minutes in seconds
+  };
   return {
     // default cookie options
     sessionToken: {
       name: `${cookiePrefix}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite,
-        path: '/',
-        secure: useSecureCookies,
-      },
+      options,
     },
     callbackUrl: {
       name: `${cookiePrefix}next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite,
-        path: '/',
-        secure: useSecureCookies,
-      },
+      options,
     },
     csrfToken: {
       // Default to __Host- for CSRF token for additional protection if using useSecureCookies
       // NB: The `__Host-` prefix is stricter than the `__Secure-` prefix.
       name: `${useSecureCookies ? '__Host-' : ''}next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite,
-        path: '/',
-        secure: useSecureCookies,
-      },
+      options,
     },
     pkceCodeVerifier: {
       name: `${cookiePrefix}next-auth.pkce.code_verifier`,
-      options: {
-        httpOnly: true,
-        sameSite,
-        path: '/',
-        secure: useSecureCookies,
-        maxAge: 60 * 15, // 15 minutes in seconds
-      },
+      options: optionsWithLongExpiry,
     },
     state: {
       name: `${cookiePrefix}next-auth.state`,
-      options: {
-        httpOnly: true,
-        sameSite,
-        path: '/',
-        secure: useSecureCookies,
-        maxAge: 60 * 15, // 15 minutes in seconds
-      },
+      options: optionsWithLongExpiry,
     },
     nonce: {
       name: `${cookiePrefix}next-auth.nonce`,
-      options: {
-        httpOnly: true,
-        sameSite,
-        path: '/',
-        secure: useSecureCookies,
-      },
+      options,
     },
   };
 }
@@ -79,13 +58,15 @@ function defaultCookies(
 const isSecure =
   !!process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.startsWith('https:');
 
+const isOverlay = process.env.IS_IFRAME === 'true';
+
 const isDebugEnabled =
   process.env.AUTH_DEBUG_ENABLED === 'true' ||
   process.env.AUTH_DEBUG_ENABLED === '1';
 
 export const authOptions: AuthOptions = {
   providers: authProviders,
-  cookies: defaultCookies(isSecure, isSecure ? 'none' : 'lax'),
+  cookies: defaultCookies(isSecure, isSecure && isOverlay ? 'none' : 'lax'),
   callbacks,
   debug: isDebugEnabled,
   session: {

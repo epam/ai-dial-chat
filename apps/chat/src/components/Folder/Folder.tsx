@@ -1239,9 +1239,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 }
               }}
               dataQA="confirm-edit"
-            >
-              <IconCheck size={18} className="hover:text-accent-primary" />
-            </SidebarActionButton>
+              iconBefore={
+                <IconCheck size={18} className="hover:text-accent-primary" />
+              }
+            />
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -1249,9 +1250,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 handleNewFolderRename();
               }}
               dataQA="cancel-edit"
-            >
-              <IconX size={18} className="hover:text-accent-primary" />
-            </SidebarActionButton>
+              iconBefore={
+                <IconX size={18} className="hover:text-accent-primary" />
+              }
+            />
           </div>
         )}
       </div>

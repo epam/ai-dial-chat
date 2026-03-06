@@ -324,7 +324,7 @@ const ChatFolderTemplate = ({
   );
 };
 
-export const ChatSection = ({
+const ChatSection = ({
   name,
   filters,
   hideIfEmpty = true,

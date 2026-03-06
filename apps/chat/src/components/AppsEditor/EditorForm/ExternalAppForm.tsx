@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -26,9 +26,9 @@ export const ExternalAppForm = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const { formState, register, setValue, clearErrors, control } =
+  const { register, setValue, clearErrors, control } =
     useFormContext<ExternalAppFormType>();
-  const errors = formState.errors;
+  const { errors } = useFormState<ExternalAppFormType>({ control });
 
   const externalUrl = useWatch({
     name: 'externalUrl',

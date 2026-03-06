@@ -9,6 +9,7 @@ import {
   getApplicationType,
   getModelDescription,
   isExecutableApp,
+  isQuickApp2,
 } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -61,6 +62,7 @@ export function ReviewApplicationDialogView({
   );
 
   const isCodeApp = application && isExecutableApp(application);
+  const isQuickAppTwo = application && isQuickApp2(application);
 
   const controlsEntity = useMemo(
     () => ({
@@ -135,6 +137,7 @@ export function ReviewApplicationDialogView({
         )}
         {application.features &&
           !isCodeApp &&
+          !isQuickAppTwo &&
           Object.keys(application.features).length !== 0 && (
             <div className="flex gap-4">
               <span className="w-[122px] text-secondary">

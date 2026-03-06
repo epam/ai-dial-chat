@@ -2,6 +2,10 @@ import { IconArrowDown } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 interface Props {
   onScrollDownClick: () => void;
   className?: string;
@@ -9,13 +13,12 @@ interface Props {
 export const ScrollDownButton = ({ onScrollDownClick, className }: Props) => {
   return (
     <div className={classNames('absolute aspect-square h-11', className)}>
-      <button
+      <DialButton
         data-qa="scroll-down-button"
-        className="flex size-full items-center justify-center rounded-full bg-layer-3 p-2 hover:bg-layer-4"
+        className="rounded-full bg-layer-3 p-2 hover:bg-layer-4"
         onClick={onScrollDownClick}
-      >
-        <IconArrowDown width={24} height={24} />
-      </button>
+        iconBefore={<IconArrowDown size={DEFAULT_ICON_SIZES.STANDARD} />}
+      />
     </div>
   );
 };

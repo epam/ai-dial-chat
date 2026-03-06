@@ -105,17 +105,155 @@ export class MarketplacePage extends BasePage {
     );
   }
 
+  async openEditToolsetPage(id: string) {
+    await this.openEditEntityPage(
+      id,
+      MarketplaceEntitiesTabs.TOOLSETS,
+      undefined,
+      {
+        getEntities: true,
+      },
+    );
+  }
+
   private async openCreateEntityPage(
     entityTab: MarketplaceEntitiesTabs,
     appTypeSchema?: ApplicationType | string,
     options: MarketplaceEntityOptions = {},
   ): Promise<void> {
-    const mergedOptions = { ...DEFAULT_ENTITY_OPTIONS, ...options };
     const entityEditorAttributes = this.getCreateEntityEditorAttributes(
       entityTab,
       EntityEditSteps.generalInfo,
       appTypeSchema,
     );
+    await this.navigateToEntityEditorPage(options, entityEditorAttributes);
+  }
+
+  private async openEditEntityPage(
+    id: string,
+    entityTab: MarketplaceEntitiesTabs,
+    appTypeSchema?: ApplicationType | string,
+    options: MarketplaceEntityOptions = {},
+  ): Promise<void> {
+    const entityEditorAttributes = this.getEditEntityEditorAttributes(
+      entityTab,
+      id,
+      appTypeSchema,
+    );
+    await this.navigateToEntityEditorPage(options, entityEditorAttributes);
+  }
+
+  private getCreateEntityEditorAttributes(
+    entityTab: MarketplaceEntitiesTabs,
+    step: EntityEditSteps,
+    appTypeSchema?: ApplicationType | string,
+  ): {
+    entityEditorPath: string;
+    entityApiHosts: {
+      installedEntitiesApi?: string;
+      entitiesApi?: string;
+    };
+  } {
+    const config = this.getEntityConfig(entityTab);
+    const returnUrl = this.buildReturnUrl(
+      MarketplaceTabs.WORKSPACE,
+      entityTab,
+      config,
+    );
+    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
+      .withReturnUrl(returnUrl)
+      .withIsCreating();
+    if (appTypeSchema) {
+      entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
+    }
+    return {
+      entityEditorPath: entityEditorUrlBuilder.build(),
+      entityApiHosts: config.apiHosts,
+    };
+  }
+
+  private getEditEntityEditorAttributes(
+    entityTab: MarketplaceEntitiesTabs,
+    id: string,
+    appTypeSchema?: ApplicationType | string,
+  ): {
+    entityEditorPath: string;
+    entityApiHosts: {
+      installedEntitiesApi?: string;
+      entitiesApi?: string;
+    };
+  } {
+    const config = this.getEntityConfig(entityTab);
+    const returnUrl = this.buildReturnUrl(
+      MarketplaceTabs.WORKSPACE,
+      entityTab,
+      config,
+    );
+    const step =
+      entityTab === MarketplaceEntitiesTabs.TOOLSETS
+        ? EntityEditSteps.toolsetSettings
+        : EntityEditSteps.appSettings;
+    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
+      .withReturnUrl(returnUrl)
+      .withId(id);
+    if (appTypeSchema) {
+      entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
+    }
+    return {
+      entityEditorPath: entityEditorUrlBuilder.build(),
+      entityApiHosts: config.apiHosts,
+    };
+  }
+
+  private getEntityConfig(entityTab: MarketplaceEntitiesTabs) {
+    const entityConfigs: Record<MarketplaceEntitiesTabs, EntityConfig> = {
+      [MarketplaceEntitiesTabs.AGENTS]: {
+        apiHosts: {
+          installedEntitiesApi: API.installedDeploymentsHost(),
+          entitiesApi: API.publishedApplicationsHost(),
+        },
+        route: Routes.AppsEditor,
+      },
+      [MarketplaceEntitiesTabs.TOOLSETS]: {
+        apiHosts: {
+          installedEntitiesApi: API.installedToolsetsHost(),
+          entitiesApi: API.toolsetsHost(),
+        },
+        route: Routes.ToolsetEditor,
+        hasEntityTabInReturnUrl: true,
+      },
+    };
+    const config = entityConfigs[entityTab];
+    if (!config) {
+      throw new Error(`Unsupported entity tab: ${entityTab}`);
+    }
+    return config;
+  }
+
+  private buildReturnUrl(
+    tab: MarketplaceTabs,
+    entityTab: MarketplaceEntitiesTabs,
+    entityConfig: EntityConfig,
+  ) {
+    let returnUrl = new MarketplaceUrlBuilder(false).withTab(tab).build();
+    if (entityConfig.hasEntityTabInReturnUrl) {
+      // Only this specific part should be encoded
+      returnUrl += encodeURIComponent(`&entitiesTab=${entityTab}`);
+    }
+    return returnUrl;
+  }
+
+  private async navigateToEntityEditorPage(
+    options: MarketplaceEntityOptions = {},
+    entityEditorAttributes: {
+      entityEditorPath: string;
+      entityApiHosts: {
+        installedEntitiesApi?: string;
+        entitiesApi?: string;
+      };
+    },
+  ) {
+    const mergedOptions = { ...DEFAULT_ENTITY_OPTIONS, ...options };
     const expectedResponses: ExpectedApiResponse[] = [];
 
     if (mergedOptions.getInstalledEntities) {
@@ -136,81 +274,10 @@ export class MarketplacePage extends BasePage {
         urlPattern: entityEditorAttributes.entityApiHosts.installedEntitiesApi,
       });
     }
-
     await this.waitForExpectedResponses(
       () => this.navigateToUrl(entityEditorAttributes.entityEditorPath),
       expectedResponses,
     );
-  }
-
-  private getCreateEntityEditorAttributes(
-    entityTab: MarketplaceEntitiesTabs,
-    step: EntityEditSteps,
-    appTypeSchema?: ApplicationType | string,
-  ): {
-    entityEditorPath: string;
-    entityApiHosts: {
-      installedEntitiesApi?: string;
-      entitiesApi?: string;
-    };
-  } {
-    const entityConfigs = this.getEntityConfig();
-    const config = entityConfigs[entityTab];
-    if (!config) {
-      throw new Error(`Unsupported entity tab: ${entityTab}`);
-    }
-
-    const returnUrl = this.buildReturnUrl(
-      MarketplaceTabs.WORKSPACE,
-      entityTab,
-      config,
-    );
-
-    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
-      .withReturnUrl(returnUrl)
-      .withIsCreating();
-    if (appTypeSchema) {
-      entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
-    }
-
-    return {
-      entityEditorPath: entityEditorUrlBuilder.build(),
-      entityApiHosts: config.apiHosts,
-    };
-  }
-
-  private getEntityConfig() {
-    const entityConfigs: Record<MarketplaceEntitiesTabs, EntityConfig> = {
-      [MarketplaceEntitiesTabs.AGENTS]: {
-        apiHosts: {
-          installedEntitiesApi: API.installedDeploymentsHost(),
-          entitiesApi: API.publishedApplicationsHost(),
-        },
-        route: Routes.AppsEditor,
-      },
-      [MarketplaceEntitiesTabs.TOOLSETS]: {
-        apiHosts: {
-          installedEntitiesApi: API.installedToolsetsHost(),
-          entitiesApi: API.toolsetsHost(),
-        },
-        route: Routes.ToolsetEditor,
-        hasEntityTabInReturnUrl: true,
-      },
-    };
-    return entityConfigs;
-  }
-
-  private buildReturnUrl(
-    tab: MarketplaceTabs,
-    entityTab: MarketplaceEntitiesTabs,
-    entityConfig: EntityConfig,
-  ) {
-    let returnUrl = new MarketplaceUrlBuilder(false).withTab(tab).build();
-    if (entityConfig.hasEntityTabInReturnUrl) {
-      // Only this specific part should be encoded
-      returnUrl += encodeURIComponent(`&entitiesTab=${entityTab}`);
-    }
-    return returnUrl;
   }
 
   private buildMarketplaceResponses(

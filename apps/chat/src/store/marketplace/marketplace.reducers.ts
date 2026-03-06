@@ -56,8 +56,10 @@ export const marketplaceSlice = createSlice({
         payload,
       }: PayloadAction<{ saveFilters: boolean; selectedTab?: MarketplaceTabs }>,
     ) => {
+      const selectedTab = payload.selectedTab ?? state.selectedTab;
+
       if (!payload.saveFilters) {
-        return initialState;
+        return { ...initialState, selectedTab };
       }
 
       return {
@@ -68,7 +70,7 @@ export const marketplaceSlice = createSlice({
         selectedView: state.selectedView,
         tableSort: state.tableSort,
         selectedEntitiesTab: state.selectedEntitiesTab,
-        selectedTab: payload.selectedTab ?? state.selectedTab,
+        selectedTab,
         detailsEntity: state.detailsEntity,
       };
     },

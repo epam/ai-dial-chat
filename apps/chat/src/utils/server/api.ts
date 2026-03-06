@@ -150,6 +150,9 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 export const getMarketplaceEntityApiKey = (
   entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
+  if (!entity.version || entity.version === NA_VERSION) {
+    return entity.name;
+  }
   return [entity.name, entity.version].join(pathKeySeparator);
 };
 
@@ -217,21 +220,24 @@ export class ApiUtils {
     method,
     async,
     body,
+    signal,
   }: {
     url: string | URL;
     method: HTTPMethod;
     async: boolean;
     body: XMLHttpRequestBodyInit | Document | null | undefined;
+    signal?: AbortSignal | null;
   }): Observable<{ percent?: number; result?: unknown }> {
     return new Observable((observer) => {
       const xhr = new XMLHttpRequest();
+      let aborted = false;
 
       xhr.open(method, url, async);
       xhr.responseType = 'json';
 
       // Track upload progress
       xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
+        if (!aborted && event.lengthComputable) {
           const percentComplete = (event.loaded / event.total) * 100;
           observer.next({ percent: Math.round(percentComplete) });
         }
@@ -239,6 +245,7 @@ export class ApiUtils {
 
       // Handle response
       xhr.onload = () => {
+        if (aborted) return;
         if (xhr.status === 200) {
           observer.next({ result: xhr.response });
           observer.complete();
@@ -248,14 +255,31 @@ export class ApiUtils {
       };
 
       xhr.onerror = () => {
-        observer.error('Request failed');
+        if (!aborted) {
+          observer.error('Request failed');
+        }
       };
+
+      // attach abort signal
+      const abortHandler = () => {
+        aborted = true;
+        xhr.abort();
+        observer.complete();
+      };
+
+      if (signal) {
+        signal.addEventListener('abort', abortHandler);
+      }
 
       xhr.send(body);
 
       // Return cleanup function
       return () => {
+        aborted = true;
         xhr.abort();
+        if (signal) {
+          signal.removeEventListener('abort', abortHandler);
+        }
       };
     });
   }
@@ -263,7 +287,14 @@ export class ApiUtils {
 
 export const getModelIdWithoutVersion = (id: string) => {
   const parts = id.split(pathKeySeparator);
+  if (parts.length < 2) {
+    return id;
+  }
   const name = parts.slice(0, -1).join(pathKeySeparator);
+  const version = parts.at(-1)?.replace(/^_/, '');
+  if (!version || !validVersionRegEx.test(version)) {
+    return id;
+  }
   if (parts.at(-1)?.startsWith('_')) {
     return `${name}_`;
   }
@@ -277,9 +308,6 @@ export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
 
   return getModelIdWithoutVersion(id);
 };
-
-export const addVersionToId = (id: string, version: string) =>
-  [id, version].join(pathKeySeparator);
 
 export const isValidEntityApiType = (apiKey: string): boolean => {
   return (
@@ -299,12 +327,16 @@ export const getIdWithoutVersionFromApiKey = (id: string) => {
 
 export const getVersionFromId = (id: string) => {
   const parts = id.split(pathKeySeparator);
-  const version = parts.at(-1)?.replace(/^_/, '');
-
-  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
-  if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
+  if (parts.length < 2) {
     return NA_VERSION;
   }
+
+  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
+  if (isConversationId(id) && parts.length < 3) {
+    return NA_VERSION;
+  }
+
+  const version = parts.at(-1)?.replace(/^_/, '');
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };

@@ -1,9 +1,10 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
-import { Tags } from '@/src/ui/domData';
+import { AttributeValues, Tags } from '@/src/ui/domData';
 import { IconSelectors, PublishingDialogSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
+import { Button } from '@/src/ui/webElements/common/button';
 import {
   PublishApplicationsTree,
   PublishConversationsTree,
@@ -121,8 +122,10 @@ export class PublishingRequestDialog extends BaseElement {
   public author = this.getChildElementBySelector(
     PublishingDialogSelectors.author,
   );
-  public sendRequestButton = this.getChildElementBySelector(
-    PublishingDialogSelectors.sendButton,
+  public sendRequestButton = new Button(
+    this.page,
+    AttributeValues.sendRequest,
+    this.rootLocator,
   );
   public publishPath = this.getChildElementBySelector(
     PublishingDialogSelectors.publishPath,

@@ -1,13 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 
@@ -60,7 +59,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   const searchParams = new URLSearchParams();
   searchParams.set('recursive', recursive);
@@ -69,7 +68,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
-      headers: getApiHeaders({ jwt: token?.access_token as string }),
+      headers: getApiHeaders({ jwt }),
     });
 
     let json: unknown;

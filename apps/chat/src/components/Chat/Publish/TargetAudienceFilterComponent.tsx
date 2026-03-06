@@ -1,4 +1,4 @@
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -11,23 +11,32 @@ import { translate } from '@/src/utils/app/translation';
 import { ModalState } from '@/src/types/modal';
 import {
   PublicationFunctions,
-  TargetAudienceFilter,
+  TargetAudienceFilterData,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Modal } from '@/src/components/Common/Modal';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
+import {
+  DialGhostIconButton,
+  DialPrimaryButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
+
 const emptySelector = translate('Select');
 
 interface Props {
-  onSaveFilter: (filter: TargetAudienceFilter) => void;
+  onSaveFilter: (filter: TargetAudienceFilterData) => void;
   onCloseFilter: () => void;
 }
 
@@ -93,7 +102,7 @@ export function TargetAudienceFilterComponent({
     );
 
     onSaveFilter({
-      id: selectedTarget,
+      source: selectedTarget,
       filterFunction: filterFunction as PublicationFunctions,
       filterParams: preparedFilterParams,
     });
@@ -194,6 +203,7 @@ export function TargetAudienceFilterComponent({
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
                 id="filterFns"
+                capitalizeFirstLetters
               />
             </div>
             {/* TODO: uncomment when it will be supported on core */}
@@ -223,13 +233,11 @@ export function TargetAudienceFilterComponent({
           </div>
           {/* )} */}
           <div className="flex justify-end">
-            <button
+            <DialPrimaryButton
+              label={t('Add filter')}
               onClick={handleSaveFilter}
-              className="button button-primary flex h-[38px] items-center"
               disabled={isSaveBtnDisabled}
-            >
-              {t('Add filter')}
-            </button>
+            />
           </div>
         </div>
       </Modal>
@@ -257,6 +265,7 @@ export function TargetAudienceFilterComponent({
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
+        capitalizeFirstLetters
       />
       {/* TODO: uncomment when it will be supported on core */}
       {/* {!isTrueOrFalseFilterSelected && */}
@@ -277,27 +286,22 @@ export function TargetAudienceFilterComponent({
           dataQa="filter-values-container"
         />
       )}
-      {/* } */}
-      <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
-        <div className="flex gap-2">
-          <button
-            data-qa="save-filter"
-            onClick={handleSaveFilter}
-            className={classNames(
-              isSaveBtnDisabled
-                ? 'cursor-not-allowed text-controls-disable'
-                : 'text-secondary hover:text-accent-primary',
-            )}
-            disabled={isSaveBtnDisabled}
-          >
-            <IconCheck size={18} />
-          </button>
-          <IconX
-            className="cursor-pointer text-secondary hover:text-accent-primary"
-            size={18}
-            onClick={onCloseFilter}
-          />
-        </div>
+      <div className="flex min-h-[31px] gap-2 bg-layer-3 px-2 py-[3.5px]">
+        <DialGhostIconButton
+          size={ElementSize.Small}
+          data-qa="save-filter"
+          onClick={handleSaveFilter}
+          disabled={isSaveBtnDisabled}
+          icon={
+            <IconCheck
+              size={DEFAULT_ICON_SIZES.SMALL}
+              className={classNames(
+                isSaveBtnDisabled && 'hover:text-controls-disable',
+              )}
+            />
+          }
+        />
+        <CloseButtonSmall onClick={onCloseFilter} data-qa="cancel-filter" />
       </div>
     </div>
   );

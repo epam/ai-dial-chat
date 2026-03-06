@@ -24,7 +24,11 @@ export const TopicsList = ({
       <OverflowIndicator
         count={hiddenItems.length}
         tooltipContent={hiddenItems.map((item) => (
-          <MarketplaceEntityTopic key={item.topic} topic={item.topic} />
+          <MarketplaceEntityTopic
+            key={item.topic}
+            topic={item.topic}
+            className="max-w-full truncate"
+          />
         ))}
         placement="top"
         displayDelay={100}

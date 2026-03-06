@@ -42,17 +42,19 @@ export class DebugAuth {
         this.baseUrl,
       );
 
-      // Step 2: Get Auth0 dynamic parameters
-      const dynamicParams = await this.authApiHelper.getAuth0DynamicParams(
-        this.baseUrl,
-        urlCsrfToken,
-      );
+      // Step 2: Get Auth0 dynamic parameters and CSRF token
+      const { urlParams: dynamicParams, auth0Csrf } =
+        await this.authApiHelper.getAuth0DynamicParams(
+          this.baseUrl,
+          urlCsrfToken,
+        );
 
       // Step 3: Submit credentials to Auth0
       const authParams = await this.authApiHelper.submitCredentials(
         username,
         password,
         dynamicParams,
+        auth0Csrf,
       );
 
       // Step 4: Complete authentication flow

@@ -10,6 +10,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface NavigationButtonProps {
@@ -65,6 +67,7 @@ export const NavigationButton = ({
           !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
         aria-selected={selected}
+        aria-label={caption}
       >
         {/* eslint-enable jsx-a11y/role-supports-aria-props */}
         <Icon
@@ -72,9 +75,9 @@ export const NavigationButton = ({
             'min-h-[24px] min-w-[24px]',
             selected ? 'text-accent-primary' : 'text-secondary',
           )}
-          width={24}
-          height={24}
-          size={24}
+          width={DEFAULT_ICON_SIZES.STANDARD}
+          height={DEFAULT_ICON_SIZES.STANDARD}
+          size={DEFAULT_ICON_SIZES.STANDARD}
         />
 
         {!isOverlay && (

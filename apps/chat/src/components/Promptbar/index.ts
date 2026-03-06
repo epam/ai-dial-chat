@@ -1,1 +1,0 @@
-export { Promptbar } from './Promptbar';

@@ -1,9 +1,11 @@
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -54,15 +56,28 @@ export const ToolsetEditorHeader = ({
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
   const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  const isPublicToolset = currentToolset && isEntityIdPublic(currentToolset);
 
   const isExistingToolset = !!currentToolset;
+
+  const isToolsetDetailsLoading = useAppSelector(
+    ToolsetSelectors.selectIsToolsetDetailsLoading,
+  );
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
 
-  const { formState, trigger } = useFormContext<ToolsetEditorForm>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { trigger, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
+
+  useEffect(() => {
+    if (isPublicToolset && !isToolsetDetailsLoading) {
+      const timerId = setTimeout(() => {
+        trigger();
+      });
+      return () => clearTimeout(timerId);
+    }
+  }, [dispatch, isPublicToolset, isToolsetDetailsLoading, trigger]);
 
   const errorSteps = useMemo(() => {
     return stepFields.reduce<Set<ToolsetEditorSteps>>(
@@ -98,7 +113,7 @@ export const ToolsetEditorHeader = ({
       if (isExistingToolset) {
         const isValid = await trigger();
 
-        if (!isValid) {
+        if (!isValid && !isPublicToolset) {
           setSaveDraftDialog(true);
           setRedirectToChat(true);
           return;
@@ -106,7 +121,7 @@ export const ToolsetEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isExistingToolset, onSave, trigger],
+    [isExistingToolset, isPublicToolset, onSave, trigger],
   );
 
   const handleTabClick = useCallback(
@@ -121,13 +136,13 @@ export const ToolsetEditorHeader = ({
     if (isExistingToolset) {
       const isValid = await trigger();
 
-      if (!isValid) {
+      if (!isValid && !isPublicToolset) {
         setSaveDraftDialog(true);
         return;
       }
     }
     onSave();
-  }, [isExistingToolset, onSave, trigger]);
+  }, [isExistingToolset, isPublicToolset, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -149,6 +164,9 @@ export const ToolsetEditorHeader = ({
     [dispatch, errorSteps, onSave, redirectToChat],
   );
 
+  const saveLabel =
+    isExistingToolset && !isPublicToolset ? 'Save and exit' : 'Exit';
+
   return (
     <>
       <EditorHeader
@@ -158,7 +176,7 @@ export const ToolsetEditorHeader = ({
         isEditing={isExistingToolset}
         onTabClick={handleTabClick}
         title={t(isCreatingToolset ? 'Add toolset' : 'Edit toolset')}
-        saveLabel={isExistingToolset ? 'Save and exit' : 'Exit'}
+        saveLabel={saveLabel}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
         dataQa="entity-editor-header"

@@ -47,4 +47,5 @@ export enum Cursors {
 export enum Overflow {
   auto = 'auto',
   ellipsis = 'ellipsis',
+  clip = 'clip',
 }

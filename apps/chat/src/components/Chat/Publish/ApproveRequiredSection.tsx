@@ -20,6 +20,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 
@@ -53,7 +55,6 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       publication.url,
     ),
   );
-
   const isMessageStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -114,10 +115,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <div
           className={classNames(
             'group/button flex size-full items-center gap-1 py-2 pr-3',
-            {
-              'cursor-pointer': !isMessageStreaming,
-              'cursor-not-allowed': isMessageStreaming,
-            },
+            isMessageStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
           )}
         >
           <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />
@@ -125,8 +123,8 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
             <IconClipboard
               className="text-secondary"
               strokeWidth={1.5}
-              width={24}
-              height={24}
+              width={DEFAULT_ICON_SIZES.STANDARD}
+              height={DEFAULT_ICON_SIZES.STANDARD}
             />
             {(!itemsToReview
               .filter((item) => !isFileId(item.reviewUrl))
@@ -247,7 +245,7 @@ export const ApproveRequiredSection = ({
       isHighlighted={isSectionHighlighted}
       additionalNode={
         !!publicationsToReviewCount && (
-          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-primary px-[2px] text-xxs font-semibold text-controls-disable">
+          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-xxs font-semibold text-layer-3">
             {publicationsToReviewCount}
           </span>
         )

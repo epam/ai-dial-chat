@@ -51,11 +51,17 @@ export class AuthApiHelper extends BaseApiHelper {
   public async getAuth0DynamicParams(
     baseUrl: string,
     urlCsrfToken: string,
-  ): Promise<URLSearchParams> {
-    // Hardcode callback to staging URL (allowed in Auth0 config)
+  ): Promise<{ urlParams: URLSearchParams; auth0Csrf: string }> {
+    // Use callback URL - preserve localhost if AUTH_CALLBACK_URL_OVERRIDE is localhost
+    const callbackOverride = process.env.AUTH_CALLBACK_URL_OVERRIDE;
+    const callbackUrl =
+      callbackOverride && callbackOverride.includes('localhost')
+        ? baseUrl
+        : (callbackOverride ?? baseUrl);
+
     const formData = new URLSearchParams({
       csrfToken: urlCsrfToken,
-      callbackUrl: process.env.AUTH_CALLBACK_URL_OVERRIDE!,
+      callbackUrl: callbackUrl,
     });
 
     const response = await this.request.post(
@@ -88,7 +94,15 @@ export class AuthApiHelper extends BaseApiHelper {
       );
     }
 
-    return new URL(loginPageResponse.url()).searchParams;
+    // Extract _csrf token from Auth0 login page HTML
+    const html = await loginPageResponse.text();
+    const csrfMatch = html.match(/name="_csrf"[^>]*value="([^"]+)"/);
+    const auth0Csrf = csrfMatch ? csrfMatch[1] : '';
+
+    return {
+      urlParams: new URL(loginPageResponse.url()).searchParams,
+      auth0Csrf,
+    };
   }
 
   public getAuth0Config(): Auth0Config {
@@ -121,54 +135,59 @@ export class AuthApiHelper extends BaseApiHelper {
     username: string,
     password: string,
     dynamicParams: URLSearchParams,
+    auth0Csrf: string,
   ): Promise<Auth0Params> {
     const config = this.getAuth0Config();
 
-    // Build form data with static config
-    const formData = new URLSearchParams({
+    // Get redirect_uri - use AUTH_CALLBACK_URL_OVERRIDE if different from localhost
+    const originalRedirectUri = dynamicParams.get('redirect_uri') ?? '';
+    const callbackOverride = process.env.AUTH_CALLBACK_URL_OVERRIDE;
+    const redirectUri =
+      callbackOverride && !callbackOverride.includes('localhost')
+        ? originalRedirectUri.replace('http://localhost:3000', callbackOverride)
+        : originalRedirectUri;
+
+    // Build JSON payload matching Auth0 Lock format (from HAR analysis)
+    const jsonPayload = {
       client_id: config.clientId,
+      redirect_uri: redirectUri,
       tenant: config.tenant,
+      response_type: dynamicParams.get('response_type') ?? 'code',
+      scope:
+        dynamicParams.get('scope') ?? 'openid email profile offline_access',
+      state: dynamicParams.get('state') ?? '',
       connection: config.connection,
       username,
       password,
-      sso: 'true',
-    });
-
-    // Add optional config
-    if (config.audience) formData.append('audience', config.audience);
-    if (config.intstate) formData.append('intstate', config.intstate);
-
-    // Add dynamic params from Auth0 redirect
-    // Fix redirect_uri to use staging domain (required by Auth0)
-    const redirectUri = dynamicParams.get('redirect_uri') ?? '';
-    const correctedRedirectUri = redirectUri.replace(
-      'http://localhost:3000',
-      process.env.AUTH_CALLBACK_URL_OVERRIDE!,
-    );
-
-    const dynamicFields = {
-      redirect_uri: correctedRedirectUri,
-      response_type: dynamicParams.get('response_type') ?? '',
-      scope: dynamicParams.get('scope') ?? '',
-      state: dynamicParams.get('state') ?? '',
-      code_challenge_method: dynamicParams.get('code_challenge_method') ?? '',
+      popup_options: {},
+      sso: true,
+      _intstate: config.intstate ?? 'deprecated',
+      _csrf: auth0Csrf,
+      audience: config.audience ?? '',
+      code_challenge_method:
+        dynamicParams.get('code_challenge_method') ?? 'S256',
       code_challenge: dynamicParams.get('code_challenge') ?? '',
-      protocol: dynamicParams.get('protocol') ?? '',
+      protocol: dynamicParams.get('protocol') ?? 'oauth2',
     };
 
-    Object.entries(dynamicFields).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    // Build auth0-client header (Auth0 Lock library identifier)
+    const auth0ClientInfo = {
+      name: 'lock.js-ulp',
+      version: '13.2.0',
+    };
+    const auth0ClientHeader = Buffer.from(
+      JSON.stringify(auth0ClientInfo),
+    ).toString('base64');
 
-    const client = dynamicParams.get('client');
-    if (client) formData.append('client', client);
-
-    // Submit credentials
+    // Submit credentials as JSON (matching browser behavior)
     const response = await this.request.post(
       `${config.host}/usernamepassword/login`,
       {
-        data: formData.toString(),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        data: JSON.stringify(jsonPayload),
+        headers: {
+          'Content-Type': 'application/json',
+          'auth0-client': auth0ClientHeader,
+        },
       },
     );
 
@@ -239,15 +258,75 @@ export class AuthApiHelper extends BaseApiHelper {
     );
     const resumeUrl = new URL(resumeLocation, config.host).toString();
 
-    // Step 2: GET /authorize/resume -> redirect to /api/auth/callback/auth0
+    // Step 2: GET /authorize/resume -> redirect to /api/auth/callback/auth0 or /decision
     const resumeResponse = await this.request.get(resumeUrl, {
       maxRedirects: 0,
     });
-    const appCallbackLocation = this.getRedirectLocation(
+
+    let appCallbackLocation = this.getRedirectLocation(
       resumeResponse,
       '/authorize/resume',
       302,
     );
+
+    // Handle /decision consent redirect (for first-time users or new scopes)
+    if (appCallbackLocation.includes('/decision')) {
+      const decisionUrl = new URL(appCallbackLocation, config.host);
+      const decisionState = decisionUrl.searchParams.get('state') || '';
+
+      // POST consent approval to /decision
+      const consentFormData = new URLSearchParams();
+      consentFormData.append('state', decisionState);
+      consentFormData.append('audience', config.audience || '');
+      // Add standard scopes as array notation (scope[]=value)
+      ['openid', 'profile', 'email'].forEach((scope) => {
+        consentFormData.append('scope[]', scope);
+      });
+
+      const consentResponse = await this.request.post(
+        `${config.host}/decision`,
+        {
+          data: consentFormData.toString(),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          maxRedirects: 0,
+        },
+      );
+
+      if (consentResponse.status() !== 302) {
+        throw new Error(
+          `Expected 302 from POST /decision, got ${consentResponse.status()}`,
+        );
+      }
+
+      // POST /decision redirects to /authorize/resume again
+      const resumeAfterConsentLocation = this.getRedirectLocation(
+        consentResponse,
+        'POST /decision',
+        302,
+      );
+
+      const resumeAfterConsentUrl = new URL(
+        resumeAfterConsentLocation,
+        config.host,
+      ).toString();
+
+      const resumeAfterConsentResponse = await this.request.get(
+        resumeAfterConsentUrl,
+        { maxRedirects: 0 },
+      );
+
+      if (resumeAfterConsentResponse.status() !== 302) {
+        throw new Error(
+          `Expected 302 from /authorize/resume after consent, got ${resumeAfterConsentResponse.status()}`,
+        );
+      }
+
+      appCallbackLocation = this.getRedirectLocation(
+        resumeAfterConsentResponse,
+        '/authorize/resume after consent',
+        302,
+      );
+    }
 
     // Step 3: GET /api/auth/callback/auth0 -> sets session cookie
     const appCallbackResponse = await this.request.get(appCallbackLocation, {

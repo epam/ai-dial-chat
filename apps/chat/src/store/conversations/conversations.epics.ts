@@ -12,6 +12,7 @@ import {
   filter,
   forkJoin,
   from,
+  groupBy,
   ignoreElements,
   iif,
   map,
@@ -23,7 +24,6 @@ import {
   takeWhile,
   tap,
   throwError,
-  timeout,
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
@@ -1132,10 +1132,11 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         }),
         switchMap(() => EMPTY),
         catchError((e: Response) => {
+          console.error('Failed to rate message:', e);
           return of(
             ConversationsActions.rateMessageFail({
               ...payload,
-              error: e,
+              error: translate('Failed to rate message'),
             }),
           );
         }),
@@ -1343,6 +1344,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+      installedModelIds: ModelsSelectors.selectInstalledModelIds(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1354,6 +1356,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         payload,
+        modelsMap,
+        installedModelIds,
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,
@@ -1460,11 +1464,31 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isMessageStreaming: true,
         });
 
+        const isMarketplaceEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.Marketplace,
+        );
+        const model = modelsMap[updatedConversation.model.id];
+
         if (!payload.skipRecentModelsUpdate) {
           actions.push(
             of(
               ModelsActions.updateRecentModels({
                 modelId: updatedConversation.model.id,
+              }),
+            ),
+          );
+        }
+
+        if (
+          !isMarketplaceEnabled &&
+          model &&
+          !installedModelIds.has(model.reference)
+        ) {
+          actions.push(
+            of(
+              ModelsActions.addInstalledModels({
+                references: [model.reference],
               }),
             ),
           );
@@ -1598,8 +1622,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
-        timeout(120000),
         mergeMap((resp) => {
           if (resp.done) {
             const publicationUrl =
@@ -1684,13 +1706,22 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           }
 
           if (error.message === 'ServerError') {
+            const cause = error.cause as
+              | { status: number; statusText: string; message: string }
+              | undefined;
+
+            const contentTooLargeError =
+              cause?.status === 413 &&
+              translate(errorsMessages.bodyExeededLimit);
+            const message =
+              contentTooLargeError ||
+              cause?.message ||
+              translate(errorsMessages.generalServer);
+
             return of(
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
-                message:
-                  (!!error.cause &&
-                    (error.cause as { message?: string }).message) ||
-                  translate(errorsMessages.generalServer),
+                message,
                 response:
                   error.cause instanceof Response ? error.cause : undefined,
               }),
@@ -1713,7 +1744,9 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
     ofType(ConversationsActions.streamMessageFail.type),
     switchMap(({ payload }) => {
       return (
-        payload.response ? from(payload.response.json()) : of(undefined)
+        payload.response
+          ? from(payload.response.json().catch(() => undefined))
+          : of(undefined)
       ).pipe(
         map((response: { message: string } | undefined) => ({
           payload,
@@ -3239,22 +3272,27 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
 const getCustomAttachmentDataEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.getCustomAttachmentData.type),
-    switchMap(({ payload }) =>
-      FileService.getFileContent<CustomVisualizerData>(
-        payload.pathToAttachment,
-      ).pipe(
-        switchMap((params) => {
-          return of(
-            ConversationsActions.getCustomAttachmentDataSuccess({
-              params,
-              url: payload.pathToAttachment,
+    groupBy(({ payload }) => payload.pathToAttachment),
+    mergeMap((group$) =>
+      group$.pipe(
+        switchMap(({ payload }) =>
+          FileService.getFileContent<CustomVisualizerData>(
+            payload.pathToAttachment,
+          ).pipe(
+            switchMap((params) => {
+              return of(
+                ConversationsActions.getCustomAttachmentDataSuccess({
+                  params,
+                  url: payload.pathToAttachment,
+                }),
+              );
             }),
-          );
-        }),
-        catchError(() =>
-          of(
-            UIActions.showErrorToast(
-              translate('Error while uploading chart data'),
+            catchError(() =>
+              of(
+                UIActions.showErrorToast(
+                  translate('Error while uploading chart data'),
+                ),
+              ),
             ),
           ),
         ),

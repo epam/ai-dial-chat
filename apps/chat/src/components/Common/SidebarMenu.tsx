@@ -1,18 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import classNames from 'classnames';
-
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ContextMenu } from './ContextMenu';
 
+import { FeatureType } from '@epam/ai-dial-shared';
+import {
+  DialSecondaryIconButton,
+  DialTertiaryIconButton,
+} from '@epam/ai-dial-ui-kit';
+
 const ICON_WIDTH = 24;
-const ITEM_PADDING = 5;
+const ITEM_PADDING = 8;
 const ITEMS_GAP_IN_PIXELS = 8;
 const ITEM_WIDTH = ITEM_PADDING * 2 + ICON_WIDTH + ITEMS_GAP_IN_PIXELS;
-export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
+
+function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
     dataQa,
@@ -23,25 +28,28 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     childMenuItems,
   } = props;
 
+  const ItemComponent =
+    featureType === FeatureType.Chat
+      ? DialSecondaryIconButton
+      : DialTertiaryIconButton;
+
   const item = (
-    <button
-      className={classNames(
-        'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed [&:not(:disabled)]:hover:bg-accent-primary-alpha [&:not(:disabled)]:hover:text-accent-primary',
-        className,
-      )}
+    <ItemComponent
+      className={className}
       onClick={!childMenuItems ? onClick : undefined}
       data-qa={dataQa}
       disabled={disabled}
-    >
-      {Icon && (
-        <Icon
-          size={ICON_WIDTH}
-          height={ICON_WIDTH}
-          width={ICON_WIDTH}
-          strokeWidth="1.5"
-        />
-      )}
-    </button>
+      icon={
+        Icon && (
+          <Icon
+            size={ICON_WIDTH}
+            height={ICON_WIDTH}
+            width={ICON_WIDTH}
+            strokeWidth="1.5"
+          />
+        )
+      }
+    />
   );
 
   if (childMenuItems) {
@@ -145,7 +153,7 @@ export function SidebarMenu({
       })}
 
       <ContextMenu
-        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
+        triggerIconClassName="flex w-[40px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
         menuItems={hiddenItems}
         isOpen={isOpen}
         featureType={featureType}

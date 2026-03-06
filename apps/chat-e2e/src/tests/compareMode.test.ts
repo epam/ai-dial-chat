@@ -27,23 +27,16 @@ let bModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
   defaultModel = ModelsUtil.getDefaultAgent()!;
-  //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) =>
         m.id !== defaultModel.id &&
         ModelsUtil.doesModelAllowSystemPrompt(m) &&
-        ModelsUtil.doesModelAllowTemperature(m) &&
-        m.features?.configuration !== true,
+        ModelsUtil.doesModelAllowTemperature(m),
     ),
   );
   bModel = GeneratorUtil.randomArrayElement(
-    allModels.filter(
-      (m) =>
-        m.id !== defaultModel.id &&
-        m.id !== aModel.id &&
-        m.features?.configuration !== true,
-    ),
+    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
   );
 });
 
@@ -565,8 +558,8 @@ dialTest(
         const requestsData = await chat.sendRequestInCompareMode(
           'how are you?',
           {
-            rightEntity: firstConversation.model.id,
-            leftEntity: secondConversation.model.id,
+            rightEntity: firstConversation.id,
+            leftEntity: secondConversation.id,
           },
           true,
         );
@@ -708,6 +701,7 @@ dialTest(
         secondConversation,
       ]);
       await localStorageManager.setShowSideBarPanels();
+      await localStorageManager.setRecentModelsIds(aModel, bModel);
     });
 
     await dialTest.step(
@@ -1649,6 +1643,11 @@ dialTest(
           secondConversation,
         ]);
         await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIds(
+          aModel,
+          bModel,
+          defaultModel,
+        );
       },
     );
 

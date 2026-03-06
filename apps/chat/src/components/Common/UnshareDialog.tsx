@@ -2,7 +2,9 @@ import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { FeatureType } from '@/src/types/common';
+import { EnumMapper } from '@/src/utils/app/mappers';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { Translation } from '@/src/types/translation';
 
 import { ShareActions } from '@/src/store/actions';
@@ -82,7 +84,9 @@ function UnshareDialogView() {
         dispatch(
           ShareActions.discardSharedWithMe({
             resourceIds: [unshareEntity.id],
-            featureType: FeatureType.Application,
+            featureType: EnumMapper.getFeatureTypeByApiKey(
+              splitEntityId(unshareEntity.id).apiKey,
+            ),
           }),
         );
         dispatch(ShareActions.setUnshareEntity(undefined));

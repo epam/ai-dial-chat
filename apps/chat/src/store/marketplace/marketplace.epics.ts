@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, iif, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -64,30 +64,23 @@ const initEpic: AppEpic = (action$, state$) =>
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
       const firstRoutePart = previousRoute?.split('/')[1];
       const firstRoutePartWithoutParams = firstRoutePart?.split('?')[0];
-      const isPreviousRouteEditor =
-        !!firstRoutePartWithoutParams &&
-        ['apps-editor', 'toolset-editor'].includes(firstRoutePartWithoutParams);
+      const isShareLink = !!new URL(window.location.href).searchParams.get(
+        'share',
+      );
+      const shouldSaveFilters =
+        (!!firstRoutePartWithoutParams &&
+          ['apps-editor', 'toolset-editor'].includes(
+            firstRoutePartWithoutParams,
+          )) ||
+        isShareLink;
 
-      return concat(
-        of(
-          MarketplaceActions.initSuccess({
-            saveFilters: isPreviousRouteEditor,
-            selectedTab: workSpaceTab
-              ? MarketplaceTabs.MY_WORKSPACE
-              : undefined,
-          }),
-        ),
-        iif(
-          () => !isPreviousRouteEditor,
-          of(
-            MarketplaceActions.setSelectedTab(
-              workSpaceTab
-                ? MarketplaceTabs.MY_WORKSPACE
-                : MarketplaceTabs.HOME,
-            ),
-          ),
-          EMPTY,
-        ),
+      return of(
+        MarketplaceActions.initSuccess({
+          saveFilters: shouldSaveFilters,
+          selectedTab: workSpaceTab
+            ? MarketplaceTabs.MY_WORKSPACE
+            : MarketplaceTabs.HOME,
+        }),
       );
     }),
   );
@@ -106,10 +99,15 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setTableSort.type,
     ),
     filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
-    switchMap(() => {
+    switchMap((action) => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
+
+      // remove 'share' from query after application sharing link accepted
+      if (action.type === MarketplaceActions.setDetailsEntity.type) {
+        addToQuery(query, 'share', undefined);
+      }
       // workspace tab
       const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
 
@@ -235,12 +233,22 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
 
       if (isAgentsTab) {
         // set model details
-        const modelsMap = ModelsSelectors.selectModelsMap(state);
-        detailsEntity = getDetailsEntity({
-          entitiesMap: modelsMap,
-          reference: modelReference,
-          type: selectedEntitiesTab,
-        });
+        if (modelReference) {
+          const modelsMap = ModelsSelectors.selectModelsMap(state);
+
+          detailsEntity = getDetailsEntity({
+            entitiesMap: modelsMap,
+            reference: modelReference,
+            type: selectedEntitiesTab,
+          });
+        } else {
+          const stateDetailsEntity =
+            MarketplaceSelectors.selectDetailsEntity(state);
+          detailsEntity =
+            stateDetailsEntity?.type === MarketplaceEntitiesTabs.AGENTS
+              ? stateDetailsEntity
+              : undefined;
+        }
 
         // agents filters
         statePropertyName = 'selectedAgentsFilters';
@@ -250,13 +258,21 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         filters = getFilters(query, existingAgentsTopics, sourceTypes);
       } else {
         // set toolset details
-
-        const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
-        detailsEntity = getDetailsEntity({
-          entitiesMap: toolsetsMap,
-          reference: toolsetReference,
-          type: selectedEntitiesTab!,
-        });
+        if (toolsetReference) {
+          const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+          detailsEntity = getDetailsEntity({
+            entitiesMap: toolsetsMap,
+            reference: toolsetReference,
+            type: selectedEntitiesTab!,
+          });
+        } else {
+          const stateDetailsEntity =
+            MarketplaceSelectors.selectDetailsEntity(state);
+          detailsEntity =
+            stateDetailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+              ? stateDetailsEntity
+              : undefined;
+        }
 
         // toolsets filters
         statePropertyName = 'selectedToolsetsFilters';

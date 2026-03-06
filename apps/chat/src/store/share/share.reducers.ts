@@ -195,6 +195,7 @@ export const shareSlice = createSlice({
         payload,
       }: PayloadAction<{
         acceptedId: string;
+        permissions: SharePermission[];
         isFolder: boolean;
         isConversation?: boolean;
         isPrompt?: boolean;
@@ -227,6 +228,7 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         featureType: FeatureType;
         sharedWith: ShareRelations;
+        includeUserInfo?: boolean;
       }>,
     ) => state,
     getSharedListingSuccess: (

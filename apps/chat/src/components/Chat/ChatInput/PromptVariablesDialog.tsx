@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -23,11 +22,17 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -108,16 +113,18 @@ export const PromptVariablesDialog: FC<Props> = ({
     [],
   );
 
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (allowEnterClick(e)) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
         onClose();
       }
     },
-    [handleSubmit, onClose],
+    [allowEnterClick, handleSubmit, onClose],
   );
 
   useEffect(() => {
@@ -180,12 +187,10 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+        <CloseButtonSmall
+          className="absolute right-2 top-2"
           onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
+        />
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key} data-qa="variable">
@@ -226,13 +231,11 @@ export const PromptVariablesDialog: FC<Props> = ({
         ))}
 
         <div className="mt-1 flex justify-end">
-          <button
+          <DialPrimaryButton
+            label={t('Submit')}
             type="submit"
-            className="button button-primary"
             data-qa="submit-variable"
-          >
-            {t('Submit')}
-          </button>
+          />
         </div>
       </form>
     </div>

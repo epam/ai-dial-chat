@@ -48,7 +48,18 @@
             "message": "Use DataService instead."
           }
         ],
-        "@typescript-eslint/no-non-null-assertion": "off"
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "VariableDeclarator[init.callee.name='useFormContext'] > ObjectPattern > Property[key.name='watch']",
+            "message": "Do not destructure 'watch' from useFormContext. Use useWatch() hook instead for React Compiler compatibility."
+          },
+          {
+            "selector": "VariableDeclarator[init.callee.name='useFormContext'] > ObjectPattern > Property[key.name='formState']",
+            "message": "Do not destructure 'formState' from useFormContext. Use useFormState() hook instead for React Compiler compatibility."
+          }
+        ]
       }
     },
     {

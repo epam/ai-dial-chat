@@ -8,7 +8,6 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react';
-import { IconX } from '@tabler/icons-react';
 import {
   FormEvent,
   FormHTMLAttributes,
@@ -23,6 +22,7 @@ import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';
 
+import { CloseButtonSmall } from './CloseButtons';
 import { Spinner } from './Spinner';
 import { Tooltip } from './Tooltip';
 
@@ -114,16 +114,14 @@ function ModalView({
               {...getFloatingProps()}
               data-qa={dataQa}
               {...(form && { ...form })}
+              aria-modal="true"
             >
               {!hideClose && (
-                <button
-                  type="button"
-                  role="button"
-                  className="absolute right-2 top-2 z-50 rounded text-secondary hover:text-accent-primary"
+                <CloseButtonSmall
                   onClick={handleClose}
-                >
-                  <IconX height={24} width={24} />
-                </button>
+                  className="absolute right-2 top-2 z-50"
+                  aria-label="Close dialog"
+                />
               )}
               {heading && typeof heading === 'string' ? (
                 <h4

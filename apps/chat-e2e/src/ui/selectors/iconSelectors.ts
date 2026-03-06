@@ -24,4 +24,10 @@ export const IconSelectors = {
   oauthIcon: '.tabler-icon-brand-oauth',
   keyIcon: '.tabler-icon-key',
   lockOffIcon: '.tabler-icon-lock-off',
+  dotsMenuIcon: '.tabler-icon-dots-vertical',
+  caretIcon: '.tabler-icon-caret-right-filled',
+  chevronsRightIcon: '.tabler-icon-chevrons-right',
+  fileTypeIcon: (extension: string) =>
+    `tabler-icon tabler-icon-file-type-${extension} `,
+  alertIcon: '.tabler-icon-alert-circle-filled.text-error',
 };

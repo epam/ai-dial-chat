@@ -9,6 +9,8 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+
 export const DislikeCommentModal = ({
   onClose,
   onSubmit,
@@ -42,13 +44,12 @@ export const DislikeCommentModal = ({
         value={comment}
         onChange={(e) => setComment(e.target.value)}
       ></textarea>
-      <button
-        className="button button-primary mt-4 self-end"
+      <DialPrimaryButton
+        className="mt-4 self-end"
+        label={t('Send')}
         onClick={handleSubmit}
         data-qa="dislike-send-button"
-      >
-        {t('Send')}
-      </button>
+      />
     </Modal>
   );
 };

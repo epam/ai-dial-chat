@@ -2,19 +2,23 @@ import { useCallback } from 'react';
 
 import { PromptsActions } from '@/src/store/actions';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 
-function PromptVariablesForApplyDialogView() {
-  const dispatch = useAppDispatch();
+import { Prompt } from '@epam/ai-dial-shared';
 
-  const prompt = useAppSelector(
-    PromptsSelectors.selectPromptWithVariablesForApply,
-  );
+interface PromptVariablesForApplyDialogProps {
+  prompt: Prompt;
+}
+
+function PromptVariablesForApplyDialogView({
+  prompt,
+}: PromptVariablesForApplyDialogProps) {
+  const dispatch = useAppDispatch();
 
   const handleClose = useCallback(() => {
     dispatch(PromptsActions.setPromptWithVariablesForApply());
@@ -29,13 +33,14 @@ function PromptVariablesForApplyDialogView() {
   );
   return (
     <PromptVariablesDialog
-      prompt={prompt!}
+      prompt={prompt}
       onClose={handleClose}
       onSubmit={handleSubmit}
     />
   );
 }
 
-export const PromptVariablesForApplyDialog = withRenderWhen(
-  PromptsSelectors.selectPromptWithVariablesForApply,
-)(PromptVariablesForApplyDialogView);
+export const PromptVariablesForApplyDialog =
+  withRenderWhenEntities<PromptVariablesForApplyDialogProps>({
+    prompt: PromptsSelectors.selectPromptWithVariablesForApply,
+  })(PromptVariablesForApplyDialogView);

@@ -1,5 +1,6 @@
 import {
   AttachmentData,
+  GroupedAttachmentsData,
   VisualizerConnectorEvents,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
@@ -12,6 +13,16 @@ interface RequestParams {
 
 export interface PostMessageRequestParams extends RequestParams {
   dialHost: string;
+}
+
+/**
+ * Callback options for ChatVisualizerConnector
+ */
+export interface ChatVisualizerCallbacks {
+  /** Callback for single attachment data (CUSTOM_VISUALIZERS) */
+  onData?: (visualizerData: AttachmentData) => void;
+  /** Callback for grouped attachments data (APPLICATION_VISUALIZERS) */
+  onGroupedData?: (groupedData: GroupedAttachmentsData) => void;
 }
 
 /**
@@ -29,17 +40,20 @@ export class ChatVisualizerConnector {
 
   protected appName: string;
   protected dataCallback: (visualizerData: AttachmentData) => void;
+  protected groupedDataCallback?: (groupedData: GroupedAttachmentsData) => void;
 
   /**
    * Creates a ChatVisualizerConnector
    * @param dialHost {string | string[]} DIAL CHAT host(s)
    * @param appName {string} name of the Visualizer same as in config
-   * @param dataCallback {(visualizerData: AttachmentData) => void} callback to get data that will be used in the Visualizer
+   * @param dataCallback {(visualizerData: AttachmentData) => void | ChatVisualizerCallbacks} callback(s) to get data
    */
   constructor(
     dialHost: string | string[],
     appName: string,
-    dataCallback: (visualizerData: AttachmentData) => void,
+    dataCallback:
+      | ((visualizerData: AttachmentData) => void)
+      | ChatVisualizerCallbacks,
   ) {
     const hosts = Array.isArray(dialHost) ? dialHost : [dialHost];
 
@@ -52,7 +66,19 @@ export class ChatVisualizerConnector {
     this.dialHost = hosts[0];
 
     this.appName = appName;
-    this.dataCallback = dataCallback;
+
+    // Support both old callback format and new callbacks object
+    if (typeof dataCallback === 'function') {
+      this.dataCallback = dataCallback;
+    } else {
+      this.dataCallback =
+        dataCallback.onData ||
+        (() => {
+          console.warn('[ChatVisualizerConnector] No data callback provided');
+        });
+      this.groupedDataCallback = dataCallback.onGroupedData;
+    }
+
     this.postMessageListener = this.postMessageListener.bind(this);
 
     window.addEventListener('message', this.postMessageListener, false);
@@ -111,12 +137,19 @@ export class ChatVisualizerConnector {
 
   postMessageListener(event: MessageEvent<RequestParams>): void {
     // accept messages only from known hosts
-    if (!this.dialHosts.includes(event.origin)) return;
+    if (
+      this.dialHosts[0] !== '*' &&
+      !this.dialHosts.some((allowedHost) =>
+        allowedHost.startsWith(event.origin),
+      )
+    )
+      return;
 
     // check if there is a payload
     if (typeof event.data.payload !== 'object' || event.data.payload === null)
       return;
 
+    // Handle single attachment data (CUSTOM_VISUALIZERS)
     if (
       event.data.type ===
       `${this.appName}/${VisualizerConnectorRequests.sendVisualizeData}`
@@ -130,6 +163,30 @@ export class ChatVisualizerConnector {
         (event.data.payload as AttachmentData);
 
       payload && this.dataCallback(payload);
+
+      this.sendPMResponse({
+        type: event.data.type,
+        dialHost: event.origin,
+        requestId: event.data.requestId,
+      });
+    }
+
+    // Handle grouped attachments data (APPLICATION_VISUALIZERS)
+    if (
+      event.data.type ===
+      `${this.appName}/${VisualizerConnectorRequests.sendGroupedVisualizeData}`
+    ) {
+      const payload =
+        Object.prototype.hasOwnProperty.call(
+          event.data.payload,
+          'attachments',
+        ) &&
+        Object.prototype.hasOwnProperty.call(event.data.payload, 'layout') &&
+        (event.data.payload as GroupedAttachmentsData);
+
+      if (payload && this.groupedDataCallback) {
+        this.groupedDataCallback(payload);
+      }
 
       this.sendPMResponse({
         type: event.data.type,

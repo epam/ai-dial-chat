@@ -1,5 +1,6 @@
 import {
   IconEye,
+  IconKey,
   IconLink,
   IconLogin,
   IconLogout,
@@ -74,11 +75,10 @@ export const useToolsetMenuItems = ({
   const isAppIdPublic = isEntityIdPublic(entity);
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
-  const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const isWithAuth = isToolsetWithAuth(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);
 
-  const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
+  const canEditOrView = isMyApp || canWrite || (isAppIdPublic && isAdmin);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -97,9 +97,23 @@ export const useToolsetMenuItems = ({
         onClick: handleEdit,
       },
       {
+        name: t('Manage creds'),
+        dataQa: 'toolset-login',
+        display:
+          disabledActions.login !== true &&
+          isWithAuth &&
+          isPublicApp &&
+          isAdmin,
+        Icon: IconKey,
+        onClick: handleLogin,
+      },
+      {
         name: t(getToolsetAuthActionLabel(authAction, screenState)),
         dataQa: 'toolset-login',
-        display: disabledActions.login !== true && isWithAuth,
+        display:
+          disabledActions.login !== true &&
+          isWithAuth &&
+          !(isPublicApp && isAdmin),
         Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
         iconClassName:
           authAction === ToolsetAuthAction.LogOut
@@ -146,7 +160,6 @@ export const useToolsetMenuItems = ({
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         Icon: IconTrashX,
-        iconClassName: 'stroke-error',
         onClick: handleDelete,
       },
     ],
@@ -163,10 +176,11 @@ export const useToolsetMenuItems = ({
       isAppIdPublic,
       canEditOrView,
       handleEdit,
+      isWithAuth,
+      isAdmin,
+      handleLogin,
       authAction,
       screenState,
-      isWithAuth,
-      handleLogin,
       isMyAppOrPreview,
       handlePublish,
       handleUnpublish,

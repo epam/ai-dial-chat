@@ -1,40 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { FC, PropsWithChildren } from 'react';
+import { FC } from 'react';
 
-export type PropsFrom<Component> =
-  Component extends FC<infer Props> ? Props : never;
-
-type ComponentProps<P> =
-  P extends FC<infer Props> ? PropsWithChildren<Props> : never;
-
-// TODO: replace any, use narrow typings
-type OriginalComponent<P extends NonNullable<any> = NonNullable<any>> = FC<
-  PropsWithChildren<P>
->;
-
-type ComponentImplementation<OC extends OriginalComponent> = FC<
-  ComponentProps<OC>
->;
-
-interface ComponentResolve<OC extends OriginalComponent> {
-  instance: () => ComponentImplementation<OC> | undefined;
-  bind: (
-    componentFactory: (component: OC) => ComponentImplementation<OC>,
-  ) => ComponentImplementation<OC>;
+interface ComponentResolve<P extends object> {
+  instance: () => FC<P> | undefined;
+  bind: (componentFactory: (component: FC<P>) => FC<P>) => FC<P>;
   unbind: () => void;
-  render: () => ComponentImplementation<OC> & { original: OC };
+  render: () => FC<P> & { original: FC<P> };
 }
 
-export class Inversify {
-  private static container = new WeakMap<
-    OriginalComponent,
-    ComponentImplementation<OriginalComponent>
-  >();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyComponent = FC<any>;
 
-  public static register<OC extends OriginalComponent>(
+export class Inversify {
+  private static container = new WeakMap<AnyComponent, AnyComponent>();
+
+  public static register<P extends object>(
     name: string,
-    component: OC,
-  ): ComponentImplementation<OC> & { original: OC } {
+    component: FC<P>,
+  ): FC<P> & { original: FC<P> } {
     try {
       if (!component.name) {
         Object.defineProperty(component, 'name', {
@@ -47,42 +29,41 @@ export class Inversify {
 
       return Inversify.resolve(component).render();
     } catch {
-      return component as unknown as ComponentImplementation<OC> & {
-        original: OC;
+      return component as unknown as FC<P> & {
+        original: FC<P>;
       };
     }
   }
 
-  public static resolve<OC extends OriginalComponent>(
-    component: OC,
-  ): ComponentResolve<OC> {
+  public static resolve<P extends object>(
+    component: FC<P>,
+  ): ComponentResolve<P> {
     if (component && !Inversify.container.has(component)) {
       Inversify.container.set(component, component);
     }
 
     return {
       instance: () => Inversify.container.get(component),
-      bind: (
-        componentFactory: (component: OC) => ComponentImplementation<OC>,
-      ) => Inversify.bindImplementation(component, componentFactory),
+      bind: (componentFactory) =>
+        Inversify.bindImplementation(component, componentFactory),
       unbind: () => Inversify.container.set(component, component),
       render: () => Inversify.renderImplementation(component),
     };
   }
 
-  private static bindImplementation<OC extends OriginalComponent>(
-    component: OC,
-    componentFactory: (component: OC) => ComponentImplementation<OC>,
-  ): ComponentImplementation<OC> {
+  private static bindImplementation<P extends object>(
+    component: FC<P>,
+    componentFactory: (component: FC<P>) => FC<P>,
+  ): FC<P> {
     const newComponent = componentFactory(component);
-    Inversify.container.set(component, newComponent as OC);
+    Inversify.container.set(component, newComponent);
     return newComponent;
   }
 
-  private static renderImplementation<OC extends OriginalComponent>(
-    component: OC,
-  ): ComponentImplementation<OC> & { original: OC } {
-    const renderedComponent = (props: ComponentProps<OC>) => {
+  private static renderImplementation<P extends object>(
+    component: FC<P>,
+  ): FC<P> & { original: FC<P> } {
+    const renderedComponent = (props: P) => {
       const ResolvedComponent = Inversify.container.get(component) ?? component;
 
       return <ResolvedComponent {...props} />;
@@ -103,7 +84,7 @@ export class Inversify {
       },
     });
 
-    return renderedComponent as ComponentImplementation<OC> & { original: OC };
+    return renderedComponent as FC<P> & { original: FC<P> };
   }
 }
 

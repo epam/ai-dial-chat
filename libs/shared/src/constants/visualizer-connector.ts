@@ -12,5 +12,6 @@ export enum VisualizerConnectorEvents {
 
 export enum VisualizerConnectorRequests {
   sendVisualizeData = 'SEND_VISUALIZE_DATA',
+  sendGroupedVisualizeData = 'SEND_GROUPED_VISUALIZE_DATA',
   setVisualizerOptions = 'SET_VISUALIZER_OPTIONS',
 }

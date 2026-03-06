@@ -516,6 +516,15 @@ const selectPublicFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
 
+const selectPublicConversations = createSelector(
+  [selectConversations],
+  (conversations) => {
+    return conversations.filter((conversation) =>
+      isEntityIdPublic({ id: conversation.id }),
+    );
+  },
+);
+
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
 
@@ -807,6 +816,12 @@ const selectAction = (state: RootState) =>
 const selectMoveToConversationId = (state: RootState) =>
   rootSelector(state).moveToConversationId;
 
+const selectDeletingConversationId = (state: RootState) =>
+  rootSelector(state).deletingConversationId;
+
+const selectExportingConversationId = (state: RootState) =>
+  rootSelector(state).exportingConversationId;
+
 export const ConversationsSelectors = {
   selectConversations,
   selectConversationsByFolderId,
@@ -857,12 +872,14 @@ export const ConversationsSelectors = {
   selectCanAttachFolders,
   selectCanAttachFile,
   selectPublicFolders,
+  selectPublicConversations,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   selectIsCompareLoading,
   selectDuplicatedConversation,
   selectCustomAttachmentLoading,
   selectCustomAttachmentData,
+  selectLoadedCustomAttachments,
   selectIsSelectMode,
   selectSelectedItems,
   selectChosenFolderIds,
@@ -885,4 +902,6 @@ export const ConversationsSelectors = {
   selectIsNotAllowed,
   selectNotAllowedItemsForDisplay,
   selectMoveToConversationId,
+  selectDeletingConversationId,
+  selectExportingConversationId,
 };

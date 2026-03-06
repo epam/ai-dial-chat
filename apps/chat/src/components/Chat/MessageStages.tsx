@@ -6,6 +6,7 @@ import { MessageStage } from './MessageStage';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Stage } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   stages: Stage[];
@@ -27,21 +28,23 @@ export const MessageStages = ({ stages }: Props) => {
         <MessageStage key={stage.index} stage={stage} />
       ))}
       {stages.length > NUMBER_OF_VISIBLE_STAGES && (
-        <button
+        <DialButton
           onClick={() => setShowMore(!showMore)}
           className="mt-2 flex leading-[18px] text-accent-primary"
+          textClassName="font-normal"
           data-qa={showMore ? 'show-less' : 'show-more'}
-        >
-          {showMore ? 'Show less' : 'Show more'}
-          <ChevronDown
-            height={18}
-            width={18}
-            className={classNames(
-              'ml-2 shrink-0 transition',
-              showMore && 'rotate-180',
-            )}
-          />
-        </button>
+          label={showMore ? 'Show less' : 'Show more'}
+          iconAfter={
+            <ChevronDown
+              height={18}
+              width={18}
+              className={classNames(
+                'shrink-0 transition',
+                showMore && 'rotate-180',
+              )}
+            />
+          }
+        />
       )}
     </div>
   );

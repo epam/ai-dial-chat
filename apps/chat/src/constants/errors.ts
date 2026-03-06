@@ -8,6 +8,7 @@ export const errorsMessages = {
   403: 'Forbidden',
   400: 'Invalid request',
   404: 'Not found',
+  bodyExeededLimit: 'Conversation is too large to process.',
   ModelDeprecated:
     'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
   contentFiltering:

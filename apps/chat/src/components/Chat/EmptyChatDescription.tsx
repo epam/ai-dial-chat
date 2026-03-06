@@ -25,6 +25,8 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -35,6 +37,7 @@ import { PlaybackIcon } from './Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
@@ -123,7 +126,7 @@ const EmptyChatDescriptionView = ({
   if (models.length === 0) {
     return (
       <div className="flex w-full items-center justify-center rounded-t p-4">
-        <Spinner size={16} className="mx-auto" />
+        <Spinner size={DEFAULT_ICON_SIZES.SMALL} className="mx-auto" />
       </div>
     );
   }
@@ -244,22 +247,20 @@ const EmptyChatDescriptionView = ({
       {(!isReadOnly || !isExternal) && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           {!isEmptyChatChangeAgentHidden && (
-            <button
-              className="text-left text-accent-primary"
+            <DialLinkButton
               data-qa="change-agent"
               onClick={handleOpenChangeModel}
-            >
-              {t('Change agent')}
-            </button>
+              label={t('Change agent')}
+              className="px-0"
+            />
           )}
           {!isReplayAsIs && !isPlayback && isEmptyChatSettingsEnabled && (
-            <button
-              className="pl-3 text-left text-accent-primary"
+            <DialLinkButton
               data-qa="configure-settings"
               onClick={handleOpenSettings}
-            >
-              {t('Configure settings')}
-            </button>
+              label={t('Configure settings')}
+              className="rounded-none border-y-0 px-3"
+            />
           )}
         </div>
       )}

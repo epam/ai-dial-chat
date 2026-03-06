@@ -1,4 +1,4 @@
-import { DialHomePage, MarketplacePage } from '../ui/pages';
+import { DialHomePage, FileManagerPage, MarketplacePage } from '../ui/pages';
 import {
   AttachFilesModal,
   Chat,
@@ -10,6 +10,11 @@ import {
   DropdownMenu,
   EntityDetailsModal,
   FileDropArea,
+  FileManager,
+  FileManagerContainer,
+  FileManagerGrid,
+  FileManagerModal,
+  FileManagerToolbar,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -36,6 +41,7 @@ import {
   ChatMessagesAssertion,
   ConversationAssertion,
   ConversationInfoTooltipAssertion,
+  FileManagerGridAssertion,
   ManageAttachmentsAssertion,
   MenuAssertion,
   PublicationReviewControlAssertion,
@@ -169,6 +175,15 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
+  adminFileManagerPage: FileManagerPage;
+  adminFileManagerContainer: FileManagerContainer;
+  adminFileManager: FileManager;
+  adminFileManagerToolbar: FileManagerToolbar;
+  adminFileManagerGrid: FileManagerGrid;
+  adminFileManagerGridAssertion: FileManagerGridAssertion;
+  adminFileManagerModal: FileManagerModal;
+  adminFileManagerModalManager: FileManager;
+  adminFileManagerModalGrid: FileManagerGrid;
   adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: PublishApplicationsTree;
@@ -693,6 +708,46 @@ const dialAdminTest = dialTest.extend<{
   adminAttachFilesModal: async ({ adminPage }, use) => {
     const adminAttachFilesModal = new AttachFilesModal(adminPage);
     await use(adminAttachFilesModal);
+  },
+  adminFileManagerPage: async ({ adminPage }, use) => {
+    const adminFileManagerPage = new FileManagerPage(adminPage);
+    await use(adminFileManagerPage);
+  },
+  adminFileManagerContainer: async ({ adminFileManagerPage }, use) => {
+    const adminFileManagerContainer =
+      adminFileManagerPage.getFileManagerContainer();
+    await use(adminFileManagerContainer);
+  },
+  adminFileManager: async ({ adminFileManagerContainer }, use) => {
+    const adminFileManager = adminFileManagerContainer.getFileManager();
+    await use(adminFileManager);
+  },
+  adminFileManagerToolbar: async ({ adminFileManager }, use) => {
+    const adminFileManagerToolbar = adminFileManager.getFileManagerToolbar();
+    await use(adminFileManagerToolbar);
+  },
+  adminFileManagerGrid: async ({ adminFileManager }, use) => {
+    const adminFileManagerGrid = adminFileManager.getFileManagerGrid();
+    await use(adminFileManagerGrid);
+  },
+  adminFileManagerGridAssertion: async ({ adminFileManagerGrid }, use) => {
+    const adminFileManagerGridAssertion = new FileManagerGridAssertion(
+      adminFileManagerGrid,
+    );
+    await use(adminFileManagerGridAssertion);
+  },
+  adminFileManagerModal: async ({ adminPage }, use) => {
+    const adminFileManagerModal = new FileManagerModal(adminPage);
+    await use(adminFileManagerModal);
+  },
+  adminFileManagerModalManager: async ({ adminFileManagerModal }, use) => {
+    const adminFileManagerModalManager = adminFileManagerModal.getFileManager();
+    await use(adminFileManagerModalManager);
+  },
+  adminFileManagerModalGrid: async ({ adminFileManagerModalManager }, use) => {
+    const adminFileManagerModalGrid =
+      adminFileManagerModalManager.getFileManagerGrid();
+    await use(adminFileManagerModalGrid);
   },
   adminEntityDetailsModal: async ({ adminMarketplaceEntities }, use) => {
     const adminEntityDetailsModal =

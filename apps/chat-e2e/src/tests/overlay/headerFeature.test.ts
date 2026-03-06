@@ -142,7 +142,6 @@ dialOverlayTest(
     overlayProfilePanel,
     overlayRequestApiKeyModal,
     overlayReportAnIssueModal,
-    overlayAttachFilesModal,
     overlayChatMessages,
     overlayBaseAssertion,
     overlayConversationAssertion,
@@ -227,18 +226,12 @@ dialOverlayTest(
     );
 
     await dialTest.step(
-      'Verify "Manage attachments" modal is opened on click "Clip" in the bottom menu',
+      'Verify "Clip" icon is not visible at the bottom menu',
       async () => {
         await overlayBaseAssertion.assertElementState(
           overlayChatBar.attachments,
-          'visible',
+          'hidden',
         );
-        await overlayChatBar.openManageAttachmentsModal();
-        await overlayBaseAssertion.assertElementState(
-          overlayAttachFilesModal,
-          'visible',
-        );
-        await overlayAttachFilesModal.closeButton.click();
       },
     );
 

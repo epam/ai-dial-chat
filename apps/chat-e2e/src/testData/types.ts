@@ -34,6 +34,7 @@ export interface Entity {
 export interface ArithmeticRequestEntity extends Entity {
   isSysPromptAllowed?: boolean;
   systemPrompt?: string;
+  temperature?: string;
 }
 
 export interface EntitySimpleRequest extends Entity {
@@ -74,4 +75,32 @@ export enum ImportResolutionOption {
   Replace = 'Replace',
   Postfix = 'Postfix',
   Ignore = 'Ignore',
+}
+
+export enum OAuthOptions {
+  WithLogin = 'With login',
+  WithLoginAndConfig = 'With login & config',
+}
+
+export enum FileManagerToolbarTabs {
+  MyFiles = 'My Files',
+  SharedWithMe = 'Shared with Me',
+  Organization = 'Organization',
+}
+
+export enum FileManagerColumnKey {
+  Name = 'name',
+  UpdatedAt = 'updatedAt',
+  Size = 'size',
+  Author = 'author',
+  Owner = 'owner',
+  Path = 'path',
+  Actions = '__actions',
+  Select = 'ag-Grid-SelectionColumn',
+}
+
+export enum ModelTopic {
+  TextGeneration = 'Text Generation',
+  ImageGeneration = 'Image Generation',
+  ImageRecognition = 'Image Recognition',
 }

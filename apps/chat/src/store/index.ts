@@ -96,14 +96,7 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
       preloadedState,
       middleware,
     });
-    epicMiddleware.run(hotReloadingEpic);
-
-    if ((module as NodeModuleWithHot).hot) {
-      (module as NodeModuleWithHot).hot.accept('./rootEpic', async () => {
-        const next = await import('./rootEpic');
-        epic$.next(next.rootEpic);
-      });
-    }
+    epicMiddleware.run(rootEpic as Epic);
 
     return localStore;
   }

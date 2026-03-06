@@ -2,14 +2,20 @@ import { useEffect } from 'react';
 
 export const useResizeObserver = (
   target: Element | null,
-  callback: ResizeObserverCallback,
+  callback: () => void,
+  callImmediately = false,
 ) => {
+  if (callImmediately && target) {
+    callback();
+  }
+
   useEffect(() => {
+    if (!target) {
+      return;
+    }
     const observer = new ResizeObserver(callback);
 
-    if (target) {
-      observer.observe(target);
-    }
+    observer.observe(target);
 
     return () => observer.disconnect();
   }, [callback, target]);

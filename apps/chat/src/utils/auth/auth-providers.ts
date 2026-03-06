@@ -1,4 +1,8 @@
-import { OAuthProviderType, Provider } from 'next-auth/providers';
+import {
+  OAuthProviderType,
+  Provider,
+  TokenEndpointHandler,
+} from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import AzureB2CProvider from 'next-auth/providers/azure-ad-b2c';
@@ -16,11 +20,35 @@ import {
   providerConfigSchema,
 } from '@/src/types/auth';
 
-import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
+import NextClient from './nextauth-client';
 import PingId from './ping-identity';
 
 const DEFAULT_NAME = 'SSO';
+
+// Need to be set for all providers
+const tokenConfig: TokenEndpointHandler = {
+  request: async (context) => {
+    let tokens;
+
+    NextClient.setClient(context.client, context.provider);
+
+    if (context.provider.idToken) {
+      tokens = await context.client.callback(
+        context.provider.callbackUrl,
+        context.params,
+        context.checks,
+      );
+    } else {
+      tokens = await context.client.oauthCallback(
+        context.provider.callbackUrl,
+        context.params,
+        context.checks,
+      );
+    }
+    return { tokens };
+  },
+};
 
 const getAzureProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.tenantId
@@ -41,12 +69,14 @@ const getAzureProvider = (config: ProviderConfig) =>
     : undefined;
 
 const getAzureB2CProvider = (config: ProviderConfig) =>
-  config.clientId && config.clientSecret && config.tenantId
+  config.clientId && config.clientSecret && config.tenantId && config.userFlow
     ? AzureB2CProvider({
         id: config.id,
+        issuer: config.issuer,
         clientId: config.clientId,
         clientSecret: config.clientSecret,
         tenantId: config.tenantId,
+        primaryUserFlow: config.userFlow,
         name: config.name ?? DEFAULT_NAME,
         authorization: {
           params: {
@@ -184,7 +214,7 @@ const getOktaProvider = (config: ProviderConfig) =>
 
 const providerNames = {
   [SupportedProviders.AUTH0]: 'auth0',
-  [SupportedProviders.AZURE_B2C]: 'azureB2C',
+  [SupportedProviders.AZURE_B2C]: 'azure-ad-b2c',
   [SupportedProviders.AZURE_AD]: 'azure-ad',
   [SupportedProviders.COGNITO]: 'cognito',
   [SupportedProviders.GOOGLE]: 'google',

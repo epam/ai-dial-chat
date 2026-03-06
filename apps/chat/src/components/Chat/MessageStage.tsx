@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
@@ -23,6 +24,7 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import CircleCheck from '@/public/images/icons/circle-check.svg';
 import Download from '@/public/images/icons/download.svg';
 import { Stage } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface StageTitleProps {
   isOpened: boolean;
@@ -68,21 +70,7 @@ interface Props {
 const DownloadStageView = ({ content }: { content: string }) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCopied, setIsCopied] = useState(false);
-
-  const copyToClipboard = useCallback(() => {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(content).then(() => {
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    });
-  }, [content]);
+  const { copied: isCopied, onCopy: copyToClipboard } = useCopy(content, true);
 
   const downloadAsFile = useCallback(() => {
     const fileName = `ai-chat-stage-${getDownLoadCurrentDate()}.txt`;
@@ -105,28 +93,28 @@ const DownloadStageView = ({ content }: { content: string }) => {
         `Content is too large to display (exceeds ${getLimitStageContent()} KB).`,
       )}
       <div className="flex items-center gap-3 text-secondary">
-        <button
-          className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
+        <DialButton
+          className="[&:not(:disabled)]:hover:text-accent-primary"
           onClick={copyToClipboard}
           disabled={isCopied}
-        >
-          {isCopied ? (
-            <Tooltip tooltip={t('Copied!')}>
-              <IconCheck size={18} />
-            </Tooltip>
-          ) : (
-            <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
-              <IconCopy size={18} />
-            </Tooltip>
-          )}
-        </button>
+          iconBefore={
+            isCopied ? (
+              <Tooltip tooltip={t('Copied!')}>
+                <IconCheck size={18} />
+              </Tooltip>
+            ) : (
+              <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
+                <IconCopy size={18} />
+              </Tooltip>
+            )
+          }
+        />
         <Tooltip isTriggerClickable tooltip={t('Download')}>
-          <button
-            className="flex items-center rounded bg-none hover:text-accent-primary"
+          <DialButton
+            className="bg-none hover:text-accent-primary"
             onClick={downloadAsFile}
-          >
-            <Download width={18} height={18} />
-          </button>
+            iconBefore={<Download width={18} height={18} />}
+          />
         </Tooltip>
       </div>
     </div>

@@ -13,6 +13,7 @@ import {
   SPECIAL_DEFAULT_MODEL_DIC,
 } from '@/src/constants/chat';
 
+import { Label } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 
 interface DefaultModelSelectProps {
@@ -55,9 +56,9 @@ export const DefaultModelSelect = ({
   }, [modelReference, models, modelsMap]);
 
   return (
-    <div className="flex items-center gap-5" data-qa="default-model">
-      <span className="basis-1/3 md:basis-1/4">{t('Start chat with')}</span>
-      <div className="flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border-y border-primary md:basis-3/4">
+    <div className="flex flex-col" data-qa="default-model">
+      <Label>{t('Start chat with')}</Label>
+      <div className="flex h-[38px] grow items-center gap-8 overflow-hidden rounded border-y border-primary">
         <ModelsSelector
           value={selectedModel.id}
           onChange={onModelChange}

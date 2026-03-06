@@ -45,8 +45,9 @@ type AppPropsWithLayout = AppProps<SessionProviderProps & HomeProps> & {
 };
 
 function App({ Component, ...rest }: AppPropsWithLayout) {
+  const initialSettingsState = rest.pageProps.initialState?.settings;
   const store = createStore({
-    settings: rest.pageProps.initialState?.settings,
+    settings: initialSettingsState,
   });
 
   const getPage = Component.getLayout ?? ((page) => page);
@@ -58,21 +59,22 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
           name="viewport"
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
         />
-        {process.env.NODE_ENV !== 'development' && (
-          <>
-            <link
-              rel="icon"
-              href={getThemeIconUrl('favicon')}
-              sizes="any"
-              type="image/png"
-            />
-            <link
-              rel="apple-touch-icon"
-              href={getThemeIconUrl('favicon')}
-              type="image/png"
-            />
-          </>
-        )}
+        {process.env.NODE_ENV !== 'development' &&
+          initialSettingsState?.themesHostDefined && (
+            <>
+              <link
+                rel="icon"
+                href={getThemeIconUrl('favicon')}
+                sizes="any"
+                type="image/png"
+              />
+              <link
+                rel="apple-touch-icon"
+                href={getThemeIconUrl('favicon')}
+                type="image/png"
+              />
+            </>
+          )}
       </Head>
       <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
         <Provider store={store}>

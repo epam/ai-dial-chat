@@ -19,11 +19,7 @@ import {
 } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
 import { Cursors, StyleValues, Styles } from '@/src/ui/domData';
-import {
-  BaseElement,
-  EntityEditSteps,
-  FileModalSection,
-} from '@/src/ui/webElements';
+import { BaseElement, EntityEditSteps } from '@/src/ui/webElements';
 import {
   DateUtil,
   GeneratorUtil,
@@ -1111,7 +1107,8 @@ dialTest(
       entityEditorGeneralInfoPreviewCard,
       tooltipAssertion,
       customAppEditorViewForm,
-      attachFilesModal,
+      fileManagerModalGrid,
+      fileManagerModal,
       entityEditorGeneralInfoPreview,
       fileApiHelper,
       entityEditorHeader,
@@ -1291,11 +1288,12 @@ dialTest(
       }
       await entityEditorGeneralForm.topicsDropdownToggle.click();
       await entityEditorGeneralForm.addIconButton.click();
-      await attachFilesModal.checkAttachedFile(
-        Attachment.sunImageName,
-        FileModalSection.AllFiles,
-      );
-      await attachFilesModal.attachFiles();
+      const attachmentCheckbox =
+        await fileManagerModalGrid.gridCheckboxByNameCell(
+          Attachment.sunImageName,
+        );
+      await attachmentCheckbox.click();
+      await fileManagerModal.getSelectButton().click();
     });
 
     await dialTest.step(
@@ -1693,7 +1691,8 @@ dialTest(
     marketplaceEntitiesSection,
     entityDetailsModal,
     entityEditorPage,
-    attachFilesModal,
+    fileManagerModal,
+    fileManagerModalGrid,
     entityEditorHeader,
     entityEditorGeneralForm,
     entityEditorGeneralInfoPreview,
@@ -1780,11 +1779,10 @@ dialTest(
           'hidden',
         );
         await entityEditorGeneralForm.addIconButton.click();
-        await attachFilesModal.checkAttachedFile(
-          newIconFileName,
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
+        const iconCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(newIconFileName);
+        await iconCheckbox.click();
+        await fileManagerModal.getSelectButton().click();
       },
     );
 
@@ -1885,12 +1883,14 @@ dialTest(
     agentInfoAssertion,
     sendMessage,
     attachmentDropdownMenu,
-    attachFilesModal,
+    fileManagerModal,
+    fileManagerModalGrid,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     tooltipAssertion,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
+    fileManagerToolbar,
   }) => {
     setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
@@ -2006,16 +2006,16 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        const modalHeaderText = await attachFilesModal
-          .getModalHeader()
-          .getElementInnerContent();
+        const modalHeaderText = await fileManagerModal
+          .getHeader()
+          .getSupportedTypes();
         baseAssertion.assertStringIncludes(
-          modalHeaderText,
+          modalHeaderText!,
           attachmentType.substring(attachmentType.lastIndexOf('/') + 1),
           ExpectedMessages.headerShouldContainDefinedAttachmentTypes,
         );
         baseAssertion.assertStringNotIncludes(
-          modalHeaderText,
+          modalHeaderText!,
           'Up to ',
           ExpectedMessages.headerMaxNumberOfAttacmentsNotMentioned,
         );
@@ -2026,12 +2026,17 @@ dialTest(
       'Select several files with correct type and click attach',
       async () => {
         for (const pdfFile of pdfFilesToUpload) {
-          await attachFilesModal.checkAttachedFile(
-            pdfFile,
-            FileModalSection.AllFiles,
-          );
+          const attachmentCheckbox =
+            await fileManagerModalGrid.gridCheckboxByNameCell(pdfFile);
+          await attachmentCheckbox.click();
         }
-        await attachFilesModal.attachFiles();
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          pdfFilesToUpload.length,
+        );
+
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
+
+        await fileManagerModal.getAttachButton().click();
         for (const pdfFile of pdfFilesToUpload) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             pdfFile,

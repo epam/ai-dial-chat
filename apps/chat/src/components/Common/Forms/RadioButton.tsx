@@ -1,5 +1,5 @@
 import { IconCircle } from '@tabler/icons-react';
-import { InputHTMLAttributes, useId } from 'react';
+import React, { InputHTMLAttributes, useId } from 'react';
 
 import classNames from 'classnames';
 
@@ -9,10 +9,12 @@ import IconCircleChecked from '@/public/images/icons/radio-checked.svg';
 
 interface RadioButtonProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  caption?: string;
+  caption?: React.ReactNode;
   className?: string;
   tooltip?: string;
 }
+
+const iconSize = 18;
 
 export const RadioButton = ({
   caption,
@@ -27,6 +29,7 @@ export const RadioButton = ({
   return (
     <Tooltip tooltip={tooltip} triggerClassName="w-fit">
       <label
+        id="auth-login-option"
         htmlFor={id}
         className={classNames(
           'group flex select-none items-center justify-start gap-2',
@@ -46,13 +49,17 @@ export const RadioButton = ({
 
         <span className="hidden peer-checked:block">
           <IconCircleChecked
-            width={17}
-            height={17}
+            width={iconSize}
+            height={iconSize}
             className="text-accent-primary"
           />
         </span>
         <span className="block peer-checked:hidden">
-          <IconCircle size={18} className="text-secondary" strokeWidth={1} />
+          <IconCircle
+            size={iconSize}
+            className="text-secondary"
+            strokeWidth={1}
+          />
         </span>
 
         {!!caption && (
