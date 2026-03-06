@@ -1,4 +1,4 @@
-import { IconProps } from '@tabler/icons-react';
+import { Icon, IconProps } from '@tabler/icons-react';
 import { FC, ForwardRefExoticComponent, ReactNode, RefAttributes } from 'react';
 
 import classNames from 'classnames';
@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { Badge } from '@/src/components/Badge';
 
 interface AuthAccordionProps {
-  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>;
+  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
   title: string;
   isOpen: boolean;
   onClick: () => void;

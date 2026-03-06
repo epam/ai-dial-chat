@@ -1,4 +1,5 @@
 import {
+  Icon,
   IconBrandOauth,
   IconKey,
   IconLockOff,
@@ -41,7 +42,7 @@ const authTypeOptions: Record<
   string,
   {
     name: string;
-    Icon: ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>;
+    Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
   }
 > = {
   [ToolsetAuthTypes.OAUTH]: {

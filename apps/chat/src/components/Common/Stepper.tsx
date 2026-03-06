@@ -1,4 +1,5 @@
 import {
+  Icon,
   IconAlertSmall,
   IconCheck,
   IconPointFilled,
@@ -15,7 +16,7 @@ import classNames from 'classnames';
 
 const getIcon = (
   active: boolean,
-  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>,
+  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>,
   iconStyles: string,
   wrapperStyles: string,
   size?: number,
