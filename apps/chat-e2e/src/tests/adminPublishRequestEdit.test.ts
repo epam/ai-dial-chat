@@ -1567,7 +1567,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   "Edit folder's name for publish request for folder with chat\n" +
     '[Admin view][Edit request] Rename the folder several times in a row\n' +
     "Update folder's name for publish request for folder with chat with attached file. Input different names for chat's folder and file's folder",
@@ -1732,7 +1732,7 @@ dialAdminTest.skip(
           updatedFileFolderName,
           'visible',
         );
-        await fileManagerFoldersTree.expandFolders(...updatedFileFolderName);
+        await fileManagerFoldersTree.expandFolders(updatedFileFolderName);
         await fileManagerGridAssertion.assertGridRowByNameState(
           imageName,
           'visible',
