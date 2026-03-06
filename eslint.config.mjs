@@ -9,10 +9,10 @@ import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import reactRefreshPlugin from 'eslint-plugin-react-refresh';
 import tailwindPlugin from 'eslint-plugin-tailwindcss';
 import testingLibraryPlugin from 'eslint-plugin-testing-library';
 import globals from 'globals';
-
 
 export default [
   {
@@ -76,6 +76,7 @@ export default [
       import: importPlugin,
       tailwindcss: tailwindPlugin,
       'testing-library': testingLibraryPlugin,
+      'react-refresh': reactRefreshPlugin,
     },
 
     rules: {
@@ -94,6 +95,10 @@ export default [
       'testing-library/prefer-presence-queries': 'warn',
       'tailwindcss/classnames-order': 'off',
       'testing-library/render-result-naming-convention': 'warn',
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^__' },
