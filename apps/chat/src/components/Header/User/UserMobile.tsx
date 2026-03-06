@@ -22,30 +22,19 @@ import { FooterMessage } from '@/src/components/Common/FooterMessage';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { withRenderForScreen } from '@/src/components/Common/ScreenRender';
 
-import UserIcon from '@/public/images/icons/user.svg';
+import { UserIcon } from './UserIcon';
+
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const UserInfo = () => {
-  const { t } = useTranslation(Translation.Header);
-
   const { data: session } = useSession();
 
   return (
     <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
-        {session?.user?.image ? (
-          <img
-            className="mx-2 rounded"
-            src={session?.user?.image}
-            width={18}
-            height={18}
-            alt={t('User avatar')}
-          />
-        ) : (
-          <UserIcon className="mx-2 text-secondary" width={18} height={18} />
-        )}
+        <UserIcon className="mx-2" fallbackIconClassName="text-secondary" />
 
         <DialEllipsisTooltip
           contentClassName="grow"
