@@ -198,7 +198,7 @@
     "@module-federation/node": "2.7.14",
     "prismjs": "1.30.0",
     "nodemailer": "7.0.10",
-    "dompurify": "3.3.1",
+    "dompurify": "3.3.2",
     "js-yaml": "4.1.1",
     "glob": "11.1.0",
     "@modern-js/utils": "2.70.8",
