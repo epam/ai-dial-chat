@@ -14,6 +14,7 @@ import tailwindPlugin from 'eslint-plugin-tailwindcss';
 import testingLibraryPlugin from 'eslint-plugin-testing-library';
 import globals from 'globals';
 
+
 export default [
   {
     ignores: [
@@ -97,7 +98,16 @@ export default [
       'testing-library/render-result-naming-convention': 'warn',
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            'getServerSideProps',
+            'getStaticProps',
+            'getStaticPaths',
+            'config',
+            'metadata',
+          ],
+        },
       ],
       '@typescript-eslint/no-unused-vars': [
         'error',
