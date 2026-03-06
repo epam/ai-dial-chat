@@ -109,7 +109,7 @@ export const AgentAndToolsetSelector: React.FC<
                 additionalText={t('JSON')}
                 className="flex w-fit items-center gap-2"
                 tooltip={t(
-                  readonly
+                  !readonly
                     ? 'Switch to JSON view for Agents and Toolsets'
                     : 'This application is public and cannot be edited',
                 )}
