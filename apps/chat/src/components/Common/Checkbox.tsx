@@ -1,5 +1,5 @@
 import { IconCheck, IconMinus } from '@tabler/icons-react';
-import { forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 
 import classNames from 'classnames';
 

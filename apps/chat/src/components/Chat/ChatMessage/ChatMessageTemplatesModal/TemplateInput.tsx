@@ -1,4 +1,4 @@
-import { LegacyRef, forwardRef } from 'react';
+import React, { LegacyRef, forwardRef } from 'react';
 
 import classNames from 'classnames';
 

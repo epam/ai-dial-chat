@@ -1,5 +1,7 @@
-import { CustomAppEditorAppSettingsPreviewBody } from '@/src/ui/webElements';
-import { EntityEditorEntitySettingsPreview } from '@/src/ui/webElements';
+import {
+  CustomAppEditorAppSettingsPreviewBody,
+  EntityEditorEntitySettingsPreview,
+} from '@/src/ui/webElements';
 
 export class CustomAppEditorAppSettingsPreview extends EntityEditorEntitySettingsPreview<CustomAppEditorAppSettingsPreviewBody> {
   protected entityEditorEntitySettingsPreviewBody!: CustomAppEditorAppSettingsPreviewBody;

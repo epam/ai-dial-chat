@@ -49,7 +49,6 @@ export class AgentSettings extends BaseElement {
 
   public async setSystemPrompt(prompt: string) {
     await this.systemPrompt.typeInInput(prompt);
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 

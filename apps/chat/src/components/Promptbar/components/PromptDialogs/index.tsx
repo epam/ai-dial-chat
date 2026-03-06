@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { PromptDeleteDialog } from './PromptDeleteDialog';
 import { PromptMoveToDialog } from './PromptMoveToDialog';
 

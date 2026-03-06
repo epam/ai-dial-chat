@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { LoginButton } from '@/src/components/Marketplace/ToolsetsDetails/LoginButton';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';

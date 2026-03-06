@@ -1,8 +1,6 @@
 import {
   CustomAppEditorAppSettingsPreview,
   CustomAppEditorViewForm,
-} from '@/src/ui/webElements';
-import {
   EntityEditorContainer,
   EntityEditorEntitySettingsPreviewBody,
   EntityEditorGeneralForm,

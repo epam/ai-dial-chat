@@ -134,7 +134,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const processStream = async () => {
       try {
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           if (clientAborted) {
             break;

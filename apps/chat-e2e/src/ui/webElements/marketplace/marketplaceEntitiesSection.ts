@@ -162,7 +162,6 @@ export class MarketplaceEntitiesSection extends BaseElement {
       return allEntities;
     }
     //wait for available cards are displayed
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(marketplaceContentDisplayTimeout);
     await this.moveToEntitiesSection();
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
@@ -243,7 +242,6 @@ export class MarketplaceEntitiesSection extends BaseElement {
     const bounding = await this.getElementBoundingBox();
     await this.page.mouse.click(bounding!.x, bounding!.y);
     await this.page.keyboard.press(keys.home);
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(1500);
   }
 
@@ -267,7 +265,6 @@ export class MarketplaceEntitiesSection extends BaseElement {
     );
     const rowHeight = lastRowBounding!.height;
     //need to wait the scrolling is finished
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(marketplaceContentDisplayTimeout);
     return rowHeight;
   }
