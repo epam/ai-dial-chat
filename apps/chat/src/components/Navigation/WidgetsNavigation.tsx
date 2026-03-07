@@ -1,5 +1,5 @@
 import { IconBrowser, IconProps } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 

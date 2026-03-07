@@ -38,7 +38,7 @@ export const MarketplaceHeader = () => {
       LeftItems={
         <ToggleSidebarButton
           iconSize={headerIconSize}
-          tooltip="Control panel"
+          tooltip="Filters"
           isOpened={showFilterbar}
           onToggle={handleToggleFilterbar}
           dataQa="left-panel-toggle"

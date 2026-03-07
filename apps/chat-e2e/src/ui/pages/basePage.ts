@@ -120,7 +120,7 @@ export class BasePage {
       let body;
       try {
         body = await response.text();
-      } catch (e) {
+      } catch {
         // eslint-disable-next-line no-console
         console.log('Response body not available for call: ', response.url());
         throw new Error();
@@ -285,7 +285,7 @@ export class BasePage {
       await method();
       await receivedDownloads;
       return downloadedData;
-    } catch (error) {
+    } catch {
       await Promise.all(
         downloadedData.map((data) => {
           const paths = Array.isArray(data.path) ? data.path : [data.path];
@@ -322,7 +322,6 @@ export class BasePage {
       ? uploadData.path.map((p) => path.join(directory, p))
       : path.join(directory, uploadData.path);
     await fileChooser.setFiles(filePaths);
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(500);
   }
 
@@ -401,7 +400,6 @@ export class BasePage {
     const { pasteToElement, isHttpMethodTriggered = true } = options || {};
     // 1. Focus on element that support 'paste' event
     if (pasteToElement) {
-      // eslint-disable-next-line playwright/no-force-option
       await pasteToElement.click({ force: true });
     }
 

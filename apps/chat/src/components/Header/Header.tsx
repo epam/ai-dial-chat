@@ -118,7 +118,7 @@ export const Header = Inversify.register('Header', () => {
           {enabledFeatures.has(Feature.ConversationsSection) && (
             <ToggleSidebarButton
               iconSize={headerIconSize}
-              tooltip="Conversation list"
+              tooltip="Conversations"
               isOpened={showChatbar}
               onToggle={handleToggleChatbar}
               dataQa="left-panel-toggle"
@@ -137,7 +137,7 @@ export const Header = Inversify.register('Header', () => {
         enabledFeatures.has(Feature.PromptsSection) && (
           <ToggleSidebarButton
             iconSize={headerIconSize}
-            tooltip="Prompt list"
+            tooltip="Prompts"
             isOpened={showPromptbar}
             onToggle={handleTogglePromtbar}
             dataQa="right-panel-toggle"
