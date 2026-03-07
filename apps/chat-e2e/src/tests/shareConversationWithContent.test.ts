@@ -576,6 +576,7 @@ dialSharedWithMeTest.skip(
     confirmationDialog,
     manageAttachmentsAssertion,
     setTestIds,
+    setIssueIds,
     additionalShareUserDataInjector,
     additionalShareUserDialHomePage,
     additionalShareUserConversations,
@@ -590,6 +591,7 @@ dialSharedWithMeTest.skip(
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101', 'EPMRTC-5524');
+    setIssueIds('5957');
     let imageConversation: Conversation;
     let firstImageUrl: string;
     let secondImageUrl: string;

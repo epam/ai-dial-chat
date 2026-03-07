@@ -46,8 +46,14 @@ export class NavigationPanel extends BaseElement {
     }
   }
 
-  public async goToFileManager() {
-    const hostsArray = [API.filePropsHost, API.filesListingHost()];
+  public async goToFileManager(
+    options: { isFilesListingTriggered?: boolean } = {
+      isFilesListingTriggered: true,
+    },
+  ) {
+    const hostsArray = options?.isFilesListingTriggered
+      ? [API.filePropsHost, API.filesListingHost()]
+      : [API.filePropsHost];
     const responses = [];
     for (const host of hostsArray) {
       const resp = this.page.waitForResponse(

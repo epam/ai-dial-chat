@@ -122,6 +122,10 @@ export class FileManagerToolbar extends BaseElement {
     FileManagerToolbarTabs.MyFiles,
   );
 
+  public sharedWithMeTab = this.getToolbarTabs().tabByName(
+    FileManagerToolbarTabs.SharedWithMe,
+  );
+
   public organizationTab = this.getToolbarTabs().tabByName(
     FileManagerToolbarTabs.Organization,
   );

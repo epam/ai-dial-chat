@@ -1,4 +1,4 @@
-import { DialHomePage, MarketplacePage } from '../ui/pages';
+import { DialHomePage, FileManagerPage, MarketplacePage } from '../ui/pages';
 import {
   AgentSettings,
   AttachFilesModal,
@@ -10,9 +10,14 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   ConversationToCompare,
+  Dropdown,
   DropdownMenu,
   EntityDetailsModal,
   FileDropArea,
+  FileManager,
+  FileManagerContainer,
+  FileManagerGrid,
+  FileManagerToolbar,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -33,16 +38,7 @@ import {
 
 import { BackendResourceType } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
-import {
-  ChatAssertion,
-  ConversationAssertion,
-  DownloadAssertion,
-  ManageAttachmentsAssertion,
-  SelectFolderModalAssertion,
-  TalkToAgentDialogAssertion,
-  ToastAssertion,
-  TooltipAssertion,
-} from '@/src/assertions';
+import { ChatAssertion, ConversationAssertion, DownloadAssertion, FileManagerGridAssertion, ManageAttachmentsAssertion, SelectFolderModalAssertion, TalkToAgentDialogAssertion, ToastAssertion, TooltipAssertion } from '@/src/assertions';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
@@ -67,12 +63,7 @@ import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInter
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
-import {
-  ConversationsTree,
-  FolderPrompts,
-  Folders,
-  PromptsTree,
-} from '@/src/ui/webElements/entityTree';
+import { ConversationsTree, FolderPrompts, Folders, PromptsTree } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
 import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
@@ -175,6 +166,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
   additionalShareUserTooltip: Tooltip;
   additionalShareUserTooltipAssertion: TooltipAssertion;
+  additionalShareUserFileManagerPage: FileManagerPage;
+  additionalShareUserFileManagerContainer: FileManagerContainer;
+  additionalShareUserFileManager: FileManager;
+  additionalShareUserFileManagerToolbar: FileManagerToolbar;
+  additionalShareUserFileManagerGrid: FileManagerGrid;
+  additionalShareUserFileManagerGridAssertion: FileManagerGridAssertion;
+  additionalShareUserFileManagerGridRowDropdownMenu: Dropdown;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -929,6 +927,59 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserTooltip,
     );
     await use(additionalShareUserTooltipAssertion);
+  },
+  additionalShareUserFileManagerPage: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerPage = new FileManagerPage(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserFileManagerPage);
+  },
+  additionalShareUserFileManagerContainer: async (
+    { additionalShareUserFileManagerPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerContainer =
+      additionalShareUserFileManagerPage.getFileManagerContainer();
+    await use(additionalShareUserFileManagerContainer);
+  },
+  additionalShareUserFileManager: async (
+    { additionalShareUserFileManagerContainer },
+    use,
+  ) => {
+    const additionalShareUserFileManager =
+      additionalShareUserFileManagerContainer.getFileManager();
+    await use(additionalShareUserFileManager);
+  },
+  additionalShareUserFileManagerToolbar: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerToolbar =
+      additionalShareUserFileManager.getFileManagerToolbar();
+    await use(additionalShareUserFileManagerToolbar);
+  },
+  additionalShareUserFileManagerGrid: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGrid =
+      additionalShareUserFileManager.getFileManagerGrid();
+    await use(additionalShareUserFileManagerGrid);
+  },
+  additionalShareUserFileManagerGridAssertion: async (
+    { additionalShareUserFileManagerGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGridAssertion =
+      new FileManagerGridAssertion(additionalShareUserFileManagerGrid);
+    await use(additionalShareUserFileManagerGridAssertion);
+  },
+  additionalShareUserFileManagerGridRowDropdownMenu: async ({ additionalShareUserFileManagerGrid }, use) => {
+    const additionalShareUserFileManagerGridRowDropdownMenu = additionalShareUserFileManagerGrid.getRowDropdownMenu();
+    await use(additionalShareUserFileManagerGridRowDropdownMenu);
   },
 });
 
