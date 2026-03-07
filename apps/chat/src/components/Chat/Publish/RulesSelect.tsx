@@ -20,6 +20,11 @@ interface FilterTypeProps {
   triggerClassName?: string;
 }
 
+const filterLabelMap: Record<string, string> = {
+  [PublicationFunctions.Contain]: 'Contains',
+  [PublicationFunctions.Equal]: 'Equals',
+};
+
 export function RulesSelect({
   id,
   filters,
@@ -51,7 +56,7 @@ export function RulesSelect({
         >
           {capitalizeFirstLetters
             ? startCase(toLower(selectedFilter))
-            : selectedFilter}
+            : filterLabelMap[selectedFilter] || selectedFilter}
           <IconChevronDown
             data-qa={`open-filter-dropdown-${id}`}
             className={classNames(
