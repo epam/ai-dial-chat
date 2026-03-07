@@ -38,7 +38,17 @@ import {
 
 import { BackendResourceType } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
-import { ChatAssertion, ConversationAssertion, DownloadAssertion, FileManagerGridAssertion, ManageAttachmentsAssertion, SelectFolderModalAssertion, TalkToAgentDialogAssertion, ToastAssertion, TooltipAssertion } from '@/src/assertions';
+import {
+  ChatAssertion,
+  ConversationAssertion,
+  DownloadAssertion,
+  FileManagerGridAssertion,
+  ManageAttachmentsAssertion,
+  SelectFolderModalAssertion,
+  TalkToAgentDialogAssertion,
+  ToastAssertion,
+  TooltipAssertion,
+} from '@/src/assertions';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
@@ -63,7 +73,12 @@ import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInter
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
-import { ConversationsTree, FolderPrompts, Folders, PromptsTree } from '@/src/ui/webElements/entityTree';
+import {
+  ConversationsTree,
+  FolderPrompts,
+  Folders,
+  PromptsTree,
+} from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
 import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
@@ -977,8 +992,12 @@ const dialSharedWithMeTest = dialTest.extend<{
       new FileManagerGridAssertion(additionalShareUserFileManagerGrid);
     await use(additionalShareUserFileManagerGridAssertion);
   },
-  additionalShareUserFileManagerGridRowDropdownMenu: async ({ additionalShareUserFileManagerGrid }, use) => {
-    const additionalShareUserFileManagerGridRowDropdownMenu = additionalShareUserFileManagerGrid.getRowDropdownMenu();
+  additionalShareUserFileManagerGridRowDropdownMenu: async (
+    { additionalShareUserFileManagerGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGridRowDropdownMenu =
+      additionalShareUserFileManagerGrid.getRowDropdownMenu();
     await use(additionalShareUserFileManagerGridRowDropdownMenu);
   },
 });
