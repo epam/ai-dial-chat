@@ -5,6 +5,7 @@ import {
 } from '@tabler/icons-react';
 
 import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -34,13 +35,13 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
     entity.id,
   );
 
+  const hasDeployAccess = useHasDeployAccess(entity);
+
   const isAppDeployed = isApplicationDeployed(entity);
   const isAppDeploymentInProgress = isApplicationDeploymentInProgress(entity);
-  const isDeploying =
-    entity.functionStatus === ApplicationStatus.DEPLOYING ||
-    entity.functionStatus === ApplicationStatus.REDEPLOYING;
+  const isDeploying = entity.functionStatus === ApplicationStatus.DEPLOYING;
 
-  if (!isExecutableApp(entity)) {
+  if (!isExecutableApp(entity) || !hasDeployAccess) {
     return null;
   }
 
@@ -80,10 +81,12 @@ const RedeployButton = ({ entity }: ActionButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const { handleRedeploy } = useApplicationStatusActions(entity.id);
 
+  const hasDeployAccess = useHasDeployAccess(entity);
+
   const isAppDeployed = isApplicationDeployed(entity);
   const isAppDeploymentInProgress = isApplicationDeploymentInProgress(entity);
 
-  if (!isAppDeployed || isAppDeploymentInProgress) {
+  if (!isAppDeployed || isAppDeploymentInProgress || !hasDeployAccess) {
     return null;
   }
 
