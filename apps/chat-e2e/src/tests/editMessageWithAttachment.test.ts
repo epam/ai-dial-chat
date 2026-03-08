@@ -41,8 +41,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1613', 'EPMRTC-1776');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
+    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+      modelsWithAttachments.filter(
+        (m) =>
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+      ),
     );
     let conversation: Conversation;
     let client: CDPSession;
@@ -51,11 +55,13 @@ dialTest(
       'Create conversation with model that accept attachments only with text in request',
       async () => {
         conversation = conversationData.prepareDefaultConversation(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 

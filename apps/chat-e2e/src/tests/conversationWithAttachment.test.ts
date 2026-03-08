@@ -16,8 +16,16 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 let modelsWithAttachments: DialAIEntityModel[];
+let randomModelWithImageAttachment: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+    modelsWithAttachments.filter(
+      (m) =>
+        m.inputAttachmentTypes?.length == 1 &&
+        m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+    ),
+  );
 });
 
 dialTest(
@@ -161,15 +169,12 @@ dialTest(
     chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1640');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     const request = 'Describe the picture';
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
       await localStorageManager.setRecentModelsIdsAndUseLastModel(
-        randomModelWithAttachment,
+        randomModelWithImageAttachment,
       );
       await localStorageManager.setShowSideBarPanels();
     });
@@ -308,15 +313,12 @@ dialTest(
       'EPMRTC-1898',
       'EPMRTC-1899',
     );
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     const request = 'Describe the picture';
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
       await localStorageManager.setRecentModelsIdsAndUseLastModel(
-        randomModelWithAttachment,
+        randomModelWithImageAttachment,
       );
       await localStorageManager.setShowSideBarPanels();
     });
@@ -537,13 +539,6 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3118', 'EPMRTC-3283');
-    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments.filter(
-        (m) =>
-          m.inputAttachmentTypes?.length == 1 &&
-          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
-      ),
-    );
     let conversation: Conversation;
 
     await dialTest.step('Upload txt file to app', async () => {

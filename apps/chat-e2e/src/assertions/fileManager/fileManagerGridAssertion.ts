@@ -53,10 +53,8 @@ export class FileManagerGridAssertion extends BaseAssertion {
     name: string,
     expectedState: CheckboxState,
   ) {
-    await this.assertCheckboxState(
-      await this.fileManagerGrid.gridCheckboxByNameCell(name),
-      expectedState,
-    );
+    const checkbox = await this.fileManagerGrid.gridCheckboxByNameCell(name);
+    await this.assertCheckboxState(checkbox.checkboxInput, expectedState);
   }
 
   public async assertGridRowBackgroundColor(
@@ -74,6 +72,16 @@ export class FileManagerGridAssertion extends BaseAssertion {
 
   public async assertGridCheckboxColor(name: string, expectedColor: string) {
     await this.assertElementColor(
+      await this.fileManagerGrid.gridCheckboxByNameCell(name),
+      expectedColor,
+    );
+  }
+
+  public async assertGridCheckboxBorderColors(
+    name: string,
+    expectedColor: string,
+  ) {
+    await this.assertElementBorderColors(
       await this.fileManagerGrid.gridCheckboxByNameCell(name),
       expectedColor,
     );
