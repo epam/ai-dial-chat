@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -80,10 +80,11 @@ export function ResizableSidebarWrapper({
       : SIDEBAR_MIN_WIDTH;
 
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 group-hover:visible md:visible xl:bg-accent-primary xl:text-accent-primary',
+    'invisible h-full w-0.5 group-hover:visible md:visible',
+    'sidebar-overlay:bg-accent-primary sidebar-overlay:text-accent-primary',
     isResizing
-      ? 'bg-accent-primary text-accent-primary xl:visible'
-      : 'bg-layer-3 text-secondary xl:invisible',
+      ? 'bg-accent-primary text-accent-primary sidebar-overlay:visible'
+      : 'bg-layer-3 text-secondary sidebar-overlay:invisible',
   );
 
   const sidebarWidth = useMemo(() => {
@@ -219,19 +220,15 @@ export function ResizableSidebarWrapper({
       : 'sidebar-right';
 
   const resizableWrapperClassName = classNames(
-    '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
-    isLeftSidebar ? 'left-0 border-r xl:left-0' : 'right-0 border-l',
+    '!fixed z-40 flex !h-full max-w-[95%] border-tertiary md:max-w-[45%]',
+    'sidebar-overlay:!relative sidebar-overlay:top-0',
+    isLeftSidebar
+      ? 'left-0 border-r sidebar-overlay:left-0'
+      : 'right-0 border-l',
     sidebarThemeClassname,
     isLeftSidebar &&
       isNavigationVisible &&
       (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
-    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
-      '!h-full',
-    screenState !== ScreenState.SM &&
-      screenState !== ScreenState.MD &&
-      (isOverlay
-        ? 'top-9 !h-[calc(100%-36px)]'
-        : 'top-12 !h-[calc(100%-48px)]'),
   );
 
   const resizeSettings: ResizableProps = useMemo(() => {

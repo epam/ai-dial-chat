@@ -50,11 +50,11 @@ import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/Too
 import { Feature } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
-  ButtonSize,
   ButtonVariant,
   ConfirmationPopupVariant,
   DialButton,
   DialConfirmationPopup,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 
@@ -283,7 +283,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         <DialButton
           label={t('Discard')}
           variant={ButtonVariant.Neutral}
-          size={ButtonSize.Small}
+          size={ElementSize.Small}
           appearance={ButtonAppearance.Outlined}
           onClick={() => setIsDiscardingJson(true)}
           disabled={!dirtyFields.agentsAndToolsetsJson && !editorError}
@@ -291,7 +291,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         <DialButton
           label={t('Save JSON')}
           variant={ButtonVariant.Primary}
-          size={ButtonSize.Small}
+          size={ElementSize.Small}
           onClick={handleSaveJson}
           disabled={
             !!errors.agentsAndToolsetsJson ||

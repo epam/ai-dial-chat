@@ -117,7 +117,6 @@ async function refreshAccessToken(token: Token) {
     }
 
     let msWaiting = 0;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const refresh = NextClient.getRefreshToken(token.userId);
 

@@ -40,6 +40,12 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   const isAppDeployed = isApplicationDeployed(entity);
   const isAppDeploymentInProgress = isApplicationDeploymentInProgress(entity);
   const isDeploying = entity.functionStatus === ApplicationStatus.DEPLOYING;
+  const isRedeploying = entity.functionStatus === ApplicationStatus.REDEPLOYING;
+  const buttonStatus = isDeploying
+    ? t('Deploying')
+    : isRedeploying
+      ? t('Redeploying')
+      : t('Undeploying');
 
   if (!isExecutableApp(entity) || !hasDeployAccess) {
     return null;
@@ -48,7 +54,7 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   if (isAppDeploymentInProgress) {
     return (
       <DialNeutralButton
-        label={isDeploying ? t('Deploying') : t('Undeploying')}
+        label={buttonStatus}
         iconBefore={<Spinner size={18} className="!text-controls-disable" />}
         data-qa="deploy-pending"
         disabled

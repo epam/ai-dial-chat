@@ -12,7 +12,7 @@ import {
 import { NoResultsFound } from './NoResultsFound';
 import { SuggestionButton } from './SuggestionButton';
 
-interface TalkToNotFound {
+interface TalkToNotFoundProps {
   isMyWorkspace: boolean;
   onOpenMarketplaceTab: () => void;
   isSearchMode?: boolean;
@@ -22,7 +22,7 @@ export const TalkToNotFound = ({
   isMyWorkspace,
   onOpenMarketplaceTab,
   isSearchMode = true,
-}: TalkToNotFound) => {
+}: TalkToNotFoundProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   if (!isSearchMode) {

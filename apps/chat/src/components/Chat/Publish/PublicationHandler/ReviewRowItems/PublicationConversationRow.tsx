@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { parseEntityApiKey } from '@/src/utils/server/api';

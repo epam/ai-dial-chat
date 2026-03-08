@@ -27,7 +27,10 @@ import {
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
-import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
+import {
+  getEntitiesFoldersFromEntities,
+  getParentFolderIdsFromEntityId,
+} from '@/src/utils/app/folders';
 import {
   getEntityBucket,
   isApplicationId,
@@ -90,6 +93,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -963,12 +967,22 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
             state$.value,
           );
-          const sharedWithMeFileIds = payload.resources.entities.map(
-            (res) => res.id,
+          const files = payload.resources.entities as DialFile[];
+          const folders = uniqBy(
+            [
+              ...payload.resources.folders,
+              ...getEntitiesFoldersFromEntities(files, FeatureType.File).map(
+                (folder) => ({
+                  ...folder,
+                  status: UploadStatus.LOADED,
+                }),
+              ),
+            ],
+            'id',
           );
-          const sharedWithMeFolderIds = payload.resources.folders.map(
-            (res) => res.id,
-          );
+          const sharedWithMeFileIds = files.map((res) => res.id);
+
+          const sharedWithMeFolderIds = folders.map((res) => res.id);
 
           actions.push(
             FilesActions.setSharedWithMeFilesAndFoldersIds({
@@ -984,20 +998,20 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           actions.push(
             FilesActions.addSharedFiles({
-              files: payload.resources.entities
+              files: files
                 // do not override selected files
                 .filter((res) => !selectedFilesIds.includes(res.id))
                 .map((res) => ({
                   ...res,
                   sharedWithMe: true,
-                })) as DialFile[],
+                })),
               reviewFolder: codeEditorFolderOnReview,
             }),
           );
 
           actions.push(
             FilesActions.addFolders({
-              folders: payload.resources.folders.map((res) => ({
+              folders: folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
               })) as FolderInterface[],

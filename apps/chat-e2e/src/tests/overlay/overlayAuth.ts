@@ -15,7 +15,6 @@ if (process.env.E2E_ADMIN) {
 }
 
 for (let i = 0; i < overlayUsernames.length; i++) {
-  // eslint-disable-next-line playwright/expect-expect
   test(`[Overlay] Login: ${overlayUsernames[i]}`, async ({
     page,
     setTestIds,

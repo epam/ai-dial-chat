@@ -1,3 +1,5 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -14,7 +16,7 @@ export const CloseSidebarButton: React.FC<Props> = ({
   return (
     <div
       className={classNames(
-        'absolute top-0 z-50 p-[6px] xl:hidden',
+        'absolute top-0 z-50 p-[6px] sidebar-overlay:hidden',
         isLeftSide ? 'right-0 translate-x-full' : 'left-0 -translate-x-full',
       )}
     >

@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useScreenState } from '@/src/hooks/useScreenState';

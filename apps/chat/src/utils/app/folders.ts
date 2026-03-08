@@ -291,7 +291,7 @@ export const getFilteredFolders = ({
 export const getParentAndChildFolders = (
   allFolders: FolderInterface[],
   folders: FolderInterface[],
-) => {
+): FolderInterface[] => {
   const folderIds = folders.map(({ id }) => id);
 
   return uniq(
@@ -436,7 +436,7 @@ export const getEntitiesFoldersFromEntities = (
   entities: Conversation[] | Prompt[] | DialFile[],
   featureType: FeatureType,
 ): FolderInterface[] => {
-  const foldersIds = uniq(entities.map((info) => info.folderId));
+  const foldersIds = uniq(entities.map((info) => info.folderId)) as string[];
   //calculate all folders;
   const featuresFolders = getFoldersFromIds(
     uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
@@ -447,7 +447,7 @@ export const getEntitiesFoldersFromEntities = (
 };
 
 export const sortByName = <T extends Entity>(entities: T[]): T[] =>
-  sortBy(entities, (entity) => entity.name.toLowerCase());
+  sortBy(entities, (entity: T) => entity.name.toLowerCase());
 
 export const updateMovedFolderId = (
   oldParentFolderId: string,
@@ -605,7 +605,7 @@ export const getActionsAddFoldersFromFolderId = ({
   shouldOpen?: boolean;
 }): Observable<AppAction>[] => {
   const actions: Observable<AppAction>[] = [];
-  const paths = uniq(getParentFolderIdsFromFolderId(folderId));
+  const paths = uniq(getParentFolderIdsFromFolderId(folderId)) as string[];
 
   actions.push(
     of(

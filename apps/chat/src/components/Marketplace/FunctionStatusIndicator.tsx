@@ -18,8 +18,9 @@ const getLabel = (entity: DialAIEntityModel) => {
     case ApplicationStatus.DEPLOYED:
       return 'Deployed';
     case ApplicationStatus.DEPLOYING:
-    case ApplicationStatus.REDEPLOYING:
       return 'Deploying';
+    case ApplicationStatus.REDEPLOYING:
+      return 'Redeploying';
     case ApplicationStatus.UNDEPLOYING:
       return 'Undeploying';
     default:
