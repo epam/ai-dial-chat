@@ -60,7 +60,7 @@ export const GridSelectors = {
 };
 
 export const CheckboxSelectors = {
-  checkboxContainer: '.ag-checkbox-input-wrapper:not(.ag-disabled)',
+  checkboxContainer: '.ag-checkbox-input-wrapper',
   checkbox: `${Tags.input}[type="checkbox"]`,
 };
 

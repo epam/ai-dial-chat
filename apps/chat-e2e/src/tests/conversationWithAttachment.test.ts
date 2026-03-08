@@ -587,10 +587,8 @@ dialTest(
           fileManagerModalGrid.gridNameCellValue(Attachment.textName),
           Cursors.notAllowed,
         );
-        await fileManagerModalGridAssertion.assertElementActionabilityState(
-          await fileManagerModalGrid.gridCheckboxByNameCell(
-            Attachment.textName,
-          ),
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameActionabilityState(
+          Attachment.textName,
           'disabled',
         );
         // hover is cancelled here by the inner call of goTop()
@@ -603,7 +601,7 @@ dialTest(
           'hidden',
         );
         await fileManagerModalGridAssertion.assertElementActionabilityState(
-          fileManagerModalGrid.gridHeaderCheckbox,
+          fileManagerModalGrid.gridHeaderCheckbox.checkboxInput,
           'disabled',
         );
       },
@@ -705,13 +703,13 @@ dialTest(
         await folderRowLocator.hover();
         const folderCheckboxElement =
           await fileManagerModalGrid.gridCheckboxByNameCell(folderName);
-        await fileManagerModalGridAssertion.assertCheckboxState(
-          folderCheckboxElement,
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          folderName,
           CheckboxState.unchecked,
         );
         await folderCheckboxElement.click();
-        await fileManagerModalGridAssertion.assertCheckboxState(
-          folderCheckboxElement,
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          folderName,
           CheckboxState.checked,
         );
         await baseAssertion.assertElementActionabilityState(
