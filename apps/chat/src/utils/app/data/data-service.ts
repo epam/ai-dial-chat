@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';

@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { formatFileSize, isAbsoluteUrl } from '../file';
 
 describe('File utility methods', () => {

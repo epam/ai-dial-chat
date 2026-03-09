@@ -1,4 +1,9 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 

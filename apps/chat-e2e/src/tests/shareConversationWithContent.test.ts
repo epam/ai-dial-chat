@@ -29,7 +29,7 @@ dialTest.beforeAll(async () => {
   );
 });
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Share with me. Chats with different context.\n' +
     'Shared chat history is updated in Shared with me if to generate new picture.\n' +
     'Publish chat with file, file is from "Shared with me" section',
@@ -330,7 +330,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Share with me. Folder with chats with different context',
   async ({
     conversationData,
@@ -849,7 +849,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing of a chat in Playback mode',
   async ({
     conversationData,
@@ -1045,7 +1045,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing of a chat with plotly graph',
   async ({
     conversationData,
@@ -1123,7 +1123,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing of a chat with attached link',
   async ({
     conversationData,

@@ -1,4 +1,4 @@
-import { describe, expect, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   addTrailingSlashIfAbsent,

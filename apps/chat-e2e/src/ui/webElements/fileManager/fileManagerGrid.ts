@@ -102,7 +102,6 @@ export class FileManagerGrid extends Grid {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
-    // eslint-disable-next-line playwright/no-force-option
     await dotsMenu.click({ force: true });
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
     await this.gridNameCellInput.inputField.fillInInput(newName);
@@ -156,7 +155,7 @@ export class FileManagerGrid extends Grid {
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
     // Hours wasted here: 5
-    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for ag grid to finish rendering and animation, etc
+    // -- wait for ag grid to finish rendering and animation, etc
     await this.page.waitForTimeout(500);
     try {
       //try to scroll into grid record if it is visible on the page

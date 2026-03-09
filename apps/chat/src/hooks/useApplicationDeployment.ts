@@ -1,7 +1,8 @@
 import { IconCloudUpload, IconPlayerPlay } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -25,7 +26,6 @@ import { AuthSelectors } from '@/src/store/selectors';
 export const useApplicationDeployment = (entity: DialAIEntityModel) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const { handleDeploy } = useApplicationStatusActions(entity.id);
 
   const [wasDeployClicked, setWasDeployClicked] = useState(false);
@@ -38,12 +38,17 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
   const isExecutable = isExecutableApp(entity);
   const isPublicApp = isMarketplaceEntityPublic(entity);
 
+  const hasDeployAccess = useHasDeployAccess(entity);
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+
   const showAsUseButton =
-    !isUndeploying && (isDeployed || isUpdating || wasDeployClicked);
+    !isUndeploying &&
+    (isDeployed || isUpdating || wasDeployClicked || !hasDeployAccess);
 
   const isButtonDisabled =
     isExecutable &&
     ((!isDeployed && isPublicApp && !isAdmin) ||
+      (!isDeployed && !hasDeployAccess) ||
       isUpdating ||
       isUndeploying ||
       (wasDeployClicked && !isDeployed));
@@ -60,36 +65,39 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
     if (isUpdating || isUndeploying) {
       return t(`Application is ${entity.functionStatus?.toLowerCase()}`);
     }
-    if (isButtonDisabled && isExecutable) {
-      return t(
-        isPublicApp && !isAdmin
-          ? 'Ask your administrator to deploy this application to be able to use it'
-          : 'Ask author to deploy the application to be able to use it',
-      );
+    if (isButtonDisabled && !hasDeployAccess) {
+      if (isPublicApp) {
+        return t(
+          'Ask your administrator to deploy this application to be able to use it',
+        );
+      }
+      return t('Ask author to deploy the application to be able to use it');
     }
     return '';
   }, [
+    isExecutable,
+    wasDeployClicked,
+    isDeployed,
     isUpdating,
     isUndeploying,
     isButtonDisabled,
-    isExecutable,
-    isPublicApp,
-    isAdmin,
     t,
     entity.functionStatus,
+    isPublicApp,
+    isAdmin,
   ]);
 
   const createButtonClickHandler = useCallback(
     (onUseEntity?: () => void) => (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (isExecutable && !isDeployed) {
+      if (isExecutable && !isDeployed && hasDeployAccess) {
         setWasDeployClicked(true);
         handleDeploy();
-      } else {
+      } else if (!isButtonDisabled) {
         onUseEntity?.();
       }
     },
-    [isDeployed, handleDeploy],
+    [isDeployed, handleDeploy, isExecutable, hasDeployAccess, isButtonDisabled],
   );
 
   useEffect(() => {

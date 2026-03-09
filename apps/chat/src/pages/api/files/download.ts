@@ -109,7 +109,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             archive.append(fileStream, { name: file.path });
 
             await waitForStream(fileStream);
-          } catch (err) {
+          } catch {
             logger.error(`Failed to add file to archive: ${file.path}`);
           }
         }
@@ -118,7 +118,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       } catch (err) {
         try {
           archive.abort();
-        } catch (e) {
+        } catch {
           logger.error(err);
         }
 

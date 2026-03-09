@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { ServerSlugs } from '@/src/types/slugs-types';
 
 import {

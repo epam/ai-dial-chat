@@ -59,10 +59,13 @@ export const getCommonPageProps: GetServerSideProps = async ({
 }) => {
   const requestCSPHeaders = req.headers[HeadersNames.CONTENT_SECURITY_POLICY];
 
-  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives(process.env.ALLOWED_IFRAME_ORIGINS, process.env.ALLOWED_IFRAME_SOURCES)}`;
+  const [cspHeader, nonce] = getFrameContentSecurityPolicyDirectives();
+
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : cspHeader}`;
 
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
+  res.setHeader('x-nonce', nonce);
   res.setHeader(
     HeadersNames.CONTENT_SECURITY_POLICY,
     contentSecurityPolicyHeaderValue,
@@ -187,6 +190,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
         [],
       ),
     },
+    stageContentLimit: parseFloat(
+      process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT || '40',
+    ),
   };
 
   if (isIsolatedView) {

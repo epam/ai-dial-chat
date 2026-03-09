@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -98,7 +98,6 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
     if (value) {
       dispatch(FilesActions.getFilesWithFolders({ id: value }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

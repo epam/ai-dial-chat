@@ -149,7 +149,6 @@ dialAdminTest(
               adminModelInfoTooltip.versionInfo,
               'hidden',
             );
-        // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
         await baseAssertion.assertElementState(
           adminTalkToAgentDialog,
@@ -174,7 +173,6 @@ dialAdminTest(
         await adminTooltipAssertion.assertTooltipContains(
           ExpectedConstants.settingsTooltipWithoutChanges(agent.type),
         );
-        // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.conversationSettings.click({ force: true });
         await baseAssertion.assertElementState(
           adminConversationSettings,
@@ -1567,7 +1565,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   "Edit folder's name for publish request for folder with chat\n" +
     '[Admin view][Edit request] Rename the folder several times in a row\n' +
     "Update folder's name for publish request for folder with chat with attached file. Input different names for chat's folder and file's folder",
@@ -1732,7 +1730,7 @@ dialAdminTest.skip(
           updatedFileFolderName,
           'visible',
         );
-        await fileManagerFoldersTree.expandFolders(...updatedFileFolderName);
+        await fileManagerFoldersTree.expandFolders(updatedFileFolderName);
         await fileManagerGridAssertion.assertGridRowByNameState(
           imageName,
           'visible',

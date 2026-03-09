@@ -1,5 +1,10 @@
+import React from 'react';
+
 import { useTranslation } from 'next-i18next';
 
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
+
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isToolsetId } from '@/src/utils/app/id';
 import { getEntityStatus } from '@/src/utils/marketplace';
 
@@ -69,12 +74,24 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
     return <div className="text-sm text-error">{t(message)}</div>;
   }
 
+  const hasDeployAccess = useHasDeployAccess(item);
+  const isPublicApp = item ? isMarketplaceEntityPublic(item) : false;
+
   if (isUndeployed) {
-    const message = readonly
-      ? 'Undeployed app.'
-      : `Undeployed app. Click ${
-          isInSelectionList ? 'to scroll to' : 'on'
-        } the app to deploy.`;
+    let message: string;
+    if (readonly) {
+      message = 'Undeployed app.';
+    } else if (!hasDeployAccess) {
+      if (isPublicApp) {
+        message = 'Undeployed app. Ask administrator to deploy the app.';
+      } else {
+        message = 'Undeployed app. Ask author to deploy the app.';
+      }
+    } else {
+      message = `Undeployed app. Click ${
+        isInSelectionList ? 'to scroll to' : 'on'
+      } the app to deploy.`;
+    }
 
     return <div className="text-sm text-error">{t(message)}</div>;
   }

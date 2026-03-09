@@ -10,33 +10,15 @@ import { HeadersNames } from './constants/server';
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-
-  const isDev = process.env.NODE_ENV === 'development';
   const shouldIgnoreFrameOptions =
     (!process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
       process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false') &&
     (path === '/auth/signin' || path === '/api/auth/signin');
 
-  const frameDirectives = getFrameContentSecurityPolicyDirectives(
-    process.env.ALLOWED_IFRAME_ORIGINS,
-    process.env.ALLOWED_IFRAME_SOURCES,
+  const [cspHeader, nonce] = getFrameContentSecurityPolicyDirectives(
     shouldIgnoreFrameOptions,
   );
-  const allowedScriptsSrc =
-    `${process.env.ALLOWED_IFRAME_ORIGINS ?? ''} ${process.env.ALLOWED_IFRAME_SOURCES ?? ''}`.replace(
-      "'self'",
-      '',
-    );
-  const cspHeader = `
-    object-src 'none';
-    base-uri 'self';
-    script-src 'self' ${allowedScriptsSrc}
-     https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/
-     'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
-     worker-src 'self' blob:;
-    ${frameDirectives}
-`;
+
   // Replace newline characters and spaces
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeader);
 

@@ -1,4 +1,3 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -14,8 +13,9 @@ import { SettingsSelectors } from '@/src/store/selectors';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
+import { UserIcon } from './UserIcon';
+
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
@@ -42,17 +42,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              {session?.user?.image ? (
-                <img
-                  className="rounded"
-                  src={session?.user?.image}
-                  width={18}
-                  height={18}
-                  alt={t(`User avatar`)}
-                />
-              ) : (
-                <UserIcon width={18} height={18} />
-              )}
+              <UserIcon />
 
               <DialEllipsisTooltip
                 contentClassName="grow"
