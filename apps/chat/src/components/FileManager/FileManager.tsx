@@ -66,6 +66,9 @@ export const FileManager: React.FC = () => {
     sharedWithMeIds,
 
     uploadEnabled,
+
+    emptyStateDescription,
+    emptyStateTitle,
   } = useFileManager();
 
   useEffect(() => {
@@ -112,6 +115,8 @@ export const FileManager: React.FC = () => {
           sharedWithMeIds={sharedWithMeIds}
           uploadEnabled={uploadEnabled}
           clearSearchResults={handleClearSearch}
+          emptyStateTitle={emptyStateTitle}
+          emptyStateDescription={emptyStateDescription}
         />
       )}
       {isAnyOperationInProgress && (
