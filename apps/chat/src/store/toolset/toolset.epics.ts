@@ -794,7 +794,10 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
             void router.push(callbackUrl);
 
-            return toastAction$;
+            return concat(
+              toastAction$,
+              of(ToolsetActions.logInToolsetSuccess()),
+            );
           }
 
           return refreshToolset$(payload.toolsetId, state$.value).pipe(
