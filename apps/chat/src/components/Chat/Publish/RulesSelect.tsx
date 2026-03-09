@@ -36,7 +36,6 @@ export function RulesSelect({
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-
   const getFilterLabel = (filterType: string) => {
     const filterLabel = filterLabelMap[filterType] || filterType;
     return capitalizeFirstLetters
@@ -47,7 +46,6 @@ export function RulesSelect({
   const selectedFilterLabel = useMemo(() => {
     return getFilterLabel(selectedFilter);
   }, [selectedFilter, capitalizeFirstLetters]);
-
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);

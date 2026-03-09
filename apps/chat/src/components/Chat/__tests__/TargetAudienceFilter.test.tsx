@@ -9,9 +9,8 @@ import { AppAction } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
-
 import { filterLabelMap } from '@/src/components/Chat/Publish/RulesSelect';
+import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
 import capitalize from 'lodash-es/capitalize';
 
@@ -30,7 +29,6 @@ vi.mock('@/src/store/selectors', async () => {
       selectPublicationFilters: vi.fn(),
     },
   };
-
 });
 
 describe('TargetAudienceFilterComponent', () => {
@@ -82,7 +80,9 @@ describe('TargetAudienceFilterComponent', () => {
       ).toBeInTheDocument();
     }
 
-    const selectedFilterOption = screen.getByText(filterLabelMap[filterValues[1].toUpperCase()]);
+    const selectedFilterOption = screen.getByText(
+      filterLabelMap[filterValues[1].toUpperCase()],
+    );
     await userEvent.click(selectedFilterOption);
 
     expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-  const selectedFilter = filterLabelMap[filterValues[1].toUpperCase()];
+    const selectedFilter = filterLabelMap[filterValues[1].toUpperCase()];
     const selectedTarget = targetValues[0];
 
     render(
