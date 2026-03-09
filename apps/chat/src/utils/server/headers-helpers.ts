@@ -1,6 +1,8 @@
+'use server';
 export const cleanHeaderDirectives = (directives: string) =>
   directives.replace(/\s{2,}/g, ' ').trim();
 
+const insertSelf = (str: string) => `'self' ${str.replaceAll("'self'", '')}`;
 /**
  *
  * @param frameAncestors sources for the 'frame-ancestors' directive from the 'process.env.ALLOWED_IFRAME_ORIGINS'
@@ -8,20 +10,30 @@ export const cleanHeaderDirectives = (directives: string) =>
  * @param disabled if 'true' will set 'none' for both directives
  * @returns
  */
-export const getFrameContentSecurityPolicyDirectives = (
-  frameAncestors: string | undefined,
-  frameSrc: string | undefined,
-  disabled?: boolean,
-) => {
+export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
+  const frameAncestors = process.env.ALLOWED_IFRAME_ORIGINS;
+  const frameSrc = process.env.ALLOWED_IFRAME_SOURCES;
+  const scriptSrc = process.env.ALLOWED_SCRIPT_SOURCES;
+  const isDev = process.env.NODE_ENV === 'development';
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const allowedScriptsSrc = insertSelf(
+    scriptSrc ?? `${frameAncestors ?? ''} ${frameSrc ?? ''}`,
+  );
   const ancestorsDirective =
-    frameAncestors && !disabled
-      ? `frame-ancestors 'self' ${frameAncestors.replace("'self'", '')}`
-      : "frame-ancestors 'none'";
+    frameAncestors && !disabled ? insertSelf(frameAncestors) : "'none'";
 
   const frameSrcDirective =
-    frameSrc && !disabled
-      ? `frame-src 'self' ${frameSrc.replace("'self'", '')}`
-      : "frame-src 'none'";
+    frameSrc && !disabled ? insertSelf(frameSrc) : "'none'";
 
-  return `${ancestorsDirective}; ${frameSrcDirective};`;
+  return [
+    `
+    object-src 'none';
+    base-uri 'self';
+    script-src ${allowedScriptsSrc} https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/ 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ''};
+    worker-src 'self' blob:;
+    frame-ancestors ${ancestorsDirective};
+    frame-src ${frameSrcDirective};
+`,
+    nonce,
+  ];
 };
