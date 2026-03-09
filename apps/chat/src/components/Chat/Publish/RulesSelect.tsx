@@ -20,7 +20,7 @@ interface FilterTypeProps {
   triggerClassName?: string;
 }
 
-const filterLabelMap: Record<string, string> = {
+export const filterLabelMap: Record<string, string> = {
   [PublicationFunctions.Contain]: 'Contains',
   [PublicationFunctions.Equal]: 'Equals',
 };
@@ -36,9 +36,6 @@ export function RulesSelect({
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedFilterLabel = useMemo(() => {
-    return getFilterLabel(selectedFilter);
-  }, [selectedFilter, capitalizeFirstLetters]);
 
   const getFilterLabel = (filterType: string) => {
     const filterLabel = filterLabelMap[filterType] || filterType;
@@ -46,6 +43,11 @@ export function RulesSelect({
       ? startCase(toLower(filterLabel))
       : filterLabel;
   };
+
+  const selectedFilterLabel = useMemo(() => {
+    return getFilterLabel(selectedFilter);
+  }, [selectedFilter, capitalizeFirstLetters]);
+
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);

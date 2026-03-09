@@ -11,6 +11,8 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
+import { filterLabelMap } from '@/src/components/Chat/Publish/RulesSelect';
+
 import capitalize from 'lodash-es/capitalize';
 
 vi.mock('@/src/store/hooks', async () => {
@@ -28,6 +30,7 @@ vi.mock('@/src/store/selectors', async () => {
       selectPublicationFilters: vi.fn(),
     },
   };
+
 });
 
 describe('TargetAudienceFilterComponent', () => {
@@ -74,7 +77,9 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of filterValues) {
-      expect(screen.getByText(option)).toBeInTheDocument();
+      expect(
+        screen.getAllByText(filterLabelMap[option] || option),
+      ).toBeInTheDocument();
     }
 
     const selectedFilterOption = screen.getByText(filterValues[1]);
@@ -85,7 +90,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('selects an filter and target options on click', async () => {
-    const selectedFilter = filterValues[1];
+    const selectedFilter = filterLabelMap[filterValues[1].toUpperCase()];
     const selectedTarget = targetValues[0];
 
     render(
@@ -108,7 +113,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('save button is disabled if no targets chosen', async () => {
-    const selectedFilter = filterValues[0];
+    const selectedFilter = filterLabelMap[filterValues[0].toUpperCase()];
     const selectedTarget = targetValues[0];
 
     render(
@@ -132,7 +137,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-    const selectedFilter = filterValues[1];
+  const selectedFilter = filterLabelMap[filterValues[1].toUpperCase()];
     const selectedTarget = targetValues[0];
 
     render(
@@ -160,7 +165,7 @@ describe('TargetAudienceFilterComponent', () => {
 
     expect(onSaveFilter).toHaveBeenCalledWith({
       source: selectedTarget,
-      filterFunction: selectedFilter.toUpperCase(),
+      filterFunction: filterValues[1].toUpperCase(),
       filterParams: ['QA', 'Developer', 'Manager'],
     });
   });
