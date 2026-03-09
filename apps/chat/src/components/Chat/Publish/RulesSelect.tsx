@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -36,6 +36,14 @@ export function RulesSelect({
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const selectedFilterLabel = useMemo(() => {
+    const filterLabel = filterLabelMap[selectedFilter] || selectedFilter;
+    if (capitalizeFirstLetters) {
+      return startCase(toLower(filterLabel));
+    }
+    return filterLabel;
+  }, [selectedFilter, capitalizeFirstLetters]);
+
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
     setIsOpen(false);
@@ -54,9 +62,7 @@ export function RulesSelect({
             triggerClassName,
           )}
         >
-          {capitalizeFirstLetters
-            ? startCase(toLower(selectedFilter))
-            : filterLabelMap[selectedFilter] || selectedFilter}
+          {selectedFilterLabel}
           <IconChevronDown
             data-qa={`open-filter-dropdown-${id}`}
             className={classNames(
