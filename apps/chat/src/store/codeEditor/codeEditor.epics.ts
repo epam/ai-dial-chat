@@ -199,7 +199,7 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
       const { bucket } = splitEntityId(file.id);
       return TextFileService.updateContent({
         relativePath:
-          file.relativePath ?? getIdWithoutRootPathSegments(file.id),
+          file.relativePath ?? getIdWithoutRootPathSegments(file.folderId),
         fileName: file.name,
         content: payload.content,
         contentType: file.contentType,
