@@ -60,7 +60,8 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
         />
         {process.env.NODE_ENV !== 'development' &&
-          initialSettingsState?.themesHostDefined && (
+          (initialSettingsState?.themesHostDefined ||
+            process.env.THEMES_CONFIG_HOST) && (
             <>
               <link
                 rel="icon"
