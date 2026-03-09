@@ -229,15 +229,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();

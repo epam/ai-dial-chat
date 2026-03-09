@@ -361,9 +361,6 @@ dialSharedWithMeTest(
       'Open File manager page by additional user and verify app icon is still displayed on "Shared with me" tab',
       async () => {
         await additionalShareUserFileManagerPage.reloadPage();
-        await additionalShareUserFileManagerPage.waitForPageLoaded({
-          isGridVisible: false,
-        });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
@@ -654,9 +651,6 @@ dialSharedWithMeTest(
           updateInstalledToolsets: false,
           getInstalledToolsets: true,
           getStyles: false,
-        });
-        await additionalShareUserFileManagerPage.waitForPageLoaded({
-          isGridVisible: false,
         });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
