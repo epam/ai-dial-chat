@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { isRootId } from '@/src/utils/app/id';
+import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -23,32 +24,39 @@ export const usePublicationResources = <
     [resources],
   );
 
-  const itemsToDisplay = useMemo(
-    () =>
-      items.filter(
-        (item) => isRootId(item.folderId) && resourceUrls.includes(item.id),
-      ),
-    [items, resourceUrls],
-  );
+  const groupedItems = useMemo(() => {
+    return uniqBy(items, (entity) => getIdWithoutVersionFromApiKey(entity.id));
+  }, [items]);
 
-  const folderItemsToDisplay = useMemo(
-    () =>
-      items.filter(
-        (item) => !isRootId(item.folderId) && resourceUrls.includes(item.id),
-      ),
-    [items, resourceUrls],
-  );
+  const { itemsToDisplay, folderItemsToDisplay } = useMemo(() => {
+    return groupedItems.reduce<{
+      itemsToDisplay: T[];
+      folderItemsToDisplay: T[];
+    }>(
+      (acc, item) => {
+        if (!resourceUrls.includes(item.id)) return acc;
+
+        if (isRootId(item.folderId)) {
+          acc.itemsToDisplay.push(item);
+        } else {
+          acc.folderItemsToDisplay.push(item);
+        }
+        return acc;
+      },
+      { itemsToDisplay: [], folderItemsToDisplay: [] },
+    );
+  }, [groupedItems, resourceUrls]);
 
   const rootPublicationFolders = useMemo(() => {
     return uniqBy(
       resourceUrls.map((url) =>
         minBy(
-          allFolders.filter((f) => url.startsWith(`${f.id}/`)),
-          (item) => item.id.split('/').length,
+          allFolders.filter((folder) => url.startsWith(`${folder.id}/`)),
+          (folder) => folder.id.split('/').length,
         ),
       ),
       'id',
-    ).filter(Boolean) as FolderInterface[];
+    ).filter((folder) => !!folder);
   }, [allFolders, resourceUrls]);
 
   const allPublicationFolders = useMemo(
