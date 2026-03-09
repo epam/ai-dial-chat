@@ -69,14 +69,16 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
     }
     return '';
   }, [
+    isExecutable,
+    wasDeployClicked,
+    isDeployed,
     isUpdating,
     isUndeploying,
     isButtonDisabled,
-    isExecutable,
-    isPublicApp,
-    isAdmin,
     t,
     entity.functionStatus,
+    isPublicApp,
+    isAdmin,
   ]);
 
   const createButtonClickHandler = useCallback(
