@@ -826,6 +826,35 @@ export const useFileManager = ({
     [dispatch],
   );
 
+  const handleRemoveAccess = useCallback(
+    (items: { path: string; nodeType?: string }[]) => {
+      const grouped = groupBy(items, (item) =>
+        item.nodeType === DialFileNodeType.FOLDER ? 'folders' : 'files',
+      );
+
+      if (grouped.folders?.length) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceIds: grouped.folders.map(({ path }) => path),
+            featureType: FeatureType.File,
+            isFolder: true,
+          }),
+        );
+      }
+
+      if (grouped.files?.length) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceIds: grouped.files.map(({ path }) => path),
+            featureType: FeatureType.File,
+            isFolder: false,
+          }),
+        );
+      }
+    },
+    [],
+  );
+
   const handleRenameValidation = useCallback(
     (value: string, item: DialFile) => {
       const schema = getEntityNameSchema({
@@ -883,6 +912,7 @@ export const useFileManager = ({
     handleMoveFiles,
     handleDeleteFiles,
     handleDownloadFiles,
+    handleRemoveAccess,
     handleTableFileClick,
     handleUploadFiles,
     handleCreateFolder,
