@@ -47,7 +47,6 @@ interface DialogProps {
 }
 
 function makeMockDialog(dataTestId: string) {
-  // eslint-disable-next-line react/display-name
   return ({ onClose }: DialogProps) => (
     <div data-qa={dataTestId}>
       <button onClick={onClose}>Close</button>

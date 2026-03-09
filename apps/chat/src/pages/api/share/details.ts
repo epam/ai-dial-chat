@@ -42,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let json: unknown;
     try {
       json = await proxyRes.json();
-    } catch (err) {
+    } catch {
       json = undefined;
     }
 

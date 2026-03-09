@@ -1,4 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { isSafari } from 'react-device-detect';
 
 import classNames from 'classnames';

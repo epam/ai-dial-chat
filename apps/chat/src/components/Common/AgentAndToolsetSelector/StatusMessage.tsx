@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { isToolsetId } from '@/src/utils/app/id';

@@ -141,7 +141,7 @@ export const createDialApiSlugsHandler = (
       if (pathOptions.response) {
         try {
           responseData = await fetchResult.json();
-        } catch (err) {
+        } catch {
           responseData = {};
         }
       }

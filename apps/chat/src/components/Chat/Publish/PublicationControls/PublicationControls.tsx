@@ -1,5 +1,5 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import classNames from 'classnames';
 

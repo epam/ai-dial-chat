@@ -80,7 +80,6 @@ dialOverlayTest(
     await dialTest.step(
       'Click on model icon and verify "Select an agent" modal is not opened',
       async () => {
-        // eslint-disable-next-line playwright/no-force-option
         await overlayChatHeader.chatModelIcon.click({ force: true });
         await overlayBaseAssertion.assertElementState(
           overlayTalkToAgentDialog,
