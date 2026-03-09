@@ -1,5 +1,10 @@
 import { BaseAssertion } from '@/src/assertions';
-import { CheckboxState, ElementActionabilityState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { FileManagerGrid } from '@/src/ui/webElements';
 
 export class FileManagerGridAssertion extends BaseAssertion {
@@ -54,7 +59,10 @@ export class FileManagerGridAssertion extends BaseAssertion {
     expectedState: ElementActionabilityState,
   ) {
     const checkbox = await this.fileManagerGrid.gridCheckboxByNameCell(name);
-    await this.assertElementActionabilityState(checkbox.checkboxInput, expectedState);
+    await this.assertElementActionabilityState(
+      checkbox.checkboxInput,
+      expectedState,
+    );
   }
 
   public async assertGridCheckboxByNameState(
