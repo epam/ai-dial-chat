@@ -335,6 +335,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
   );
+  const isFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const allFiles = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const selectedFileId = useAppSelector(CodeEditorSelectors.selectSelectedFile);
@@ -381,10 +382,10 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   }, [sourcesFolderId]);
 
   useEffect(() => {
-    if (sourcesFolderId) {
+    if (sourcesFolderId && rootFiles.length) {
       dispatch(CodeEditorActions.initCodeEditor({ sourcesFolderId }));
     }
-  }, [dispatch, sourcesFolderId]);
+  }, [dispatch, rootFiles.length, sourcesFolderId]);
 
   const handleUploadFile = useCallback(
     (relativePath: string) => {
@@ -594,17 +595,21 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                 />
               );
             })}
-            {rootFiles.map((file) => (
-              <CodeEditorFile
-                isModified={modifiedFileIds.includes(file.id)}
-                key={file.id}
-                file={file}
-                onSelectFile={handleSelectFile}
-                isHighlighted={selectedFileId === file.id}
-                onDeleteFile={setDeletingFileId}
-                onSave={handleSaveFiles}
-              />
-            ))}
+            {!rootFiles.length && isFilesLoading ? (
+              <Loader />
+            ) : (
+              rootFiles.map((file) => (
+                <CodeEditorFile
+                  isModified={modifiedFileIds.includes(file.id)}
+                  key={file.id}
+                  file={file}
+                  onSelectFile={handleSelectFile}
+                  isHighlighted={selectedFileId === file.id}
+                  onDeleteFile={setDeletingFileId}
+                  onSave={handleSaveFiles}
+                />
+              ))
+            )}
             {newFileFolder && (
               <div
                 className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
@@ -732,11 +737,15 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
             </div>
           </div>
           <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
-            {selectedFileId && (
-              <CodeEditorView
-                selectedFileId={selectedFileId}
-                readOnly={readOnly}
-              />
+            {!selectedFileId && isFilesLoading ? (
+              <Loader />
+            ) : (
+              selectedFileId && (
+                <CodeEditorView
+                  selectedFileId={selectedFileId}
+                  readOnly={readOnly}
+                />
+              )
             )}
           </div>
         </div>
