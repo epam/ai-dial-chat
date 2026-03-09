@@ -634,7 +634,9 @@ dialTest(
         modelsWithAttachments.filter(
           (m) =>
             m.features?.folderAttachments == false &&
-            m.features.urlAttachments == false,
+            m.features.urlAttachments == false &&
+            m.inputAttachmentTypes?.length == 1 &&
+            m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
         ),
       );
     const folderName = GeneratorUtil.randomString(7);
