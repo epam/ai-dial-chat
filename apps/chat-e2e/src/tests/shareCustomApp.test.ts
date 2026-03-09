@@ -242,9 +242,6 @@ dialSharedWithMeTest(
       'Open File manager and verify app icon is displayed on "Shared with me" tab',
       async () => {
         await additionalShareUserNavigationPanel.goToFileManager();
-        await additionalShareUserFileManagerPage.waitForPageLoaded({
-          isGridVisible: false,
-        });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
@@ -575,9 +572,6 @@ dialSharedWithMeTest(
         await additionalShareUserNavigationPanel.goToFileManager({
           isFilesListingTriggered: false,
         });
-        await additionalShareUserFileManagerPage.waitForPageLoaded({
-          isGridVisible: false,
-        });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
@@ -726,9 +720,6 @@ dialSharedWithMeTest(
           getInstalledDeployments: true,
           updateInstalledToolsets: false,
           getInstalledToolsets: true,
-        });
-        await additionalShareUserFileManagerPage.waitForPageLoaded({
-          isGridVisible: false,
         });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         const rowLocator =
