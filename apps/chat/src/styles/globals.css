@@ -193,10 +193,12 @@ pre:has(div.codeblock) {
 }
 
 .h-screen {
-  height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+  /* Fallback for browsers not supporting dvh */
   min-height: 100vh;
-  min-height: calc(var(--vh, 1vh) * 100);
-  height: calc(var(--vh, 1vh) * 100);
+  height: 100vh;
+
+  min-height: 100dvh;
+  height: 100dvh;
 }
 
 span.katex-mathml {
