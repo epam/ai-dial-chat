@@ -190,6 +190,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
         [],
       ),
     },
+    stageContentLimit: parseFloat(
+      process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT || '40',
+    ),
   };
 
   if (isIsolatedView) {

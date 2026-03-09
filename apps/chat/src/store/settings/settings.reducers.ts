@@ -31,6 +31,7 @@ const initialState: SettingsState = {
     borderlessTypes: [],
     withoutTitleTypes: [],
   },
+  stageContentLimit: 40,
 };
 
 export const settingsSlice = createSlice({
