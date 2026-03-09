@@ -22,7 +22,7 @@ export default [
       '**/.svn',
       '**/.hg',
       '**/node_modules',
-      '.next',
+      '**/.next/**',
       'next.config.js',
       'next-i18next.config.js',
       'public',
