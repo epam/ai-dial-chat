@@ -14,3 +14,4 @@ misconfiguration:
 scan:
   skip-dirs:
     - '**/__tests__'
+    - '/usr/local/lib/node_modules/npm'
