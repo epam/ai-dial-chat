@@ -1,6 +1,8 @@
+import { ReactNode } from 'react';
+
 interface InfoRowProps {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
   dataQa?: string;
   valueClassName?: string;
   labelClassName?: string;
