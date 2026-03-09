@@ -245,7 +245,7 @@ export const ApproveRequiredSection = ({
       isHighlighted={isSectionHighlighted}
       additionalNode={
         !!publicationsToReviewCount && (
-          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-xxs font-semibold text-layer-3">
+          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-primary-alpha px-[2px] text-xxs font-semibold text-accent-primary">
             {publicationsToReviewCount}
           </span>
         )
