@@ -1,4 +1,3 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
