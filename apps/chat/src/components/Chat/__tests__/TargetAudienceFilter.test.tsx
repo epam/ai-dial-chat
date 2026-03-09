@@ -78,11 +78,11 @@ describe('TargetAudienceFilterComponent', () => {
 
     for (const option of filterValues) {
       expect(
-        screen.getAllByText(filterLabelMap[option] || option),
+        screen.getByText(filterLabelMap[option.toUpperCase()] || option),
       ).toBeInTheDocument();
     }
 
-    const selectedFilterOption = screen.getByText(filterValues[1]);
+    const selectedFilterOption = screen.getByText(filterLabelMap[filterValues[1].toUpperCase()]);
     await userEvent.click(selectedFilterOption);
 
     expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
