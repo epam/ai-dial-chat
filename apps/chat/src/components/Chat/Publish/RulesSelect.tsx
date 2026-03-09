@@ -37,12 +37,15 @@ export function RulesSelect({
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedFilterLabel = useMemo(() => {
-    const filterLabel = filterLabelMap[selectedFilter] || selectedFilter;
-    if (capitalizeFirstLetters) {
-      return startCase(toLower(filterLabel));
-    }
-    return filterLabel;
+    return getFilterLabel(selectedFilter);
   }, [selectedFilter, capitalizeFirstLetters]);
+
+  const getFilterLabel = (filterType: string) => {
+    const filterLabel = filterLabelMap[filterType] || filterType;
+    return capitalizeFirstLetters
+      ? startCase(toLower(filterLabel))
+      : filterLabel;
+  };
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
@@ -80,11 +83,7 @@ export function RulesSelect({
           <MenuItem
             key={filterType}
             className="max-w-full text-xs hover:bg-accent-primary-alpha"
-            item={
-              capitalizeFirstLetters
-                ? startCase(toLower(filterType))
-                : filterType
-            }
+            item={getFilterLabel(filterType)}
             value={filterType}
             onClick={onChangeHandler}
           />
