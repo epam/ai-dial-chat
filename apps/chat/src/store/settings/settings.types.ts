@@ -50,4 +50,5 @@ export interface SettingsState {
     borderlessTypes: string[];
     withoutTitleTypes: string[];
   };
+  stageContentLimit: number;
 }
