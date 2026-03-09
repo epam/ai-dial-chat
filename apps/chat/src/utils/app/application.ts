@@ -266,6 +266,9 @@ export const convertApplicationFromApi = (
       function: appFunction,
       functionStatus: appFunction.status,
     }),
+    owner: application.author,
+    createdAt: application.created_at,
+    updatedAt: application.updated_at,
   };
 };
 
