@@ -248,6 +248,9 @@ const selectAttachmentsSettings = (state: RootState) =>
 const selectHiddenEntityTag = (state: RootState) =>
   rootSelector(state).hiddenEntityTag;
 
+const selectStageContentLimit = (state: RootState) =>
+  rootSelector(state).stageContentLimit;
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -283,4 +286,5 @@ export const SettingsSelectors = {
   selectIsAuthDisabled,
   selectAttachmentsSettings,
   selectHiddenEntityTag,
+  selectStageContentLimit,
 };
