@@ -14,6 +14,9 @@ import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -60,14 +63,12 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => (
   </div>
 );
 
-const getLimitStageContent = () =>
-  parseFloat(process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT ?? '40');
-
-interface Props {
-  stage: Stage;
+interface DownloadStageViewProps {
+  content: string;
+  limit: number;
 }
 
-const DownloadStageView = ({ content }: { content: string }) => {
+const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const { copied: isCopied, onCopy: copyToClipboard } = useCopy(content, true);
@@ -89,9 +90,7 @@ const DownloadStageView = ({ content }: { content: string }) => {
 
   return (
     <div className="flex justify-between gap-1 ps-1">
-      {t(
-        `Content is too large to display (exceeds ${getLimitStageContent()} KB).`,
-      )}
+      {t(`Content is too large to display (exceeds ${limit} KB).`)}
       <div className="flex items-center gap-3 text-secondary">
         <DialButton
           className="[&:not(:disabled)]:hover:text-accent-primary"
@@ -124,10 +123,13 @@ const DownloadStageView = ({ content }: { content: string }) => {
 const StageView = ({ content }: { content: string }) => {
   // Calculate byte size of the string
   const size = useMemo(() => new Blob([content]).size, [content]);
+  const stageContentLimit = useAppSelector(
+    SettingsSelectors.selectStageContentLimit,
+  );
 
   // in bytes
-  if (size > getLimitStageContent() * 1024) {
-    return <DownloadStageView content={content} />;
+  if (size > stageContentLimit * 1024) {
+    return <DownloadStageView content={content} limit={stageContentLimit} />;
   }
   return (
     <span className="inline-block overflow-auto">
@@ -136,7 +138,11 @@ const StageView = ({ content }: { content: string }) => {
   );
 };
 
-export const MessageStage = ({ stage }: Props) => {
+interface MessageStageProps {
+  stage: Stage;
+}
+
+export const MessageStage = ({ stage }: MessageStageProps) => {
   const [isOpened, setIsOpened] = useState(false);
   const [hasContent, setHasContent] = useState(
     () => !!(stage?.content || stage?.attachments?.length),
