@@ -1,4 +1,3 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 

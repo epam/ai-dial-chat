@@ -109,18 +109,15 @@ export function Layout({
   // ON LOAD --------------------------------------------
 
   useEffect(() => {
-    // Hack for ios 100vh issue
-    const handleSetProperVHPoints = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        window.innerHeight * 0.01 + 'px',
-      );
+    const handleResize = () => {
       dispatch(UIActions.resize());
     };
-    handleSetProperVHPoints();
-    window.addEventListener('resize', handleSetProperVHPoints);
 
+    handleResize();
     dispatch(SettingsActions.initApp(getPageType(router.route)));
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
@@ -140,7 +137,6 @@ export function Layout({
         </div>
       ) : (
         <main
-          // eslint-disable-next-line tailwindcss/enforces-shorthand
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
