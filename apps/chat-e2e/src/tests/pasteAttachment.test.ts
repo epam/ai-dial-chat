@@ -127,11 +127,11 @@ dialTest(
         );
         await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
         await fileManagerModalFoldersTree.expandFolder(
-          true,
+          { isFilesListingTriggered: true },
           ExpectedConstants.fileUploadFolder,
         );
         await fileManagerModalFoldersTree.expandFolder(
-          false,
+          { isFilesListingTriggered: false },
           yearMonthSubfolder,
         );
         await fileManagerGridAssertion.assertGridRowByNameState(

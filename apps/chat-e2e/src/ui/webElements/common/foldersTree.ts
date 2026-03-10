@@ -49,8 +49,13 @@ export class FoldersTree extends BaseElement {
     return this.folderByPath(...path).locator(FolderTreeSelectors.folderGroup);
   };
 
-  public async expandFolder(waitForResponse = true, ...path: string[]) {
-    if (waitForResponse) {
+  public async expandFolder(
+    options: { isFilesListingTriggered: boolean } = {
+      isFilesListingTriggered: true,
+    },
+    ...path: string[]
+  ) {
+    if (options.isFilesListingTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) =>
           resp
@@ -72,7 +77,10 @@ export class FoldersTree extends BaseElement {
   public async expandFolders(...path: string[]) {
     const folderToExpandPath = [path[0]];
     for (let i = 0; i < path.length; i++) {
-      await this.expandFolder(true, ...folderToExpandPath);
+      await this.expandFolder(
+        { isFilesListingTriggered: true },
+        ...folderToExpandPath,
+      );
       folderToExpandPath.push(path[i + 1]);
     }
   }
