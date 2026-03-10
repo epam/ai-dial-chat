@@ -136,7 +136,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-    const selectedFilter = getFilterLabel(filterValues[1]);
+    const selectedFilter = filterValues[1];
     const selectedTarget = targetValues[0];
 
     render(

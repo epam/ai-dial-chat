@@ -8,4 +8,4 @@ const filterLabelMap: Record<string, string> = {
 
 export const getFilterLabel = (filterType: string) => {
   return filterLabelMap[filterType] || filterType;
-}
+};

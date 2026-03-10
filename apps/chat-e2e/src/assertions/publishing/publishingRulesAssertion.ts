@@ -115,7 +115,7 @@ export class PublishingRulesAssertion extends BaseAssertion {
       const expectedValue = Object.values(PublicationFunctions).includes(
         fieldsToVerify.filterFunctionValue as PublicationFunctions,
       )
-        ? startCase(value.toLowerCase())
+        ? value
         : fieldsToVerify.filterFunctionValue;
       await this.assertElementText(
         publishingFilter.filterFunction,
