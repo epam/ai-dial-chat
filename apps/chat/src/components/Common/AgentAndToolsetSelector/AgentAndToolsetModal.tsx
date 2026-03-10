@@ -163,12 +163,8 @@ const AgentAndToolsetModalView = ({
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
-  const allAgents = useAppSelector((state) =>
-    ModelsSelectors.selectModels(state, true),
-  );
-  const allToolsets = useAppSelector((state) =>
-    ToolsetSelectors.selectToolsets(state, true),
-  );
+  const allAgents = useAppSelector(ModelsSelectors.selectModels);
+  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
