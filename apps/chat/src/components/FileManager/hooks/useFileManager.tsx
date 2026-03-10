@@ -880,6 +880,28 @@ export const useFileManager = ({
     FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
   );
 
+  const emptyStateTitle = useMemo(() => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return t('No shared files');
+      case DialFileManagerTabs.Organization:
+        return t('No organization files');
+      default:
+        return t('You don’t have any files');
+    }
+  }, [activeTab, t]);
+
+  const emptyStateDescription = useMemo(() => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return t('Files shared with you will appear here.');
+      case DialFileManagerTabs.Organization:
+        return t('Public files will appear here.');
+      default:
+        return t('Upload or drag and drop files');
+    }
+  }, [activeTab, t]);
+
   return {
     currentPath,
     setCurrentPath,
@@ -922,5 +944,8 @@ export const useFileManager = ({
     sharedWithMeIds,
 
     uploadEnabled,
+
+    emptyStateDescription,
+    emptyStateTitle,
   };
 };
