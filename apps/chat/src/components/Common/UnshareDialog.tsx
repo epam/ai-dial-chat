@@ -63,7 +63,7 @@ function UnshareDialogView() {
           dispatch(
             ShareActions.revokeAccess({
               ...revokePayload,
-              resourceId: unshareResourceId,
+              resourceIds: [unshareResourceId],
             }),
           );
           dispatch(ShareActions.setUnshareResourceId(undefined));
@@ -73,7 +73,7 @@ function UnshareDialogView() {
           dispatch(
             ShareActions.revokeAccess({
               ...revokePayload,
-              resourceId: unshareEntity.id,
+              resourceIds: [unshareEntity.id],
             }),
           );
           dispatch(ShareActions.setUnshareEntity(undefined));

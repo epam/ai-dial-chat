@@ -309,7 +309,7 @@ export const FileItem = ({
             if (result) {
               dispatch(
                 ShareActions.revokeAccess({
-                  resourceId: item.id,
+                  resourceIds: [item.id],
                   featureType: FeatureType.File,
                 }),
               );

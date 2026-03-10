@@ -45,7 +45,7 @@ export const errorsMessages = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   revokeAccessFailed: 'Revoking access failed. Please try again later.',
   discardSharedWithMeFailed:
-    'Discarding shared with you resource failed. Please try again later.',
+    'Unsharing shared with you resource failed. Please try again later.',
   shareByMeListingFailed:
     'Getting shared by you resources failed. Please reload the page to get them again.',
   shareWithMeListingFailed:
