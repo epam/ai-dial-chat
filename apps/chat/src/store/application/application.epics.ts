@@ -762,11 +762,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
       const selectedConversationIds =
         ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-      const initialActions$ = of(
+      const initialActions: AppAction[] = [
         ApplicationActions.setReturnConversationIds(
           selectedConversationIds.filter((id) => !isEntityIdLocal({ id })),
         ),
-      );
+      ];
 
       const actions: AppAction[] = [
         ApplicationActions.get({ applicationId: entity.id }),
@@ -783,12 +783,15 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
           ),
         );
       } else if (isApplicationType(applicationType)) {
-        actions.push(
+        initialActions.push(
           ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
         );
       }
 
       const dispatchActions$ = concat(...actions.map((action) => of(action)));
+      const dispatchInitialActions$ = concat(
+        ...initialActions.map((action) => of(action)),
+      );
 
       const waitForAppLoad$ = action$.pipe(
         ofType(ApplicationActions.getSuccess.type),
@@ -828,7 +831,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         map(() => ApplicationActions.enterEditModeComplete()),
       );
 
-      return concat(initialActions$, dispatchActions$, waitForData$).pipe(
+      return concat(
+        dispatchInitialActions$,
+        dispatchActions$,
+        waitForData$,
+      ).pipe(
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
