@@ -1,5 +1,5 @@
-import { PublicationFunctions } from '@/chat/types/publication';
 import { filterLabelMap } from '@/chat/components/Chat/Publish/RulesSelect';
+import { PublicationFunctions } from '@/chat/types/publication';
 import { BaseAssertion } from '@/src/assertions';
 import {
   BooleanOperator,
@@ -110,7 +110,9 @@ export class PublishingRulesAssertion extends BaseAssertion {
       );
     }
     if (fieldsToVerify.filterFunctionValue) {
-      const value = filterLabelMap[fieldsToVerify.filterFunctionValue]|| fieldsToVerify.filterFunctionValue;
+      const value =
+        filterLabelMap[fieldsToVerify.filterFunctionValue] ||
+        fieldsToVerify.filterFunctionValue;
       const expectedValue = Object.values(PublicationFunctions).includes(
         fieldsToVerify.filterFunctionValue as PublicationFunctions,
       )
