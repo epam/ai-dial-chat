@@ -62,6 +62,7 @@ export const FileManager: React.FC = () => {
     handleUploadArchive,
     handleUnshareFiles,
     handleRenameValidation,
+    handleRemoveAccess,
 
     sharedWithMeIds,
 
@@ -110,6 +111,7 @@ export const FileManager: React.FC = () => {
           onCreateFolder={handleCreateFolder}
           onUploadArchive={handleUploadArchive}
           onUnshareFiles={handleUnshareFiles}
+          onRemoveFilesAccess={handleRemoveAccess}
           onRenameValidate={handleRenameValidation}
           onCreateFolderValidate={handleRenameValidation}
           sharedWithMeIds={sharedWithMeIds}
