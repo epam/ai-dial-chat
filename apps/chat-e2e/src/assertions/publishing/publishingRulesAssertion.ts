@@ -1,5 +1,5 @@
-import { getFilterLabel } from '@/chat/utils/app/rules';
 import { PublicationFunctions } from '@/chat/types/publication';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { BaseAssertion } from '@/src/assertions';
 import {
   BooleanOperator,
@@ -8,7 +8,6 @@ import {
   PublishingRulesFilterTarget,
 } from '@/src/testData';
 import { PublishingRules } from '@/src/ui/webElements';
-import startCase from 'lodash-es/startCase';
 
 export class PublishingRulesAssertion extends BaseAssertion {
   readonly publishingRules: PublishingRules;
@@ -110,8 +109,7 @@ export class PublishingRulesAssertion extends BaseAssertion {
       );
     }
     if (fieldsToVerify.filterFunctionValue) {
-      const value =
-        getFilterLabel(fieldsToVerify.filterFunctionValue)
+      const value = getFilterLabel(fieldsToVerify.filterFunctionValue);
       const expectedValue = Object.values(PublicationFunctions).includes(
         fieldsToVerify.filterFunctionValue as PublicationFunctions,
       )

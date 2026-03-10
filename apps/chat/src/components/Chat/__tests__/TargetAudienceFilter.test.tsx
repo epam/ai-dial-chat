@@ -13,8 +13,6 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
-import capitalize from 'lodash-es/capitalize';
-
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),
@@ -41,7 +39,7 @@ describe('TargetAudienceFilterComponent', () => {
     // TODO: uncomment when it will be supported on core
     // PublicationFunctions.True,
     // PublicationFunctions.False,
-  ].map((v) => capitalize(v));
+  ];
 
   const defaultFilterOption = 'Select';
 
@@ -136,7 +134,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-    const selectedFilter = filterValues[1];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -200,7 +198,7 @@ describe('TargetAudienceFilterComponent', () => {
   // });
 
   it('fires onSaveFilter method if click on check icon with regex value', async () => {
-    const selectedFilter = filterValues[2];
+    const selectedFilter = getFilterLabel(filterValues[2]);
     const selectedTarget = targetValues[0];
 
     render(

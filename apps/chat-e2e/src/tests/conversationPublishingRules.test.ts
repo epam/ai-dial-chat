@@ -1,10 +1,10 @@
-import { getFilterLabel } from '@/chat/utils/app/rules';
 import { BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
   PublicationFunctions,
   PublicationRequestModel,
 } from '@/chat/types/publication';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';

@@ -13,8 +13,8 @@ describe('utils/app/rules.ts', () => {
     expect(getFilterLabel(PublicationFunctions.Equal)).toBe('Equals');
   });
 
-  it('returns "Regex " for REGEX function', () => {
-    expect(getFilterLabel(PublicationFunctions.Regex)).toBe('Regex ');
+  it('returns "Regex" for REGEX function', () => {
+    expect(getFilterLabel(PublicationFunctions.Regex)).toBe('Regex');
   });
 
   it('returns input value for unknown filter function', () => {
