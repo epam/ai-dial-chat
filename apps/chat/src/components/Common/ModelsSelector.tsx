@@ -77,6 +77,7 @@ interface ModelsSelectorProps {
   inputClassName?: string;
   panelClassName?: string;
   indexSeparator?: number;
+  showHiddenTagModels?: boolean;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -89,8 +90,11 @@ export const ModelsSelector = memo(function ModelsSelector({
   inputClassName,
   panelClassName,
   indexSeparator,
+  showHiddenTagModels,
 }: ModelsSelectorProps) {
-  const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
+  const modelTypeAgents = useAppSelector((state) =>
+    ModelsSelectors.selectModelTypeAgents(state, showHiddenTagModels),
+  );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const displayedModels = models ?? modelTypeAgents;
 

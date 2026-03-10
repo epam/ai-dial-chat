@@ -482,15 +482,16 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           const modelFromState = modelsMap[application.reference];
 
-          const isAcceptSharePermissions =
-            !!payload.acceptSharePermissions?.length;
+          const acceptSharedWithMe = payload.acceptSharePermissions?.length
+            ? true
+            : undefined;
 
           actions.push(
             of(
               ApplicationActions.getSuccess({
                 ...application,
                 sharedWithMe:
-                  isAcceptSharePermissions ?? modelFromState?.sharedWithMe,
+                  acceptSharedWithMe ?? modelFromState?.sharedWithMe,
                 permissions:
                   payload.acceptSharePermissions ?? modelFromState?.permissions,
                 isShared: modelFromState?.isShared,
@@ -505,8 +506,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
                   models: [
                     {
                       ...application,
-                      owner: application.owner ?? application.author,
-                      sharedWithMe: isAcceptSharePermissions,
+                      sharedWithMe: acceptSharedWithMe,
                       permissions: payload.acceptSharePermissions,
                     },
                   ],
@@ -522,6 +522,7 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
                   references: [application.reference],
                 }),
               ),
+              of(ShareActions.triggerGettingSharedApplicationsListings()),
             );
           }
 

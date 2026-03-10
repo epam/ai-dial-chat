@@ -158,6 +158,7 @@ export const QuickAppForm = () => {
             error={errors.model?.message}
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+            showHiddenTagModels
           />
         )}
       />
