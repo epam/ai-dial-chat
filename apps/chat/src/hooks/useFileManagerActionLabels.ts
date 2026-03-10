@@ -18,6 +18,7 @@ const ACTION_LABELS = {
   rename: (t: TranslationFn) => t('Rename'),
   unshare: (t: TranslationFn) => t('Unshare'),
   info: (t: TranslationFn) => t('Info'),
+  removeAccess: (t: TranslationFn) => t('Remove access'),
 } as const;
 
 type FileAction = keyof typeof ACTION_LABELS;
@@ -27,6 +28,7 @@ type ActionsByTab = Record<DialFileManagerTabs, FileAction[]>;
 const DEFAULT_TAB_ACTIONS: ActionsByTab = {
   my_files: [
     DialFileManagerActions.Duplicate,
+    DialFileManagerActions.RemoveAccess,
     DialFileManagerActions.Copy,
     DialFileManagerActions.Move,
     DialFileManagerActions.Delete,
