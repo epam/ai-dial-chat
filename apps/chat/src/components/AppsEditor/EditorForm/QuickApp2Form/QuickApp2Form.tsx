@@ -61,7 +61,9 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     ApplicationSelectors.selectApplicationDetail,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
+  const modelTypeAgents = useAppSelector((state) =>
+    ModelsSelectors.selectModelTypeAgents(state, true),
+  );
 
   const toolSupportingModels = useMemo(
     () => modelTypeAgents.filter((model) => model.features?.tools),
