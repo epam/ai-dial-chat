@@ -1,10 +1,16 @@
 import { Token } from '@/src/types/auth';
 
-import { Client } from 'openid-client';
+import { Client, Issuer } from 'openid-client';
 
 export interface RefreshToken {
   isRefreshing: boolean;
   token: Token | undefined;
+}
+
+interface ProviderMeta {
+  issuerUrl: string;
+  clientId: string;
+  clientSecret: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,10 +25,39 @@ class NextClient {
 
     globalObj._client[provider.id] = clientLocal;
   }
-  public static getClient(providerId: string): Client | null {
+  static getClient(providerId: string): Client | null {
     globalObj._client = globalObj._client || {};
 
     return globalObj._client[providerId] || null;
+  }
+
+  public static setProviderMeta(providerId: string, meta: ProviderMeta): void {
+    globalObj._providerMeta = globalObj._providerMeta || {};
+    globalObj._providerMeta[providerId] = meta;
+  }
+
+  public static async getOrDiscoverClient(
+    providerId: string,
+  ): Promise<Client | null> {
+    const cached = this.getClient(providerId);
+    if (cached) return cached;
+
+    const meta: ProviderMeta | undefined =
+      globalObj._providerMeta?.[providerId];
+    if (!meta) return null;
+
+    try {
+      const issuer = await Issuer.discover(meta.issuerUrl);
+      const client = new issuer.Client({
+        client_id: meta.clientId,
+        client_secret: meta.clientSecret,
+      });
+      globalObj._client = globalObj._client || {};
+      globalObj._client[providerId] = client;
+      return client;
+    } catch {
+      return null;
+    }
   }
 
   public static getRefreshToken(userId: string): RefreshToken | undefined {
