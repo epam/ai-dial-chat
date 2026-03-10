@@ -187,7 +187,6 @@ export function TargetAudienceFilterComponent({
                 triggerClassName="h-[38px] items-center rounded border border-primary font-semibold"
                 filters={publicationFilters}
                 selectedFilter={selectedTarget}
-                capitalizeFirstLetters
                 onChangeFilter={handleChangeTarget}
                 id="targets"
               />
@@ -203,7 +202,6 @@ export function TargetAudienceFilterComponent({
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
                 id="filterFns"
-                capitalizeFirstLetters
               />
             </div>
             {/* TODO: uncomment when it will be supported on core */}
@@ -250,7 +248,6 @@ export function TargetAudienceFilterComponent({
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
-        capitalizeFirstLetters
         onChangeFilter={handleChangeTarget}
         id="targets"
       />
@@ -265,7 +262,6 @@ export function TargetAudienceFilterComponent({
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
-        capitalizeFirstLetters
       />
       {/* TODO: uncomment when it will be supported on core */}
       {/* {!isTrueOrFalseFilterSelected && */}

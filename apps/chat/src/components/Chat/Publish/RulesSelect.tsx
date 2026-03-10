@@ -1,51 +1,34 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { MouseEvent, useMemo, useState } from 'react';
+import { MouseEvent, useState } from 'react';
 
 import classNames from 'classnames';
+
+import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { PublicationFunctions } from '@/src/types/publication';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
-
 interface FilterTypeProps {
   id: string;
   filters: string[];
   selectedFilter: string;
-  capitalizeFirstLetters?: boolean;
   onChangeFilter: (filterType: PublicationFunctions) => void;
   menuClassName?: string;
   triggerClassName?: string;
 }
 
-export const filterLabelMap: Record<string, string> = {
-  [PublicationFunctions.Contain]: 'Contains',
-  [PublicationFunctions.Equal]: 'Equals',
-};
-
 export function RulesSelect({
   id,
   filters,
   selectedFilter,
-  capitalizeFirstLetters,
   onChangeFilter,
   menuClassName,
   triggerClassName,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const getFilterLabel = (filterType: string) => {
-    const filterLabel = filterLabelMap[filterType] || filterType;
-    return capitalizeFirstLetters
-      ? startCase(toLower(filterLabel))
-      : filterLabel;
-  };
-
-  const selectedFilterLabel = useMemo(() => {
-    return getFilterLabel(selectedFilter);
-  }, [selectedFilter, capitalizeFirstLetters]);
+  const selectedFilterLabel = getFilterLabel(selectedFilter);
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);

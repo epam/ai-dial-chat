@@ -1,4 +1,4 @@
-import { filterLabelMap } from '@/chat/components/Chat/Publish/RulesSelect';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
@@ -156,13 +156,13 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(filterLabelMap[PublicationFunctions.Contain]);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: filterLabelMap[PublicationFunctions.Contain],
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Contain),
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
@@ -372,7 +372,7 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(filterLabelMap[PublicationFunctions.Contain]);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
         await publishingFilter.setFilterValue(firstFilterValue);
         await publishingFilter.setFilterValue(secondFilterValue);
         await publishingRulesAssertion.assertFilterFields({
@@ -806,13 +806,13 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(filterLabelMap[PublicationFunctions.Equal]);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Equal));
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: filterLabelMap[PublicationFunctions.Equal],
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Equal),
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();

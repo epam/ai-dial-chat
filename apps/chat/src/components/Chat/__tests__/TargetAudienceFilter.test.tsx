@@ -4,12 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { getFilterLabel } from '@/src/utils/app/rules';
+
 import { PublicationFunctions } from '@/src/types/publication';
 import { AppAction } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { filterLabelMap } from '@/src/components/Chat/Publish/RulesSelect';
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
 import capitalize from 'lodash-es/capitalize';
@@ -75,13 +76,11 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of filterValues) {
-      expect(
-        screen.getByText(filterLabelMap[option.toUpperCase()] || option),
-      ).toBeInTheDocument();
+      expect(screen.getByText(getFilterLabel(option))).toBeInTheDocument();
     }
 
     const selectedFilterOption = screen.getByText(
-      filterLabelMap[filterValues[1].toUpperCase()],
+      getFilterLabel(filterValues[1]),
     );
     await userEvent.click(selectedFilterOption);
 
@@ -90,7 +89,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('selects an filter and target options on click', async () => {
-    const selectedFilter = filterLabelMap[filterValues[1].toUpperCase()];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -113,7 +112,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('save button is disabled if no targets chosen', async () => {
-    const selectedFilter = filterLabelMap[filterValues[0].toUpperCase()];
+    const selectedFilter = getFilterLabel(filterValues[0]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -137,7 +136,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-    const selectedFilter = filterLabelMap[filterValues[1].toUpperCase()];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
