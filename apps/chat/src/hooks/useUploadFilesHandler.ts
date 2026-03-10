@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 

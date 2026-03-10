@@ -34,7 +34,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',

@@ -18,7 +18,6 @@ import {
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,

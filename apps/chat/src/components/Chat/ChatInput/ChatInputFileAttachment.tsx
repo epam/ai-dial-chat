@@ -11,7 +11,7 @@ import { DialFile } from '@/src/types/files';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
