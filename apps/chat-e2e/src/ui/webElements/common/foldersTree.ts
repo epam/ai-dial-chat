@@ -49,24 +49,30 @@ export class FoldersTree extends BaseElement {
     return this.folderByPath(...path).locator(FolderTreeSelectors.folderGroup);
   };
 
-  public async expandFolder(...path: string[]) {
-    const respPromise = this.page.waitForResponse(
-      (resp) =>
-        resp
-          .url()
-          .endsWith(API.folderFilesListingHost(path[path.length - 1])) &&
-        resp.ok(),
-    );
-    await this.folderByPath(...path)
-      .locator(IconSelectors.caretIcon)
-      .click();
-    await respPromise;
+  public async expandFolder(waitForResponse = true, ...path: string[]) {
+    if (waitForResponse) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp
+            .url()
+            .endsWith(API.folderFilesListingHost(path[path.length - 1])) &&
+          resp.ok(),
+      );
+      await this.folderByPath(...path)
+        .locator(IconSelectors.caretIcon)
+        .click();
+      await respPromise;
+    } else {
+      await this.folderByPath(...path)
+        .locator(IconSelectors.caretIcon)
+        .click();
+    }
   }
 
   public async expandFolders(...path: string[]) {
     const folderToExpandPath = [path[0]];
     for (let i = 0; i < path.length; i++) {
-      await this.expandFolder(...folderToExpandPath);
+      await this.expandFolder(true, ...folderToExpandPath);
       folderToExpandPath.push(path[i + 1]);
     }
   }
