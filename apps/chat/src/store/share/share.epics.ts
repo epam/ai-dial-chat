@@ -1041,9 +1041,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           actions.push(ModelsActions.updateLocalModels({ modelsToUpdate }));
         } else {
-          //TODO make request for the shared applications to add them into the state when share invitation is accepted.
-          //TODO new action-service needs to be created.
-
           const updateSharedActions: AppAction[] = [];
           const modelsToUpdate = payload.resources.entities
             .map((sharedItem) => {
