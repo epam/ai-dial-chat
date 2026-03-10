@@ -28,7 +28,7 @@ export function MarketplaceEntityInfoRow({
         data-qa={dataQa ? `${dataQa}-label` : undefined}
       >{`${label}:`}</span>
 
-      <div data-qa={dataQa} className='flex-1 min-w-0'>
+      <div data-qa={dataQa} className="min-w-0 flex-1">
         <DialEllipsisTooltip text={value} className={valueClassName} />
       </div>
     </div>
