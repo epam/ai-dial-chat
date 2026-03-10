@@ -187,7 +187,7 @@ export const AppsEditor = () => {
         if (shouldRevokeAccess) {
           dispatch(
             ShareActions.revokeAccess({
-              resourceId: appDetails.id,
+              resourceIds: [appDetails.id],
               featureType: FeatureType.Application,
             }),
           );
