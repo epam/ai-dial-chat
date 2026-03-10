@@ -38,7 +38,7 @@ export const EntityMarkdownDescription = ({
     <MemoizedReactMarkdown
       className={classNames(
         className,
-        'prose-sm text-xs prose-a:break-all prose-a:underline break-all',
+        'prose-sm break-all text-xs prose-a:break-all prose-a:underline',
       )}
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[
