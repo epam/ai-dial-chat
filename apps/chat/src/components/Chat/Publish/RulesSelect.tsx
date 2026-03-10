@@ -3,16 +3,17 @@ import { MouseEvent, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getFilterLabel } from '@/src/utils/app/rules';
-
 import { PublicationFunctions } from '@/src/types/publication';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+
+import { startCase, toLower } from 'lodash-es';
 
 interface FilterTypeProps {
   id: string;
   filters: string[];
   selectedFilter: string;
+  formattingFunction?: (filterType: string) => string;
   onChangeFilter: (filterType: PublicationFunctions) => void;
   menuClassName?: string;
   triggerClassName?: string;
@@ -25,10 +26,13 @@ export function RulesSelect({
   onChangeFilter,
   menuClassName,
   triggerClassName,
+  formattingFunction,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedFilterLabel = getFilterLabel(selectedFilter);
+  const selectedFilterLabel = formattingFunction
+    ? formattingFunction(selectedFilter)
+    : startCase(toLower(selectedFilter));
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
@@ -66,7 +70,11 @@ export function RulesSelect({
           <MenuItem
             key={filterType}
             className="max-w-full text-xs hover:bg-accent-primary-alpha"
-            item={getFilterLabel(filterType)}
+            item={
+              formattingFunction
+                ? formattingFunction(filterType)
+                : startCase(toLower(filterType))
+            }
             value={filterType}
             onClick={onChangeHandler}
           />
