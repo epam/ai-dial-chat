@@ -228,9 +228,14 @@ export const ExpectedConstants = {
   continueReviewButtonTitle: 'Continue review',
   goToReviewButtonTitle: 'Go to a review',
   reviewResourcesTooltip: `It's required to review all resources`,
-  duplicatedUnpublishingError: (...names: string[]) => {
-    const namesString = names.map((name) => `"${name}"`).join(', ');
-    return `${namesString} have already been unpublished. You can't approve this request.`;
+  duplicatedUnpublishingError: (
+    ...entries: { name: string; version: string }[]
+  ) => {
+    const namesString = entries
+      .map(({ name, version }) => `"${name} v. ${version}"`)
+      .join(', ');
+    const verb = entries.length === 1 ? 'has' : 'have';
+    return `${namesString} ${verb} already been unpublished. You can't approve this request.`;
   },
   messageTemplateModalTitle: 'Message template',
   messageTemplateModalDescription:

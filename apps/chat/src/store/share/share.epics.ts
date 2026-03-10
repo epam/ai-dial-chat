@@ -19,6 +19,7 @@ import {
   getApplicationType,
   getQuickAppDocumentUrl,
 } from '@/src/utils/app/application';
+import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
@@ -1041,9 +1042,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           actions.push(ModelsActions.updateLocalModels({ modelsToUpdate }));
         } else {
-          //TODO make request for the shared applications to add them into the state when share invitation is accepted.
-          //TODO new action-service needs to be created.
-
           const updateSharedActions: AppAction[] = [];
           const modelsToUpdate = payload.resources.entities
             .map((sharedItem) => {
@@ -1110,30 +1108,14 @@ const revokeAccessEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.revokeAccess.type),
     switchMap(({ payload }) => {
-      const resourceUrl = payload.isFolder
-        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
-        : ApiUtils.encodeApiUrl(payload.resourceId);
+      const resourceUrls = payload.isFolder
+        ? payload.resourceIds.map((id) =>
+            addTrailingSlashIfAbsent(ApiUtils.encodeApiUrl(id)),
+          )
+        : payload.resourceIds.map(ApiUtils.encodeApiUrl);
 
-      return ShareService.shareRevoke([resourceUrl]).pipe(
-        concatMap(() =>
-          concat(
-            of(ShareActions.revokeAccessSuccess(payload)),
-            iif(
-              () => payload.featureType === FeatureType.Application,
-              of(
-                ModelsActions.updateLocalModels({
-                  modelsToUpdate: [
-                    {
-                      reference: payload.resourceId,
-                      updatedValues: { isShared: false },
-                    },
-                  ],
-                }),
-              ),
-              EMPTY,
-            ),
-          ),
-        ),
+      return ShareService.shareRevoke(resourceUrls).pipe(
+        concatMap(() => concat(of(ShareActions.revokeAccessSuccess(payload)))),
         catchError(() => of(ShareActions.revokeAccessFail())),
       );
     }),
@@ -1143,10 +1125,11 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ShareActions.revokeAccessSuccess.type),
     switchMap(({ payload }) => {
+      const resourceId = payload.resourceIds[0];
       if (!payload.isFolder && payload.featureType === FeatureType.Chat) {
         return of(
           ConversationsActions.updateConversationSuccess({
-            id: payload.resourceId,
+            id: resourceId,
             conversation: {
               isShared: false,
             },
@@ -1156,7 +1139,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.isFolder && payload.featureType === FeatureType.Chat) {
         return of(
           ConversationsActions.updateFolder({
-            folderId: payload.resourceId,
+            folderId: resourceId,
             values: {
               isShared: false,
             },
@@ -1166,7 +1149,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
       if (!payload.isFolder && payload.featureType === FeatureType.Prompt) {
         return of(
           PromptsActions.updatePromptSuccess({
-            id: payload.resourceId,
+            id: resourceId,
             prompt: {
               isShared: false,
             },
@@ -1176,7 +1159,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.isFolder && payload.featureType === FeatureType.Prompt) {
         return of(
           PromptsActions.updateFolder({
-            folderId: payload.resourceId,
+            folderId: resourceId,
             values: {
               isShared: false,
             },
@@ -1187,7 +1170,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.featureType === FeatureType.File) {
         return of(
           FilesActions.updateFileInfo({
-            id: payload.resourceId,
+            id: resourceId,
             file: {
               isShared: false,
             },
@@ -1197,7 +1180,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
 
       if (payload.featureType === FeatureType.Application) {
         const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-        const applicationReference = modelsMap[payload.resourceId]?.reference;
+        const applicationReference = modelsMap[resourceId]?.reference;
 
         if (!applicationReference) {
           return EMPTY;
@@ -1216,7 +1199,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      console.error(`Entity not updated: ${payload.resourceId}`);
+      console.error(`Entity not updated: ${payload.resourceIds}`);
       return EMPTY;
     }),
   );
@@ -1236,12 +1219,10 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
     ofType(ShareActions.discardSharedWithMe.type),
     mergeMap(({ payload }) => {
       const resourceUrls = payload.isFolder
-        ? payload.resourceIds.map(
-            (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
+        ? payload.resourceIds.map((resourceId) =>
+            addTrailingSlashIfAbsent(ApiUtils.encodeApiUrl(resourceId)),
           )
-        : payload.resourceIds.map((resourceId) =>
-            ApiUtils.encodeApiUrl(resourceId),
-          );
+        : payload.resourceIds.map(ApiUtils.encodeApiUrl);
 
       return ShareService.shareDiscard(resourceUrls).pipe(
         mergeMap(() => {
@@ -1486,7 +1467,7 @@ const revokeFolderAccessEpic: AppEpic = (action$, state$) =>
           of(
             ShareActions.revokeAccess({
               isFolder: true,
-              resourceId: folder.id,
+              resourceIds: [folder.id],
               featureType,
             }),
           ),

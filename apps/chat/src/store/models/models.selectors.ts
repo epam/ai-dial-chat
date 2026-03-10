@@ -106,9 +106,12 @@ const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectModelTypeAgents = createSelector([selectModels], (models) => {
-  return models.filter((model) => model.type === EntityType.Model);
-});
+const selectModelTypeAgents = createSelector(
+  [(state, showHidden?: boolean) => selectModels(state, showHidden)],
+  (models) => {
+    return models.filter((model) => model.type === EntityType.Model);
+  },
+);
 
 const selectPublishRequestModels = (state: RootState) =>
   rootSelector(state).publishRequestModels;
