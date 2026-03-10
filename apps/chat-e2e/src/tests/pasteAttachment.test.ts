@@ -15,7 +15,7 @@ import { Conversation } from '@epam/ai-dial-shared';
 let appEntity: DialAIEntityModel;
 let conversation: Conversation;
 
-dialTest.only(
+dialTest(
   'Ctrl-V pastes a file into input.\n' +
     'Pasted file appears in Manage attachments in "uploads/<year-month>" folder. New folder structure.\n' +
     'The uploads folder is changed for each month in the successful message and in Manage attachments.\n' +
