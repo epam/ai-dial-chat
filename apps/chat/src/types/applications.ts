@@ -47,6 +47,9 @@ export interface ApiApplicationResponseBase {
     | QuickAppConfig
     | QuickApp2Config
     | Record<string, unknown>;
+  author?: string;
+  created_at?: number;
+  updated_at?: number;
 }
 
 export interface ApiApplicationResponsePublication
