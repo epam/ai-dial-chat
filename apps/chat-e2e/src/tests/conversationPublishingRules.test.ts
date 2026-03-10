@@ -1,3 +1,4 @@
+import { filterLabelMap } from '@/chat/components/Chat/Publish/RulesSelect';
 import { BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
@@ -155,13 +156,13 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(filterLabelMap[PublicationFunctions.Contain]);
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: filterLabelMap[PublicationFunctions.Contain],
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
@@ -371,7 +372,7 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(filterLabelMap[PublicationFunctions.Contain]);
         await publishingFilter.setFilterValue(firstFilterValue);
         await publishingFilter.setFilterValue(secondFilterValue);
         await publishingRulesAssertion.assertFilterFields({
@@ -805,13 +806,13 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Equal);
+          .selectMenuOption(filterLabelMap[PublicationFunctions.Equal]);
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Equal,
+          filterFunctionValue: filterLabelMap[PublicationFunctions.Equal],
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
