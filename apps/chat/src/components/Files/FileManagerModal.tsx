@@ -72,6 +72,9 @@ export const FileManagerModal = memo(
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
 
+    const initialSelectionPerformedRef = useRef(false);
+    const prevSelectionRef = useRef<Set<string>>(new Set());
+
     const headingId = useId();
     const descriptionId = useId();
 
@@ -95,7 +98,15 @@ export const FileManagerModal = memo(
       [folders],
     );
 
-    const prevSelectionRef = useRef<Set<string>>(new Set());
+    const handleClose = useCallback(
+      (value: boolean | string[]) => {
+        initialSelectionPerformedRef.current = false;
+        prevSelectionRef.current.clear();
+        onClose(value);
+        dispatch(FilesActions.resetChosenFiles());
+      },
+      [onClose, initialSelectionPerformedRef, prevSelectionRef],
+    );
 
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
@@ -153,16 +164,23 @@ export const FileManagerModal = memo(
     }, [allowedTypesArray, allowedTypesLabel, t]);
 
     useEffect(() => {
-      if (isOpen) {
+      if (isOpen && !initialSelectionPerformedRef.current) {
         dispatch(FilesActions.resetAllFoldersStatus());
         dispatch(FilesActions.getFilesWithFolders({}));
         dispatch(FilesActions.resetNewFolderId());
+        dispatch(
+          FilesActions.setChosenFilesAndFolders({
+            ids: previousSelectedFilesIds ?? [],
+          }),
+        );
+        initialSelectionPerformedRef.current = true;
       }
-
-      return () => {
-        dispatch(FilesActions.resetChosenFiles());
-      };
-    }, [dispatch, isOpen]);
+    }, [
+      dispatch,
+      isOpen,
+      previousSelectedFilesIds,
+      initialSelectionPerformedRef.current,
+    ]);
 
     const handleAttachFiles = useCallback(() => {
       const accumulatedIds = new Set<string>(previousSelectedFilesIds);
@@ -227,7 +245,7 @@ export const FileManagerModal = memo(
         return;
       }
 
-      onClose(Array.from(accumulatedIds));
+      handleClose(Array.from(accumulatedIds));
     }, [
       allowedTypesArray,
       canAttachFolders,
@@ -235,7 +253,7 @@ export const FileManagerModal = memo(
       files,
       previousSelectedFilesIds,
       maximumAttachmentsAmount,
-      onClose,
+      handleClose,
       selectedFilesIds,
       selectedFolderIds,
       t,
@@ -312,11 +330,21 @@ export const FileManagerModal = memo(
       availableTabs,
     });
 
+    const defaultSelectedPaths = useMemo(
+      () =>
+        new Set(
+          previousSelectedFilesIds.map((id) =>
+            id.endsWith('/') ? id.slice(0, -1) : id,
+          ) ?? [],
+        ),
+      [previousSelectedFilesIds],
+    );
+
     return (
       <Modal
         portalId="theme-main"
         state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-        onClose={() => onClose(false)}
+        onClose={() => handleClose(false)}
         dataQa="file-manager-modal"
         containerClassName="flex flex-col gap-4 w-full sm:w-[1200px] h-[min(800px,100vh)] !bg-layer-2"
         dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
@@ -393,6 +421,7 @@ export const FileManagerModal = memo(
               onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
+              defaultSelectedPaths={defaultSelectedPaths}
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
