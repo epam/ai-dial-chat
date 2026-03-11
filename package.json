@@ -189,7 +189,7 @@
     "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.3.2",
     "eslint-plugin-playwright": "^2.2.0",
-    "file-type": "^21.0.0",
+    "file-type": "^21.3.1",
     "playwright-chromium": "^1.55.1"
   },
   "overrides": {
