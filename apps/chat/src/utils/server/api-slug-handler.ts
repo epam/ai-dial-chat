@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getToken } from '@/src/utils/server/server';
 
@@ -10,8 +11,6 @@ import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 import { mappingServerUrls } from '@/src/constants/server';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { getApiHeaders } from './get-headers';
 import { logger } from './logger';
