@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
 
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+
 interface InfoRowProps {
   label: string;
   value: ReactNode;
@@ -25,8 +27,9 @@ export function MarketplaceEntityInfoRow({
         className={labelClassName}
         data-qa={dataQa ? `${dataQa}-label` : undefined}
       >{`${label}:`}</span>
-      <div className={valueClassName} data-qa={dataQa}>
-        {value}
+
+      <div data-qa={dataQa} className="min-w-0 flex-1">
+        <DialEllipsisTooltip text={value} className={valueClassName} />
       </div>
     </div>
   );
