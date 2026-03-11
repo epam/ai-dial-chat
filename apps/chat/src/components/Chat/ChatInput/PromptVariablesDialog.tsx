@@ -15,7 +15,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -38,14 +37,12 @@ interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
   onClose: () => void;
-  ignoreOutsideClicks?: string;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   onSubmit,
   onClose,
-  ignoreOutsideClicks,
 }) => {
   const variables = useMemo(
     () => parseVariablesFromContent(prompt.content),
@@ -126,26 +123,6 @@ export const PromptVariablesDialog: FC<Props> = ({
     },
     [allowEnterClick, handleSubmit, onClose],
   );
-
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        ignoreOutsideClicks &&
-        hasParentWithAttribute(e.target as Element, ignoreOutsideClicks)
-      ) {
-        return;
-      }
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('click', handleOutsideClick);
-
-    return () => {
-      window.removeEventListener('click', handleOutsideClick);
-    };
-  }, [ignoreOutsideClicks, onClose]);
 
   useEffect(() => {
     inputsRefs.current?.[0]?.focus?.();

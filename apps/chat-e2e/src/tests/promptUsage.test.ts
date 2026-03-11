@@ -825,3 +825,58 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  'Variable modal is not closed on outside click',
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    sendMessage,
+    variableModalAssertion,
+    variableModalDialog,
+    page,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-NEW-1');
+    let prompt: Prompt;
+    const variable = 'A';
+    const content = `test {{${variable}}}`;
+
+    await dialTest.step('Prepare a prompt with a variable', async () => {
+      prompt = promptData.preparePrompt(content);
+      await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      'Open variable modal via prompt selection',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await sendMessage.messageInput.fillInInput('/');
+        await sendMessage
+          .getPromptList()
+          .selectPromptWithKeyboard(prompt.name, {
+            triggeredHttpMethod: 'GET',
+          });
+        await variableModalAssertion.assertVariableModalState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Type a value, click outside the modal and verify modal stays open with entered value',
+      async () => {
+        const testValue = 'some test value';
+        await variableModalDialog.setVariableValue(variable, testValue);
+        await page.mouse.click(1, 1);
+        await variableModalAssertion.assertVariableModalState('visible');
+        await variableModalAssertion.assertPromptVariableValue(
+          variable,
+          testValue,
+        );
+      },
+    );
+  },
+);
