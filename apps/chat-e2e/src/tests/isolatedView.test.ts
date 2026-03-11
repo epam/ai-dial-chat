@@ -158,7 +158,10 @@ dialTest(
     //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment().filter(
-        (m) => !m.id.includes(':'),
+        (m) =>
+          !m.id.includes(':') &&
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
       ),
     )!;
     const testMessage = 'Test message with attachment';

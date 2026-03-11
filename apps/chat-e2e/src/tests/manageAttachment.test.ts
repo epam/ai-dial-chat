@@ -143,8 +143,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
+    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+      modelsWithAttachments.filter(
+        (m) =>
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+      ),
     );
     let conversation: Conversation;
 
@@ -158,11 +162,11 @@ dialTest(
       'Create empty conversation that allow input attachments',
       async () => {
         conversation = conversationData.prepareEmptyConversation(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
       },
