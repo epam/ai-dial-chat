@@ -93,7 +93,7 @@ export const ToolsetLoginForm = ({
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
 
   return (
-    <div className={classNames('flex flex-col gap-4', className)}>
+    <div className={classNames('flex flex-col gap-3', className)}>
       {type === ToolsetAuthTypes.API_KEY && !isSignedIn && (
         <>
           <div
