@@ -24,6 +24,8 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { RuleListItem } from '../RuleListItem';
 import { PublicationRequestFormData, PublishRequestFieldsNames } from '../form';
 
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+
 interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
@@ -132,7 +134,9 @@ function PublicationFiltersView({
         <>
           {publicationModel && (
             <p className="mb-1 text-xs text-secondary" data-qa="published-path">
-              {editedPublishToUrl.split('/').pop()}
+              <DialEllipsisTooltip
+                text={editedPublishToUrl.split('/').pop() || ''}
+              />
             </p>
           )}
           <RulesInput
