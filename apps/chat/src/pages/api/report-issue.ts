@@ -1,14 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { logger } from '@/src/utils/server/logger';
 
 import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from './auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 
