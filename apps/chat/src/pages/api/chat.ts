@@ -10,6 +10,7 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
@@ -28,8 +29,6 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from './auth/[...nextauth]';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
