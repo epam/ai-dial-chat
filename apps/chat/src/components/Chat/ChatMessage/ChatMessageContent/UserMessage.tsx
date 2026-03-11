@@ -11,7 +11,6 @@ import {
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,
@@ -474,11 +473,10 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [shouldScroll]);
 
-  const uploadPastedFiles = useChatUploadFiles(
-    getQuickAttachmentsSavingPath(),
-    newEditableAttachments.length,
-    true,
-  );
+  const uploadPastedFiles = useChatUploadFiles({
+    selectedAttachmentsAmount: newEditableAttachments.length,
+    skipSelect: true,
+  });
 
   const handleUploadPastedFiles = useCallback(
     (
