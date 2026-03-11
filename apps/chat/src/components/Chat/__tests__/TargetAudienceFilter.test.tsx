@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { getFilterLabel } from '@/src/utils/app/rules';
+
 import { PublicationFunctions } from '@/src/types/publication';
 import { AppAction } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
-
-import capitalize from 'lodash-es/capitalize';
 
 vi.mock('@/src/store/hooks', async () => {
   return {
@@ -39,7 +39,7 @@ describe('TargetAudienceFilterComponent', () => {
     // TODO: uncomment when it will be supported on core
     // PublicationFunctions.True,
     // PublicationFunctions.False,
-  ].map((v) => capitalize(v));
+  ];
 
   const defaultFilterOption = 'Select';
 
@@ -74,10 +74,12 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of filterValues) {
-      expect(screen.getByText(option)).toBeInTheDocument();
+      expect(screen.getByText(getFilterLabel(option))).toBeInTheDocument();
     }
 
-    const selectedFilterOption = screen.getByText(filterValues[1]);
+    const selectedFilterOption = screen.getByText(
+      getFilterLabel(filterValues[1]),
+    );
     await userEvent.click(selectedFilterOption);
 
     expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
@@ -85,7 +87,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('selects an filter and target options on click', async () => {
-    const selectedFilter = filterValues[1];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -108,7 +110,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('save button is disabled if no targets chosen', async () => {
-    const selectedFilter = filterValues[0];
+    const selectedFilter = getFilterLabel(filterValues[0]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -132,7 +134,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-    const selectedFilter = filterValues[1];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -160,7 +162,7 @@ describe('TargetAudienceFilterComponent', () => {
 
     expect(onSaveFilter).toHaveBeenCalledWith({
       source: selectedTarget,
-      filterFunction: selectedFilter.toUpperCase(),
+      filterFunction: filterValues[1].toUpperCase(),
       filterParams: ['QA', 'Developer', 'Manager'],
     });
   });
@@ -196,7 +198,7 @@ describe('TargetAudienceFilterComponent', () => {
   // });
 
   it('fires onSaveFilter method if click on check icon with regex value', async () => {
-    const selectedFilter = filterValues[2];
+    const selectedFilter = getFilterLabel(filterValues[2]);
     const selectedTarget = targetValues[0];
 
     render(

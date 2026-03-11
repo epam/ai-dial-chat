@@ -4,6 +4,7 @@ import {
   PublicationFunctions,
   PublicationRequestModel,
 } from '@/chat/types/publication';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
@@ -155,13 +156,13 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Contain),
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
@@ -371,14 +372,14 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
         await publishingFilter.setFilterValue(firstFilterValue);
         await publishingFilter.setFilterValue(secondFilterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Contain),
           filterValues: [firstFilterValue, secondFilterValue],
         });
       },
@@ -549,7 +550,7 @@ dialAdminTest(
           await publishingFilter.filterFunction.click();
           await publishingFilter
             .getFilterFunctionDropdownMenu()
-            .selectMenuOption(PublicationFunctions.Contain);
+            .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
           await publishingFilter.setFilterValue(value);
           await publishingFilter.saveFilterButton.click();
           await publishingRulesAssertion.assertRule(
@@ -805,13 +806,13 @@ dialAdminTest(
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Equal);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Equal));
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Equal,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Equal),
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
