@@ -44,6 +44,17 @@ pnpm-lock.yaml
 
 # editors
 .vscode
+.cursor
+.windsurf
+
+# AI tools
+.claude
+CLAUDE.local.md
+.agent
+.codemie
+.aider*
+.copilot
+.serena
 
 # e2e
 /apps/chat-e2e/test-results/
