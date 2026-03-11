@@ -13,6 +13,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import {
   DEFAULT_PROVIDER,
   authProviders,
@@ -26,8 +27,6 @@ import { Translation } from '@/src/types/translation';
 
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
