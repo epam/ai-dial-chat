@@ -129,7 +129,7 @@ export const shareSlice = createSlice({
     revokeAccess: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
@@ -137,7 +137,7 @@ export const shareSlice = createSlice({
     revokeAccessSuccess: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,

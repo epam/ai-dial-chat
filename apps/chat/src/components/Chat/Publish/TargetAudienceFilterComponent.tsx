@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { getFilterLabel } from '@/src/utils/app/rules';
 import { translate } from '@/src/utils/app/translation';
 
 import { ModalState } from '@/src/types/modal';
@@ -187,7 +188,6 @@ export function TargetAudienceFilterComponent({
                 triggerClassName="h-[38px] items-center rounded border border-primary font-semibold"
                 filters={publicationFilters}
                 selectedFilter={selectedTarget}
-                capitalizeFirstLetters
                 onChangeFilter={handleChangeTarget}
                 id="targets"
               />
@@ -202,8 +202,8 @@ export function TargetAudienceFilterComponent({
                 filters={filterFunctionValues}
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
+                formattingFunction={(filter) => getFilterLabel(filter)}
                 id="filterFns"
-                capitalizeFirstLetters
               />
             </div>
             {/* TODO: uncomment when it will be supported on core */}
@@ -250,7 +250,6 @@ export function TargetAudienceFilterComponent({
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
-        capitalizeFirstLetters
         onChangeFilter={handleChangeTarget}
         id="targets"
       />
@@ -263,9 +262,9 @@ export function TargetAudienceFilterComponent({
         // )}
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
+        formattingFunction={(filter) => getFilterLabel(filter)}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
-        capitalizeFirstLetters
       />
       {/* TODO: uncomment when it will be supported on core */}
       {/* {!isTrueOrFalseFilterSelected && */}

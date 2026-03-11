@@ -826,6 +826,35 @@ export const useFileManager = ({
     [dispatch],
   );
 
+  const handleRemoveAccess = useCallback(
+    (items: { path: string; nodeType?: string }[]) => {
+      const grouped = groupBy(items, (item) =>
+        item.nodeType === DialFileNodeType.FOLDER ? 'folders' : 'files',
+      );
+
+      if (grouped.folders?.length) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceIds: grouped.folders.map(({ path }) => path),
+            featureType: FeatureType.File,
+            isFolder: true,
+          }),
+        );
+      }
+
+      if (grouped.files?.length) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceIds: grouped.files.map(({ path }) => path),
+            featureType: FeatureType.File,
+            isFolder: false,
+          }),
+        );
+      }
+    },
+    [],
+  );
+
   const handleRenameValidation = useCallback(
     (value: string, item: DialFile) => {
       const schema = getEntityNameSchema({
@@ -850,6 +879,28 @@ export const useFileManager = ({
   const sharedWithMeIds = useAppSelector(
     FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
   );
+
+  const emptyStateTitle = useMemo(() => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return t('No shared files');
+      case DialFileManagerTabs.Organization:
+        return t('No organization files');
+      default:
+        return t('You don’t have any files');
+    }
+  }, [activeTab, t]);
+
+  const emptyStateDescription = useMemo(() => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return t('Files shared with you will appear here.');
+      case DialFileManagerTabs.Organization:
+        return t('Public files will appear here.');
+      default:
+        return t('Upload or drag and drop files');
+    }
+  }, [activeTab, t]);
 
   return {
     currentPath,
@@ -883,6 +934,7 @@ export const useFileManager = ({
     handleMoveFiles,
     handleDeleteFiles,
     handleDownloadFiles,
+    handleRemoveAccess,
     handleTableFileClick,
     handleUploadFiles,
     handleCreateFolder,
@@ -892,5 +944,8 @@ export const useFileManager = ({
     sharedWithMeIds,
 
     uploadEnabled,
+
+    emptyStateDescription,
+    emptyStateTitle,
   };
 };
