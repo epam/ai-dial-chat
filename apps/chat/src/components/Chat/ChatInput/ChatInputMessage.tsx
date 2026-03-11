@@ -14,6 +14,7 @@ import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getUserCustomContent } from '@/src/utils/app/file';
 import {
   getConversationSchema,
@@ -227,6 +228,14 @@ export const ChatInputMessage = Inversify.register(
 
       return isFormValueValid(schema, chatFormValue);
     }, [selectedConversations, configurationSchema, chatFormValue]);
+
+    const selectedAttachmentsIds = useMemo(
+      () =>
+        selectedFiles
+          .map((f) => f.id)
+          .concat(selectedFolders.map((f) => addTrailingSlashIfAbsent(f.id))),
+      [selectedFolders, selectedFiles],
+    );
 
     const isInputEmpty = useMemo(() => {
       return (
@@ -571,9 +580,7 @@ export const ChatInputMessage = Inversify.register(
                 )}
               >
                 <AttachButton
-                  selectedFilesIds={selectedFiles
-                    .map((f) => f.id)
-                    .concat(selectedFolders.map((f) => `${f.id}/`))}
+                  selectedFilesIds={selectedAttachmentsIds}
                   onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                   onUploadFromDevice={handleUploadFromDevice}
                   onAddLinkToMessage={handleAddLinkToMessage}
