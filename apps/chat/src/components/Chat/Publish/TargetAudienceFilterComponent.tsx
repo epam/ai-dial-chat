@@ -1,50 +1,38 @@
 import { IconCheck } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
-
-
 import classNames from 'classnames';
 
-
-
 import { useTranslation } from '@/src/hooks/useTranslation';
-
-
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getFilterLabel } from '@/src/utils/app/rules';
 import { translate } from '@/src/utils/app/translation';
 
-
-
 import { ModalState } from '@/src/types/modal';
-import { PublicationFunctions, TargetAudienceFilterData } from '@/src/types/publication';
+import {
+  PublicationFunctions,
+  TargetAudienceFilterData,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
-
-
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-
-
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
-
-
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Modal } from '@/src/components/Common/Modal';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
-
-
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
-
-
-import { DialGhostIconButton, DialPrimaryButton, ElementSize } from '@epam/ai-dial-ui-kit';
-
+import {
+  DialGhostIconButton,
+  DialPrimaryButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 const emptySelector = translate('Select');
 
