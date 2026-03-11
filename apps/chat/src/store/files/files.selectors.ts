@@ -70,6 +70,15 @@ const selectFolders = createSelector([_selectFolders], (folders) => {
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
+const selectFolderById = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    return folders.find((folder) => folderId === folder.id);
+  },
+);
+const selectFolderStatusById = createSelector([selectFolderById], (folder) => {
+  return folder?.status;
+});
 const selectFilteredFolders = createSelector(
   [
     selectFolders,
@@ -296,6 +305,8 @@ export const FilesSelectors = {
   selectSelectedFolders,
   selectIsUploadingFilePresent,
   selectFolders,
+  selectFolderById,
+  selectFolderStatusById,
   selectFilteredFolders,
   selectAreFoldersLoading,
   selectLoadingFolderIds,
