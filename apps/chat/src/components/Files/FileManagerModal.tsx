@@ -5,10 +5,16 @@ import { useFileManager } from '@/src/components/FileManager/hooks/useFileManage
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  addTrailingSlashIfAbsent,
+  removeTrailingSlash,
+} from '@/src/utils/app/common';
+import {
   formatFileSize,
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
+import { isParentFolderSelected } from '@/src/utils/app/folders';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -108,35 +114,6 @@ export const FileManagerModal = memo(
       [onClose, initialSelectionPerformedRef, prevSelectionRef],
     );
 
-    const pathSelectionHandler = useCallback(
-      (paths: Set<string>) => {
-        const prev = prevSelectionRef.current;
-        const next = new Set(paths);
-
-        const added = [...next].filter((id) => !prev.has(id));
-        const removed = [...prev].filter((id) => !next.has(id));
-
-        prevSelectionRef.current = next;
-
-        for (const id of added) {
-          if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
-          } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
-          }
-        }
-
-        for (const id of removed) {
-          if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
-          } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
-          }
-        }
-      },
-      [dispatch, folderPaths],
-    );
-
     const allowedTypesArray = useMemo(
       () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
       [allowedTypes, canAttachFiles, canAttachFolders],
@@ -183,7 +160,7 @@ export const FileManagerModal = memo(
     ]);
 
     const handleAttachFiles = useCallback(() => {
-      const accumulatedIds = new Set<string>(previousSelectedFilesIds);
+      const accumulatedIds = new Set<string>([]);
 
       const selectedFiles = files.filter((file) =>
         selectedFilesIds.includes(file.id),
@@ -193,6 +170,9 @@ export const FileManagerModal = memo(
         getDialFilesWithInvalidFileType(selectedFiles, allowedTypesArray).map(
           (file) => file.id,
         ),
+      );
+      const hiddenFilesIds = new Set(
+        selectedFiles.filter(isHiddenEntity).map(({ id }) => id),
       );
 
       if (invalidFileIds.size > 0) {
@@ -209,12 +189,21 @@ export const FileManagerModal = memo(
 
       if (canAttachFolders) {
         selectedFolderIds.forEach((folderId) => {
-          accumulatedIds.add(folderId);
+          if (
+            !isParentFolderSelected({
+              currentFolderId: folderId,
+              selectedFolderIds: selectedFolderIds.filter(
+                (id) => id !== folderId,
+              ),
+            })
+          ) {
+            accumulatedIds.add(folderId);
+          }
         });
       }
 
       selectedFilesIds.forEach((fileId) => {
-        if (invalidFileIds.has(fileId)) {
+        if (invalidFileIds.has(fileId) || hiddenFilesIds.has(fileId)) {
           return;
         }
 
@@ -251,7 +240,6 @@ export const FileManagerModal = memo(
       canAttachFolders,
       dispatch,
       files,
-      previousSelectedFilesIds,
       maximumAttachmentsAmount,
       handleClose,
       selectedFilesIds,
@@ -330,14 +318,27 @@ export const FileManagerModal = memo(
       availableTabs,
     });
 
-    const defaultSelectedPaths = useMemo(
+    const selectedPaths = useMemo(
       () =>
         new Set(
-          previousSelectedFilesIds.map((id) =>
-            id.endsWith('/') ? id.slice(0, -1) : id,
-          ) ?? [],
+          selectedFilesIds
+            .concat(selectedFolderIds.map(removeTrailingSlash))
+            .filter(
+              (id) => id.split('/').slice(0, -1).join('/') === currentPath,
+            ),
         ),
-      [previousSelectedFilesIds],
+      [selectedFilesIds, selectedFolderIds],
+    );
+
+    const pathSelectionHandler = useCallback(
+      (paths: Set<string>) => {
+        const normalizedIds = [...paths].map((id) =>
+          folderPaths.has(id) ? addTrailingSlashIfAbsent(id) : id,
+        );
+
+        dispatch(FilesActions.setChosenFilesAndFolders({ ids: normalizedIds }));
+      },
+      [dispatch, folderPaths, currentPath],
     );
 
     return (
@@ -421,7 +422,7 @@ export const FileManagerModal = memo(
               onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
-              defaultSelectedPaths={defaultSelectedPaths}
+              selectedPaths={selectedPaths}
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">

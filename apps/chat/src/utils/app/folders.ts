@@ -689,6 +689,10 @@ export const getPartialAndFullyChosenFolders = (
   emptyFolderIds: string[] = [],
   selectedEmptyFolderIds: string[] = [],
 ) => {
+  const selectedEmptyFolderIdsSet = new Set(
+    selectedEmptyFolderIds.map(addTrailingSlashIfAbsent),
+  );
+
   const fullyChosenFolderIds = folders
     .map((folder) => addTrailingSlashIfAbsent(folder.id))
     .filter(
@@ -704,7 +708,7 @@ export const getPartialAndFullyChosenFolders = (
         emptyFolderIds
           .filter((id) => id.startsWith(folderId))
           .every((id) =>
-            selectedEmptyFolderIds.includes(addTrailingSlashIfAbsent(id)),
+            selectedEmptyFolderIdsSet.has(addTrailingSlashIfAbsent(id)),
           ),
     );
 

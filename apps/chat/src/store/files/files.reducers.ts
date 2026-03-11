@@ -208,6 +208,7 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         id?: string;
+        selectedEmptyFoldersIds?: string[];
       }>,
     ) => {
       state.filesStatus = UploadStatus.LOADING;
@@ -219,6 +220,7 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         files: DialFile[];
         foldersSet: Set<string>;
+        selectedEmptyFoldersIds?: string[];
       }>,
     ) => {
       const parentFolderId = Array.from(payload.foldersSet)[0];
@@ -264,7 +266,10 @@ export const filesSlice = createSlice({
         );
       }
 
-      const idsToReselect = state.chosenEmptyFoldersIds.reduce<{
+      const selectedEmptyFolderIds =
+        payload.selectedEmptyFoldersIds ?? state.chosenEmptyFoldersIds;
+
+      const idsToReselect = selectedEmptyFolderIds.reduce<{
         folderIds: string[];
         fileIds: string[];
       }>(
@@ -391,6 +396,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         id?: string;
+        selectedEmptyFoldersIds?: string[];
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;
@@ -409,6 +415,7 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         folders: FileFolderInterface[];
         folderId?: string;
+        selectedEmptyFoldersIds?: string[];
       }>,
     ) => {
       state.loadingFolderId = undefined;
@@ -429,10 +436,11 @@ export const filesSlice = createSlice({
         ),
       );
 
+      const selectedEmptyFolderIds =
+        payload.selectedEmptyFoldersIds ?? state.chosenEmptyFoldersIds;
+
       const folderIdsToSelect = payload.folders
-        .filter((f) =>
-          state.chosenEmptyFoldersIds.some((id) => f.id.startsWith(id)),
-        )
+        .filter((f) => selectedEmptyFolderIds.some((id) => f.id.startsWith(id)))
         .map(({ id }) => addTrailingSlashIfAbsent(id));
 
       state.chosenEmptyFoldersIds = xor(
@@ -692,10 +700,18 @@ export const filesSlice = createSlice({
     ) => {
       const folderIds = payload.ids.filter(isFolderId);
       const fileIds = payload.ids.filter((id) => !isFolderId(id));
+      const emptyFolderIds = state.folders
+        .filter((f) => !state.files.some(({ id }) => id.startsWith(f.id)))
+        .map(({ id }) => id);
 
-      const emptyFolderIds = folderIds.filter(
-        (id) => !state.files.some((f) => f.id.startsWith(id)),
-      );
+      const selectedEmptyFolderIds = folderIds
+        .filter((id) => !state.files.some((f) => f.id.startsWith(id)))
+        .concat(
+          emptyFolderIds.filter((id) =>
+            folderIds.some((folderId) => id.startsWith(folderId)),
+          ),
+        );
+
       const fileIdsToSelect = [
         ...fileIds,
         ...state.files
@@ -706,13 +722,13 @@ export const filesSlice = createSlice({
       ];
 
       if (
-        isEqual(emptyFolderIds, state.chosenEmptyFoldersIds) &&
+        isEqual(selectedEmptyFolderIds, state.chosenEmptyFoldersIds) &&
         isEqual(state.chosenFileIds, fileIdsToSelect)
       ) {
         return;
       }
 
-      state.chosenEmptyFoldersIds = emptyFolderIds;
+      state.chosenEmptyFoldersIds = selectedEmptyFolderIds;
       state.chosenFileIds = fileIdsToSelect;
     },
     setChosenFolder: (

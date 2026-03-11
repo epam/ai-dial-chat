@@ -247,6 +247,7 @@ const getFilesEpic: AppEpic = (action$) =>
               FilesActions.getFilesSuccess({
                 files,
                 foldersSet: new Set([payload.id ?? getFileRootId()]),
+                selectedEmptyFoldersIds: payload.selectedEmptyFoldersIds,
               }),
             ),
             catchError(() => of(FilesActions.getFilesFail())),
@@ -314,6 +315,7 @@ const getFileFoldersEpic: AppEpic = (action$) =>
           FilesActions.getFoldersSuccess({
             folderId: payload.id,
             folders,
+            selectedEmptyFoldersIds: payload.selectedEmptyFoldersIds,
           }),
         ),
         catchError(() =>
@@ -323,13 +325,17 @@ const getFileFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
-const getFilesWithFoldersEpic: AppEpic = (action$) =>
+const getFilesWithFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.getFilesWithFolders.type),
     switchMap(({ payload }) => {
+      const selectedEmptyFoldersIds = FilesSelectors.selectChosenEmptyFolderIds(
+        state$.value,
+      );
+
       return concat(
-        of(FilesActions.getFolders(payload)),
-        of(FilesActions.getFiles(payload)),
+        of(FilesActions.getFolders({ ...payload, selectedEmptyFoldersIds })),
+        of(FilesActions.getFiles({ ...payload, selectedEmptyFoldersIds })),
       );
     }),
   );

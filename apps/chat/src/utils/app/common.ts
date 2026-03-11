@@ -397,8 +397,11 @@ export const replaceStringRange = (
 
 export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
 
-export const addTrailingSlashIfAbsent = (id: string) =>
-  id.endsWith('/') ? id : `${id}/`;
+export const addTrailingSlashIfAbsent = (str: string) =>
+  str.endsWith('/') ? str : `${str}/`;
+
+export const removeTrailingSlash = (str: string) =>
+  str.endsWith('/') ? str.slice(0, -1) : str;
 
 export const getEntityBaseId = (id: string): string => {
   const lastColonIndex = id.lastIndexOf(':');
