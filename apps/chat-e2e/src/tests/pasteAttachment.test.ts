@@ -126,8 +126,12 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         await filesManagerModalCollapsibleSidebar.expandIfCollapsed();
-        await filesManagerModalFoldersTree.expandFolders(
+        await filesManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: true },
           ExpectedConstants.fileUploadFolder,
+        );
+        await filesManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: false },
           yearMonthSubfolder,
         );
         await filesManagerGridAssertion.assertGridRowByNameState(
