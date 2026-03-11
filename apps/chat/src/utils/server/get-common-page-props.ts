@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -25,8 +26,6 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 import { HeadersNames } from '@/src/constants/server';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { safeParseJSON } from '../json';
 import {

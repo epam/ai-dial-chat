@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   copyFilesInBatches,
@@ -14,8 +15,6 @@ import { DialAIError } from '@/src/types/error';
 import { FileOperationsResult } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
