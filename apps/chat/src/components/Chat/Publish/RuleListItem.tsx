@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -53,7 +54,7 @@ export function RuleListItem({
                 {startCase(toLower(rule.source))}
               </span>
               <span className="font-normal italic" data-qa="rule-function">
-                {toLower(rule.function)}
+                {toLower(getFilterLabel(rule.function))}
               </span>
               {rule.targets.map((target, index) => (
                 <Fragment key={index}>

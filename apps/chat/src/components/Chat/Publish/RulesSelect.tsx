@@ -7,14 +7,13 @@ import { PublicationFunctions } from '@/src/types/publication';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
+import { startCase, toLower } from 'lodash-es';
 
 interface FilterTypeProps {
   id: string;
   filters: string[];
   selectedFilter: string;
-  capitalizeFirstLetters?: boolean;
+  formattingFunction?: (filterType: string) => string;
   onChangeFilter: (filterType: PublicationFunctions) => void;
   menuClassName?: string;
   triggerClassName?: string;
@@ -24,12 +23,16 @@ export function RulesSelect({
   id,
   filters,
   selectedFilter,
-  capitalizeFirstLetters,
   onChangeFilter,
   menuClassName,
   triggerClassName,
+  formattingFunction,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const selectedFilterLabel = formattingFunction
+    ? formattingFunction(selectedFilter)
+    : startCase(toLower(selectedFilter));
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
@@ -49,9 +52,7 @@ export function RulesSelect({
             triggerClassName,
           )}
         >
-          {capitalizeFirstLetters
-            ? startCase(toLower(selectedFilter))
-            : selectedFilter}
+          {selectedFilterLabel}
           <IconChevronDown
             data-qa={`open-filter-dropdown-${id}`}
             className={classNames(
@@ -70,9 +71,9 @@ export function RulesSelect({
             key={filterType}
             className="max-w-full text-xs hover:bg-accent-primary-alpha"
             item={
-              capitalizeFirstLetters
-                ? startCase(toLower(filterType))
-                : filterType
+              formattingFunction
+                ? formattingFunction(filterType)
+                : startCase(toLower(filterType))
             }
             value={filterType}
             onClick={onChangeHandler}
