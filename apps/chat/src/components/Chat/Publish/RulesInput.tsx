@@ -4,6 +4,7 @@ import { Fragment, useCallback } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getRuleFilterId } from '@/src/utils/app/publications';
+import { getFilterLabel } from '@/src/utils/app/rules';
 
 import {
   TargetAudienceFilter,
@@ -72,7 +73,7 @@ export const RulesInput = ({
                   {startCase(toLower(item.source))}
                 </span>
                 <span className="italic" data-qa="rule-function">
-                  {toLower(item.filterFunction)}
+                  {toLower(getFilterLabel(item.filterFunction))}
                 </span>
                 {item.filterParams.map((param, index) => (
                   <Fragment key={index}>
