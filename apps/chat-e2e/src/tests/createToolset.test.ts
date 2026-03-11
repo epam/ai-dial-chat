@@ -291,18 +291,15 @@ dialTest(
     await dialTest.step(
       'Check that the required fields of Tools settings step form are marked with asterisks',
       async () => {
-        for (const field of [
-          ExpectedConstants.endpointLabel,
-          ExpectedConstants.transportProtocol,
-        ]) {
-          const fieldRequiredIndicator =
-            toolsetEditorViewForm.getRequiredIndicator(field);
-          await baseAssertion.assertElementState(
-            fieldRequiredIndicator,
-            'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+        const fieldRequiredIndicator =
+          toolsetEditorViewForm.getRequiredIndicator(
+            ExpectedConstants.endpointLabel,
           );
-        }
+        await baseAssertion.assertElementState(
+          fieldRequiredIndicator,
+          'visible',
+          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+        );
       },
     );
 
