@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { ApiUtils } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
@@ -13,8 +14,6 @@ import { HTTPMethod } from '@/src/types/http';
 
 import { DIAL_API_HOST } from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from './auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 
