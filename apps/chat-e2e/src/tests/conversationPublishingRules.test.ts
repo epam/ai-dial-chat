@@ -379,7 +379,7 @@ dialAdminTest(
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Contain),
           filterValues: [firstFilterValue, secondFilterValue],
         });
       },
@@ -550,7 +550,7 @@ dialAdminTest(
           await publishingFilter.filterFunction.click();
           await publishingFilter
             .getFilterFunctionDropdownMenu()
-            .selectMenuOption(PublicationFunctions.Contain);
+            .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
           await publishingFilter.setFilterValue(value);
           await publishingFilter.saveFilterButton.click();
           await publishingRulesAssertion.assertRule(
