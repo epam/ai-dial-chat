@@ -32,7 +32,7 @@ export const ChatDropArea = ({
     ConversationsSelectors.selectTalkToConversationId,
   );
 
-  const handleUploadFiles = useChatUploadFiles();
+  const handleUploadFiles = useChatUploadFiles({ preUploadFiles: true });
 
   const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
