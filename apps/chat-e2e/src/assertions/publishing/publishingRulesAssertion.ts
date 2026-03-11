@@ -1,4 +1,5 @@
 import { PublicationFunctions } from '@/chat/types/publication';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { BaseAssertion } from '@/src/assertions';
 import {
   BooleanOperator,
@@ -108,11 +109,11 @@ export class PublishingRulesAssertion extends BaseAssertion {
       );
     }
     if (fieldsToVerify.filterFunctionValue) {
+      const value = getFilterLabel(fieldsToVerify.filterFunctionValue);
       const expectedValue = Object.values(PublicationFunctions).includes(
         fieldsToVerify.filterFunctionValue as PublicationFunctions,
       )
-        ? fieldsToVerify.filterFunctionValue.charAt(0).toUpperCase() +
-          fieldsToVerify.filterFunctionValue.slice(1).toLowerCase()
+        ? value
         : fieldsToVerify.filterFunctionValue;
       await this.assertElementText(
         publishingFilter.filterFunction,
