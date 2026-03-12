@@ -20,7 +20,7 @@ import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageBu
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import RefreshCW from '@/public/images/icons/refresh-cw.svg';
-import { DialButton, DialIconButton } from '@epam/ai-dial-ui-kit';
+import { DialIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showReplayControls: boolean;
