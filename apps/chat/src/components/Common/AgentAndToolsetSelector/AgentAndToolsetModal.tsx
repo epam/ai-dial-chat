@@ -1,4 +1,3 @@
-import { IconSearch } from '@tabler/icons-react';
 import {
   useCallback,
   useEffect,
@@ -64,7 +63,11 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
-import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialNeutralButton,
+  DialPrimaryButton,
+  DialSearch,
+} from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
@@ -450,20 +453,15 @@ const AgentAndToolsetModalView = ({
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col px-5 pb-2">
         <div ref={headerRef} className="mb-2">
           <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4">
-            <div className="relative flex grow">
-              <IconSearch
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                size={18}
-              />
-              <input
-                value={searchTerm}
-                onChange={(e) => handleSetSearchTerm(e.target.value)}
-                placeholder={t('Search')}
-                className="input-form peer m-0 pl-[38px]"
-                data-qa="search-agents"
-                autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-              />
-            </div>
+            <DialSearch
+              data-qa="search-agents"
+              autoFocus={isOverlay || !isSmallScreenOrTouchable()}
+              placeholder={t('Search')}
+              className="input-form peer"
+              value={searchTerm}
+              onChange={handleSetSearchTerm}
+            />
+
             <div className="flex gap-2 sm:gap-3">
               {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
                 (tab) => (

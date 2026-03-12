@@ -23,6 +23,7 @@ import { Loader } from '@/src/components/Common/Loader';
 import { ConversationCompareItem } from './ConversationCompareItem';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { DialSearch } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -171,12 +172,12 @@ export const ChatCompareSelect = ({
         <div className="overflow-auto px-6 pt-4">
           {comparableConversations.length ? (
             <>
-              <input
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+              <DialSearch
+                data-qa="search-compare-conversation"
                 placeholder={t('Search conversations')}
                 className="input-form peer"
-                data-qa="search-compare-conversation"
+                value={searchValue}
+                onChange={setSearchValue}
               />
               <div className="mt-4">
                 {filteredComparableConversations.length ? (
