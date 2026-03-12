@@ -628,7 +628,10 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   }}
                   autoFocus
                 />
-                <div className="absolute right-1 z-10 flex gap-x-1" data-qa="actions">
+                <div
+                  className="absolute right-1 z-10 flex gap-x-1"
+                  data-qa="actions"
+                >
                   <DialGhostIconButton
                     data-qa="confirm-edit"
                     onClick={() => handleUploadEmptyFile(newFileName)}
