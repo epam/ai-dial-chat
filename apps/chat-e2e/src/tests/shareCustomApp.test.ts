@@ -361,6 +361,9 @@ dialSharedWithMeTest(
       'Open File manager page by additional user and verify app icon is still displayed on "Shared with me" tab',
       async () => {
         await additionalShareUserFileManagerPage.reloadPage();
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: false,
+        });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
@@ -397,6 +400,7 @@ dialSharedWithMeTest(
     'Icon file stay in Manage attachments if recipient Unshare app',
   async ({
     marketplacePage,
+    additionalShareUserDialHomePage,
     marketplaceHeader,
     marketplaceEntitiesSection,
     entityDetailsModal,
@@ -581,6 +585,7 @@ dialSharedWithMeTest(
       'Select created conversation and click on app icon in the chat header',
       async () => {
         await additionalShareUserNavigationPanel.backToChat();
+        additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserConversations.selectEntity(conversation.name);
         await additionalShareUserChatHeader.chatModelIcon.click();
       },

@@ -196,6 +196,8 @@ const dialSharedWithMeTest = dialTest.extend<{
         additionalUserShareApiHelper,
         additionalSecondUserItemApiHelper,
         additionalSecondUserShareApiHelper,
+        additionalUserFileApiHelper,
+        additionalSecondShareUserFileApiHelper,
       },
       use,
     ) => {
@@ -205,6 +207,8 @@ const dialSharedWithMeTest = dialTest.extend<{
       await additionalSecondUserItemApiHelper.deleteAllData(
         BucketUtil.getAdditionalSecondShareUserBucket(),
       );
+      await additionalUserFileApiHelper.deleteAllFiles();
+      await additionalSecondShareUserFileApiHelper.deleteAllFiles();
       const additionalUserSharedEntities =
         await additionalUserShareApiHelper.listSharedWithMeEntities(
           ...Object.values(BackendResourceType),
