@@ -59,9 +59,7 @@ export const MessageAttachments = ({
 
     if (applicationVisualizerConfig) {
       const visualizerContentType = applicationVisualizerConfig.contentType;
-      const visualizerAttachments = attachments.filter(
-        (a) => a.type === visualizerContentType && a.url,
-      );
+      const visualizerAttachments = attachments.filter((a) => a.url);
       const groupedVisualizerItems = visualizerAttachments.map((a) => ({
         url: getMappedAttachmentUrl(a.url)!,
         mimeType: a.type,
