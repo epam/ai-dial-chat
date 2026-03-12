@@ -33,6 +33,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
 import {
+  DialEllipsisTooltip,
   DialGhostIconButton,
   DialLinkButton,
   ElementSize,
@@ -205,10 +206,11 @@ function ShareModalView() {
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
           <Tooltip tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}>
             <div
-              className="line-clamp-2 w-full break-words pr-6"
+              className="flex w-full items-center gap-2 pr-6"
               data-qa="modal-entity-name"
             >
-              {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
+              <p>{t('Share')}:</p>
+              <DialEllipsisTooltip text={shareResourceName?.trim()} />
             </div>
           </Tooltip>
         </h4>
