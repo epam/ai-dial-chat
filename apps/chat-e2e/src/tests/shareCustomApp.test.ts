@@ -716,9 +716,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserFileManagerPage.openFileManagerPage({
           updateInstalledDeployments: false,
-          getInstalledDeployments: true,
           updateInstalledToolsets: false,
-          getInstalledToolsets: true,
         });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
         const rowLocator =
