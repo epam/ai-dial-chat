@@ -89,6 +89,8 @@ export const PlaybackControls = ({
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
   const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
 
+  const iconClassName =
+    'absolute top-3 p-0 outline-none hover:text-accent-primary disabled:text-controls-disable size-[20px]';
   const isActiveIndex = typeof activeIndex === 'number';
 
   const isNextMessageInStack = useMemo(() => {
@@ -310,7 +312,7 @@ export const PlaybackControls = ({
               isDisabledPlaybackControls ||
               (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
             }
-            className="absolute left-4 top-3 rounded p-0 outline-none hover:text-accent-primary disabled:text-controls-disable"
+            className={classNames(iconClassName, 'left-4')}
             icon={<IconPlayerPlay size={20} className="rotate-180" />}
           />
         </Tooltip>
@@ -355,7 +357,7 @@ export const PlaybackControls = ({
                     <DialIconButton
                       data-qa="playback-next"
                       onClick={handlePlayNextMessage}
-                      className="absolute right-4 top-3 rounded p-0 outline-none hover:text-accent-primary disabled:text-controls-disable"
+                      className={classNames(iconClassName, 'right-4')}
                       disabled={
                         isDisabledPlaybackControls ||
                         isMessageStreaming ||
