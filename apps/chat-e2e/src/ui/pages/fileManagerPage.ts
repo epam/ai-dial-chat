@@ -34,7 +34,9 @@ export class FileManagerPage extends BasePage {
     return this.fileManagerContainer;
   }
 
-  public async openFileManagerPage(options: Partial<FileManagerPageOptions> = {}) {
+  public async openFileManagerPage(
+    options: Partial<FileManagerPageOptions> = {},
+  ) {
     const mergedOptions = { ...DEFAULT_FILE_MANAGER_OPTIONS, ...options };
     const expectedResponses: ExpectedApiResponse[] = [];
     if (mergedOptions.updateInstalledDeployments) {
