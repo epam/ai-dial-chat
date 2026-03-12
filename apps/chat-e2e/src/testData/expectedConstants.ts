@@ -102,7 +102,8 @@ export const ExpectedConstants = {
     'Please regenerate response to continue working with chat',
   regenerateResponseTooltip: 'Regenerate response',
   sharedEntityTooltip: 'Shared',
-  sharedEntityName: (name: string) => `Share:${name}`,
+  sharedEntityName: (name: string, hasSpace?: boolean) =>
+    `Share:${hasSpace ? ' ' : ''}${name}`,
   sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
     const startIndex =
