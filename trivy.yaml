@@ -11,3 +11,7 @@ db:
     - public.ecr.aws/aquasecurity/trivy-java-db:1
 misconfiguration:
   checks-bundle-repository: public.ecr.aws/aquasecurity/trivy-checks
+scan:
+  skip-dirs:
+    - '**/__tests__'
+    - '/usr/local/lib/node_modules/npm'
