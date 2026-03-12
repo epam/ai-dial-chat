@@ -578,7 +578,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 };
 
                 newOptions.theme = 'light';
-                newOptions.modelId = 'dall-e-3';
+                newOptions.modelId = 'gemini-2.5-flash';
 
                 overlay.current?.setOverlayOptions(newOptions);
               }}
