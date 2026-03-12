@@ -19,7 +19,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
-import { ButtonAppearance, ButtonVariant } from '@epam/ai-dial-ui-kit';
+import { ButtonVariant } from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
