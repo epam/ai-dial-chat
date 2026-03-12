@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 

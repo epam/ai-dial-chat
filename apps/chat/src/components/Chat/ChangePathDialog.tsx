@@ -134,8 +134,8 @@ export const ChangePathDialog = ({
   }, [dispatch, isOpen]);
 
   const handleSearch = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
+    (value: string) => {
+      setSearchQuery(value);
       dispatch(FoldersActions.resetNewTemporaryFolderId());
     },
     [dispatch],
