@@ -100,7 +100,7 @@ export const CodeBlock: FC<Props> = memo(
           {!isLastMessageStreaming && (
             <div
               data-no-context-menu
-              className="flex items-center gap-3 text-secondary"
+              className="flex items-center gap-2 text-secondary"
             >
               <DialGhostIconButton
                 size={ElementSize.Small}
