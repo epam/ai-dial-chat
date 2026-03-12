@@ -9,6 +9,8 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
+import { isParentFolderSelected } from '@/src/utils/app/folders';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -176,6 +178,9 @@ export const FileManagerModal = memo(
           (file) => file.id,
         ),
       );
+      const hiddenFilesIds = new Set(
+        selectedFiles.filter(isHiddenEntity).map(({ id }) => id),
+      );
 
       if (invalidFileIds.size > 0) {
         dispatch(
@@ -191,12 +196,21 @@ export const FileManagerModal = memo(
 
       if (canAttachFolders) {
         selectedFolderIds.forEach((folderId) => {
-          accumulatedIds.add(folderId);
+          if (
+            !isParentFolderSelected({
+              currentFolderId: folderId,
+              selectedFolderIds: selectedFolderIds.filter(
+                (id) => id !== folderId,
+              ),
+            })
+          ) {
+            accumulatedIds.add(folderId);
+          }
         });
       }
 
       selectedFilesIds.forEach((fileId) => {
-        if (invalidFileIds.has(fileId)) {
+        if (invalidFileIds.has(fileId) || hiddenFilesIds.has(fileId)) {
           return;
         }
 
