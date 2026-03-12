@@ -81,8 +81,8 @@ export const ChatControls: FC<Props> = ({
   return (
     <DialIconButton
       className={classNames(
-        'absolute p-0 size-[20px]',
-        isOverlay ? 'bottom-2 right-3' : 'top-3 right-4 md:bottom-3',
+        'absolute size-[20px] p-0',
+        isOverlay ? 'bottom-2 right-3' : 'right-4 top-3 md:bottom-3',
       )}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
