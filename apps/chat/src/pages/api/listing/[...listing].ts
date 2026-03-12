@@ -59,32 +59,46 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     searchParams.set('recursive', recursive);
     searchParams.set('permissions', 'true');
 
-    const url = `${sanitizeUri(path)}/?${searchParams}`;
+    const baseUrl = `${sanitizeUri(path)}/?${searchParams}`;
 
-    const response = await fetch(url, {
-      headers: getApiHeaders({ jwt: token?.access_token as string }),
-    });
-
-    if (response.status === 404) {
-      return res.status(200).send([]);
-    } else if (!response.ok) {
-      const serverErrorMessage = await response.text();
-      throw new DialAIError(serverErrorMessage, response.status, req);
-    }
-
-    const json = (await response.json()) as
-      | BackendFileFolder
-      | BackendChatFolder;
-    let result: (
+    const allItems: (
       | BackendFile
       | BackendFileFolder
       | BackendChatEntity
       | BackendChatFolder
-    )[] = json.items || [];
+    )[] = [];
+    let nextToken: string | undefined;
 
-    if (filter) {
-      result = result.filter((item) => item.nodeType === filter);
-    }
+    do {
+      const url = nextToken ? `${baseUrl}&token=${nextToken}` : baseUrl;
+
+      const response = await fetch(url, {
+        headers: getApiHeaders({ jwt: token?.access_token as string }),
+      });
+
+      if (response.status === 404) {
+        break;
+      } else if (!response.ok) {
+        const serverErrorMessage = await response.text();
+        throw new DialAIError(serverErrorMessage, response.status, req);
+      }
+
+      const json = (await response.json()) as (
+        | BackendFileFolder
+        | BackendChatFolder
+      ) & { nextToken?: string };
+
+      if (json.items) {
+        allItems.push(...json.items);
+      }
+
+      nextToken = json.nextToken;
+    } while (nextToken);
+
+    // Filtering needed to avoid DIAL Chat crashing in case of name === null || name === ''
+    const result = allItems.filter(
+      (item) => (!filter || item.nodeType === filter) && !!item.name,
+    );
 
     return res.status(200).send(result);
   } catch (error) {
