@@ -11,7 +11,7 @@ import { DialFile } from '@/src/types/files';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
@@ -63,7 +63,7 @@ export const ChatInputFileAttachment = ({
             <DialIconButton
               data-qa="retry-upload"
               onClick={() => onRetryFile(file.id)}
-              size={ElementSize.Small}
+              size={ButtonSize.Small}
               className="px-0"
               icon={
                 <IconReload

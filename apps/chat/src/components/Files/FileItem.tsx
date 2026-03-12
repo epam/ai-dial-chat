@@ -34,7 +34,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import { ButtonSize, DialIconButton } from '@epam/ai-dial-ui-kit';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -260,7 +260,7 @@ export const FileItem = ({
           <DialIconButton
             onClick={handleRetry}
             data-qa="retry-upload"
-            size={ElementSize.Small}
+            size={ButtonSize.Small}
             icon={
               <IconReload
                 className="shrink-0 text-secondary hover:text-accent-primary"
