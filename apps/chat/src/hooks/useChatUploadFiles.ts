@@ -5,11 +5,19 @@ import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors, FilesSelectors } from '@/src/store/selectors';
 
-export const useChatUploadFiles = (
-  path: string = getQuickAttachmentsSavingPath(),
-  selectedAttachmentsAmount?: number,
+interface ChatUploadFilesProps {
+  path?: string;
+  selectedAttachmentsAmount?: number;
+  skipSelect?: boolean;
+  preUploadFiles?: boolean;
+}
+
+export const useChatUploadFiles = ({
+  path = getQuickAttachmentsSavingPath(),
+  selectedAttachmentsAmount,
   skipSelect = false,
-) => {
+  preUploadFiles = false,
+}: ChatUploadFilesProps = {}) => {
   const availableAttachmentsTypes = useAppSelector(
     ConversationsSelectors.selectAvailableAttachmentsTypes,
   );
@@ -26,6 +34,6 @@ export const useChatUploadFiles = (
     maximumAttachmentsAmount,
     availableAttachmentsTypes,
     skipSelect,
-    false,
+    preUploadFiles,
   );
 };
