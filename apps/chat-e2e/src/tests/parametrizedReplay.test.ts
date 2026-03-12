@@ -59,6 +59,7 @@ dialTest(
     variableModalAssertion,
     variableModalDialog,
     chatAssertion,
+    page,
     chatMessagesAssertion,
     localStorageManager,
   }) => {
@@ -143,6 +144,15 @@ dialTest(
       'Close modal and verify "Start Replay" button is available',
       async () => {
         await variableModalDialog.closeButton.click();
+        await chatAssertion.assertReplayButtonState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Open modal again, click out of modal and verify "Start Replay" button is available',
+      async () => {
+        await chat.replay.click();
+        await page.mouse.click(0, 0);
         await chatAssertion.assertReplayButtonState('visible');
       },
     );
