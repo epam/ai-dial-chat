@@ -38,7 +38,7 @@ import {
   Feature,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -303,14 +303,14 @@ export const PlaybackControls = ({
           asChild
           isTriggerClickable
         >
-          <DialButton
+          <DialIconButton
             data-qa="playback-prev"
             onClick={handlePrevMessage}
             disabled={
               isDisabledPlaybackControls ||
               (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
             }
-            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+            className="absolute top-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable p-0"
             iconBefore={<IconPlayerPlay size={20} className="rotate-180" />}
           />
         </Tooltip>
@@ -352,16 +352,16 @@ export const PlaybackControls = ({
                     isTriggerClickable
                     asChild
                   >
-                    <DialButton
+                    <DialIconButton
                       data-qa="playback-next"
                       onClick={handlePlayNextMessage}
-                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+                      className="absolute top-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable p-0"
                       disabled={
                         isDisabledPlaybackControls ||
                         isMessageStreaming ||
                         !isNextMessageInStack
                       }
-                      iconBefore={<IconPlayerPlay size={20} />}
+                      icon={<IconPlayerPlay size={20} />}
                     />
                   </Tooltip>
                 </>
