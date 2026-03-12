@@ -310,8 +310,8 @@ export const PlaybackControls = ({
               isDisabledPlaybackControls ||
               (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
             }
-            className="absolute top-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable p-0"
-            iconBefore={<IconPlayerPlay size={20} className="rotate-180" />}
+            className="absolute left-4 top-3 rounded p-0 outline-none hover:text-accent-primary disabled:text-controls-disable"
+            icon={<IconPlayerPlay size={20} className="rotate-180" />}
           />
         </Tooltip>
         <div
@@ -355,7 +355,7 @@ export const PlaybackControls = ({
                     <DialIconButton
                       data-qa="playback-next"
                       onClick={handlePlayNextMessage}
-                      className="absolute top-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable p-0"
+                      className="absolute right-4 top-3 rounded p-0 outline-none hover:text-accent-primary disabled:text-controls-disable"
                       disabled={
                         isDisabledPlaybackControls ||
                         isMessageStreaming ||
