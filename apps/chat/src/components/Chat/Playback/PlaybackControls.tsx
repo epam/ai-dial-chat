@@ -38,7 +38,7 @@ import {
   Feature,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
-import { DialButton, DialIconButton } from '@epam/ai-dial-ui-kit';
+import { DialIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
