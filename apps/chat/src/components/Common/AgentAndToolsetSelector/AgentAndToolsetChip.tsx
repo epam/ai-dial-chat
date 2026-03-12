@@ -19,6 +19,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
+import { ButtonAppearance, ButtonVariant } from '@epam/ai-dial-ui-kit';
+
 interface ChipWrapperProps {
   isError: boolean;
   isCustomTool?: boolean;
@@ -65,6 +67,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
       )}
       onClick={() => onRemove?.(id)}
       aria-label="Remove item"
+      variant={isError ? ButtonVariant.Error : ButtonVariant.Primary}
     />
   );
 };
