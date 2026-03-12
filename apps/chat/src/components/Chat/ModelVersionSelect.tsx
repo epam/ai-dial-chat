@@ -31,7 +31,7 @@ const VersionPrefix = () => {
 };
 
 const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
-  if (isCreatedMarketplaceEntity(entity)) {
+  if (isCreatedMarketplaceEntity(entity) || entity.version) {
     return entity.version || NA_VERSION;
   }
   return entity.id;
