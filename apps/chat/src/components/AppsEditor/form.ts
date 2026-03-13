@@ -322,7 +322,7 @@ const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   type: AppsEditorSchemaTypes.CustomApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
-  completionUrl: app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER,
+  completionUrl: app ? (app.completionUrl ?? '') : MANDATORY_FIELD_PLACEHOLDER,
   features: safeStringifyApplicationFeatures(app?.features),
 });
 
@@ -485,9 +485,9 @@ const getExternalAppFormData = (
   app?: CustomApplicationModel,
 ): ExternalAppForm => ({
   type: AppsEditorSchemaTypes.ExternalApp,
-  externalUrl:
-    (app?.applicationProperties as ExternalAppConfig)?.external_url ||
-    MANDATORY_FIELD_PLACEHOLDER,
+  externalUrl: app
+    ? ((app?.applicationProperties as ExternalAppConfig)?.external_url ?? '')
+    : MANDATORY_FIELD_PLACEHOLDER,
 });
 
 const getSettingsFormData = ({
