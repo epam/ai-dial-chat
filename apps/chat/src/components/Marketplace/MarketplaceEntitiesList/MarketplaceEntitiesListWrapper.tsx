@@ -73,6 +73,7 @@ export const MarketplaceEntitiesListWrapper = forwardRef<
       router.events.off('routeChangeComplete', handleRouteChange);
     };
     // We don't need to re-run this effect when the router changes, because we just register the event listener once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
