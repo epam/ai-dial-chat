@@ -11,6 +11,7 @@ import {
   isExternalApp,
 } from '@/src/utils/app/application';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -23,6 +24,7 @@ import {
   CardIconSizes,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -148,14 +150,14 @@ export const MarketplaceEntityCard = memo(
                   !isMyEntity && '!mr-12',
                 )}
               >
-                {entity.version && (
+                {(isCreatedMarketplaceEntity(entity) || entity.version) && (
                   <>
                     {t('Version: ')}
                     <span
                       className="mr-1 max-w-full overflow-hidden truncate whitespace-nowrap"
                       data-qa="version"
                     >
-                      {entity.version}
+                      {entity.version || t(NA_VERSION)}
                     </span>
                   </>
                 )}
