@@ -6,10 +6,18 @@ import {
   IconFile,
   IconFolder,
 } from '@tabler/icons-react';
-import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
@@ -298,30 +306,21 @@ export const MessageAttachment = ({
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (wasOpened && anchorRef.current) {
-        const anchor = anchorRef.current;
-        const styles = getComputedStyle(anchorRef.current);
-        const padding =
-          parseFloat(styles.paddingBottom || '0') +
-          parseFloat(styles.paddingTop || '0');
-        if (anchor.clientHeight - padding > 0) {
-          anchorRef.current?.scrollIntoView({ block: 'end' });
-          setWasOpened(false);
-        }
+  const handleResize = useCallback(() => {
+    if (wasOpened && anchorRef.current) {
+      const anchor = anchorRef.current;
+      const styles = getComputedStyle(anchorRef.current);
+      const padding =
+        parseFloat(styles.paddingBottom || '0') +
+        parseFloat(styles.paddingTop || '0');
+      if (anchor.clientHeight - padding > 0) {
+        anchorRef.current?.scrollIntoView({ block: 'end' });
+        setWasOpened(false);
       }
-    };
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (anchorRef.current) {
-      resizeObserver.observe(anchorRef.current);
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, [wasOpened]);
+
+  useResizeObserver(anchorRef.current, handleResize);
 
   const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
   const Icon = isFolder ? IconFolder : IconFile;
