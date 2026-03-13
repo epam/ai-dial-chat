@@ -44,7 +44,6 @@ import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Loader } from '@/src/components/Common/Loader';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
@@ -629,16 +628,15 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   }}
                   autoFocus
                 />
-                <div className="absolute right-1 z-10 flex" data-qa="actions">
-                  <SidebarActionButton
-                    handleClick={() => handleUploadEmptyFile(newFileName)}
-                    dataQA="confirm-edit"
-                    iconBefore={
-                      <IconCheck
-                        size={18}
-                        className="hover:text-accent-primary"
-                      />
-                    }
+                <div
+                  className="absolute right-1 z-10 flex gap-x-1"
+                  data-qa="actions"
+                >
+                  <DialGhostIconButton
+                    data-qa="confirm-edit"
+                    onClick={() => handleUploadEmptyFile(newFileName)}
+                    size={ElementSize.Small}
+                    icon={<IconCheck size={18} />}
                   />
                   <CloseButtonSmall
                     onClick={() => {
