@@ -215,7 +215,7 @@ export const OpenAIStream = async ({
       try {
         abortController.abort();
       } catch (error) {
-        logger.debug(
+        logger.error(
           { error },
           'AbortController: abort was called but the request was already aborted',
         );
@@ -225,7 +225,7 @@ export const OpenAIStream = async ({
         const nodeBody = res.body as Readable | null;
         nodeBody?.destroy?.();
       } catch (error) {
-        logger.debug(
+        logger.error(
           { error },
           'Stream body: destroy was called but the stream was already closed',
         );
