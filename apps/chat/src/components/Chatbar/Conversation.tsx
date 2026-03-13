@@ -201,7 +201,7 @@ export const ConversationComponent = memo(
     const isSelectMode = useAppSelector(
       ConversationsSelectors.selectIsSelectMode,
     );
-    const messageIsStreaming = useAppSelector(
+    const isConversationsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
     const isChosen = useAppSelector((state) =>
@@ -247,7 +247,7 @@ export const ConversationComponent = memo(
           e.dataTransfer &&
           !isExternal &&
           !isSelectMode &&
-          !messageIsStreaming
+          !isConversationsStreaming
         ) {
           e.dataTransfer.setDragImage(getDragImage(), 0, 0);
           e.dataTransfer.setData(
@@ -256,7 +256,7 @@ export const ConversationComponent = memo(
           );
         }
       },
-      [messageIsStreaming, isExternal, isSelectMode],
+      [isConversationsStreaming, isExternal, isSelectMode],
     );
 
     const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
@@ -291,12 +291,12 @@ export const ConversationComponent = memo(
           style={{
             paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
           }}
-          disabled={messageIsStreaming || (isSelectMode && isExternal)}
+          disabled={isConversationsStreaming || (isSelectMode && isExternal)}
           draggable={
             !isExternal &&
             !isNameOrPathInvalid &&
             !isSelectMode &&
-            !messageIsStreaming
+            !isConversationsStreaming
           }
           onClick={() => {
             if (!isSelectMode || !isExternal) {
@@ -335,7 +335,7 @@ export const ConversationComponent = memo(
           />
         </button>
 
-        {!isSelectMode && !messageIsStreaming && (
+        {!isSelectMode && !isConversationsStreaming && (
           <div
             className={classNames(
               'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
