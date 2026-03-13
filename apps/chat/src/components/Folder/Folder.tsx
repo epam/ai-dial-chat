@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
+import { IconCheck, IconFolder, IconMinus } from '@tabler/icons-react';
 import React, {
   ChangeEvent,
   DragEvent,
@@ -76,10 +76,10 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { Checkbox } from '@/src/components/Common/Checkbox';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
@@ -91,6 +91,7 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -1231,28 +1232,24 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )}
         {isRenaming && (
           <div className="absolute right-1 z-10 flex" data-qa="actions">
-            <SidebarActionButton
-              handleClick={(e) => {
+            <DialGhostIconButton
+              data-qa="confirm-edit"
+              onClick={(e) => {
                 e.stopPropagation();
                 if (isRenaming) {
                   handleRename();
                 }
               }}
-              dataQA="confirm-edit"
-              iconBefore={
-                <IconCheck size={18} className="hover:text-accent-primary" />
-              }
+              size={ElementSize.Small}
+              icon={<IconCheck size={18} />}
             />
-            <SidebarActionButton
-              handleClick={(e) => {
+            <CloseButtonSmall
+              onClick={(e) => {
                 e.stopPropagation();
                 setIsRenaming(false);
                 handleNewFolderRename();
               }}
-              dataQA="cancel-edit"
-              iconBefore={
-                <IconX size={18} className="hover:text-accent-primary" />
-              }
+              data-qa="cancel-edit"
             />
           </div>
         )}

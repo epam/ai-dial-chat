@@ -294,13 +294,17 @@ const updateApplicationEpic: AppEpic = (action$) =>
             .pipe(
               map(() => ({ success: true as const })),
               catchError((err) => {
+                const failActions = [
+                  ApplicationActions.updateFail({
+                    oldApplication: payload.oldApplication,
+                  }),
+                  UIActions.setEditorLoader(false),
+                ];
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
-                      ApplicationActions.updateFail({
-                        oldApplication: payload.oldApplication,
-                      }),
+                      ...failActions,
                       UIActions.showErrorToast(
                         translate(
                           'An application with this name and this version already exists.',
@@ -313,9 +317,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                 return of({
                   success: false as const,
                   actions: [
-                    ApplicationActions.updateFail({
-                      oldApplication: payload.oldApplication,
-                    }),
+                    ...failActions,
                     UIActions.showErrorToast(
                       translate('Failed to move application'),
                     ),
@@ -406,6 +408,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     ),
                     EMPTY,
                   ),
+                  of(UIActions.setEditorLoader(false)),
                 );
               }),
               endWith(ApplicationActions.updateComplete()),
@@ -936,7 +939,10 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       }
 
       actions.push(of(UIActions.setEditorLoader(false)));
-      actions.push(of(ApplicationActions.setAppDetails()));
+
+      if (!publicationUrl) {
+        actions.push(of(ApplicationActions.setAppDetails()));
+      }
 
       return navigateAndThen(router, route, concat(...actions));
     }),
