@@ -110,6 +110,7 @@ export const AppsEditor = () => {
   const saveAndExitRef = useRef(false);
   const redirectToChatRef = useRef(false);
   const isSimpleViewSwitchRef = useRef(false);
+  const firstValidationPerformedRef = useRef(false);
 
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
@@ -390,6 +391,13 @@ export const AppsEditor = () => {
       dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(false));
     }
   }, [shouldTriggerEditorAutoUpdate, isAppPublic, handleSubmit, dispatch]);
+
+  useEffect(() => {
+    if (idQuery && !firstValidationPerformedRef.current && !isAppPublic) {
+      void formMethods.trigger();
+    }
+    firstValidationPerformedRef.current = true;
+  }, [idQuery, formMethods.trigger, isAppPublic]);
 
   return (
     <FormProvider {...formMethods}>
