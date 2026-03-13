@@ -110,7 +110,6 @@ const ReplayVariablesDialog = () => {
       prompt={prompt}
       onSubmit={handleContentApply}
       onClose={handleClose}
-      ignoreOutsideClicks="data-replay-variables"
     />
   );
 };
