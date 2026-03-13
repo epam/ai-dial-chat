@@ -68,8 +68,12 @@ const selectInfoModalOpened = (state: RootState) =>
 const selectSelectedEntityInfo = (state: RootState) =>
   rootSelector(state).selectedEntityInfo;
 
+const selectInputContentTemplateMapping = (state: RootState) =>
+  rootSelector(state).inputContentTemplateMapping;
+
 export const ChatSelectors = {
   selectInputContent,
+  selectInputContentTemplateMapping,
   selectChatFormValue,
   selectUploadedConfigurationSchemas,
   selectConfigurationSchemaByModelId,
