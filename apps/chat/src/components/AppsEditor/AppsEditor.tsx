@@ -393,11 +393,11 @@ export const AppsEditor = () => {
   }, [shouldTriggerEditorAutoUpdate, isAppPublic, handleSubmit, dispatch]);
 
   useEffect(() => {
-    if (idQuery && !firstValidationPerformedRef.current) {
+    if (idQuery && !firstValidationPerformedRef.current && !isAppPublic) {
       void formMethods.trigger();
     }
     firstValidationPerformedRef.current = true;
-  }, [idQuery, formMethods.trigger]);
+  }, [idQuery, formMethods.trigger, isAppPublic]);
 
   return (
     <FormProvider {...formMethods}>

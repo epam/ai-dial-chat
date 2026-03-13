@@ -235,11 +235,11 @@ export const ToolsetEditor = () => {
   }, [formMethods, toolsetDetails]);
 
   useEffect(() => {
-    if (idQuery && !firstValidationPerformedRef.current) {
+    if (idQuery && !firstValidationPerformedRef.current && !isToolsetPublic) {
       void formMethods.trigger();
     }
     firstValidationPerformedRef.current = true;
-  }, [idQuery, formMethods.trigger]);
+  }, [idQuery, formMethods.trigger, isToolsetPublic]);
 
   return (
     <FormProvider {...formMethods}>
