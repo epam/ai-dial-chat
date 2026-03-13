@@ -5,38 +5,30 @@ import { Translation } from '@/src/types/translation';
 
 import { MAX_ENTITY_LENGTH, MIN_ENTITY_LENGTH } from './default-ui-settings';
 
-import { startCase } from 'lodash-es';
-
 export const formErrors = {
   required: translate('This field is required'),
   notValidUrl: translate('URL is not correct'),
   notValidUrlProtocol: translate('URL must start with a valid protocol'),
   notValidString: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
     translate(
-      `${getName(name)} should be ${MIN_ENTITY_LENGTH} to ${maxLength} characters long and should not contain special characters`,
+      `${name} should be ${MIN_ENTITY_LENGTH} to ${maxLength} characters long and should not contain special characters`,
     ),
   hasSpecialCharacters: (name = 'Name') =>
     translate(
-      `${getName(name)} should not contain special symbols ${notAllowedSymbols}`,
+      `${name} should not contain special symbols ${notAllowedSymbols}`,
     ),
   tooShort: (name = 'Name', minLength = MIN_ENTITY_LENGTH) =>
-    translate(
-      `${getName(name)} should be at least ${minLength} characters long`,
-    ),
+    translate(`${name} should be at least ${minLength} characters long`),
   tooLong: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
-    translate(
-      `${getName(name)} should be at most ${maxLength} characters long`,
-    ),
+    translate(`${name} should be at most ${maxLength} characters long`),
   noDotInTheEnd: (name = 'Name') =>
-    translate(`Using a dot at the end of a ${getName(name)} is not permitted.`),
+    translate(`Using a dot at the end of a ${name} is not permitted.`),
   notUniqName: (name = 'Name', newName: string) =>
-    translate(`${getName(name)} "{{newName}}" already exists in this folder.`, {
+    translate(`${name} "{{newName}}" already exists in this folder.`, {
       ns: Translation.Errors,
       newName,
     }),
 };
-
-const getName = (str: string) => startCase(str.toLowerCase());
 
 export const urlErrors = {
   notValidUrl: translate('URL is not correct'),
