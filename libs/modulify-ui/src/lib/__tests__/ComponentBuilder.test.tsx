@@ -87,7 +87,7 @@ describe('ComponentBuilder', () => {
     );
 
     expect(screen.queryByText('Original Content')).not.toBeInTheDocument();
-    expect(screen.queryByText('Replaced Content')).toBeInTheDocument();
+    expect(screen.getByText('Replaced Content')).toBeInTheDocument();
   });
 
   it('should update text on button click using state and effects', async () => {

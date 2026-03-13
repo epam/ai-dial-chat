@@ -156,7 +156,7 @@ const handler = async (
 
         const uploadUrl = buildApiUrl('v1', slugs);
 
-        logger.debug(`Uploading file to: ${uploadUrl}`);
+        logger.info(`Uploading file to: ${uploadUrl}`);
 
         const formData = new FormData();
         formData.append('file', file.content, {

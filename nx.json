@@ -36,13 +36,11 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "maxWarnings": 150
+        "maxWarnings": 100
       },
       "inputs": [
         "default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/.eslintignore",
-        "{workspaceRoot}/eslint.config.js"
+        "{workspaceRoot}/eslint.config.mjs"
       ]
     },
     "lint:fix": {
@@ -50,13 +48,11 @@
       "executor": "@nx/eslint:lint",
       "inputs": [
         "default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/.eslintignore",
-        "{workspaceRoot}/eslint.config.js"
+        "{workspaceRoot}/eslint.config.mjs"
       ],
       "options": {
         "fix": true,
-        "maxWarnings": 150
+        "maxWarnings": 100
       }
     },
     "format": {
