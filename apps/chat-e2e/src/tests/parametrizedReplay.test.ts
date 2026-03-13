@@ -149,18 +149,17 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open modal again, click out of modal and verify "Start Replay" button is available',
+      'Open modal again, click out of modal and verify modal is not closed',
       async () => {
         await chat.replay.click();
         await page.mouse.click(0, 0);
-        await chatAssertion.assertReplayButtonState('visible');
+        await variableModalAssertion.assertVariableModalState('visible');
       },
     );
 
     await dialTest.step(
       'Clear 1st parameter, set spaces in the 2nd and 3rd and verify fields are highlighted, error messages appear under the fields',
       async () => {
-        await chat.replay.click();
         await variableModalDialog.setVariableValue(countryVar, '');
         await variableModalDialog.setVariableValue(attractionsVar, '  ');
         await variableModalDialog.setVariableValue(daysVar, ' ');
