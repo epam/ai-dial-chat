@@ -585,7 +585,7 @@ dialSharedWithMeTest(
       'Select created conversation and click on app icon in the chat header',
       async () => {
         await additionalShareUserNavigationPanel.backToChat();
-        additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserConversations.selectEntity(conversation.name);
         await additionalShareUserChatHeader.chatModelIcon.click();
       },
