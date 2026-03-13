@@ -139,7 +139,7 @@ dialTest(
         await shareModal.entityName.hoverOver();
         await baseAssertion.assertElementText(
           tooltip,
-          ExpectedConstants.sharedEntityName(conversation.name),
+          ExpectedConstants.sharedEntityName(conversation.name, true),
           ExpectedMessages.tooltipContentIsValid,
         );
 
