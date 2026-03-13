@@ -89,6 +89,7 @@ export default [
       ...testingLibraryPlugin.configs.react.rules,
       'no-multi-spaces': 'error',
       'import/no-unresolved': 'off',
+      'react-hooks/exhaustive-deps': 'error',
       'import/no-duplicates': 'error',
       'import/named': 'off',
       '@next/next/no-document-import-in-page': 'warn',
