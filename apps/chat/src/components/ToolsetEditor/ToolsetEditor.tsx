@@ -239,6 +239,7 @@ export const ToolsetEditor = () => {
       void formMethods.trigger();
     }
     firstValidationPerformedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idQuery, formMethods.trigger, isToolsetPublic]);
 
   return (
