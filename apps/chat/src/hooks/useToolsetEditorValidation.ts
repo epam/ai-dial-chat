@@ -68,7 +68,7 @@ export const useToolsetEditorValidation = () => {
 
   const redirectToNotFound = useCallback(() => {
     void router.push(Routes.NotFound);
-  }, [router.push]);
+  }, [router]);
 
   useEffect(() => {
     if (!isEditing || !areToolsetsLoaded || isToolsetDetailsLoading) {
@@ -116,6 +116,7 @@ export const useToolsetEditorValidation = () => {
       redirectToNotFound();
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     areToolsetsLoaded,
     dispatch,
