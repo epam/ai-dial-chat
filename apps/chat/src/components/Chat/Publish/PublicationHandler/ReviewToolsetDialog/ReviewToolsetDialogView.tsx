@@ -43,59 +43,62 @@ function ReviewToolsetDialogContent({
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
         <h2 className="text-base font-semibold">{t('Toolset')}</h2>
-
-        <MarketplaceEntityInfoRow
-          label={t('Name')}
-          value={toolset.name}
-          dataQa="app-name"
-        />
-        <MarketplaceEntityInfoRow
-          label={t('Version')}
-          value={toolset.version ?? NA_VERSION}
-          dataQa="app-version"
-        />
-        <MarketplaceEntityInfoRow
-          label={t('Icon')}
-          value={<ModelIcon entity={toolset} entityId={toolset.id} size={60} />}
-          valueClassName=""
-        />
-        <MarketplaceEntityInfoRow
-          label={t('Description')}
-          value={description}
-          dataQa="app-description"
-        />
-        {toolset.topics?.length && (
+        <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
-            label={t('Topics')}
-            value={
-              <div className="flex flex-wrap gap-1">
-                {toolset.topics.map((topic) => (
-                  <MarketplaceEntityTopic key={topic} topic={topic} />
-                ))}
-              </div>
-            }
+            label={t('Name')}
+            value={toolset.name}
+            dataQa="app-name"
           />
-        )}
-        <MarketplaceEntityInfoRow
-          label={t('Endpoint')}
-          value={toolset.endpoint}
-          dataQa="app-endpoint"
-        />
-        <MarketplaceEntityInfoRow
-          label={t('Transport protocol')}
-          value={toolset.transport}
-          dataQa="app-transport"
-        />
-        <MarketplaceEntityInfoRow
-          label={t('Authentication type')}
-          value={toolset.authSettings?.authenticationType}
-          dataQa="app-authentication-type"
-        />
-        <MarketplaceEntityInfoRow
-          label={t('Allowed tools')}
-          value={toolset.allowedTools?.join(', ')}
-          dataQa="app-allowed-tools"
-        />
+          <MarketplaceEntityInfoRow
+            label={t('Version')}
+            value={toolset.version ?? NA_VERSION}
+            dataQa="app-version"
+          />
+          <MarketplaceEntityInfoRow
+            label={t('Icon')}
+            value={
+              <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
+            }
+            valueClassName=""
+          />
+          <MarketplaceEntityInfoRow
+            label={t('Description')}
+            value={description}
+            dataQa="app-description"
+          />
+          {toolset.topics?.length && (
+            <MarketplaceEntityInfoRow
+              label={t('Topics')}
+              value={
+                <div className="flex flex-wrap gap-1">
+                  {toolset.topics.map((topic) => (
+                    <MarketplaceEntityTopic key={topic} topic={topic} />
+                  ))}
+                </div>
+              }
+            />
+          )}
+          <MarketplaceEntityInfoRow
+            label={t('Endpoint')}
+            value={toolset.endpoint}
+            dataQa="app-endpoint"
+          />
+          <MarketplaceEntityInfoRow
+            label={t('Transport protocol')}
+            value={toolset.transport}
+            dataQa="app-transport"
+          />
+          <MarketplaceEntityInfoRow
+            label={t('Authentication type')}
+            value={toolset.authSettings?.authenticationType}
+            dataQa="app-authentication-type"
+          />
+          <MarketplaceEntityInfoRow
+            label={t('Allowed tools')}
+            value={toolset.allowedTools?.join(', ')}
+            dataQa="app-allowed-tools"
+          />
+        </div>
       </div>
       <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         <PublicationControls
