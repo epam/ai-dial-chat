@@ -29,6 +29,16 @@ export const chatSlice = createSlice({
     appendInputContent: (state, { payload }: PayloadAction<string>) => {
       state.inputContent = `${state.inputContent} ${payload}`;
     },
+    appendInputContentWithMapping: (
+      state,
+      { payload }: PayloadAction<{ substituted: string; original: string }>,
+    ) => {
+      state.inputContent = `${state.inputContent} ${payload.substituted}`;
+      state.inputContentTemplateMapping = payload;
+    },
+    clearInputContentTemplateMapping: (state) => {
+      state.inputContentTemplateMapping = undefined;
+    },
     setFormValue(
       state,
       {

@@ -15,7 +15,10 @@ import {
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import {
+  getGroupMarketplaceEntityKey,
+  isCreatedMarketplaceEntity,
+} from '@/src/utils/app/marketplace';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
@@ -113,7 +116,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         ? allToolsets
         : [];
 
-    if (!entity.version) {
+    if (!isCreatedMarketplaceEntity(entity) && !entity.version) {
       return [];
     }
 

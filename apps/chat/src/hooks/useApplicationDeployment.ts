@@ -74,6 +74,7 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
       return t('Ask author to deploy the application to be able to use it');
     }
     return '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isExecutable,
     wasDeployClicked,
@@ -110,6 +111,7 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
     if (isExternalApp(entity)) {
       dispatch(ApplicationActions.get({ applicationId: entity.id }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, entity.id]);
 
   return {

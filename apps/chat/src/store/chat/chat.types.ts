@@ -5,6 +5,7 @@ import { MessageFormSchema, MessageFormValue } from '@epam/ai-dial-shared';
 
 export interface ChatState {
   inputContent: string;
+  inputContentTemplateMapping?: { substituted: string; original: string };
   formValue?: MessageFormValue;
   configurationSchemas: { modelId: string; schema: MessageFormSchema }[];
   configurationSchemasLoadingIds: string[];
