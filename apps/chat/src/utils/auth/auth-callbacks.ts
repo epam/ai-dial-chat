@@ -111,7 +111,7 @@ async function refreshAccessToken(token: Token) {
     if (!token.providerId) {
       throw new Error(`No provider information exists in token`);
     }
-    const client = NextClient.getClient(token.providerId);
+    const client = await NextClient.getOrDiscoverClient(token.providerId);
     if (!client) {
       throw new Error(`No client for appropriate provider set`);
     }
