@@ -318,7 +318,7 @@ export const MessageAttachment = ({
         setWasOpened(false);
       }
     }
-  }, []);
+  }, [wasOpened]);
 
   useResizeObserver(anchorRef.current, handleResize);
 
