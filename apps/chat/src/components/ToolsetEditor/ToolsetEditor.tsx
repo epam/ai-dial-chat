@@ -20,6 +20,7 @@ import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 import { ToolsetEditorHeader } from '@/src/components/ToolsetEditor/ToolsetEditorHeader';
 import { ToolsetEditorView } from '@/src/components/ToolsetEditor/ToolsetEditorView';
 import {
+  ENDPOINT_PLACEHOLDER,
   ToolsetEditorForm,
   ToolsetEditorFormSchema,
   getDefaultFormData,
@@ -45,6 +46,7 @@ export const ToolsetEditor = () => {
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
   const saveAndExitRef = useRef(false);
   const redirectToChatRef = useRef(false);
+  const firstValidationPerformedRef = useRef(false);
 
   const [isExiting, setIsExiting] = useState(false);
 
@@ -66,7 +68,8 @@ export const ToolsetEditor = () => {
       const payloadToolset = getToolsetPayload(
         {
           name: data.name,
-          endpoint: data.endpoint.trim(),
+          endpoint:
+            data.endpoint === ENDPOINT_PLACEHOLDER ? '' : data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
           description: data.description,
@@ -230,6 +233,13 @@ export const ToolsetEditor = () => {
       });
     }
   }, [formMethods, toolsetDetails]);
+
+  useEffect(() => {
+    if (idQuery && !firstValidationPerformedRef.current && !isToolsetPublic) {
+      void formMethods.trigger();
+    }
+    firstValidationPerformedRef.current = true;
+  }, [idQuery, formMethods.trigger, isToolsetPublic]);
 
   return (
     <FormProvider {...formMethods}>

@@ -290,13 +290,17 @@ const updateToolsetEpic: AppEpic = (action$) =>
             .pipe(
               map(() => ({ success: true as const })),
               catchError((err) => {
+                const failActions = [
+                  ToolsetActions.updateToolsetFailed({
+                    oldToolset: payload.oldToolset,
+                  }),
+                  UIActions.setEditorLoader(false),
+                ];
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
-                      ToolsetActions.updateToolsetFailed({
-                        oldToolset: payload.oldToolset,
-                      }),
+                      ...failActions,
                       UIActions.showErrorToast(
                         translate(errorsMessages.toolsetAlreadyExists),
                       ),
@@ -307,9 +311,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                 return of({
                   success: false as const,
                   actions: [
-                    ToolsetActions.updateToolsetFailed({
-                      oldToolset: payload.oldToolset,
-                    }),
+                    ...failActions,
                     UIActions.showErrorToast(
                       translate(errorsMessages.toolsetMoveFailed),
                     ),
@@ -409,10 +411,13 @@ const updateToolsetEpic: AppEpic = (action$) =>
                       },
                     }),
                   ),
-                  of(
-                    ToolsetActions.updateToolsetFailed({
-                      oldToolset: payload.oldToolset,
-                    }),
+                  concat(
+                    of(
+                      ToolsetActions.updateToolsetFailed({
+                        oldToolset: payload.oldToolset,
+                      }),
+                    ),
+                    of(UIActions.setEditorLoader(false)),
                   ),
                 ),
               );
