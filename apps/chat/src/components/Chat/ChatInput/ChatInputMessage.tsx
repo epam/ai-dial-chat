@@ -154,6 +154,9 @@ export const ChatInputMessage = Inversify.register(
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
+    const inputContentTemplateMapping = useAppSelector(
+      ChatSelectors.selectInputContentTemplateMapping,
+    );
     const isDisabledInputFeature = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
     );
@@ -186,6 +189,16 @@ export const ChatInputMessage = Inversify.register(
         );
       }
     }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
+
+    useEffect(() => {
+      if (inputContentTemplateMapping) {
+        promptTemplateMappingRef.current.set(
+          inputContentTemplateMapping.substituted.trim(),
+          inputContentTemplateMapping.original.trim(),
+        );
+        dispatch(ChatActions.clearInputContentTemplateMapping());
+      }
+    }, [dispatch, inputContentTemplateMapping]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 

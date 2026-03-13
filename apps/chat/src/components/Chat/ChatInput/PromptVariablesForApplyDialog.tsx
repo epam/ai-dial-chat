@@ -26,10 +26,15 @@ function PromptVariablesForApplyDialogView({
 
   const handleSubmit = useCallback(
     (updatedContent: string) => {
-      dispatch(ChatActions.appendInputContent(updatedContent));
+      dispatch(
+        ChatActions.appendInputContentWithMapping({
+          substituted: updatedContent,
+          original: prompt.content ?? '',
+        }),
+      );
       handleClose();
     },
-    [dispatch, handleClose],
+    [dispatch, handleClose, prompt.content],
   );
   return (
     <PromptVariablesDialog
