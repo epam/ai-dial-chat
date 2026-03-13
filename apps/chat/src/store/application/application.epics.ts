@@ -939,7 +939,10 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       }
 
       actions.push(of(UIActions.setEditorLoader(false)));
-      actions.push(of(ApplicationActions.setAppDetails()));
+
+      if (!publicationUrl) {
+        actions.push(of(ApplicationActions.setAppDetails()));
+      }
 
       return navigateAndThen(router, route, concat(...actions));
     }),
