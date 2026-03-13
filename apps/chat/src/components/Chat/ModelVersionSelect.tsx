@@ -4,14 +4,14 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { getVersionFromId } from '@/src/utils/server/api';
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -31,11 +31,8 @@ const VersionPrefix = () => {
 };
 
 const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
-  if (entity.version) {
-    return entity.version;
-  }
-  if (isEntityIdPublic(entity) || entity.id !== entity.reference) {
-    return getVersionFromId(entity.id);
+  if (isCreatedMarketplaceEntity(entity) || entity.version) {
+    return entity.version || NA_VERSION;
   }
   return entity.id;
 };
@@ -60,6 +57,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   triggerClassName,
   selectedBaseIdsSet,
 }: EntityVersionSelectProps<T>) => {
+  const { t } = useTranslation(Translation.Marketplace);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (entity: T) => {
@@ -68,7 +66,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   };
 
   if (entities.length < 2) {
-    if (entities.length && entities[0].version) {
+    if (
+      entities.length &&
+      (isCreatedMarketplaceEntity(entities[0]) || entities[0].version)
+    ) {
       return (
         <div
           className={classNames('flex truncate font-theme text-sm', className)}
@@ -78,7 +79,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {entities[0].version}
+            {entities[0].version ?? t(NA_VERSION)}
           </span>
         </div>
       );
