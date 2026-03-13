@@ -1,3 +1,5 @@
+const defaultTheme = require('tailwindcss/defaultTheme');
+
 // Default color palette is black when no themes presented
 const commonBgColors = {
   transparent: 'transparent',
@@ -18,8 +20,8 @@ const commonBgColors = {
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
   overlay: 'var(--bg-overlay, #090D13B3)',
-  'auth-layer-0': 'var(--bg-auth-layer-0, var(--bg-layer-1, #F7F6F5))',
-  'auth-layer-1': 'var(--bg-auth-layer-1, var(--bg-layer-3, #333451))',
+  'auth-layer-0': 'var(--bg-auth-layer-0, var(--bg-layer-1, #090D13))',
+  'auth-layer-1': 'var(--bg-auth-layer-1, var(--bg-layer-3, #222932))',
 };
 
 const commonBorderColors = {
@@ -36,6 +38,11 @@ const commonBorderColors = {
   'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
 };
+
+const sidebarOverlayBreakpoint =
+  process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT === 'true'
+    ? defaultTheme.screens.md
+    : defaultTheme.screens.xl;
 
 // Do not use palette directly, only through semantic colors
 /** @type {import('tailwindcss').Config} */
@@ -88,9 +95,10 @@ module.exports = {
         '3xl': '1770px',
         '4xl': '2120px',
         '5xl': '2560px',
+        'sidebar-overlay': sidebarOverlayBreakpoint,
       },
       borderRadius: {
-        DEFAULT: '3px',
+        DEFAULT: 'var(--border-radius, 3px)',
       },
       opacity: {
         15: '15%',

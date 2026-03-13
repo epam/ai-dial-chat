@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { PublicationFunctions } from '@/src/types/publication';
 import { AppAction } from '@/src/types/store';
@@ -72,10 +74,12 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of filterValues) {
-      expect(screen.getByText(option)).toBeInTheDocument();
+      expect(screen.getByText(getFilterLabel(option))).toBeInTheDocument();
     }
 
-    const selectedFilterOption = screen.getByText(filterValues[1]);
+    const selectedFilterOption = screen.getByText(
+      getFilterLabel(filterValues[1]),
+    );
     await userEvent.click(selectedFilterOption);
 
     expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
@@ -83,7 +87,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('selects an filter and target options on click', async () => {
-    const selectedFilter = filterValues[1];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -106,7 +110,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('save button is disabled if no targets chosen', async () => {
-    const selectedFilter = filterValues[0];
+    const selectedFilter = getFilterLabel(filterValues[0]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -130,7 +134,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it('fires onSaveFilter method if click on check icon with filter params', async () => {
-    const selectedFilter = filterValues[1];
+    const selectedFilter = getFilterLabel(filterValues[1]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -157,8 +161,8 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(iconCheck);
 
     expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
-      filterFunction: selectedFilter,
+      source: selectedTarget,
+      filterFunction: filterValues[1].toUpperCase(),
       filterParams: ['QA', 'Developer', 'Manager'],
     });
   });
@@ -187,14 +191,14 @@ describe('TargetAudienceFilterComponent', () => {
   //   await userEvent.click(iconCheck);
 
   //   expect(onSaveFilter).toHaveBeenCalledWith({
-  //     id: selectedTarget,
+  //     source: selectedTarget,
   //     filterFunction: selectedFilter,
   //     filterParams: [],
   //   });
   // });
 
   it('fires onSaveFilter method if click on check icon with regex value', async () => {
-    const selectedFilter = filterValues[2];
+    const selectedFilter = getFilterLabel(filterValues[2]);
     const selectedTarget = targetValues[0];
 
     render(
@@ -219,8 +223,8 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(iconCheck);
 
     expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
-      filterFunction: selectedFilter,
+      source: selectedTarget,
+      filterFunction: selectedFilter.toUpperCase(),
       filterParams: ['Developer.*'],
     });
   });

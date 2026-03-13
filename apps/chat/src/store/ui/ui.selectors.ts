@@ -70,8 +70,18 @@ const selectChatbarWidth = (state: RootState) =>
 const selectPromptbarWidth = (state: RootState) =>
   rootSelector(state).promptbarWidth;
 
-const selectIsChatFullWidth = (state: RootState) =>
-  rootSelector(state).isChatFullWidth;
+const selectMarketplaceFilterbarWidth = (state: RootState) =>
+  rootSelector(state).marketplaceFilterbarWidth;
+
+const selectIsChatFullWidth = createSelector(
+  [rootSelector, SettingsSelectors.selectEnabledFeatures],
+  (state, enabledFeatures) => {
+    return (
+      enabledFeatures.has(Feature.ChatFullWidthByDefault) ||
+      state.isChatFullWidth
+    );
+  },
+);
 
 const selectCustomLogo = (state: RootState) => rootSelector(state).customLogo;
 
@@ -159,4 +169,5 @@ export const UISelectors = {
   selectVisibleSidebarItems,
   selectIsEditorLoader,
   selectAllowEnterToSend,
+  selectMarketplaceFilterbarWidth,
 };

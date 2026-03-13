@@ -1,3 +1,5 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 type ButtonProps = Omit<

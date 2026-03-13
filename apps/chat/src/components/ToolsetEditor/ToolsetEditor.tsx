@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
@@ -58,6 +59,7 @@ export const ToolsetEditor = () => {
   );
 
   const isDirty = formMethods.formState.isDirty;
+  const isToolsetPublic = !!toolsetDetails && isEntityIdPublic(toolsetDetails);
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
@@ -148,7 +150,7 @@ export const ToolsetEditor = () => {
   const handleSaveAndExit = useCallback(
     (saveDraft = false, redirectToChat = false) => {
       setIsExiting(true);
-      if ((!isDirty && toolsetDetails) || !toolsetDetails) {
+      if ((!isDirty && toolsetDetails) || !toolsetDetails || isToolsetPublic) {
         dispatch(
           ToolsetActions.exitEditor({
             redirectUrl: redirectToChat ? Routes.Chat : undefined,
@@ -163,12 +165,23 @@ export const ToolsetEditor = () => {
       dispatch(UIActions.setEditorLoader(true));
       handleSubmit(undefined, saveDraft);
     },
-    [dispatch, handleSubmit, isCreatingToolset, isDirty, toolsetDetails],
+    [
+      dispatch,
+      handleSubmit,
+      isCreatingToolset,
+      isDirty,
+      isToolsetPublic,
+      toolsetDetails,
+    ],
   );
 
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
       if (tab === editorStep) return;
+      if (isToolsetPublic) {
+        dispatch(ToolsetActions.setEditorStep(tab));
+        return;
+      }
       if (!isDirty && toolsetDetails) {
         handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)), true);
       } else {
@@ -176,12 +189,23 @@ export const ToolsetEditor = () => {
         handleSubmit(undefined, true);
       }
     },
-    [dispatch, editorStep, handleSubmit, isDirty, toolsetDetails],
+    [
+      dispatch,
+      editorStep,
+      handleSubmit,
+      isDirty,
+      isToolsetPublic,
+      toolsetDetails,
+    ],
   );
 
   const handleNextClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      if (isToolsetPublic) {
+        dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings));
+        return;
+      }
       if (!isDirty && toolsetDetails) {
         handleSubmit(() =>
           dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings)),
@@ -191,7 +215,7 @@ export const ToolsetEditor = () => {
         handleSubmit(undefined, !!toolsetDetails);
       }
     },
-    [dispatch, handleSubmit, isDirty, toolsetDetails],
+    [dispatch, handleSubmit, isDirty, isToolsetPublic, toolsetDetails],
   );
 
   useEffect(() => {

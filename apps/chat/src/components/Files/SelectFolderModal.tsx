@@ -65,6 +65,7 @@ export const SelectFolderModal = ({
     navigationPanelOptions,
     handleCreateFolder,
     handleMoveFiles,
+    handleRenameValidation,
   } = useFileManager({
     actionLabelsOptions: {
       actionsByTab: {
@@ -135,6 +136,15 @@ export const SelectFolderModal = ({
     onClose(selectedFolderId);
   }, [onClose, selectedFolderId]);
 
+  const modalTreeOptions = useMemo(
+    () => ({
+      collapsed: collapsedTree,
+      onCollapseChange: setCollapsedTree,
+      header: treeOptions.header,
+    }),
+    [collapsedTree, treeOptions.header],
+  );
+
   return (
     <DialDestinationFolderPopup
       open={isOpen}
@@ -145,17 +155,13 @@ export const SelectFolderModal = ({
       addFolderLabel={t('Add folder')}
       header={t('Select folder')}
       path={currentPath}
-      onPathChange={setCurrentPath}
+      onFolderPopupPathChange={setCurrentPath}
       sourceFolder={rootFolderId}
       disabledPathTooltip={t('Root folder cannot be selected')}
       items={fileTreeItems}
       rootItem={rootFolder}
       filesLoading={areFoldersLoading}
-      treeOptions={{
-        collapsed: collapsedTree,
-        onCollapseChange: setCollapsedTree,
-        header: treeOptions.header,
-      }}
+      treeOptions={modalTreeOptions}
       gridOptions={{ ...gridOptions }}
       navigationPanelOptions={navigationPanelOptions}
       collapsedFileTree={collapsedTree}
@@ -163,6 +169,7 @@ export const SelectFolderModal = ({
       actionsRef={fileManagerActionRef}
       onCreateFolder={handleCreateFolder}
       onMoveToFiles={handleMoveFiles}
+      onCreateFolderValidate={handleRenameValidation}
       uploadEnabled={false}
       alertProps={
         warningMessage

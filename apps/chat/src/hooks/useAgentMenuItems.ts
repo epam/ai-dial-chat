@@ -3,7 +3,6 @@ import {
   IconFileDescription,
   IconLink,
   IconPencilMinus,
-  IconRefresh,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -13,6 +12,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
 
 import {
   getApplicationSimpleStatus,
@@ -100,8 +100,8 @@ export const useAgentMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
+  const hasDeployAccess = useHasDeployAccess(entity);
+  const isExecutable = isExecutableApp(entity) && hasDeployAccess;
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const hasCustomEditor = schemas.some(
@@ -125,15 +125,6 @@ export const useAgentMenuItems = ({
         onClick: handleCopy,
       },
       {
-        name: t('Redeploy'),
-        dataQa: 'redeploy',
-        display: showRedeploy && disabledActions.deploy !== true,
-        Icon: IconRefresh,
-        className: PlayerContextButtonClasses[SimpleApplicationStatus.DEPLOY],
-        iconClassName: PlayerContextIconClasses[SimpleApplicationStatus.DEPLOY],
-        onClick: handleRedeploy,
-      },
-      {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
@@ -142,6 +133,16 @@ export const useAgentMenuItems = ({
         className: PlayerContextButtonClasses[playerStatus],
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: handleUpdateFunctionStatus,
+      },
+      {
+        name: t('Redeploy'),
+        dataQa: 'redeploy',
+        display: showRedeploy && disabledActions.deploy !== true,
+        Icon: PlayerContextIcons[SimpleApplicationStatus.REDEPLOY],
+        className: PlayerContextButtonClasses[SimpleApplicationStatus.REDEPLOY],
+        iconClassName:
+          PlayerContextIconClasses[SimpleApplicationStatus.REDEPLOY],
+        onClick: handleRedeploy,
       },
       {
         name: t(isAppIdPublic ? 'View' : 'Edit'),

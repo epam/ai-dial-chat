@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useState } from 'react';
+import React, { MouseEvent, useCallback, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -108,7 +108,11 @@ export const AgentAndToolsetSelector: React.FC<
                 switchOFFText={t('OFF')}
                 additionalText={t('JSON')}
                 className="flex w-fit items-center gap-2"
-                tooltip={t('Switch to JSON view for Agents and Toolsets')}
+                tooltip={t(
+                  !readonly
+                    ? 'Switch to JSON view for Agents and Toolsets'
+                    : 'This application is public and cannot be edited',
+                )}
               />
             </>
           )}
@@ -116,7 +120,7 @@ export const AgentAndToolsetSelector: React.FC<
         {!value.length ? (
           <NoAgentsAndToolsets />
         ) : (
-          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+          <div className="flex flex-wrap gap-1 rounded border border-primary p-2">
             {value.map((id) => (
               <AgentAndToolsetChip
                 key={id}

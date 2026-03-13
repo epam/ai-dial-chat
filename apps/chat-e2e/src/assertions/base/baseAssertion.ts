@@ -496,6 +496,31 @@ export class BaseAssertion {
     );
   }
 
+  /**
+   * <input> element specific assertion.
+   * The input value is truncated with dots when the following CSS props are applied:
+   * - text-overflow: ellipsis
+   * - overflow-x:clip
+   */
+  public async assertInputValueIsTruncated(
+    element: BaseElement | Locator,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+      )
+      .toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+      )
+      .toHaveCSS(Styles.overflow_x, Overflow.clip);
+  }
+
   public async assertElementDisplayStyle(
     element: BaseElement | Locator,
     expectedDisplay: Overflow | StyleValues,

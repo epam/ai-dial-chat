@@ -221,6 +221,9 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
     },
+    logInToolsetSuccess: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
     logInToolsetFail: (state) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },

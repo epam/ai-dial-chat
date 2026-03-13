@@ -1,20 +1,19 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   deleteFilesInBatches,
   fetchAllFilesRecursive,
 } from '@/src/utils/server/file-delete-utils';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { FileOperationsResult } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { DialDeletedItem } from '@epam/ai-dial-ui-kit';
 
@@ -47,7 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (item.nodeType === 'folder') {
         const folderFiles = await fetchAllFilesRecursive(
           item.sourceUrl,
-          authToken?.access_token as string,
+          authToken ?? '',
         );
         allFilesToDelete = allFilesToDelete.concat(
           folderFiles.map((f) => f.sourceUrl),
@@ -67,7 +66,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { succeeded, errors } = await deleteFilesInBatches(
       allFilesToDelete,
-      authToken?.access_token as string,
+      authToken ?? '',
       100,
     );
 

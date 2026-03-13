@@ -2,23 +2,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-interface ItemProps {
-  itemLabel: string;
-  itemValue: string;
-}
-export const ReviewApplicationPropsItem = ({
-  itemLabel,
-  itemValue,
-}: ItemProps) => {
-  return (
-    <div className="flex gap-4 text-primary">
-      <span className="w-[122px] shrink-0">{itemLabel}:</span>
-      <span className="shrink grow">{itemValue}</span>
-    </div>
-  );
-};
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 
-interface SectionProps {
+interface Props {
   label: string;
   appProps: Record<string, string>;
   propsNames?: Record<string, string>;
@@ -28,22 +14,27 @@ export const ReviewApplicationPropsSection = ({
   label,
   appProps,
   propsNames,
-}: SectionProps) => {
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   return (
-    <div className="flex gap-4">
-      <span className="w-[122px] shrink-0 text-secondary">{t(label)}:</span>
-      <div className="flex shrink grow flex-col gap-1">
-        {Object.entries(appProps).map(([key, value]) => {
-          return (
-            <ReviewApplicationPropsItem
+    <MarketplaceEntityInfoRow
+      label={t(label)}
+      value={
+        <div className="flex flex-col gap-1">
+          {Object.entries(appProps).map(([key, value]) => (
+            <MarketplaceEntityInfoRow
               key={key}
-              itemLabel={propsNames ? t(propsNames[key]) : key}
-              itemValue={value}
+              label={propsNames ? t(propsNames[key]) : key}
+              value={value}
+              wrapperClassName="flex"
+              labelClassName="w-[122px] shrink-0 text-primary"
+              valueClassName="shrink grow text-primary"
             />
-          );
-        })}
-      </div>
-    </div>
+          ))}
+        </div>
+      }
+      valueClassName="shrink grow text-primary"
+    />
   );
 };

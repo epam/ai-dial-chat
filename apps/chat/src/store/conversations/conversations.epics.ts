@@ -12,6 +12,7 @@ import {
   filter,
   forkJoin,
   from,
+  groupBy,
   ignoreElements,
   iif,
   map,
@@ -1343,6 +1344,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+      installedModelIds: ModelsSelectors.selectInstalledModelIds(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1354,6 +1356,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         payload,
+        modelsMap,
+        installedModelIds,
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,
@@ -1460,11 +1464,31 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isMessageStreaming: true,
         });
 
+        const isMarketplaceEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.Marketplace,
+        );
+        const model = modelsMap[updatedConversation.model.id];
+
         if (!payload.skipRecentModelsUpdate) {
           actions.push(
             of(
               ModelsActions.updateRecentModels({
                 modelId: updatedConversation.model.id,
+              }),
+            ),
+          );
+        }
+
+        if (
+          !isMarketplaceEnabled &&
+          model &&
+          !installedModelIds.has(model.reference)
+        ) {
+          actions.push(
+            of(
+              ModelsActions.addInstalledModels({
+                references: [model.reference],
               }),
             ),
           );
@@ -1580,7 +1604,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           const observable = subj.asObservable();
           const observer = async () => {
             try {
-              // eslint-disable-next-line no-constant-condition
               while (true) {
                 const val = await reader.read();
 
@@ -3248,22 +3271,27 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
 const getCustomAttachmentDataEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.getCustomAttachmentData.type),
-    switchMap(({ payload }) =>
-      FileService.getFileContent<CustomVisualizerData>(
-        payload.pathToAttachment,
-      ).pipe(
-        switchMap((params) => {
-          return of(
-            ConversationsActions.getCustomAttachmentDataSuccess({
-              params,
-              url: payload.pathToAttachment,
+    groupBy(({ payload }) => payload.pathToAttachment),
+    mergeMap((group$) =>
+      group$.pipe(
+        switchMap(({ payload }) =>
+          FileService.getFileContent<CustomVisualizerData>(
+            payload.pathToAttachment,
+          ).pipe(
+            switchMap((params) => {
+              return of(
+                ConversationsActions.getCustomAttachmentDataSuccess({
+                  params,
+                  url: payload.pathToAttachment,
+                }),
+              );
             }),
-          );
-        }),
-        catchError(() =>
-          of(
-            UIActions.showErrorToast(
-              translate('Error while uploading chart data'),
+            catchError(() =>
+              of(
+                UIActions.showErrorToast(
+                  translate('Error while uploading chart data'),
+                ),
+              ),
             ),
           ),
         ),

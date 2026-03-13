@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -50,6 +50,7 @@ export const FileManager: React.FC = () => {
     deleteConfirmationOptions,
 
     handleSearchFiles,
+    handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,
@@ -61,10 +62,14 @@ export const FileManager: React.FC = () => {
     handleUploadArchive,
     handleUnshareFiles,
     handleRenameValidation,
+    handleRemoveAccess,
 
     sharedWithMeIds,
 
     uploadEnabled,
+
+    emptyStateDescription,
+    emptyStateTitle,
   } = useFileManager();
 
   useEffect(() => {
@@ -106,9 +111,14 @@ export const FileManager: React.FC = () => {
           onCreateFolder={handleCreateFolder}
           onUploadArchive={handleUploadArchive}
           onUnshareFiles={handleUnshareFiles}
+          onRemoveFilesAccess={handleRemoveAccess}
           onRenameValidate={handleRenameValidation}
+          onCreateFolderValidate={handleRenameValidation}
           sharedWithMeIds={sharedWithMeIds}
           uploadEnabled={uploadEnabled}
+          clearSearchResults={handleClearSearch}
+          emptyStateTitle={emptyStateTitle}
+          emptyStateDescription={emptyStateDescription}
         />
       )}
       {isAnyOperationInProgress && (

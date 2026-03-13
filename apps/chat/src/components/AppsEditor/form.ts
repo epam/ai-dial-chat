@@ -5,6 +5,7 @@ import {
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  getQuickAppItemNameFromConfig,
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   safeStringifyApplicationFeatures,
@@ -14,8 +15,7 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   CustomApplicationModel,
@@ -33,6 +33,7 @@ import {
   QuickApp2Config,
   QuickAppConfig,
   UnknownToolset,
+  isDialDeploymentSimpleTool,
   isDialDeploymentToolset,
   isMcpToolset,
   isUnknownToolset,
@@ -85,7 +86,7 @@ export type BaseAppForm = zodValidation.infer<
   typeof MarketplaceEntityBaseSchema
 >;
 
-export const CustomAppSchema = zodValidation.object({
+const CustomAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
   inputAttachmentTypes: AttachmentTypesSchema,
   completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
@@ -138,7 +139,7 @@ export const CustomAppSchema = zodValidation.object({
           });
           return;
         }
-      } catch (error) {
+      } catch {
         ctx.addIssue({
           code: 'custom',
           path: ['features'],
@@ -150,7 +151,7 @@ export const CustomAppSchema = zodValidation.object({
 });
 export type CustomAppForm = zodValidation.infer<typeof CustomAppSchema>;
 
-export const ExternalAppSchema = zodValidation.object({
+const ExternalAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.ExternalApp),
   externalUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
     zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
@@ -158,7 +159,7 @@ export const ExternalAppSchema = zodValidation.object({
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
 
-export const QuickAppSchema = zodValidation.object({
+const QuickAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp),
   instructions: zodValidation.string(),
   temperature: zodValidation.number(),
@@ -194,9 +195,7 @@ const AgentOrToolsetSchema = zodValidation.object({
   isDialDeploymentTool: zodValidation.boolean().optional(), // tool_sets can have both agents from marketplace and custom tools listed in DialDeploymentToolset
 });
 
-export type AgentOrToolsetFormType = zodValidation.infer<
-  typeof AgentOrToolsetSchema
->;
+type AgentOrToolsetFormType = zodValidation.infer<typeof AgentOrToolsetSchema>;
 
 export const QuickApp2Schema = zodValidation
   .object({
@@ -235,7 +234,7 @@ export const QuickApp2Schema = zodValidation
   });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
-export const CodeAppSchema = zodValidation
+const CodeAppSchema = zodValidation
   .object({
     type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
     inputAttachmentTypes: AttachmentTypesSchema,
@@ -313,7 +312,7 @@ const getBaseFormData = ({
   name:
     app?.name ??
     getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-  version: app?.version ?? DEFAULT_VERSION,
+  version: app ? app.version : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: app?.description ?? '',
   topics: app?.topics ?? [],
@@ -356,47 +355,6 @@ const getQuickAppFormData = (app?: CustomApplicationModel): QuickAppForm => {
   };
 };
 
-const getQuickAppItemNameFromConfig = (
-  item: MCPToolset | DialDeploymentSimpleTool,
-): string => {
-  if ('dial_id' in item) {
-    return (
-      item.name ||
-      ApiUtils.decodeApiUrl(
-        parseEntityApiKey(splitEntityId(item.dial_id).name, {
-          parseVersion: true,
-        }).name,
-      )
-    );
-  }
-
-  if (isApplicationId(item.deployment_id)) {
-    return ApiUtils.decodeApiUrl(
-      parseEntityApiKey(splitEntityId(item.deployment_id).name, {
-        parseVersion: true,
-      }).name,
-    );
-  }
-
-  if ('open_ai_tool' in item) {
-    return (
-      (item.open_ai_tool as { function?: { name?: string } })?.function?.name ||
-      'OpenAI Tool'
-    );
-  }
-
-  if ('name' in item && typeof item.name === 'string') {
-    return item.name;
-  }
-
-  if (!item.deployment_id) {
-    console.error('Dial Tool is missing deployment_id:', item);
-    return 'unknown';
-  }
-
-  return item.deployment_id;
-};
-
 export const getAgentsAndToolsetsFormValue = (
   tools?: AnyToolset[],
 ): AgentOrToolsetFormType[] => {
@@ -423,11 +381,12 @@ export const getAgentsAndToolsetsFormValue = (
   );
 
   return sortedItems.map((item) => {
-    const id = isUnknownToolset(item)
-      ? undefined
-      : 'dial_id' in item
-        ? item.dial_id
-        : item.deployment_id;
+    const id =
+      isUnknownToolset(item) && !isDialDeploymentSimpleTool(item)
+        ? undefined
+        : 'dial_id' in item
+          ? item.dial_id
+          : item.deployment_id;
     return {
       id: id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown'),
       tool: item,
@@ -715,10 +674,12 @@ export const getApplicationPayload = ({
   data,
   currentApp,
   allEntitiesMap,
+  keepCurrentToolsets,
 }: {
   data: AppsEditorFormType;
   allEntitiesMap: Record<string, MarketplaceEntity>;
   currentApp?: CustomApplicationModel;
+  keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
   const generalData = {
     id: '',
@@ -825,9 +786,10 @@ export const getApplicationPayload = ({
               url,
               type: 'file',
             })) ?? [],
-          tool_sets: data.isJsonView
-            ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
-            : getQuickApp2Toolsets({ data, allEntitiesMap }),
+          tool_sets:
+            data.isJsonView && !keepCurrentToolsets
+              ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
+              : getQuickApp2Toolsets({ data, allEntitiesMap }),
         },
       };
     }

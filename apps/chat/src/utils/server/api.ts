@@ -150,6 +150,9 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 export const getMarketplaceEntityApiKey = (
   entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
+  if (!entity.version || entity.version === NA_VERSION) {
+    return entity.name;
+  }
   return [entity.name, entity.version].join(pathKeySeparator);
 };
 
@@ -284,7 +287,14 @@ export class ApiUtils {
 
 export const getModelIdWithoutVersion = (id: string) => {
   const parts = id.split(pathKeySeparator);
+  if (parts.length < 2) {
+    return id;
+  }
   const name = parts.slice(0, -1).join(pathKeySeparator);
+  const version = parts.at(-1)?.replace(/^_/, '');
+  if (!version || !validVersionRegEx.test(version)) {
+    return id;
+  }
   if (parts.at(-1)?.startsWith('_')) {
     return `${name}_`;
   }
@@ -298,9 +308,6 @@ export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
 
   return getModelIdWithoutVersion(id);
 };
-
-export const addVersionToId = (id: string, version: string) =>
-  [id, version].join(pathKeySeparator);
 
 export const isValidEntityApiType = (apiKey: string): boolean => {
   return (
@@ -320,12 +327,16 @@ export const getIdWithoutVersionFromApiKey = (id: string) => {
 
 export const getVersionFromId = (id: string) => {
   const parts = id.split(pathKeySeparator);
-  const version = parts.at(-1)?.replace(/^_/, '');
-
-  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
-  if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
+  if (parts.length < 2) {
     return NA_VERSION;
   }
+
+  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
+  if (isConversationId(id) && parts.length < 3) {
+    return NA_VERSION;
+  }
+
+  const version = parts.at(-1)?.replace(/^_/, '');
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };

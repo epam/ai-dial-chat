@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface MarketplaceEntitiesListProps<T> {
   entities: T[];
   suggestedResults: T[];

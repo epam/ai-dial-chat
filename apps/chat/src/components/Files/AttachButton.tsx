@@ -25,6 +25,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { AttachLinkDialog } from './AttachLinkDialog';
@@ -175,7 +177,7 @@ export const AttachButton = ({
         menuItems={menuItems}
         TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
-        triggerIconSize={24}
+        triggerIconSize={DEFAULT_ICON_SIZES.STANDARD}
         triggerTooltip={t(label)}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight

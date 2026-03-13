@@ -23,6 +23,7 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -31,7 +32,12 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
-import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialEllipsisTooltip,
+  DialGhostIconButton,
+  DialLinkButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -91,7 +97,7 @@ function ShareAccessSection({
   );
 }
 
-export function ShareModalView() {
+function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
@@ -200,10 +206,11 @@ export function ShareModalView() {
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
           <Tooltip tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}>
             <div
-              className="line-clamp-2 w-full break-words pr-6"
+              className="flex w-full items-center gap-2 pr-6"
               data-qa="modal-entity-name"
             >
-              {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
+              <p>{t('Share')}:</p>
+              <DialEllipsisTooltip text={shareResourceName?.trim()} />
             </div>
           </Tooltip>
         </h4>
@@ -254,15 +261,11 @@ export function ShareModalView() {
                 </Tooltip>
               ) : (
                 <Tooltip tooltip={t('Copy URL')}>
-                  <DialButton
+                  <DialGhostIconButton
+                    size={ElementSize.Small}
                     onClick={handleCopy}
                     aria-label="copy-link"
-                    iconBefore={
-                      <IconCopy
-                        size={20}
-                        className="text-secondary hover:text-accent-primary"
-                      />
-                    }
+                    icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
                 </Tooltip>
               )}

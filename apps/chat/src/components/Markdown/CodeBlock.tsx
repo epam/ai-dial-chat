@@ -23,10 +23,12 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import Download from '@/public/images/icons/download.svg';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   language: string;
@@ -100,27 +102,33 @@ export const CodeBlock: FC<Props> = memo(
               data-no-context-menu
               className="flex items-center gap-3 text-secondary"
             >
-              <DialButton
-                className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
+              <DialGhostIconButton
+                size={ElementSize.Small}
                 onClick={copyToClipboard}
                 disabled={isCopied}
-                iconBefore={
+                icon={
                   isCopied ? (
                     <Tooltip tooltip={t('Copied!')}>
-                      <IconCheck size={18} />
+                      <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
                     </Tooltip>
                   ) : (
                     <Tooltip isTriggerClickable tooltip={t('Copy code')}>
-                      <IconCopy size={18} />
+                      <IconCopy size={DEFAULT_ICON_SIZES.SMALL} />
                     </Tooltip>
                   )
                 }
               />
               <Tooltip isTriggerClickable tooltip={t('Download')}>
-                <DialButton
+                <DialGhostIconButton
+                  size={ElementSize.Small}
                   className="flex items-center rounded bg-none hover:text-accent-primary"
                   onClick={downloadAsFile}
-                  iconBefore={<Download width={18} height={18} />}
+                  icon={
+                    <Download
+                      width={DEFAULT_ICON_SIZES.SMALL}
+                      height={DEFAULT_ICON_SIZES.SMALL}
+                    />
+                  }
                 />
               </Tooltip>
             </div>

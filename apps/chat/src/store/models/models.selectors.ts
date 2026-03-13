@@ -5,9 +5,17 @@ import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/marketplace';
+import {
+  filterHiddenEntities,
+  shouldShowHiddenEntities,
+} from '@/src/utils/app/models';
+import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
 
@@ -36,35 +44,74 @@ const selectIsRecentModelsLoaded = (state: RootState) =>
 
 const _selectModels = (state: RootState) => rootSelector(state).models;
 
-const selectModels = createSelector([_selectModels], (models) => {
-  const sortedResponse = sortBy(models, (model) => model.name.toLowerCase());
-  const sortedAgents = groupMarketplaceEntityAndSaveOrder(
-    sortedResponse,
-  ).flatMap(({ entities }) => {
-    if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-      sortItemsVersions(entities);
-    }
+const selectModels = createSelector(
+  [
+    _selectModels,
+    SettingsSelectors.selectHiddenEntityTag,
+    (_state, showHidden?: boolean) => showHidden,
+  ],
+  (models, hiddenEntityTag, showHidden) => {
+    const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
+      ? models
+      : filterHiddenEntities(models, hiddenEntityTag);
+    const sortedResponse = sortBy(filteredHidden, (model) =>
+      model.name.toLowerCase(),
+    );
+    const sortedAgents = groupMarketplaceEntityAndSaveOrder(
+      sortedResponse,
+    ).flatMap(({ entities }) => {
+      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+        sortItemsVersions(entities);
+      }
 
-    return entities;
-  });
-  return sortedAgents;
-});
+      return entities;
+    });
+    return sortedAgents;
+  },
+);
 
-const selectModelTopics = createSelector([_selectModels], (models) => {
-  return sortBy(
-    uniq(models?.flatMap((model) => model.topics ?? []) ?? []),
-    (topic) => topic.toLowerCase(),
-  );
-});
+const selectModelsVersionGroupByGroupId = createSelector(
+  [
+    (state) => selectModels(state),
+    (_state, versionGroupId: string) => versionGroupId,
+  ],
+  (models, versionGroupId) =>
+    models.reduce((acc, model) => {
+      if (getIdWithoutVersionFromApiKey(model.id) === versionGroupId) {
+        return [...acc, model];
+      }
+      return acc;
+    }, [] as DialAIEntityModel[]),
+);
+
+const selectModelTopics = createSelector(
+  [
+    _selectModels,
+    SettingsSelectors.selectHiddenEntityTag,
+    (_state, showHidden?: boolean) => showHidden,
+  ],
+  (models, hiddenEntityTag, showHidden) => {
+    const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
+      ? models
+      : filterHiddenEntities(models, hiddenEntityTag);
+    return sortBy(
+      uniq(filteredHidden?.flatMap((model) => model.topics ?? []) ?? []),
+      (topic) => topic.toLowerCase(),
+    );
+  },
+);
 
 const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;
 
 const selectRecentModelsIds = (state: RootState) =>
   rootSelector(state).recentModelsIds;
 
-const selectModelTypeAgents = createSelector([selectModels], (models) => {
-  return models.filter((model) => model.type === EntityType.Model);
-});
+const selectModelTypeAgents = createSelector(
+  [(state, showHidden?: boolean) => selectModels(state, showHidden)],
+  (models) => {
+    return models.filter((model) => model.type === EntityType.Model);
+  },
+);
 
 const selectPublishRequestModels = (state: RootState) =>
   rootSelector(state).publishRequestModels;
@@ -127,6 +174,7 @@ const selectDefaultModelReference = createSelector(
 
 export const ModelsSelectors = {
   selectModels,
+  selectModelsVersionGroupByGroupId,
   selectModelsMap,
   selectModelById,
   selectModelsError,

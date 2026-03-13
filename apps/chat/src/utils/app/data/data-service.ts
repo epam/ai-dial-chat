@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
@@ -94,6 +93,22 @@ export class DataService {
 
   public static setPromptbarWidth(promptBarWidth: number): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.PromptbarWidth, promptBarWidth);
+  }
+
+  public static getMarketplaceFilterbarWidth(): Observable<number> {
+    return BrowserStorage.getData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      SIDEBAR_MIN_WIDTH,
+    );
+  }
+
+  public static setMarketplaceFilterbarWidth(
+    filterbarWidth: number,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      filterbarWidth,
+    );
   }
 
   public static getIsChatFullWidth(): Observable<boolean> {

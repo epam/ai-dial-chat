@@ -14,11 +14,13 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import RefreshCW from '@/public/images/icons/refresh-cw.svg';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showReplayControls: boolean;
@@ -77,22 +79,22 @@ export const ChatControls: FC<Props> = ({
   const Icon = isError ? RefreshCW : IconPlayerPlay;
 
   return (
-    <DialButton
+    <DialIconButton
       className={classNames(
-        'absolute',
-        isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+        'absolute size-[20px] p-0',
+        isOverlay ? 'bottom-2 right-3' : 'right-4 top-3 md:bottom-3',
       )}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
       data-replay-variables
-      iconBefore={
+      icon={
         <Tooltip
           tooltip={isError ? t('Try again') : t('Continue replay')}
           isTriggerClickable
         >
           <Icon
-            height={24}
-            width={24}
+            height={DEFAULT_ICON_SIZES.STANDARD}
+            width={DEFAULT_ICON_SIZES.STANDARD}
             className={classNames(
               'shrink-0 hover:text-accent-primary',
               isError ? 'text-error' : 'text-secondary',

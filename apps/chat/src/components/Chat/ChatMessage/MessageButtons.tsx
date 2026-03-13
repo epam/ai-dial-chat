@@ -25,6 +25,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -39,8 +41,8 @@ import {
 } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
-  ButtonSize,
   DialPrimaryIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface MessageUserButtonsProps {
@@ -78,7 +80,7 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full select-none items-center justify-end gap-2',
+        'flex h-[24px] w-full select-none items-center justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
@@ -100,9 +102,14 @@ export const MessageUserButtons = ({
             >
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
-                size={ButtonSize.Small}
+                size={ElementSize.Small}
                 onClick={onToggleTemplatesEditing}
-                icon={<IconListDetails size={16} stroke={1.5} />}
+                icon={
+                  <IconListDetails
+                    size={DEFAULT_ICON_SIZES.SMALL}
+                    stroke={1.5}
+                  />
+                }
               />
             </Tooltip>
           )}
@@ -110,20 +117,21 @@ export const MessageUserButtons = ({
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
-                size={ButtonSize.Small}
+                size={ElementSize.Small}
                 onClick={onToggleEditing}
-                icon={<IconEdit size={16} stroke={1.5} />}
+                icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
               />
             </Tooltip>
           )}
           {onDelete && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-              {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
-                size={ButtonSize.Small}
+                size={ElementSize.Small}
                 onClick={onDelete}
-                icon={<IconTrashX size={16} stroke={1.5} />}
+                icon={
+                  <IconTrashX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+                }
               />
             </Tooltip>
           )}
@@ -152,30 +160,29 @@ const CopyButton = ({
   const { t } = useTranslation(Translation.Chat);
 
   const { copied, onCopy } = useCopy(content, convertFromMarkdown);
-  if (copied) {
-    return (
-      <Tooltip
-        key={`copied${keyPostfix}`}
-        placement="top"
-        tooltip={t(copiedLabel)}
-      >
-        <IconCheck size={18} className="text-secondary" />
-      </Tooltip>
-    );
-  }
 
   return (
     <Tooltip
-      key={`copy${keyPostfix}`}
+      key={`${copied ? 'copied' : 'copy'}${keyPostfix}`}
       placement="top"
       isTriggerClickable
-      tooltip={t(copyLabel)}
+      tooltip={t(copied ? copiedLabel : copyLabel)}
     >
       <DialPrimaryIconButton
         appearance={ButtonAppearance.Ghost}
-        size={ButtonSize.Small}
+        size={ElementSize.Small}
         onClick={onCopy}
-        icon={<Icon size={18} stroke={1.5} />}
+        disabled={copied}
+        icon={
+          copied ? (
+            <IconCheck
+              size={DEFAULT_ICON_SIZES.SMALL}
+              className="text-secondary"
+            />
+          ) : (
+            <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+          )
+        }
       />
     </Tooltip>
   );
@@ -229,9 +236,9 @@ export const MessageAssistantButtons = ({
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
           <DialPrimaryIconButton
             appearance={ButtonAppearance.Ghost}
-            size={ButtonSize.Small}
+            size={ElementSize.Small}
             onClick={onRegenerate}
-            icon={<IconRefresh size={16} stroke={1.5} />}
+            icon={<IconRefresh size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
             data-qa="regenerate"
           />
         </Tooltip>
@@ -256,10 +263,10 @@ export const MessageAssistantButtons = ({
         <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
           <DialPrimaryIconButton
             appearance={ButtonAppearance.Ghost}
-            size={ButtonSize.Small}
+            size={ElementSize.Small}
             onClick={onToggleEditing}
             data-qa="edit"
-            icon={<IconEdit size={16} stroke={1.5} />}
+            icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
           />
         </Tooltip>
       )}

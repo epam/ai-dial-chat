@@ -10,12 +10,11 @@ import { getVersionFromId } from '@/src/utils/server/api';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
-
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ListItemContentProps {
   id: string;
@@ -55,13 +54,9 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
         <ModelIcon entityId={id} entity={item} size={18} isCustomTooltip />
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
-      <DialCloseButton
-        className={classNames(
-          'text-secondary',
-          isError && 'hover:enabled:text-error',
-        )}
-        onClose={handleRemove}
-        size={18}
+      <CloseButtonSmall
+        className={classNames(isError && 'hover:enabled:text-error')}
+        onClick={handleRemove}
       />
     </div>
   );
@@ -84,8 +79,7 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
 
   const isMobileView = isSmallScreen();
 
-  const { isInvalid, isLoggedOut, isError, isUndeployed } =
-    getEntityStatus(item);
+  const { isInvalid, isError } = getEntityStatus(item);
 
   const shouldShowTooltip = !isMobileView || (isMobileView && isInvalid);
   const name = !item
@@ -129,9 +123,6 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
           item={item}
           name={name}
           version={version}
-          isInvalid={isInvalid}
-          isLoggedOut={isLoggedOut}
-          isUndeployed={isUndeployed}
           isInSelectionList
         />
       }

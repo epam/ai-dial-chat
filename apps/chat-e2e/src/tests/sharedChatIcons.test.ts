@@ -42,6 +42,7 @@ dialTest(
     conversationData,
     dataInjector,
     shareModal,
+    baseAssertion,
     shareModalAssertion,
     tooltipAssertion,
     tooltip,
@@ -111,9 +112,9 @@ dialTest(
     await dialTest.step(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
-        await shareModal.closeButton.hoverOver();
+        await shareModal.closeButtonIcon.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
-          shareModal.closeButton,
+          shareModal.closeButtonIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await shareModal.copyLinkButton.hoverOver();
@@ -132,19 +133,15 @@ dialTest(
     await dialTest.step(
       'Verify chat name is truncated with dots and full name is shown on hover',
       async () => {
-        const chatNameOverflowProp =
-          await shareModal.entityName.getComputedStyleProperty(
-            Styles.overflow_wrap,
-          );
-        expect
-          .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(StyleValues.breakWord);
-
+        await baseAssertion.assertElementTextIsTruncated(
+          shareModal.leftEntityName,
+        );
         await shareModal.entityName.hoverOver();
-        const tooltipChatName = await tooltip.getContent();
-        expect
-          .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedEntityName(conversation.name));
+        await baseAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.sharedEntityName(conversation.name),
+          ExpectedMessages.tooltipContentIsValid,
+        );
 
         const isTooltipChatNameTruncated =
           await tooltip.isElementWidthTruncated();
@@ -807,7 +804,7 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
     'Share folder with chats via QR code.\n' +

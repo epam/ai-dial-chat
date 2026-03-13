@@ -16,10 +16,12 @@ declare global {
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
+      ALLOWED_IFRAME_SOURCES?: string;
+      ALLOWED_SCRIPT_SOURCES?: string;
       IS_IFRAME?: string;
       ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME?: string;
-      ALLOWED_IFRAME_SOURCES?: string;
       CUSTOM_VISUALIZERS?: string;
+      APPLICATION_VISUALIZERS?: string;
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
       ENABLED_FEATURES?: string;
       PUBLICATION_FILTERS?: string;
@@ -49,6 +51,7 @@ declare global {
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
       TOPICS?: string;
+      HIDDEN_ENTITY_TAG?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
       WIDGETS_SCHEMA_IDS?: string;
       NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;

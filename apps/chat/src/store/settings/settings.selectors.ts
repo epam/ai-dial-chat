@@ -131,6 +131,9 @@ const selectThemeHostDefined = (state: RootState) =>
 const selectCustomVisualizers = (state: RootState) =>
   rootSelector(state).customRenderers;
 
+const selectApplicationVisualizers = (state: RootState) =>
+  rootSelector(state).applicationVisualizers;
+
 const selectMappedVisualizers = createSelector(
   [selectCustomVisualizers],
   (customVisualizers) => {
@@ -160,6 +163,15 @@ const selectIsCustomAttachmentType = (attachmentType: string) =>
       Object.prototype.hasOwnProperty.call(mappedVisualizers, attachmentType)
     );
   });
+
+const selectApplicationVisualizerConfig = (
+  state: RootState,
+  applicationId: string | undefined,
+) => {
+  return applicationId
+    ? selectApplicationVisualizers(state)?.[applicationId]
+    : undefined;
+};
 
 const selectPublicationFilters = (state: RootState) =>
   rootSelector(state).publicationFilters;
@@ -245,6 +257,12 @@ const selectIsAuthDisabled = (state: RootState) =>
 const selectAttachmentsSettings = (state: RootState) =>
   rootSelector(state).attachmentsSettings;
 
+const selectHiddenEntityTag = (state: RootState) =>
+  rootSelector(state).hiddenEntityTag;
+
+const selectStageContentLimit = (state: RootState) =>
+  rootSelector(state).stageContentLimit;
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -266,6 +284,8 @@ export const SettingsSelectors = {
   selectPreselectedAction,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
+  selectApplicationVisualizers,
+  selectApplicationVisualizerConfig,
   selectPublicationFilters,
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
@@ -279,4 +299,6 @@ export const SettingsSelectors = {
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
   selectAttachmentsSettings,
+  selectHiddenEntityTag,
+  selectStageContentLimit,
 };

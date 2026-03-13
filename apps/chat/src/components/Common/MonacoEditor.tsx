@@ -4,7 +4,7 @@ import {
   IconArrowsMinimize,
   IconExclamationCircleFilled,
 } from '@tabler/icons-react';
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -21,9 +21,10 @@ import { UISelectors } from '@/src/store/selectors';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { CloseButtonSmall } from './CloseButtons';
 import { TabOption, Tabs } from './Tabs';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import omit from 'lodash-es/omit';
 import { nanoid } from 'nanoid';
 
@@ -218,10 +219,9 @@ export const MonacoEditor = memo(function MonacoEditor(
               {errorLabel}
 
               {showErrors && (
-                <DialCloseButton
-                  onClose={handleErrorsClick}
+                <CloseButtonSmall
+                  onClick={handleErrorsClick}
                   className="ml-auto"
-                  size={18}
                 />
               )}
             </div>

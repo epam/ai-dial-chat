@@ -86,7 +86,6 @@ export type AppDispatch = typeof store.dispatch;
 export const createStore = (preloadedState: { settings: SettingsState }) => {
   if (typeof window === 'undefined') {
     const epicMiddleware = createEpicMiddleware({
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       dependencies: { router: useRouter() },
     });
 
@@ -103,7 +102,6 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
 
   if (!store) {
     const epicMiddleware = createEpicMiddleware({
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       dependencies: { router: useRouter() },
     });
 

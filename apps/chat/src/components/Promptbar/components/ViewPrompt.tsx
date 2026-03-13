@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -155,6 +155,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 <PublicVersionSelector
                   publicVersionGroupId={publicVersionGroupId}
                   onChangeSelectedVersion={handleChangeSelectedVersion}
+                  btnClassNames="!text-primary"
                 />
               )}
               <DialPrimaryButton

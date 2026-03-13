@@ -477,7 +477,7 @@ interface FormSchemaProps {
   buttonClassName?: string;
 }
 
-export const FormSchemaMemo = memo(function FormSchema({
+const FormSchemaMemo = memo(function FormSchema({
   schema,
   formValue,
   onChange,

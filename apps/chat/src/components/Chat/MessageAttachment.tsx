@@ -1,6 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
-import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconDownload,
+  IconFile,
+  IconFolder,
+} from '@tabler/icons-react';
+import {
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -26,6 +39,7 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -38,11 +52,15 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
 interface AttachmentDataRendererProps {
   attachment: Attachment;
+  isFullScreen?: boolean;
+  onFullScreenClick?: () => void;
   isInner?: boolean;
+  forceDefaultView?: boolean;
 }
 
 const getSourceDataUrl = (attachment: Attachment): string | undefined => {
@@ -62,6 +80,7 @@ const AttachmentSourceRenderer = ({
 
 const AttachmentDataRenderer = ({
   attachment,
+  isFullScreen,
   isInner,
 }: AttachmentDataRendererProps) => {
   if (AUDIO_TYPES_SET.has(attachment.type)) {
@@ -83,7 +102,12 @@ const AttachmentDataRenderer = ({
     return (
       <img
         src={getSourceDataUrl(attachment)}
-        className="m-0 aspect-auto w-full"
+        className={classNames(
+          'm-0',
+          isFullScreen
+            ? 'size-auto max-h-full max-w-full object-contain'
+            : 'aspect-auto w-full',
+        )}
         alt="Attachment image"
       />
     );
@@ -124,7 +148,12 @@ const AttachmentDataRenderer = ({
     );
   }
   if (attachment.type === PLOTLY_CONTENT_TYPE) {
-    return <PlotlyStringDataRenderer plotlyStringData={attachment.data} />;
+    return (
+      <PlotlyStringDataRenderer
+        plotlyStringData={attachment.data}
+        isFullScreen={isFullScreen}
+      />
+    );
   }
 
   return null;
@@ -132,10 +161,12 @@ const AttachmentDataRenderer = ({
 
 interface ChartAttachmentUrlRendererProps {
   attachmentUrl: string | undefined;
+  isFullScreen?: boolean;
 }
 
 const ChartAttachmentUrlRenderer = ({
   attachmentUrl,
+  isFullScreen,
 }: ChartAttachmentUrlRendererProps) => {
   const dispatch = useAppDispatch();
 
@@ -171,7 +202,7 @@ const ChartAttachmentUrlRenderer = ({
   }
 
   if (chart) {
-    return <PlotlyComponent plotlyData={chart} />;
+    return <PlotlyComponent plotlyData={chart} isFullScreen={isFullScreen} />;
   }
 
   return null;
@@ -180,10 +211,17 @@ const ChartAttachmentUrlRenderer = ({
 interface Props {
   attachment: Attachment;
   isInner?: boolean;
+  forceDefaultView?: boolean;
 }
 
 const AttachmentRendererComponent = withErrorBoundary(
-  ({ attachment, isInner }: AttachmentDataRendererProps) => {
+  ({
+    attachment,
+    isInner,
+    isFullScreen,
+    onFullScreenClick,
+    forceDefaultView,
+  }: AttachmentDataRendererProps) => {
     const attachmentType: MIMEType = attachment.type;
     const mappedAttachmentUrl = useMemo(
       () => getSourceDataUrl(attachment),
@@ -206,6 +244,9 @@ const AttachmentRendererComponent = withErrorBoundary(
           attachmentUrl={mappedAttachmentUrl}
           renderer={mappedVisualizers[attachmentType][0]}
           mimeType={attachmentType}
+          isFullScreen={isFullScreen}
+          onFullScreenClick={onFullScreenClick}
+          forceDefaultView={forceDefaultView}
         />
       );
     }
@@ -215,14 +256,29 @@ const AttachmentRendererComponent = withErrorBoundary(
       attachment.url &&
       mappedAttachmentUrl
     ) {
-      return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+      return (
+        <ChartAttachmentUrlRenderer
+          attachmentUrl={mappedAttachmentUrl}
+          isFullScreen={isFullScreen}
+        />
+      );
     }
 
-    return <AttachmentDataRenderer attachment={attachment} isInner={isInner} />;
+    return (
+      <AttachmentDataRenderer
+        attachment={attachment}
+        isInner={isInner}
+        isFullScreen={isFullScreen}
+      />
+    );
   },
 );
 
-export const MessageAttachment = ({ attachment, isInner }: Props) => {
+export const MessageAttachment = ({
+  attachment,
+  isInner,
+  forceDefaultView,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -239,13 +295,16 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const isBorderless = borderlessTypes.includes(attachment.type);
+  const isBorderless =
+    borderlessTypes.includes(attachment.type) && !forceDefaultView;
   const isExpandedByDefault =
-    isBorderless || expandedTypes.includes(attachment.type);
+    (isBorderless || expandedTypes.includes(attachment.type)) &&
+    !forceDefaultView;
 
   const [isOpened, setIsOpened] = useState(isExpandedByDefault);
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const handleResize = useCallback(() => {
     if (wasOpened && anchorRef.current) {
@@ -287,17 +346,100 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     VIDEO_TYPES_SET.has(attachment.type) ||
     AUDIO_TYPES_SET.has(attachment.type);
 
+  const isFullScreenEnabled =
+    IMAGE_TYPES_SET.has(attachment.type) ||
+    isCustomAttachmentType ||
+    attachment.type === PLOTLY_CONTENT_TYPE;
+
+  const FullScreenIcon = useMemo(
+    () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
+    [isFullScreen],
+  );
+
+  const handleToggleFullScreen = (e?: MouseEvent<HTMLButtonElement>) => {
+    if (e) {
+      stopBubbling(e);
+    }
+    setIsFullScreen((prev) => {
+      if (!prev) {
+        setIsOpened(true);
+        setIsExpanded(true);
+      }
+      return !prev;
+    });
+  };
+
+  const handleDropdownClick = () => {
+    if (isBorderless || isFullScreen) return;
+    setIsExpanded((isExpanded) => !isExpanded);
+    if (isOpenable) {
+      setIsOpened((isOpened) => {
+        if (!isOpened) {
+          setWasOpened(true);
+        }
+        return !isOpened;
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!isFullScreen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsFullScreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [isFullScreen]);
+
+  // const linkClassName =
+  //   'flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline';
+
   return (
     <div
       data-no-context-menu
       className={classNames(
-        'rounded',
+        'flex flex-col rounded',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
         !isInner && !isBorderless && 'border border-secondary',
         !isBorderless ? 'bg-layer-3 px-1 py-2' : 'mb-3 last:mb-0',
+        isFullScreen && 'fixed left-0 top-0 z-[9999] size-full bg-layer-3',
+        isFullScreen && isBorderless && '!bg-layer-1',
       )}
     >
-      {!isBorderless && (
+      {isBorderless ? (
+        <div
+          className={classNames(
+            'flex items-center justify-end gap-2',
+            isFullScreen ? 'px-3 py-2' : 'p-1',
+            isCustomAttachmentType && 'hidden',
+          )}
+        >
+          {isDownloadable && !isFolder && (
+            <a
+              download={attachment.title}
+              href={mappedAttachmentUrl}
+              target="_blank"
+              className="link-icon-button-small"
+            >
+              <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
+            </a>
+          )}
+
+          {isFullScreenEnabled && (
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
+              onClick={handleToggleFullScreen}
+            />
+          )}
+        </div>
+      ) : (
         <div className="flex items-center gap-3 px-2">
           <div className="flex items-center">
             {mappedAttachmentReferenceUrl ? (
@@ -305,40 +447,32 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 <a
                   href={mappedAttachmentReferenceUrl}
                   target="_blank"
-                  className="shrink-0"
+                  className="link-icon-button-small"
                   rel="noopener noreferrer"
                 >
                   <LinkIcon
-                    height={18}
-                    width={18}
-                    className="text-secondary hover:text-accent-primary"
+                    height={DEFAULT_ICON_SIZES.SMALL}
+                    width={DEFAULT_ICON_SIZES.SMALL}
                   />
                 </a>
               </Tooltip>
             ) : (
-              <Icon size={18} className="shrink-0 text-secondary" />
+              <Icon
+                size={DEFAULT_ICON_SIZES.SMALL}
+                className="shrink-0 text-secondary"
+              />
             )}
           </div>
-          <button
-            onClick={() => {
-              setIsExpanded((isExpanded) => !isExpanded);
-              if (isOpenable) {
-                setIsOpened((isOpened) => {
-                  if (!isOpened) {
-                    setWasOpened(true);
-                  }
-                  return !isOpened;
-                });
-              }
-            }}
-            className="flex grow items-center justify-between overflow-hidden"
+          <div
+            onClick={handleDropdownClick}
+            className="flex grow cursor-pointer items-center justify-between overflow-hidden"
             data-qa={
               isExpanded ? 'attachment-expanded' : 'attachment-collapsed'
             }
           >
             <span
               className={classNames(
-                'shrink truncate whitespace-pre text-left text-sm',
+                'shrink truncate whitespace-pre pr-2 text-left text-sm',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
@@ -347,6 +481,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             >
               {attachment.title || attachment.url || t('Attachment')}
             </span>
+
             {isOpenable && !isFolder ? (
               <div className="flex gap-2">
                 {isDownloadable && (
@@ -354,19 +489,33 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                     download={attachment.title}
                     href={mappedAttachmentUrl}
                     onClick={stopBubbling}
-                    className="text-secondary hover:text-accent-primary"
+                    className="link-icon-button-small"
                   >
-                    <IconDownload size={18} />
+                    <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                   </a>
                 )}
-                <ChevronDown
-                  height={18}
-                  width={18}
-                  className={classNames(
-                    'shrink-0 text-secondary transition',
-                    isOpened && 'rotate-180',
-                  )}
-                />
+                {isFullScreenEnabled && isOpened && (
+                  <DialGhostIconButton
+                    size={ElementSize.Small}
+                    icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
+                    onClick={handleToggleFullScreen}
+                  />
+                )}
+                {!isFullScreen && (
+                  <DialGhostIconButton
+                    size={ElementSize.Small}
+                    icon={
+                      <ChevronDown
+                        height={DEFAULT_ICON_SIZES.SMALL}
+                        width={DEFAULT_ICON_SIZES.SMALL}
+                        className={classNames(
+                          'shrink-0 transition',
+                          isOpened && 'rotate-180',
+                        )}
+                      />
+                    }
+                  />
+                )}
               </div>
             ) : (
               !isFolder &&
@@ -376,28 +525,33 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
                   target="_blank"
-                  className="text-secondary hover:text-accent-primary"
+                  className="link-icon-button-small"
                 >
-                  <IconDownload size={18} />
+                  <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
                 </a>
               )
             )}
-          </button>
+          </div>
         </div>
       )}
+
       {isOpenable && isOpened && (
         <div
           className={classNames(
-            'relative h-auto w-full overflow-hidden text-sm duration-200',
-            {
-              'mt-2 border-t border-tertiary p-3 pt-4': !isBorderless,
-            },
+            'relative overflow-hidden text-sm',
+            isFullScreen
+              ? 'm-0 flex grow items-center justify-center p-3'
+              : 'h-auto w-full',
+            !isBorderless && 'mt-2 border-t border-tertiary p-3 pt-4',
           )}
           ref={anchorRef}
         >
           <AttachmentRendererComponent
             attachment={attachment}
             isInner={isInner}
+            isFullScreen={isFullScreen}
+            onFullScreenClick={handleToggleFullScreen}
+            forceDefaultView={forceDefaultView}
           />
           {mappedAttachmentReferenceUrl && (
             <a

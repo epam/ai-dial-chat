@@ -1,6 +1,6 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
-import {
+import React, {
   ChangeEvent,
   DragEvent,
   FC,

@@ -1,18 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { validateInvitationId } from '@/src/utils/app/share';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 
@@ -24,7 +23,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   try {
     const { invitationId } = req.body;
@@ -35,7 +34,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,
       {
         method: HTTPMethod.GET,
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
+        headers: getApiHeaders({ jwt }),
       },
     );
 

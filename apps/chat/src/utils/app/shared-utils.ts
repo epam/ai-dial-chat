@@ -21,10 +21,6 @@ export const isReplayConversation = (conversation: ConversationInfo) =>
 
 export const isFolderId = (id: string) => id.endsWith('/');
 
-export const isRootId = (id?: string) => {
-  return id?.split('/').length === 2;
-};
-
 export const constructPath = (
   ...values: (string | undefined | null)[]
 ): string => {
@@ -63,6 +59,7 @@ export const splitEntityId = (
 
 export const getEntityBucket = (entity: { id: string }) =>
   entity.id.split('/')[1];
+
 export const isMyBucket = (bucket: string) => {
   return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
 };

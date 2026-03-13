@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import classNames from 'classnames';
 

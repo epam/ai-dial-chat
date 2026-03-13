@@ -39,7 +39,7 @@ import {
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
   generateNextName,
   getConversationAttachmentWithPath,
@@ -1223,7 +1223,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
 
             formData.append(
               'attachment',
-              attachment.fileContent,
+              getFileWithType(attachment.fileContent),
               attachment.name,
             );
 

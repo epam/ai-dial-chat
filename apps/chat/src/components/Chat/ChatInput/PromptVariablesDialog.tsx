@@ -28,10 +28,11 @@ import { UISelectors } from '@/src/store/selectors';
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -186,9 +187,9 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <DialCloseButton
-          className="absolute right-2 top-2 rounded"
-          onClose={onClose}
+        <CloseButtonSmall
+          className="absolute right-2 top-2"
+          onClick={onClose}
         />
 
         {updatedVariables.map((variable, index) => (

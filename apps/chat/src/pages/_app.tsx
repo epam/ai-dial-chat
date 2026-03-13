@@ -45,8 +45,9 @@ type AppPropsWithLayout = AppProps<SessionProviderProps & HomeProps> & {
 };
 
 function App({ Component, ...rest }: AppPropsWithLayout) {
+  const initialSettingsState = rest.pageProps.initialState?.settings;
   const store = createStore({
-    settings: rest.pageProps.initialState?.settings,
+    settings: initialSettingsState,
   });
 
   const getPage = Component.getLayout ?? ((page) => page);

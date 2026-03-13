@@ -17,6 +17,8 @@ import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/Pub
 import { CodeEditor } from '@/src/components/Common/CodeEditor';
 import { Spinner } from '@/src/components/Common/Spinner';
 
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
+
 import isEmpty from 'lodash-es/isEmpty';
 
 interface ReviewCodeAppSectionViewProps {
@@ -51,21 +53,19 @@ const ReviewCodeAppSectionView = ({
         />
       )}
 
-      <div className="flex gap-4">
-        <span className="w-[122px] shrink-0 text-secondary">
-          {t('Source folder: ')}
-        </span>
-
-        <div className="min-h-[400px] max-w-full shrink grow">
-          {isFilesLoading ? (
+      <MarketplaceEntityInfoRow
+        label={t('Source folder')}
+        value={
+          isFilesLoading ? (
             <div className="flex size-full items-center justify-center rounded border border-tertiary">
               <Spinner size={30} />
             </div>
           ) : (
             <CodeEditor sourcesFolderId={config.sourceFolder} readOnly />
-          )}
-        </div>
-      </div>
+          )
+        }
+        valueClassName="min-h-[400px] max-w-full shrink grow"
+      />
     </>
   );
 };
@@ -77,9 +77,7 @@ interface ReviewCodeAppSectionProps {
 export const ReviewCodeAppSection = ({
   application,
 }: ReviewCodeAppSectionProps) => {
-  const isCodeApp = isExecutableApp(application);
-
-  if (!isCodeApp || !application.function) return null;
+  if (!isExecutableApp(application) || !application.function) return null;
 
   return <ReviewCodeAppSectionView config={application.function} />;
 };

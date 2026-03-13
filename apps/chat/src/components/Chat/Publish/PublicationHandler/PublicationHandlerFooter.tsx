@@ -59,7 +59,8 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
   PublicationRequestFormData,
@@ -392,6 +393,7 @@ export const PublicationHandlerFooter = ({
 
       const isValidVersion =
         resource?.action === PublishActions.DELETE ||
+        publishModel?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
           !isVersionExists(
@@ -505,22 +507,23 @@ export const PublicationHandlerFooter = ({
       {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
-            size={24}
+            size={DEFAULT_ICON_SIZES.STANDARD}
             className="shrink-0 text-error"
             stroke="1.5"
           />
           <p className="text-sm text-error" data-qa="duplicate-unpublishing">
-            {selectedInvalidEntities.map((e, idx) => (
-              <span key={e.id} className="italic">
+            {selectedInvalidEntities.map((entity, idx) => (
+              <span key={entity.id} className="italic">
                 &quot;
-                {e.name.substring(0, 50) === e.name
-                  ? e.name
-                  : `${e.name.substring(0, 50)}...`}
+                {entity.name.substring(0, 50) === entity.name
+                  ? entity.name
+                  : `${entity.name.substring(0, 50)}...`}{' '}
+                {t('v')}. {entity.publicationInfo?.version ?? NA_VERSION}
                 &quot;{idx === selectedInvalidEntities.length - 1 ? ' ' : ', '}
               </span>
             ))}
             {t(
-              "have already been unpublished. You can't approve this request.",
+              `${selectedInvalidEntities.length > 1 ? 'have' : 'has'} already been unpublished. You can't approve this request.`,
             )}
           </p>
         </div>
@@ -530,6 +533,7 @@ export const PublicationHandlerFooter = ({
           <DialLinkButton
             className="px-0"
             onClick={handlePublicationReview}
+            disabled={isPublicationUpdating}
             data-qa="go-to-review"
             label={t(
               resourcesToReview.some((r) => r.reviewed)
@@ -550,6 +554,7 @@ export const PublicationHandlerFooter = ({
                     dataQa="edit"
                     onClick={handleToggleEditMode}
                     Icon={IconPencil}
+                    disabled={isPublicationUpdating}
                   />
                 )}
                 <DialNeutralButton
@@ -562,6 +567,7 @@ export const PublicationHandlerFooter = ({
                     )
                   }
                   data-qa="reject"
+                  disabled={isPublicationUpdating}
                 />
               </>
             )}

@@ -7,7 +7,10 @@ import { getEntityStatus } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
-import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
+import {
+  DisabledActions,
+  ItemCardView,
+} from '@/src/components/Chat/TalkTo/ItemCardView';
 
 export interface AgentAndToolsetSelectItemProps {
   groupItem: MarketplaceEntity;
@@ -15,7 +18,7 @@ export interface AgentAndToolsetSelectItemProps {
   onToggleSelectItem: (item: MarketplaceEntity) => void;
 }
 
-const disabledAgentActions = {
+const disabledAgentActions: DisabledActions = {
   edit: true,
   share: true,
   unshare: true,

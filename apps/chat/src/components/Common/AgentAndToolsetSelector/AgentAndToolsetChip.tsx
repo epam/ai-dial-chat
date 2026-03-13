@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -13,12 +13,11 @@ import { getVersionFromId } from '@/src/utils/server/api';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
-
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -59,14 +58,13 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   const isCustomTool = !isApplicationId(id) && !isToolsetId(id);
 
   return (
-    <DialCloseButton
+    <CloseButtonSmall
       className={classNames(
-        'mr-1 p-1 text-secondary',
+        'mr-1',
         isError && !isCustomTool && 'hover:enabled:text-error',
       )}
-      onClose={() => onRemove?.(id)}
+      onClick={() => onRemove?.(id)}
       aria-label="Remove item"
-      size={18}
     />
   );
 };
@@ -138,8 +136,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   onItemClick,
   isInSelectionList,
 }) => {
-  const { isInvalid, isLoggedOut, isError, isUndeployed } =
-    getEntityStatus(item);
+  const { isInvalid, isError } = getEntityStatus(item);
 
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
@@ -159,26 +156,12 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
         item={item}
         name={name}
         version={version}
-        isInvalid={isInvalid}
-        isLoggedOut={isLoggedOut}
-        isUndeployed={isUndeployed}
         isInSelectionList={isInSelectionList}
         isCustomTool={isCustomTool}
         readonly={readonly}
       />
     );
-  }, [
-    id,
-    item,
-    name,
-    version,
-    isInvalid,
-    isLoggedOut,
-    isUndeployed,
-    isInSelectionList,
-    readonly,
-    isCustomTool,
-  ]);
+  }, [id, item, name, version, isInSelectionList, readonly, isCustomTool]);
 
   return (
     <ChipWrapper isError={isError} isCustomTool={isCustomTool}>

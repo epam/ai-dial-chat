@@ -57,7 +57,7 @@ export const TrueFilter: EntityFilter<ShareInterface> = () => true;
 export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.sharedWithMe;
 
-export const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
+const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
   item.folderId === getConversationRootId() ||
   item.folderId === getPromptRootId() ||
   item.folderId === getFileRootId();
@@ -67,7 +67,7 @@ export const SharedWithMeFilters: EntityFilters = {
   sectionFilter: SharedWithMeFilter,
 };
 
-export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
+const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;
 
 export const PublishedWithMeFilter: EntityFilters = {
@@ -76,7 +76,7 @@ export const PublishedWithMeFilter: EntityFilters = {
   versionFilter: (item, version) => item.publicationInfo?.version === version,
 };
 
-export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
+const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isPublished;
 
 export const NotReplayFilter: EntityFilter<ConversationInfo> = (conv) =>
@@ -93,7 +93,7 @@ export const isSearchFilterSelected = (
   value: SearchFilters,
 ) => (filter & value) === value;
 
-export const getMyItemsFilter = (
+const getMyItemsFilter = (
   searchFilters: SearchFilters,
 ): EntityFilter<ShareEntity> => {
   const itemFilters: EntityFilter<ShareEntity>[] = [];

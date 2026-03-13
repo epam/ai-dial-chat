@@ -2,13 +2,11 @@ import { EntityEditorAppTypes, EntityEditorToolsetTypes } from '@/src/testData';
 import { BasePage } from '@/src/ui/pages/basePage';
 import {
   CustomAppEditorContainer,
-  ExternalAppEditorContainer,
-  ToolsetEditorContainer,
-} from '@/src/ui/webElements';
-import {
   EntityEditorGeneralForm,
   EntityEditorGeneralInfoPreview,
   EntityEditorHeader,
+  ExternalAppEditorContainer,
+  ToolsetEditorContainer,
 } from '@/src/ui/webElements';
 
 export class EntityEditorPage extends BasePage {

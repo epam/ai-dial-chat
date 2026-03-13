@@ -1,5 +1,12 @@
 import { IconPaperclip } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -11,7 +18,6 @@ import {
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,
@@ -45,6 +51,7 @@ import {
 } from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
@@ -473,11 +480,10 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [shouldScroll]);
 
-  const uploadPastedFiles = useChatUploadFiles(
-    getQuickAttachmentsSavingPath(),
-    newEditableAttachments.length,
-    true,
-  );
+  const uploadPastedFiles = useChatUploadFiles({
+    selectedAttachmentsAmount: newEditableAttachments.length,
+    skipSelect: true,
+  });
 
   const handleUploadPastedFiles = useCallback(
     (
@@ -583,9 +589,9 @@ export const UserMessage = memo(function UserMessage({
                 <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
                   <IconPaperclip
                     strokeWidth="1.5"
-                    size={24}
-                    width={24}
-                    height={24}
+                    size={DEFAULT_ICON_SIZES.STANDARD}
+                    width={DEFAULT_ICON_SIZES.STANDARD}
+                    height={DEFAULT_ICON_SIZES.STANDARD}
                   />
                 </div>
               }

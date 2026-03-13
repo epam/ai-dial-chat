@@ -4,11 +4,12 @@ import {
   addTrailingSlashIfAbsent,
   combineEntities,
 } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getFolderFromId,
   getNextDefaultName,
+  getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
   isFolderEmpty,
   renameFolderAndMoveEntity,
@@ -25,6 +26,7 @@ import {
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
+import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { FilesState } from './files.types';
@@ -105,6 +107,7 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
+      const fileContent = getFileWithType(payload.fileContent);
       state.files.push({
         id: payload.id,
         name: payload.name,
@@ -113,9 +116,9 @@ export const filesSlice = createSlice({
 
         status: UploadStatus.LOADING,
         percent: 0,
-        fileContent: payload.fileContent,
+        fileContent,
         contentLength: payload.fileContent.size,
-        contentType: payload.fileContent.type,
+        contentType: fileContent.type,
       });
     },
     uploadFileCancel: (
@@ -340,10 +343,23 @@ export const filesSlice = createSlice({
       state.isLoadingSearchListing = false;
 
       const existingFileIds = new Set(state.files.map((f) => f.id));
-      const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
+      const existingFolderIds = new Set(state.folders.map((f) => f.id));
+      const newFiles = payload.files.filter(
+        (f) =>
+          !existingFileIds.has(f.id) &&
+          !f.folderId.endsWith(`/${CLIENTDATA_PATH}`),
+      );
+      const newFolders = uniq(
+        newFiles.flatMap((f) => getParentFolderIdsFromFolderId(f.folderId)),
+      )
+        .filter((id) => !existingFolderIds.has(id))
+        .map((id) => getFolderFromId(id, FeatureType.File));
 
       if (newFiles.length > 0) {
         state.files = [...state.files, ...newFiles];
+      }
+      if (newFolders.length > 0) {
+        state.folders = [...state.folders, ...newFolders];
       }
 
       state.searchListingMetadata[payload.folderPath] = {
@@ -942,6 +958,7 @@ export const filesSlice = createSlice({
         );
         state.files = state.files.filter((f) => f.id !== id);
 
+        const fileContent = getFileWithType(file.fileContent);
         state.files.push({
           id,
           name: file.name,
@@ -949,9 +966,9 @@ export const filesSlice = createSlice({
           folderId: constructPath(getFileRootId(bucket), relativePath),
           status: UploadStatus.LOADING,
           percent: 0,
-          fileContent: file.fileContent,
+          fileContent,
           contentLength: file.fileContent.size,
-          contentType: file.fileContent.type,
+          contentType: fileContent.type,
         });
       });
     },

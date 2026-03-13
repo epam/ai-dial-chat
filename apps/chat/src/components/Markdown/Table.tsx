@@ -14,6 +14,8 @@ import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface CopyIconProps {
@@ -29,7 +31,7 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
   return (
     <IconComponent
       className="cursor-pointer text-secondary hover:text-accent-primary"
-      size={24}
+      size={DEFAULT_ICON_SIZES.STANDARD}
       data-qa={type.concat('-icon')}
       onClick={() => {
         if (!copied) {

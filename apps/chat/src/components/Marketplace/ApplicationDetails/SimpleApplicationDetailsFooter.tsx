@@ -1,10 +1,11 @@
 import {
-  IconPlayerPlay,
-  IconPlaystationSquare,
+  IconCloudDownload,
+  IconCloudUpload,
   IconRefresh,
 } from '@tabler/icons-react';
 
 import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -28,26 +29,32 @@ interface ActionButtonProps {
   entity: DialAIEntityModel;
 }
 
-export const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
+const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const { handleDeploy, handleUndeploy } = useApplicationStatusActions(
     entity.id,
   );
 
+  const hasDeployAccess = useHasDeployAccess(entity);
+
   const isAppDeployed = isApplicationDeployed(entity);
   const isAppDeploymentInProgress = isApplicationDeploymentInProgress(entity);
-  const isDeploying =
-    entity.functionStatus === ApplicationStatus.DEPLOYING ||
-    entity.functionStatus === ApplicationStatus.REDEPLOYING;
+  const isDeploying = entity.functionStatus === ApplicationStatus.DEPLOYING;
+  const isRedeploying = entity.functionStatus === ApplicationStatus.REDEPLOYING;
+  const buttonStatus = isDeploying
+    ? t('Deploying')
+    : isRedeploying
+      ? t('Redeploying')
+      : t('Undeploying');
 
-  if (!isExecutableApp(entity)) {
+  if (!isExecutableApp(entity) || !hasDeployAccess) {
     return null;
   }
 
   if (isAppDeploymentInProgress) {
     return (
       <DialNeutralButton
-        label={isDeploying ? t('Deploying') : t('Undeploying')}
+        label={buttonStatus}
         iconBefore={<Spinner size={18} className="!text-controls-disable" />}
         data-qa="deploy-pending"
         disabled
@@ -59,7 +66,7 @@ export const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
     return (
       <DialNeutralButton
         label={t('Undeploy')}
-        iconBefore={<IconPlaystationSquare size={18} />}
+        iconBefore={<IconCloudDownload size={18} />}
         onClick={handleUndeploy}
         data-qa="undeploy-in-details"
       />
@@ -69,21 +76,23 @@ export const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   return (
     <DialPrimaryButton
       label={t('Deploy')}
-      iconBefore={<IconPlayerPlay size={18} />}
+      iconBefore={<IconCloudUpload size={18} />}
       onClick={handleDeploy}
       data-qa="deploy-in-details"
     />
   );
 };
 
-export const RedeployButton = ({ entity }: ActionButtonProps) => {
+const RedeployButton = ({ entity }: ActionButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const { handleRedeploy } = useApplicationStatusActions(entity.id);
+
+  const hasDeployAccess = useHasDeployAccess(entity);
 
   const isAppDeployed = isApplicationDeployed(entity);
   const isAppDeploymentInProgress = isApplicationDeploymentInProgress(entity);
 
-  if (!isAppDeployed || isAppDeploymentInProgress) {
+  if (!isAppDeployed || isAppDeploymentInProgress || !hasDeployAccess) {
     return null;
   }
 

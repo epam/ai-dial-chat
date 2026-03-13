@@ -1,6 +1,12 @@
+import React from 'react';
+
 import { useTranslation } from 'next-i18next';
 
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
+
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isToolsetId } from '@/src/utils/app/id';
+import { getEntityStatus } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -8,9 +14,6 @@ import { Translation } from '@/src/types/translation';
 interface StatusMessageProps {
   id: string;
   item?: MarketplaceEntity;
-  isInvalid: boolean;
-  isLoggedOut: boolean;
-  isUndeployed: boolean;
   isInSelectionList?: boolean;
   isCustomTool?: boolean;
   readonly?: boolean;
@@ -18,14 +21,21 @@ interface StatusMessageProps {
 
 export const StatusMessage: React.FC<StatusMessageProps> = ({
   id,
-  isInvalid,
-  isLoggedOut,
-  isUndeployed,
+  item,
   isInSelectionList,
   isCustomTool,
   readonly,
 }) => {
   const { t } = useTranslation(Translation.Common);
+
+  const {
+    isInvalid,
+    isLoggedOut,
+    isUndeployed,
+    isDeploying,
+    isUndeploying,
+    isRedeploying,
+  } = getEntityStatus(item);
 
   let entityTypeKey: 'agent' | 'toolset' = 'agent';
   if (isToolsetId(id)) {
@@ -64,12 +74,24 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
     return <div className="text-sm text-error">{t(message)}</div>;
   }
 
+  const hasDeployAccess = useHasDeployAccess(item);
+  const isPublicApp = item ? isMarketplaceEntityPublic(item) : false;
+
   if (isUndeployed) {
-    const message = readonly
-      ? 'Undeployed app.'
-      : `Undeployed app. Click ${
-          isInSelectionList ? 'to scroll to' : 'on'
-        } the app to deploy.`;
+    let message: string;
+    if (readonly) {
+      message = 'Undeployed app.';
+    } else if (!hasDeployAccess) {
+      if (isPublicApp) {
+        message = 'Undeployed app. Ask administrator to deploy the app.';
+      } else {
+        message = 'Undeployed app. Ask author to deploy the app.';
+      }
+    } else {
+      message = `Undeployed app. Click ${
+        isInSelectionList ? 'to scroll to' : 'on'
+      } the app to deploy.`;
+    }
 
     return <div className="text-sm text-error">{t(message)}</div>;
   }
@@ -79,6 +101,36 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
       ? 'Click to scroll to the {{entityType}}.'
       : 'Click on the {{entityType}} to see details.'
     : '';
+
+  if (isDeploying) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Deploying app.')}
+        {textTemplate &&
+          ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
+      </div>
+    );
+  }
+
+  if (isUndeploying) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Undeploying app.')}
+        {textTemplate &&
+          ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
+      </div>
+    );
+  }
+
+  if (isRedeploying) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Redeploying app.')}
+        {textTemplate &&
+          ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
+      </div>
+    );
+  }
 
   return (
     <div className="text-sm text-secondary">

@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { prepareFileName } from '@/src/utils/app/file';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   buildApiUrl,
@@ -11,12 +11,11 @@ import {
 } from '@/src/utils/server/file-manager-utils';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import FormData from 'form-data';
 import JSZip from 'jszip';
@@ -134,8 +133,7 @@ const handler = async (
       return res.status(400).json({ error: 'Archive does not contain files' });
     }
 
-    const authToken = await getToken({ req });
-    const jwt = authToken?.access_token as string;
+    const jwt = await getToken({ req });
 
     const batchSize = 50;
 

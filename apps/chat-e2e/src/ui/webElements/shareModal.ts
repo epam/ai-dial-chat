@@ -21,11 +21,15 @@ export class ShareModal extends BaseElement {
     this.rootLocator,
   );
   public copyLinkIcon = this.copyLinkButton.getChildElementBySelector(Tags.svg);
+  public closeButtonIcon = this.closeButton.getChildElementBySelector(Tags.svg);
   public shareLinkInput = this.getChildElementBySelector(
     ShareModalSelectors.shareLink,
   );
   public entityName = this.getChildElementBySelector(
     ShareModalSelectors.entityName,
+  );
+  public leftEntityName = this.entityName.getChildElementBySelector(
+    ShareModalSelectors.leftEntityName,
   );
   public shareQrCodeContainer = this.getChildElementBySelector(
     ShareModalSelectors.qrCode,

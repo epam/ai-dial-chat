@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -15,12 +15,13 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
-import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -97,7 +98,6 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
     if (value) {
       dispatch(FilesActions.getFilesWithFolders({ id: value }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -128,11 +128,7 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
                 label={value ? t('Change') : t('Add')}
               />
               {value && (
-                <DialCloseButton
-                  onClose={handleDelete}
-                  disabled={disabled}
-                  size={18}
-                />
+                <CloseButtonSmall onClick={handleDelete} disabled={disabled} />
               )}
             </div>
           </Tooltip>

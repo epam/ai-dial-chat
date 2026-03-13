@@ -228,9 +228,14 @@ export const ExpectedConstants = {
   continueReviewButtonTitle: 'Continue review',
   goToReviewButtonTitle: 'Go to a review',
   reviewResourcesTooltip: `It's required to review all resources`,
-  duplicatedUnpublishingError: (...names: string[]) => {
-    const namesString = names.map((name) => `"${name}"`).join(', ');
-    return `${namesString} have already been unpublished. You can't approve this request.`;
+  duplicatedUnpublishingError: (
+    ...entries: { name: string; version: string }[]
+  ) => {
+    const namesString = entries
+      .map(({ name, version }) => `"${name} v. ${version}"`)
+      .join(', ');
+    const verb = entries.length === 1 ? 'has' : 'have';
+    return `${namesString} ${verb} already been unpublished. You can't approve this request.`;
   },
   messageTemplateModalTitle: 'Message template',
   messageTemplateModalDescription:
@@ -299,8 +304,7 @@ export const ExpectedConstants = {
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
     'Request name should be at most 160 characters long',
-  publishRequestNameMinLengthErrorMessage:
-    'Request name should be at least 2 characters long',
+  publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
@@ -393,6 +397,7 @@ export enum MenuOptions {
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
+  newFolder = 'New folder',
   upload = 'Upload',
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
@@ -497,8 +502,10 @@ export const API = {
   fileHost: () => `/api/${API.filesHostSegment}`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
   deleteFileHost: () => `${API.fileHost()}/delete`,
-  folderFilesListingHost: (folderName: string) =>
-    `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`,
+  folderFilesListingHost: (folderName?: string) =>
+    folderName
+      ? `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`
+      : '?filter=ITEM',
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',

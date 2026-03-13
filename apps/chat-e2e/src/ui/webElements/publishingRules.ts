@@ -1,4 +1,5 @@
 import { PublicationFunctions } from '@/chat/types/publication';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { BooleanOperator, PublishingRulesFilterTarget } from '@/src/testData';
 import { AttributeValues } from '@/src/ui/domData';
 import { IconSelectors, PublishingRulesSelectors } from '@/src/ui/selectors';
@@ -69,7 +70,9 @@ export class PublishingRules extends BaseElement {
         has: new BaseElement(
           this.page,
           PublishingRulesSelectors.ruleFunction,
-        ).getElementLocatorByText(new RegExp(`^${rule.fnc.toLowerCase()}$`)),
+        ).getElementLocatorByText(
+          new RegExp(`^${getFilterLabel(rule.fnc)}$`, 'i'),
+        ),
       });
 
     for (let i = 0; i < rule.values.length; i++) {

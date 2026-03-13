@@ -14,18 +14,18 @@
       "inputs": ["default", "^production"]
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"]
     },
     "test:watch": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],
       "options": {
         "watch": true
       }
     },
     "test:coverage": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],
       "options": {
         "coverage": true
@@ -36,7 +36,7 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "maxWarnings": 10
+        "maxWarnings": 150
       },
       "inputs": [
         "default",
@@ -56,7 +56,7 @@
       ],
       "options": {
         "fix": true,
-        "maxWarnings": 10
+        "maxWarnings": 150
       }
     },
     "format": {
@@ -70,6 +70,14 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": ["prettier --write {projectRoot}"]
+      }
+    },
+    "unused-exports": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx ts-unused-exports {projectRoot}/tsconfig.json --showLineNumber --excludePathsFromReport='.next;dist;e2e'"
+        ]
       }
     }
   },

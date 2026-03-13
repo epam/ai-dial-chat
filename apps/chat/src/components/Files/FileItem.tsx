@@ -26,6 +26,7 @@ import { Translation } from '@/src/types/translation';
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -33,7 +34,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -256,10 +257,11 @@ export const FileItem = ({
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <DialButton
+          <DialIconButton
             onClick={handleRetry}
             data-qa="retry-upload"
-            iconBefore={
+            size={ElementSize.Small}
+            icon={
               <IconReload
                 className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}
@@ -268,10 +270,9 @@ export const FileItem = ({
           />
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <DialCloseButton
-            onClose={handleCancelFile}
-            ariaLabel="remove-file"
-            size={18}
+          <CloseButtonSmall
+            onClick={handleCancelFile}
+            aria-label="remove-file"
           />
         ) : (
           <FileItemContextMenu
@@ -309,7 +310,7 @@ export const FileItem = ({
             if (result) {
               dispatch(
                 ShareActions.revokeAccess({
-                  resourceId: item.id,
+                  resourceIds: [item.id],
                   featureType: FeatureType.File,
                 }),
               );

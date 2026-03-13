@@ -84,6 +84,12 @@ export function isDialDeploymentToolset(
   return toolset.type === ToolsetTypes.DialDeployment;
 }
 
+export function isDialDeploymentSimpleTool(tool: {
+  type?: unknown;
+}): tool is DialDeploymentSimpleTool {
+  return tool.type === DialDeploymentToolsetToolTypes.DialDeploymentSimple;
+}
+
 export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
   return toolset.type === ToolsetTypes.DialMcp;
 }

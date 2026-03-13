@@ -1,5 +1,5 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import classNames from 'classnames';
 
@@ -19,6 +19,7 @@ import {
   ConversationsActions,
   PromptsActions,
   PublicationActions,
+  ToolsetActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -53,7 +54,6 @@ function PublicationControlsView({
   const isMessageStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
       state,
@@ -65,20 +65,7 @@ function PublicationControlsView({
     (res) => res.reviewUrl === resourceToReview.reviewUrl,
   );
 
-  const unselectPrompt = useCallback(() => {
-    dispatch(
-      PromptsActions.selectPrompt({
-        promptId: undefined,
-      }),
-    );
-    dispatch(
-      ConversationsActions.selectConversations({
-        conversationIds: [],
-      }),
-    );
-  }, [dispatch]);
-
-  const unselectConversation = useCallback(() => {
+  const handleClearReviewSelection = useCallback(() => {
     dispatch(
       PublicationActions.selectPublication(resourceToReview.publicationUrl),
     );
@@ -87,33 +74,28 @@ function PublicationControlsView({
         conversationIds: [],
       }),
     );
-  }, [dispatch, resourceToReview.publicationUrl]);
-
-  const unselectApplication = useCallback(() => {
+    dispatch(
+      PromptsActions.selectPrompt({
+        promptId: undefined,
+      }),
+    );
     dispatch(PublicationActions.setIsApplicationReview(false));
-  }, [dispatch]);
-
-  const unselectToolset = useCallback(() => {
     dispatch(PublicationActions.setIsToolsetReview(false));
-  }, [dispatch]);
+  }, [dispatch, resourceToReview.publicationUrl]);
 
   const toggleResource = useCallback(
     (offset: number) => {
       const reviewUrl = resourcesToReview[publicationIdx + offset].reviewUrl;
 
+      handleClearReviewSelection();
+
       if (isConversationId(reviewUrl)) {
-        unselectPrompt();
-        unselectApplication();
-        unselectToolset();
         dispatch(
           ConversationsActions.selectConversations({
             conversationIds: [reviewUrl],
           }),
         );
       } else if (isPromptId(reviewUrl)) {
-        unselectConversation();
-        unselectApplication();
-        unselectToolset();
         dispatch(
           PromptsActions.selectPrompt({
             promptId: reviewUrl,
@@ -122,9 +104,6 @@ function PublicationControlsView({
         );
         dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
       } else if (isApplicationId(reviewUrl)) {
-        unselectConversation();
-        unselectPrompt();
-        unselectToolset();
         dispatch(
           ApplicationActions.get({
             applicationId: reviewUrl,
@@ -132,40 +111,20 @@ function PublicationControlsView({
         );
         dispatch(PublicationActions.setIsApplicationReview(true));
       } else {
-        unselectConversation();
-        unselectPrompt();
-        unselectApplication();
+        dispatch(ToolsetActions.getToolsetDetails({ id: reviewUrl }));
         dispatch(PublicationActions.setIsToolsetReview(true));
       }
     },
-    [
-      resourcesToReview,
-      publicationIdx,
-      unselectPrompt,
-      unselectApplication,
-      unselectToolset,
-      dispatch,
-      unselectConversation,
-    ],
+    [resourcesToReview, publicationIdx, handleClearReviewSelection, dispatch],
   );
 
-  const handleBackToPublication = useCallback(() => {
-    if (isConversationId(resourceToReview.reviewUrl)) {
-      unselectConversation();
-    } else if (isPromptId(resourceToReview.reviewUrl)) {
-      unselectPrompt();
-    } else if (isApplicationId(resourceToReview.reviewUrl)) {
-      unselectApplication();
-    } else {
-      unselectToolset();
-    }
-  }, [
-    resourceToReview.reviewUrl,
-    unselectConversation,
-    unselectPrompt,
-    unselectApplication,
-    unselectToolset,
-  ]);
+  const handleToggleNext = useCallback(() => {
+    toggleResource(1);
+  }, [toggleResource]);
+
+  const handleTogglePrev = useCallback(() => {
+    toggleResource(-1);
+  }, [toggleResource]);
 
   useEffect(() => {
     if (!resourceToReview.reviewed) {
@@ -176,7 +135,12 @@ function PublicationControlsView({
         }),
       );
     }
-  }, [entity, resourceToReview, dispatch]);
+  }, [
+    entity.id,
+    resourceToReview.publicationUrl,
+    resourceToReview.reviewed,
+    dispatch,
+  ]);
 
   return (
     <div
@@ -189,7 +153,7 @@ function PublicationControlsView({
       <DialNeutralButton
         data-qa="prev-chat-review-button"
         disabled={publicationIdx === 0}
-        onClick={() => toggleResource(-1)}
+        onClick={handleTogglePrev}
         iconAfter={
           <IconPlayerPlay
             className="shrink-0 rotate-180"
@@ -201,13 +165,13 @@ function PublicationControlsView({
       <DialNeutralButton
         data-qa="next-chat-review-button"
         disabled={publicationIdx === resourcesToReview.length - 1}
-        onClick={() => toggleResource(1)}
+        onClick={handleToggleNext}
         iconBefore={
           <IconPlayerPlay className="shrink-0" height={18} width={18} />
         }
       />
       <DialPrimaryButton
-        onClick={handleBackToPublication}
+        onClick={handleClearReviewSelection}
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
         label={t('Back to publication request')}

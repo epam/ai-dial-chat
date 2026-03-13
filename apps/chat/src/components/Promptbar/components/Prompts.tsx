@@ -18,7 +18,7 @@ interface Props {
   prompts: PromptInfo[];
 }
 
-export const PromptsView: FC<Props> = ({ prompts }) => {
+const PromptsView: FC<Props> = ({ prompts }) => {
   const visibleSidebarItemsCount = useAppSelector((state) =>
     UISelectors.selectVisibleSidebarItems(state, FeatureType.Prompt),
   );

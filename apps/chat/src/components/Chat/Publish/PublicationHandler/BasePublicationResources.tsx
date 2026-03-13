@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import {
   getFolderIdFromEntityId,
@@ -14,7 +14,10 @@ import {
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { parseEntityApiKey } from '@/src/utils/server/api';
+import {
+  getIdWithoutVersionFromApiKey,
+  parseEntityApiKey,
+} from '@/src/utils/server/api';
 
 import { PublicationResource } from '@/src/types/publication';
 
@@ -31,6 +34,7 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 interface Props {
   resources: PublicationResource[];
@@ -84,10 +88,14 @@ export const BasePublicationResources = ({
 
   const rootEntities = useMemo(
     () =>
-      entities.filter(
-        (entity) =>
-          // in case of publication creation, we need to show all files as root entities
-          isRootEntity(entity.id) || (publicationModel && isFileId(entity.id)),
+      uniqBy(
+        entities.filter(
+          (entity) =>
+            // in case of publication creation, we need to show all files as root entities
+            isRootEntity(entity.id) ||
+            (publicationModel && isFileId(entity.id)),
+        ),
+        (entity) => getIdWithoutVersionFromApiKey(entity.id),
       ),
     [entities, publicationModel],
   );
@@ -115,6 +123,12 @@ export const BasePublicationResources = ({
     [folders, publicationModel],
   );
 
+  const displayFolderEntities = useMemo(() => {
+    return uniqBy(entities, (entity) =>
+      getIdWithoutVersionFromApiKey(entity.id),
+    );
+  }, [entities]);
+
   return (
     <>
       {rootFolders.map((folder) => (
@@ -123,6 +137,7 @@ export const BasePublicationResources = ({
           key={folder.id}
           currentFolder={folder}
           allFolders={folders}
+          displayItems={displayFolderEntities}
           allItems={entities}
           ItemComponent={ItemComponent}
           level={0}

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -111,7 +111,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
       dispatch(
         ApplicationActions.enterEditMode({
-          entity: entity,
+          entity,
           applicationType,
           detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
         }),

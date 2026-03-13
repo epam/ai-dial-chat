@@ -11,6 +11,7 @@ export class Breadcrumb extends BaseElement {
   public items = this.getChildElementBySelector(
     BreadcrumbSelectors.breadcrumbItem,
   );
+
   public itemByName = (name: string) =>
     this.items.getElementLocator().filter({
       has: this.page.locator(BreadcrumbSelectors.breadcrumbItemContent, {

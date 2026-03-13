@@ -39,7 +39,7 @@ import {
   Feature,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -90,6 +90,8 @@ export const PlaybackControls = ({
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
   const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
 
+  const iconClassName =
+    'absolute top-3 p-0 outline-none hover:text-accent-primary disabled:text-controls-disable size-[20px]';
   const isActiveIndex = typeof activeIndex === 'number';
 
   const isNextMessageInStack = useMemo(() => {
@@ -294,15 +296,15 @@ export const PlaybackControls = ({
           asChild
           isTriggerClickable
         >
-          <DialButton
+          <DialIconButton
             data-qa="playback-prev"
             onClick={handlePrevMessage}
             disabled={
               isDisabledPlaybackControls ||
               (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
             }
-            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
-            iconBefore={<IconPlayerPlay size={20} className="rotate-180" />}
+            className={classNames(iconClassName, 'left-4')}
+            icon={<IconPlayerPlay size={20} className="rotate-180" />}
           />
         </Tooltip>
         <div
@@ -343,16 +345,16 @@ export const PlaybackControls = ({
                     isTriggerClickable
                     asChild
                   >
-                    <DialButton
+                    <DialIconButton
                       data-qa="playback-next"
                       onClick={handlePlayNextMessage}
-                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+                      className={classNames(iconClassName, 'right-4')}
                       disabled={
                         isDisabledPlaybackControls ||
                         isMessageStreaming ||
                         !isNextMessageInStack
                       }
-                      iconBefore={<IconPlayerPlay size={20} />}
+                      icon={<IconPlayerPlay size={20} />}
                     />
                   </Tooltip>
                 </>
