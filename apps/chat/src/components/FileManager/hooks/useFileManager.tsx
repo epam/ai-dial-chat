@@ -853,7 +853,7 @@ export const useFileManager = ({
         );
       }
     },
-    [],
+    [dispatch],
   );
 
   const handleRenameValidation = useCallback(
