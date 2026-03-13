@@ -22,6 +22,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { NA_VERSION } from '@/src/constants/publication';
 import { Routes } from '@/src/constants/routes';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -264,7 +265,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ entity }) => {
                 triggerClassName="!text-xs bg-layer-4 rounded p-1"
               />
             ) : (
-              <span className="text-xs text-secondary">N/A</span>
+              <span className="text-xs text-secondary">{t(NA_VERSION)}</span>
             )}
           </div>
         </div>

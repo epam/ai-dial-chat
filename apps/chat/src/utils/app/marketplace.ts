@@ -13,7 +13,7 @@ import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 
 export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
-  if (entity.id === entity.reference) {
+  if (!isCreatedMarketplaceEntity(entity)) {
     return entity.name;
   }
   const pathParts = getModelIdWithoutVersion(entity.id).split('/');
@@ -74,4 +74,10 @@ export const isMarketplaceEditorStep = (
     step === MarketplaceEditorSteps.General ||
     step === MarketplaceEditorSteps.Settings
   );
+};
+
+export const isCreatedMarketplaceEntity = (
+  entity: MarketplaceEntity,
+): boolean => {
+  return entity.id !== entity.reference;
 };
