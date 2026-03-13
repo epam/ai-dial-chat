@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { OverflowContainer } from '@/src/components/Common/OverflowContainer';
 import { OverflowIndicator } from '@/src/components/Common/OverflowIndicator';

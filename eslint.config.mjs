@@ -63,6 +63,7 @@ export default [
         RequestInit: 'readonly',
         XMLHttpRequestBodyInit: 'readonly',
         ReadableStreamReadResult: 'readonly',
+        ResizeObserverCallback: 'readonly',
       },
     },
 
