@@ -1,4 +1,5 @@
 import {
+  OAuthConfig,
   OAuthProviderType,
   Provider,
   TokenEndpointHandler,
@@ -297,6 +298,24 @@ const getProviders = () => {
 
 // TODO: create a validator for providers options
 export const authProviders = getProviders();
+
+// Pre-register OIDC metadata so token refresh works after server restarts,
+// without waiting for a login to happen on the current process instance.
+authProviders.forEach((provider) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = provider as OAuthConfig<any>;
+  const issuerUrl = typeof p.issuer === 'string' ? p.issuer : undefined;
+  const clientId = typeof p.clientId === 'string' ? p.clientId : undefined;
+  const clientSecret =
+    typeof p.clientSecret === 'string' ? p.clientSecret : undefined;
+  if (issuerUrl && clientId && clientSecret) {
+    NextClient.setProviderMeta(provider.id, {
+      issuerUrl,
+      clientId,
+      clientSecret,
+    });
+  }
+});
 
 /**
  * Sets the DEFAULT_PROVIDER to the single available provider's ID if:

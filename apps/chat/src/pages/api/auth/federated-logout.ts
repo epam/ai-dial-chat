@@ -43,7 +43,7 @@ const handler = async (
       return;
     }
 
-    const client = NextClient.getClient(token.providerId);
+    const client = await NextClient.getOrDiscoverClient(token.providerId);
 
     if (!client) {
       logger.warn(`Client for providerId ${token.providerId} not found.`);
