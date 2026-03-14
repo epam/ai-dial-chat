@@ -1,4 +1,4 @@
-import { DialHomePage, MarketplacePage } from '../ui/pages';
+import { DialHomePage, FileManagerPage, MarketplacePage } from '../ui/pages';
 import {
   AgentSettings,
   AttachFilesModal,
@@ -10,9 +10,14 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   ConversationToCompare,
+  Dropdown,
   DropdownMenu,
   EntityDetailsModal,
   FileDropArea,
+  FileManager,
+  FileManagerContainer,
+  FileManagerGrid,
+  FileManagerToolbar,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -37,6 +42,7 @@ import {
   ChatAssertion,
   ConversationAssertion,
   DownloadAssertion,
+  FileManagerGridAssertion,
   ManageAttachmentsAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
@@ -175,6 +181,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
   additionalShareUserTooltip: Tooltip;
   additionalShareUserTooltipAssertion: TooltipAssertion;
+  additionalShareUserFileManagerPage: FileManagerPage;
+  additionalShareUserFileManagerContainer: FileManagerContainer;
+  additionalShareUserFileManager: FileManager;
+  additionalShareUserFileManagerToolbar: FileManagerToolbar;
+  additionalShareUserFileManagerGrid: FileManagerGrid;
+  additionalShareUserFileManagerGridAssertion: FileManagerGridAssertion;
+  additionalShareUserFileManagerGridRowDropdownMenu: Dropdown;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -183,6 +196,8 @@ const dialSharedWithMeTest = dialTest.extend<{
         additionalUserShareApiHelper,
         additionalSecondUserItemApiHelper,
         additionalSecondUserShareApiHelper,
+        additionalUserFileApiHelper,
+        additionalSecondShareUserFileApiHelper,
       },
       use,
     ) => {
@@ -192,6 +207,8 @@ const dialSharedWithMeTest = dialTest.extend<{
       await additionalSecondUserItemApiHelper.deleteAllData(
         BucketUtil.getAdditionalSecondShareUserBucket(),
       );
+      await additionalUserFileApiHelper.deleteAllFiles();
+      await additionalSecondShareUserFileApiHelper.deleteAllFiles();
       const additionalUserSharedEntities =
         await additionalUserShareApiHelper.listSharedWithMeEntities(
           ...Object.values(BackendResourceType),
@@ -929,6 +946,63 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserTooltip,
     );
     await use(additionalShareUserTooltipAssertion);
+  },
+  additionalShareUserFileManagerPage: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerPage = new FileManagerPage(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserFileManagerPage);
+  },
+  additionalShareUserFileManagerContainer: async (
+    { additionalShareUserFileManagerPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerContainer =
+      additionalShareUserFileManagerPage.getFileManagerContainer();
+    await use(additionalShareUserFileManagerContainer);
+  },
+  additionalShareUserFileManager: async (
+    { additionalShareUserFileManagerContainer },
+    use,
+  ) => {
+    const additionalShareUserFileManager =
+      additionalShareUserFileManagerContainer.getFileManager();
+    await use(additionalShareUserFileManager);
+  },
+  additionalShareUserFileManagerToolbar: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerToolbar =
+      additionalShareUserFileManager.getFileManagerToolbar();
+    await use(additionalShareUserFileManagerToolbar);
+  },
+  additionalShareUserFileManagerGrid: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGrid =
+      additionalShareUserFileManager.getFileManagerGrid();
+    await use(additionalShareUserFileManagerGrid);
+  },
+  additionalShareUserFileManagerGridAssertion: async (
+    { additionalShareUserFileManagerGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGridAssertion =
+      new FileManagerGridAssertion(additionalShareUserFileManagerGrid);
+    await use(additionalShareUserFileManagerGridAssertion);
+  },
+  additionalShareUserFileManagerGridRowDropdownMenu: async (
+    { additionalShareUserFileManagerGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGridRowDropdownMenu =
+      additionalShareUserFileManagerGrid.getRowDropdownMenu();
+    await use(additionalShareUserFileManagerGridRowDropdownMenu);
   },
 });
 
