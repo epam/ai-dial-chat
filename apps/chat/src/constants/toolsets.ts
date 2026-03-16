@@ -10,6 +10,10 @@ export enum ToolsetEditorQuery {
   IsCreating = 'isCreating',
 }
 
+export enum ToolsetLoginQuery {
+  LoginComplete = 'login-complete',
+}
+
 export const DRAFT_TOOLSET_ID = `${ApiKeys.Toolsets}/draft`;
 
 export enum ToolsetAuthAction {
@@ -21,3 +25,5 @@ export enum ToolsetAuthAction {
 export const PUBLIC_TOOLSET_TOOLTIP = translate(
   'This toolset is public and cannot be edited',
 );
+
+export const TOOLSET_AUTH_POPUP_NAME = 'toolset-auth';

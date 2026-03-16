@@ -6,6 +6,7 @@ import {
   defer,
   filter,
   forkJoin,
+  from,
   iif,
   map,
   mergeMap,
@@ -34,6 +35,7 @@ import {
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
+import { signInToolset } from '@/src/utils/auth/auth-toolset';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -61,8 +63,11 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
-import { ToolsetEditorQuery } from '@/src/constants/toolsets';
+import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
+import {
+  ToolsetEditorQuery,
+  ToolsetLoginQuery,
+} from '@/src/constants/toolsets';
 
 import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
@@ -714,6 +719,9 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
               credentialsLevel: payload.authLevel,
               isAdmin,
             };
+            const isPublic =
+              isEntityIdPublic({ id: payload.toolset.id }) ||
+              isPredefinedEntity({ id: payload.toolset.id });
 
             const url = new URL(authSettings.authorizationEndpoint);
             url.searchParams.set('response_type', 'code');
@@ -741,10 +749,40 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
 
             return concat(
               autoUpdateAction$,
-              defer(() => {
-                window.location.assign(url.toString());
-                return EMPTY;
-              }),
+              defer(
+                () =>
+                  from(signInToolset(url.href)).pipe(
+                    switchMap((isPopup) =>
+                      !isPopup
+                        ? EMPTY
+                        : refreshToolset$(
+                            payload.toolset.id,
+                            state$.value,
+                          ).pipe(
+                            mergeMap((actions) =>
+                              concat(
+                                of(actions),
+                                of(
+                                  UIActions.showSuccessToast(
+                                    translate(
+                                      getLoginSuccessMessage(
+                                        isAdmin && isPublic,
+                                        payload.authLevel,
+                                      ),
+                                      {
+                                        name: payload.toolset.name,
+                                        version: payload.toolset.version,
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                    ),
+                  ),
+                catchError(() => of(ToolsetActions.logInToolsetFail())),
+              ),
             );
           }
 
@@ -797,7 +835,20 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           );
 
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            void router.push(callbackUrl);
+            if (payload.isPopup) {
+              void router.push(
+                {
+                  pathname: router.pathname,
+                  query: {
+                    [ToolsetLoginQuery.LoginComplete]: QUERY_VALUE_TRUE,
+                  },
+                },
+                undefined,
+                { shallow: true },
+              );
+            } else {
+              void router.push(callbackUrl);
+            }
 
             return concat(
               toastAction$,

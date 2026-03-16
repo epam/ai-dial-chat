@@ -206,7 +206,9 @@ export const toolsetSlice = createSlice({
         apiKey?: string;
         toolset: ToolsetModel;
       }>,
-    ) => state,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
     logInToolset: (
       state,
       _action: PayloadAction<{
@@ -217,6 +219,7 @@ export const toolsetSlice = createSlice({
         apiKey?: string;
         callbackUrl?: string;
         isAdmin?: boolean;
+        isPopup?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
