@@ -18,6 +18,7 @@ import { templateMatchContent } from '@/src/utils/app/prompts';
 import { Translation } from '@/src/types/translation';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { TemplateInput } from './TemplateInput';
 
@@ -167,7 +168,7 @@ export const TemplateRow = ({
         />
       </div>
       <IconTrashX
-        size={24}
+        size={DEFAULT_ICON_SIZES.STANDARD}
         className={classNames(
           'shrink-0 cursor-pointer self-center text-secondary hover:text-accent-primary',
           lastRow && 'invisible',

@@ -8,6 +8,7 @@ export const errorsMessages = {
   403: 'Forbidden',
   400: 'Invalid request',
   404: 'Not found',
+  bodyExeededLimit: 'Conversation is too large to process.',
   ModelDeprecated:
     'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
   contentFiltering:
@@ -37,14 +38,14 @@ export const errorsMessages = {
   exportFailed: 'Export failed',
   shareFailed: 'Sharing failed. Please try again later.',
   shareWithExternalFilesFailed:
-    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
+    'Sharing failed. You are only allowed to share conversations with attachments from "My files"',
   acceptShareFailed:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   acceptShareNotExists:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   revokeAccessFailed: 'Revoking access failed. Please try again later.',
   discardSharedWithMeFailed:
-    'Discarding shared with you resource failed. Please try again later.',
+    'Unsharing shared with you resource failed. Please try again later.',
   shareByMeListingFailed:
     'Getting shared by you resources failed. Please reload the page to get them again.',
   shareWithMeListingFailed:
@@ -57,7 +58,7 @@ export const errorsMessages = {
   entityPathInvalidExternal: 'The parent folder name is invalid',
   publicationFailed: 'Creation of publication failed. Please try again later.',
   publicationWithExternalFilesFailed:
-    'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
+    'Publishing failed. You are only allowed to publish conversations with attachments from "My files"',
   publicationsUploadFailed: 'Publications uploading failed.',
   publicationUploadFailed: 'Publication uploading failed.',
   publishedItemsUploadFailed: 'Published items uploading failed.',

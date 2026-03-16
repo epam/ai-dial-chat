@@ -1,4 +1,3 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -14,10 +13,12 @@ import { SettingsSelectors } from '@/src/store/selectors';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
+import { UserIcon } from './UserIcon';
+
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
@@ -40,22 +41,17 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 pr-3"
             data-qa="account-settings"
           >
-            <div className="flex items-center gap-3">
-              {session?.user?.image ? (
-                <img
-                  className="rounded"
-                  src={session?.user?.image}
-                  width={18}
-                  height={18}
-                  alt={t(`User avatar`)}
-                />
-              ) : (
-                <UserIcon width={18} height={18} />
-              )}
+            <div className="flex items-center gap-3 overflow-hidden">
+              <UserIcon />
 
-              <span className="grow" data-qa="username">
-                {session?.user?.name || t('User')}
-              </span>
+              <DialEllipsisTooltip
+                contentClassName="grow"
+                text={
+                  <span data-qa="username">
+                    {session?.user?.name || t('User')}
+                  </span>
+                }
+              />
             </div>
             <ChevronDownIcon
               className={`shrink-0 text-primary transition-all ${

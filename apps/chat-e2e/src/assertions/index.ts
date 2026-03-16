@@ -45,3 +45,6 @@ export * from './entityEditorPreviewCardAssertion';
 export * from './entityEditorPreviewToggleAssertion';
 export * from './replaceConfirmationModalAssertion';
 export * from './toolset/toolsetAuthAssertion';
+export * from './common/confirmationPopupAssertion';
+export * from './fileManager/fileManagerGridAssertion';
+export * from './common/foldersTreeAssertion';

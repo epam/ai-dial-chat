@@ -1,6 +1,8 @@
-import { IconFolder, IconX } from '@tabler/icons-react';
+import { IconFolder } from '@tabler/icons-react';
 
 import { FileFolderInterface } from '@/src/types/files';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
 interface Props {
   folder: FileFolderInterface;
@@ -23,12 +25,7 @@ export const ChatInputFolderAttachment = ({ folder, onUnselect }: Props) => {
         </div>
         {onUnselect && (
           <div className="flex gap-3">
-            <button onClick={() => onUnselect(`${folder.id}/`)}>
-              <IconX
-                className="shrink-0 text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </button>
+            <CloseButtonSmall onClick={() => onUnselect(`${folder.id}/`)} />
           </div>
         )}
       </div>

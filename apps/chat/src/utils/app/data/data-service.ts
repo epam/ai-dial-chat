@@ -1,9 +1,8 @@
-/* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { LastConversationSettings } from '@/src/types/settings';
+import { EnterType, LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { ThemesConfig } from '@/src/types/themes';
 
@@ -62,6 +61,14 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
   }
 
+  public static getEnterType(): Observable<EnterType> {
+    return BrowserStorage.getData(UIStorageKeys.EnterType, EnterType.Enter);
+  }
+
+  public static setEnterType(enterType: EnterType): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.EnterType, enterType);
+  }
+
   public static getThemesConfig(): Observable<ThemesConfig> {
     return ApiUtils.request('/api/themes/listing');
   }
@@ -86,6 +93,22 @@ export class DataService {
 
   public static setPromptbarWidth(promptBarWidth: number): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.PromptbarWidth, promptBarWidth);
+  }
+
+  public static getMarketplaceFilterbarWidth(): Observable<number> {
+    return BrowserStorage.getData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      SIDEBAR_MIN_WIDTH,
+    );
+  }
+
+  public static setMarketplaceFilterbarWidth(
+    filterbarWidth: number,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      filterbarWidth,
+    );
   }
 
   public static getIsChatFullWidth(): Observable<boolean> {

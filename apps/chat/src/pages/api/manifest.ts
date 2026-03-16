@@ -2,12 +2,49 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 
+interface ManifestIcon {
+  src: string;
+  sizes: string;
+  type: string;
+  purpose: string;
+}
+
+interface ManifestScreenshot {
+  src: string;
+  sizes: string;
+  type: string;
+  description: string;
+}
+
+interface ManifestShortcut {
+  name: string;
+  url: string;
+  description: string;
+}
+
+interface Manifest {
+  name: string;
+  short_name: string;
+  start_url: string;
+  display: string;
+  description: string;
+  lang: string;
+  dir: string;
+  theme_color: string;
+  background_color: string;
+  orientation: string;
+  icons: ManifestIcon[];
+  screenshots: ManifestScreenshot[];
+  related_applications: unknown[];
+  prefer_related_applications: boolean;
+  shortcuts: ManifestShortcut[];
+}
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'DIAL';
-  const iconUrl = getThemeIconUrl('favicon');
-  const logoUrl = getThemeIconUrl('dark-logo');
   res.setHeader('Content-Type', 'application/json');
-  res.status(200).json({
+
+  const response: Manifest = {
     name: appName,
     short_name: appName,
     start_url: '/',
@@ -18,22 +55,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     theme_color: '#090D13B3',
     background_color: '#090D13B3',
     orientation: 'any',
-    icons: [
-      {
-        src: iconUrl,
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'any',
-      },
-    ],
-    screenshots: [
-      {
-        src: logoUrl,
-        sizes: '2880x1800',
-        type: 'image/png',
-        description: 'Logo',
-      },
-    ],
+    icons: [],
+    screenshots: [],
     related_applications: [],
     prefer_related_applications: false,
     shortcuts: [
@@ -43,5 +66,24 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         description: 'ChatGPT but better.',
       },
     ],
-  });
+  };
+
+  if (process.env.THEMES_CONFIG_HOST) {
+    const iconUrl = getThemeIconUrl('favicon');
+    response.icons.push({
+      src: iconUrl,
+      sizes: '192x192',
+      type: 'image/png',
+      purpose: 'any',
+    });
+
+    response.screenshots.push({
+      src: iconUrl,
+      sizes: '2880x1800',
+      type: 'image/png',
+      description: 'Logo',
+    });
+  }
+
+  res.status(200).json(response);
 }

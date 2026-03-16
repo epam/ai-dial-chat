@@ -88,7 +88,6 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectShareMenuOption();
-        // eslint-disable-next-line playwright/no-force-option
         await promptBar.draggableArea.click({ force: true });
         await shareModalAssertion.assertModalState('hidden');
         await promptAssertion.assertEntityArrowIconState(

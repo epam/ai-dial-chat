@@ -1,6 +1,7 @@
 import { API } from '@/src/testData';
 import { NavigationPanelSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Button } from '@/src/ui/webElements/common/button';
 import { Locator, Page } from '@playwright/test';
 
 export class NavigationPanel extends BaseElement {
@@ -17,16 +18,15 @@ export class NavigationPanel extends BaseElement {
   public myWorkspaceButton = this.getChildElementBySelector(
     NavigationPanelSelectors.myWorkspaceButton,
   );
+  public filesButton = new Button(this.page, 'Files', this.rootLocator);
   public buttonLabel = (button: BaseElement) =>
     button.getChildElementBySelector(NavigationPanelSelectors.buttonLabel);
 
   public async goToMarketplaceHome() {
-    // eslint-disable-next-line playwright/no-force-option
     await this.marketplaceHomeButton.click({ force: true });
   }
 
   public async goToMyWorkspace() {
-    // eslint-disable-next-line playwright/no-force-option
     await this.myWorkspaceButton.click({ force: true });
   }
 
@@ -43,6 +43,30 @@ export class NavigationPanel extends BaseElement {
       await responsePromise;
     } else {
       await this.backToChatButton.click();
+    }
+  }
+
+  public async goToFileManager(
+    options: { isFilesListingTriggered?: boolean } = {
+      isFilesListingTriggered: true,
+    },
+  ) {
+    const hostsArray = options?.isFilesListingTriggered
+      ? [API.filePropsHost, API.filesListingHost()]
+      : [API.filePropsHost];
+    const responses = [];
+    for (const host of hostsArray) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.url().includes(host) &&
+          response.request().method() === 'GET' &&
+          response.status() === 200,
+      );
+      responses.push(resp);
+    }
+    await this.filesButton.click({ force: true });
+    for (const resp of responses) {
+      await resp;
     }
   }
 }

@@ -1,16 +1,16 @@
 import { BaseElement } from './baseElement';
 
 import {
-  AttachFilesModalSelectors,
   ChatSelectors,
   EntitySelectors,
+  FileManagerModalSelectors,
   IconSelectors,
   MenuSelectors,
   SelectFolderModalSelectors,
 } from '@/src/ui/selectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
-import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { FileManagerModalHeader } from '@/src/ui/webElements/fileManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
@@ -26,11 +26,11 @@ export const invalidSectionError = (section: FileModalSection) =>
 
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
-    super(page, AttachFilesModalSelectors.modalContainer, parentLocator);
+    super(page, FileManagerModalSelectors.modalContainer, parentLocator);
   }
 
   private fileDropdownMenu!: DropdownMenu;
-  private modalHeader!: FilesModalHeader;
+  private modalHeader!: FileManagerModalHeader;
   //'All files' section entities
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
@@ -62,16 +62,19 @@ export class AttachFilesModal extends BaseElement {
     return this.fileDropdownMenu;
   }
 
-  getModalHeader(): FilesModalHeader {
+  getModalHeader(): FileManagerModalHeader {
     if (!this.modalHeader) {
-      this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
+      this.modalHeader = new FileManagerModalHeader(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.modalHeader;
   }
 
   public getSharedWithMeFilesContainer(): BaseElement {
     return this.getChildElementBySelector(
-      AttachFilesModalSelectors.sharedWithMeFilesContainer,
+      FileManagerModalSelectors.sharedWithMeFilesContainer,
     );
   }
 
@@ -85,13 +88,13 @@ export class AttachFilesModal extends BaseElement {
       fileTree = this.getOrganizationTree();
     }
     await fileTree!
-      .getChildElementBySelector(AttachFilesModalSelectors.rootFolder)
+      .getChildElementBySelector(FileManagerModalSelectors.rootFolder)
       .click();
   }
 
   public getAllFilesContainer(): BaseElement {
     return this.getChildElementBySelector(
-      AttachFilesModalSelectors.allFilesContainer,
+      FileManagerModalSelectors.allFilesContainer,
     );
   }
 
@@ -100,7 +103,7 @@ export class AttachFilesModal extends BaseElement {
       this.allFolderFiles = new Folders(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.allFilesContainer,
+        FileManagerModalSelectors.allFilesContainer,
         EntitySelectors.file,
       );
     }
@@ -112,7 +115,7 @@ export class AttachFilesModal extends BaseElement {
       this.organizationTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.organizationFilesContainer,
+        FileManagerModalSelectors.organizationFilesContainer,
       );
     }
     return this.organizationTree;
@@ -123,7 +126,7 @@ export class AttachFilesModal extends BaseElement {
       this.organizationFolderFiles = new Folders(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.organizationFilesContainer,
+        FileManagerModalSelectors.organizationFilesContainer,
         EntitySelectors.file,
       );
     }
@@ -135,7 +138,7 @@ export class AttachFilesModal extends BaseElement {
       this.allFilesTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.allFilesContainer,
+        FileManagerModalSelectors.allFilesContainer,
       );
     }
     return this.allFilesTree;
@@ -145,15 +148,15 @@ export class AttachFilesModal extends BaseElement {
     switch (section) {
       case FileModalSection.AllFiles:
         return this.getChildElementBySelector(
-          AttachFilesModalSelectors.allFilesContainer,
+          FileManagerModalSelectors.allFilesContainer,
         );
       case FileModalSection.SharedWithMe:
         return this.getChildElementBySelector(
-          AttachFilesModalSelectors.sharedWithMeFilesContainer,
+          FileManagerModalSelectors.sharedWithMeFilesContainer,
         );
       case FileModalSection.Organization:
         return this.getChildElementBySelector(
-          AttachFilesModalSelectors.organizationFilesContainer,
+          FileManagerModalSelectors.organizationFilesContainer,
         );
       default:
         throw new Error(`Unknown section: ${section}`);
@@ -165,7 +168,7 @@ export class AttachFilesModal extends BaseElement {
       this.sharedWithMeTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.sharedWithMeFilesContainer,
+        FileManagerModalSelectors.sharedWithMeFilesContainer,
       );
     }
     return this.sharedWithMeTree;
@@ -176,7 +179,7 @@ export class AttachFilesModal extends BaseElement {
       this.sharedWithMeFolderFiles = new Folders(
         this.page,
         this.rootLocator,
-        AttachFilesModalSelectors.sharedWithMeFilesContainer,
+        FileManagerModalSelectors.sharedWithMeFilesContainer,
         EntitySelectors.file,
       );
     }
@@ -184,19 +187,19 @@ export class AttachFilesModal extends BaseElement {
   }
 
   public attachFilesButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.attachFilesButton,
+    FileManagerModalSelectors.attachFilesButton,
   );
 
   public uploadFromDeviceButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.uploadFromDeviceButton,
+    FileManagerModalSelectors.uploadFromDeviceButton,
   );
 
   public deleteFilesButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.deleteFilesButton,
+    FileManagerModalSelectors.deleteFilesButton,
   );
 
   public downloadFilesButton = this.getChildElementBySelector(
-    AttachFilesModalSelectors.downloadFilesButton,
+    FileManagerModalSelectors.downloadFilesButton,
   );
 
   public newFolderButton = this.getChildElementBySelector(
@@ -205,7 +208,7 @@ export class AttachFilesModal extends BaseElement {
 
   public getFilesSection = (sectionElement: BaseElement) =>
     sectionElement
-      .getChildElementBySelector(AttachFilesModalSelectors.fileSection)
+      .getChildElementBySelector(FileManagerModalSelectors.fileSection)
       .getElementLocator();
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);

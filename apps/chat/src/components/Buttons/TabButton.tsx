@@ -1,3 +1,5 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 type ButtonProps = Omit<
@@ -30,7 +32,7 @@ export const TabButton = <T,>({
         'rounded px-3 py-2',
         selected
           ? 'border-accent-primary bg-accent-primary-alpha'
-          : 'border-primary bg-layer-4 hover:border-transparent',
+          : 'border-transparent bg-layer-4',
         disabled
           ? 'button border-transparent'
           : 'border-b-2 hover:bg-accent-primary-alpha',

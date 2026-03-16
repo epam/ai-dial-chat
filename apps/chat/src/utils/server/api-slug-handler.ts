@@ -1,9 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -11,15 +12,13 @@ import { HTTPMethod } from '@/src/types/http';
 import { errorsMessages } from '@/src/constants/errors';
 import { mappingServerUrls } from '@/src/constants/server';
 
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-
 import { getApiHeaders } from './get-headers';
 import { logger } from './logger';
 import { ServerUtils } from './server';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 
-export const getEntityUrlFromSlugs = ({
+const getEntityUrlFromSlugs = ({
   dialApiHost,
   req,
   pathParameter,
@@ -106,7 +105,7 @@ export const createDialApiSlugsHandler = (
         if (!isSessionValid) return;
       }
 
-      const token = requireAuth ? await getToken({ req }) : null;
+      const jwt = requireAuth ? await getToken({ req }) : undefined;
       const { url, pathOptions } = getEntityUrlFromSlugs({
         dialApiHost,
         req,
@@ -118,7 +117,7 @@ export const createDialApiSlugsHandler = (
       const reqMethod = method ?? (req.method as HTTPMethod);
       const fetchResult = await fetch(url, {
         method: reqMethod,
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
+        headers: getApiHeaders({ jwt }),
         body:
           reqMethod !== HTTPMethod.GET ? JSON.stringify(req.body) : undefined,
         signal: AbortSignal.timeout(timeout),
@@ -141,7 +140,7 @@ export const createDialApiSlugsHandler = (
       if (pathOptions.response) {
         try {
           responseData = await fetchResult.json();
-        } catch (err) {
+        } catch {
           responseData = {};
         }
       }

@@ -2,7 +2,6 @@ import {
   IconDotsVertical,
   IconEraser,
   IconSettings,
-  IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -36,10 +35,12 @@ import {
 } from '@/src/store/selectors';
 
 import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -48,6 +49,12 @@ import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import {
+  DialButton,
+  DialGhostIconButton,
+  DialLinkButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversation: Conversation;
@@ -158,7 +165,6 @@ export const ChatHeader = Inversify.register(
       [dispatch],
     );
 
-    const iconSize = screenState === ScreenState.SM ? 20 : 18;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent =
@@ -213,6 +219,7 @@ export const ChatHeader = Inversify.register(
                       publicVersionGroupId={publicVersionGroupId}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
                       selectedEntityId={conversation.id}
+                      btnClassNames="!text-primary"
                     />
                   ) : (
                     <p
@@ -242,22 +249,19 @@ export const ChatHeader = Inversify.register(
                       />
                     }
                   >
-                    <button
-                      className={classNames(
-                        isMessageStreaming &&
-                          !isChangeAgentDisallowed &&
-                          'cursor-not-allowed',
-                      )}
+                    <DialButton
+                      className="h-fit px-0"
                       disabled={isMessageStreaming || disallowChangeAgent}
                       onClick={() => onModelClick(conversation.id)}
-                    >
-                      <ModelIcon
-                        entityId={conversation.model.id}
-                        entity={model}
-                        size={iconSize}
-                        isCustomTooltip
-                      />
-                    </button>
+                      iconBefore={
+                        <ModelIcon
+                          entityId={conversation.model.id}
+                          entity={model}
+                          size={screenState === ScreenState.SM ? 20 : 18}
+                          isCustomTooltip
+                        />
+                      }
+                    />
                   </Tooltip>
                 </span>
               </>
@@ -288,32 +292,31 @@ export const ChatHeader = Inversify.register(
                     />
                   }
                 >
-                  <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  <DialGhostIconButton
+                    size={ElementSize.Small}
                     onClick={() => setShowSettings(!isShowSettings)}
                     data-qa="conversation-setting"
                     disabled={isMessageStreaming || disallowChangeSettings}
-                  >
-                    <IconSettings size={iconSize} />
-                  </button>
+                    icon={<IconSettings size={DEFAULT_ICON_SIZES.SMALL} />}
+                  />
                 </Tooltip>
               )}
 
               {isShowClearConversation &&
                 !isConversationInvalid &&
-                !isCompareMode && (
+                !isCompareMode &&
+                !conversation.publishedWithMe && (
                   <Tooltip
                     isTriggerClickable={!isMessageStreaming}
                     tooltip={t('Clear conversation messages')}
                   >
-                    <button
-                      className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    <DialGhostIconButton
+                      size={ElementSize.Small}
                       onClick={() => setIsClearConversationModalOpen(true)}
                       data-qa="clear-conversation"
                       disabled={isMessageStreaming}
-                    >
-                      <IconEraser size={iconSize} />
-                    </button>
+                      icon={<IconEraser size={DEFAULT_ICON_SIZES.SMALL} />}
+                    />
                   </Tooltip>
                 )}
 
@@ -331,15 +334,16 @@ export const ChatHeader = Inversify.register(
               )}
 
               {isPlayback && !isExternal && (
-                <button
-                  className="cursor-pointer text-accent-primary"
+                <DialLinkButton
+                  className="px-0"
                   onClick={onCancelPlaybackMode}
                   data-qa="cancel-playback-mode"
-                >
-                  {screenState === ScreenState.SM
-                    ? t('Stop')
-                    : t('Stop playback')}
-                </button>
+                  label={
+                    screenState === ScreenState.SM
+                      ? t('Stop')
+                      : t('Stop playback')
+                  }
+                />
               )}
 
               {isCompareMode && selectedConversationIds.length > 1 && (
@@ -347,14 +351,11 @@ export const ChatHeader = Inversify.register(
                   isTriggerClickable
                   tooltip={t('Delete conversation from compare mode')}
                 >
-                  <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  <CloseButtonSmall
                     onClick={() => onUnselectConversation(conversation.id)}
                     disabled={isMessageStreaming}
                     data-qa="delete-from-compare"
-                  >
-                    <IconX size={18} />
-                  </button>
+                  />
                 </Tooltip>
               )}
             </div>

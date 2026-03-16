@@ -16,7 +16,7 @@ import {
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, Cursors, StyleValues, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import {
   Toolset,
@@ -53,7 +53,8 @@ dialTest(
       entityEditorGeneralForm,
       toolsetEditorViewFormAssertion,
       listboxMenu,
-      attachFilesModal,
+      fileManagerModal,
+      fileManagerModalGrid,
       entityEditorGeneralInfoPreviewCardAssertion,
       toolsetEditorSettingsPreviewCardAssertion,
       entityEditorGeneralInfoPreviewCard,
@@ -241,11 +242,10 @@ dialTest(
       await entityEditorGeneralForm.topicsDropdownToggle.click();
 
       await entityEditorGeneralForm.addIconButton.click();
-      await attachFilesModal.checkAttachedFile(
-        filename,
-        FileModalSection.AllFiles,
-      );
-      await attachFilesModal.attachFiles();
+      const attachmentCheckbox =
+        await fileManagerModalGrid.gridCheckboxByNameCell(filename);
+      await attachmentCheckbox.click();
+      await fileManagerModal.getSelectButton().click();
     });
 
     await dialTest.step(
@@ -279,7 +279,7 @@ dialTest(
         await toolsetEditorViewFormAssertion.assertToolsetEditorViewFormAttributes(
           {
             endpoint: '',
-            transportProtocol: ToolsetTransportType.SSE,
+            transportProtocol: ToolsetTransportType.HTTP,
             availableAuthTypes: Object.values(ToolsetAuthTypes),
             selectedAuthType: ToolsetAuthTypes.NONE,
             allowedTools: [],
@@ -291,18 +291,15 @@ dialTest(
     await dialTest.step(
       'Check that the required fields of Tools settings step form are marked with asterisks',
       async () => {
-        for (const field of [
-          ExpectedConstants.endpointLabel,
-          ExpectedConstants.transportProtocol,
-        ]) {
-          const fieldRequiredIndicator =
-            toolsetEditorViewForm.getRequiredIndicator(field);
-          await baseAssertion.assertElementState(
-            fieldRequiredIndicator,
-            'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+        const fieldRequiredIndicator =
+          toolsetEditorViewForm.getRequiredIndicator(
+            ExpectedConstants.endpointLabel,
           );
-        }
+        await baseAssertion.assertElementState(
+          fieldRequiredIndicator,
+          'visible',
+          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+        );
       },
     );
 

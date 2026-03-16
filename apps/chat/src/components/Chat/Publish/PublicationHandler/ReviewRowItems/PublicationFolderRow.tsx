@@ -1,5 +1,5 @@
 import { IconFolder } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -35,6 +35,7 @@ interface Props {
   currentFolder: FolderInterface;
   allFolders: FolderInterface[];
   allItems: ShareEntity[];
+  displayItems: ShareEntity[];
   level: number;
   ItemComponent: React.FC<PublicationItemProps>;
   publicationUrl: string;
@@ -49,6 +50,7 @@ export const PublicationFolderRow = ({
   currentFolder,
   allFolders,
   allItems,
+  displayItems,
   level,
   ItemComponent,
   publicationUrl,
@@ -71,9 +73,9 @@ export const PublicationFolderRow = ({
       PublicationSelectors.selectChosenPublicationFolderIds(
         publicationUrl,
         allFolders,
-        allItems,
+        displayItems,
       ),
-    [allFolders, allItems, publicationUrl],
+    [allFolders, displayItems, publicationUrl],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
@@ -124,9 +126,9 @@ export const PublicationFolderRow = ({
   const { folders, items } = useMemo(() => {
     return {
       folders: filteredItems(allFolders, currentFolder.id),
-      items: filteredItems(allItems, currentFolder.id),
+      items: filteredItems(displayItems, currentFolder.id),
     };
-  }, [allFolders, allItems, currentFolder.id]);
+  }, [allFolders, displayItems, currentFolder.id]);
 
   const handleSelectFolder = useCallback(() => {
     const entitiesToSelect = getSelectedEntitiesByFolderId({
@@ -233,6 +235,7 @@ export const PublicationFolderRow = ({
               currentFolder={item}
               ItemComponent={ItemComponent}
               allItems={allItems}
+              displayItems={displayItems}
               allFolders={allFolders}
             />
           ))}

@@ -3,13 +3,16 @@ import {
   IconAlertTriangle,
   IconCircleCheck,
   IconInfoCircle,
-  IconX,
 } from '@tabler/icons-react';
 import hotToast, { Toast, ToastBar, Toaster } from 'react-hot-toast';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { ToastType } from '@/src/types/toasts';
+
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { CloseButton } from '@/src/components/Common/CloseButtons';
 
 const getToastConfigByType = (toastType: ToastType) => {
   switch (toastType) {
@@ -56,6 +59,7 @@ export const Toasts = () => (
             borderWidth: '1px',
             maxWidth: isSmallScreen() ? '100%' : '730px',
             padding: '12px',
+            zIndex: 9999,
           }}
           toast={toast}
         >
@@ -63,7 +67,11 @@ export const Toasts = () => (
             <>
               <span>
                 {!toast.icon ? (
-                  <Icon size={24} className={iconClass} stroke={1.5} />
+                  <Icon
+                    size={DEFAULT_ICON_SIZES.STANDARD}
+                    className={iconClass}
+                    stroke={1.5}
+                  />
                 ) : (
                   toast.icon
                 )}
@@ -74,12 +82,10 @@ export const Toasts = () => (
               >
                 {message}
               </div>
-              <button
+              <CloseButton
                 className="mt-0.5 self-start"
                 onClick={() => hotToast.dismiss(toast.id)}
-              >
-                <IconX stroke={1} size={24} className="text-secondary" />
-              </button>
+              />
             </>
           )}
         </ToastBar>

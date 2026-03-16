@@ -2,22 +2,32 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
+  CheckboxState,
   ExpectedMessages,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
+let randomModelWithImageAttachment: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+    modelsWithAttachments.filter(
+      (m) =>
+        m.inputAttachmentTypes?.length == 1 &&
+        m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+    ),
+  );
 });
 
 dialTest(
@@ -39,9 +49,6 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1613', 'EPMRTC-1776');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     let conversation: Conversation;
     let client: CDPSession;
 
@@ -49,10 +56,13 @@ dialTest(
       'Create conversation with model that accept attachments only with text in request',
       async () => {
         conversation = conversationData.prepareDefaultConversation(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 
@@ -147,6 +157,7 @@ dialTest(
     conversations,
     chatMessages,
     editMessageInputAttachments,
+    editMessageInputAttachmentsAssertions,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1762', 'EPMRTC-1902');
@@ -175,6 +186,7 @@ dialTest(
           );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
       },
     );
 
@@ -204,14 +216,10 @@ dialTest(
             Attachment.specialSymbolsName,
           );
         await removeAttachmentIcon.hoverOver();
-        const removeIconColor =
-          await removeAttachmentIcon.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            removeIconColor[0],
-            ExpectedMessages.removeAttachmentIconIsHighlighted,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        await editMessageInputAttachmentsAssertions.assertElementColor(
+          removeAttachmentIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
 
         await removeAttachmentIcon.click();
         await expect
@@ -250,21 +258,21 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    fileManagerModal,
+    fileManagerModalGrid,
     fileApiHelper,
     attachmentDropdownMenu,
     conversationData,
     dataInjector,
     chatMessages,
     conversations,
-    editMessageInputAttachments,
     chat,
     localStorageManager,
+    fileManagerModalGridAssertion,
+    editMessageInputAttachmentsAssertions,
+    editMessageInputAttachments,
   }) => {
     setTestIds('EPMRTC-1903');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     let conversation: Conversation;
     const allAttachedFiles = [
       Attachment.sunImageName,
@@ -277,8 +285,10 @@ dialTest(
     ];
     const updatedAttachedFiles = [
       Attachment.sunImageName,
+      Attachment.cloudImageName,
       Attachment.flowerImageName,
     ];
+    const filesToCheck = [Attachment.flowerImageName];
     const attachmentUrls: string[] = [];
 
     await dialTest.step('Upload 3 files to app', async () => {
@@ -292,50 +302,61 @@ dialTest(
       async () => {
         conversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            randomModelWithAttachment,
+            randomModelWithImageAttachment,
             false,
             undefined,
             ...attachmentUrls.slice(0, 2),
           );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 
+    await dialTest.step('Open conversation request in edit mode', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await conversations.selectEntity(conversation.name);
+      await chatMessages.openEditMessageMode(1);
+      for (const file of initAttachedFiles) {
+        await editMessageInputAttachmentsAssertions.assertAttachedFileState(
+          file,
+          'visible',
+        );
+      }
+
+      await chatMessages.getChatMessageClipIcon(1).click();
+      await attachmentDropdownMenu.selectMenuOption(
+        UploadMenuOptions.attachUploadedFiles,
+        { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+      );
+    });
+
     await dialTest.step(
-      'Open conversation request in edit mode, in "Attach files" modal change attached files and verify updated files are displayed in Edit message box',
+      'In "Attach files" modal change attached files and verify updated files are displayed in Edit message box',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectEntity(conversation.name);
-        await chatMessages.openEditMessageMode(1);
-        await chatMessages.getChatMessageClipIcon(1).click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-        );
-        await attachFilesModal.checkAttachedFile(
-          initAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.checkAttachedFile(
-          updatedAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
-        for (const file of updatedAttachedFiles) {
-          await expect
-            .soft(
-              editMessageInputAttachments.inputAttachment(file),
-              ExpectedMessages.fileIsAttached,
-            )
-            .toBeVisible();
+        for (const file of filesToCheck) {
+          const attachmentCheckbox =
+            await fileManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
+          await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+            file,
+            CheckboxState.checked,
+          );
         }
-        expect
-          .soft(
-            await editMessageInputAttachments.inputAttachments.getElementsCount(),
-            ExpectedMessages.attachedFilesCountIsValid,
-          )
-          .toBe(updatedAttachedFiles.length);
+        await fileManagerModal.getAttachButton().click();
+        for (const file of updatedAttachedFiles) {
+          await editMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
+        }
+        await editMessageInputAttachmentsAssertions.assertElementsCount(
+          editMessageInputAttachments.inputAttachments,
+          updatedAttachedFiles.length,
+        );
       },
     );
 

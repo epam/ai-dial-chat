@@ -1,5 +1,5 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import {
+import React, {
   memo,
   useCallback,
   useEffect,
@@ -15,6 +15,7 @@ import classNames from 'classnames';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
@@ -81,6 +82,7 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
@@ -90,7 +92,17 @@ const isWideScreen = () => !is4XLScreen();
 const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
   isWideScreen() && !messagesLength && !isCompareMode;
 
-const ChatView = memo(() => {
+interface CustomViewerType {
+  title: string;
+  viewerUrl: string;
+  applicationId: string;
+}
+
+interface ChatViewProps {
+  customViewer?: CustomViewerType;
+}
+
+const ChatView = memo(({ customViewer }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -114,6 +126,9 @@ const ChatView = memo(() => {
   );
   const isEditUserMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
+  );
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
   const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
@@ -173,9 +188,37 @@ const ChatView = memo(() => {
     ConversationsSelectors.selectIsNotAllowed,
   );
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const autoScrollEnabledRef = useRef(true);
+
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-  const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
+
+  const mergedMessages = useMemo(() => {
+    if (selectedConversations.length === 0) {
+      return [];
+    }
+    const mergedMessages: MergedMessages[] = [];
+    const userMessages = selectedConversations.map((conv) =>
+      excludeSystemMessages(conv.messages),
+    );
+    const messagesLength = userMessages[0]?.length ?? 0;
+
+    for (let i = 0; i < messagesLength; i++) {
+      mergedMessages.push(
+        selectedConversations.map((conv, convIndex) => [
+          conv,
+          userMessages[convIndex][i] || {
+            role: Role.Assistant,
+            content: '',
+          },
+          i,
+          userMessages[convIndex],
+        ]),
+      );
+    }
+
+    return mergedMessages;
+  }, [selectedConversations]);
+
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
@@ -253,36 +296,35 @@ const ChatView = memo(() => {
     [dispatch],
   );
 
-  const setAutoScroll = () => {
+  const setAutoScroll = useCallback(() => {
     if (disableAutoScrollTimeoutRef.current !== null) {
       clearTimeout(disableAutoScrollTimeoutRef.current);
     }
 
-    setAutoScrollEnabled(true);
+    autoScrollEnabledRef.current = true;
     setShowScrollDownButton(false);
-  };
+  }, []);
 
   const scrollDown = useCallback(
     (force = false) => {
-      if (autoScrollEnabled || force) {
+      if (autoScrollEnabledRef.current || force) {
         setAutoScroll();
         chatContainerRef.current?.scrollTo({
           top: chatContainerRef.current.scrollHeight,
         });
       }
     },
-    [autoScrollEnabled],
+    [setAutoScroll],
+  );
+
+  const throttledScrollDown = useMemo(
+    () => throttle(scrollDown, scrollThrottlingTimeout),
+    [scrollDown],
   );
 
   useEffect(() => {
-    scrollDown();
-  }, [scrollDown]);
-
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
-
-  useEffect(() => {
     throttledScrollDown();
-  }, [conversations, throttledScrollDown]);
+  }, [conversations, mergedMessages, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
     scrollDown(true);
@@ -295,7 +337,7 @@ const ChatView = memo(() => {
       const bottomTolerance = 25;
 
       if (lastScrollTop.current > scrollTop) {
-        setAutoScrollEnabled(false);
+        autoScrollEnabledRef.current = false;
         setShowScrollDownButton(true);
       } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
         if (disableAutoScrollTimeoutRef.current !== null) {
@@ -303,7 +345,7 @@ const ChatView = memo(() => {
         }
 
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
-          setAutoScrollEnabled(false);
+          autoScrollEnabledRef.current = false;
           setShowScrollDownButton(true);
         }, scrollThrottlingTimeout);
       } else {
@@ -312,7 +354,7 @@ const ChatView = memo(() => {
 
       lastScrollTop.current = scrollTop;
     }
-  }, []);
+  }, [setAutoScroll]);
 
   const handleChatMessagesResize = useCallback(() => {
     if (
@@ -329,8 +371,7 @@ const ChatView = memo(() => {
   }, [isCompareMode, mergedMessages.length]);
 
   useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
-
-  useResizeObserver(document.body, handleChatResize);
+  useWindowResizeEvent(handleChatResize);
 
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length
@@ -345,30 +386,6 @@ const ChatView = memo(() => {
   }, [mergedMessages]);
 
   useLayoutEffect(() => {
-    if (selectedConversations.length > 0) {
-      const mergedMessages: MergedMessages[] = [];
-      const userMessages = selectedConversations.map((conv) =>
-        excludeSystemMessages(conv.messages),
-      );
-      const messagesLength = userMessages[0].length;
-
-      for (let i = 0; i < messagesLength; i++) {
-        mergedMessages.push(
-          selectedConversations.map((conv, convIndex) => [
-            conv,
-            userMessages[convIndex][i] || {
-              role: Role.Assistant,
-              content: '',
-            },
-            i,
-            userMessages[convIndex],
-          ]),
-        );
-      }
-
-      setMergedMessages(mergedMessages);
-    }
-
     if (
       selectedConversations.every(
         (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
@@ -376,7 +393,9 @@ const ChatView = memo(() => {
     ) {
       setShowScrollDownButton(false);
     } else {
-      handleScroll();
+      if (!autoScrollEnabledRef.current) {
+        handleScroll();
+      }
     }
   }, [handleScroll, selectedConversations]);
 
@@ -405,7 +424,7 @@ const ChatView = memo(() => {
       setPrevSelectedIds(selectedConversationsIds);
       setIsShowChatSettings(false);
     }
-  }, [prevSelectedIds, selectedConversationsIds]);
+  }, [prevSelectedIds, selectedConversationsIds, setAutoScroll]);
 
   const handleDeleteMessage = useCallback(
     (index: number, conv: Conversation) => {
@@ -578,6 +597,7 @@ const ChatView = memo(() => {
   );
 
   const isChatReadyForInput =
+    !isMarketplaceEnabled ||
     areModelsInstalled ||
     isIsolatedView ||
     isAdminPreview ||
@@ -587,45 +607,13 @@ const ChatView = memo(() => {
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
       !isApproveRequiredEntity &&
-      (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+      (areModelsInstalled ||
+        isAdminPreview ||
+        isReplay ||
+        isIsolatedView ||
+        !isMarketplaceEnabled) &&
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
-
-  const applicationTypeSchemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-
-  const customViewer = useMemo(() => {
-    const model = modelsMap[selectedConversations[0]?.model?.id];
-
-    if (!model) return;
-
-    if (model.viewerUrl) {
-      return {
-        viewerUrl: model.viewerUrl,
-        title: model.name,
-        applicationId: model.id,
-      };
-    }
-
-    if (
-      model.applicationTypeSchemaId &&
-      applicationTypeSchemas.some(
-        (schema) => schema.id === model.applicationTypeSchemaId,
-      )
-    ) {
-      const schema = applicationTypeSchemas.find(
-        (schema) => schema.id === model.applicationTypeSchemaId,
-      );
-      if (schema?.viewerUrl) {
-        return {
-          viewerUrl: schema.viewerUrl,
-          title: schema.displayName,
-          applicationId: model.id,
-        };
-      }
-    }
-  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
     if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
@@ -720,7 +708,8 @@ const ChatView = memo(() => {
                                     !isPlayback &&
                                     !isReplay &&
                                     !isReadOnly &&
-                                    !isApproveRequiredEntity
+                                    !isApproveRequiredEntity &&
+                                    !isExternal
                                   }
                                   isShowSettings={isShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
@@ -853,6 +842,7 @@ const ChatView = memo(() => {
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
+                                              !isChatReadyForInput ||
                                               ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
@@ -870,6 +860,7 @@ const ChatView = memo(() => {
                                                 : undefined
                                             }
                                             onRegenerate={
+                                              isChatReadyForInput &&
                                               index ===
                                                 mergedMessages.length - 1 &&
                                               showLastMessageRegenerate &&
@@ -1006,11 +997,7 @@ const ChatView = memo(() => {
 
 interface CustomChatViewerProps {
   setShowSettings: (value: boolean) => void;
-  customViewer: {
-    title: string;
-    viewerUrl: string;
-    applicationId: string;
-  };
+  customViewer: CustomViewerType;
 }
 
 const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
@@ -1022,6 +1009,9 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
 
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
   );
 
   const handleTalkToConversationId = useCallback(
@@ -1037,9 +1027,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
     return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
-  const isStartedCustomViewerConversation = useAppSelector(
-    ConversationsSelectors.selectIsStartedCustomViewerConversation,
-  );
   return (
     <>
       {selectedConversations[0].messages.length !== 0 ||
@@ -1059,9 +1046,13 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             </div>
 
             <div className="flex w-full flex-col items-center pt-3 md:pt-5">
-              <button
-                className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                data-qa="start-working"
+              <DialPrimaryButton
+                className="mb-2 flex items-center md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                label={t('Start working with the {{viewerTitle}}', {
+                  ns: Translation.Chat,
+                  viewerTitle: customViewer.title,
+                })}
+                iconBefore={<IconPlayerPlay size={18} />}
                 onClick={() =>
                   dispatch(
                     ConversationsActions.setIsStartedCustomViewerConversation(
@@ -1069,26 +1060,10 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
                     ),
                   )
                 }
-              >
-                <IconPlayerPlay size={18} />
-                <span>
-                  {t('Start working with the')}
-                  {` ${customViewer.title}`}
-                </span>
-              </button>
+              />
             </div>
           </div>
         ))}
-      {(isStartedCustomViewerConversation ||
-        isApplicationPreviewChat ||
-        selectedConversations[0].messages.length !== 0) && (
-        <CustomChatViewer
-          conversation={selectedConversations[0]}
-          id={customViewer.applicationId}
-          title={customViewer.title}
-          customViewerUrl={customViewer.viewerUrl}
-        />
-      )}
     </>
   );
 };
@@ -1103,6 +1078,8 @@ export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const router = useRouter();
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -1131,10 +1108,52 @@ export function Chat({ isPreview }: ChatProps) {
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
+  );
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditor;
+  }, [router.pathname]);
+
+  const customViewer = useMemo(() => {
+    const model = modelsMap[selectedConversations[0]?.model?.id];
+
+    if (!model) return;
+
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
+
+    if (
+      model.applicationTypeSchemaId &&
+      applicationTypeSchemas.some(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      )
+    ) {
+      const schema = applicationTypeSchemas.find(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      );
+      if (schema?.viewerUrl) {
+        return {
+          viewerUrl: schema.viewerUrl,
+          title: schema.displayName,
+          applicationId: model.id,
+        };
+      }
+    }
+  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
@@ -1196,9 +1215,25 @@ export function Chat({ isPreview }: ChatProps) {
     );
   }
 
+  if (
+    customViewer &&
+    (isStartedCustomViewerConversation ||
+      isApplicationPreviewChat ||
+      selectedConversations[0].messages.length !== 0)
+  ) {
+    return (
+      <CustomChatViewer
+        conversation={selectedConversations[0]}
+        id={customViewer.applicationId}
+        title={customViewer.title}
+        customViewerUrl={customViewer.viewerUrl}
+      />
+    );
+  }
+
   return (
     <>
-      <ChatView />
+      <ChatView customViewer={customViewer} />
       {!isPreview && <ChatInputFooter />}
     </>
   );

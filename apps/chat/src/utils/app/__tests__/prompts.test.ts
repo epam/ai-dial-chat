@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { replaceDefaultValuesFromContent } from '../prompts';
 
 describe('Prompt utility methods', () => {

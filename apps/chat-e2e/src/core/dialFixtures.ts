@@ -1,5 +1,10 @@
 import config from '../../config/chat.playwright.config';
-import { DialHomePage, EntityEditorPage, MarketplacePage } from '../ui/pages';
+import {
+  DialHomePage,
+  EntityEditorPage,
+  FileManagerPage,
+  MarketplacePage,
+} from '../ui/pages';
 import {
   AgentInfo,
   AttachFilesModal,
@@ -8,6 +13,7 @@ import {
   ChatHeader,
   ChatMessages,
   ChatNotFound,
+  ConfirmationPopup,
   ConversationSettingsModal,
   ConversationToCompare,
   CustomAppEditorAppSettingsPreview,
@@ -15,6 +21,7 @@ import {
   CustomAppEditorContainer,
   CustomAppEditorViewForm,
   DragFile,
+  Dropdown,
   EntityDetailsModal,
   EntityEditorEntitySettingsCardPreview,
   EntityEditorEntitySettingsCardPreviewBody,
@@ -26,19 +33,29 @@ import {
   ExternalAppEditorContainer,
   ExternalAppEditorViewForm,
   FileDropArea,
+  FileManager,
+  FileManagerCollapsibleSidebar,
+  FileManagerContainer,
+  FileManagerGrid,
+  FileManagerModal,
+  FileManagerToolbar,
   FileModalSection,
+  FoldersTree,
   InformationModal,
   ListboxMenu,
   MessageTemplateModal,
   PromptBar,
   PublishingFilter,
   PublishingRules,
+  SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  TooltipPortal,
   TopicsTooltip,
+  UploadProgressDialog,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
@@ -57,7 +74,9 @@ import {
   EntityEditorPreviewCardAssertion,
   EntityEditorPreviewToggleAssertion,
   EntityTreeAssertion,
+  FileManagerGridAssertion,
   FolderAssertion,
+  FoldersTreeAssertion,
   FooterAssertion,
   MenuAssertion,
   PlaybackAssertion,
@@ -82,6 +101,7 @@ import {
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
+import { ConfirmationPopupAssertion } from '@/src/assertions/common/confirmationPopupAssertion';
 import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { EntityEditorHeaderAssertion } from '@/src/assertions/entityEditorHeaderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
@@ -113,7 +133,7 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
-import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
+import { DialErrorPage } from '@/src/ui/pages/dialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
@@ -186,6 +206,7 @@ const dialTest = test.extend<{
   dialHomePage: DialHomePage;
   dialErrorPage: DialErrorPage;
   marketplacePage: MarketplacePage;
+  fileManagerPage: FileManagerPage;
   entityEditorPage: EntityEditorPage;
   entityEditorHeader: EntityEditorHeader;
   entityEditorGeneralForm: EntityEditorGeneralForm;
@@ -315,6 +336,7 @@ const dialTest = test.extend<{
   attachFilesModal: AttachFilesModal;
   uploadFromDeviceModal: UploadFromDeviceModal;
   selectFolderModal: SelectFolderModal;
+  selectFolderManagerModal: SelectFolderManagerModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
   attachedOrganizationFiles: Folders;
@@ -417,6 +439,33 @@ const dialTest = test.extend<{
   replaceConfirmationModalFoldersAssertion: FolderAssertion<ReplaceConfirmationModalFolders>;
   replaceConfirmationModalConversationsAssertion: EntityTreeAssertion<ReplaceConfirmationModalConversations>;
   toolsetAuthAssertion: ToolsetAuthAssertion;
+  fileManagerContainer: FileManagerContainer;
+  fileManager: FileManager;
+  fileManagerToolbar: FileManagerToolbar;
+  fileManagerGrid: FileManagerGrid;
+  fileManagerCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  fileManagerFoldersTree: FoldersTree;
+  fileManagerGridRowDropdownMenu: Dropdown;
+  fileManagerDeleteItemConfirmationPopup: ConfirmationPopup;
+  fileManagerModal: FileManagerModal;
+  fileManagerModalManager: FileManager;
+  fileManagerModalGrid: FileManagerGrid;
+  fileManagerModalToolbar: FileManagerToolbar;
+  fileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  fileManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalManager: FileManager;
+  selectFolderManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  selectFolderManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalGrid: FileManagerGrid;
+  selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
+  fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  fileManagerGridAssertion: FileManagerGridAssertion;
+  fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
+  fileManagerModalGridAssertion: FileManagerGridAssertion;
+  fileConflictConfirmationPopup: ConfirmationPopup;
+  fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  uploadProgressDialog: UploadProgressDialog;
+  tooltipPortal: TooltipPortal;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -511,6 +560,10 @@ const dialTest = test.extend<{
   marketplacePage: async ({ page }, use) => {
     const marketplacePage = new MarketplacePage(page);
     await use(marketplacePage);
+  },
+  fileManagerPage: async ({ page }, use) => {
+    const fileManagerPage = new FileManagerPage(page);
+    await use(fileManagerPage);
   },
   entityEditorPage: async ({ page }, use) => {
     const entityEditorPage = new EntityEditorPage(page);
@@ -1127,6 +1180,51 @@ const dialTest = test.extend<{
     const selectFolderModal = new SelectFolderModal(page);
     await use(selectFolderModal);
   },
+  selectFolderManagerModal: async ({ page }, use) => {
+    const selectFolderManagerModal = new SelectFolderManagerModal(page);
+    await use(selectFolderManagerModal);
+  },
+  selectFolderManagerModalManager: async (
+    { selectFolderManagerModal },
+    use,
+  ) => {
+    const selectFolderManagerModalManager =
+      selectFolderManagerModal.getFileManager();
+    await use(selectFolderManagerModalManager);
+  },
+  selectFolderManagerModalCollapsibleSidebar: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalCollapsibleSidebar =
+      selectFolderManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(selectFolderManagerModalCollapsibleSidebar);
+  },
+  selectFolderManagerModalFoldersTree: async (
+    { selectFolderManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const selectFolderManagerModalFoldersTree =
+      selectFolderManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(selectFolderManagerModalFoldersTree);
+  },
+  selectFolderManagerModalGrid: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalGrid =
+      selectFolderManagerModalManager.getFileManagerGrid();
+    await use(selectFolderManagerModalGrid);
+  },
+  selectFolderManagerModalGridAssertion: async (
+    { selectFolderManagerModalGrid },
+    use,
+  ) => {
+    const selectFolderManagerModalGridAssertion = new FileManagerGridAssertion(
+      selectFolderManagerModalGrid,
+    );
+    await use(selectFolderManagerModalGridAssertion);
+  },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();
     await use(selectUploadFolder);
@@ -1729,6 +1827,125 @@ const dialTest = test.extend<{
       toolsetEditorViewForm,
     );
     await use(toolsetOAuthAssertion);
+  },
+  fileManagerContainer: async ({ fileManagerPage }, use) => {
+    const fileManagerContainer = fileManagerPage.getFileManagerContainer();
+    await use(fileManagerContainer);
+  },
+  fileManager: async ({ fileManagerContainer }, use) => {
+    const fileManager = fileManagerContainer.getFileManager();
+    await use(fileManager);
+  },
+  fileManagerToolbar: async ({ fileManager }, use) => {
+    const fileManagerToolbar = fileManager.getFileManagerToolbar();
+    await use(fileManagerToolbar);
+  },
+  fileManagerGrid: async ({ fileManager }, use) => {
+    const fileManagerGrid = fileManager.getFileManagerGrid();
+    await use(fileManagerGrid);
+  },
+  fileManagerGridRowDropdownMenu: async ({ fileManagerGrid }, use) => {
+    const fileManagerGridRowDropdownMenu = fileManagerGrid.getRowDropdownMenu();
+    await use(fileManagerGridRowDropdownMenu);
+  },
+  fileManagerCollapsibleSidebar: async ({ fileManager }, use) => {
+    const fileManagerCollapsibleSidebar =
+      fileManager.getFileManagerCollapsibleSidebar();
+    await use(fileManagerCollapsibleSidebar);
+  },
+  fileManagerFoldersTree: async ({ fileManagerCollapsibleSidebar }, use) => {
+    const fileManagerFoldersTree =
+      fileManagerCollapsibleSidebar.getFoldersTree();
+    await use(fileManagerFoldersTree);
+  },
+  fileManagerDeleteItemConfirmationPopup: async ({ page }, use) => {
+    const fileManagerDeleteItemConfirmationPopup = new ConfirmationPopup(
+      page,
+      'Delete',
+    );
+    await use(fileManagerDeleteItemConfirmationPopup);
+  },
+  fileManagerModal: async ({ page }, use) => {
+    const fileManagerModal = new FileManagerModal(page);
+    await use(fileManagerModal);
+  },
+  fileManagerModalManager: async ({ fileManagerModal }, use) => {
+    const fileManagerModalManager = fileManagerModal.getFileManager();
+    await use(fileManagerModalManager);
+  },
+  fileManagerModalGrid: async ({ fileManagerModalManager }, use) => {
+    const fileManagerModalGrid = fileManagerModalManager.getFileManagerGrid();
+    await use(fileManagerModalGrid);
+  },
+  fileManagerModalToolbar: async ({ fileManagerModalManager }, use) => {
+    const fileManagerModalToolbar =
+      fileManagerModalManager.getFileManagerToolbar();
+    await use(fileManagerModalToolbar);
+  },
+  fileManagerModalCollapsibleSidebar: async (
+    { fileManagerModalManager },
+    use,
+  ) => {
+    const fileManagerModalCollapsibleSidebar =
+      fileManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(fileManagerModalCollapsibleSidebar);
+  },
+  fileManagerModalFoldersTree: async (
+    { fileManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const fileManagerModalFoldersTree =
+      fileManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(fileManagerModalFoldersTree);
+  },
+  fileManagerDeleteItemConfirmationPopupAssertion: async (
+    { fileManagerDeleteItemConfirmationPopup },
+    use,
+  ) => {
+    const fileManagerDeleteItemConfirmationPopupAssertion =
+      new ConfirmationPopupAssertion(fileManagerDeleteItemConfirmationPopup);
+    await use(fileManagerDeleteItemConfirmationPopupAssertion);
+  },
+  fileManagerGridAssertion: async ({ fileManagerGrid }, use) => {
+    const fileManagerGridAssertion = new FileManagerGridAssertion(
+      fileManagerGrid,
+    );
+    await use(fileManagerGridAssertion);
+  },
+  fileManagerFoldersTreeAssertion: async ({ fileManagerFoldersTree }, use) => {
+    const fileManagerFoldersTreeAssertion = new FoldersTreeAssertion(
+      fileManagerFoldersTree,
+    );
+    await use(fileManagerFoldersTreeAssertion);
+  },
+  fileManagerModalGridAssertion: async ({ fileManagerModalGrid }, use) => {
+    const fileManagerModalGridAssertion = new FileManagerGridAssertion(
+      fileManagerModalGrid,
+    );
+    await use(fileManagerModalGridAssertion);
+  },
+  fileConflictConfirmationPopup: async ({ page }, use) => {
+    const fileConflictConfirmationPopup = new ConfirmationPopup(
+      page,
+      'Confirm',
+    );
+    await use(fileConflictConfirmationPopup);
+  },
+  fileConflictConfirmationPopupAssertion: async (
+    { fileConflictConfirmationPopup },
+    use,
+  ) => {
+    const fileConflictConfirmationPopupAssertion =
+      new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
+    await use(fileConflictConfirmationPopupAssertion);
+  },
+  uploadProgressDialog: async ({ page }, use) => {
+    const uploadProgressDialog = new UploadProgressDialog(page);
+    await use(uploadProgressDialog);
+  },
+  tooltipPortal: async ({ page }, use) => {
+    const tooltipPortal = new TooltipPortal(page);
+    await use(tooltipPortal);
   },
 });
 

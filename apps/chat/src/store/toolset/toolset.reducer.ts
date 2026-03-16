@@ -216,9 +216,13 @@ export const toolsetSlice = createSlice({
         code?: string;
         apiKey?: string;
         callbackUrl?: string;
+        isAdmin?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    logInToolsetSuccess: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     logInToolsetFail: (state) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;

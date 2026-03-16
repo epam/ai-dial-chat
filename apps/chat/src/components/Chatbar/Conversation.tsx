@@ -1,4 +1,4 @@
-import { DragEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
+import { DragEvent, memo, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -55,15 +55,17 @@ import {
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlighted: boolean;
+  isSelected: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
   additionalItemData?: AdditionalItemData;
   isContextMenu: boolean;
 }
 
-export function ConversationView({
+function ConversationView({
   conversation,
   isHighlighted,
+  isSelected,
   isChosen = false,
   isSelectMode,
   additionalItemData,
@@ -81,9 +83,6 @@ export function ConversationView({
       conversation.id,
       additionalItemData?.publicationUrl,
     ),
-  );
-  const selectedConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
   );
 
   const handleToggle = useCallback(() => {
@@ -136,8 +135,7 @@ export function ConversationView({
           <ReviewDot
             className={classNames(
               'group-hover:bg-accent-secondary-alpha',
-              (selectedConversationIds.includes(conversation.id) ||
-                isContextMenu) &&
+              (isSelected || isContextMenu) &&
                 isPartOfSelectedPublication &&
                 'bg-accent-secondary-alpha',
             )}
@@ -195,11 +193,10 @@ export const ConversationComponent = memo(
   ({ item: conversation, level, additionalItemData }: Props) => {
     const dispatch = useAppDispatch();
 
-    const selectedConversationIds = useAppSelector(
-      ConversationsSelectors.selectSelectedConversationsIds,
-    );
-    const messageIsStreaming = useAppSelector(
-      ConversationsSelectors.selectIsConversationsStreaming,
+    const isSelected = useAppSelector((state) =>
+      ConversationsSelectors.selectSelectedConversationsIds(state).includes(
+        conversation.id,
+      ),
     );
     const isSelectMode = useAppSelector(
       ConversationsSelectors.selectIsSelectMode,
@@ -207,8 +204,10 @@ export const ConversationComponent = memo(
     const isConversationsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
-    const chosenConversationIds = useAppSelector(
-      ConversationsSelectors.selectSelectedItems,
+    const isChosen = useAppSelector((state) =>
+      ConversationsSelectors.selectSelectedItems(state).includes(
+        conversation.id,
+      ),
     );
     const selectedPublicationUrl = useAppSelector(
       PublicationSelectors.selectSelectedPublicationUrl,
@@ -239,13 +238,6 @@ export const ConversationComponent = memo(
     });
 
     useContextMenuTrigger(handleContextMenuOpen, conversationRef);
-
-    const isSelected = selectedConversationIds.includes(conversation.id);
-
-    const isChosen = useMemo(
-      () => chosenConversationIds.includes(conversation.id),
-      [chosenConversationIds, conversation.id],
-    );
 
     const isExternal = isEntityIdExternal(conversation);
 
@@ -299,7 +291,7 @@ export const ConversationComponent = memo(
           style={{
             paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
           }}
-          disabled={messageIsStreaming || (isSelectMode && isExternal)}
+          disabled={isConversationsStreaming || (isSelectMode && isExternal)}
           draggable={
             !isExternal &&
             !isNameOrPathInvalid &&
@@ -335,6 +327,7 @@ export const ConversationComponent = memo(
           <ConversationView
             conversation={conversation}
             isHighlighted={isHighlighted || isContextMenu}
+            isSelected={isSelected}
             isChosen={isChosen}
             isSelectMode={isSelectMode}
             additionalItemData={additionalItemData}
@@ -342,7 +335,7 @@ export const ConversationComponent = memo(
           />
         </button>
 
-        {!isSelectMode && !messageIsStreaming && (
+        {!isSelectMode && !isConversationsStreaming && (
           <div
             className={classNames(
               'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',

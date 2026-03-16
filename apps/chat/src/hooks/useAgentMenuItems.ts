@@ -12,10 +12,12 @@ import { useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
 
 import {
   getApplicationSimpleStatus,
   getPlayerCaption,
+  isApplicationDeployed,
   isApplicationStatusUpdating,
   isExecutableApp,
   isMarketplaceEntityPublic,
@@ -89,6 +91,7 @@ export const useAgentMenuItems = ({
     handlePublish,
     handleUnpublish,
     handleUpdateFunctionStatus,
+    handleRedeploy,
   } = useAgentMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -97,8 +100,8 @@ export const useAgentMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
+  const hasDeployAccess = useHasDeployAccess(entity);
+  const isExecutable = isExecutableApp(entity) && hasDeployAccess;
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const hasCustomEditor = schemas.some(
@@ -109,6 +112,8 @@ export const useAgentMenuItems = ({
     isMyApp ||
     canWrite ||
     (isPublicAndAdmin && (!hasCustomEditor || isQuickApp2(entity)));
+
+  const showRedeploy = isExecutable && isApplicationDeployed(entity);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -130,8 +135,20 @@ export const useAgentMenuItems = ({
         onClick: handleUpdateFunctionStatus,
       },
       {
+        name: t('Redeploy'),
+        dataQa: 'redeploy',
+        display: showRedeploy && disabledActions.deploy !== true,
+        Icon: PlayerContextIcons[SimpleApplicationStatus.REDEPLOY],
+        className: PlayerContextButtonClasses[SimpleApplicationStatus.REDEPLOY],
+        iconClassName:
+          PlayerContextIconClasses[SimpleApplicationStatus.REDEPLOY],
+        onClick: handleRedeploy,
+      },
+      {
         name: t(isAppIdPublic ? 'View' : 'Edit'),
         dataQa: 'edit',
+        disabled:
+          isExecutable && playerStatus === SimpleApplicationStatus.UPDATING,
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
@@ -186,7 +203,6 @@ export const useAgentMenuItems = ({
         display: isMyAppOrPreview && disabledActions.delete !== true,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
-        iconClassName: 'stroke-error',
         onClick: handleDelete,
       },
     ],
@@ -203,6 +219,8 @@ export const useAgentMenuItems = ({
       disabledActions.logs,
       disabledActions.delete,
       handleCopy,
+      showRedeploy,
+      handleRedeploy,
       entity,
       playerStatus,
       isExecutable,

@@ -8,17 +8,24 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 interface MarketplaceEntityIndicatorProps {
   entity: MarketplaceEntity;
+  isDetailedView?: boolean;
 }
 
 export const MarketplaceEntityIndicator = ({
   entity,
+  isDetailedView,
 }: MarketplaceEntityIndicatorProps) => {
   if (isDialAiEntityModel(entity)) {
     return <FunctionStatusIndicator entity={entity} />;
   }
 
   if (isToolsetEntityModel(entity)) {
-    return <CredentialsStatusIndicator entity={entity} />;
+    return (
+      <CredentialsStatusIndicator
+        entity={entity}
+        showAdditionalBadge={isDetailedView}
+      />
+    );
   }
 
   return null;

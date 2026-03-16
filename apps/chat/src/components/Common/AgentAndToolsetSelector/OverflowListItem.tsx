@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import React, { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -11,6 +10,7 @@ import { getVersionFromId } from '@/src/utils/server/api';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
@@ -54,12 +54,10 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
         <ModelIcon entityId={id} entity={item} size={18} isCustomTooltip />
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
-      <button
-        className="shrink-0 text-secondary hover:text-primary"
+      <CloseButtonSmall
+        className={classNames(isError && 'hover:enabled:text-error')}
         onClick={handleRemove}
-      >
-        <IconX size={18} />
-      </button>
+      />
     </div>
   );
 };
@@ -81,7 +79,7 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
 
   const isMobileView = isSmallScreen();
 
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+  const { isInvalid, isError } = getEntityStatus(item);
 
   const shouldShowTooltip = !isMobileView || (isMobileView && isInvalid);
   const name = !item
@@ -125,8 +123,6 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
           item={item}
           name={name}
           version={version}
-          isInvalid={isInvalid}
-          isLoggedOut={isLoggedOut}
           isInSelectionList
         />
       }

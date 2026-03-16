@@ -1,4 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -20,6 +22,7 @@ import {
   MOBILE_SIDEBAR_MIN_WIDTH,
   SIDEBAR_MIN_WIDTH,
 } from '@/src/constants/default-ui-settings';
+import { Routes } from '@/src/constants/routes';
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 
@@ -43,17 +46,24 @@ export function ResizableSidebarWrapper({
   handleClose,
 }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const sideBarElementRef = useRef<Resizable>(null);
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+  const marketplaceFilterbarWidth = useAppSelector(
+    UISelectors.selectMarketplaceFilterbarWidth,
+  );
   const isChatbarOpen = useAppSelector(UISelectors.selectShowChatbar);
   const isPromptbarOpen = useAppSelector(UISelectors.selectShowPromptbar);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isNavigationVisible = useAppSelector(
     UISelectors.selectIsNavigationVisible,
   );
+
+  const isMarketplaceFilterbar =
+    isLeftSidebar && router.route === Routes.Marketplace;
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -70,19 +80,31 @@ export function ResizableSidebarWrapper({
       : SIDEBAR_MIN_WIDTH;
 
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 group-hover:visible md:visible xl:bg-accent-primary xl:text-accent-primary',
+    'invisible h-full w-0.5 group-hover:visible md:visible',
+    'sidebar-overlay:bg-accent-primary sidebar-overlay:text-accent-primary',
     isResizing
-      ? 'bg-accent-primary text-accent-primary xl:visible'
-      : 'bg-layer-3 text-secondary xl:invisible',
+      ? 'bg-accent-primary text-accent-primary sidebar-overlay:visible'
+      : 'bg-layer-3 text-secondary sidebar-overlay:invisible',
   );
 
   const sidebarWidth = useMemo(() => {
     if (windowWidth && isSmallScreen()) {
       return MOBILE_SIDEBAR_MIN_WIDTH;
     } else {
-      return isLeftSidebar ? chatbarWidth : promptbarWidth;
+      return isLeftSidebar
+        ? isMarketplaceFilterbar
+          ? marketplaceFilterbarWidth
+          : chatbarWidth
+        : promptbarWidth;
     }
-  }, [windowWidth, isLeftSidebar, chatbarWidth, promptbarWidth]);
+  }, [
+    windowWidth,
+    isLeftSidebar,
+    chatbarWidth,
+    promptbarWidth,
+    marketplaceFilterbarWidth,
+    isMarketplaceFilterbar,
+  ]);
 
   const centralChatMinWidth =
     windowWidth && isTabletScreen()
@@ -118,7 +140,7 @@ export function ResizableSidebarWrapper({
   }, [windowWidth, centralChatMinWidth, oppositeSidebarMinWidth]);
 
   const onResize: ResizeCallback = useCallback(() => {
-    if (!windowWidth) return;
+    if (!windowWidth || isMarketplaceFilterbar) return;
 
     const sidebarCurrentWidth =
       sideBarElementRef.current?.resizable?.getClientRects()[0].width;
@@ -164,6 +186,7 @@ export function ResizableSidebarWrapper({
     promptbarWidth,
     chatbarWidth,
     dispatch,
+    isMarketplaceFilterbar,
   ]);
 
   const onResizeStop = useCallback(() => {
@@ -176,6 +199,11 @@ export function ResizableSidebarWrapper({
 
     const width = resizableWidth ?? sidebarMinWidth;
 
+    if (isMarketplaceFilterbar) {
+      dispatch(UIActions.setMarketplaceFilterbarWidth(width));
+      return;
+    }
+
     if (isLeftSidebar) {
       dispatch(UIActions.setChatbarWidth(width));
     }
@@ -183,23 +211,24 @@ export function ResizableSidebarWrapper({
     if (!isLeftSidebar) {
       dispatch(UIActions.setPromptbarWidth(width));
     }
-  }, [dispatch, isLeftSidebar, sidebarMinWidth]);
+  }, [dispatch, isLeftSidebar, isMarketplaceFilterbar, sidebarMinWidth]);
+
+  const sidebarThemeClassname = isMarketplaceFilterbar
+    ? undefined
+    : isLeftSidebar
+      ? 'sidebar-left'
+      : 'sidebar-right';
 
   const resizableWrapperClassName = classNames(
-    '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
+    '!fixed z-40 flex !h-full max-w-[95%] border-tertiary md:max-w-[45%]',
+    'sidebar-overlay:!relative sidebar-overlay:top-0',
     isLeftSidebar
-      ? 'sidebar-left left-0 border-r xl:left-0'
-      : 'sidebar-right right-0 border-l',
+      ? 'left-0 border-r sidebar-overlay:left-0'
+      : 'right-0 border-l',
+    sidebarThemeClassname,
     isLeftSidebar &&
       isNavigationVisible &&
       (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
-    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
-      '!h-full',
-    screenState !== ScreenState.SM &&
-      screenState !== ScreenState.MD &&
-      (isOverlay
-        ? 'top-9 !h-[calc(100%-36px)]'
-        : 'top-12 !h-[calc(100%-48px)]'),
   );
 
   const resizeSettings: ResizableProps = useMemo(() => {

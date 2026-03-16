@@ -1,5 +1,5 @@
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -71,9 +71,11 @@ export const AppsEditorHeader = ({
 
   const dispatch = useAppDispatch();
 
-  const { formState, trigger } = useFormContext<AppsEditorFormType>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { control, trigger } = useFormContext<AppsEditorFormType>();
+  const { errors, isValid } = useFormState<AppsEditorFormType>({ control });
+  const isAppLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
@@ -101,6 +103,7 @@ export const AppsEditorHeader = ({
     !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
   const agent = id ? modelsMap[id.toString()] : undefined;
+  const isPublicApp = agent && isEntityIdPublic(agent);
 
   const tabs = useMemo(
     () => [
@@ -142,13 +145,22 @@ export const AppsEditorHeader = ({
     [onTabClick],
   );
 
+  useEffect(() => {
+    if (isPublicApp && !isAppLoading) {
+      const timerId = setTimeout(() => {
+        trigger();
+      });
+      return () => clearTimeout(timerId);
+    }
+  }, [dispatch, isPublicApp, isAppLoading, trigger]);
+
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
       if (isExistingApp) {
         const isValid = await trigger();
 
-        if (!isValid) {
+        if (!isValid && !isPublicApp) {
           setSaveDraftDialog(true);
           setRedirectToChat(true);
           return;
@@ -156,20 +168,20 @@ export const AppsEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isExistingApp, trigger, onSave],
+    [isExistingApp, onSave, trigger, isPublicApp],
   );
 
   const handleSaveAndRedirect = useCallback(async () => {
     if (isExistingApp) {
       const isValid = await trigger();
 
-      if (!isValid) {
+      if (!isValid && !isPublicApp) {
         setSaveDraftDialog(true);
         return;
       }
     }
     onSave();
-  }, [isExistingApp, onSave, trigger]);
+  }, [isExistingApp, isPublicApp, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -205,9 +217,7 @@ export const AppsEditorHeader = ({
   );
 
   const saveLabel =
-    isExistingApp &&
-    !hasCustomEditor &&
-    (agent ? !isEntityIdPublic(agent) : false)
+    isExistingApp && !hasCustomEditor && !isPublicApp
       ? 'Save and exit'
       : 'Exit';
 

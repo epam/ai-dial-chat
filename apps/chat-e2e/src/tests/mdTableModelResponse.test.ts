@@ -3,8 +3,9 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator, expect } from '@playwright/test';
 
 const expectedChatMessageIndex = 2;
@@ -137,9 +138,10 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === ThemeId.dark
-              ? Colors.backgroundLayer4Dark
-              : Colors.backgroundLayer4Light,
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgLayer4,
+              theme as ThemeId,
+            ),
           );
 
         const tableRowBackgroundColor =
@@ -152,9 +154,10 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === ThemeId.dark
-              ? Colors.backgroundLayer3Dark
-              : Colors.backgroundLayer3Light,
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgLayer3,
+              theme as ThemeId,
+            ),
           );
       },
     );

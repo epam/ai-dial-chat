@@ -4,10 +4,14 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
+
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -26,9 +30,12 @@ const VersionPrefix = () => {
   );
 };
 
-const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
-  entity.version || entity.id;
-
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
+  if (isCreatedMarketplaceEntity(entity) || entity.version) {
+    return entity.version || NA_VERSION;
+  }
+  return entity.id;
+};
 interface EntityVersionSelectProps<T extends MarketplaceEntity> {
   entities: T[];
   currentEntity: T;
@@ -50,6 +57,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   triggerClassName,
   selectedBaseIdsSet,
 }: EntityVersionSelectProps<T>) => {
+  const { t } = useTranslation(Translation.Marketplace);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (entity: T) => {
@@ -58,7 +66,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   };
 
   if (entities.length < 2) {
-    if (entities.length && entities[0].version) {
+    if (
+      entities.length &&
+      (isCreatedMarketplaceEntity(entities[0]) || entities[0].version)
+    ) {
       return (
         <div
           className={classNames('flex truncate font-theme text-sm', className)}
@@ -68,7 +79,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {entities[0].version}
+            {entities[0].version ?? t(NA_VERSION)}
           </span>
         </div>
       );
@@ -83,7 +94,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}
-      listClassName="z-[60]"
+      listClassName="z-[2000]"
       data-qa="model-version-select"
       trigger={
         <div
@@ -117,14 +128,18 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] overflow-hidden text-nowrap hover:bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap border-l border-transparent hover:bg-accent-primary-alpha',
             (currentEntity.id === entity.id ||
               selectedBaseIdsSet?.has(entity.id)) &&
-              'bg-accent-primary-alpha',
+              '!border-accent-primary bg-accent-primary-alpha',
           )}
           item={
             <div className="flex w-full items-center gap-2">
-              <ModelIcon entityId={entity.id} entity={entity} size={16} />
+              <ModelIcon
+                entityId={entity.id}
+                entity={entity}
+                size={DEFAULT_ICON_SIZES.SMALL}
+              />
               <Tooltip
                 tooltip={getDisplayValue(entity)}
                 triggerClassName="truncate"

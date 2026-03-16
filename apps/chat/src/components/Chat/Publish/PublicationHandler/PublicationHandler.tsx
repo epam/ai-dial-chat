@@ -55,8 +55,8 @@ import { PublicationInfoSection } from '../PublicationInfoSection';
 import { PublishToSection } from '../PublishToSection';
 import {
   PublicationRequestFormData,
+  PublicationRequestFormSchema,
   PublishRequestFieldsNames,
-  validators,
 } from '../form';
 import { BasePublicationResources } from './BasePublicationResources';
 import { CompareRulesModal } from './CompareRulesModal';
@@ -71,10 +71,17 @@ import { PublicationToolsetRow } from './ReviewRowItems/PublicationToolsetRow';
 import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { zodResolver } from '@hookform/resolvers/zod';
 import isEqual from 'lodash-es/isEqual';
 
 const AUTHOR_PUBLIC_NAME_TOOLTIP =
   "This name will be displayed instead of the author's name for this publication.";
+
+const entityNamePreprocessor = {
+  setValueAs: (name: string) => {
+    return replaceSpacesFromString(name.trim());
+  },
+};
 
 interface Props {
   publication: Publication;
@@ -204,6 +211,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const formMethods = useForm<PublicationRequestFormData>({
     defaultValues: getDefaultValues(),
     mode: 'onChange',
+    resolver: zodResolver(PublicationRequestFormSchema),
   });
 
   useEffect(() => {
@@ -218,12 +226,20 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     PublishRequestFieldsNames.PUBLISH_TO_URL,
   );
 
+  const rulesPath = !isReview ? editedPublishToUrl : publication.targetFolder;
+
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(
-      state,
-      !isReview ? editedPublishToUrl : publication.targetFolder,
-    ),
+    PublicationSelectors.selectRulesByPath(state, rulesPath),
   );
+
+  useEffect(() => {
+    if (rules && !isReview) {
+      formMethods.setValue(
+        PublishRequestFieldsNames.RULES,
+        rules[rulesPath] ?? [],
+      );
+    }
+  }, [formMethods, rulesPath, rules, isReview]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -425,7 +441,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                 className="border-none p-0 text-base font-semibold"
                 {...formMethods.register(
                   PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
-                  validators.publishRequestName,
+                  entityNamePreprocessor,
                 )}
                 placeholder={t(
                   `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
@@ -497,7 +513,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           )}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
-                            validators.publicationAuthor,
+                            entityNamePreprocessor,
                           )}
                           id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
                           error={
@@ -562,6 +578,11 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       newRules={newRules}
                       publication={publication}
                       editedPublishToUrl={editedPublishToUrl}
+                      error={
+                        formMethods.formState.errors.rules
+                          ? t('Please fix the rules to proceed')
+                          : undefined
+                      }
                     />
                   </section>
                 </div>
@@ -582,6 +603,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
                             });
+
                           const isConversationSectionAndNoFiles =
                             !isReview &&
                             featureType === FeatureType.File &&
@@ -665,14 +687,10 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             )}
           </div>
           <PublicationHandlerFooter
-            displayAuthorEditState={displayAuthorEditState}
             publication={publication}
             isFormChanged={isFormChanged}
             areRulesChanged={hasUserChangedRules}
             initialState={initialState}
-            isFormErrors={
-              Object.values(formMethods.formState.errors).length > 0
-            }
           />
         </div>
         {isCompareModalOpened && publication.targetFolder && (

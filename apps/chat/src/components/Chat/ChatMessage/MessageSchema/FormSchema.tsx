@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -35,6 +36,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import intersection from 'lodash-es/intersection';
 
 interface HiddenButtonsPropertyProps {
@@ -157,23 +159,14 @@ const HiddenButtonsProperty = ({
     onSetHiddenOptions(hidden.map((item) => item.option));
   }, [onCloseModal, onSetHiddenOptions, onSetVisibleOptions, options]);
 
+  useResizeObserver(hiddenContainerRef.current, determineVisibility);
+
   useEffect(() => {
-    const handleResize = () => {
-      determineVisibility();
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (hiddenContainerRef.current) {
-      resizeObserver.observe(hiddenContainerRef.current);
-    }
-
     return () => {
-      resizeObserver.disconnect();
       onSetHiddenOptions([]);
       onSetVisibleOptions(options);
     };
-  }, [determineVisibility, onSetHiddenOptions, onSetVisibleOptions, options]);
+  }, [onSetHiddenOptions, onSetVisibleOptions, options]);
 
   return (
     <div
@@ -185,17 +178,18 @@ const HiddenButtonsProperty = ({
       )}
     >
       {options.map((option) => (
-        <button
+        <DialButton
           key={`${option.const}`}
           className={classNames('chat-button', buttonClassName)}
           disabled
-        >
-          {option.title}
-        </button>
+          label={option.title}
+        />
       ))}
-      <button ref={dotsButtonRef} className="chat-button">
-        <IconDotsVertical size={18} />
-      </button>
+      <DialButton
+        ref={dotsButtonRef}
+        className="chat-button"
+        iconBefore={<IconDotsVertical size={18} />}
+      />
     </div>
   );
 };
@@ -278,7 +272,7 @@ const ButtonsProperty = ({
         ))}
 
         {hiddenOptions.length > 0 && (
-          <button
+          <DialButton
             onClick={() => setHiddenOptionsModal(true)}
             className={classNames(
               'chat-button',
@@ -289,9 +283,8 @@ const ButtonsProperty = ({
                 ).length &&
                 'button-accent-primary',
             )}
-          >
-            <IconDotsVertical size={18} />
-          </button>
+            iconBefore={<IconDotsVertical size={18} />}
+          />
         )}
       </div>
 
@@ -484,7 +477,7 @@ interface FormSchemaProps {
   buttonClassName?: string;
 }
 
-export const FormSchemaMemo = memo(function FormSchema({
+const FormSchemaMemo = memo(function FormSchema({
   schema,
   formValue,
   onChange,

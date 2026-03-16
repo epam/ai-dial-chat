@@ -28,7 +28,7 @@ dialTest.beforeAll(async ({ iconApiHelper }) => {
     ThemeColorAttributes.textError,
   );
   expectedBgDisabledColor = ThemesUtil.getRgbColorByKey(
-    ThemeColorAttributes.controlsBgDisable,
+    ThemeColorAttributes.textSecondary,
   );
 });
 
@@ -384,7 +384,10 @@ dialAdminTest(
         );
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(firstConversation.name),
+          ExpectedConstants.duplicatedUnpublishingError({
+            name: firstConversation.name,
+            version: ExpectedConstants.defaultEntityVersion,
+          }),
         );
       },
     );
@@ -748,7 +751,10 @@ dialAdminTest(
               folderConversations,
               (f) => f.toLowerCase(),
               'asc',
-            ),
+            ).map((name) => ({
+              name,
+              version: ExpectedConstants.defaultEntityVersion,
+            })),
           ),
         );
       },

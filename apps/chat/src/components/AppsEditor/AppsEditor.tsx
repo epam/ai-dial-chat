@@ -42,6 +42,7 @@ import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { AppsEditorView } from '@/src/components/AppsEditor/AppsEditorView';
 import {
   AppsEditorFormType,
+  QuickApp2Form,
   getApplicationPayload,
   getDefaultFormData,
   getValidationSchema,
@@ -80,10 +81,12 @@ export const AppsEditor = () => {
   const {
     [AppsEditorQuery.Schema]: typeQuery = '',
     [AppsEditorQuery.PublicationUrl]: publicationUrl = '',
-    [AppsEditorQuery.Id]: id,
+    [AppsEditorQuery.IsCreating]: isCreating,
+    [AppsEditorQuery.Id]: idQuery,
   } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
-  const isCreateRef = useRef(!id);
+  const isCreatingApp =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
@@ -106,6 +109,8 @@ export const AppsEditor = () => {
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
   const saveAndExitRef = useRef(false);
   const redirectToChatRef = useRef(false);
+  const isSimpleViewSwitchRef = useRef(false);
+  const firstValidationPerformedRef = useRef(false);
 
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
@@ -129,11 +134,17 @@ export const AppsEditor = () => {
     getDefaultFormData({
       app: appDetails,
       models: modelsWithFolder,
-      type: type,
+      type,
       runtime: pythonVersions[0],
     }),
   );
   const isDirty = formMethods.formState.isDirty;
+  const isQuickAppJsonDirty = (
+    formMethods.formState.dirtyFields as Record<keyof QuickApp2Form, boolean>
+  )['agentsAndToolsetsJson'];
+  const onlyQuickAppJsonChanged =
+    Object.keys(formMethods.formState.dirtyFields).length === 1 &&
+    isQuickAppJsonDirty;
 
   const marketplaceEntities = useMemo(
     () =>
@@ -153,6 +164,7 @@ export const AppsEditor = () => {
         data,
         allEntitiesMap: marketplaceEntities,
         currentApp: appDetails,
+        keepCurrentToolsets: !isSimpleViewSwitchRef.current,
       });
 
       if (!appDetails) {
@@ -176,7 +188,7 @@ export const AppsEditor = () => {
         if (shouldRevokeAccess) {
           dispatch(
             ShareActions.revokeAccess({
-              resourceId: appDetails.id,
+              resourceIds: [appDetails.id],
               featureType: FeatureType.Application,
             }),
           );
@@ -205,31 +217,63 @@ export const AppsEditor = () => {
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
             isSaveAndExit: saveAndExitRef.current,
-            shouldSelectApplication: isCreateRef.current,
+            shouldSelectApplication: isCreatingApp,
+            shouldSetEditorError: isSimpleViewSwitchRef.current,
           }),
         );
       }
 
+      const shouldKeepJsonFieldDirty =
+        !isSimpleViewSwitchRef.current && isQuickAppJsonDirty;
+
+      formMethods.reset(
+        {
+          ...formMethods.getValues(),
+          ...(shouldKeepJsonFieldDirty && {
+            agentsAndToolsetsJson: (
+              lastSubmittedValuesRef.current as QuickApp2Form
+            ).agentsAndToolsetsJson,
+          }),
+        },
+        {
+          keepIsValid: true,
+          keepErrors: true,
+        },
+      );
+      // Make agentsAndToolsetsJson dirty if it was not saved manually
+      if (shouldKeepJsonFieldDirty) {
+        formMethods.setValue(
+          'agentsAndToolsetsJson',
+          (data as QuickApp2Form).agentsAndToolsetsJson as string,
+          { shouldDirty: true, shouldTouch: true, shouldValidate: true },
+        );
+      }
+
+      lastSubmittedValuesRef.current = getDefaultFormData({
+        app: payload,
+        type,
+        runtime: pythonVersions[0],
+      });
+      isSimpleViewSwitchRef.current = false;
       changeEditorTabRef.current = null;
       saveAndExitRef.current = false;
       redirectToChatRef.current = false;
-      formMethods.reset(formMethods.getValues(), {
-        keepIsValid: true,
-        keepErrors: true,
-      });
-      lastSubmittedValuesRef.current = getDefaultFormData(payload);
     },
     [
+      isQuickAppJsonDirty,
       appDetails,
       dispatch,
       formMethods,
       isAppDeployed,
+      isCreatingApp,
       isSchemaApplicationType,
       isShared,
       marketplaceEntities,
       publicationUrl,
+      pythonVersions,
       schema,
       t,
+      type,
     ],
   );
 
@@ -274,7 +318,7 @@ export const AppsEditor = () => {
         dispatch(
           ApplicationActions.exitEditor({
             redirectUrl: redirectToChat ? Routes.Chat : undefined,
-            shouldSelectApplication: isCreateRef.current,
+            shouldSelectApplication: isCreatingApp,
           }),
         );
         return;
@@ -286,7 +330,7 @@ export const AppsEditor = () => {
 
       void handleSubmit(undefined, saveDraft);
     },
-    [isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
+    [isDirty, appDetails, isAppPublic, dispatch, handleSubmit, isCreatingApp],
   );
 
   const handleTabClick = useCallback(
@@ -328,10 +372,18 @@ export const AppsEditor = () => {
     }
   }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 
-  const handleAutoSave = useCallback(() => {
-    if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
-    void handleSubmit(undefined, true, true);
-  }, [editorStep, handleSubmit, isAppPublic]);
+  const handleAutoSave = useCallback(
+    (isSimpleViewSwitch?: boolean) => {
+      if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
+      if (isSimpleViewSwitch) {
+        isSimpleViewSwitchRef.current = true;
+      } else if (onlyQuickAppJsonChanged) {
+        return;
+      }
+      void handleSubmit(undefined, true, true);
+    },
+    [editorStep, handleSubmit, isAppPublic, onlyQuickAppJsonChanged],
+  );
 
   useEffect(() => {
     if (shouldTriggerEditorAutoUpdate && !isAppPublic) {
@@ -339,6 +391,14 @@ export const AppsEditor = () => {
       dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(false));
     }
   }, [shouldTriggerEditorAutoUpdate, isAppPublic, handleSubmit, dispatch]);
+
+  useEffect(() => {
+    if (idQuery && !firstValidationPerformedRef.current && !isAppPublic) {
+      void formMethods.trigger();
+    }
+    firstValidationPerformedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idQuery, formMethods.trigger, isAppPublic]);
 
   return (
     <FormProvider {...formMethods}>

@@ -1,9 +1,15 @@
-import { ConversationMoveToDialog } from './ConversationMoveToDialog';
+import { FC } from 'react';
 
-export const ConversationDialogs: React.FC = () => {
+import { ConversationMoveToDialog } from './ConversationMoveToDialog';
+import { DeleteConversationDialog } from './DeleteConversationDialog';
+import { ExportConversationDialog } from './ExportConversationDialog';
+
+export const ConversationDialogs: FC = () => {
   return (
     <>
       <ConversationMoveToDialog />
+      <DeleteConversationDialog />
+      <ExportConversationDialog />
     </>
   );
 };

@@ -7,11 +7,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -23,6 +27,7 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import CircleCheck from '@/public/images/icons/circle-check.svg';
 import Download from '@/public/images/icons/download.svg';
 import { Stage } from '@epam/ai-dial-shared';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface StageTitleProps {
   isOpened: boolean;
@@ -58,31 +63,15 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => (
   </div>
 );
 
-const getLimitStageContent = () =>
-  parseFloat(process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT ?? '40');
-
-interface Props {
-  stage: Stage;
+interface DownloadStageViewProps {
+  content: string;
+  limit: number;
 }
 
-const DownloadStageView = ({ content }: { content: string }) => {
+const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCopied, setIsCopied] = useState(false);
-
-  const copyToClipboard = useCallback(() => {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      return;
-    }
-
-    navigator.clipboard.writeText(content).then(() => {
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    });
-  }, [content]);
+  const { copied: isCopied, onCopy: copyToClipboard } = useCopy(content, true);
 
   const downloadAsFile = useCallback(() => {
     const fileName = `ai-chat-stage-${getDownLoadCurrentDate()}.txt`;
@@ -101,32 +90,30 @@ const DownloadStageView = ({ content }: { content: string }) => {
 
   return (
     <div className="flex justify-between gap-1 ps-1">
-      {t(
-        `Content is too large to display (exceeds ${getLimitStageContent()} KB).`,
-      )}
-      <div className="flex items-center gap-3 text-secondary">
-        <button
-          className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
+      {t(`Content is too large to display (exceeds ${limit} KB).`)}
+      <div className="flex items-center gap-2 text-secondary">
+        <DialGhostIconButton
           onClick={copyToClipboard}
+          size={ElementSize.Small}
           disabled={isCopied}
-        >
-          {isCopied ? (
-            <Tooltip tooltip={t('Copied!')}>
-              <IconCheck size={18} />
-            </Tooltip>
-          ) : (
-            <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
-              <IconCopy size={18} />
-            </Tooltip>
-          )}
-        </button>
+          icon={
+            isCopied ? (
+              <Tooltip tooltip={t('Copied!')}>
+                <IconCheck size={18} />
+              </Tooltip>
+            ) : (
+              <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
+                <IconCopy size={18} />
+              </Tooltip>
+            )
+          }
+        />
         <Tooltip isTriggerClickable tooltip={t('Download')}>
-          <button
-            className="flex items-center rounded bg-none hover:text-accent-primary"
+          <DialGhostIconButton
+            size={ElementSize.Small}
             onClick={downloadAsFile}
-          >
-            <Download width={18} height={18} />
-          </button>
+            icon={<Download width={18} height={18} />}
+          />
         </Tooltip>
       </div>
     </div>
@@ -136,10 +123,13 @@ const DownloadStageView = ({ content }: { content: string }) => {
 const StageView = ({ content }: { content: string }) => {
   // Calculate byte size of the string
   const size = useMemo(() => new Blob([content]).size, [content]);
+  const stageContentLimit = useAppSelector(
+    SettingsSelectors.selectStageContentLimit,
+  );
 
   // in bytes
-  if (size > getLimitStageContent() * 1024) {
-    return <DownloadStageView content={content} />;
+  if (size > stageContentLimit * 1024) {
+    return <DownloadStageView content={content} limit={stageContentLimit} />;
   }
   return (
     <span className="inline-block overflow-auto">
@@ -148,7 +138,11 @@ const StageView = ({ content }: { content: string }) => {
   );
 };
 
-export const MessageStage = ({ stage }: Props) => {
+interface MessageStageProps {
+  stage: Stage;
+}
+
+export const MessageStage = ({ stage }: MessageStageProps) => {
   const [isOpened, setIsOpened] = useState(false);
   const [hasContent, setHasContent] = useState(
     () => !!(stage?.content || stage?.attachments?.length),

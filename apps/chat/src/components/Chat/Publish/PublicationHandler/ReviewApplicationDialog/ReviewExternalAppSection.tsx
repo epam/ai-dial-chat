@@ -12,6 +12,10 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
+
 interface ReviewExternalAppSectionProps {
   application: CustomApplicationModel;
 }
@@ -21,30 +25,28 @@ export const ReviewExternalAppSection = ({
 }: ReviewExternalAppSectionProps) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const isExternalApplication = isExternalApp(application);
-
-  if (!isExternalApplication) return null;
-
-  const externalUrl = (application.applicationProperties as ExternalAppConfig)
+  const externalUrl = (application?.applicationProperties as ExternalAppConfig)
     ?.external_url;
 
+  if (!externalUrl || !isExternalApp(application)) return null;
+
   return (
-    <div className="flex gap-4">
-      <span
-        className="w-[122px] text-secondary"
-        data-qa="app-external-url-label"
-      >
-        {t('External URL:')}
-      </span>
-      <Link
-        href={externalUrl ?? ''}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex max-w-[414px] flex-nowrap items-center gap-1 break-all text-accent-primary"
-        data-qa="app-external-url"
-      >
-        {externalUrl} <IconExternalLink size={16}></IconExternalLink>
-      </Link>
-    </div>
+    <MarketplaceEntityInfoRow
+      label={t('External URL')}
+      dataQa="app-external-url-label"
+      value={
+        <Link
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-nowrap items-center gap-1 break-all text-accent-primary"
+          data-qa="app-external-url"
+        >
+          {externalUrl}
+          <IconExternalLink size={DEFAULT_ICON_SIZES.SMALL} />
+        </Link>
+      }
+      valueClassName="max-w-[414px]"
+    />
   );
 };

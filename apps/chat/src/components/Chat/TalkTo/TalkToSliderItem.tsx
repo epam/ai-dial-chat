@@ -51,6 +51,11 @@ export const TalkToSliderItem = ({
 
   const isSelected = isNotPseudoModelSelected || isPseudoModelSelected;
 
+  const isUnavailableModel =
+    !modelsMap[groupItem.reference] &&
+    !isPseudoModel(groupItem.id) &&
+    groupItem.reference !== REPLAY_AS_IS_MODEL;
+
   if (groupItem === SuggestedCard) {
     return (
       <div
@@ -68,11 +73,8 @@ export const TalkToSliderItem = ({
     <ItemCardView
       isSelected={isSelected}
       conversation={conversation}
-      isUnavailableModel={
-        !modelsMap[groupItem.reference] &&
-        !isPseudoModel(groupItem.id) &&
-        groupItem.reference !== REPLAY_AS_IS_MODEL
-      }
+      hasError={isUnavailableModel}
+      isUnavailableModel={isUnavailableModel}
       disabled={
         isPlaybackConversation(conversation) &&
         groupItem.reference !== PseudoModel.Playback

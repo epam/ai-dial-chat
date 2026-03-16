@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import {
@@ -11,6 +10,7 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
@@ -18,6 +18,7 @@ import {
   getUserMessageCustomContent,
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
+import { getFullToken } from '@/src/utils/server/server';
 
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -28,8 +29,6 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from './auth/[...nextauth]';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
@@ -44,7 +43,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     req.body as ChatBody;
 
   try {
-    const token = await getToken({ req });
+    const token = await getFullToken({ req });
 
     if (!id || !model || (!prompt && !messages?.length)) {
       return res.status(400).send(errorsMessages[400]);
@@ -113,15 +112,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       temperature: temperatureToUse,
       messages: messagesToSend,
-      userJWT: token?.access_token as string,
+      userJWT: token?.token ?? '',
       chatReference: reference ?? id,
-      jobTitle: token?.jobTitle as string,
+      jobTitle: token?.jobTitle,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
       configurationSchemaValue: configurationValue,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Content-Type', 'application/octet-stream');
 
     const reader = stream.getReader();
 
@@ -133,7 +133,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const processStream = async () => {
       try {
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           if (clientAborted) {
             break;

@@ -27,6 +27,7 @@ interface LogoProps {
 
 export const Logo = ({ onLogoClick }: LogoProps) => {
   const router = useRouter();
+
   const dispatch = useAppDispatch();
 
   const areConversationsLoaded = useAppSelector(
@@ -36,16 +37,14 @@ export const Logo = ({ onLogoClick }: LogoProps) => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
 
   const isCustomLogoFeatureEnabled = enabledFeatures.has(Feature.CustomLogo);
   const isNewConversationDisabled = enabledFeatures.has(
     Feature.HideNewConversation,
   );
-
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&

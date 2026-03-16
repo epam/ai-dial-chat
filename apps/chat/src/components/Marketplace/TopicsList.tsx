@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { OverflowContainer } from '@/src/components/Common/OverflowContainer';
 import { OverflowIndicator } from '@/src/components/Common/OverflowIndicator';
@@ -24,7 +24,11 @@ export const TopicsList = ({
       <OverflowIndicator
         count={hiddenItems.length}
         tooltipContent={hiddenItems.map((item) => (
-          <MarketplaceEntityTopic key={item.topic} topic={item.topic} />
+          <MarketplaceEntityTopic
+            key={item.topic}
+            topic={item.topic}
+            className="max-w-full truncate"
+          />
         ))}
         placement="top"
         displayDelay={100}

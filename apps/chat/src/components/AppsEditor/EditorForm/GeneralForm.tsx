@@ -1,5 +1,5 @@
-import { FormEvent, useCallback, useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import React, { FormEvent, useCallback, useMemo } from 'react';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { preventEnterDown } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -26,6 +27,7 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { BYTES_IN_KB } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { BaseAppForm } from '@/src/components/AppsEditor/form';
@@ -36,6 +38,8 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
@@ -73,11 +77,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const isFieldDisabled =
     isAppDeployed || isSharedWithMe || isAppPublic || isDeploying;
 
-  const {
-    register,
-    formState: { errors, isValid },
-    control,
-  } = useFormContext<BaseAppForm>();
+  const { register, control } = useFormContext<BaseAppForm>();
+
+  const { errors, isValid } = useFormState<BaseAppForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
@@ -138,6 +140,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
       onSubmit={handleSubmit}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
       data-qa="entity-general-form"
+      onKeyDown={preventEnterDown}
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field
@@ -182,6 +185,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               confirmDialogValues={
                 appDetails?.isShared ? CONFIRM_ICON_FILE_VALUES : undefined
               }
+              maxSelectableFileSize={100 * BYTES_IN_KB}
               warningMessage={iconWarning}
               sourceFilters={sourceFilters}
             />
@@ -226,14 +230,12 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           tooltip={t('Fill in all required fields')}
           hideTooltip={isValid || isEditing}
         >
-          <button
-            className="button button-primary py-2"
+          <DialPrimaryButton
+            label={t('Next')}
             data-qa="save-entity-general-info"
             type="submit"
             disabled={(!isValid && !isEditing) || isAppLoading}
-          >
-            {t('Next')}
-          </button>
+          />
         </Tooltip>
       </div>
     </form>

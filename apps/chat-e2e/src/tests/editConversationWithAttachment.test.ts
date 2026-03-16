@@ -9,14 +9,16 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
-  modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment(true, [
+    'image/*',
+    '*/*',
+  ]);
 });
 
 dialTest(
@@ -99,16 +101,17 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    fileManagerModal,
+    fileManagerModalGrid,
     sendMessage,
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
     sendMessageInputAttachmentsAssertions,
-    attachAllFilesTreeAssertion,
+    fileManagerModalGridAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1764', 'EPMRTC-1901');
+    setTestIds('EPMRTC-1763', 'EPMRTC-1901');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
@@ -124,6 +127,11 @@ dialTest(
     const updatedAttachedFiles = [
       Attachment.sunImageName,
       Attachment.flowerImageName,
+      Attachment.cloudImageName,
+    ];
+    const finalAttachedFiles = [
+      Attachment.flowerImageName,
+      Attachment.cloudImageName,
     ];
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textAccentPrimary,
@@ -150,16 +158,15 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
-          await attachFilesModal.checkAttachedFile(
+          const attachmentCheckbox =
+            await fileManagerModalGrid.gridCheckboxByNameCell(file);
+          await attachmentCheckbox.click();
+          await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
-            FileModalSection.AllFiles,
-          );
-          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-            { name: file },
             CheckboxState.checked,
           );
         }
-        await attachFilesModal.attachFiles();
+        await fileManagerModal.getAttachButton().click();
         for (const file of initAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             file,
@@ -170,50 +177,23 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Attach files" modal again and verify files are checked and marked with blue',
+      'Open "Attach files" modal again and check another file',
       async () => {
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        for (const file of initAttachedFiles) {
-          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-            { name: file },
-            CheckboxState.checked,
+        const updatedAttachmentCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(
+            updatedAttachedFiles[1],
           );
-          await attachAllFilesTreeAssertion.assertEntityColor(
-            { name: file },
-            expectedColor,
-          );
-          await attachAllFilesTreeAssertion.assertEntityCheckboxColor(
-            { name: file },
-            expectedColor,
-          );
-        }
-      },
-    );
-
-    await dialTest.step(
-      'Uncheck attached file, check another and verify updated files are displayed in Send message box',
-      async () => {
-        await attachFilesModal.checkAttachedFile(
-          initAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-          { name: initAttachedFiles[1] },
-          CheckboxState.unchecked,
-        );
-        await attachFilesModal.checkAttachedFile(
+        await updatedAttachmentCheckbox.click();
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
           updatedAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-          { name: updatedAttachedFiles[1] },
           CheckboxState.checked,
         );
-        await attachFilesModal.attachFiles();
+        await fileManagerModal.getAttachButton().click();
 
         for (const file of updatedAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
@@ -246,6 +226,12 @@ dialTest(
           initAttachedFiles[0],
           'hidden',
         );
+        for (const file of finalAttachedFiles) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
+        }
       },
     );
   },

@@ -81,7 +81,7 @@ interface MenuProps {
   isTriggerEnabled?: boolean;
 }
 
-export const MenuComponent = forwardRef<
+const MenuComponent = forwardRef<
   HTMLDivElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(

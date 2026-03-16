@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,6 +8,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -15,6 +16,8 @@ import { Translation } from '@/src/types/translation';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
+
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -45,6 +48,7 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
     onBookmarkClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
+
     const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();
@@ -83,7 +87,10 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
       >
         <div className="flex w-[100px] min-w-[100px] flex-col justify-center gap-1">
           <MarketplaceEntityIndicator entity={entity} />
-          <span className="truncate pl-[6px]">{entity.version}</span>
+          <span className="truncate pl-[6px]">
+            {entity.version ||
+              (isCreatedMarketplaceEntity(entity) ? t(NA_VERSION) : '')}
+          </span>
         </div>
         <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
           {screenState === ScreenState.SM ? (
@@ -91,7 +98,11 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
           ) : (
             <>
               {visibleTopics.map((topic) => (
-                <MarketplaceEntityTopic key={topic} topic={topic} />
+                <MarketplaceEntityTopic
+                  key={topic}
+                  topic={topic}
+                  className="max-w-full truncate"
+                />
               ))}
               {!!hiddenTopics.length && (
                 <Tooltip
@@ -99,7 +110,11 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
                   tooltip={
                     <div className="my-1 flex max-w-48 flex-wrap gap-2">
                       {hiddenTopics.map((topic) => (
-                        <MarketplaceEntityTopic key={topic} topic={topic} />
+                        <MarketplaceEntityTopic
+                          key={topic}
+                          topic={topic}
+                          className="max-w-full truncate"
+                        />
                       ))}
                     </div>
                   }

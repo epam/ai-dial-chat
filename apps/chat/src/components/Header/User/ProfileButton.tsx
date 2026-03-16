@@ -1,6 +1,4 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconX } from '@tabler/icons-react';
-import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -13,7 +11,9 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
-import UserIcon from '@/public/images/icons/user.svg';
+import { UserIcon } from './UserIcon';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -22,7 +22,6 @@ export const ProfileButton = () => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Header);
-  const { data: session } = useSession();
 
   const onClick = useCallback(() => {
     if (!isProfileOpen && isSmallScreen()) {
@@ -36,30 +35,23 @@ export const ProfileButton = () => {
   const iconSize = isOverlay ? 18 : 24;
 
   return (
-    <button
+    <DialButton
       className="flex items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
       data-qa="account-settings"
       aria-label={t('Account settings')}
-    >
-      {isProfileOpen ? (
-        <IconX
-          className="text-secondary"
-          width={iconSize}
-          height={iconSize}
-          id="close-icon"
-        />
-      ) : session?.user?.image ? (
-        <img
-          className="rounded"
-          src={session?.user?.image}
-          width={iconSize}
-          height={iconSize}
-          alt={t('User avatar')}
-        />
-      ) : (
-        <UserIcon width={iconSize} height={iconSize} />
-      )}
-    </button>
+      iconBefore={
+        isProfileOpen ? (
+          <IconX
+            className="text-secondary"
+            width={iconSize}
+            height={iconSize}
+            id="close-icon"
+          />
+        ) : (
+          <UserIcon iconSize={iconSize} />
+        )
+      }
+    />
   );
 };

@@ -26,6 +26,12 @@ const initialState: SettingsState = {
   codeEditorPythonVersions: [],
   providerId: null,
   initialDataStatus: UploadStatus.UNINITIALIZED,
+  attachmentsSettings: {
+    expandedTypes: [],
+    borderlessTypes: [],
+    withoutTitleTypes: [],
+  },
+  stageContentLimit: 40,
 };
 
 export const settingsSlice = createSlice({

@@ -1,4 +1,5 @@
 import { IconBulb } from '@tabler/icons-react';
+import React from 'react';
 
 import { BackendResourceTypeName } from '@/src/types/common';
 

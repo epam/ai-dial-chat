@@ -9,7 +9,8 @@
       "executor": "@nx/next:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/overlay-sandbox"
+        "outputPath": "dist/apps/overlay-sandbox",
+        "webpack": true
       },
       "configurations": {
         "production": {}
@@ -29,7 +30,8 @@
       "executor": "@nx/next:server",
       "options": {
         "buildTarget": "overlay-sandbox:build:development",
-        "dev": true
+        "dev": true,
+        "webpack": true
       }
     },
     "serve:sandbox:production": {
@@ -37,7 +39,8 @@
       "dependsOn": ["overlay-sandbox:build"],
       "options": {
         "dev": false,
-        "buildTarget": "overlay-sandbox:build:production"
+        "buildTarget": "overlay-sandbox:build:production",
+        "webpack": true
       }
     },
     "serve-chat": {
@@ -50,7 +53,8 @@
     "lint": {},
     "lint:fix": {},
     "format": {},
-    "format:fix": {}
+    "format:fix": {},
+    "unused-exports": {}
   },
   "tags": ["example"],
   "implicitDependencies": ["chat"]

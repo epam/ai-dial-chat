@@ -1,4 +1,4 @@
-import { Children, ReactNode, memo } from 'react';
+import { Children, ReactNode, memo, useMemo } from 'react';
 import { Components, Options } from 'react-markdown';
 
 import classnames from 'classnames';
@@ -14,6 +14,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
+  mathMLTags,
   modelCursorSign,
   modelCursorSignWithBackquote,
 } from '@/src/constants/chat';
@@ -74,7 +75,7 @@ const getMDComponents = (
 
       return (match && match[1]) || isPlaintextCodeBlock ? (
         <CodeBlock
-          key={Math.random()}
+          key={`${node?.position?.start.line}:${node?.position?.start.column}`}
           language={(match && match[1]) || ''}
           value={childrenAsString.replace(/\n$/, '')}
           isInner={isInner}
@@ -139,8 +140,8 @@ const getMDComponents = (
       return (
         <details
           className={classnames(
-            'my-4 rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
-            ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_details>summary]:border-secondary [&_details_details>summary]:border-tertiary',
+            'rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
+            ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
           )}
           {...props}
         >
@@ -168,7 +169,7 @@ const getMDComponents = (
 
 const remarkPlugins: Options['remarkPlugins'] = [
   remarkGfm,
-  [remarkMath, { singleDollarTextMath: true }],
+  [remarkMath, { singleDollarTextMath: false }],
 ];
 const rehypePlugins: Options['rehypePlugins'] = [
   rehypeRaw,
@@ -177,6 +178,7 @@ const rehypePlugins: Options['rehypePlugins'] = [
     rehypeSanitize,
     {
       ...defaultSchema,
+      tagNames: [...(defaultSchema.tagNames || []), ...mathMLTags],
       attributes: {
         ...defaultSchema.attributes,
         code: [
@@ -184,6 +186,9 @@ const rehypePlugins: Options['rehypePlugins'] = [
           // Preserve className for syntax highlighting
           ['className'],
         ],
+      },
+      protocols: {
+        src: [...(defaultSchema.protocols?.src ?? []), 'data'],
       },
     },
   ],
@@ -208,6 +213,11 @@ export const ChatMDComponent = memo(
       (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
     );
 
+    const components = useMemo(
+      () => getMDComponents(isShowResponseLoader, isInner),
+      [isShowResponseLoader, isInner],
+    );
+
     const processedContent = preprocessLaTeX(content);
 
     return (
@@ -215,7 +225,7 @@ export const ChatMDComponent = memo(
         className={mdClassNames}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        components={getMDComponents(isShowResponseLoader, isInner)}
+        components={components}
         urlTransform={transformUri}
       >
         {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}

@@ -72,7 +72,6 @@ export const ChatMessage: FC<Props> = memo(
   }) => {
     const { t } = useTranslation(Translation.Chat);
 
-    const [messageCopied, setMessageCopied] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
@@ -132,17 +131,6 @@ export const ChatMessage: FC<Props> = memo(
       [isTemplateModalOpened],
     );
 
-    const handleCopy = useCallback(() => {
-      if (!navigator.clipboard) return;
-
-      navigator.clipboard.writeText(message.content).then(() => {
-        setMessageCopied(true);
-        setTimeout(() => {
-          setMessageCopied(false);
-        }, 2000);
-      });
-    }, [message.content]);
-
     const handleDeleteMessage = useCallback(() => {
       onDelete?.(messageIndex, conversation);
     }, [onDelete, messageIndex, conversation]);
@@ -179,11 +167,9 @@ export const ChatMessage: FC<Props> = memo(
             editDisabled={editDisabled}
             onToggleEditingTemplates={handleToggleEditingTemplates}
             isEditingTemplates={isTemplateModalOpened}
-            messageCopied={messageCopied}
             conversation={conversation}
             allMessages={filteredMessages}
             onLike={handleLike}
-            onCopy={handleCopy}
             message={message}
             onRegenerate={onRegenerate}
             withButtons={
@@ -224,7 +210,7 @@ export const ChatMessage: FC<Props> = memo(
                 message={message}
                 onEdit={onEdit}
                 onClick={(e, messageRef) => {
-                  const rect = messageRef.current!.getBoundingClientRect();
+                  const rect = messageRef.current.getBoundingClientRect();
                   setClientY(e.clientY - rect.y);
                   setClientX(
                     e.clientX -
@@ -246,8 +232,6 @@ export const ChatMessage: FC<Props> = memo(
               realMessageIndex={realMessageIndex}
               message={message}
               isLikesEnabled={isLikesEnabled}
-              onCopy={handleCopy}
-              messageCopied={messageCopied}
               editDisabled={editDisabled}
               onLike={handleLike}
               onDelete={onDelete && handleDelete}

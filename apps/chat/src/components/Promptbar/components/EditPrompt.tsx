@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -28,11 +27,14 @@ import { Translation } from '@/src/types/translation';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/selectors';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -137,15 +139,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const saveDisabled =
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
+  const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
+
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey && !saveDisabled) {
+      if (!saveDisabled && allowEnterClick(e)) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);
       }
     },
-    [handleEdit, prompt, saveDisabled],
+    [allowEnterClick, handleEdit, prompt, saveDisabled],
   );
 
   const handleConfirmClose = useCallback(
@@ -179,14 +183,11 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   return (
     <>
-      <button
-        type="button"
-        role="button"
-        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+      <CloseButtonSmall
+        className="absolute right-2 top-2"
         onClick={handleEditClose}
-      >
-        <IconX height={24} width={24} />
-      </button>
+      />
+
       <div className="flex flex-col gap-4 overflow-y-auto px-3 md:px-6">
         <div>
           <label
@@ -268,15 +269,13 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           tooltip={t('Please fill in all required fields')}
           hideTooltip={!saveDisabled}
         >
-          <button
+          <DialPrimaryButton
             type="submit"
-            className="button button-primary"
             data-qa="save-prompt"
             onClick={(e) => handleSubmit(e, prompt)}
             disabled={saveDisabled}
-          >
-            {t('Save')}
-          </button>
+            label={t('Save')}
+          />
         </Tooltip>
       </div>
       {confirmClose && (

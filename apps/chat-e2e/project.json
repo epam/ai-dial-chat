@@ -65,7 +65,8 @@
     },
     "lint": {},
     "format": {},
-    "format:fix": {}
+    "format:fix": {},
+    "unused-exports": {}
   },
   "tags": ["e2e"],
   "implicitDependencies": ["chat"]

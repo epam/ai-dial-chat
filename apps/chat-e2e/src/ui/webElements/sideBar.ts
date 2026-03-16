@@ -1,9 +1,15 @@
-import { ErrorLabelSelectors, SideBarSelectors } from '../selectors';
+import {
+  ErrorLabelSelectors,
+  MenuSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
+import { MenuOptions } from '@/src/testData';
 import { Styles, removeAlpha } from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
+import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
 
@@ -14,6 +20,7 @@ export class SideBar extends BaseElement {
 
   private search!: Search;
   private chatLoader!: ChatLoader;
+  private bottomDropdownMenu!: DropdownMenu;
 
   getSearch(): Search {
     if (!this.search) {
@@ -65,6 +72,17 @@ export class SideBar extends BaseElement {
     SideBarSelectors.newEntity,
   );
 
+  public bottomDotsMenuIcon = this.bottomPanel.getChildElementBySelector(
+    MenuSelectors.dotsMenu,
+  );
+
+  getBottomDropdownMenu(): DropdownMenu {
+    if (!this.bottomDropdownMenu) {
+      this.bottomDropdownMenu = new DropdownMenu(this.page);
+    }
+    return this.bottomDropdownMenu;
+  }
+
   public async createNewEntity() {
     await this.newEntityButton.click();
   }
@@ -74,7 +92,13 @@ export class SideBar extends BaseElement {
   }
 
   public async deleteAllEntities() {
-    await this.deleteEntitiesButton.click();
+    const isButtonVisible = await this.deleteEntitiesButton.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.delete);
+    } else {
+      await this.deleteEntitiesButton.click();
+    }
   }
 
   public async getDraggableAreaColor() {

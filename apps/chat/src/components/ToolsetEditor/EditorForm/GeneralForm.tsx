@@ -1,11 +1,12 @@
-import { FormEvent, useCallback, useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import React, { FormEvent, useCallback, useMemo } from 'react';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { preventEnterDown } from '@/src/utils/app/forms';
 
 import { ScreenState } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -17,6 +18,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { BYTES_IN_KB } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
@@ -28,6 +30,8 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
@@ -55,11 +59,8 @@ export const GeneralForm = ({
   const isMobileView = screenState === ScreenState.SM;
   const isEditing = !!toolset;
 
-  const {
-    register,
-    formState: { errors, isValid },
-    control,
-  } = useFormContext<ToolsetEditorForm>();
+  const { register, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
@@ -78,6 +79,7 @@ export const GeneralForm = ({
       onSubmit={onNextClick}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
       data-qa="entity-general-form"
+      onKeyDown={preventEnterDown}
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field
@@ -118,6 +120,7 @@ export const GeneralForm = ({
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
               disabled={isToolsetPublic}
+              maxSelectableFileSize={100 * BYTES_IN_KB}
               tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
@@ -161,14 +164,12 @@ export const GeneralForm = ({
           tooltip={t('Fill in all required fields')}
           hideTooltip={isValid || isEditing}
         >
-          <button
-            className="button button-primary py-2"
+          <DialPrimaryButton
             data-qa="save-entity-general-info"
             type="submit"
             disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
-          >
-            {t('Next')}
-          </button>
+            label={t('Next')}
+          />
         </Tooltip>
       </div>
     </form>

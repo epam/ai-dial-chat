@@ -87,4 +87,18 @@ export class FileUtil {
     }
     return jsonData;
   }
+
+  public static getFilenameWithoutExtension(filename: string) {
+    const separator = '.';
+    return filename.includes(separator)
+      ? filename.substring(0, filename.lastIndexOf(separator))
+      : filename;
+  }
+
+  public static getFileExtension(filename: string) {
+    const separator = '.';
+    return filename.includes(separator)
+      ? filename.substring(filename.lastIndexOf(separator))
+      : '';
+  }
 }

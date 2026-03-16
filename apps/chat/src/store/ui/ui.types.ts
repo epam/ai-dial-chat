@@ -1,4 +1,5 @@
 import { FeatureType } from '@/src/types/common';
+import { EnterType } from '@/src/types/settings';
 import { Theme, ThemesImages } from '@/src/types/themes';
 
 export interface UIState {
@@ -28,4 +29,5 @@ export interface UIState {
     [FeatureType.Prompt]: number;
   };
   isEditorLoader?: boolean;
+  enterType: EnterType;
 }

@@ -1,6 +1,6 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconBulb, IconCheck } from '@tabler/icons-react';
-import {
+import React, {
   DragEvent,
   MouseEventHandler,
   memo,
