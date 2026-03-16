@@ -378,7 +378,6 @@ export const ReplaceConfirmationModalSelectors = {
 export const UploadProgressDialogSelectors = {
   title: 'div:has-text("Uploading items")',
   itemName: '#name',
-  fileTypeIcon: '[aria-label="File type icon"]',
   uploadingIndicator: '[data-qa="uploading-indicator"]',
   uploadingItemsCount: '[data-qa="uploading-items-count"]',
 };

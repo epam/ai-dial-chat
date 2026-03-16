@@ -41,6 +41,11 @@ export class FoldersTree extends BaseElement {
     return currentLocator;
   };
 
+  public folderByPathCaret = (...path: string[]) =>
+    this.folderByPath(...path)
+      .locator(IconSelectors.caretIcon)
+      .nth(0);
+
   public folderNameByPath = (...path: string[]): Locator => {
     return this.folderByPath(...path).locator(FolderTreeSelectors.folderName);
   };
@@ -50,9 +55,7 @@ export class FoldersTree extends BaseElement {
   };
 
   public async expandFolder(
-    options: { isFilesListingTriggered: boolean } = {
-      isFilesListingTriggered: true,
-    },
+    options: { isFilesListingTriggered: boolean },
     ...path: string[]
   ) {
     if (options.isFilesListingTriggered) {
@@ -63,24 +66,20 @@ export class FoldersTree extends BaseElement {
             .endsWith(API.folderFilesListingHost(path[path.length - 1])) &&
           resp.ok(),
       );
-      await this.folderByPath(...path)
-        .locator(IconSelectors.caretIcon)
-        .click();
+      await this.folderByPathCaret(...path).click();
       await respPromise;
     } else {
-      await this.folderByPath(...path)
-        .locator(IconSelectors.caretIcon)
-        .click();
+      await this.folderByPathCaret(...path).click();
     }
   }
 
-  public async expandFolders(...path: string[]) {
+  public async expandFolders(
+    options: { isFilesListingTriggered: boolean },
+    ...path: string[]
+  ) {
     const folderToExpandPath = [path[0]];
     for (let i = 0; i < path.length; i++) {
-      await this.expandFolder(
-        { isFilesListingTriggered: true },
-        ...folderToExpandPath,
-      );
+      await this.expandFolder(options, ...folderToExpandPath);
       folderToExpandPath.push(path[i + 1]);
     }
   }

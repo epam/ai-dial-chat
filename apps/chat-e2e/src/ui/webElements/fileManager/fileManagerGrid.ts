@@ -1,6 +1,10 @@
 import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
-import { GridSelectors, IconSelectors } from '@/src/ui/selectors';
+import {
+  EntityIconSelectors,
+  GridSelectors,
+  IconSelectors,
+} from '@/src/ui/selectors';
 import { Checkbox, Dropdown, Grid, Input } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -50,6 +54,17 @@ export class FileManagerGrid extends Grid {
         GridSelectors.gridCell(FileManagerColumnKey.Select),
       ),
     );
+  }
+
+  public async gridFileIconByNameCell(name: string) {
+    await this.goTop();
+    const gridRowByNameCellLocator = await this.goToGridRowByNameCell(name);
+    return gridRowByNameCellLocator.locator(EntityIconSelectors.fileIcon);
+  }
+
+  public async gridSharedFileIconByNameCell(name: string) {
+    const fileIcon = await this.gridFileIconByNameCell(name);
+    return fileIcon.locator(IconSelectors.sharedEntityIcon);
   }
 
   public gridNameCell = (name: string) =>
@@ -154,7 +169,6 @@ export class FileManagerGrid extends Grid {
       .getElementLocator()
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
-    // Hours wasted here: 5
     // -- wait for ag grid to finish rendering and animation, etc
     await this.page.waitForTimeout(500);
     try {
