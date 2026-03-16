@@ -464,8 +464,13 @@ export const isExternalAppEditor = checkAppEditorType(
   DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
 );
 
-export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
+export const getEditorSchemaType = (
+  type: string,
+): AppsEditorSchemaTypes | string => {
   if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
+
+  if (type === ApplicationType.CUSTOM_APP)
+    return AppsEditorSchemaTypes.CustomApp;
 
   if (isQuickAppEditor(type)) return AppsEditorSchemaTypes.QuickApp;
 
@@ -473,7 +478,7 @@ export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
 
   if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
 
-  return AppsEditorSchemaTypes.CustomApp;
+  return type;
 };
 
 export const getEntityDisplayName = (

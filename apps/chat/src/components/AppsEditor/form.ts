@@ -496,7 +496,7 @@ const getSettingsFormData = ({
   runtime,
 }: {
   app?: CustomApplicationModel;
-  type: AppsEditorSchemaTypes;
+  type: string;
   runtime?: string;
 }) => {
   switch (type) {
@@ -545,8 +545,9 @@ export const getValidationSchema = (schemaType: string) => {
     case AppsEditorSchemaTypes.QuickApp2:
       return QuickApp2Schema.and(MarketplaceEntityBaseSchema);
     case AppsEditorSchemaTypes.CustomApp:
-    default:
       return CustomAppSchema.and(MarketplaceEntityBaseSchema);
+    default:
+      return MarketplaceEntityBaseSchema;
   }
 };
 
