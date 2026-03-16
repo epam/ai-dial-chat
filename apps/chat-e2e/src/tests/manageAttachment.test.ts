@@ -109,8 +109,10 @@ dialTest(
           isHttpMethodTriggered: false,
         });
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'GET',
-          triggeredHttpHost: API.filesListingHost(),
+          expectedRequests: new Map([
+            [API.deleteFileHost(), 'POST'],
+            [API.filesListingHost(), 'GET'],
+          ]),
         });
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,

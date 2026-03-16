@@ -281,10 +281,14 @@ export class BaseAssertion {
   public async assertElementColor(
     element: BaseElement | Locator,
     expectedColor: string,
+    expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     await expect
-      .soft(elementLocator, ExpectedMessages.entityBackgroundColorIsValid)
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.entityBackgroundColorIsValid,
+      )
       .toHaveCSS(Styles.color, expectedColor);
   }
 

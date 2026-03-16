@@ -830,7 +830,7 @@ dialSharedWithMeTest(
         GeneratorUtil.randomString(10),
       );
       await additionalShareUserFileManagerGridAssertion.assertElementState(
-        additionalShareUserFileManager,
+        additionalShareUserFileManager.getNoDataContent(),
         'visible',
       );
 
