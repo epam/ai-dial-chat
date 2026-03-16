@@ -860,8 +860,8 @@ export const useFileManager = ({
       const schema = getEntityNameSchema({
         name:
           item.nodeType === DialFileNodeType.FOLDER
-            ? t('folder name')
-            : t('file name'),
+            ? t('Folder name')
+            : t('File name'),
         checkDotsInTheEnd: true,
       });
 
