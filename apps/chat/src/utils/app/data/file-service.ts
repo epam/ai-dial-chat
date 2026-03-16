@@ -24,7 +24,6 @@ import { FALLBACK_CONTENT_TYPE } from '@/src/constants/file';
 
 import { constructPath, getMimeTypeByFileName } from '../file';
 import { getFileRootId } from '../id';
-import { BucketService } from './bucket-service';
 
 import {
   DialCopiedItem,
