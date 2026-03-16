@@ -204,15 +204,13 @@ function ShareModalView() {
     >
       <div className="px-3 py-4 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
-          <Tooltip tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}>
-            <div
-              className="flex w-full items-center gap-2 pr-6"
-              data-qa="modal-entity-name"
-            >
-              <p>{t('Share')}:</p>
-              <DialEllipsisTooltip text={shareResourceName?.trim()} />
-            </div>
-          </Tooltip>
+          <div
+            className="flex w-full items-center gap-2 pr-6"
+            data-qa="modal-entity-name"
+          >
+            <p>{t('Share')}:</p>
+            <DialEllipsisTooltip text={shareResourceName?.trim()} />
+          </div>
         </h4>
 
         <div className="flex flex-col justify-between gap-2">
