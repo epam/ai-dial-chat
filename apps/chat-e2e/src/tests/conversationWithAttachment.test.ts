@@ -16,8 +16,16 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 let modelsWithAttachments: DialAIEntityModel[];
+let randomModelWithImageAttachment: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+    modelsWithAttachments.filter(
+      (m) =>
+        m.inputAttachmentTypes?.length == 1 &&
+        m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+    ),
+  );
 });
 
 dialTest(
@@ -161,15 +169,12 @@ dialTest(
     chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1640');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     const request = 'Describe the picture';
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
       await localStorageManager.setRecentModelsIdsAndUseLastModel(
-        randomModelWithAttachment,
+        randomModelWithImageAttachment,
       );
       await localStorageManager.setShowSideBarPanels();
     });
@@ -224,15 +229,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -308,15 +310,12 @@ dialTest(
       'EPMRTC-1898',
       'EPMRTC-1899',
     );
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     const request = 'Describe the picture';
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
       await localStorageManager.setRecentModelsIdsAndUseLastModel(
-        randomModelWithAttachment,
+        randomModelWithImageAttachment,
       );
       await localStorageManager.setShowSideBarPanels();
     });
@@ -537,13 +536,6 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3118', 'EPMRTC-3283');
-    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments.filter(
-        (m) =>
-          m.inputAttachmentTypes?.length == 1 &&
-          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
-      ),
-    );
     let conversation: Conversation;
 
     await dialTest.step('Upload txt file to app', async () => {
@@ -583,7 +575,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is not available',
+      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is available',
       async () => {
         const attachmentLocator =
           await fileManagerModalGrid.goToGridRowByNameCell(Attachment.textName);
@@ -592,10 +584,8 @@ dialTest(
           fileManagerModalGrid.gridNameCellValue(Attachment.textName),
           Cursors.notAllowed,
         );
-        await fileManagerModalGridAssertion.assertElementActionabilityState(
-          await fileManagerModalGrid.gridCheckboxByNameCell(
-            Attachment.textName,
-          ),
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameActionabilityState(
+          Attachment.textName,
           'disabled',
         );
         // hover is cancelled here by the inner call of goTop()
@@ -605,10 +595,10 @@ dialTest(
         await attachmentLocator.hover();
         await fileManagerModalGridAssertion.assertElementState(
           dotsMenu,
-          'hidden',
+          'visible',
         );
         await fileManagerModalGridAssertion.assertElementActionabilityState(
-          fileManagerModalGrid.gridHeaderCheckbox,
+          fileManagerModalGrid.gridHeaderCheckbox.checkboxInput,
           'disabled',
         );
       },
@@ -644,7 +634,9 @@ dialTest(
         modelsWithAttachments.filter(
           (m) =>
             m.features?.folderAttachments == false &&
-            m.features.urlAttachments == false,
+            m.features.urlAttachments == false &&
+            m.inputAttachmentTypes?.length == 1 &&
+            m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
         ),
       );
     const folderName = GeneratorUtil.randomString(7);
@@ -710,13 +702,13 @@ dialTest(
         await folderRowLocator.hover();
         const folderCheckboxElement =
           await fileManagerModalGrid.gridCheckboxByNameCell(folderName);
-        await fileManagerModalGridAssertion.assertCheckboxState(
-          folderCheckboxElement,
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          folderName,
           CheckboxState.unchecked,
         );
         await folderCheckboxElement.click();
-        await fileManagerModalGridAssertion.assertCheckboxState(
-          folderCheckboxElement,
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          folderName,
           CheckboxState.checked,
         );
         await baseAssertion.assertElementActionabilityState(

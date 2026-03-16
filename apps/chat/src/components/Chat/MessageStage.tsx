@@ -27,7 +27,7 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import CircleCheck from '@/public/images/icons/circle-check.svg';
 import Download from '@/public/images/icons/download.svg';
 import { Stage } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface StageTitleProps {
   isOpened: boolean;
@@ -91,12 +91,12 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
   return (
     <div className="flex justify-between gap-1 ps-1">
       {t(`Content is too large to display (exceeds ${limit} KB).`)}
-      <div className="flex items-center gap-3 text-secondary">
-        <DialButton
-          className="[&:not(:disabled)]:hover:text-accent-primary"
+      <div className="flex items-center gap-2 text-secondary">
+        <DialGhostIconButton
           onClick={copyToClipboard}
+          size={ElementSize.Small}
           disabled={isCopied}
-          iconBefore={
+          icon={
             isCopied ? (
               <Tooltip tooltip={t('Copied!')}>
                 <IconCheck size={18} />
@@ -109,10 +109,10 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
           }
         />
         <Tooltip isTriggerClickable tooltip={t('Download')}>
-          <DialButton
-            className="bg-none hover:text-accent-primary"
+          <DialGhostIconButton
+            size={ElementSize.Small}
             onClick={downloadAsFile}
-            iconBefore={<Download width={18} height={18} />}
+            icon={<Download width={18} height={18} />}
           />
         </Tooltip>
       </div>

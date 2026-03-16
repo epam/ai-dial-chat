@@ -57,13 +57,11 @@ export const GridSelectors = {
   loadingIndicator: '.ag-overlay-loading-center',
   gridViewPort: '.ag-body-viewport',
   gridBody: '.ag-body',
-  gridCheckboxInput: 'input.ag-checkbox-input',
-  gridCheckboxWrapper: '.ag-checkbox-input-wrapper',
 };
 
 export const CheckboxSelectors = {
-  checkboxContainer: '[aria-description="checkbox-container"]',
-  checkbox: '[role="checkbox"]',
+  checkboxContainer: '.ag-checkbox-input-wrapper',
+  checkbox: `${Tags.input}[type="checkbox"]`,
 };
 
 export const PopupSelectors = {
@@ -84,4 +82,8 @@ export const InputSelectors = {
 
 export const TooltipSelectors = {
   tooltipContainer: '[role="tooltip"]',
+};
+
+export const EntityIconSelectors = {
+  fileIcon: '[aria-label="File type icon"]',
 };

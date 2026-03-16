@@ -136,21 +136,27 @@ dialTest(
         await baseAssertion.assertElementTextIsTruncated(
           shareModal.leftEntityName,
         );
+        const isNameVisuallyTruncated =
+          await shareModal.leftEntityName.isElementWidthTruncated();
         await shareModal.entityName.hoverOver();
-        await baseAssertion.assertElementText(
-          tooltip,
-          ExpectedConstants.sharedEntityName(conversation.name),
-          ExpectedMessages.tooltipContentIsValid,
-        );
+        if (isNameVisuallyTruncated) {
+          await baseAssertion.assertElementText(
+            tooltip,
+            ExpectedConstants.sharedEntityName(conversation.name, true),
+            ExpectedMessages.tooltipContentIsValid,
+          );
 
-        const isTooltipChatNameTruncated =
-          await tooltip.isElementWidthTruncated();
-        expect
-          .soft(
-            isTooltipChatNameTruncated,
-            ExpectedMessages.entityNameIsFullyVisible,
-          )
-          .toBeFalsy();
+          const isTooltipChatNameTruncated =
+            await tooltip.isElementWidthTruncated();
+          expect
+            .soft(
+              isTooltipChatNameTruncated,
+              ExpectedMessages.entityNameIsFullyVisible,
+            )
+            .toBeFalsy();
+        } else {
+          await baseAssertion.assertElementState(tooltip, 'hidden');
+        }
       },
     );
 
