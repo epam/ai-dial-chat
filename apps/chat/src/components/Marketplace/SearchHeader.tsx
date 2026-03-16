@@ -50,7 +50,8 @@ export const SearchHeader = () => {
   return (
     <div className="flex w-full grow items-center gap-2 sm:justify-end md:w-auto">
       <DialSearch
-        containerClassName="w-full sm:w-auto lg:max-w-[500px]"
+        wrapperClassName="lg:max-w-[500px]"
+        containerClassName="w-full lg:max-w-[500px]"
         placeholder={t('Search')}
         value={searchTerm}
         onChange={onSearchChange}

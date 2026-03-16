@@ -454,10 +454,10 @@ const AgentAndToolsetModalView = ({
         <div ref={headerRef} className="mb-2">
           <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4">
             <DialSearch
+              containerClassName="flex-1"
               data-qa="search-agents"
               autoFocus={isOverlay || !isSmallScreenOrTouchable()}
               placeholder={t('Search')}
-              className="input-form peer"
               value={searchTerm}
               onChange={handleSetSearchTerm}
             />

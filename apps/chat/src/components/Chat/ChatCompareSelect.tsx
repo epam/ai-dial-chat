@@ -175,7 +175,6 @@ export const ChatCompareSelect = ({
               <DialSearch
                 data-qa="search-compare-conversation"
                 placeholder={t('Search conversations')}
-                className="input-form peer"
                 value={searchValue}
                 onChange={setSearchValue}
               />
