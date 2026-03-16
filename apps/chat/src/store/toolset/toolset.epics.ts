@@ -749,39 +749,34 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
 
             return concat(
               autoUpdateAction$,
-              defer(
-                () =>
-                  from(signInToolset(url.href)).pipe(
-                    switchMap((isPopup) =>
-                      !isPopup
-                        ? EMPTY
-                        : refreshToolset$(
-                            payload.toolset.id,
-                            state$.value,
-                          ).pipe(
-                            mergeMap((actions) =>
-                              concat(
-                                of(actions),
-                                of(
-                                  UIActions.showSuccessToast(
-                                    translate(
-                                      getLoginSuccessMessage(
-                                        isAdmin && isPublic,
-                                        payload.authLevel,
-                                      ),
-                                      {
-                                        name: payload.toolset.name,
-                                        version: payload.toolset.version,
-                                      },
+              defer(() =>
+                from(signInToolset(url.href)).pipe(
+                  switchMap((isPopup) =>
+                    !isPopup
+                      ? EMPTY
+                      : refreshToolset$(payload.toolset.id, state$.value).pipe(
+                          mergeMap((actions) =>
+                            concat(
+                              of(actions),
+                              of(
+                                UIActions.showSuccessToast(
+                                  translate(
+                                    getLoginSuccessMessage(
+                                      isAdmin && isPublic,
+                                      payload.authLevel,
                                     ),
+                                    {
+                                      name: payload.toolset.name,
+                                      version: payload.toolset.version,
+                                    },
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                    ),
+                        ),
                   ),
-                catchError(() => of(ToolsetActions.logInToolsetFail())),
+                ),
               ),
             );
           }
@@ -913,6 +908,7 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
                     ),
                   ),
                 ),
+                of(ToolsetActions.logOutToolsetSuccess()),
               ),
             ),
           );

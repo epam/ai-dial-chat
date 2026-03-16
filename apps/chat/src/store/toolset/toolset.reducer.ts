@@ -240,6 +240,9 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
     },
+    logOutToolsetSuccess: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
     logOutToolsetFail: (state) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
