@@ -1,5 +1,6 @@
 import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 
+import { ApiKeys } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
@@ -237,7 +238,7 @@ export const buildFileTree = (
     parentPath: null,
     label: pathRootAlias || 'Files',
     permissions:
-      effectiveRootId === `files/${BucketService.getBucket()}`
+      effectiveRootId === `${ApiKeys.Files}/${BucketService.getBucket()}`
         ? [DialFilePermission.READ, DialFilePermission.WRITE]
         : [],
   };
