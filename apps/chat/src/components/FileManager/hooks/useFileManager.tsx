@@ -587,6 +587,7 @@ export const useFileManager = ({
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
       selectionMode: GridSelectionMode.MULTIPLE,
+      allowDisabledContextMenu: true,
     }),
     [gridActionLabels, visibleColumns],
   );
