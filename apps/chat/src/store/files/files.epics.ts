@@ -243,12 +243,13 @@ const getFilesEpic: AppEpic = (action$) =>
       group$.pipe(
         switchMap(({ payload }) =>
           FileService.getFiles(payload.id).pipe(
-            map((files) =>
-              FilesActions.getFilesSuccess({
+            map((files) => {
+              console.log(files);
+              return FilesActions.getFilesSuccess({
                 files,
                 foldersSet: new Set([payload.id ?? getFileRootId()]),
-              }),
-            ),
+              });
+            }),
             catchError(() => of(FilesActions.getFilesFail())),
           ),
         ),

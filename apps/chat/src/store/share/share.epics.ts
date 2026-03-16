@@ -969,27 +969,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const files = payload.resources.entities as DialFile[];
-          const folders = uniqBy(
-            [
-              ...payload.resources.folders,
-              ...getEntitiesFoldersFromEntities(files, FeatureType.File).map(
-                (folder) => ({
-                  ...folder,
-                  status: UploadStatus.LOADED,
-                }),
-              ),
-            ],
-            'id',
-          );
-          const sharedWithMeFileIds = files.map((res) => res.id);
-
-          const sharedWithMeFolderIds = folders.map((res) => res.id);
-
-          actions.push(
-            FilesActions.setSharedWithMeFilesAndFoldersIds({
-              ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
-            }),
-          );
+          const folders = payload.resources.folders;
 
           const selectedCodeEditorFileId =
             CodeEditorSelectors.selectSelectedFile(state$.value);

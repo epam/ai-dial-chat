@@ -4,8 +4,13 @@ import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
 import { BucketService } from './data/bucket-service';
+import { constructPath } from './shared-utils';
 
-import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  FolderInterface,
+  SharePermission,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
   DialFilePermission,
@@ -80,6 +85,7 @@ const PermissionMap: Record<SharePermission, DialFilePermission> = {
 
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
   const fullPath = file.id;
+  const folderId = file.sharedWithMe ? '' : file.folderId;
 
   const parentPath = file.folderId || null;
 
@@ -87,7 +93,7 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     id: file.id,
     name: file.name,
     path: fullPath,
-    folderId: file.folderId || '',
+    folderId,
     nodeType: DialFileNodeType.ITEM,
     resourceType: DialFileResourceType.FILE,
     contentLength: file.contentLength,
