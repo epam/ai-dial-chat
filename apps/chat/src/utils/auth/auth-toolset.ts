@@ -22,7 +22,9 @@ export const signInToolset = async (
   );
 
   if (!popup) {
-    throw new Error('Unable to open popup');
+    console.error('Unable to open popup');
+    window.location.assign(url.toString());
+    return Promise.resolve(false);
   }
 
   return await new Promise<boolean>((resolve, reject) => {
