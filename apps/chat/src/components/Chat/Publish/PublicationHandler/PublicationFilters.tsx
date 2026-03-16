@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -18,10 +18,13 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { RuleListItem } from '../RuleListItem';
 import { PublicationRequestFormData, PublishRequestFieldsNames } from '../form';
+
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
@@ -47,7 +50,7 @@ const showNoRulesLabel = (
   return isNoRulesToDisplay;
 };
 
-export function PublicationFilters({
+function PublicationFiltersView({
   filteredRuleEntries,
   newRules,
   publication,
@@ -63,9 +66,14 @@ export function PublicationFilters({
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
-  const { setValue, watch } = useFormContext<PublicationRequestFormData>();
+  const { setValue } = useFormContext<PublicationRequestFormData>();
 
-  const rulesOnEdit = watch(PublishRequestFieldsNames.RULES);
+  const rulesOnEdit = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.RULES
+  >({
+    name: PublishRequestFieldsNames.RULES,
+  });
 
   const filters = useMemo(
     () => rulesOnEdit?.map(mapRuleToFilter) ?? [],
@@ -126,7 +134,9 @@ export function PublicationFilters({
         <>
           {publicationModel && (
             <p className="mb-1 text-xs text-secondary" data-qa="published-path">
-              {editedPublishToUrl.split('/').pop()}
+              <DialEllipsisTooltip
+                text={editedPublishToUrl.split('/').pop() || ''}
+              />
             </p>
           )}
           <RulesInput
@@ -140,3 +150,5 @@ export function PublicationFilters({
     </>
   );
 }
+
+export const PublicationFilters = withErrorMessage(PublicationFiltersView);

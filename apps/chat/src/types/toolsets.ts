@@ -80,6 +80,7 @@ export interface ToolsetRedirectState {
   toolsetId: string;
   credentialsLevel?: ToolsetCredentialsLevel;
   callbackUrl?: string;
+  isAdmin?: boolean;
 }
 
 export type ToolsetsMap = Partial<Record<string, ToolsetModel>>;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -22,14 +22,15 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 export const useToolsetEditorValidation = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+
   const {
-    [ToolsetEditorQuery.Id]: toolsetRef = '',
+    [ToolsetEditorQuery.Id]: toolsetReference = '',
     [ToolsetEditorQuery.PublicationUrl]: publicationUrlQuery,
   } = router.query;
   const publicationUrl = publicationUrlQuery
     ? decodeURIComponent(publicationUrlQuery.toString())
     : undefined;
-  const isEditing = !!toolsetRef.toString();
+  const isEditing = !!toolsetReference.toString();
 
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const areToolsetsLoaded = useAppSelector(
@@ -59,51 +60,63 @@ export const useToolsetEditorValidation = () => {
     return undefined;
   }, [publicationUrl, publication]);
 
+  const listingToolset = toolsetsMap[toolsetReference.toString()];
+  const listingToolsetId = listingToolset?.id;
+  const hasWriteRights = listingToolset && canWriteSharedWithMe(listingToolset);
+  const shouldUploadPublication =
+    publicationUrl !== publication?.url || !publication?.resources;
+
+  const redirectToNotFound = useCallback(() => {
+    void router.push(Routes.NotFound);
+  }, [router]);
+
   useEffect(() => {
-    if (!isEditing || !areToolsetsLoaded) {
+    if (!isEditing || !areToolsetsLoaded || isToolsetDetailsLoading) {
       return;
     }
 
-    if (
-      publicationUrl &&
-      (publicationUrl !== publication?.url || !publication?.resources)
-    ) {
+    if (publicationUrl && shouldUploadPublication) {
       dispatch(PublicationActions.uploadPublication({ url: publicationUrl }));
       return;
     }
 
-    const toolset = toolsetsMap[toolsetRef.toString()];
-    const toolsetId = toolset?.id;
-    const isToolsetPublic = toolsetId && isEntityIdPublic({ id: toolsetId });
+    const isToolsetPublic =
+      listingToolsetId && isEntityIdPublic({ id: listingToolsetId });
 
     if (isAdmin && publicationUrl) {
-      if (!toolset && !isToolsetDetailsLoading && reviewToolsetId) {
+      if (!listingToolsetId && reviewToolsetId) {
         dispatch(ToolsetActions.getToolsetDetails({ id: reviewToolsetId }));
       }
       return;
     }
 
-    if (!toolsetId || (!isAdmin && isToolsetPublic)) {
-      void router.push(Routes.NotFound);
+    if (!listingToolsetId || (!isAdmin && isToolsetPublic)) {
+      console.error(
+        'NotFound',
+        `toolset is not found or is not public. toolsetId: ${listingToolsetId}, isToolsetPublic: ${isToolsetPublic}`,
+      );
+      redirectToNotFound();
       return;
     }
 
-    if (
-      (!toolsetDetails || !toolsetDetails?.endpoint) &&
-      !isToolsetLoadingFailed
-    ) {
-      dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
+    if (!toolsetDetails && !isToolsetLoadingFailed) {
+      dispatch(ToolsetActions.getToolsetDetails({ id: listingToolsetId }));
     }
 
     if (
-      toolset &&
+      listingToolsetId &&
       !isToolsetPublic &&
-      !isMyEntity(toolset) &&
-      !canWriteSharedWithMe(toolset)
+      !isMyEntity({ id: listingToolsetId }) &&
+      !hasWriteRights
     ) {
-      void router.push(Routes.NotFound);
+      console.error(
+        'NotFound',
+        `toolset is not public or not my toolset or not shared with me. toolset: ${listingToolsetId}, isToolsetPublic: ${isToolsetPublic}, isMyEntity: ${isMyEntity({ id: listingToolsetId })}, canWriteSharedWithMe: ${hasWriteRights}`,
+      );
+      redirectToNotFound();
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     areToolsetsLoaded,
     dispatch,
@@ -111,13 +124,11 @@ export const useToolsetEditorValidation = () => {
     isEditing,
     isToolsetDetailsLoading,
     isToolsetLoadingFailed,
-    publication?.resources,
-    publication?.url,
+    shouldUploadPublication,
     publicationUrl,
     reviewToolsetId,
-    router,
+    redirectToNotFound,
     toolsetDetails,
-    toolsetRef,
-    toolsetsMap,
+    toolsetReference,
   ]);
 };

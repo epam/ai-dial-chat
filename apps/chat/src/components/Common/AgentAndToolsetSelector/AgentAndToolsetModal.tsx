@@ -64,6 +64,9 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import sortBy from 'lodash-es/sortBy';
+
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
   allVersions?: MarketplaceEntity[];
 };
@@ -260,8 +263,10 @@ const AgentAndToolsetModalView = ({
     (tab: MarketplaceTabs = MarketplaceTabs.HOME) => {
       setScopeTab(tab);
       setShouldResetSliderState(true);
+      setActiveSlide(0);
+      setScrollToItemId(null);
     },
-    [],
+    [setScrollToItemId],
   );
 
   const handleSetSearchTerm = (searchTerm: string) => {
@@ -341,10 +346,15 @@ const AgentAndToolsetModalView = ({
       return true;
     });
 
-    const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
+    const allGroupedItemsUnsorted = groupMarketplaceEntityAndSaveOrder(
+      filteredItems,
+    )
       .map(getSelectedItemFromGroup)
-      .filter((item): item is DisplayedMarketplaceEntity => !!item)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .filter((item): item is DisplayedMarketplaceEntity => !!item);
+
+    const allGroupedItems = sortBy(allGroupedItemsUnsorted, [
+      (item) => item.name.toLowerCase(),
+    ]);
 
     if (!isMyWorkspace) {
       return allGroupedItems;
@@ -422,6 +432,12 @@ const AgentAndToolsetModalView = ({
     [isMyWorkspace, searchTerm, shouldResetSliderState],
   );
 
+  useEffect(() => {
+    if (shouldResetSliderState) {
+      setShouldResetSliderState(false);
+    }
+  }, [shouldResetSliderState]);
+
   const handleConfirm = useCallback(() => {
     onConfirm(selectedIds);
   }, [selectedIds, onConfirm]);
@@ -433,7 +449,7 @@ const AgentAndToolsetModalView = ({
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col px-5 pb-2">
         <div ref={headerRef} className="mb-2">
-          <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse">
+          <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4">
             <div className="relative flex grow">
               <IconSearch
                 className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -448,20 +464,18 @@ const AgentAndToolsetModalView = ({
                 autoFocus={isOverlay || !isSmallScreenOrTouchable()}
               />
             </div>
-            <div className="flex gap-2">
-              <div className="flex gap-2">
-                {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
-                  (tab) => (
-                    <ScopeTabButton
-                      key={tab}
-                      tab={tab}
-                      onSetTab={handleSetScopeTab}
-                      currentTab={scopeTab}
-                      textMap={ChangeMarketplaceTabs}
-                    />
-                  ),
-                )}
-              </div>
+            <div className="flex gap-2 sm:gap-3">
+              {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
+                (tab) => (
+                  <ScopeTabButton
+                    key={tab}
+                    tab={tab}
+                    onSetTab={handleSetScopeTab}
+                    currentTab={scopeTab}
+                    textMap={ChangeMarketplaceTabs}
+                  />
+                ),
+              )}
             </div>
           </div>
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
@@ -517,12 +531,8 @@ const AgentAndToolsetModalView = ({
         ref={footerRef}
         className="absolute bottom-0 flex w-full justify-end gap-3 border-t border-tertiary px-6 py-[14px]"
       >
-        <button className="button button-secondary" onClick={onClose}>
-          {t('Cancel')}
-        </button>
-        <button className="button button-primary" onClick={handleConfirm}>
-          {t('Confirm')}
-        </button>
+        <DialNeutralButton label={t('Cancel')} onClick={onClose} />
+        <DialPrimaryButton label={t('Confirm')} onClick={handleConfirm} />
       </div>
     </>
   );

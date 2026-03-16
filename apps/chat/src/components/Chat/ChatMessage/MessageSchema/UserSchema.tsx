@@ -26,6 +26,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 const emptyHandler = () => undefined;
 
@@ -97,7 +98,7 @@ const UserSchemaView = memo(function UserSchemaView({
       />
     );
 
-  return schemaPropertiesWithUserResponse ? (
+  return schemaPropertiesWithUserResponse.length ? (
     <div className="flex flex-col gap-6">
       {schemaPropertiesWithUserResponse.map((row) => (
         <div key={row.property}>
@@ -110,16 +111,15 @@ const UserSchemaView = memo(function UserSchemaView({
           {row.type === FormSchemaPropertyType.Button && (
             <div className="flex flex-wrap gap-2">
               {row.options?.map((option) => (
-                <button
+                <DialButton
                   key={String(option.value)}
                   className={classNames(
                     'chat-button',
                     option.selected && 'button-accent-primary',
                   )}
                   disabled
-                >
-                  {option.label}
-                </button>
+                  label={option.label}
+                />
               ))}
             </div>
           )}

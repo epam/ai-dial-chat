@@ -129,7 +129,7 @@ export const shareSlice = createSlice({
     revokeAccess: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
@@ -137,7 +137,7 @@ export const shareSlice = createSlice({
     revokeAccessSuccess: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
@@ -195,6 +195,7 @@ export const shareSlice = createSlice({
         payload,
       }: PayloadAction<{
         acceptedId: string;
+        permissions: SharePermission[];
         isFolder: boolean;
         isConversation?: boolean;
         isPrompt?: boolean;
@@ -227,6 +228,7 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         featureType: FeatureType;
         sharedWith: ShareRelations;
+        includeUserInfo?: boolean;
       }>,
     ) => state,
     getSharedListingSuccess: (

@@ -1,9 +1,11 @@
 import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
 
 import {
+  getEditorSchemaType,
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  getQuickAppItemNameFromConfig,
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   safeStringifyApplicationFeatures,
@@ -12,10 +14,10 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
-  ApplicationType,
   CustomApplicationModel,
   ExternalAppConfig,
   Toolsets,
@@ -30,8 +32,11 @@ import {
   MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
+  UnknownToolset,
+  isDialDeploymentSimpleTool,
   isDialDeploymentToolset,
   isMcpToolset,
+  isUnknownToolset,
 } from '@/src/types/quick-apps';
 
 import {
@@ -43,14 +48,12 @@ import {
 import {
   DEFAULT_APPLICATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
-import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { formErrors } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
-  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
-  DEFAULT_QUICK_APPS_SCHEMA_ID,
   DialDeploymentToolsetToolTypes,
   ToolsetTypes,
 } from '@/src/constants/quick-apps';
@@ -63,7 +66,9 @@ import {
 } from '@/src/constants/validation-helpers';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
+import { nanoid } from 'nanoid';
 import { z as zodValidation } from 'zod';
 
 export enum AppsEditorSchemaTypes {
@@ -81,7 +86,7 @@ export type BaseAppForm = zodValidation.infer<
   typeof MarketplaceEntityBaseSchema
 >;
 
-export const CustomAppSchema = zodValidation.object({
+const CustomAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
   inputAttachmentTypes: AttachmentTypesSchema,
   completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
@@ -134,7 +139,7 @@ export const CustomAppSchema = zodValidation.object({
           });
           return;
         }
-      } catch (error) {
+      } catch {
         ctx.addIssue({
           code: 'custom',
           path: ['features'],
@@ -146,7 +151,7 @@ export const CustomAppSchema = zodValidation.object({
 });
 export type CustomAppForm = zodValidation.infer<typeof CustomAppSchema>;
 
-export const ExternalAppSchema = zodValidation.object({
+const ExternalAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.ExternalApp),
   externalUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
     zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
@@ -154,7 +159,7 @@ export const ExternalAppSchema = zodValidation.object({
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
 
-export const QuickAppSchema = zodValidation.object({
+const QuickAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp),
   instructions: zodValidation.string(),
   temperature: zodValidation.number(),
@@ -182,20 +187,54 @@ export const QuickAppSchema = zodValidation.object({
 });
 export type QuickAppForm = zodValidation.infer<typeof QuickAppSchema>;
 
-export const QuickApp2Schema = zodValidation.object({
-  type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp2),
-  instructions: zodValidation.string(),
-  temperature: zodValidation.number(),
-  documentRelativeUrl: zodValidation.array(zodValidation.string()),
-  model: zodValidation.string(),
-  agentsAndToolsets: zodValidation.array(zodValidation.string()),
-  codeInterpreter: zodValidation.boolean(),
-  inputAttachmentTypes: AttachmentTypesSchema,
-  maxInputAttachments: MaxInputAttachmentsSchema.optional(),
+const AgentOrToolsetSchema = zodValidation.object({
+  id: zodValidation.string(),
+  tool: zodValidation
+    .record(zodValidation.string(), zodValidation.any())
+    .optional(),
+  isDialDeploymentTool: zodValidation.boolean().optional(), // tool_sets can have both agents from marketplace and custom tools listed in DialDeploymentToolset
 });
+
+type AgentOrToolsetFormType = zodValidation.infer<typeof AgentOrToolsetSchema>;
+
+export const QuickApp2Schema = zodValidation
+  .object({
+    type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp2),
+    instructions: zodValidation.string(),
+    temperature: zodValidation.number(),
+    documentRelativeUrl: zodValidation.array(zodValidation.string()),
+    model: zodValidation.string(),
+    agentsAndToolsets: zodValidation.array(AgentOrToolsetSchema),
+    codeInterpreter: zodValidation.boolean(),
+    inputAttachmentTypes: AttachmentTypesSchema,
+    maxInputAttachments: MaxInputAttachmentsSchema.optional(),
+    isJsonView: zodValidation.boolean(),
+    agentsAndToolsetsJson: zodValidation.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isJsonView) {
+      try {
+        const parsed: unknown[] = JSON.parse(data.agentsAndToolsetsJson);
+
+        if (!Array.isArray(parsed)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['agentsAndToolsetsJson'],
+            message: 'Should be an array',
+          });
+        }
+      } catch {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['agentsAndToolsetsJson'],
+          message: 'Should be a valid JSON',
+        });
+      }
+    }
+  });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
-export const CodeAppSchema = zodValidation
+const CodeAppSchema = zodValidation
   .object({
     type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
     inputAttachmentTypes: AttachmentTypesSchema,
@@ -273,7 +312,7 @@ const getBaseFormData = ({
   name:
     app?.name ??
     getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-  version: app?.version ?? DEFAULT_VERSION,
+  version: app ? app.version : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: app?.description ?? '',
   topics: app?.topics ?? [],
@@ -283,7 +322,7 @@ const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   type: AppsEditorSchemaTypes.CustomApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
-  completionUrl: app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER,
+  completionUrl: app ? (app.completionUrl ?? '') : MANDATORY_FIELD_PLACEHOLDER,
   features: safeStringifyApplicationFeatures(app?.features),
 });
 
@@ -316,13 +355,49 @@ const getQuickAppFormData = (app?: CustomApplicationModel): QuickAppForm => {
   };
 };
 
-const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
-  const appProperties = app?.applicationProperties as QuickApp2Config;
-  const agentToolsets =
-    appProperties?.tool_sets
+export const getAgentsAndToolsetsFormValue = (
+  tools?: AnyToolset[],
+): AgentOrToolsetFormType[] => {
+  const deploymentTools =
+    tools
       ?.filter(isDialDeploymentToolset)
       ?.flatMap((toolset) => toolset.tools) ?? [];
-  const mcpToolsets = appProperties?.tool_sets?.filter(isMcpToolset) ?? [];
+  const mcpToolsets = tools?.filter(isMcpToolset) ?? [];
+  const unknownToolsets = tools?.filter(isUnknownToolset) ?? [];
+
+  const markedDeploymentTools = deploymentTools?.map((item) => ({
+    ...item,
+    name: getQuickAppItemNameFromConfig(item),
+    isDeploymentTool: true,
+  }));
+  const allItems = [...mcpToolsets, ...unknownToolsets].map((item) => ({
+    ...item,
+    name: getQuickAppItemNameFromConfig(item as MCPToolset),
+  }));
+
+  const sortedItems = sortBy(
+    [...markedDeploymentTools, ...allItems],
+    [(item) => item.name.toLowerCase()],
+  );
+
+  return sortedItems.map((item) => {
+    const id =
+      isUnknownToolset(item) && !isDialDeploymentSimpleTool(item)
+        ? undefined
+        : 'dial_id' in item
+          ? item.dial_id
+          : item.deployment_id;
+    return {
+      id: id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown'),
+      tool: item,
+      isDialDeploymentTool:
+        'isDeploymentTool' in item ? item.isDeploymentTool : false,
+    };
+  });
+};
+
+const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
+  const appProperties = app?.applicationProperties as QuickApp2Config;
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -334,20 +409,19 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
     temperature:
       appProperties?.orchestrator?.deployment?.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
-    agentsAndToolsets: [
-      ...agentToolsets.map((agentToolset) =>
-        ApiUtils.decodeApiUrl(agentToolset.deployment_id),
-      ),
-      ...mcpToolsets.map((mcpToolset) =>
-        ApiUtils.decodeApiUrl(mcpToolset.dial_id),
-      ),
-    ],
+    agentsAndToolsets: getAgentsAndToolsetsFormValue(appProperties?.tool_sets),
     codeInterpreter:
       appProperties?.tool_sets?.some(
         (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
       ) ?? false,
     inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
     maxInputAttachments: app?.maxInputAttachments ?? undefined,
+    agentsAndToolsetsJson: JSON.stringify(
+      appProperties?.tool_sets ?? [],
+      null,
+      2,
+    ),
+    isJsonView: false,
   };
 };
 
@@ -381,6 +455,7 @@ const getCodeAppFormData = ({
         editableKey:
           !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
         static: key === FEATURES_ENDPOINTS.chat_completion,
+        id: nanoid(),
       }))
     : [
         {
@@ -393,6 +468,7 @@ const getCodeAppFormData = ({
             ] || '',
           editableKey: false,
           static: true,
+          id: nanoid(),
         },
       ],
   env: app?.function?.env
@@ -400,6 +476,7 @@ const getCodeAppFormData = ({
         label,
         value,
         editableKey: true,
+        id: nanoid(),
       }))
     : [],
 });
@@ -408,34 +485,10 @@ const getExternalAppFormData = (
   app?: CustomApplicationModel,
 ): ExternalAppForm => ({
   type: AppsEditorSchemaTypes.ExternalApp,
-  externalUrl:
-    (app?.applicationProperties as ExternalAppConfig)?.external_url ||
-    MANDATORY_FIELD_PLACEHOLDER,
+  externalUrl: app
+    ? ((app?.applicationProperties as ExternalAppConfig)?.external_url ?? '')
+    : MANDATORY_FIELD_PLACEHOLDER,
 });
-
-const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
-  const quickAppSchemaId = DefaultsService.get(
-    'quickAppsSchemaId',
-    DEFAULT_QUICK_APPS_SCHEMA_ID,
-  );
-  const quickApp2SchemaId = DefaultsService.get(
-    'quickAppsSchemaId2',
-    DEFAULT_QUICK_APPS_SCHEMA_2_ID,
-  );
-  const externalAppSchemaId = DefaultsService.get(
-    'externalAppsSchemaId',
-    DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
-  );
-
-  if (quickAppSchemaId.endsWith(type)) return AppsEditorSchemaTypes.QuickApp;
-  if (quickApp2SchemaId.endsWith(type)) return AppsEditorSchemaTypes.QuickApp2;
-  if (externalAppSchemaId.endsWith(type))
-    return AppsEditorSchemaTypes.ExternalApp;
-
-  if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
-
-  return AppsEditorSchemaTypes.CustomApp;
-};
 
 const getSettingsFormData = ({
   app,
@@ -525,31 +578,58 @@ const getActualSourceFolder = (formSources?: string) => {
     : formSources;
 };
 
-const getQuickApp2Toolsets = ({
+export const getAgentOrToolsetOption = (id: string): AgentOrToolsetFormType => {
+  const isDeploymentToolset = isApplicationId(id);
+
+  return {
+    id,
+    tool: {
+      type: isDeploymentToolset
+        ? DialDeploymentToolsetToolTypes.DialDeploymentSimple
+        : ToolsetTypes.DialMcp,
+      [isDeploymentToolset ? 'deployment_id' : 'dial_id']:
+        ApiUtils.encodeApiUrl(id),
+    },
+    isDialDeploymentTool: isDeploymentToolset,
+  };
+};
+
+export const getQuickApp2Toolsets = ({
   allEntitiesMap,
   data,
 }: {
   allEntitiesMap: Record<string, MarketplaceEntity>;
   data: QuickApp2Form;
+  currentTools?: AnyToolset[];
 }): AnyToolset[] => {
-  const { dialDeploymentsToolsets, dialMCPToolsets } =
+  const { dialDeploymentsToolsets, dialMCPToolsets, otherToolsets } =
     data.agentsAndToolsets.reduce<{
       dialDeploymentsToolsets: DialDeploymentSimpleTool[];
       dialMCPToolsets: MCPToolset[];
+      otherToolsets: UnknownToolset[];
     }>(
       (acc, agentAndToolset) => {
-        const entity = allEntitiesMap[agentAndToolset];
+        const entity = allEntitiesMap[agentAndToolset.id];
         if (!entity) {
-          if (isApplicationId(agentAndToolset)) {
+          if (isApplicationId(agentAndToolset.id)) {
             acc.dialDeploymentsToolsets.push({
               type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
-              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset),
+              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
             });
-          } else if (isToolsetId(agentAndToolset)) {
+          } else if (isToolsetId(agentAndToolset.id)) {
             acc.dialMCPToolsets.push({
-              dial_id: ApiUtils.encodeApiUrl(agentAndToolset),
+              dial_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
               type: ToolsetTypes.DialMcp,
             });
+          } else if (
+            agentAndToolset.tool &&
+            agentAndToolset.isDialDeploymentTool
+          ) {
+            acc.dialDeploymentsToolsets.push(
+              agentAndToolset.tool as DialDeploymentSimpleTool,
+            );
+          } else if (agentAndToolset.tool) {
+            acc.otherToolsets.push(agentAndToolset.tool);
           }
           return acc;
         }
@@ -568,7 +648,7 @@ const getQuickApp2Toolsets = ({
 
         return acc;
       },
-      { dialDeploymentsToolsets: [], dialMCPToolsets: [] },
+      { dialDeploymentsToolsets: [], dialMCPToolsets: [], otherToolsets: [] },
     );
 
   return [
@@ -578,6 +658,7 @@ const getQuickApp2Toolsets = ({
       type: ToolsetTypes.DialDeployment,
       tools: [...dialDeploymentsToolsets],
     },
+    ...otherToolsets,
     ...(data.codeInterpreter
       ? [
           {
@@ -593,10 +674,12 @@ export const getApplicationPayload = ({
   data,
   currentApp,
   allEntitiesMap,
+  keepCurrentToolsets,
 }: {
   data: AppsEditorFormType;
   allEntitiesMap: Record<string, MarketplaceEntity>;
   currentApp?: CustomApplicationModel;
+  keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
   const generalData = {
     id: '',
@@ -667,7 +750,14 @@ export const getApplicationPayload = ({
           document_relative_url: data.documentRelativeUrl,
         },
       };
-    case AppsEditorSchemaTypes.QuickApp2:
+
+    case AppsEditorSchemaTypes.QuickApp2: {
+      const model = allEntitiesMap[data.model];
+      const temperatureToUse =
+        model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
+          ? data.temperature
+          : FALLBACK_TEMPERATURE;
+
       return {
         ...generalData,
         inputAttachmentTypes: data.inputAttachmentTypes,
@@ -680,9 +770,9 @@ export const getApplicationPayload = ({
         applicationProperties: {
           orchestrator: {
             deployment: {
-              name: allEntitiesMap[data.model]?.id ?? data.model,
+              name: model?.id ?? data.model,
               parameters: {
-                temperature: data.temperature,
+                temperature: temperatureToUse,
               },
             },
             system_prompt: {
@@ -696,9 +786,13 @@ export const getApplicationPayload = ({
               url,
               type: 'file',
             })) ?? [],
-          tool_sets: getQuickApp2Toolsets({ data, allEntitiesMap }),
+          tool_sets:
+            data.isJsonView && !keepCurrentToolsets
+              ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
+              : getQuickApp2Toolsets({ data, allEntitiesMap }),
         },
       };
+    }
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return {

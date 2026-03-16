@@ -1,6 +1,8 @@
-import { IconX } from '@tabler/icons-react';
+import React from 'react';
 
 import classNames from 'classnames';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
 interface Props {
   onClose: () => void;
@@ -14,17 +16,15 @@ export const CloseSidebarButton: React.FC<Props> = ({
   return (
     <div
       className={classNames(
-        'absolute top-0 z-50 p-[6px] xl:hidden',
+        'absolute top-0 z-50 p-[6px] sidebar-overlay:hidden',
         isLeftSide ? 'right-0 translate-x-full' : 'left-0 -translate-x-full',
       )}
     >
-      <button
+      <CloseButtonSmall
         onClick={onClose}
-        className="cursor-pointer rounded-full bg-layer-3 p-[6px]"
         data-qa="close-sidebar"
-      >
-        <IconX size={24} className="text-primary" />
-      </button>
+        className="rounded-full bg-layer-3"
+      />
     </div>
   );
 };

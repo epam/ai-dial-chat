@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -31,11 +31,11 @@ import {
 } from '@epam/ai-dial-shared';
 
 const bucket = '123';
-beforeAll(() => {
-  BucketService.setBucket(bucket);
-});
 
 describe('Export Format Functions', () => {
+  beforeAll(() => {
+    BucketService.setBucket(bucket);
+  });
   describe('isExportFormatV1', () => {
     it('should return true for v1 format', () => {
       const obj = [{ id: 1 }];

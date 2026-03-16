@@ -9,8 +9,12 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
+
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -27,7 +31,7 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
   return (
     <IconComponent
       className="cursor-pointer text-secondary hover:text-accent-primary"
-      size={24}
+      size={DEFAULT_ICON_SIZES.STANDARD}
       data-qa={type.concat('-icon')}
       onClick={() => {
         if (!copied) {
@@ -57,7 +61,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
     (type: CopyTableType, fn: (table: HTMLTableElement) => string) => () => {
       if (tableRef.current) {
         const text = fn(tableRef.current);
-        navigator.clipboard.writeText(text).then(() => {
+        writeTextToClipboard(text, () => {
           if (timer && type !== copiedType) {
             clearTimeout(timer);
           }

@@ -7,11 +7,17 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { Button } from '@/src/components/Common/Button';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
+import {
+  ButtonAppearance,
+  DialPrimaryIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface LikeItemProps {
   targetStatus: LikeState;
@@ -31,18 +37,21 @@ const DesktopLikeView = ({
   dataQa,
 }: LikeItemProps) => (
   <Tooltip placement="top" isTriggerClickable={!wasClicked} tooltip={label}>
-    <Button
+    <DialPrimaryIconButton
+      appearance={ButtonAppearance.Ghost}
+      size={ElementSize.Small}
       onClick={() => {
         if (!wasClicked) {
           onLike(targetStatus);
         }
       }}
-      className={!wasClicked ? 'text-secondary' : 'text-accent-primary'}
+      className={classNames(
+        wasClicked && 'text-accent-primary disabled:text-accent-primary',
+      )}
       disabled={wasClicked}
       data-qa={dataQa}
-    >
-      <Icon size={18} />
-    </Button>
+      icon={<Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+    />
   </Tooltip>
 );
 

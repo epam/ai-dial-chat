@@ -6,6 +6,7 @@ import { prepareEntityName } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
+  getFileMimeType,
   getNextFileName,
   getRelativePath,
   prepareFileName,
@@ -20,6 +21,8 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 const validateFiles = (
   files: File[],
@@ -58,12 +61,20 @@ export const useUploadFilesHandler = (
   );
 
   const folderPath = getRelativePath(folderId);
+  const folderStatus = useAppSelector((state) =>
+    FilesSelectors.selectFolderStatusById(state, folderId),
+  );
 
   useEffect(() => {
-    if (folderId && !isRootId(folderId) && preUploadFiles) {
+    if (
+      folderId &&
+      !isRootId(folderId) &&
+      preUploadFiles &&
+      (!folderStatus || folderStatus === UploadStatus.UNINITIALIZED)
+    ) {
       dispatch(FilesActions.getFiles({ id: folderId }));
     }
-  }, [dispatch, folderId, preUploadFiles]);
+  }, [dispatch, folderId, folderStatus, preUploadFiles]);
 
   const handleUpload = useCallback(
     (files: File[]) => {
@@ -88,7 +99,7 @@ export const useUploadFilesHandler = (
         return file.name === cleanName
           ? file
           : new File([file], cleanName, {
-              type: file.type,
+              type: getFileMimeType(file),
               lastModified: file.lastModified,
             });
       });

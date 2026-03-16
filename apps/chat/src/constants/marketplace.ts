@@ -1,12 +1,14 @@
-import { IconPlayerPlay, IconPlaystationSquare } from '@tabler/icons-react';
+import {
+  IconCloudDownload,
+  IconCloudUpload,
+  IconRefresh,
+} from '@tabler/icons-react';
 
 import {
   ApplicationType,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { EntityType, ScreenState } from '@/src/types/common';
-
-import { Loader } from '@/src/components/Common/Loader';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 
@@ -101,25 +103,23 @@ export const HeaderIconSizes: Record<ScreenState, IconSize> = {
 
 export const PlayerContextIconClasses = {
   [SimpleApplicationStatus.DEPLOY]: 'text-accent-secondary',
-  [SimpleApplicationStatus.UNDEPLOY]: 'text-error',
+  [SimpleApplicationStatus.UNDEPLOY]: '!text-error',
   [SimpleApplicationStatus.UPDATING]: 'animate-spin-steps',
+  [SimpleApplicationStatus.REDEPLOY]: '!text-accent-secondary',
 };
 
 export const PlayerContextButtonClasses = {
   [SimpleApplicationStatus.DEPLOY]: 'button-accent-secondary',
-  [SimpleApplicationStatus.UNDEPLOY]: 'button-error',
+  [SimpleApplicationStatus.UNDEPLOY]: '!button-error',
   [SimpleApplicationStatus.UPDATING]: '',
-};
-
-export const StatusIcons = {
-  [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
-  [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
-  [SimpleApplicationStatus.UPDATING]: Loader,
+  [SimpleApplicationStatus.REDEPLOY]: '!button-accent-secondary',
 };
 
 export const PlayerContextIcons = {
-  ...StatusIcons,
+  [SimpleApplicationStatus.DEPLOY]: IconCloudUpload,
+  [SimpleApplicationStatus.UNDEPLOY]: IconCloudDownload,
   [SimpleApplicationStatus.UPDATING]: LoaderIcon,
+  [SimpleApplicationStatus.REDEPLOY]: IconRefresh,
 };
 
 export enum ViewTypes {

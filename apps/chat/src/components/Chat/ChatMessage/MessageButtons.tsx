@@ -1,14 +1,17 @@
 import {
+  Icon,
   IconCheck,
   IconCopy,
   IconEdit,
   IconListDetails,
+  IconMarkdown,
   IconRefresh,
   IconTrashX,
 } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMessageCustomContent } from '@/src/utils/app/conversation';
@@ -22,7 +25,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import { Button } from '@/src/components/Common/Button';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -35,6 +39,11 @@ import {
   Role,
   onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
+import {
+  ButtonAppearance,
+  DialPrimaryIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface MessageUserButtonsProps {
   realMessageIndex: number;
@@ -71,7 +80,7 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full select-none items-center justify-end gap-2',
+        'flex h-[24px] w-full select-none items-center justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
@@ -91,32 +100,39 @@ export const MessageUserButtons = ({
               isTriggerClickable
               tooltip={t('Set message template')}
             >
-              <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+              <DialPrimaryIconButton
+                appearance={ButtonAppearance.Ghost}
+                size={ElementSize.Small}
                 onClick={onToggleTemplatesEditing}
-              >
-                <IconListDetails size={18} />
-              </button>
+                icon={
+                  <IconListDetails
+                    size={DEFAULT_ICON_SIZES.SMALL}
+                    stroke={1.5}
+                  />
+                }
+              />
             </Tooltip>
           )}
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-              <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+              <DialPrimaryIconButton
+                appearance={ButtonAppearance.Ghost}
+                size={ElementSize.Small}
                 onClick={onToggleEditing}
-              >
-                <IconEdit size={18} />
-              </button>
+                icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+              />
             </Tooltip>
           )}
           {onDelete && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-              <button
-                className="text-secondary hover:text-accent-primary"
+              <DialPrimaryIconButton
+                appearance={ButtonAppearance.Ghost}
+                size={ElementSize.Small}
                 onClick={onDelete}
-              >
-                <IconTrashX size={18} />
-              </button>
+                icon={
+                  <IconTrashX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+                }
+              />
             </Tooltip>
           )}
         </>
@@ -125,23 +141,66 @@ export const MessageUserButtons = ({
   );
 };
 
+interface CopyButtonProps {
+  keyPostfix?: string;
+  content: string;
+  convertFromMarkdown?: boolean;
+  copyLabel?: string;
+  copiedLabel?: string;
+  Icon?: Icon;
+}
+const CopyButton = ({
+  keyPostfix = '',
+  content,
+  convertFromMarkdown = false,
+  copyLabel = 'Copy',
+  copiedLabel = 'Copied',
+  Icon = IconCopy,
+}: CopyButtonProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const { copied, onCopy } = useCopy(content, convertFromMarkdown);
+
+  return (
+    <Tooltip
+      key={`${copied ? 'copied' : 'copy'}${keyPostfix}`}
+      placement="top"
+      isTriggerClickable
+      tooltip={t(copied ? copiedLabel : copyLabel)}
+    >
+      <DialPrimaryIconButton
+        appearance={ButtonAppearance.Ghost}
+        size={ElementSize.Small}
+        onClick={onCopy}
+        disabled={copied}
+        icon={
+          copied ? (
+            <IconCheck
+              size={DEFAULT_ICON_SIZES.SMALL}
+              className="text-secondary"
+            />
+          ) : (
+            <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+          )
+        }
+      />
+    </Tooltip>
+  );
+};
+
 interface MessageAssistantButtonsProps {
   realMessageIndex: number;
-  messageCopied?: boolean;
   isLikesEnabled: boolean;
   message: Message;
-  copyOnClick: () => void;
   onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing?: () => void;
 }
 
 export const MessageAssistantButtons = ({
-  messageCopied,
   message,
   realMessageIndex,
   isLikesEnabled,
-  copyOnClick,
   onLike,
   onRegenerate,
   onToggleEditing,
@@ -175,41 +234,40 @@ export const MessageAssistantButtons = ({
       ))}
       {onRegenerate && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
-          <Button
+          <DialPrimaryIconButton
+            appearance={ButtonAppearance.Ghost}
+            size={ElementSize.Small}
             onClick={onRegenerate}
+            icon={<IconRefresh size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
             data-qa="regenerate"
-            className="text-secondary"
-          >
-            <IconRefresh size={18} />
-          </Button>
+          />
         </Tooltip>
       )}
-      {hasMessageContent &&
-        (messageCopied ? (
-          <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
-            <IconCheck size={18} className="text-secondary" />
-          </Tooltip>
-        ) : (
-          <Tooltip
-            key="copy"
-            placement="top"
-            isTriggerClickable
-            tooltip={t('Copy text')}
-          >
-            <Button className="text-secondary" onClick={copyOnClick}>
-              <IconCopy size={18} />
-            </Button>
-          </Tooltip>
-        ))}
+      {hasMessageContent && (
+        <>
+          <CopyButton
+            content={message.content}
+            copyLabel="Copy text"
+            copiedLabel="Text copied"
+            convertFromMarkdown
+          />
+          <CopyButton
+            content={message.content}
+            copyLabel="Copy markdown"
+            copiedLabel="Markdown copied"
+            Icon={IconMarkdown}
+          />
+        </>
+      )}
       {onToggleEditing && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-          <Button
+          <DialPrimaryIconButton
+            appearance={ButtonAppearance.Ghost}
+            size={ElementSize.Small}
             onClick={onToggleEditing}
             data-qa="edit"
-            className="text-secondary"
-          >
-            <IconEdit size={18} />
-          </Button>
+            icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+          />
         </Tooltip>
       )}
       {isLikesEnabled &&
@@ -223,10 +281,48 @@ export const MessageAssistantButtons = ({
   );
 };
 
+const MobileCopyButton = ({
+  keyPostfix = '',
+  content,
+  convertFromMarkdown = false,
+  copyLabel = 'Copy',
+  copiedLabel = 'Copied',
+  Icon = IconCopy,
+}: CopyButtonProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const { copied, onCopy } = useCopy(content, convertFromMarkdown);
+  if (copied) {
+    return (
+      <MenuItem
+        key={`copy${keyPostfix}`}
+        item={
+          <div className="flex items-center gap-3 text-nowrap">
+            <IconCheck size={20} className="text-secondary" />
+            <p>{t(copiedLabel)}</p>
+          </div>
+        }
+      />
+    );
+  }
+
+  return (
+    <MenuItem
+      className="hover:bg-accent-primary-alpha"
+      item={
+        <div className="flex items-center gap-3 text-nowrap">
+          <Icon className="text-secondary" size={18} />
+          {t(copyLabel)}
+        </div>
+      }
+      onClick={onCopy}
+    />
+  );
+};
+
 interface MessageMobileButtonsProps {
   message: Message;
   realMessageIndex: number;
-  messageCopied: boolean;
   editDisabled: boolean;
   isEditing: boolean;
   isEditTemplatesAvailable: boolean;
@@ -238,12 +334,10 @@ interface MessageMobileButtonsProps {
   onDelete?: () => void;
   onToggleEditing: (value: boolean) => void;
   onToggleTemplatesEditing: () => void;
-  onCopy: () => void;
   onRegenerate?: () => void;
 }
 
 export const MessageMobileButtons = ({
-  messageCopied,
   editDisabled,
   message,
   realMessageIndex,
@@ -257,7 +351,6 @@ export const MessageMobileButtons = ({
   onDelete,
   onToggleEditing,
   onToggleTemplatesEditing,
-  onCopy,
   onRegenerate,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -270,6 +363,9 @@ export const MessageMobileButtons = ({
   );
   const isAllLastMessageEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
+  );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
   const isAssistant = message.role === Role.Assistant;
@@ -299,28 +395,22 @@ export const MessageMobileButtons = ({
               }
             />
           ))}
-          {hasMessageContent &&
-            (messageCopied ? (
-              <MenuItem
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconCheck size={20} className="text-secondary" />
-                    <p>{t('Copied')}</p>
-                  </div>
-                }
+          {hasMessageContent && (
+            <>
+              <MobileCopyButton
+                content={message.content}
+                copyLabel="Copy text"
+                copiedLabel="Copied text"
+                convertFromMarkdown
               />
-            ) : (
-              <MenuItem
-                className="hover:bg-accent-primary-alpha"
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconCopy className="text-secondary" size={18} />
-                    {t('Copy')}
-                  </div>
-                }
-                onClick={onCopy}
+              <MobileCopyButton
+                content={message.content}
+                copyLabel="Copy markdown"
+                copiedLabel="Copied markdown"
+                Icon={IconMarkdown}
               />
-            ))}
+            </>
+          )}
           {!editDisabled &&
             onToggleEditing &&
             (isAllLastMessageEnabled ||
@@ -362,7 +452,7 @@ export const MessageMobileButtons = ({
   }
 
   return (
-    !editDisabled &&
+    !isReadOnly &&
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>

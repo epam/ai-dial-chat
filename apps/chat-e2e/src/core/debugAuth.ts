@@ -42,17 +42,19 @@ export class DebugAuth {
         this.baseUrl,
       );
 
-      // Step 2: Get Auth0 dynamic parameters
-      const dynamicParams = await this.authApiHelper.getAuth0DynamicParams(
-        this.baseUrl,
-        urlCsrfToken,
-      );
+      // Step 2: Get Auth0 dynamic parameters and CSRF token
+      const { urlParams: dynamicParams, auth0Csrf } =
+        await this.authApiHelper.getAuth0DynamicParams(
+          this.baseUrl,
+          urlCsrfToken,
+        );
 
       // Step 3: Submit credentials to Auth0
       const authParams = await this.authApiHelper.submitCredentials(
         username,
         password,
         dynamicParams,
+        auth0Csrf,
       );
 
       // Step 4: Complete authentication flow
@@ -106,30 +108,44 @@ export class DebugAuth {
       index: number;
     }[],
     baseUrl: string,
+    maxRetries = 3,
   ): Promise<{ index: number; authTokens: AuthTokens }[]> {
     const authPromises = userCredentials.map(
       async ({ username, password, statePath, index }) => {
-        // Create a new request context for each user to avoid conflicts
-        const requestContext = await request.newContext({
-          baseURL: baseUrl,
-        });
+        let lastError: unknown;
 
-        const debugAuth = new DebugAuth(requestContext, baseUrl);
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          // Create a fresh request context for each attempt to avoid cookie conflicts
+          const requestContext = await request.newContext({
+            baseURL: baseUrl,
+          });
+          const debugAuth = new DebugAuth(requestContext, baseUrl);
 
-        try {
-          const authTokens = await debugAuth.authenticateAndSaveState(
-            username,
-            password,
-            statePath,
-          );
-          await requestContext.dispose();
-          return { index, authTokens };
-        } catch (error) {
-          await requestContext.dispose();
-          throw new Error(
-            `Authentication failed for user ${username} (index ${index}): ${error}`,
-          );
+          try {
+            const authTokens = await debugAuth.authenticateAndSaveState(
+              username,
+              password,
+              statePath,
+            );
+            await requestContext.dispose();
+            return { index, authTokens };
+          } catch (error) {
+            await requestContext.dispose();
+            lastError = error;
+            if (attempt < maxRetries) {
+              const delayMs = 2000 * attempt;
+              // eslint-disable-next-line no-console
+              console.warn(
+                `Auth attempt ${attempt}/${maxRetries} failed for ${username}: ${error}. Retrying in ${delayMs}ms...`,
+              );
+              await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+          }
         }
+
+        throw new Error(
+          `Authentication failed for user ${username} (index ${index}) after ${maxRetries} attempts: ${lastError}`,
+        );
       },
     );
 

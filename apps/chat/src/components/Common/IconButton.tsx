@@ -1,12 +1,13 @@
 import { Icon } from '@tabler/icons-react';
+import React from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from './Tooltip';
+
+import { ButtonAppearance, DialPrimaryIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   name: string;
@@ -29,15 +30,14 @@ export const IconButton: React.FC<Props> = ({
 
   return (
     <Tooltip isTriggerClickable tooltip={t(name)}>
-      <button
-        disabled={disabled}
+      <DialPrimaryIconButton
+        appearance={ButtonAppearance.Ghost}
         onClick={onClick}
-        className={classNames('icon-button', className)}
+        disabled={disabled}
+        icon={Icon && <Icon className="size-6" strokeWidth="1.5" />}
         data-qa={dataQa}
-        type="button"
-      >
-        {Icon && <Icon className="size-6" strokeWidth="1.5" />}
-      </button>
+        className={className}
+      />
     </Tooltip>
   );
 };

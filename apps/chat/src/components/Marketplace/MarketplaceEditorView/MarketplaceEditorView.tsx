@@ -1,4 +1,10 @@
-import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  MouseEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -21,7 +27,7 @@ interface MarketplaceEditorViewProps {
   onPreviewModeChange: (mode: PreviewMode) => void;
 
   defaultPreviewMode?: PreviewMode;
-  onLeftMouseLeave?: () => void;
+  onLeftMouseLeave?: (e?: MouseEvent<HTMLDivElement>) => void;
   rightQa?: string;
   closedPreviewLabel?: string;
   leftTabLabel?: string;
@@ -106,9 +112,9 @@ export const MarketplaceEditorView = ({
 
           <div
             className={classNames(
-              'flex h-full min-h-0 flex-col border-l border-primary transition-all duration-300 ease-in-out',
+              'flex h-full min-h-0 flex-col transition-all duration-300 ease-in-out',
               {
-                'w-1/2 opacity-100': isPreviewHalf,
+                'w-1/2 border-l border-secondary opacity-100': isPreviewHalf,
                 'w-full opacity-100': isPreviewFull,
                 'w-0 overflow-hidden opacity-0': isPreviewClosed,
               },
@@ -120,7 +126,7 @@ export const MarketplaceEditorView = ({
 
           {isPreviewClosed && (
             <div
-              className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-4"
+              className="flex h-full w-10 flex-col items-center space-y-3 border-l border-secondary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-4"
               onClick={handleOpenPreview}
             >
               <PreviewModeButton mode={PreviewMode.full} />
@@ -131,7 +137,7 @@ export const MarketplaceEditorView = ({
 
               {!!closedPreviewLabel && (
                 <span
-                  className="select-none text-primary"
+                  className="select-none truncate text-primary"
                   style={{ writingMode: 'vertical-rl' }}
                 >
                   {closedPreviewLabel}

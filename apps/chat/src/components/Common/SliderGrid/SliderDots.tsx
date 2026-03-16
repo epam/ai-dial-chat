@@ -1,5 +1,5 @@
 import { IconCaretLeftFilled, IconCaretRightFilled } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -121,7 +121,7 @@ export const SliderDots: React.FC<Props> = ({
       <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
         <div className="relative z-40 flex items-center gap-4 md:-translate-x-1/2">
           {sliderDotsArray.length <= 1 && screenState === ScreenState.SM && (
-            <span className="h-[18px] bg-transparent"></span>
+            <span className="h-[8px] bg-transparent"></span>
           )}
           {sliderDotsArray.length > 1 && (
             <>
@@ -130,14 +130,14 @@ export const SliderDots: React.FC<Props> = ({
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+                  className="text-controls-disable enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
                   <IconCaretLeftFilled size={18} />
                 </button>
               )}
               <div className="flex max-w-[176px] overflow-hidden">
                 <div
-                  className="flex items-center gap-4  transition-all duration-200"
+                  className="flex items-center gap-4 transition-all duration-200"
                   style={{
                     transform: `translateX(-${translateXValue}px)`,
                   }}
@@ -170,7 +170,7 @@ export const SliderDots: React.FC<Props> = ({
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+                  className="text-controls-disable enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
                   <IconCaretRightFilled size={18} />
                 </button>

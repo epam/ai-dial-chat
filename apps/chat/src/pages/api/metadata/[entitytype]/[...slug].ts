@@ -1,19 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
@@ -57,18 +55,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   try {
     const proxyRes = await fetch(sanitizeUri(url, /^https?$/i), {
-      headers: getApiHeaders({ jwt: token?.access_token as string }),
+      headers: getApiHeaders({ jwt }),
     });
 
     let json: unknown;
     if (!proxyRes.ok) {
       try {
         json = await proxyRes.json();
-      } catch (err) {
+      } catch {
         json = undefined;
       }
 

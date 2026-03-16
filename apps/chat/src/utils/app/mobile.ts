@@ -1,35 +1,47 @@
-import { isMobile as isMobileValue, isTablet } from 'react-device-detect';
+import { getSelectorsByUserAgent } from 'react-device-detect';
 
 import { ScreenState } from '@/src/types/common';
 
-export const isMobile = () => isMobileValue && !isTablet;
-export const isTouchable = () => isMobileValue || isTablet;
+export const getDeviceSelectors = () =>
+  getSelectorsByUserAgent(navigator.userAgent);
+
+export const isMacOs = () => {
+  const { isMacOs } = getDeviceSelectors();
+  return isMacOs;
+};
+
+export const isMobile = () => {
+  const { isMobileOnly, isTablet } = getDeviceSelectors();
+  return isMobileOnly && !isTablet;
+};
+export const isTouchable = () => {
+  const { isMobileOnly, isTablet } = getDeviceSelectors();
+  return isMobileOnly || isTablet;
+};
 
 const isScreenSize = (maxWidth: number): boolean =>
   typeof window !== 'undefined' && window.innerWidth < maxWidth;
-export const isSmallScreen = () => isScreenSize(ScreenState.SM);
-export const isTabletScreen = () => isScreenSize(ScreenState.MD);
-export const isXLScreen = () => isScreenSize(ScreenState.XL);
-export const is3XLScreen = () => isScreenSize(ScreenState.XL3);
-export const is4XLScreen = () => isScreenSize(ScreenState.XL4);
+const createCheck = (screenState: ScreenState) => () =>
+  isScreenSize(screenState);
+export const isSmallScreen = createCheck(ScreenState.SM);
+export const isTabletScreen = createCheck(ScreenState.MD);
+export const isXLScreen = createCheck(ScreenState.XL);
+export const is3XLScreen = createCheck(ScreenState.XL3);
+export const is4XLScreen = createCheck(ScreenState.XL4);
 
 export const isTabletScreenOrMobile = () => isTabletScreen() || isMobile();
 export const isSmallScreenOrTouchable = () => isSmallScreen() || isTouchable();
 
 export const getScreenState = () => {
   const screenMappings = [
-    { check: isSmallScreen, state: ScreenState.SM },
-    { check: isTabletScreen, state: ScreenState.MD },
-    { check: isXLScreen, state: ScreenState.XL },
-    { check: is3XLScreen, state: ScreenState.XL3 },
-    { check: is4XLScreen, state: ScreenState.XL4 },
+    ScreenState.SM,
+    ScreenState.MD,
+    ScreenState.XL,
+    ScreenState.XL3,
+    ScreenState.XL4,
   ];
 
-  const found = screenMappings.find(({ check }) => check());
+  const found = screenMappings.find((screenState) => isScreenSize(screenState));
 
-  if (found) {
-    return found.state;
-  }
-
-  return ScreenState.XL5;
+  return found ?? ScreenState.XL5;
 };

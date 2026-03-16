@@ -1,6 +1,11 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useCallback } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -19,6 +24,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const getItemLabel = (item: unknown): string => item as string;
@@ -41,6 +47,7 @@ interface ToolsetLoginFormProps {
   onLogout?: () => void;
   onLogin?: (data: ToolsetLoginFormType) => void;
   hideConfigFields?: boolean;
+  fieldsInfo?: Partial<Record<keyof ToolsetLoginFormType, string>>;
 }
 
 export const ToolsetLoginForm = ({
@@ -54,15 +61,19 @@ export const ToolsetLoginForm = ({
   onLogout,
   onLogin,
   hideConfigFields = false,
+  fieldsInfo,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
-  const { register, formState, getValues, trigger, control } =
+  const [LogInButton, LoginIcon] = isSignedIn
+    ? [DialNeutralButton, IconLogout]
+    : [DialPrimaryButton, IconLogin];
+
+  const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
 
   const withLogin = useWatch({
     name: 'withLogin',
@@ -82,31 +93,39 @@ export const ToolsetLoginForm = ({
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
 
   return (
-    <div className={classNames('flex flex-col gap-4', className)}>
+    <div className={classNames('flex flex-col gap-3', className)}>
       {type === ToolsetAuthTypes.API_KEY && !isSignedIn && (
         <>
-          {!hideConfigFields && (
+          <div
+            className={classNames({
+              hidden: hideConfigFields,
+            })}
+          >
             <Field
               {...register('keyHeader')}
               label={t('API Key parameter name')}
               mandatory
               placeholder={t('Enter key name')}
               id="keyHeader"
+              autoComplete="username"
               error={errors.keyHeader?.message}
               disabled={disabled}
               tooltip={fieldsTooltip}
             />
-          )}
+          </div>
           {withLogin === WithLogin.WithLogin && (
             <Field
               {...register('apiKey')}
               label={t('API Key')}
               mandatory
+              type="password"
               placeholder={t('Enter API Key')}
               id="apiKey"
+              autoComplete="current-password"
               error={errors.apiKey?.message}
               disabled={disabled}
               tooltip={fieldsTooltip}
+              info={fieldsInfo?.['apiKey']}
             />
           )}
         </>
@@ -177,23 +196,13 @@ export const ToolsetLoginForm = ({
         )}
 
       {withLogin !== WithLogin.WithoutLogin && (
-        <button
-          className={classNames(
-            'button flex w-fit items-center gap-2 py-2',
-            buttonClassName,
-            isSignedIn ? 'button-secondary' : 'button-primary',
-          )}
-          data-qa="log-in-button"
+        <LogInButton
+          className={classNames('flex w-fit items-center', buttonClassName)}
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
-        >
-          {isSignedIn ? (
-            <IconLogout className="text-secondary" size={18} />
-          ) : (
-            <IconLogin size={18} />
-          )}
-          {t(isSignedIn ? 'Log out' : 'Log in')}
-        </button>
+          iconBefore={<LoginIcon size={18} />}
+          label={t(isSignedIn ? 'Log out' : 'Log in')}
+        />
       )}
     </div>
   );

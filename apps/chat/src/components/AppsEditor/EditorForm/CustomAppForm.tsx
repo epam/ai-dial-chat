@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -39,9 +44,9 @@ export const CustomAppForm = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const { control, formState, register, setError, clearErrors, setValue } =
+  const { control, register, setError, clearErrors, setValue } =
     useFormContext<CustomAppFormType>();
-  const errors = formState.errors;
+  const { errors } = useFormState<CustomAppFormType>({ control });
   const completionUrl = useWatch({
     name: 'completionUrl',
     control,

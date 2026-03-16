@@ -5,3 +5,8 @@ export interface Settings {
 export interface LastConversationSettings {
   temperature: number;
 }
+
+export enum EnterType {
+  Enter = 'Enter',
+  CtrlEnter = 'CtrlEnter',
+}

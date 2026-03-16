@@ -1,5 +1,10 @@
-import { useEffect } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import React, { useEffect } from 'react';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -53,7 +58,7 @@ const FormSection = ({
   return (
     <div className={classNames('flex flex-col gap-4', className)}>
       {(!!title || !!subtitle) && (
-        <div>
+        <div className="flex flex-col gap-2">
           {!!title && (
             <h5
               className="text-base font-semibold text-primary"
@@ -92,13 +97,9 @@ interface SettingsFormProps {
 export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
-  const {
-    register,
-    formState: { errors },
-    clearErrors,
-    setValue,
-    control,
-  } = useFormContext<ToolsetEditorForm>();
+  const { register, clearErrors, setValue, control } =
+    useFormContext<ToolsetEditorForm>();
+  const { errors } = useFormState<ToolsetEditorForm>({ control });
   const endpointField = useWatch<ToolsetEditorForm>({
     name: 'endpoint',
     control,
@@ -113,10 +114,10 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
 
   return (
     <div
-      className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
+      className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 py-4 xl:py-5"
       data-qa="entity-view-form"
     >
-      <FormSection title={t('Definition')}>
+      <FormSection title={t('Definition')} className="px-3 md:px-5">
         <Field
           {...register('endpoint')}
           label={t('Endpoint')}
@@ -141,7 +142,6 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
                   (option as unknown as DropdownSelectorOption).value,
                 )
               }
-              mandatory
               id="protocol"
               options={protocolOptions}
               closeMenuOnSelect
@@ -157,7 +157,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         subtitle={t(
           'Select one of the methods below that will be used to authenticate',
         )}
-        className="pt-4"
+        className="px-3 pt-4 md:px-5"
       >
         <AuthField
           tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
@@ -170,7 +170,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         subtitle={t(
           'The list of tools will be available after filling in the definition and authentication section',
         )}
-        className="pt-4"
+        className="px-3 pt-4 md:px-5"
       >
         <Controller
           name="allowedTools"

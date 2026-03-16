@@ -6,7 +6,6 @@ import {
 } from '../selectors';
 
 import { API, MenuOptions } from '@/src/testData';
-import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversationsTree,
   ConversationsTree,
@@ -31,7 +30,6 @@ export class ChatBar extends SideBar {
   private approveRequiredConversationsTree!: ApproveRequiredConversationsTree;
   private organizationFolderConversations!: Folders;
   private organizationConversations!: OrganizationConversationsTree;
-  private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
   );
@@ -113,13 +111,6 @@ export class ChatBar extends SideBar {
       );
     }
     return this.organizationConversations;
-  }
-
-  getBottomDropdownMenu(): DropdownMenu {
-    if (!this.bottomDropdownMenu) {
-      this.bottomDropdownMenu = new DropdownMenu(this.page);
-    }
-    return this.bottomDropdownMenu;
   }
 
   public async openCompareMode() {

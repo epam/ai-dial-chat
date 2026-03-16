@@ -11,6 +11,7 @@ import {
   isExternalApp,
 } from '@/src/utils/app/application';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -23,6 +24,7 @@ import {
   CardIconSizes,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -142,24 +144,26 @@ export const MarketplaceEntityCard = memo(
               </ShareIcon>
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
-              {entity.version && (
-                <div
-                  className={classNames(
-                    'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
-                    !isMyEntity && '!mr-12',
-                  )}
-                >
-                  {t('Version: ')}
-                  <span
-                    className="mr-1 max-w-full overflow-hidden truncate whitespace-nowrap"
-                    data-qa="version"
-                  >
-                    {entity.version}
-                  </span>
+              <div
+                className={classNames(
+                  'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
+                  !isMyEntity && '!mr-12',
+                )}
+              >
+                {(isCreatedMarketplaceEntity(entity) || entity.version) && (
+                  <>
+                    {t('Version: ')}
+                    <span
+                      className="mr-1 max-w-full overflow-hidden truncate whitespace-nowrap"
+                      data-qa="version"
+                    >
+                      {entity.version || t(NA_VERSION)}
+                    </span>
+                  </>
+                )}
 
-                  <MarketplaceEntityIndicator entity={entity} />
-                </div>
-              )}
+                <MarketplaceEntityIndicator entity={entity} />
+              </div>
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(

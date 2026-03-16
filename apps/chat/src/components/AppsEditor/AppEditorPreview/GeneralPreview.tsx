@@ -64,7 +64,7 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
         className="hidden max-w-full items-center justify-between md:flex xl:justify-end"
         data-qa="preview-toggle-container"
       >
-        <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
+        <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary">
           {t('Preview')}
         </span>
         <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">

@@ -102,7 +102,8 @@ export const ExpectedConstants = {
     'Please regenerate response to continue working with chat',
   regenerateResponseTooltip: 'Regenerate response',
   sharedEntityTooltip: 'Shared',
-  sharedEntityName: (name: string) => `Share: ${name}`,
+  sharedEntityName: (name: string, hasSpace?: boolean) =>
+    `Share:${hasSpace ? ' ' : ''}${name}`,
   sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
     const startIndex =
@@ -118,7 +119,7 @@ export const ExpectedConstants = {
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   sharingWithAttachmentNotFromAllFilesErrorMessage:
-    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
+    'Sharing failed. You are only allowed to share conversations with attachments from "My files"',
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
@@ -181,8 +182,8 @@ export const ExpectedConstants = {
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: ${filename}`,
-  sameFilenamesError: (filename: string) =>
-    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filename}`,
+  sameFilenamesError: (...filenames: string[]) =>
+    `The files you're trying to upload have the same names. Please rename or remove them from your upload list: ${filenames.join(', ')}`,
   restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
@@ -228,9 +229,14 @@ export const ExpectedConstants = {
   continueReviewButtonTitle: 'Continue review',
   goToReviewButtonTitle: 'Go to a review',
   reviewResourcesTooltip: `It's required to review all resources`,
-  duplicatedUnpublishingError: (...names: string[]) => {
-    const namesString = names.map((name) => `"${name}"`).join(', ');
-    return `${namesString} have already been unpublished. You can't approve this request.`;
+  duplicatedUnpublishingError: (
+    ...entries: { name: string; version: string }[]
+  ) => {
+    const namesString = entries
+      .map(({ name, version }) => `"${name} v. ${version}"`)
+      .join(', ');
+    const verb = entries.length === 1 ? 'has' : 'have';
+    return `${namesString} ${verb} already been unpublished. You can't approve this request.`;
   },
   messageTemplateModalTitle: 'Message template',
   messageTemplateModalDescription:
@@ -252,7 +258,7 @@ export const ExpectedConstants = {
   publishedAttachmentDownloadPath: (name: string) =>
     `${API.fileHost()}/public/${name}`,
   attachmentPublishErrorMessage:
-    'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
+    'Publishing failed. You are only allowed to publish conversations with attachments from "My files"',
   marketplacePath: '/marketplace',
   workspaceTab: 'tab=workspace',
   workspacePath: () =>
@@ -299,8 +305,7 @@ export const ExpectedConstants = {
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
     'Request name should be at most 160 characters long',
-  publishRequestNameMinLengthErrorMessage:
-    'Request name should be at least 2 characters long',
+  publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
@@ -357,6 +362,14 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
+  fileManagerPath: '/file-manager',
+  deleteItemToastMessage: (filename: string, path: string) =>
+    `Item deleted successfully.\n“${filename}” deleted from ${path}`,
+  replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
+  replaceAttachmentConfirmationMessage: (filename: string) =>
+    `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
+  failedToMoveFileMessage: 'Failed to move files. Please try again later.',
+  uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
 };
 
 export enum Types {
@@ -385,6 +398,7 @@ export enum MenuOptions {
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
+  newFolder = 'New folder',
   upload = 'Upload',
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
@@ -411,6 +425,7 @@ export enum AccountMenuOptions {
 export enum UploadMenuOptions {
   attachUploadedFiles = 'Attach uploaded files',
   uploadFromDevice = 'Upload from device',
+  uploadFiles = 'Upload files',
 }
 
 export enum ExampleURLs {
@@ -482,9 +497,16 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   toolsetsHost: () => `${API.api}/toolsets-listing`,
+  filePropsHost: '/file-manager.json',
   filesHostSegment: 'files',
   filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
   fileHost: () => `/api/${API.filesHostSegment}`,
+  downloadFilesHost: () => `${API.fileHost()}/download`,
+  deleteFileHost: () => `${API.fileHost()}/delete`,
+  folderFilesListingHost: (folderName?: string) =>
+    folderName
+      ? `/${ItemUtil.getEncodedItemId(folderName)}?filter=ITEM`
+      : '?filter=ITEM',
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
@@ -728,3 +750,12 @@ export enum SignInButtonTitles {
   logIn = 'Log in',
   logOut = 'Log out',
 }
+
+export const ExpectedConfirmationPopupData = {
+  deleteItemHeader: 'Confirm Deleting Item',
+  deleteItemsHeader: 'Confirm Deleting Items',
+  deleteItemContent: (item: string) =>
+    `Are you sure you want to delete “${item}”?`,
+  deleteItemsContent: (count: number) =>
+    `Do you want to delete the following ${count} items?`,
+};

@@ -7,6 +7,7 @@ import { UnshareDialog } from '@/src/components/Common/UnshareDialog';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
 import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
+import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { PromptVariablesForApplyDialog } from './ChatInput/PromptVariablesForApplyDialog';
 import { PublishDialog } from './Publish/PublishDialog';
@@ -29,6 +30,7 @@ export function ChatModalsManager() {
       <AgentDialogs />
       <ToolsetDialogs />
       <DeleteMarketplaceEntityDialog />
+      <SettingDialog />
     </>
   );
 }

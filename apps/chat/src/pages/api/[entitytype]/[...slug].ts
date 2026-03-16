@@ -1,20 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { JWT, getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
@@ -95,7 +93,7 @@ interface PutOptions {
 }
 async function handlePutRequest(
   req: NextApiRequest,
-  token: JWT | null,
+  jwt: string | undefined,
   res: NextApiResponse,
   options?: PutOptions,
 ) {
@@ -105,7 +103,7 @@ async function handlePutRequest(
     method: HTTPMethod.PUT,
     headers: {
       ...getApiHeaders({
-        jwt: token?.access_token as string,
+        jwt,
         ifNoneMatch: options?.ifNoneMatch,
       }),
       'Content-Type': req.headers['content-type'] as string,
@@ -113,16 +111,22 @@ async function handlePutRequest(
     body: readable,
   });
 
-  let json: unknown;
+  let json: string | undefined;
+  let text: string | undefined;
   try {
-    json = await proxyRes.json();
+    text = await proxyRes.text();
+  } catch {
+    text = undefined;
+  }
+  try {
+    json = JSON.parse(text as string);
   } catch {
     json = undefined;
   }
 
   if (!proxyRes.ok) {
     throw new DialAIError(
-      (typeof json === 'string' && json) || proxyRes.statusText,
+      json ?? text ?? proxyRes.statusText,
       proxyRes.status,
       req,
     );
@@ -133,12 +137,12 @@ async function handlePutRequest(
 
 async function handleGetRequest(
   req: NextApiRequest,
-  token: JWT | null,
+  jwt: string | undefined,
   res: NextApiResponse,
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    headers: getApiHeaders({ jwt: token?.access_token as string }),
+    headers: getApiHeaders({ jwt }),
   });
 
   if (!proxyRes.ok) {
@@ -163,13 +167,13 @@ async function handleGetRequest(
 
 async function handleDeleteRequest(
   req: NextApiRequest,
-  token: JWT | null,
+  jwt: string | undefined,
   res: NextApiResponse,
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: HTTPMethod.DELETE,
-    headers: getApiHeaders({ jwt: token?.access_token as string }),
+    headers: getApiHeaders({ jwt }),
   });
 
   if (!proxyRes.ok) {

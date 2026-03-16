@@ -6,10 +6,10 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
+import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
@@ -23,6 +23,7 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -31,6 +32,12 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
+import {
+  DialEllipsisTooltip,
+  DialGhostIconButton,
+  DialLinkButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -77,14 +84,12 @@ function ShareAccessSection({
   return (
     <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
       {isShared ? (
-        <button
+        <DialLinkButton
           onClick={onUnshare}
-          className="flex gap-2 text-sm text-accent-primary"
           data-qa="remove-access-button"
-        >
-          <IconUserUnshare height={18} width={18} />
-          <p>{unshareLabel}</p>
-        </button>
+          iconBefore={<IconUserUnshare height={18} width={18} />}
+          label={unshareLabel}
+        />
       ) : (
         <p data-qa="not-shared-entity-label">{notSharedMessage}</p>
       )}
@@ -92,12 +97,9 @@ function ShareAccessSection({
   );
 }
 
-export function ShareModalView() {
+function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
-
-  const [urlCopied, setUrlCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editAccess, setEditAccess] = useState(false);
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
@@ -169,23 +171,16 @@ export function ShareModalView() {
     dispatch(ShareActions.setModalState({ modalState: ModalState.CLOSED }));
   }, [dispatch]);
 
+  const { copied: urlCopied, onCopy } = useCopy(url);
+
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
 
-      navigator.clipboard.writeText(url).then(() => {
-        setUrlCopied(true);
-        if (timeoutRef.current !== null) {
-          clearTimeout(timeoutRef.current);
-        }
-        timeoutRef.current = setTimeout(() => {
-          setUrlCopied(false);
-        }, 2000);
-      });
+      onCopy();
     },
-    [url],
+    [onCopy],
   );
 
   const handleOpenUnshare = useCallback(() => {
@@ -198,13 +193,6 @@ export function ShareModalView() {
     dispatch(ShareActions.setUnshareResourceId(shareResourceId));
   }, [dispatch, handleClose, shareResourceId]);
 
-  useEffect(
-    () => () => {
-      if (timeoutRef.current !== null) return clearTimeout(timeoutRef.current);
-    },
-    [],
-  );
-
   return (
     <Modal
       portalId="theme-main"
@@ -216,14 +204,13 @@ export function ShareModalView() {
     >
       <div className="px-3 py-4 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
-          <Tooltip tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}>
-            <div
-              className="line-clamp-2 w-full break-words pr-6"
-              data-qa="modal-entity-name"
-            >
-              {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
-            </div>
-          </Tooltip>
+          <div
+            className="flex w-full items-center gap-2 pr-6"
+            data-qa="modal-entity-name"
+          >
+            <p>{t('Share')}:</p>
+            <DialEllipsisTooltip text={shareResourceName?.trim()} />
+          </div>
         </h4>
 
         <div className="flex flex-col justify-between gap-2">
@@ -272,17 +259,12 @@ export function ShareModalView() {
                 </Tooltip>
               ) : (
                 <Tooltip tooltip={t('Copy URL')}>
-                  <button
-                    className="outline-none"
+                  <DialGhostIconButton
+                    size={ElementSize.Small}
                     onClick={handleCopy}
-                    data-qa="copy-link"
-                  >
-                    <IconCopy
-                      height={20}
-                      width={20}
-                      className="text-secondary hover:text-accent-primary"
-                    />
-                  </button>
+                    aria-label="copy-link"
+                    icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
+                  />
                 </Tooltip>
               )}
             </div>

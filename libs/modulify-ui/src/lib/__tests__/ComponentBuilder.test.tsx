@@ -1,8 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import ComponentBuilder from '../ComponentBuilder';
+import ComponentBuilder, {
+  CB_Handlers,
+  CB_SetState,
+  CB_State,
+  CB_StateFn,
+} from '../ComponentBuilder';
 
 import '@testing-library/jest-dom/vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { PropsWithChildren } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -20,8 +24,8 @@ const MockComponent: React.FC<PropsWithChildren<{ text: string }>> = ({
 describe('ComponentBuilder', () => {
   it('should render the base component', () => {
     const Component = ComponentBuilder.use(MockComponent).build();
-    const { getByText } = render(<Component text="Hello" />);
-    expect(getByText('Hello')).toBeInTheDocument();
+    render(<Component text="Hello" />);
+    expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 
   it('should apply custom class names', () => {
@@ -47,7 +51,7 @@ describe('ComponentBuilder', () => {
   });
 
   it('should update state using state function', () => {
-    const stateFn = vi.fn((state, setState) => {
+    const stateFn = vi.fn<CB_StateFn>((_state, setState) => {
       setState({ updated: true });
     });
 
@@ -70,40 +74,48 @@ describe('ComponentBuilder', () => {
   });
 
   it('should update HTML content', () => {
-    const Component = ComponentBuilder.use<typeof MockComponent, 'block1'>(
-      MockComponent,
-    )
+    const Component = ComponentBuilder.use(MockComponent)
       .updateHTML({
         block1: () => <span>Replaced Content</span>,
       })
       .build();
 
-    const { queryByText } = render(
+    render(
       <Component text="Hello">
         <div data-customize-id="block1">Original Content</div>
       </Component>,
     );
 
-    expect(queryByText('Original Content')).not.toBeInTheDocument();
-    expect(queryByText('Replaced Content')).toBeInTheDocument();
+    expect(screen.queryByText('Original Content')).not.toBeInTheDocument();
+    expect(screen.getByText('Replaced Content')).toBeInTheDocument();
   });
 
   it('should update text on button click using state and effects', async () => {
-    const stateFn = vi.fn((state, setState) => {
-      if (state.clicked === undefined) {
-        setState((state: any) => ({ ...state, clicked: false }));
+    const stateFn = vi.fn<CB_StateFn>((state, setState) => {
+      if (state['clicked'] === undefined) {
+        setState((state: CB_State) => ({ ...state, clicked: false }));
       }
     });
 
-    const effectFn = vi.fn((state, setState) => {
-      if (state.clicked && !state.status) {
-        setState((state: any) => ({ ...state, status: 'Clicked!' }));
-      }
-    });
+    const effectFn = vi.fn<(state?: CB_State, setState?: CB_SetState) => void>(
+      (state, setState) => {
+        if (state?.['clicked'] && !state?.['status']) {
+          setState?.((state: CB_State) => ({ ...state, status: 'Clicked!' }));
+        }
+      },
+    );
 
-    const onClickFn = vi.fn((setState) => setState?.({ clicked: true }));
+    const onClickFn = vi.fn<
+      (setState?: (arg: { clicked: boolean }) => void) => void
+    >((setState) => setState?.({ clicked: true }));
 
-    const handlerFn = vi.fn((handlers, state, setState) => ({
+    const handlerFn = vi.fn<
+      (
+        handlers: CB_Handlers,
+        state?: CB_State | undefined,
+        setState?: CB_SetState | undefined,
+      ) => CB_Handlers
+    >((handlers, _state, setState) => ({
       ...handlers,
       component: {
         ...handlers.component,
@@ -130,8 +142,8 @@ describe('ComponentBuilder', () => {
       ))
       .build();
 
-    const { getByText } = render(<Component text="Hello" />);
-    const button = getByText('Click me');
+    render(<Component text="Hello" />);
+    const button = screen.getByText('Click me');
 
     await userEvent.click(button);
 
@@ -139,6 +151,6 @@ describe('ComponentBuilder', () => {
     expect(onClickFn).toHaveBeenCalled();
     expect(stateFn).toHaveBeenCalled();
     expect(effectFn).toHaveBeenCalled();
-    expect(getByText('Clicked!')).toBeInTheDocument();
+    expect(screen.getByText('Clicked!')).toBeInTheDocument();
   });
 });

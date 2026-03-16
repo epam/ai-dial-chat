@@ -107,7 +107,7 @@ export const OpenAIStream = async ({
       let result: DialAIErrorResponse;
       try {
         result = JSON.parse(await res.text()) as DialAIErrorResponse;
-      } catch (e) {
+      } catch {
         throw new DialAIError(res.statusText, res.status, url, {
           displayMessage: res.statusText,
         });
@@ -149,7 +149,6 @@ export const OpenAIStream = async ({
     }
 
     break;
-    // eslint-disable-next-line no-constant-condition
   } while (true);
 
   let idSend = false;
@@ -216,7 +215,7 @@ export const OpenAIStream = async ({
       try {
         abortController.abort();
       } catch (error) {
-        logger.debug(
+        logger.error(
           { error },
           'AbortController: abort was called but the request was already aborted',
         );
@@ -226,7 +225,7 @@ export const OpenAIStream = async ({
         const nodeBody = res.body as Readable | null;
         nodeBody?.destroy?.();
       } catch (error) {
-        logger.debug(
+        logger.error(
           { error },
           'Stream body: destroy was called but the stream was already closed',
         );

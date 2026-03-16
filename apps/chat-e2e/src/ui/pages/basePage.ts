@@ -13,7 +13,7 @@ import path from 'path';
 import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
-  path: string;
+  path: string | string[];
   dataType?: 'download' | 'upload';
 }
 
@@ -100,7 +100,6 @@ export class BasePage {
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { urlPattern: API.installedDeploymentsHost() },
         { apiMethod: 'GET', urlPattern: API.publishedApplicationsHost() },
-        { apiMethod: 'GET', urlPattern: API.filesListingHost() },
         { apiMethod: 'GET', urlPattern: API.publishedConversationsHost() },
         { apiMethod: 'GET', urlPattern: API.publishedPromptsHost() },
         { apiMethod: 'GET', urlPattern: API.appSchemasHost },
@@ -121,7 +120,7 @@ export class BasePage {
       let body;
       try {
         body = await response.text();
-      } catch (e) {
+      } catch {
         // eslint-disable-next-line no-console
         console.log('Response body not available for call: ', response.url());
         throw new Error();
@@ -286,12 +285,15 @@ export class BasePage {
       await method();
       await receivedDownloads;
       return downloadedData;
-    } catch (error) {
+    } catch {
       await Promise.all(
-        downloadedData.map((data) =>
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          fs.promises.unlink(data.path).catch(() => {}),
-        ),
+        downloadedData.map((data) => {
+          const paths = Array.isArray(data.path) ? data.path : [data.path];
+          return Promise.all(
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            paths.map((p) => fs.promises.unlink(p).catch(() => {})),
+          );
+        }),
       );
       throw new Error(`Download failed:`);
     }
@@ -316,8 +318,10 @@ export class BasePage {
     const fileChooserPromise = this.page.waitForEvent('filechooser');
     await method();
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(directory, uploadData.path));
-    // eslint-disable-next-line playwright/no-wait-for-timeout
+    const filePaths = Array.isArray(uploadData.path)
+      ? uploadData.path.map((p) => path.join(directory, p))
+      : path.join(directory, uploadData.path);
+    await fileChooser.setFiles(filePaths);
     await this.page.waitForTimeout(500);
   }
 
@@ -396,7 +400,6 @@ export class BasePage {
     const { pasteToElement, isHttpMethodTriggered = true } = options || {};
     // 1. Focus on element that support 'paste' event
     if (pasteToElement) {
-      // eslint-disable-next-line playwright/no-force-option
       await pasteToElement.click({ force: true });
     }
 

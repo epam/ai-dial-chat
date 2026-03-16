@@ -63,7 +63,6 @@ export function ChatMessageContent({
   conversation,
   editDisabled,
   isLikesEnabled,
-  messageCopied,
   isEditing,
   isEditingTemplates,
   withButtons,
@@ -72,7 +71,6 @@ export function ChatMessageContent({
   onLike,
   onDelete,
   onClick,
-  onCopy,
   onEdit,
   onRegenerate,
 }: Props) {
@@ -170,8 +168,6 @@ export function ChatMessageContent({
               isLastMessage={isLastMessage}
               isLikesEnabled={isLikesEnabled}
               withButtons={withButtons}
-              messageCopied={messageCopied}
-              onCopy={onCopy}
               onLike={onLike}
               onToggleEditing={onToggleEditing}
               onEdit={onEdit}

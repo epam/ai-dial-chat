@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -15,11 +16,14 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Modal } from '@/src/components/Common/Modal';
 
 import { ConversationSettings } from './ConversationSettings';
+
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface ChatSettingsViewProps {
   conversation: Conversation;
@@ -151,13 +155,14 @@ export const ChatSettings = ({
                   />
                 </div>
                 <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
-                  {model?.version && (
-                    <div className="flex items-center">
-                      <p className="mr-1 text-xs text-secondary">
-                        {t('Version')}: {model.version}
-                      </p>
-                    </div>
-                  )}
+                  {model &&
+                    (isCreatedMarketplaceEntity(model) || model.version) && (
+                      <div className="flex items-center">
+                        <p className="mr-1 text-xs text-secondary">
+                          {t('Version')}: {model.version || t(NA_VERSION)}
+                        </p>
+                      </div>
+                    )}
                   <div className="flex whitespace-nowrap">
                     <div
                       className={classNames(
@@ -196,13 +201,11 @@ export const ChatSettings = ({
       </div>
       {isSomethingConfigurable && (
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
-          <button
-            className="button button-primary"
-            data-qa="apply-changes"
+          <DialPrimaryButton
+            label={t('Apply changes')}
             onClick={handleOnApplySettings}
-          >
-            {t('Apply changes')}
-          </button>
+            data-qa="apply-changes"
+          />
         </div>
       )}
     </Modal>

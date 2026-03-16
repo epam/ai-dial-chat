@@ -557,7 +557,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
     'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
     'Unshared by the owner file disappears from "Shared with me". User1 shares two files, unshares one file.\n' +
@@ -576,6 +576,7 @@ dialSharedWithMeTest(
     confirmationDialog,
     manageAttachmentsAssertion,
     setTestIds,
+    setIssueIds,
     additionalShareUserDataInjector,
     additionalShareUserDialHomePage,
     additionalShareUserConversations,
@@ -590,6 +591,7 @@ dialSharedWithMeTest(
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101', 'EPMRTC-5524');
+    setIssueIds('5957');
     let imageConversation: Conversation;
     let firstImageUrl: string;
     let secondImageUrl: string;

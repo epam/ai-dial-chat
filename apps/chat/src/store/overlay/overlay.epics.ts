@@ -114,7 +114,7 @@ import {
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
-export const postMessageMapperEpic: AppEpic = (_, state$) =>
+const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
     ? fromEvent<MessageEvent>(window, 'message').pipe(
         filter(isPostMessageOverlayRequest),
@@ -1366,7 +1366,12 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
             );
           } else {
             //will try to signin in the iframe
-            signIn(signInOptions?.signInProvider);
+            const logInHint = signInOptions?.logInHint;
+            const authParams: Record<string, string> | undefined = logInHint
+              ? { login_hint: logInHint }
+              : undefined;
+
+            signIn(signInOptions?.signInProvider, undefined, authParams);
           }
         }
       };

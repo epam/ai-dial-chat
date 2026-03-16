@@ -18,8 +18,10 @@ export const ExpectedMessages = {
   conversationsListIsValid: 'Conversations list is valid',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
-  folderIsNotVisible: 'Folder is not visible in chat bar',
+  folderIsNotVisible: 'Folder is not visible',
   folderIsVisible: 'Folder is visible',
+  folderIsSelected: 'Folder is selected',
+  folderIsNotSelected: 'Folder is not selected',
   newFolderCreated: 'New folder is created',
   folderCollapsed: 'Folder is collapsed',
   folderExpanded: 'Folder is expanded',
@@ -305,6 +307,7 @@ export const ExpectedMessages = {
   fileExtensionIsValid: 'File extension is valid',
   elementAttributeValueIsValid: 'Element attribute value is valid',
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
+  elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',
@@ -451,6 +454,10 @@ export const ExpectedMessages = {
     'Updated conversation should have original and new messages',
   postfixedConversationHasImportedMessages:
     'Postfixed conversation should have imported (original) messages only',
+  popupHeaderIsValid: 'Popup header is valid',
+  popupContentIsValid: 'Popup content is valid',
+  gridRowIsVisible: 'Grid row is visible',
+  gridRowIsNotVisible: 'Grid row is not visible',
 };
 
 export const PublishingExpectedMessages = {

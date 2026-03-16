@@ -1,3 +1,5 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';

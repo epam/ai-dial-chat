@@ -1,7 +1,8 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { getToolsetLink } from '@/src/utils/marketplace';
 
@@ -11,7 +12,6 @@ import { Translation } from '@/src/types/translation';
 import {
   MarketplaceActions,
   PublicationActions,
-  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -52,10 +52,10 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!navigator.clipboard) return;
       const link = getToolsetLink(toolset);
-      navigator.clipboard.writeText(link);
-      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      writeTextToClipboard(link, () => {
+        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+      });
     },
     [dispatch, t, toolset],
   );
@@ -64,7 +64,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(ToolsetActions.setToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
         query: {
@@ -75,7 +74,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         },
       });
     },
-    [dispatch, router, toolset.reference],
+    [router, toolset.reference],
   );
 
   const handlePublish = useCallback(

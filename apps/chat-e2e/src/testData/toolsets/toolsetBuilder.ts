@@ -33,7 +33,7 @@ export class ToolsetBuilder {
   protected reset(): Toolset {
     this.toolset = {
       endpoint: ExpectedConstants.defaultEntityUrl,
-      transport: ToolsetTransportType.SSE,
+      transport: ToolsetTransportType.HTTP,
       allowed_tools: [],
       display_name: GeneratorUtil.randomToolsetName(),
       display_version: ExpectedConstants.defaultEntityVersion,

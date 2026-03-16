@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { FC, useCallback } from 'react';
 
 import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { translate } from '@/src/utils/app/translation';
@@ -11,13 +11,13 @@ import {
   ModelsActions,
   ToolsetActions,
 } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 const getDeleteConfirmationText = (
   action: DeleteType,
@@ -55,12 +55,20 @@ const getDeleteConfirmationText = (
   return deleteConfirmationText[action];
 };
 
-const DeleteMarketplaceEntityDialogView = () => {
+interface DeleteMarketplaceEntityDialogProps {
+  deleteState: {
+    entity: MarketplaceEntity;
+    action: DeleteType;
+  };
+}
+
+const DeleteMarketplaceEntityDialogView: FC<
+  DeleteMarketplaceEntityDialogProps
+> = ({ deleteState }) => {
   const dispatch = useAppDispatch();
 
-  const deleteState = useAppSelector(MarketplaceSelectors.selectDeleteEntity);
-  const deleteAction = deleteState?.action;
-  const deleteEntity = deleteState?.entity;
+  const deleteAction = deleteState.action;
+  const deleteEntity = deleteState.entity;
 
   const handleDelete = useCallback(
     (entity: MarketplaceEntity) => {
@@ -99,7 +107,7 @@ const DeleteMarketplaceEntityDialogView = () => {
 
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
-      if (confirm && deleteEntity) {
+      if (confirm) {
         if (deleteAction === DeleteType.REMOVE) {
           handleRemove(deleteEntity);
         } else if (deleteAction === DeleteType.DELETE) {
@@ -113,8 +121,6 @@ const DeleteMarketplaceEntityDialogView = () => {
     [deleteAction, deleteEntity, dispatch, handleDelete, handleRemove],
   );
 
-  if (!deleteEntity || !deleteAction) return null;
-
   return (
     <ConfirmDialog
       isOpen
@@ -124,6 +130,7 @@ const DeleteMarketplaceEntityDialogView = () => {
   );
 };
 
-export const DeleteMarketplaceEntityDialog = withRenderWhen(
-  MarketplaceSelectors.selectDeleteEntity,
-)(DeleteMarketplaceEntityDialogView);
+export const DeleteMarketplaceEntityDialog =
+  withRenderWhenEntities<DeleteMarketplaceEntityDialogProps>({
+    deleteState: MarketplaceSelectors.selectDeleteEntity,
+  })(DeleteMarketplaceEntityDialogView);

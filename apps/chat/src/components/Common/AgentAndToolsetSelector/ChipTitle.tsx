@@ -1,9 +1,12 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 interface ChipTitleProps {
   name: string;
   version?: string;
   isError: boolean;
+  isCustomTool?: boolean;
   className?: string;
 }
 
@@ -11,6 +14,7 @@ export const ChipTitle: React.FC<ChipTitleProps> = ({
   name,
   version,
   isError,
+  isCustomTool,
   className,
 }) => {
   return (
@@ -23,7 +27,7 @@ export const ChipTitle: React.FC<ChipTitleProps> = ({
       <span
         className={classNames(
           'min-w-0 truncate',
-          isError ? 'text-error' : 'text-primary',
+          isError && !isCustomTool ? 'text-error' : 'text-primary',
         )}
       >
         {name}

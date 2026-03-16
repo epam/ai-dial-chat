@@ -1,3 +1,4 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -25,6 +26,8 @@ import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper
 
 import { Loader } from './Common/Loader';
 import { Title } from './Title';
+
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const removeQueryString = (url: string) => url.split('?')[0];
 
@@ -54,8 +57,18 @@ export function Layout({
     MarketplaceSelectors.selectIsApplyingModel,
   );
   const isEditorLoader = useAppSelector(UISelectors.selectIsEditorLoader);
+  const isAnyMenuOpen = useAppSelector((state) =>
+    UISelectors.selectIsAnyMenuOpen(state, router.pathname),
+  );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const [loading, setLoading] = useState(isApplyingModel);
+
+  const showFloatingOverlay = isAnyMenuOpen && !isIsolatedView;
+
+  const handleCloseOverlay = useCallback(() => {
+    dispatch(UIActions.closeAllPanels());
+  }, [dispatch]);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
@@ -96,18 +109,15 @@ export function Layout({
   // ON LOAD --------------------------------------------
 
   useEffect(() => {
-    // Hack for ios 100vh issue
-    const handleSetProperVHPoints = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        window.innerHeight * 0.01 + 'px',
-      );
+    const handleResize = () => {
       dispatch(UIActions.resize());
     };
-    handleSetProperVHPoints();
-    window.addEventListener('resize', handleSetProperVHPoints);
 
+    handleResize();
     dispatch(SettingsActions.initApp(getPageType(router.route)));
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
@@ -119,20 +129,23 @@ export function Layout({
       <Title settings={settings} />
       {shouldOverlayLogin ? (
         <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
-          <button
+          <DialNeutralButton
+            label={t('Login')}
             onClick={handleOverlayAuth}
-            className="button button-secondary"
             disabled={authStatus === 'loading'}
-          >
-            {t('Login')}
-          </button>
+          />
         </div>
       ) : (
         <main
-          // eslint-disable-next-line tailwindcss/enforces-shorthand
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
+          {showFloatingOverlay && (
+            <FloatingOverlay
+              className="z-30 bg-blackout sidebar-overlay:hidden"
+              onClick={handleCloseOverlay}
+            />
+          )}
           <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}

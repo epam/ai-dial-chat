@@ -5,7 +5,6 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import { IconX } from '@tabler/icons-react';
 import {
   FC,
   RefObject,
@@ -22,6 +21,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CloseButtonSmall } from './CloseButtons';
 import { Tooltip } from './Tooltip';
 
 import { useCombobox, useMultipleSelection } from 'downshift';
@@ -266,8 +266,8 @@ export function MultipleComboBox<T>({
                   >
                     <span
                       className={classNames(
-                        'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
-                        itemHeightClassName ? itemHeightClassName : 'h-[23px]',
+                        'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha p-1 pr-0',
+                        itemHeightClassName ? itemHeightClassName : 'h-[24px]',
                       )}
                       data-qa="combobox-pill"
                       {...getSelectedItemProps({
@@ -284,20 +284,17 @@ export function MultipleComboBox<T>({
                           {getItemLabel(selectedItemForRender)}
                         </span>
                       )}
-                      <button
+                      <CloseButtonSmall
                         data-qa={`unselect-item-${getItemValue(
                           selectedItemForRender,
                         )}`}
                         disabled={disabled}
-                        className={disabled ? 'cursor-not-allowed' : ''}
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
                           removeSelectedItem(selectedItemForRender);
                         }}
-                      >
-                        <IconX size={14} className="text-secondary" />
-                      </button>
+                      />
                     </span>
                   </Tooltip>
                 );
@@ -363,17 +360,15 @@ export function MultipleComboBox<T>({
           </ul>
         </div>
         {hasDeleteAll && selectedItems.length > 0 ? (
-          <button
-            className={classNames('py-2', disabled && 'cursor-not-allowed')}
+          <CloseButtonSmall
+            className="text-primary"
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedItems([]);
               onChangeSelectedItems([]);
             }}
-          >
-            <IconX height={18} width={18} />
-          </button>
+          />
         ) : null}
       </div>
     </Tooltip>

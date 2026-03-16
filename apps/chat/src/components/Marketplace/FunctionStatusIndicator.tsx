@@ -5,7 +5,6 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { Badge } from '@/src/components/Badge';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface FunctionStatusIndicatorProps {
   entity: DialAIEntityModel;
@@ -19,8 +18,9 @@ const getLabel = (entity: DialAIEntityModel) => {
     case ApplicationStatus.DEPLOYED:
       return 'Deployed';
     case ApplicationStatus.DEPLOYING:
-    case ApplicationStatus.REDEPLOYING:
       return 'Deploying';
+    case ApplicationStatus.REDEPLOYING:
+      return 'Redeploying';
     case ApplicationStatus.UNDEPLOYING:
       return 'Undeploying';
     default:
@@ -49,16 +49,10 @@ export const FunctionStatusIndicator = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   return entity.functionStatus ? (
-    <Tooltip
-      tooltip={getLabel(entity)}
-      isTriggerClickable
-      triggerClassName="flex shrink-0"
-    >
-      <Badge
-        label={t(getLabel(entity))}
-        type={getBadgeType(entity)}
-        className="shrink-0"
-      />
-    </Tooltip>
+    <Badge
+      label={t(getLabel(entity))}
+      type={getBadgeType(entity)}
+      className="shrink-0"
+    />
   ) : null;
 };

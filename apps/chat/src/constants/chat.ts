@@ -26,7 +26,6 @@ export const ACTION_QUERY_PARAM = 'action';
 export const DEFAULT_CUSTOM_ATTACHMENT_WIDTH = 150;
 export const DEFAULT_CUSTOM_ATTACHMENT_HEIGHT = 150;
 
-export const MIN_TWO_CAL_CHAT_SETTINGS_WIDTH = 510;
 export const CENTRAL_CHAT_MIN_WIDTH = 800;
 
 export const REPLAY_AS_IS_MODEL = 'REPLAY_AS_IS_MODEL';
@@ -95,3 +94,38 @@ export const SPECIAL_DEFAULT_MODEL_DIC: Record<string, DialAIEntityModel> = {
   [DEFAULT_AGENT]: DEFAULT_MODEL_OPTION,
   [LAST_USED_AGENT]: LAST_USED_MODEL_OPTION,
 };
+
+// taken from https://developer.mozilla.org/en-US/docs/Web/MathML/Reference/Element
+export const mathMLTags = [
+  'math',
+  'maction',
+  'annotation',
+  'annotation-xml',
+  'menclose',
+  'merror',
+  'mfenced',
+  'mfrac',
+  'mi',
+  'mmultiscripts',
+  'mn',
+  'mo',
+  'mover',
+  'mpadded',
+  'mphantom',
+  'mroot',
+  'mrow',
+  'ms',
+  'semantics',
+  'mspace',
+  'msqrt',
+  'mstyle',
+  'msub',
+  'msup',
+  'msubsup',
+  'mtable',
+  'mtd',
+  'mtext',
+  'mtr',
+  'munder',
+  'munderover',
+];

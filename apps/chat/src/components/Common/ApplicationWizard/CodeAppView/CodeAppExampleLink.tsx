@@ -19,6 +19,8 @@ import { CODE_APPS_EXAMPLES, ExampleTypes } from '@/src/constants/code-apps';
 
 import { CodeData } from '../form';
 
+import { nanoid } from 'nanoid';
+
 interface CodeAppExampleLinkProps {
   exampleType: ExampleTypes;
   folderId: string;
@@ -68,6 +70,7 @@ export const CodeAppExampleLink = ({
             label: endpoint,
             value: endpointUrl,
             visibleName: FEATURES_ENDPOINTS_NAMES[endpoint],
+            id: nanoid(),
           });
         } else {
           setValue(`endpoints.${index}.value`, endpointUrl);
@@ -84,6 +87,7 @@ export const CodeAppExampleLink = ({
             value: getEnvValue(),
             editableKey: true,
             visibleName: variable,
+            id: nanoid(),
           });
         } else {
           setValue(`env.${index}.value`, getEnvValue());

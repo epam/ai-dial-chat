@@ -17,9 +17,15 @@ export interface UserGroup {
   name: string;
 }
 
+export interface SharedResource {
+  url: string;
+  permissions: SharePermission[];
+  author: string;
+  shareCredentials: boolean;
+}
 export interface InvitationDetails {
   id: string;
-  resources: { url: string }[];
+  resources: SharedResource[];
   createdAt: number;
   expireAt: number;
 }
@@ -71,4 +77,5 @@ export interface ShareListingRequestModel {
   resourceTypes: BackendResourceType[];
   with: ShareRelations;
   order: 'popular_asc';
+  includeUserInfo?: boolean;
 }

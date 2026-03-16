@@ -1,4 +1,4 @@
-import { DialHomePage, MarketplacePage } from '../ui/pages';
+import { DialHomePage, FileManagerPage, MarketplacePage } from '../ui/pages';
 import {
   AgentSettings,
   AttachFilesModal,
@@ -8,11 +8,21 @@ import {
   ChatMessages,
   Compare,
   ConfirmationDialog,
+  ConfirmationPopup,
   ConversationSettingsModal,
   ConversationToCompare,
+  Dropdown,
   DropdownMenu,
   EntityDetailsModal,
   FileDropArea,
+  FileManager,
+  FileManagerCollapsibleSidebar,
+  FileManagerContainer,
+  FileManagerGrid,
+  FileManagerModal,
+  FileManagerNavigationPanel,
+  FileManagerToolbar,
+  FoldersTree,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -37,6 +47,8 @@ import {
   ChatAssertion,
   ConversationAssertion,
   DownloadAssertion,
+  FileManagerGridAssertion,
+  FoldersTreeAssertion,
   ManageAttachmentsAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
@@ -175,6 +187,22 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
   additionalShareUserTooltip: Tooltip;
   additionalShareUserTooltipAssertion: TooltipAssertion;
+  additionalShareUserFileManagerPage: FileManagerPage;
+  additionalShareUserFileManagerContainer: FileManagerContainer;
+  additionalShareUserFileManager: FileManager;
+  additionalShareUserFileManagerToolbar: FileManagerToolbar;
+  additionalShareUserFileManagerGrid: FileManagerGrid;
+  additionalShareUserFileManagerGridAssertion: FileManagerGridAssertion;
+  additionalShareUserFileManagerGridRowDropdownMenu: Dropdown;
+  additionalShareUserFileManagerNavigationPanel: FileManagerNavigationPanel;
+  additionalShareUserFileManagerModal: FileManagerModal;
+  additionalShareUserFileManagerModalManager: FileManager;
+  additionalShareUserFileManagerModalGrid: FileManagerGrid;
+  additionalShareUserFileManagerModalToolbar: FileManagerToolbar;
+  additionalShareUserFileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  additionalShareUserFileManagerModalFoldersTree: FoldersTree;
+  additionalShareUserFileManagerDeleteItemConfirmationPopup: ConfirmationPopup;
+  additionalShareUserFileManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -183,6 +211,8 @@ const dialSharedWithMeTest = dialTest.extend<{
         additionalUserShareApiHelper,
         additionalSecondUserItemApiHelper,
         additionalSecondUserShareApiHelper,
+        additionalUserFileApiHelper,
+        additionalSecondShareUserFileApiHelper,
       },
       use,
     ) => {
@@ -192,6 +222,8 @@ const dialSharedWithMeTest = dialTest.extend<{
       await additionalSecondUserItemApiHelper.deleteAllData(
         BucketUtil.getAdditionalSecondShareUserBucket(),
       );
+      await additionalUserFileApiHelper.deleteAllFiles();
+      await additionalSecondShareUserFileApiHelper.deleteAllFiles();
       const additionalUserSharedEntities =
         await additionalUserShareApiHelper.listSharedWithMeEntities(
           ...Object.values(BackendResourceType),
@@ -929,6 +961,136 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserTooltip,
     );
     await use(additionalShareUserTooltipAssertion);
+  },
+  additionalShareUserFileManagerPage: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerPage = new FileManagerPage(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserFileManagerPage);
+  },
+  additionalShareUserFileManagerContainer: async (
+    { additionalShareUserFileManagerPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerContainer =
+      additionalShareUserFileManagerPage.getFileManagerContainer();
+    await use(additionalShareUserFileManagerContainer);
+  },
+  additionalShareUserFileManager: async (
+    { additionalShareUserFileManagerContainer },
+    use,
+  ) => {
+    const additionalShareUserFileManager =
+      additionalShareUserFileManagerContainer.getFileManager();
+    await use(additionalShareUserFileManager);
+  },
+  additionalShareUserFileManagerToolbar: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerToolbar =
+      additionalShareUserFileManager.getFileManagerToolbar();
+    await use(additionalShareUserFileManagerToolbar);
+  },
+  additionalShareUserFileManagerGrid: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGrid =
+      additionalShareUserFileManager.getFileManagerGrid();
+    await use(additionalShareUserFileManagerGrid);
+  },
+  additionalShareUserFileManagerGridAssertion: async (
+    { additionalShareUserFileManagerGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGridAssertion =
+      new FileManagerGridAssertion(additionalShareUserFileManagerGrid);
+    await use(additionalShareUserFileManagerGridAssertion);
+  },
+  additionalShareUserFileManagerGridRowDropdownMenu: async (
+    { additionalShareUserFileManagerGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerGridRowDropdownMenu =
+      additionalShareUserFileManagerGrid.getRowDropdownMenu();
+    await use(additionalShareUserFileManagerGridRowDropdownMenu);
+  },
+  additionalShareUserFileManagerNavigationPanel: async (
+    { additionalShareUserFileManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerNavigationPanel =
+      additionalShareUserFileManager.getFileManagerNavigationPanel();
+    await use(additionalShareUserFileManagerNavigationPanel);
+  },
+  additionalShareUserFileManagerModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModal = new FileManagerModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserFileManagerModal);
+  },
+  additionalShareUserFileManagerModalManager: async (
+    { additionalShareUserFileManagerModal },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalManager =
+      additionalShareUserFileManagerModal.getFileManager();
+    await use(additionalShareUserFileManagerModalManager);
+  },
+  additionalShareUserFileManagerModalGrid: async (
+    { additionalShareUserFileManagerModalManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalGrid =
+      additionalShareUserFileManagerModalManager.getFileManagerGrid();
+    await use(additionalShareUserFileManagerModalGrid);
+  },
+  additionalShareUserFileManagerModalToolbar: async (
+    { additionalShareUserFileManagerModalManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalToolbar =
+      additionalShareUserFileManagerModalManager.getFileManagerToolbar();
+    await use(additionalShareUserFileManagerModalToolbar);
+  },
+  additionalShareUserFileManagerModalCollapsibleSidebar: async (
+    { additionalShareUserFileManagerModalManager },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalCollapsibleSidebar =
+      additionalShareUserFileManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(additionalShareUserFileManagerModalCollapsibleSidebar);
+  },
+  additionalShareUserFileManagerModalFoldersTree: async (
+    { additionalShareUserFileManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalFoldersTree =
+      additionalShareUserFileManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(additionalShareUserFileManagerModalFoldersTree);
+  },
+  additionalShareUserFileManagerDeleteItemConfirmationPopup: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserFileManagerDeleteItemConfirmationPopup =
+      new ConfirmationPopup(additionalShareUserPage, 'Delete');
+    await use(additionalShareUserFileManagerDeleteItemConfirmationPopup);
+  },
+  additionalShareUserFileManagerModalFoldersTreeAssertion: async (
+    { additionalShareUserFileManagerModalFoldersTree },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalFoldersTreeAssertion =
+      new FoldersTreeAssertion(additionalShareUserFileManagerModalFoldersTree);
+    await use(additionalShareUserFileManagerModalFoldersTreeAssertion);
   },
 });
 

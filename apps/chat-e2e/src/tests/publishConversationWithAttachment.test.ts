@@ -13,7 +13,6 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { FileModalSection } from '@/src/ui/webElements';
 import {
   DateUtil,
   FileUtil,
@@ -27,9 +26,9 @@ let modelWithInputAttachments: DialAIEntityModel;
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
-  modelWithInputAttachments = ModelsUtil.getModel(
-    'claude-3-7-sonnet@20250219',
-  )!;
+  modelWithInputAttachments = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getLatestModelsWithAttachment(),
+  );
 });
 
 dialAdminTest(
@@ -58,9 +57,9 @@ dialAdminTest(
     publishFileTreeAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
-    chatBar,
-    attachFilesModal,
-    manageAttachmentsAssertion,
+    navigationPanel,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
     adminFilesToApproveTree,
@@ -328,15 +327,15 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Verify attachment is displayed under "Organization" section in "Manage attachments" modal',
+      'Verify attachment is displayed under "Organization" section in File Manager',
       async () => {
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          FileModalSection.Organization,
+        await navigationPanel.goToFileManager();
+        await fileManagerToolbar.organizationTab.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
           'visible',
         );
-        await attachFilesModal.closeButton.click();
+        await navigationPanel.backToChat();
       },
     );
 

@@ -11,9 +11,16 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, StyleValues, Styles } from '@/src/ui/domData';
+import {
+  Colors,
+  Overflow,
+  StyleValues,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -35,7 +42,9 @@ dialTest(
     conversationData,
     dataInjector,
     shareModal,
+    baseAssertion,
     shareModalAssertion,
+    tooltipAssertion,
     tooltip,
     page,
     sendMessage,
@@ -103,54 +112,51 @@ dialTest(
     await dialTest.step(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
-        await shareModal.closeButton.hoverOver();
-        const closeButtonColor =
-          await shareModal.closeButton.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(closeButtonColor[0], ExpectedMessages.buttonColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
-
+        await shareModal.closeButtonIcon.hoverOver();
+        await shareModalAssertion.assertElementBorderColors(
+          shareModal.closeButtonIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
         await shareModal.copyLinkButton.hoverOver();
-        const copyButtonColor =
-          await shareModal.copyLinkButton.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(copyButtonColor[0], ExpectedMessages.buttonColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
-
-        const copyLinkTooltip = await tooltip.getContent();
-        expect
-          .soft(copyLinkTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.copyUrlTooltip);
+        await shareModalAssertion.assertElementBorderColors(
+          shareModal.copyLinkIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
+        await tooltipAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.copyUrlTooltip,
+          ExpectedMessages.tooltipContentIsValid,
+        );
       },
     );
 
     await dialTest.step(
       'Verify chat name is truncated with dots and full name is shown on hover',
       async () => {
-        const chatNameOverflowProp =
-          await shareModal.entityName.getComputedStyleProperty(
-            Styles.overflow_wrap,
-          );
-        expect
-          .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(StyleValues.breakWord);
-
+        await baseAssertion.assertElementTextIsTruncated(
+          shareModal.leftEntityName,
+        );
+        const isNameVisuallyTruncated =
+          await shareModal.leftEntityName.isElementWidthTruncated();
         await shareModal.entityName.hoverOver();
-        const tooltipChatName = await tooltip.getContent();
-        expect
-          .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedEntityName(conversation.name));
+        if (isNameVisuallyTruncated) {
+          await baseAssertion.assertElementText(
+            tooltip,
+            ExpectedConstants.sharedEntityName(conversation.name, true),
+            ExpectedMessages.tooltipContentIsValid,
+          );
 
-        const isTooltipChatNameTruncated =
-          await tooltip.isElementWidthTruncated();
-        expect
-          .soft(
-            isTooltipChatNameTruncated,
-            ExpectedMessages.entityNameIsFullyVisible,
-          )
-          .toBeFalsy();
+          const isTooltipChatNameTruncated =
+            await tooltip.isElementWidthTruncated();
+          expect
+            .soft(
+              isTooltipChatNameTruncated,
+              ExpectedMessages.entityNameIsFullyVisible,
+            )
+            .toBeFalsy();
+        } else {
+          await baseAssertion.assertElementState(tooltip, 'hidden');
+        }
       },
     );
 

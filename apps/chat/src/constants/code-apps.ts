@@ -11,7 +11,7 @@ export enum ExampleTypes {
   REQUIREMENTS = 'requirements.txt',
 }
 
-export interface Example {
+interface Example {
   files: Record<string, string>;
   endpoints?: Record<string, string>;
   variables?: Record<string, () => string>;

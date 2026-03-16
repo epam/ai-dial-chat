@@ -18,7 +18,6 @@ import {
   SourcesFilterOptions,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator } from '@playwright/test';
@@ -43,7 +42,8 @@ dialTest(
     baseAssertion,
     fileApiHelper,
     entityEditorGeneralForm,
-    attachFilesModal,
+    fileManagerModal,
+    fileManagerModalGrid,
     entityEditorHeader,
   }) => {
     setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
@@ -184,11 +184,12 @@ dialTest(
         'visible',
       );
       await entityEditorGeneralForm.changeIcon.click();
-      await attachFilesModal.checkAttachedFile(
-        Attachment.cloudImageName,
-        FileModalSection.AllFiles,
-      );
-      await attachFilesModal.attachFiles();
+      const attachmentCheckbox =
+        await fileManagerModalGrid.gridCheckboxByNameCell(
+          Attachment.cloudImageName,
+        );
+      await attachmentCheckbox.click();
+      await fileManagerModal.getSelectButton().click();
       await entityEditorHeader.saveAndExitButton.click();
       await marketplacePage.waitForPageLoaded();
     });

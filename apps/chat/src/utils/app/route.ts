@@ -20,6 +20,8 @@ export const getPageType = (route?: string) => {
       return PageType.ToolsetEditor;
     case Routes.AppsEditor:
       return PageType.AppsEditor;
+    case Routes.FileManager:
+      return PageType.FileManager;
     default:
       return PageType.Chat;
   }
@@ -33,6 +35,12 @@ export const getPageName = ({ route, query }: BaseRouter) => {
         : 'Marketplace';
     case Routes.AppsEditor:
       return 'App Editor';
+    case Routes.ToolsetEditor:
+      return 'Toolset Editor';
+    case Routes.ToolsetSignIn:
+      return 'Toolset Sign In';
+    case Routes.FileManager:
+      return 'Files';
     case Routes.Widgets:
       return 'Widgets';
     case Routes.SelectedWidget:

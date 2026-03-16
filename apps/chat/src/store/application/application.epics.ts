@@ -35,6 +35,7 @@ import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -293,13 +294,17 @@ const updateApplicationEpic: AppEpic = (action$) =>
             .pipe(
               map(() => ({ success: true as const })),
               catchError((err) => {
+                const failActions = [
+                  ApplicationActions.updateFail({
+                    oldApplication: payload.oldApplication,
+                  }),
+                  UIActions.setEditorLoader(false),
+                ];
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
-                      ApplicationActions.updateFail({
-                        oldApplication: payload.oldApplication,
-                      }),
+                      ...failActions,
                       UIActions.showErrorToast(
                         translate(
                           'An application with this name and this version already exists.',
@@ -312,9 +317,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                 return of({
                   success: false as const,
                   actions: [
-                    ApplicationActions.updateFail({
-                      oldApplication: payload.oldApplication,
-                    }),
+                    ...failActions,
                     UIActions.showErrorToast(
                       translate('Failed to move application'),
                     ),
@@ -359,6 +362,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       isExitingAfterSave: payload.isSaveAndExit,
                     }),
                   ),
+                  of(ApplicationActions.setEditorError()),
                 ];
 
                 if (payload.isSaveAndExit) {
@@ -383,13 +387,28 @@ const updateApplicationEpic: AppEpic = (action$) =>
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
-                return of(
-                  ApplicationActions.updateFail({
-                    oldApplication: payload.oldApplication,
-                  }),
-                  UIActions.showErrorToast(
-                    translate('Failed to update application'),
+                return concat(
+                  of(
+                    ApplicationActions.updateFail({
+                      oldApplication: payload.oldApplication,
+                    }),
                   ),
+                  of(
+                    UIActions.showErrorToast(
+                      translate('Failed to update application'),
+                    ),
+                  ),
+                  iif(
+                    () => !!payload.shouldSetEditorError,
+                    of(
+                      ApplicationActions.setEditorError(
+                        err.message ??
+                          translate('App settings are not matching the schema'),
+                      ),
+                    ),
+                    EMPTY,
+                  ),
+                  of(UIActions.setEditorLoader(false)),
                 );
               }),
               endWith(ApplicationActions.updateComplete()),
@@ -466,19 +485,60 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           const modelFromState = modelsMap[application.reference];
 
+          const acceptSharedWithMe = payload.acceptSharePermissions?.length
+            ? true
+            : undefined;
+
           actions.push(
             of(
               ApplicationActions.getSuccess({
                 ...application,
-                sharedWithMe: modelFromState?.sharedWithMe,
-                permissions: modelFromState?.permissions,
+                sharedWithMe:
+                  acceptSharedWithMe ?? modelFromState?.sharedWithMe,
+                permissions:
+                  payload.acceptSharePermissions ?? modelFromState?.permissions,
                 isShared: modelFromState?.isShared,
               }),
             ),
           );
 
           if (!modelFromState) {
-            actions.push(of(ModelsActions.addModelToMap(application)));
+            actions.push(
+              of(
+                ModelsActions.addModels({
+                  models: [
+                    {
+                      ...application,
+                      sharedWithMe: acceptSharedWithMe,
+                      permissions: payload.acceptSharePermissions,
+                    },
+                  ],
+                }),
+              ),
+            );
+          }
+
+          if (payload.acceptSharePermissions) {
+            actions.push(
+              of(
+                ModelsActions.addInstalledModels({
+                  references: [application.reference],
+                }),
+              ),
+              of(ShareActions.triggerGettingSharedApplicationsListings()),
+            );
+          }
+
+          if (payload.showCard) {
+            actions.push(
+              of(
+                MarketplaceActions.setDetailsEntity({
+                  reference: application.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }),
+              ),
+            );
           }
 
           if (payload.isForSharing) {
@@ -498,6 +558,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
+          console.error(
+            'NotFound',
+            `Application is not found: ${payload.applicationId}`,
+          );
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
@@ -701,11 +765,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
       const selectedConversationIds =
         ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-      const initialActions$ = of(
+      const initialActions: AppAction[] = [
         ApplicationActions.setReturnConversationIds(
           selectedConversationIds.filter((id) => !isEntityIdLocal({ id })),
         ),
-      );
+      ];
 
       const actions: AppAction[] = [
         ApplicationActions.get({ applicationId: entity.id }),
@@ -722,12 +786,15 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
           ),
         );
       } else if (isApplicationType(applicationType)) {
-        actions.push(
+        initialActions.push(
           ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
         );
       }
 
       const dispatchActions$ = concat(...actions.map((action) => of(action)));
+      const dispatchInitialActions$ = concat(
+        ...initialActions.map((action) => of(action)),
+      );
 
       const waitForAppLoad$ = action$.pipe(
         ofType(ApplicationActions.getSuccess.type),
@@ -767,7 +834,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         map(() => ApplicationActions.enterEditModeComplete()),
       );
 
-      return concat(initialActions$, dispatchActions$, waitForData$).pipe(
+      return concat(
+        dispatchInitialActions$,
+        dispatchActions$,
+        waitForData$,
+      ).pipe(
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
@@ -869,7 +940,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       actions.push(of(UIActions.setEditorLoader(false)));
 
-      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+      if (!publicationUrl) {
+        actions.push(of(ApplicationActions.setAppDetails()));
+      }
+
+      return navigateAndThen(router, route, concat(...actions));
     }),
   );
 

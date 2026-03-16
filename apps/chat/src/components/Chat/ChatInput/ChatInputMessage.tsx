@@ -1,4 +1,4 @@
-import {
+import React, {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
@@ -14,12 +14,12 @@ import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getUserCustomContent } from '@/src/utils/app/file';
 import {
   getConversationSchema,
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
-import { isMobile } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialFile, DialLink } from '@/src/types/files';
@@ -154,6 +154,9 @@ export const ChatInputMessage = Inversify.register(
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
+    const inputContentTemplateMapping = useAppSelector(
+      ChatSelectors.selectInputContentTemplateMapping,
+    );
     const isDisabledInputFeature = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
     );
@@ -186,6 +189,16 @@ export const ChatInputMessage = Inversify.register(
         );
       }
     }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
+
+    useEffect(() => {
+      if (inputContentTemplateMapping) {
+        promptTemplateMappingRef.current.set(
+          inputContentTemplateMapping.substituted.trim(),
+          inputContentTemplateMapping.original.trim(),
+        );
+        dispatch(ChatActions.clearInputContentTemplateMapping());
+      }
+    }, [dispatch, inputContentTemplateMapping]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
@@ -228,6 +241,14 @@ export const ChatInputMessage = Inversify.register(
 
       return isFormValueValid(schema, chatFormValue);
     }, [selectedConversations, configurationSchema, chatFormValue]);
+
+    const selectedAttachmentsIds = useMemo(
+      () =>
+        selectedFiles
+          .map((f) => f.id)
+          .concat(selectedFolders.map((f) => addTrailingSlashIfAbsent(f.id))),
+      [selectedFolders, selectedFiles],
+    );
 
     const isInputEmpty = useMemo(() => {
       return (
@@ -347,16 +368,13 @@ export const ChatInputMessage = Inversify.register(
       onRegenerate,
     ]);
 
+    const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
+
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (showPromptList && filteredPrompts.length > 0) {
           handleKeyDownIfShown(e);
-        } else if (
-          e.key === 'Enter' &&
-          !isTyping &&
-          !isMobile() &&
-          !e.shiftKey
-        ) {
+        } else if (!isTyping && allowEnterClick(e)) {
           e.preventDefault();
           if (isReplay || messageIsStreaming) {
             return;
@@ -371,6 +389,7 @@ export const ChatInputMessage = Inversify.register(
         showPromptList,
         filteredPrompts.length,
         isTyping,
+        allowEnterClick,
         handleKeyDownIfShown,
         isReplay,
         messageIsStreaming,
@@ -565,11 +584,16 @@ export const ChatInputMessage = Inversify.register(
           />
           {canAttach && (
             <>
-              <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
+              <div
+                className={classNames(
+                  'absolute cursor-pointer rounded disabled:cursor-not-allowed',
+                  isOverlay
+                    ? 'bottom-2 left-3'
+                    : 'bottom-2.5 left-4 md:bottom-3',
+                )}
+              >
                 <AttachButton
-                  selectedFilesIds={selectedFiles
-                    .map((f) => f.id)
-                    .concat(selectedFolders.map((f) => `${f.id}/`))}
+                  selectedFilesIds={selectedAttachmentsIds}
                   onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                   onUploadFromDevice={handleUploadFromDevice}
                   onAddLinkToMessage={handleAddLinkToMessage}

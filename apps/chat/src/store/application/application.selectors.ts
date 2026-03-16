@@ -57,6 +57,8 @@ const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
 const selectShouldTriggerEditorAutoUpdate = (state: RootState) =>
   rootSelector(state).shouldTriggerEditorAutoUpdate;
 
+const selectEditorError = (state: RootState) => rootSelector(state).editorError;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -70,4 +72,5 @@ export const ApplicationSelectors = {
   selectLogsEntityId,
   selectEditorStep,
   selectShouldTriggerEditorAutoUpdate,
+  selectEditorError,
 };

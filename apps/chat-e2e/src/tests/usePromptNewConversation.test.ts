@@ -8,7 +8,6 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -29,13 +28,14 @@ dialTest(
     sendMessage,
     chat,
     localStorageManager,
-    attachFilesModal,
     attachmentDropdownMenu,
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     chatBar,
     compare,
     sendMessageInputAttachments,
+    fileManagerModalGrid,
+    fileManagerModal,
   }) => {
     setTestIds(
       'EPMRTC-5486',
@@ -44,12 +44,8 @@ dialTest(
       'EPMRTC-5512',
       'EPMRTC-5497',
     );
-    // Select a model that allows file attachments
-    //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment().filter(
-        (m) => m.features?.configuration !== true,
-      ),
+      ModelsUtil.getLatestModelsWithAttachment(),
     );
     await localStorageManager.setRecentModelsIdsAndUseLastModel(
       modelWithAttachment,
@@ -118,11 +114,12 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(
-          Attachment.sunImageName,
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
+        const attachmentCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.sunImageName,
+          );
+        await attachmentCheckbox.click();
+        await fileManagerModal.getAttachButton().click();
         await sendMessage.messageInput.fillInInput(initialMessage);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.use);

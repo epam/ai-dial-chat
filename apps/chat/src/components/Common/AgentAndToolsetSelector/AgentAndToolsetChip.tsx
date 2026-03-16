@@ -1,29 +1,45 @@
-import { IconX } from '@tabler/icons-react';
+import React, { useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { getEntityNameFromId } from '@/src/utils/app/id';
+import {
+  getEntityNameFromId,
+  isApplicationId,
+  isToolsetId,
+} from '@/src/utils/app/id';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
+import { ButtonVariant } from '@epam/ai-dial-ui-kit';
+
 interface ChipWrapperProps {
   isError: boolean;
+  isCustomTool?: boolean;
   children: React.ReactNode;
 }
 
-const ChipWrapper: React.FC<ChipWrapperProps> = ({ isError, children }) => (
+const ChipWrapper: React.FC<ChipWrapperProps> = ({
+  isError,
+  isCustomTool,
+  children,
+}) => (
   <div
     className={classNames(
       'flex h-[34px] items-center rounded',
-      isError ? 'bg-error' : 'bg-accent-primary-alpha',
+      isCustomTool
+        ? 'bg-layer-4'
+        : isError
+          ? 'bg-error'
+          : 'bg-accent-primary-alpha',
     )}
   >
     {children}
@@ -40,18 +56,21 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   id,
   isError,
   onRemove,
-}) => (
-  <button
-    className={classNames(
-      'mr-1 p-1 text-secondary',
-      isError ? 'hover:text-error' : 'hover:text-accent-primary',
-    )}
-    onClick={() => onRemove?.(id)}
-    aria-label="Remove item"
-  >
-    <IconX size={14} />
-  </button>
-);
+}) => {
+  const isCustomTool = !isApplicationId(id) && !isToolsetId(id);
+
+  return (
+    <CloseButtonSmall
+      className={classNames(
+        'mr-1',
+        isError && !isCustomTool && 'hover:enabled:text-error',
+      )}
+      onClick={() => onRemove?.(id)}
+      aria-label="Remove item"
+      variant={isError ? ButtonVariant.Error : ButtonVariant.Primary}
+    />
+  );
+};
 
 interface ChipBodyProps {
   id: string;
@@ -79,12 +98,15 @@ const ChipBody: React.FC<ChipBodyProps> = ({
     onClick?.(id);
   };
 
+  const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
+
   return (
     <div
       className={classNames(
         'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
         isError ? 'text-error' : 'text-primary',
         readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
+        readonly && 'pr-2',
       )}
       onClick={handleClick}
     >
@@ -94,6 +116,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         version={version}
         isError={isError}
         className="max-w-[220px]"
+        isCustomTool={isCustomTool}
       />
     </div>
   );
@@ -106,7 +129,6 @@ interface AgentAndToolsetChipProps {
   readonly?: boolean;
   onItemClick?: (id: string) => void;
   isInSelectionList?: boolean;
-  customTooltip?: string;
 }
 
 export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
@@ -116,35 +138,37 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   readonly,
   onItemClick,
   isInSelectionList,
-  customTooltip,
 }) => {
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+  const { isInvalid, isError } = getEntityStatus(item);
 
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
     : item.name;
-  const version = !item ? getVersionFromId(id) : item.version;
+  const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
+
+  const version = isCustomTool
+    ? ''
+    : !item
+      ? getVersionFromId(id)
+      : item.version;
+
+  const tooltipContent = useMemo(() => {
+    return (
+      <ChipTooltipContent
+        id={id}
+        item={item}
+        name={name}
+        version={version}
+        isInSelectionList={isInSelectionList}
+        isCustomTool={isCustomTool}
+        readonly={readonly}
+      />
+    );
+  }, [id, item, name, version, isInSelectionList, readonly, isCustomTool]);
 
   return (
-    <ChipWrapper isError={isError}>
-      <Tooltip
-        isTriggerClickable
-        tooltip={
-          <>
-            {customTooltip && <div className="px-2 pt-1">{customTooltip}</div>}
-            <ChipTooltipContent
-              id={id}
-              item={item}
-              name={name}
-              version={version}
-              isInvalid={isInvalid}
-              isLoggedOut={isLoggedOut}
-              isInSelectionList={isInSelectionList}
-              hideStatusMessage={readonly}
-            />
-          </>
-        }
-      >
+    <ChipWrapper isError={isError} isCustomTool={isCustomTool}>
+      <Tooltip isTriggerClickable tooltip={tooltipContent}>
         <ChipBody
           id={id}
           item={item}

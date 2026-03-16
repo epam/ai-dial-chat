@@ -1,5 +1,6 @@
 'use client';
 
+import { ConfigurationInJSON, OverlayFeatures } from './OverlayConfiguration';
 import { BackToButton } from './backToSelectOverlayMode';
 
 import {
@@ -29,6 +30,8 @@ export const ChatOverlayManagerWrapper: React.FC<
 
   const [messageIndex, setMessageIndex] = useState(0);
   const [inputContent, setInputContent] = useState('');
+
+  const { enabledFeatures, ...restOverlayOptions } = overlayManagerOptions;
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
@@ -150,6 +153,21 @@ export const ChatOverlayManagerWrapper: React.FC<
     handleDisplayInformation,
     overlayManagerOptions.id,
   ]);
+
+  const setOverlayOptions = useCallback(
+    (newOptions: Partial<ChatOverlayManagerOptions>) => {
+      const updatedOptions = {
+        ...overlayManagerOptions,
+        hostDomain: window.location.origin,
+        ...newOptions,
+      };
+      overlayManager.current?.setOverlayOptions(
+        overlayManagerOptions.id,
+        updatedOptions,
+      );
+    },
+    [overlayManagerOptions],
+  );
 
   useEffect(() => {
     if (!overlayManager.current) {
@@ -304,12 +322,12 @@ export const ChatOverlayManagerWrapper: React.FC<
         <p className="whitespace-pre-wrap">{dialogInfo}</p>
       </dialog>
 
-      <div className="flex max-w-[600px] flex-col gap-2">
+      <div className="flex max-w-[900px] flex-col gap-2">
         <BackToButton />
         <details open={true}>
           <summary>Chat actions</summary>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col gap-2">
               <button
                 className="button"
@@ -594,9 +612,20 @@ export const ChatOverlayManagerWrapper: React.FC<
                 </div>
               </div>
             </div>
+
+            <div className="flex flex-col gap-1">
+              <ConfigurationInJSON
+                restOverlayOptions={restOverlayOptions}
+                handleSetOverlayOptions={setOverlayOptions}
+              />
+              <OverlayFeatures
+                enabledFeatures={enabledFeatures}
+                setOverlayOptions={setOverlayOptions}
+              />
+            </div>
           </div>
         </details>
-        <details>
+        <details className="mt-4">
           <summary>Overlay configuration</summary>
 
           <div className="flex flex-col gap-1">

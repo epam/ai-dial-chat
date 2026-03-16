@@ -1,5 +1,4 @@
-import { IconX } from '@tabler/icons-react';
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -16,10 +15,13 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
+
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -120,24 +122,14 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
           </Tooltip>
           <Tooltip tooltip={tooltip}>
             <div className="flex items-center gap-3">
-              <button
-                className="h-full cursor-pointer text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              <DialLinkButton
                 data-qa="change-button"
-                type="button"
                 disabled={disabled}
                 onClick={handleToggleFileManager}
-              >
-                {value ? t('Change') : t('Add')}
-              </button>
+                label={value ? t('Change') : t('Add')}
+              />
               {value && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={disabled}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                >
-                  <IconX size={18} />
-                </button>
+                <CloseButtonSmall onClick={handleDelete} disabled={disabled} />
               )}
             </div>
           </Tooltip>

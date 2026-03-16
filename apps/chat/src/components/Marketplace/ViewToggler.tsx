@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -8,6 +8,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import { ViewTypes } from '@/src/constants/marketplace';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 const views = [
   { view: ViewTypes.CARD, Icon: IconLayoutGrid },
@@ -31,19 +33,18 @@ export const ViewToggler: React.FC = () => {
   return (
     <div className="flex gap-2">
       {views.map(({ view, Icon }) => (
-        <button
+        <DialButton
           key={view}
           className={classNames(
             'rounded border p-1.5',
             selectedViewType === view
               ? 'border-accent-primary text-accent-primary'
-              : 'border-secondary text-secondary',
+              : 'border-primary text-secondary',
           )}
           data-qa={view.toLowerCase().concat('-view')}
           onClick={() => handleToggleView(view)}
-        >
-          <Icon size={24} />
-        </button>
+          iconBefore={<Icon />}
+        />
       ))}
     </div>
   );

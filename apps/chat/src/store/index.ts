@@ -86,7 +86,6 @@ export type AppDispatch = typeof store.dispatch;
 export const createStore = (preloadedState: { settings: SettingsState }) => {
   if (typeof window === 'undefined') {
     const epicMiddleware = createEpicMiddleware({
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       dependencies: { router: useRouter() },
     });
 
@@ -96,21 +95,13 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
       preloadedState,
       middleware,
     });
-    epicMiddleware.run(hotReloadingEpic);
-
-    if ((module as NodeModuleWithHot).hot) {
-      (module as NodeModuleWithHot).hot.accept('./rootEpic', async () => {
-        const next = await import('./rootEpic');
-        epic$.next(next.rootEpic);
-      });
-    }
+    epicMiddleware.run(rootEpic as Epic);
 
     return localStore;
   }
 
   if (!store) {
     const epicMiddleware = createEpicMiddleware({
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       dependencies: { router: useRouter() },
     });
 
