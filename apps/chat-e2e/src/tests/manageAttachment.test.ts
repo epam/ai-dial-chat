@@ -109,8 +109,8 @@ dialTest(
           isHttpMethodTriggered: false,
         });
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'POST',
-          triggeredHttpHost: API.deleteFileHost(),
+          triggeredHttpMethod: 'GET',
+          triggeredHttpHost: API.filesListingHost(),
         });
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
@@ -231,8 +231,8 @@ dialTest(
       async () => {
         await fileManagerModalToolbar.getDeleteButton().click();
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'POST',
-          triggeredHttpHost: API.deleteFileHost(),
+          triggeredHttpMethod: 'GET',
+          triggeredHttpHost: API.filesListingHost(),
         });
         for (const file of attachedFiles) {
           await fileManagerModalGridAssertion.assertGridRowByNameState(

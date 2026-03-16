@@ -30,4 +30,5 @@ export const IconSelectors = {
   fileTypeIcon: (extension: string) =>
     `tabler-icon tabler-icon-file-type-${extension} `,
   alertIcon: '.tabler-icon-alert-circle-filled.text-error',
+  sharedEntityIcon: '.tabler-icon-arrow-up-right',
 };

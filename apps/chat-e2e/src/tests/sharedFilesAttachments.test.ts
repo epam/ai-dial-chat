@@ -7,27 +7,27 @@ import {
   API,
   AttachFilesFolders,
   Attachment,
+  CheckboxState,
   CollapsedSections,
-  ElementCaretState,
   ExpectedConstants,
   ExpectedMessages,
+  FileManagerToolbarTabs,
   MenuOptions,
   MockedChatApiResponseBodies,
-  TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { loadingTimeout } from '@/src/ui/pages';
-import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { expect } from '@playwright/test';
+import { Locator } from '@playwright/test';
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
     'Arrow icon appears for the folder and file with the special chars in their names.\n' +
+    'On "Shared with me" tab folder tree is expanded by default on each tab opening.\n' +
     'Error message appears if to Share the conversation with an attachment from Shared with me\n' +
     'Arrow icon stays for the file if the chat was unshared by the owner\n' +
     'Arrow icon stays for the file if the chat was renamed or deleted, or model was changed\n' +
@@ -40,24 +40,25 @@ dialSharedWithMeTest.skip(
     fileApiHelper,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
-    dialHomePage,
-    manageAttachmentsAssertion,
-    chatBar,
-    attachedAllFiles,
+    fileManagerPage,
+    fileManagerFoldersTree,
+    fileManagerGridAssertion,
     localStorageManager,
     additionalShareUserSendMessage,
     additionalShareUserConversations,
     additionalShareUserChat,
     additionalShareUserConversationDropdownMenu,
     additionalShareUserAttachmentDropdownMenu,
+    additionalShareUserFileManagerModal,
+    additionalShareUserFileManagerModalToolbar,
+    additionalShareUserFileManagerModalGrid,
+    additionalShareUserFileManagerModalFoldersTree,
+    additionalShareUserFileManagerModalFoldersTreeAssertion,
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
-    additionalShareUserAttachFilesModal,
     additionalShareUserToastAssertion,
     conversations,
     appContainer,
-    attachmentDropdownMenu,
-    attachFilesModal,
     confirmationDialog,
     conversationDropdownMenu,
     agentInfo,
@@ -65,11 +66,10 @@ dialSharedWithMeTest.skip(
     chatHeader,
     talkToAgentDialog,
     additionalSecondUserShareApiHelper,
-    sendMessage,
     additionalSecondShareUserFileApiHelper,
     additionalShareUserFileApiHelper,
     toast,
-    additionalShareUserManageAttachmentsAssertion,
+    navigationPanel,
     renameConversationModal,
   }) => {
     dialSharedWithMeTest.slow();
@@ -78,6 +78,7 @@ dialSharedWithMeTest.skip(
       'EPMRTC-4134',
       /*'EPMRTC-4135,'*/
       'EPMRTC-4155',
+      'EPMRTC-4166',
       'EPMRTC-4156',
       'EPMRTC-4123',
       'EPMRTC-3116',
@@ -101,6 +102,15 @@ dialSharedWithMeTest.skip(
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
     let conversationWithSpecialChars: Conversation;
     let conversationWithTwoResponses: Conversation;
+    const appdataFiles = [
+      Attachment.sunImageName,
+      Attachment.cloudImageName,
+      Attachment.flowerImageName,
+    ];
+    let nestedFolders: string[];
+    const expectedArrowColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await localStorageManager.setChatCollapsedSection(
       CollapsedSections.Organization,
@@ -113,6 +123,11 @@ dialSharedWithMeTest.skip(
           ModelsUtil.getLatestModelsWithAttachment(),
         );
         defaultModelId = defaultModel.id;
+        nestedFolders = [
+          AttachFilesFolders.appdata,
+          defaultModelId,
+          AttachFilesFolders.images,
+        ];
         imageUrl = await fileApiHelper.putFile(Attachment.sunImageName, {
           parentPath: API.modelFilePath(defaultModelId),
         });
@@ -202,11 +217,6 @@ dialSharedWithMeTest.skip(
       await localStorageManager.setShowSideBarPanels();
     });
 
-    await dialTest.step('Open start page', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-    });
-
     //TODO EPMRTC-4135 blocked by the #1076
     // await dialTest.step(
     //   'Move the second conversation to the shared folder',
@@ -222,60 +232,42 @@ dialSharedWithMeTest.skip(
     // );
 
     await dialTest.step(
-      'Open "Manage attachments" modal and verify shared files have arrow icons',
+      'Open "File manager" page and verify shared files have arrow icons',
       async () => {
-        await chatBar.openManageAttachmentsModal();
-        await attachedAllFiles.waitForState();
-
-        await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
-          isHttpMethodTriggered: true,
-        });
-        await attachedAllFiles.expandFolder(defaultModelId, {
-          isHttpMethodTriggered: true,
-        });
-        await attachedAllFiles.expandFolder(AttachFilesFolders.images, {
-          isHttpMethodTriggered: true,
-        });
-        await attachedAllFiles.expandFolder(specialCharsFolder, {
-          isHttpMethodTriggered: true,
-        });
-
-        await attachFilesModal.closeButton.hoverOver();
-        const expectedArrowColor = ThemesUtil.getRgbColorByKey(
-          ThemeColorAttributes.textAccentPrimary,
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: true },
+          ...nestedFolders,
         );
-
-        const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          firstImageEntity,
+        for (const file of appdataFiles) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+          await fileManagerGridAssertion.assertGridFileSharedState(
+            file,
+            'visible',
+          );
+          await fileManagerGridAssertion.assertGridFileSharedIconColor(
+            file,
+            expectedArrowColor,
+          );
+        }
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: false },
+          specialCharsFolder,
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.specialSymbolsName,
           'visible',
         );
-        await manageAttachmentsAssertion.assertEntityArrowIconColor(
-          firstImageEntity,
-          expectedArrowColor,
-        );
-
-        const secondImageEntity: TreeEntity = {
-          name: Attachment.cloudImageName,
-        };
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          secondImageEntity,
+        await fileManagerGridAssertion.assertGridFileSharedState(
+          Attachment.specialSymbolsName,
           'visible',
         );
-        await manageAttachmentsAssertion.assertEntityArrowIconColor(
-          secondImageEntity,
-          expectedArrowColor,
-        );
-
-        const thirdImageEntity: TreeEntity = {
-          name: Attachment.flowerImageName,
-        };
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          thirdImageEntity,
-          'visible',
-        );
-        await manageAttachmentsAssertion.assertEntityArrowIconColor(
-          thirdImageEntity,
+        await fileManagerGridAssertion.assertGridFileSharedIconColor(
+          Attachment.specialSymbolsName,
           expectedArrowColor,
         );
 
@@ -283,50 +275,64 @@ dialSharedWithMeTest.skip(
         // const fourthImageEntity: TreeEntity = { name: Attachment.heartImageName };
         // await manageAttachmentsAssertion.assertSharedFileArrowIconState(fourthImageEntity, 'visible');
         // await manageAttachmentsAssertion.assertEntityArrowIconColor(fourthImageEntity, expectedArrowColor);
-
-        const specialCharsImageEntity: TreeEntity = {
-          name: Attachment.specialSymbolsName,
-        };
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          specialCharsImageEntity,
-          'visible',
-        );
-        await manageAttachmentsAssertion.assertEntityArrowIconColor(
-          specialCharsImageEntity,
-          expectedArrowColor,
-        );
-        await attachFilesModal.closeButton.click();
       },
     );
 
     await dialSharedWithMeTest.step(
-      'By user2 create a conversation with attachments from Shared with me section in Manage attachments',
+      'By user2 open "File manager" and verify "Shared with Me" tree is expanded',
       async () => {
         await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           defaultModel,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.specialSymbolsName },
-          FileModalSection.SharedWithMe,
-          'visible',
+        await additionalShareUserFileManagerModalToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderExpandedState(
+          'expanded',
+          FileManagerToolbarTabs.SharedWithMe,
         );
+      },
+    );
 
-        await additionalShareUserAttachFilesModal.checkAttachedFile(
-          Attachment.specialSymbolsName,
-          FileModalSection.SharedWithMe,
+    await dialSharedWithMeTest.step(
+      'Verify folder state is not saved after switching to another tab',
+      async () => {
+        await additionalShareUserFileManagerModalFoldersTree
+          .folderByPathCaret(FileManagerToolbarTabs.SharedWithMe)
+          .click();
+        await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderExpandedState(
+          'collapsed',
+          FileManagerToolbarTabs.SharedWithMe,
         );
-        await additionalShareUserAttachFilesModal.attachFiles();
+        await additionalShareUserFileManagerModalToolbar.organizationTab.click();
+        await additionalShareUserFileManagerModalToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderExpandedState(
+          'expanded',
+          FileManagerToolbarTabs.SharedWithMe,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'By user2 create a conversation with attachments from File manager "Shared with me" tab',
+      async () => {
+        const newRequest = GeneratorUtil.randomString(10);
+        await additionalShareUserFileManagerModalFoldersTree.expandFolders(
+          { isFilesListingTriggered: false },
+          specialCharsFolder,
+        );
+        const attachmentCheckbox =
+          await additionalShareUserFileManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.specialSymbolsName,
+          );
+        await attachmentCheckbox.click();
+        await additionalShareUserFileManagerModal.getAttachButton().click();
         await additionalShareUserDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -342,6 +348,7 @@ dialSharedWithMeTest.skip(
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
         await toast.closeToast();
+        await navigationPanel.backToChat();
         await conversations.selectEntity(conversationWithTwoResponses.name);
         await conversations
           .selectedEntity(conversationWithTwoResponses.name)
@@ -389,34 +396,23 @@ dialSharedWithMeTest.skip(
       });
 
       await dialTest.step(
-        'User1 opens "Manage attachment" and finds file attached to the chat',
+        'User1 opens "File manager" and finds file attached to the chat',
         async () => {
-          await chatBar.openManageAttachmentsModal();
-          await attachedAllFiles.waitForState();
-
-          await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
-            isHttpMethodTriggered: true,
-            httpHost: API.filesListingHost(),
-          });
-          await attachedAllFiles.expandFolder(defaultModelId, {
-            isHttpMethodTriggered: true,
-            httpHost: API.filesListingHost(),
-          });
-          await attachedAllFiles.expandFolder(AttachFilesFolders.images, {
-            isHttpMethodTriggered: true,
-            httpHost: API.filesListingHost(),
-          });
-
-          await attachFilesModal.closeButton.hoverOver();
-          await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-            { name: Attachment.sunImageName },
-            'visible',
+          await navigationPanel.goToFileManager();
+          await fileManagerFoldersTree.expandFolders(
+            { isFilesListingTriggered: false },
+            ...nestedFolders,
           );
-          await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-            { name: Attachment.cloudImageName },
-            'visible',
-          );
-          await attachFilesModal.closeButton.click();
+          for (const file of [
+            Attachment.sunImageName,
+            Attachment.cloudImageName,
+          ]) {
+            await fileManagerGridAssertion.assertGridFileSharedState(
+              file,
+              'visible',
+            );
+          }
+          await navigationPanel.backToChat();
         },
       );
     }
@@ -435,32 +431,21 @@ dialSharedWithMeTest.skip(
     await dialTest.step(
       'By User1 check that arrow still exist for the file',
       async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectEntity(conversationWithSpecialChars.name);
-        await conversations
-          .selectedEntity(conversationWithSpecialChars.name)
-          .waitFor();
-        await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-          {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'GET',
-            apiHost: API.filesListingHost(),
-          },
-        );
-
-        await attachedAllFiles.expandFolder(specialCharsFolder, {
-          isHttpMethodTriggered: true,
-          httpHost: API.filesListingHost(),
+        await fileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
         });
-        await attachFilesModal.closeButton.hoverOver();
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          { name: Attachment.specialSymbolsName },
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: false },
+          specialCharsFolder,
+        );
+        await fileManagerGridAssertion.assertGridFileSharedState(
+          Attachment.specialSymbolsName,
           'visible',
         );
-        await attachFilesModal.closeButton.click();
       },
     );
 
@@ -476,38 +461,27 @@ dialSharedWithMeTest.skip(
     await dialTest.step(
       'By User1 check that the arrow disappears from the file',
       async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectEntity(conversationWithSpecialChars.name);
-        await conversations
-          .selectedEntity(conversationWithSpecialChars.name)
-          .waitFor();
-        await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-          {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'GET',
-            apiHost: API.filesListingHost(),
-          },
-        );
-
-        await attachedAllFiles.expandFolder(specialCharsFolder, {
-          isHttpMethodTriggered: true,
-          httpHost: API.filesListingHost(),
+        await fileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
         });
-        await attachFilesModal.closeButton.hoverOver();
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          { name: Attachment.specialSymbolsName },
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: false },
+          specialCharsFolder,
+        );
+        await fileManagerGridAssertion.assertGridFileSharedState(
+          Attachment.specialSymbolsName,
           'hidden',
         );
-        await attachFilesModal.closeButton.click();
       },
     );
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -518,7 +492,6 @@ dialSharedWithMeTest.skip(
     "The 'Shared with me' section appears and disappears from Manage Attachments depending on the existence of shared files\n" +
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
-    'Collapsed or expanded state of "Shared with me" is stored\n' +
     'Deleted by the owner file disappears from "Shared with me". Other files exist and stay in "Shared with me".\n' +
     'Shared with me: the file stays if the chat was unshared, renamed, model was changed, the chat was deleted by the owner',
   async ({
@@ -529,19 +502,21 @@ dialSharedWithMeTest.skip(
     additionalShareUserFileApiHelper,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
-    additionalShareUserSendMessage,
-    additionalShareUserConversations,
+    additionalShareUserFileManagerToolbar,
+    additionalShareUserFileManagerPage,
+    additionalShareUserFileManagerGridRowDropdownMenu,
+    additionalShareUserFileManagerGridAssertion,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
-    additionalShareUserAttachmentDropdownMenu,
+    baseAssertion,
     additionalShareUserDialHomePage,
     additionalShareUserDataInjector,
-    additionalShareUserManageAttachmentsAssertion,
     additionalShareUserSharedFolderConversations,
-    additionalShareUserAttachFilesModal,
+    additionalShareUserFileManagerGrid,
+    additionalShareUserFileManager,
+    additionalShareUserFileManagerNavigationPanel,
     additionalShareUserDownloadAssertion,
-    additionalShareUserConfirmationDialog,
     localStorageManager,
   }) => {
     dialSharedWithMeTest.slow();
@@ -556,7 +531,6 @@ dialSharedWithMeTest.skip(
       'EPMRTC-4153',
       'EPMRTC-4158',
       'EPMRTC-4159',
-      'EPMRTC-4166',
       'EPMRTC-4162',
       'EPMRTC-4165',
     );
@@ -584,6 +558,9 @@ dialSharedWithMeTest.skip(
     const user1FolderName = 'SharedFolder';
     let user1ConversationInFolder: Conversation;
 
+    let dotsMenu: Locator;
+    let fileRow: Locator;
+
     await dialTest.step(
       'User1 uploads an image to the "All files" root',
       async () => {
@@ -604,7 +581,7 @@ dialSharedWithMeTest.skip(
             user1ConversationInFolderImageInResponse1,
           );
 
-        //upload file into 'All files' section to have it visible
+        //upload file into 'My files' section to have it visible
         await additionalShareUserFileApiHelper.putFile(
           Attachment.heartImageName,
         );
@@ -727,11 +704,15 @@ dialSharedWithMeTest.skip(
         const attachmentUrl2 =
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(3);
 
-        expect(attachmentUrl1, ExpectedMessages.attachmentUrlIsValid).toContain(
+        baseAssertion.assertStringIncludes(
+          attachmentUrl1!,
           `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ImageInRequest1}`,
+          ExpectedMessages.attachmentUrlIsValid,
         );
-        expect(attachmentUrl2, ExpectedMessages.attachmentUrlIsValid).toContain(
+        baseAssertion.assertStringIncludes(
+          attachmentUrl2!,
           `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ImageInRequest2}`,
+          ExpectedMessages.attachmentUrlIsValid,
         );
       },
     );
@@ -756,18 +737,15 @@ dialSharedWithMeTest.skip(
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(2);
         const attachmentInResponseUrl2 =
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(4);
-
-        expect(
-          attachmentInResponseUrl1,
-          ExpectedMessages.attachmentUrlIsValid,
-        ).toContain(
+        baseAssertion.assertStringIncludes(
+          attachmentInResponseUrl1!,
           `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ImageInResponse1}`,
-        );
-        expect(
-          attachmentInResponseUrl2,
           ExpectedMessages.attachmentUrlIsValid,
-        ).toContain(
+        );
+        baseAssertion.assertStringIncludes(
+          attachmentInResponseUrl2!,
           `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ImageInResponse2}`,
+          ExpectedMessages.attachmentUrlIsValid,
         );
       },
     );
@@ -790,8 +768,10 @@ dialSharedWithMeTest.skip(
         );
         const attachmentUrl =
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(2);
-        expect(attachmentUrl, ExpectedMessages.attachmentUrlIsValid).toContain(
+        baseAssertion.assertStringIncludes(
+          attachmentUrl!,
           `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ConversationInFolderImageInResponse1}`,
+          ExpectedMessages.attachmentUrlIsValid,
         );
       },
     );
@@ -814,111 +794,49 @@ dialSharedWithMeTest.skip(
     });
 
     await dialSharedWithMeTest.step(
-      'User2 opens Manage attachments',
+      "User2 opens 'File manager' and verifies the existence of shared files on 'Shared with me' tab",
       async () => {
-        await additionalShareUserConversations.selectEntity(
-          secondUserEmptyConversation.name,
-        );
-        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-
-        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-        );
-      },
-    );
-
-    for (const section of [
-      FileModalSection.AllFiles,
-      FileModalSection.SharedWithMe,
-    ]) {
-      for (const state of ['collapsed', 'expanded'] as ElementCaretState[]) {
-        await dialSharedWithMeTest.step(
-          `Collapsed or expanded state of "Shared with me" is stored. User2 sets the "${section}" section to ${state} state and reopens the modal`,
-          async () => {
-            await additionalShareUserAttachFilesModal.expandCollapseSection(
-              section,
-            ); // collapse or expand
-
-            // Close and reopen the modal
-            await additionalShareUserAttachFilesModal.closeButton.click();
-            await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-            await additionalShareUserSendMessage
-              .getDropdownMenu()
-              .selectMenuOption(UploadMenuOptions.attachUploadedFiles);
-
-            await additionalShareUserManageAttachmentsAssertion.assertSectionState(
-              section,
-              state,
-            );
-          },
-        );
-      }
-    }
-
-    await dialSharedWithMeTest.step(
-      "The 'Shared with me' section appears with the existence of shared files",
-      async () => {
-        await additionalShareUserAttachFilesModal
-          .getSharedWithMeFilesContainer()
-          .waitForState({ state: 'visible' });
+        await additionalShareUserFileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
       },
     );
 
     await dialSharedWithMeTest.step('User2 searches in files', async () => {
-      await additionalShareUserAttachFilesModal
-        .getSearchInput()
-        .fillInInput(user1ImageInRequest1.replace('.jpg', ''));
-      await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-        { name: user1ImageInRequest1 },
-        FileModalSection.SharedWithMe,
+      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
+        user1ImageInRequest1.replace('.jpg', ''),
+      );
+      await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+        user1ImageInRequest1,
         'visible',
       );
-      await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-        { name: user1ConversationInFolderImageInResponse1 },
-        FileModalSection.SharedWithMe,
+      await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+        user1ConversationInFolderImageInResponse1,
         'hidden',
       );
 
-      await additionalShareUserAttachFilesModal
-        .getSearchInput()
-        .fillInInput('');
+      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
+        '',
+      );
     });
 
     await dialSharedWithMeTest.step('User2 searches in files', async () => {
-      await additionalShareUserAttachFilesModal
-        .getSearchInput()
-        .fillInInput(GeneratorUtil.randomString(10));
-      await additionalShareUserAttachFilesModal
-        .getAllFilesTree()
-        .waitForState({ state: 'hidden' });
-      await additionalShareUserAttachFilesModal
-        .getSharedWithMeTree()
-        .waitForState({ state: 'hidden' });
+      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
+        GeneratorUtil.randomString(10),
+      );
+      await additionalShareUserFileManagerGridAssertion.assertElementState(
+        additionalShareUserFileManager,
+        'visible',
+      );
 
-      const allFiles = [
-        user1ImageInRequest1,
-        user1ImageInRequest2,
-        user1ImageInResponse1,
-        user1ImageInResponse2,
-        user1ConversationInFolderImageInResponse1,
-      ];
-      for (const file of allFiles) {
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: file },
-          FileModalSection.SharedWithMe,
-          'hidden',
-        );
-      }
-
-      await additionalShareUserAttachFilesModal
-        .getSearchInput()
-        .fillInInput('');
-      await additionalShareUserAttachFilesModal
-        .getAllFilesTree()
-        .waitForState({ state: 'visible' });
-      await additionalShareUserAttachFilesModal
-        .getSharedWithMeTree()
-        .waitForState({ state: 'visible' });
+      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
+        '',
+      );
     });
 
     await dialSharedWithMeTest.step('User2 observe shared files', async () => {
@@ -930,9 +848,8 @@ dialSharedWithMeTest.skip(
         user1ConversationInFolderImageInResponse1,
       ];
       for (const file of allFiles) {
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: file },
-          FileModalSection.SharedWithMe,
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          file,
           'visible',
         );
       }
@@ -941,15 +858,24 @@ dialSharedWithMeTest.skip(
     await dialSharedWithMeTest.step(
       'User2 downloads a file via context menu',
       async () => {
-        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
-          user1ImageInRequest1,
-          FileModalSection.SharedWithMe,
-        );
+        fileRow =
+          additionalShareUserFileManagerGrid.gridRowByNameCell(
+            user1ImageInRequest1,
+          );
+        dotsMenu =
+          await additionalShareUserFileManagerGrid.gridDotsMenuByNameCell(
+            user1ImageInRequest1,
+          );
+        await fileRow.hover();
+        await dotsMenu.click();
         const downloadedData =
-          await additionalShareUserDialHomePage.downloadData(() =>
-            additionalShareUserAttachFilesModal
-              .getFileDropdownMenu()
-              .selectMenuOption(MenuOptions.download),
+          await additionalShareUserFileManagerPage.downloadData(() =>
+            additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+              MenuOptions.download,
+              {
+                isHttpMethodTriggered: false,
+              },
+            ),
           );
         await additionalShareUserDownloadAssertion.assertPlainFileIsDownloaded(
           downloadedData,
@@ -968,64 +894,62 @@ dialSharedWithMeTest.skip(
           user1ConversationInFolderImageInResponse1,
         ];
         for (const file of imagesToDownload) {
-          await additionalShareUserAttachFilesModal.checkAttachedFile(
-            file,
-            FileModalSection.SharedWithMe,
-          );
+          const attachmentCheckbox =
+            await additionalShareUserFileManagerGrid.gridCheckboxByNameCell(
+              file,
+            );
+          await attachmentCheckbox.click();
         }
         const downloadedData =
-          await additionalShareUserDialHomePage.downloadMultipleData(
-            () =>
-              additionalShareUserAttachFilesModal.downloadFilesButton.click(),
-            imagesToDownload.length,
+          await additionalShareUserFileManagerPage.downloadMultipleData(
+            () => additionalShareUserFileManagerToolbar.clickDownloadButton(),
+            1,
+            'files.zip',
           );
-        for (const data of downloadedData) {
-          await additionalShareUserDownloadAssertion.assertPlainFileIsDownloaded(
-            data,
-          );
-        }
-        for (const file of imagesToDownload) {
-          await additionalShareUserAttachFilesModal.checkAttachedFile(
-            file,
-            FileModalSection.SharedWithMe,
-          );
-        }
+        await additionalShareUserDownloadAssertion.assertZipFileIsDownloaded(
+          downloadedData[0],
+        );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'User2 deletes a file via context menu',
+      'User2 unshares a file via context menu',
       async () => {
-        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
+        await fileRow.hover();
+        await dotsMenu.click();
+        await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+          MenuOptions.unshare,
+          {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'POST',
+            apiHost: API.discardShareWithMeItem,
+          },
+        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
+        // await additionalShareUserFileManagerDeleteItemConfirmationPopup
+        //   .getCloseButton()
+        //   .click();
+        // await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+        //   user1ImageInRequest1,
+        //   'visible',
+        // );
+        // await fileRow.hover();
+        // await dotsMenu.click();
+        // await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+        //   MenuOptions.delete,
+        //   {
+        //     isHttpMethodTriggered: false,
+        //   },
+        // );
+        // await additionalShareUserFileManagerDeleteItemConfirmationPopup.confirm(
+        //   {
+        //     triggeredHttpMethod: 'POST',
+        //   },
+        // );
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           user1ImageInRequest1,
-          FileModalSection.SharedWithMe,
-        );
-        await additionalShareUserAttachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.unshare);
-        await additionalShareUserConfirmationDialog.cancelDialog();
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInRequest1 },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-
-        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
-          user1ImageInRequest1,
-          FileModalSection.SharedWithMe,
-        );
-        await additionalShareUserAttachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.unshare);
-        await additionalShareUserConfirmationDialog.confirm({
-          triggeredHttpMethod: 'POST',
-        });
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInRequest1 },
-          FileModalSection.SharedWithMe,
           'hidden',
         );
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
@@ -1036,20 +960,18 @@ dialSharedWithMeTest.skip(
     await dialSharedWithMeTest.step(
       'User 2 check that the file has disappeared',
       async () => {
-        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInRequest2 },
-          FileModalSection.SharedWithMe,
+        await additionalShareUserFileManagerPage.reloadPage();
+        await additionalShareUserFileManagerPage.waitForPageLoaded();
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          user1ImageInRequest2,
           'hidden',
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'User2 deletes multiple files',
+      'User2 unshares multiple files',
       async () => {
         const imagesToDelete = [
           user1ImageInResponse1,
@@ -1057,19 +979,26 @@ dialSharedWithMeTest.skip(
           user1ConversationInFolderImageInResponse1,
         ];
         for (const file of imagesToDelete) {
-          await additionalShareUserAttachFilesModal.checkAttachedFile(
+          const attachmentCheckbox =
+            await additionalShareUserFileManagerGrid.gridCheckboxByNameCell(
+              file,
+            );
+          await attachmentCheckbox.click();
+          await additionalShareUserFileManagerGridAssertion.assertGridCheckboxByNameState(
             file,
-            FileModalSection.SharedWithMe,
+            CheckboxState.checked,
           );
         }
-        await additionalShareUserAttachFilesModal.deleteFilesButton.click();
-        await additionalShareUserConfirmationDialog.confirm({
-          triggeredHttpMethod: 'POST',
-        });
+        await additionalShareUserFileManagerToolbar.unshareEntities();
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
+        // await additionalShareUserFileManagerDeleteItemConfirmationPopup.confirm(
+        //   {
+        //     triggeredHttpMethod: 'POST',
+        //   },
+        // );
         for (const file of imagesToDelete) {
-          await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-            { name: file },
-            FileModalSection.SharedWithMe,
+          await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+            file,
             'hidden',
           );
         }
@@ -1077,20 +1006,27 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      "The 'Shared with me' section disappears from Manage Attachments without shared files",
+      "'No shared files' label is displayed on 'Shared with me' tab",
       async () => {
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal.getSectionElement(
-            FileModalSection.SharedWithMe,
-          ),
-          'hidden',
+        const noData = additionalShareUserFileManager.getNoDataContent();
+        await additionalShareUserFileManagerGridAssertion.assertElementState(
+          additionalShareUserFileManager.getNoDataContent(),
+          'visible',
+        );
+        await additionalShareUserFileManagerGridAssertion.assertElementText(
+          noData.noResultsTitle,
+          'No shared files',
+        );
+        await additionalShareUserFileManagerGridAssertion.assertElementText(
+          noData.noResultsReason,
+          'Files shared with you will appear here.',
         );
       },
     );
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Deleted by the owner file disappears from "Shared with me". There was only one shared and existed file. "Shared with me" disappears.',
   async ({
     setTestIds,
@@ -1099,18 +1035,17 @@ dialSharedWithMeTest.skip(
     fileApiHelper,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
-    dialHomePage,
-    manageAttachmentsAssertion,
-    chatBar,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerModalGridAssertion,
+    fileManagerDeleteItemConfirmationPopup,
     localStorageManager,
-    additionalShareUserChatBar,
-    additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
-    additionalShareUserAttachFilesModal,
-    attachFilesModal,
-    confirmationDialog,
+    additionalShareUserFileManagerPage,
+    additionalShareUserFileManagerToolbar,
+    additionalShareUserFileManager,
+    additionalShareUserFileManagerGridAssertion,
     additionalSecondUserShareApiHelper,
-    additionalShareUserManageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-5821');
     let imageUrl: string;
@@ -1146,48 +1081,46 @@ dialSharedWithMeTest.skip(
       await localStorageManager.setShowSideBarPanels();
     });
 
-    await dialTest.step('Open DIAL by additional user', async () => {
-      await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-      await additionalShareUserDialHomePage.openHomePage();
-      await additionalShareUserDialHomePage.waitForPageLoaded();
-    });
-
     await dialTest.step(
       'Delete the file from shared conversation by main user',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
-          'visible',
-        );
-        await attachFilesModal.openFileDropdownMenu(
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        const attachmentRow = await fileManagerGrid.goToGridRowByNameCell(
           Attachment.sunImageName,
-          FileModalSection.AllFiles,
         );
-        await attachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
+        await attachmentRow.hover();
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await dotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
+          isHttpMethodTriggered: false,
+        });
+        await fileManagerDeleteItemConfirmationPopup.confirm({
+          expectedRequests: new Map([
+            [API.deleteFileHost(), 'POST'],
+            [API.filesListingHost(), 'GET'],
+          ]),
+        });
+        await fileManagerModalGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
           'hidden',
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Open the attach modal by additional user and verify "Shared with me" section is not visible',
+      'Open "File manager" by additional user and verify "Shared with me" tab is empty',
       async () => {
-        await additionalShareUserChatBar.openManageAttachmentsModal();
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal.getSectionElement(
-            FileModalSection.SharedWithMe,
-          ),
-          'hidden',
+        await additionalShareUserFileManagerPage.openFileManagerPage();
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertElementState(
+          additionalShareUserFileManager.getNoDataContent(),
+          'visible',
         );
       },
     );
