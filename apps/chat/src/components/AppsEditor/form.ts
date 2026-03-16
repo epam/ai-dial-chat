@@ -324,8 +324,8 @@ const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
   completionUrl:
     app && !app.applicationTypeSchemaId
-      ? (app.completionUrl ?? '')
-      : app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER,
+      ? (app.completionUrl ?? '') // for custom apps
+      : app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER, // fallback for schema-applications
   features: safeStringifyApplicationFeatures(app?.features),
 });
 
