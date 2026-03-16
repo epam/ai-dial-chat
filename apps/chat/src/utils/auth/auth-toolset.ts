@@ -25,7 +25,7 @@ export const signInToolset = async (
     throw new Error('Unable to open popup');
   }
 
-  return await new Promise<void>((resolve, reject) => {
+  return await new Promise<boolean>((resolve, reject) => {
     const timeoutId = window.setTimeout(() => {
       cleanup();
       try {
@@ -49,7 +49,9 @@ export const signInToolset = async (
         popupUrl?.origin === window.origin &&
         popupUrl?.pathname === Routes.ToolsetSignIn &&
         isTruthyQuery(
-          popupUrl?.searchParams?.get(ToolsetLoginQuery.LoginComplete),
+          popupUrl?.searchParams?.get(
+            ToolsetLoginQuery.LoginComplete,
+          ) as string,
         )
       ) {
         cleanup();
