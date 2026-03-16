@@ -49,10 +49,12 @@ export const FunctionStatusIndicator = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   return entity.functionStatus ? (
-    <Badge
-      label={t(getLabel(entity))}
-      type={getBadgeType(entity)}
-      className="shrink-0"
-    />
+    <div>
+      <Badge
+        label={t(getLabel(entity))}
+        type={getBadgeType(entity)}
+        className="shrink-0"
+      />
+    </div>
   ) : null;
 };
