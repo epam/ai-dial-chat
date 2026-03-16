@@ -4,13 +4,8 @@ import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
 import { BucketService } from './data/bucket-service';
-import { constructPath } from './shared-utils';
 
-import {
-  FolderInterface,
-  SharePermission,
-  UploadStatus,
-} from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
   DialFilePermission,

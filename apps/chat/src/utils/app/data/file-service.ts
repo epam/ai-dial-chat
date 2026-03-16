@@ -21,7 +21,6 @@ import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { FALLBACK_CONTENT_TYPE } from '@/src/constants/file';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { constructPath, getMimeTypeByFileName } from '../file';
 import { getFileRootId } from '../id';
@@ -47,7 +46,6 @@ const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
     ? ApiUtils.decodeApiUrl(file.parentPath)
     : undefined;
-  const userBucket = BucketService.getBucket();
 
   return {
     id: constructPath(ApiKeys.Files, file.bucket, relativePath, file.name),

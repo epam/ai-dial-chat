@@ -28,10 +28,7 @@ import {
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
-import {
-  getEntitiesFoldersFromEntities,
-  getParentFolderIdsFromEntityId,
-} from '@/src/utils/app/folders';
+import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
 import {
   getEntityBucket,
   isApplicationId,
@@ -94,7 +91,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
-import uniqBy from 'lodash-es/uniqBy';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
