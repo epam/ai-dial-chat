@@ -325,7 +325,7 @@ const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   completionUrl:
     app && !app.applicationTypeSchemaId
       ? (app.completionUrl ?? '')
-      : MANDATORY_FIELD_PLACEHOLDER,
+      : app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER,
   features: safeStringifyApplicationFeatures(app?.features),
 });
 
