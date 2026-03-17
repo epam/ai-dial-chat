@@ -60,7 +60,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       onClose={handleClose}
       dataQa="attach-link-dialog"
       overlayClassName="fixed inset-0"
-      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
       heading={t('Attach link')}
       dismissProps={OUTSIDE_PRESS}
     >

@@ -103,7 +103,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
       onClose={handleClose}
       dataQa="report-issue-dialog"
       overlayClassName="fixed inset-0"
-      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
       form={{
         noValidate: true,
         onSubmit: handleSubmit,
