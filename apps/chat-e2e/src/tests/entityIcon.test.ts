@@ -47,7 +47,7 @@ dialTest(
           expectedEntityIcon,
         );
       }
-      await talkToAgentDialog.cancelButton.click();
+      await talkToAgentDialog.getCloseButton().click();
     });
   },
 );

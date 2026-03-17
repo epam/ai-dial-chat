@@ -637,7 +637,7 @@ dialTest(
       async () => {
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         await marketplaceEntitiesSection.findAndUseAgent(agent, {
           isWorkspaceAgent: true,
           isEditable: true,
@@ -686,7 +686,7 @@ dialTest(
           visibleTopicsElement,
           topics.slice(0, visibleTopicsCount),
         );
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
       },
     );
 

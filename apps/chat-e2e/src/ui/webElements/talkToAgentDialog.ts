@@ -4,19 +4,19 @@ import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
   ErrorLabelSelectors,
-  IconSelectors,
   MarketplaceEntitySelectors,
   MenuSelectors,
   TalkToAgentDialogSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Popup } from '@/src/ui/webElements/common/popup';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
 import { Locator, Page } from '@playwright/test';
 
-export class TalkToAgentDialog extends BaseElement {
-  constructor(page: Page, parentLocator?: Locator) {
-    super(page, TalkToAgentDialogSelectors.talkToAgentModal, parentLocator);
+export class TalkToAgentDialog extends Popup {
+  constructor(page: Page, selector: string) {
+    super(page, selector);
   }
 
   private agents!: MarketplaceEntities;
@@ -35,9 +35,6 @@ export class TalkToAgentDialog extends BaseElement {
   );
   public searchAgentInput = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.searchAgent,
-  );
-  public cancelButton = this.getChildElementBySelector(
-    IconSelectors.cancelIcon,
   );
   public nextArrowButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.nextArrowButton,

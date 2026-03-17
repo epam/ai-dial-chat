@@ -156,7 +156,7 @@ dialSharedWithMeTest(
           additionalShareUserTalkToAgentDialog.noResultFound,
           'visible',
         );
-        await additionalShareUserTalkToAgentDialog.cancelButton.click();
+        await additionalShareUserTalkToAgentDialog.getCloseButton().click();
       },
     );
 

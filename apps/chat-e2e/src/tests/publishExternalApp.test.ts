@@ -208,7 +208,7 @@ dialAdminTest(
           adminTalkToAgentDialog.noResultFound,
           'visible',
         );
-        await adminTalkToAgentDialog.cancelButton.click();
+        await adminTalkToAgentDialog.getCloseButton().click();
       },
     );
 

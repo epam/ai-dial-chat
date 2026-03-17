@@ -128,7 +128,7 @@ dialTest(
       'Create a new conversation and verify the first model is still selected',
       async () => {
         await chatBar.createNewEntity();
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
@@ -167,7 +167,7 @@ dialTest(
       'Create a new conversation and verify the second model is still selected',
       async () => {
         await chatBar.createNewEntity();
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
@@ -226,7 +226,7 @@ dialTest(
           'visible',
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(initialModel2);
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
@@ -703,7 +703,7 @@ dialTest(
       async () => {
         await chatBar.createNewEntity();
         await talkToAgentDialogAssertion.assertAgentIsSelected(secondModel);
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await localStorageAssertion.assertRecentModels([secondModel.id]);
         await agentInfoAssertion.assertAgentName(secondModel.name);
       },

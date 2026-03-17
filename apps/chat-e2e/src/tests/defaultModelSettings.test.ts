@@ -104,7 +104,7 @@ dialTest(
           recentAgentsIcons[0].iconLocator,
           expectedEntityIcon,
         );
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
       },
     );
 

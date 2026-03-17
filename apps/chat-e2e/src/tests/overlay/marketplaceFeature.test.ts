@@ -61,7 +61,7 @@ dialOverlayTest(
           overlayTalkToAgentDialog.searchAgentInput,
           'visible',
         );
-        await overlayTalkToAgentDialog.cancelButton.click();
+        await overlayTalkToAgentDialog.getCloseButton().click();
       },
     );
 
@@ -146,7 +146,7 @@ dialOverlayTest(
           overlayTalkToAgentDialog.goToMyWorkspaceButton,
           'hidden',
         );
-        await overlayTalkToAgentDialog.cancelButton.click();
+        await overlayTalkToAgentDialog.getCloseButton().click();
       },
     );
 
