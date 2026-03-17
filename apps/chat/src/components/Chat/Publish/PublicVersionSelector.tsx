@@ -18,6 +18,7 @@ import {
 } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -80,7 +81,7 @@ export function PublicVersionSelector({
   const mappedModelsAndToolsetsVersionGroup = useMemo(() => {
     return [...modelsVersionGroup, ...toolsetsVersionGroup].map((model) => ({
       id: model.id,
-      version: model.version,
+      version: model.version ?? NA_VERSION,
     }));
   }, [modelsVersionGroup, toolsetsVersionGroup]);
 
@@ -129,15 +130,26 @@ export function PublicVersionSelector({
   }, [excludeEntityId, selectedId, versionGroup]);
 
   const allVersions = useMemo(() => {
-    if (!currentVersionGroup?.allVersions) {
+    if (
+      !currentVersionGroup?.allVersions &&
+      !mappedModelsAndToolsetsVersionGroup.length
+    ) {
       return [];
     }
 
     if (!groupVersions) {
-      return currentVersionGroup.allVersions;
+      if (currentVersionGroup) {
+        return currentVersionGroup.allVersions;
+      }
+
+      return mappedModelsAndToolsetsVersionGroup;
     }
 
-    return groupAllVersions(currentVersionGroup.allVersions);
+    if (currentVersionGroup) {
+      return groupAllVersions(currentVersionGroup.allVersions);
+    }
+
+    return groupAllVersions(mappedModelsAndToolsetsVersionGroup);
   }, [currentVersionGroup?.allVersions, groupVersions]);
 
   if (!currentVersionGroup && !mappedModelsAndToolsetsVersionGroup.length) {
@@ -146,10 +158,7 @@ export function PublicVersionSelector({
 
   const publishModelFolder =
     publishModel && getIdWithoutRootPathSegments(publishModel.entity.folderId);
-  const mappedAllVersions = [
-    ...allVersions,
-    ...mappedModelsAndToolsetsVersionGroup,
-  ].map(({ id, version }) => {
+  const mappedAllVersions = allVersions.map(({ id, version }) => {
     return {
       id: publishModelFolder ? id.replace(`${publishModelFolder}/`, '') : id,
       version,
