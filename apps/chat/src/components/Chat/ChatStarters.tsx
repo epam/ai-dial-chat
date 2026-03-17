@@ -83,16 +83,18 @@ export const ChatStarters = memo(function ChatStarters() {
   );
 
   const conversationModelReference = selectedConversations[0]?.model.id;
+  const conversationModelId =
+    modelsMap[conversationModelReference]?.id ?? conversationModelReference;
   const schema = useAppSelector((state) =>
     ChatSelectors.selectConfigurationSchemaByModelId(
       state,
-      modelsMap[conversationModelReference]?.id ?? conversationModelReference,
+      conversationModelId,
     ),
   );
   const isSchemaLoading = useAppSelector((state) =>
     ChatSelectors.selectIsConfigurationSchemaLoading(
       state,
-      conversationModelReference,
+      conversationModelId,
     ),
   );
 
