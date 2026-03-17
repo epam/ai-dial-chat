@@ -138,19 +138,23 @@ export function PublicVersionSelector({
     }
 
     if (!groupVersions) {
-      if (currentVersionGroup) {
+      if (currentVersionGroup?.allVersions) {
         return currentVersionGroup.allVersions;
       }
 
       return mappedModelsAndToolsetsVersionGroup;
     }
 
-    if (currentVersionGroup) {
+    if (currentVersionGroup?.allVersions) {
       return groupAllVersions(currentVersionGroup.allVersions);
     }
 
     return groupAllVersions(mappedModelsAndToolsetsVersionGroup);
-  }, [currentVersionGroup?.allVersions, groupVersions]);
+  }, [
+    currentVersionGroup?.allVersions,
+    groupVersions,
+    mappedModelsAndToolsetsVersionGroup,
+  ]);
 
   if (!currentVersionGroup && !mappedModelsAndToolsetsVersionGroup.length) {
     return null;

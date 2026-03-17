@@ -8,8 +8,11 @@ import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublicationResource } from '@/src/types/publication';
 
-import { useAppSelector } from '../store/hooks';
-import { ConversationsSelectors, PromptsSelectors } from '../store/selectors';
+import { useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsSelectors,
+  PromptsSelectors,
+} from '@/src/store/selectors';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 import minBy from 'lodash-es/minBy';
