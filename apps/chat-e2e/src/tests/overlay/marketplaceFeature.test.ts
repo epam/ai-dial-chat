@@ -58,7 +58,7 @@ dialOverlayTest(
       async () => {
         await overlayChat.changeAgentButton.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
-          overlayTalkToAgentDialog.searchAgentInput,
+          overlayTalkToAgentDialog.getSearch(),
           'visible',
         );
         await overlayTalkToAgentDialog.getCloseButton().click();
@@ -72,7 +72,7 @@ dialOverlayTest(
         await overlayConversations.selectEntity(conversation.name);
         await overlayChatHeader.chatModelIcon.click();
         await overlayTalkToAgentDialogAssertion.assertElementState(
-          overlayTalkToAgentDialog.searchAgentInput,
+          overlayTalkToAgentDialog.getSearch(),
           'visible',
         );
       },
