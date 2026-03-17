@@ -145,7 +145,7 @@ dialAdminTest(
         await adminLocalStorageManager.setShowSideBarPanels();
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         appElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.hoverOver();
@@ -372,7 +372,9 @@ dialAdminTest(
       async () => {
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        await adminMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appName);
         appElement =
           await adminMarketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(appElement, 'visible');

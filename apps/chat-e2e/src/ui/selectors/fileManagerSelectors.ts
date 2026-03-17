@@ -9,5 +9,4 @@ export const FileManagerSidebarSelectors = {
 
 export const FileManagerNavigationPanelSelectors = {
   navigationPanelContainer: '[aria-label="navigation-panel"]',
-  searchField: '[role="search"]',
 };

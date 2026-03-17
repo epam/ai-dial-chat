@@ -11,6 +11,7 @@ import { Cursors, Styles } from '../ui/domData';
 import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -442,6 +443,7 @@ dialTest.skip(
     const searchTerm = randomEntity.name.substring(0, 3);
     let expectedMatchedModelsCount: number;
     let expectedMatchedAppsCount: number;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Create new conversation and click "Search on My workspace" link',
@@ -458,7 +460,8 @@ dialTest.skip(
     await dialTest.step(
       'Type first search term and verify search result is correct',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(searchTerm);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(searchTerm);
         const entitiesCount =
           await marketplaceEntities.entityNames.getElementsCount();
 
@@ -515,7 +518,7 @@ dialTest.skip(
     await dialTest.step(
       'Clear search input and verify all entities are displayed',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput('');
+        await searchInput.fillInInput('');
         const entitiesCount =
           await marketplaceEntities.entityNames.getElementsCount();
         expect
