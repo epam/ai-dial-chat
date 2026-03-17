@@ -1,5 +1,5 @@
 import { IconExternalLink } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import Link from 'next/link';
 
@@ -17,7 +17,8 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
@@ -52,13 +53,18 @@ export const ApplicationDetailsFooter = ({
   onBookmarkClick,
 }: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
   const isAppLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+
+  const dispatch = useAppDispatch();
+
   const screenState = useScreenState();
+
   const isScreenSmall = screenState === ScreenState.SM;
   const showContextMenu = entity.reference !== entity.id && isScreenSmall;
 
@@ -69,6 +75,12 @@ export const ApplicationDetailsFooter = ({
     createButtonClickHandler,
     DeployIcon,
   } = useApplicationDeployment(entity);
+
+  useEffect(() => {
+    return () => {
+      dispatch(ApplicationActions.setAppDetails());
+    };
+  }, [entity]);
 
   const agentMenuItemsParams = useMemo(
     () => ({

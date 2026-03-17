@@ -1,6 +1,6 @@
 import { NextRouter } from 'next/router';
 
-import { Observable, concatMap, from } from 'rxjs';
+import { Observable, concatMap, from, tap } from 'rxjs';
 
 import { AppAction } from '@/src/types/store';
 
