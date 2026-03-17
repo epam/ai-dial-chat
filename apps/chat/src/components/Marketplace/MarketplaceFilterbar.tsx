@@ -63,8 +63,8 @@ const FilterItem = ({
       />
 
       <DialEllipsisTooltip
-        data-qa="option-label"
         text={displayValue ?? filterValue}
+        id="option-label"
       />
     </label>
   );
