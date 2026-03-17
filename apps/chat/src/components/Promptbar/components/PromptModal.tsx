@@ -123,7 +123,7 @@ const PromptModalView = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 w-full py-4 md:py-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="flex flex-col gap-4 w-full py-4 md:py-6 xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa={
         prompt?.content === '' || !isViewMode
           ? 'prompt-modal'
