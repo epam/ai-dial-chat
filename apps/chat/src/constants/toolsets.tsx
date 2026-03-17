@@ -1,0 +1,55 @@
+import {
+  Icon,
+  IconBrandOauth,
+  IconKey,
+  IconLockOff,
+  IconProps,
+} from '@tabler/icons-react';
+import { ForwardRefExoticComponent, RefAttributes } from 'react';
+
+import { translate } from '@/src/utils/app/translation';
+
+import { ApiKeys } from '@/src/types/common';
+
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+
+export enum ToolsetEditorQuery {
+  Id = 'id',
+  PublicationUrl = 'publicationUrl',
+  Step = 'step',
+  ReturnUrl = 'returnUrl',
+  IsCreating = 'isCreating',
+}
+
+export const DRAFT_TOOLSET_ID = `${ApiKeys.Toolsets}/draft`;
+
+export enum ToolsetAuthAction {
+  LoginWithMyCreds = 'Login with my creds',
+  LogIn = 'Log in',
+  LogOut = 'Log out',
+}
+
+export const PUBLIC_TOOLSET_TOOLTIP = translate(
+  'This toolset is public and cannot be edited',
+);
+
+export const AUTH_TYPE_OPTIONS: Record<
+  string,
+  {
+    name: string;
+    Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
+  }
+> = {
+  [ToolsetAuthTypes.OAUTH]: {
+    name: 'OAuth',
+    Icon: IconBrandOauth,
+  },
+  [ToolsetAuthTypes.API_KEY]: {
+    name: 'API Key',
+    Icon: IconKey,
+  },
+  [ToolsetAuthTypes.NONE]: {
+    name: 'Without authentication',
+    Icon: IconLockOff,
+  },
+};
