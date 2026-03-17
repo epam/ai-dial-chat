@@ -66,7 +66,7 @@ function ReviewToolsetDialogContent({
             value={description}
             dataQa="app-description"
           />
-          {toolset.topics?.length && (
+          {toolset.topics?.length > 0 && (
             <MarketplaceEntityInfoRow
               label={t('Topics')}
               value={
