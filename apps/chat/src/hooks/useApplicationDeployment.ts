@@ -111,6 +111,10 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
     if (isExternalApp(entity)) {
       dispatch(ApplicationActions.get({ applicationId: entity.id }));
     }
+
+    return () => {
+      dispatch(ApplicationActions.setAppDetails());
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, entity.id]);
 
