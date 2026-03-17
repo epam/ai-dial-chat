@@ -130,4 +130,30 @@ export class FileManagerGridAssertion extends BaseAssertion {
       expectedValue,
     );
   }
+
+  public async assertGridFileSharedState(
+    name: string,
+    expectedState: ElementState,
+  ) {
+    const sharedIconLocator =
+      await this.fileManagerGrid.gridSharedFileIconByNameCell(name);
+    await this.assertElementState(
+      sharedIconLocator,
+      expectedState,
+      ExpectedMessages.fileIsShared,
+    );
+  }
+
+  public async assertGridFileSharedIconColor(
+    name: string,
+    expectedColor: string,
+  ) {
+    const sharedIconLocator =
+      await this.fileManagerGrid.gridSharedFileIconByNameCell(name);
+    await this.assertElementColor(
+      sharedIconLocator,
+      expectedColor,
+      ExpectedMessages.sharedIconColorIsValid,
+    );
+  }
 }

@@ -61,7 +61,10 @@ dialTest(
         await fileManagerPage.openFileManagerPage();
         await fileManagerPage.waitForPageLoaded();
         await fileManagerCollapsibleSidebar.expandIfCollapsed();
-        await fileManagerFoldersTree.expandFolders(...imagePathSegments);
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: true },
+          ...imagePathSegments,
+        );
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',
@@ -86,7 +89,10 @@ dialTest(
 
         await navigationPanel.goToFileManager();
         await fileManagerCollapsibleSidebar.expandIfCollapsed();
-        await fileManagerFoldersTree.expandFolders(...imagePathSegments);
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: true },
+          ...imagePathSegments,
+        );
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.cloudImageName,
           'visible',
@@ -112,7 +118,10 @@ dialTest(
 
         await navigationPanel.goToFileManager();
         await fileManagerCollapsibleSidebar.expandIfCollapsed();
-        await fileManagerFoldersTree.expandFolders(...secondImagePathSegments);
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: true },
+          ...secondImagePathSegments,
+        );
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.flowerImageName,
           'visible',

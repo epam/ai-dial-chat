@@ -112,23 +112,23 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [item, publicItemId],
   );
 
-  const publicVersionGroupId = usePublicVersionGroupId(entity);
+  const publicVersionGroupId = usePublicVersionGroupId(entity) ?? '';
   const versionGroup = useAppSelector((state) =>
     PublicationSelectors.selectPublicVersionGroupById(
       state,
-      publicVersionGroupId ?? '',
+      publicVersionGroupId,
     ),
   );
   const modelsVersionGroup = useAppSelector((state) =>
     ModelsSelectors.selectModelsVersionGroupByGroupId(
       state,
-      publicVersionGroupId ?? '',
+      publicVersionGroupId,
     ),
   );
   const toolsetVersionGroup = useAppSelector((state) =>
     ToolsetSelectors.selectToolsetVersionGroupByGroupId(
       state,
-      publicVersionGroupId ?? '',
+      publicVersionGroupId,
     ),
   );
 
@@ -271,7 +271,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             isDeleteAction && 'text-error hover:text-error',
           )}
           selectedCheckboxVersionIds={itemVersionsSelected}
-          onSelectCheckboxVersion={handleSelectCheckboxVersion}
+          onSelectCheckboxVersion={
+            isDeleteAction ? handleSelectCheckboxVersion : undefined
+          }
           groupVersions={!isDeleteAction}
           readonly={!isDeleteAction}
         />

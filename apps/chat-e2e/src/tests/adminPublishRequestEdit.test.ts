@@ -1730,7 +1730,10 @@ dialAdminTest(
           updatedFileFolderName,
           'visible',
         );
-        await fileManagerFoldersTree.expandFolders(updatedFileFolderName);
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: true },
+          updatedFileFolderName,
+        );
         await fileManagerGridAssertion.assertGridRowByNameState(
           imageName,
           'visible',
