@@ -28,7 +28,7 @@ import {
 import { Loader } from '@/src/components/Common/Loader';
 import { ResizableSidebarWrapper } from '@/src/components/Sidebar/ResizableSidebarWrapper';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -61,12 +61,11 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span
-        className="ml-2 truncate whitespace-nowrap text-sm"
+
+      <DialEllipsisTooltip
         data-qa="option-label"
-      >
-        {displayValue ?? filterValue}
-      </span>
+        text={displayValue ?? filterValue}
+      />
     </label>
   );
 };
