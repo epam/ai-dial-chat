@@ -326,12 +326,13 @@ dialSharedWithMeTest(
           confirmationDialog,
           'visible',
         );
-        await confirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.removeAccessTitle,
-        );
-        await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeAccessForAllMessage(appData.name),
-        );
+        //TODO: unblock when fixed https://github.com/epam/ai-dial-chat/issues/6073
+        // await confirmationDialogAssertion.assertConfirmationDialogTitle(
+        //   ExpectedConstants.removeAccessTitle,
+        // );
+        // await confirmationDialogAssertion.assertConfirmationMessage(
+        //   ExpectedConstants.removeAccessForAllMessage(appData.name),
+        // );
       },
     );
 

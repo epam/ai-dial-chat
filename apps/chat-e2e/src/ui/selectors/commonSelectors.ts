@@ -83,3 +83,7 @@ export const InputSelectors = {
 export const TooltipSelectors = {
   tooltipContainer: '[role="tooltip"]',
 };
+
+export const EntityIconSelectors = {
+  fileIcon: '[aria-label="File type icon"]',
+};

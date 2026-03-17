@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { FileManagerNavigationPanelSelectors } from '@/src/ui/selectors';
 import { BaseElement, Breadcrumb } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
@@ -15,6 +16,10 @@ export class FileManagerNavigationPanel extends BaseElement {
 
   public searchField = this.getChildElementBySelector(
     FileManagerNavigationPanelSelectors.searchField,
+  );
+
+  public searchFieldInput = this.searchField.getChildElementBySelector(
+    Tags.input,
   );
 
   getBreadcrumb(): Breadcrumb {
