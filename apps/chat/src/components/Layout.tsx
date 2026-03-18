@@ -127,15 +127,21 @@ export function Layout({
   };
 
   useEffect(() => {
+    let unsubscribed = false;
+
     const handleCloseTab = () => {
+      if (unsubscribed) return;
       navigator.sendBeacon(
         '/api/client-channels/unsubscribe',
         JSON.stringify({ channelId }),
       );
+      unsubscribed = true;
     };
+    window.addEventListener('beforeunload', handleCloseTab);
     window.addEventListener('pagehide', handleCloseTab);
 
     return () => {
+      window.removeEventListener('beforeunload', handleCloseTab);
       window.removeEventListener('pagehide', handleCloseTab);
     };
   }, [channelId]);
