@@ -2,6 +2,7 @@ import {
   Icon,
   IconCheck,
   IconCsv,
+  IconFileTypeCsv,
   IconMarkdown,
   IconTxt,
 } from '@tabler/icons-react';
@@ -30,6 +31,7 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
 
   return (
     <IconComponent
+      stroke={1.5}
       className="cursor-pointer text-secondary hover:text-accent-primary"
       size={DEFAULT_ICON_SIZES.STANDARD}
       data-qa={type.concat('-icon')}
@@ -162,7 +164,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           <div data-no-context-menu className="flex gap-2">
             <Tooltip placement="top" tooltip={t('Copy as CSV')}>
               <CopyIcon
-                Icon={IconCsv}
+                Icon={IconFileTypeCsv}
                 onClick={copyTableToCSV}
                 copied={CopyTableType.CSV === copiedType}
                 type={CopyTableType.CSV}
