@@ -51,7 +51,7 @@ dialTest(
           expectedDefaultRecentEntities,
           ExpectedMessages.recentEntitiesVisible,
         );
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
 
         await chat.configureSettingsButton.click();
         await agentSettingAssertion.assertSystemPromptValue(

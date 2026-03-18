@@ -1,4 +1,3 @@
-import { IconSearch } from '@tabler/icons-react';
 import {
   MouseEvent,
   useCallback,
@@ -59,6 +58,7 @@ import { TalkToNotFound } from '@/src/components/Common/TalkToNotFound';
 import { TalkToSliderItem, TalkToSliderItemProps } from './TalkToSliderItem';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialSearch } from '@epam/ai-dial-ui-kit';
 import orderBy from 'lodash-es/orderBy';
 
 interface TabButtonProps {
@@ -327,20 +327,15 @@ const TalkToModalView = ({
           ref={headerRef}
           className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4"
         >
-          <div className="relative flex grow">
-            <IconSearch
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              size={18}
-            />
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('Search')}
-              className="input-form peer m-0 pl-[38px]"
-              data-qa="search-agents"
-              autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-            />
-          </div>
+          <DialSearch
+            containerClassName="flex-1"
+            data-qa="search-agents"
+            autoFocus={isOverlay || !isSmallScreenOrTouchable()}
+            placeholder={t('Search')}
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+
           <div className="flex gap-2 sm:gap-3">
             {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
               (marketplaceTab) => (

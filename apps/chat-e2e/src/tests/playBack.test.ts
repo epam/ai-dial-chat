@@ -86,7 +86,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentIsSelected(
           ExpectedConstants.playbackLabel,
         );
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
 
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();

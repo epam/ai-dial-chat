@@ -221,7 +221,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"
-      containerClassName="inline-block h-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="inline-block h-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[1000px]"
       form={{
         noValidate: true,
         onSubmit: handleSubmit,
