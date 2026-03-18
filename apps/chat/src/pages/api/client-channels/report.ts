@@ -46,12 +46,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const response = await fetch(URL, {
       method: HTTPMethod.POST,
       headers: {
+        'Content-Type': 'application/json',
         ...getApiHeaders({
           jwt: token?.token ?? '',
           jobTitle: token?.jobTitle ?? '',
         }),
         [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
       },
+      body: JSON.stringify(req.body),
     });
 
     if (!response.ok) {
