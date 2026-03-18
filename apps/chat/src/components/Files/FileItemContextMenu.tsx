@@ -124,7 +124,7 @@ export function FileItemContextMenu({
       },
       {
         name: t('Unshare'),
-        display: !!file.sharedWithMe,
+        display: !!file.sharedWithMe && !isCodeEditorFile,
         dataQa: 'unshare-file',
         Icon: IconUserUnshare,
         onClick: onUnshare,
@@ -143,6 +143,7 @@ export function FileItemContextMenu({
         name: t('Delete'),
         dataQa: 'delete',
         display:
+          isCodeEditorFile ||
           isMyEntity(file) ||
           canEditSharedFolderOrParent(folders, file.folderId),
         Icon: IconTrashX,
