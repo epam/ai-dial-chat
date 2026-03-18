@@ -1,10 +1,10 @@
 import { PopupSelectors } from '@/src/ui/selectors';
 import { BaseElement, Button } from '@/src/ui/webElements';
-import { Locator, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 export class Popup extends BaseElement {
-  constructor(page: Page, selector = PopupSelectors.popupContainer, parentLocator?: Locator) {
-    super(page, selector, parentLocator);
+  constructor(page: Page, selector = PopupSelectors.popupContainer) {
+    super(page, selector);
   }
 
   private closeButton!: Button;

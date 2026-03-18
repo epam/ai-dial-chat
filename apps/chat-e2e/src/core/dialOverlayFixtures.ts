@@ -264,7 +264,6 @@ const dialOverlayTest = test.extend<{
   overlayTalkToAgentDialog: async ({ page, overlayHomePage }, use) => {
     const overlayTalkToAgentDialog = new TalkToAgentDialog(
       page,
-      undefined,
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayTalkToAgentDialog);
