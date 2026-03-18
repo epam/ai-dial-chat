@@ -66,26 +66,50 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   searchParams.set('permissions', 'true');
 
   try {
-    const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
-      headers: getApiHeaders({ jwt }),
-    });
+    const baseUrl = `${sanitizeUri(url)}/?${searchParams}`;
 
-    let json: unknown;
-    if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch {
-        json = undefined;
+    const allItems: unknown[] = [];
+    let nextToken: string | undefined;
+
+    do {
+      const fetchUrl = nextToken ? `${baseUrl}&token=${nextToken}` : baseUrl;
+
+      const proxyRes = await fetch(fetchUrl, {
+        headers: getApiHeaders({ jwt }),
+      });
+
+      if (proxyRes.status === 404) {
+        break;
       }
 
-      throw new DialAIError(
-        (typeof json === 'string' && json) || proxyRes.statusText,
-        proxyRes.status,
-        req,
-      );
-    }
-    json = await proxyRes.json();
-    return res.status(200).send(json);
+      if (!proxyRes.ok) {
+        let errorBody: unknown;
+        try {
+          errorBody = await proxyRes.json();
+        } catch {
+          errorBody = undefined;
+        }
+
+        throw new DialAIError(
+          (typeof errorBody === 'string' && errorBody) || proxyRes.statusText,
+          proxyRes.status,
+          req,
+        );
+      }
+
+      const json = (await proxyRes.json()) as {
+        items?: unknown[];
+        nextToken?: string;
+      };
+
+      if (json.items) {
+        allItems.push(...json.items);
+      }
+
+      nextToken = json.nextToken;
+    } while (nextToken);
+
+    return res.status(200).send(allItems);
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof DialAIError) {
