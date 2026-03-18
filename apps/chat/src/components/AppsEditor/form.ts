@@ -418,15 +418,17 @@ const getQuickApp2FormData = (
   toolSupportingModelIds?: string[],
 ): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
+  // show selected model for existing Quick Apps
   let model = appProperties?.orchestrator?.deployment?.name;
   if (!model) {
     const defaultModelId = DefaultsService.get(
       'quickAppsModel',
       DEFAULT_QUICK_APPS_MODEL,
     );
+    // check if default model for quick app is configured correctly
     model = toolSupportingModelIds?.includes(defaultModelId)
-      ? defaultModelId
-      : (toolSupportingModelIds?.[0] ?? '');
+      ? defaultModelId // use default quick app model
+      : (toolSupportingModelIds?.[0] ?? ''); // use first from list
   }
 
   return {
