@@ -10,6 +10,7 @@ import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
+import { PublishedItem } from '@/src/types/publication';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -68,7 +69,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const baseUrl = `${sanitizeUri(url)}/?${searchParams}`;
 
-    const allItems: unknown[] = [];
+    const allItems: PublishedItem[] = [];
     let nextToken: string | undefined;
 
     do {
@@ -98,7 +99,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       const json = (await proxyRes.json()) as {
-        items?: unknown[];
+        items?: PublishedItem[];
         nextToken?: string;
       };
 
