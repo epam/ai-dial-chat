@@ -8,6 +8,7 @@ import {
   MenuSelectors,
   TalkToAgentDialogSelectors,
 } from '@/src/ui/selectors';
+import { Search } from '@/src/ui/webElements';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -15,12 +16,13 @@ import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplac
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToAgentDialog extends Popup {
-  constructor(page: Page, selector: string) {
-    super(page, selector);
+  constructor(page: Page, selector?: string, parentLocator?: Locator) {
+    super(page, selector, parentLocator);
   }
 
   private agents!: MarketplaceEntities;
   private versionDropdownMenu!: DropdownButtonMenu;
+  private search!: Search;
   public goToMyWorkspaceButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.goToMyWorkspaceButton,
   );
@@ -32,9 +34,6 @@ export class TalkToAgentDialog extends Popup {
   );
   public allAgentsTab = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.allAgentsTab,
-  );
-  public searchAgentInput = this.getChildElementBySelector(
-    TalkToAgentDialogSelectors.searchAgent,
   );
   public nextArrowButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.nextArrowButton,
@@ -58,6 +57,13 @@ export class TalkToAgentDialog extends Popup {
       this.versionDropdownMenu = new DropdownButtonMenu(this.page);
     }
     return this.versionDropdownMenu;
+  }
+
+  getSearch(): Search {
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
   }
 
   public getTalkToAgent(entity: DialAIEntityModel | string) {
@@ -121,7 +127,7 @@ export class TalkToAgentDialog extends Popup {
   //the function returns an agent card or a dropdown agent version locator to select for the further usage
   public async findAgent(entity: DialAIEntityModel | string) {
     const isEntityOfStringType = typeof entity === 'string';
-    await this.searchAgentInput.fillInInput(
+    await this.getSearch().inputField.fillInInput(
       isEntityOfStringType ? entity : entity.name,
     );
     const agents = this.getAgents();
