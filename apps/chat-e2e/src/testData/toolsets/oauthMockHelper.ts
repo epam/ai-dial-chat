@@ -37,9 +37,6 @@ export class OAuthMockHelper {
     updateToolsetCode?: number;
     backendSigInCode?: number;
   };
-  // resolves when the OAuth redirect route handler captures the URL and state
-  private oauthCapturedPromise?: Promise<void>;
-  private oauthCapturedResolve?: () => void;
   private state: OAuthState = {
     isSignedIn: false,
     capturedOAuthUrl: null,
@@ -121,14 +118,32 @@ export class OAuthMockHelper {
     return this.toolset;
   }
 
-  // The popup is automatically redirected to the callback URL by
-  // setupOAuthRedirectRoute (302). It loads toolset-signin, calls the
-  // sign-in API, and sets login-complete=1. The main page detects that
-  // and closes the popup. So we just wait for the popup to close.
+  // Navigate the popup to the callback URL and wait for the flow to complete.
+  //
+  // We navigate explicitly instead of relying on the automatic 302 redirect
+  // because after a cross-origin navigation (random OAuth URL → localhost),
+  // Playwright's context-level route handlers may not intercept the popup's
+  // fetch requests. Driving the popup ourselves keeps everything same-origin
+  // from the start, so the sign-in mock fires reliably.
+  //
+  // After the popup loads /auth/toolset-signin, it calls the sign-in API,
+  // then adds login-complete=1 to its URL. The main page detects that and
+  // closes the popup. If the popup is already closed (the flow finished
+  // during an earlier step), we return immediately.
   async navigateToCallback(popup: Page): Promise<void> {
     if (!this.state.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
     }
+    if (popup.isClosed()) return;
+
+    // Set up the response waiter before navigating so we don't miss it
+    const signInResponsePromise = popup.waitForResponse((resp) =>
+      resp.url().includes(API.toolsetSignInHost()),
+    );
+    await popup.goto(this.state.callbackUrl, { waitUntil: 'domcontentloaded' });
+    await signInResponsePromise;
+
+    // The main page closes the popup once it detects login-complete=1
     if (!popup.isClosed()) {
       await popup.waitForEvent('close');
     }
