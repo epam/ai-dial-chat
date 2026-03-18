@@ -528,7 +528,7 @@ dialTest(
         });
         await chatBar.createNewEntity();
         await talkToAgentDialog.waitForState();
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await requestPromise;
       },
     );
