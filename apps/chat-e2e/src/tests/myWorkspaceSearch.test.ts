@@ -57,6 +57,7 @@ dialTest(
     let nonInstalledAppSecondVersion: string;
     let nonInstalledAppName: string;
     let foundSuggestedAgentElement: BaseElement;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Prepare one application visible in "My Workspace" and one available in the "Marketplace", both have unique name and version',
@@ -128,7 +129,8 @@ dialTest(
       async () => {
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(nonInstalledAppName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(nonInstalledAppName);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const actualFilteredAgents = actualAgents.filter(
           (agent) => agent.isWorkspaceEntity,
@@ -174,9 +176,7 @@ dialTest(
     await dialTest.step(
       'Search by non existent agent name and verify no results label is displayed',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(
-          GeneratorUtil.randomString(20),
-        );
+        await searchInput.fillInInput(GeneratorUtil.randomString(20));
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
           'visible',
@@ -203,7 +203,7 @@ dialTest(
     await dialTest.step(
       'Search by installed agent name and verify no Marketplace agents are suggested',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(installedAppName);
+        await searchInput.fillInInput(installedAppName);
         await baseAssertion.assertElementState(
           marketplace.marketplaceSuggestionsLabel,
           'hidden',
@@ -234,7 +234,7 @@ dialTest(
     await dialTest.step(
       'Search by unique installed agent version and verify agent is displayed, no Marketplace agents are suggested',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(installedAppVersion);
+        await searchInput.fillInInput(installedAppVersion);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = actualAgents.filter(
           (agent) => agent.isWorkspaceEntity,
@@ -286,9 +286,7 @@ dialTest(
     await dialTest.step(
       'Search by not installed agent version and verify no results label is displayed, agent with searched version is suggested',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(
-          nonInstalledAppSecondVersion,
-        );
+        await searchInput.fillInInput(nonInstalledAppSecondVersion);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.filter((agent) => agent.isWorkspaceEntity).length,
@@ -391,6 +389,7 @@ dialTest(
     let secondAddedAppName: string;
     let secondAddedAppVersion: string;
     let allAgents: MarketplaceEntityProperties[];
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Open "My Workspace", search by one of the installed agent versions and verify only that version is displayed in the results',
@@ -425,9 +424,8 @@ dialTest(
         }
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(
-          installedAppFirstVersion,
-        );
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(installedAppFirstVersion);
         allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredAgents = allAgents.filter(
           (agent) => agent.isWorkspaceEntity,
@@ -480,7 +478,7 @@ dialTest(
     await dialTest.step(
       'Set installed app name in the search field',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(installedAppName);
+        await searchInput.fillInInput(installedAppName);
       },
     );
 
@@ -557,7 +555,7 @@ dialTest(
           ExpectedMessages.searchResultsAreCorrect,
         );
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           installedAppName,
         );
@@ -589,6 +587,7 @@ dialTest(
     let secondAppName: string;
     let thirdAppName: string;
     const commonAppNamePart = GeneratorUtil.randomApplicationName();
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Prepare two applications with equal versions and app with common name part available in the "Marketplace"',
@@ -649,7 +648,8 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appVersion);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appVersion);
         const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const expectedAgents = allAgents.filter(
           (a) =>
@@ -702,7 +702,7 @@ dialTest(
     await dialTest.step(
       'Search by common part of app names and verify two apps are found, one app is suggested',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(commonAppNamePart);
+        await searchInput.fillInInput(commonAppNamePart);
         const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const filteredWorkspaceAgents = allAgents.filter(
           (agent) => agent.isWorkspaceEntity,
@@ -750,6 +750,8 @@ dialTest(
     applicationApiHelper,
   }) => {
     setTestIds('EPMRTC-6447');
+
+    let searchInput: BaseElement;
 
     const firstAppName = applicationNamePrefix + 'abcdefghij 1';
     const secondAppName = applicationNamePrefix + 'abcd efghij';
@@ -822,7 +824,8 @@ dialTest(
         });
         await marketplacePage.waitForPageLoaded();
         for (const searchTerm of searchTermResultMap.keys()) {
-          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          searchInput = marketplaceHeader.getSearch().inputField;
+          await searchInput.fillInInput(searchTerm);
           const actualAgents =
             await marketplaceEntitiesSection.getAllEntities();
           const filteredAgents = actualAgents.filter(
@@ -845,7 +848,7 @@ dialTest(
     await dialTest.step(
       'Type not existent combination in the search field and verify no results are found',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(seventhTerm);
+        await searchInput.fillInInput(seventhTerm);
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
           'visible',

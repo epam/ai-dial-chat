@@ -97,6 +97,7 @@ dialTest(
     let agentElement: BaseElement;
     let generalInfoStep: BaseElement;
     let appSettingsStep: BaseElement;
+    let searchInput: BaseElement;
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
@@ -246,7 +247,8 @@ dialTest(
           'hidden',
         );
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appEntity.name);
         await baseAssertion.assertElementText(
           marketplace.noResultsFound,
           ExpectedConstants.noResults,
@@ -468,7 +470,7 @@ dialTest(
     await dialTest.step(
       'Find card of created custom app on My workspace page',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
@@ -516,7 +518,7 @@ dialTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
 
@@ -593,7 +595,7 @@ dialTest(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -873,6 +875,7 @@ dialTest(
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
+    let searchInput: BaseElement;
 
     const appEntity1 = {
       name: GeneratorUtil.randomApplicationName(),
@@ -929,7 +932,8 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appEntity1.name);
         agentElement1 =
           await marketplaceEntitiesSection.findEntityElement(appEntity1);
         await baseAssertion.assertElementState(agentElement1, 'visible');
@@ -981,7 +985,7 @@ dialTest(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
-        await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
+        await searchInput.fillInInput(appEntity1.name);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -1002,7 +1006,7 @@ dialTest(
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity2_v2.name);
+        await searchInput.fillInInput(appEntity2_v2.name);
         const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const workspaceAgentsWithName = allAgents.filter(
           (agent) =>
@@ -1971,7 +1975,9 @@ dialTest(
     await dialTest.step(
       'Find the created application and verify tooltips',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         const agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await agentElement.click();
@@ -2176,7 +2182,7 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
@@ -2359,7 +2365,9 @@ dialTest(
     await dialTest.step(
       `On My Workspace page, click on app's card and then "Use application" button`,
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         const agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await agentElement.click();
@@ -2436,7 +2444,9 @@ dialTest(
     });
 
     await dialTest.step("Find app's card", async () => {
-      await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+      await marketplaceHeader
+        .getSearch()
+        .inputField.fillInInput(appEntity.name);
       reusableAgentElement =
         await marketplaceEntitiesSection.findEntityElement(appEntity);
       await baseAssertion.assertElementState(

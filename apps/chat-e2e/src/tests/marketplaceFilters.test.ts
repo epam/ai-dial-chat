@@ -71,9 +71,9 @@ dialTest(
       'Set any search term and verify it is added as a param to the url',
       async () => {
         const searchTerm = GeneratorUtil.randomString(5);
-        await marketplaceHeader.searchInput.fillInInput(searchTerm);
+        await marketplaceHeader.getSearch().inputField.fillInInput(searchTerm);
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          marketplaceHeader.getSearch().inputField,
           Attributes.value,
           searchTerm,
         );
@@ -108,7 +108,7 @@ dialTest(
           CheckboxState.unchecked,
         );
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          marketplaceHeader.getSearch().inputField,
           Attributes.value,
           '',
         );
@@ -188,9 +188,9 @@ dialTest(
               );
               break;
             case 'go-back':
-              await incognitoMarketplaceHeader.searchInput.fillInInput(
-                GeneratorUtil.randomString(5),
-              );
+              await incognitoMarketplaceHeader
+                .getSearch()
+                .inputField.fillInInput(GeneratorUtil.randomString(5));
               await incognitoAppContainer
                 .getNavigationPanel()
                 .backToChat({ isHttpMethodTriggered: false });
@@ -250,7 +250,7 @@ dialTest(
             filterState,
           );
           await baseAssertion.assertElementAttribute(
-            incognitoMarketplaceHeader.searchInput,
+            incognitoMarketplaceHeader.getSearch().inputField,
             Attributes.value,
             '',
           );
