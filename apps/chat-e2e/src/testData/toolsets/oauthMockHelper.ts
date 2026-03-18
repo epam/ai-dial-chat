@@ -140,7 +140,17 @@ export class OAuthMockHelper {
     const signInResponsePromise = popup.waitForResponse((resp) =>
       resp.url().includes(API.toolsetSignInHost()),
     );
-    await popup.goto(this.state.callbackUrl, { waitUntil: 'domcontentloaded' });
+    try {
+      await popup.goto(this.state.callbackUrl, {
+        waitUntil: 'domcontentloaded',
+      });
+    } catch (e) {
+      // Race condition: the 302 redirect completed the sign-in flow before we
+      // got here, so the main page already closed the popup. Nothing left to do.
+      if (!popup.isClosed()) throw e;
+      signInResponsePromise.catch(() => {});
+      return;
+    }
     await signInResponsePromise;
 
     // The main page closes the popup once it detects login-complete=1
