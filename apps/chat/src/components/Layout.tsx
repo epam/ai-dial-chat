@@ -48,6 +48,7 @@ export function Layout({
 
   const dispatch = useAppDispatch();
 
+  const isSubscribed = useAppSelector(ChatEventsSelectors.selectIsSubscribed);
   const channelId = useAppSelector(ChatEventsSelectors.selectChannelId);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
@@ -130,7 +131,7 @@ export function Layout({
     let unsubscribed = false;
 
     const handleCloseTab = () => {
-      if (unsubscribed) return;
+      if (unsubscribed || !isSubscribed) return;
       navigator.sendBeacon(
         '/api/client-channels/unsubscribe',
         JSON.stringify({ channelId }),
@@ -144,7 +145,7 @@ export function Layout({
       window.removeEventListener('beforeunload', handleCloseTab);
       window.removeEventListener('pagehide', handleCloseTab);
     };
-  }, [channelId]);
+  }, [channelId, isSubscribed]);
 
   return (
     <>
