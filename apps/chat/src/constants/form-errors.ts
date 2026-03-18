@@ -7,8 +7,6 @@ import { MAX_ENTITY_LENGTH, MIN_ENTITY_LENGTH } from './default-ui-settings';
 
 export const formErrors = {
   required: translate('This field is required'),
-  notValidUrl: translate('URL is not correct'),
-  notValidUrlProtocol: translate('URL must start with a valid protocol'),
   notValidString: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
     translate(
       `${name} should be ${MIN_ENTITY_LENGTH} to ${maxLength} characters long and should not contain special characters`,
