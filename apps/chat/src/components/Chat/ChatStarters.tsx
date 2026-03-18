@@ -77,25 +77,19 @@ export const ChatStarters = memo(function ChatStarters() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const conversationModelReference = selectedConversations[0]?.model.id;
-  const conversationModelId =
+  const modelId =
     modelsMap[conversationModelReference]?.id ?? conversationModelReference;
+
   const schema = useAppSelector((state) =>
-    ChatSelectors.selectConfigurationSchemaByModelId(
-      state,
-      conversationModelId,
-    ),
+    ChatSelectors.selectConfigurationSchemaByModelId(state, modelId),
   );
   const isSchemaLoading = useAppSelector((state) =>
-    ChatSelectors.selectIsConfigurationSchemaLoading(
-      state,
-      conversationModelId,
-    ),
+    ChatSelectors.selectIsConfigurationSchemaLoading(state, modelId),
   );
 
   if (
@@ -108,10 +102,5 @@ export const ChatStarters = memo(function ChatStarters() {
     return null;
   }
 
-  return (
-    <ChatStartersView
-      schema={schema}
-      modelId={selectedConversations[0].model.id}
-    />
-  );
+  return <ChatStartersView schema={schema} modelId={modelId} />;
 });
