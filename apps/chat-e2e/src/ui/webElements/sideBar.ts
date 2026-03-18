@@ -10,7 +10,7 @@ import { MenuOptions } from '@/src/testData';
 import { Styles, removeAlpha } from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { Search } from '@/src/ui/webElements/search';
+import { SidebarSearch } from '@/src/ui/webElements/sidebarSearch';
 import { Locator, Page } from '@playwright/test';
 
 export class SideBar extends BaseElement {
@@ -18,15 +18,15 @@ export class SideBar extends BaseElement {
     super(page, selector, parentLocator);
   }
 
-  private search!: Search;
+  private sidebarSearch!: SidebarSearch;
   private chatLoader!: ChatLoader;
   private bottomDropdownMenu!: DropdownMenu;
 
-  getSearch(): Search {
-    if (!this.search) {
-      this.search = new Search(this.page, this.rootLocator);
+  getSidebarSearch(): SidebarSearch {
+    if (!this.sidebarSearch) {
+      this.sidebarSearch = new SidebarSearch(this.page, this.rootLocator);
     }
-    return this.search;
+    return this.sidebarSearch;
   }
 
   getChatLoader(): ChatLoader {

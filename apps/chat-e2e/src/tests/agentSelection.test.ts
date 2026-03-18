@@ -8,6 +8,7 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -50,6 +51,7 @@ dialTest(
       'EPMRTC-4356',
       'EPMRTC-5168',
     );
+    let searchInput: BaseElement;
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
@@ -126,7 +128,7 @@ dialTest(
       'Create a new conversation and verify the first model is still selected',
       async () => {
         await chatBar.createNewEntity();
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await agentInfoAssertion.assertAgentName(initialModel1.name);
       },
     );
@@ -165,7 +167,7 @@ dialTest(
       'Create a new conversation and verify the second model is still selected',
       async () => {
         await chatBar.createNewEntity();
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
@@ -175,7 +177,8 @@ dialTest(
       async () => {
         await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(addedModel.name);
         await marketplaceEntitiesSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
@@ -193,7 +196,7 @@ dialTest(
       async () => {
         await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(addedModel.name);
+        await searchInput.fillInInput(addedModel.name);
         const addedModelElement =
           await marketplaceEntitiesSection.findEntityElement(addedModel);
         await addedModelElement.click();
@@ -223,7 +226,7 @@ dialTest(
           'visible',
         );
         await talkToAgentDialogAssertion.assertAgentIsSelected(initialModel2);
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await agentInfoAssertion.assertAgentName(initialModel2.name);
       },
     );
@@ -700,7 +703,7 @@ dialTest(
       async () => {
         await chatBar.createNewEntity();
         await talkToAgentDialogAssertion.assertAgentIsSelected(secondModel);
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await localStorageAssertion.assertRecentModels([secondModel.id]);
         await agentInfoAssertion.assertAgentName(secondModel.name);
       },

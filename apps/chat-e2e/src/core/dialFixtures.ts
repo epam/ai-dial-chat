@@ -183,9 +183,9 @@ import { RenameConversationModal } from '@/src/ui/webElements/renameConversation
 import { ReplaceConfirmationModal } from '@/src/ui/webElements/replaceConfirmationModal';
 import { ReplaceConfirmationModalConversations } from '@/src/ui/webElements/replaceConfirmationModalConversations';
 import { ReplaceConfirmationModalFolders } from '@/src/ui/webElements/replaceConfirmationModalFolders';
-import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
+import { SidebarSearch } from '@/src/ui/webElements/sidebarSearch';
 import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Toast } from '@/src/ui/webElements/toast';
@@ -295,8 +295,8 @@ const dialTest = test.extend<{
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
   shareAppModal: ShareAppModal;
-  chatBarSearch: Search;
-  promptBarSearch: Search;
+  chatBarSearch: SidebarSearch;
+  promptBarSearch: SidebarSearch;
   chatFilter: Filter;
   promptFilter: Filter;
   chatFilterDropdownMenu: DropdownCheckboxMenu;
@@ -763,7 +763,7 @@ const dialTest = test.extend<{
     await use(promptBar);
   },
   promptBarSearch: async ({ promptBar }, use) => {
-    const promptBarSearch = promptBar.getSearch();
+    const promptBarSearch = promptBar.getSidebarSearch();
     await use(promptBarSearch);
   },
   fileDropArea: async ({ appContainer }, use) => {
@@ -815,7 +815,7 @@ const dialTest = test.extend<{
     await use(folderConversations);
   },
   chatBarSearch: async ({ chatBar }, use) => {
-    const chatBarSearch = chatBar.getSearch();
+    const chatBarSearch = chatBar.getSidebarSearch();
     await use(chatBarSearch);
   },
   chatFilter: async ({ chatBarSearch }, use) => {

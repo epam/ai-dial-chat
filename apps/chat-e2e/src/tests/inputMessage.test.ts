@@ -200,7 +200,7 @@ dialAdminTest(
       'Click on "+" to create a new conversation and verify input message is preserved',
       async () => {
         await chatBar.createNewEntity();
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },
     );

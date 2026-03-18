@@ -90,6 +90,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    let searchInput: BaseElement;
 
     await dialAdminTest.step(
       'Prepare and publish a custom application via API',
@@ -127,7 +128,8 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -360,7 +362,7 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -454,6 +456,7 @@ dialAdminTest(
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let majorVersionApp: DialAIEntityModel;
     let conversation: Conversation;
+    let searchInput: BaseElement;
 
     await dialAdminTest.step(
       'Prepare and publish a custom application with two versions via API',
@@ -507,7 +510,8 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = adminMarketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -604,7 +608,7 @@ dialAdminTest(
         );
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -691,6 +695,7 @@ dialAdminTest(
     let sortedAppVersions: string[];
     let appElement: BaseElement;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
+    let searchInput: BaseElement;
 
     await dialAdminTest.step(
       'Prepare and publish a custom application with two versions via API',
@@ -718,7 +723,8 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -810,7 +816,7 @@ dialAdminTest(
         );
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
