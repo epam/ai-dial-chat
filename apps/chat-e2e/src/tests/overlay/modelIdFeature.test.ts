@@ -91,7 +91,7 @@ dialOverlayTest(
       async () => {
         await overlayChat.changeAgentButton.click();
         await overlayTalkToAgentDialogAssertion.assertIsElementFocused(
-          overlayTalkToAgentDialog.searchAgentInput,
+          overlayTalkToAgentDialog.getSearch().inputField,
           true,
         );
       },
