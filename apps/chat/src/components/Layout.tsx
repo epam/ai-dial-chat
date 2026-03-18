@@ -12,12 +12,7 @@ import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { Translation } from '@/src/types/translation';
 
-import {
-  AuthActions,
-  ChatEventsActions,
-  SettingsActions,
-  UIActions,
-} from '@/src/store/actions';
+import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AuthSelectors,
@@ -137,16 +132,13 @@ export function Layout({
         '/api/client-channels/unsubscribe',
         JSON.stringify({ channelId }),
       );
-      dispatch(ChatEventsActions.unsubscribe());
     };
     window.addEventListener('pagehide', handleCloseTab);
-    document.addEventListener('visibilitychange', handleCloseTab);
 
     return () => {
       window.removeEventListener('pagehide', handleCloseTab);
-      document.removeEventListener('visibilitychange', handleCloseTab);
     };
-  }, [dispatch, channelId]);
+  }, [channelId]);
 
   return (
     <>
