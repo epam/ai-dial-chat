@@ -168,24 +168,6 @@ export const getVersionValidationErrors = (
   return errors;
 };
 
-export const getModelValidationError = (
-  modelId: string | undefined,
-  model: DialAIEntityModel | undefined,
-  models: DialAIEntityModel[],
-) => {
-  if (!modelId) return formErrors.required;
-
-  if (!model) return modelErrors.unavailable;
-
-  const isModelValid = models.some(
-    (m) => m.reference === modelId || m.id === modelId,
-  );
-
-  if (!isModelValid) {
-    return modelErrors.notValid;
-  }
-};
-
 export const preventEnterDown = (e: KeyboardEvent<HTMLFormElement>) => {
   if (e.key === 'Enter') {
     e.preventDefault();

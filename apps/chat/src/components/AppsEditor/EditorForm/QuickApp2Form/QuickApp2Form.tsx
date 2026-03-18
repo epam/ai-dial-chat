@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 import {
   Controller,
   useFormContext,
@@ -11,7 +11,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
-import { getModelValidationError } from '@/src/utils/app/forms';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
@@ -62,15 +61,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     ApplicationSelectors.selectApplicationDetail,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelTypeAgents = useAppSelector((state) =>
-    ModelsSelectors.selectModelTypeAgents(state, true),
-  );
-
-  const areModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
-
-  const toolSupportingModels = useMemo(
-    () => modelTypeAgents.filter((model) => model.features?.tools),
-    [modelTypeAgents],
+  const toolSupportingModels = useAppSelector(
+    ModelsSelectors.selectToolSupportingModels,
   );
 
   const { control, register, setError, clearErrors } =
@@ -81,33 +73,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     control,
     name: 'model',
   });
-
-  useEffect(() => {
-    if (!areModelsLoaded) return;
-
-    const modelError = getModelValidationError(
-      modelId,
-      modelsMap[modelId],
-      toolSupportingModels,
-    );
-
-    if (modelError) {
-      setError('model', {
-        type: 'validate',
-        message: modelError,
-      });
-    } else {
-      clearErrors('model');
-    }
-  }, [
-    areModelsLoaded,
-    modelId,
-    toolSupportingModels,
-    setError,
-    clearErrors,
-    t,
-    modelsMap,
-  ]);
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];

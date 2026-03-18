@@ -41,8 +41,3 @@ export const versionsErrors = {
   tooLongPart:
     'Each part of the version should contain no more than five numbers.',
 };
-
-export const modelErrors = {
-  unavailable: 'Selected model is not available',
-  notValid: 'Selected model does not support tools',
-};
