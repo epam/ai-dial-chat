@@ -11,6 +11,10 @@ import {
   getProviderConfigById,
   isCredentialsProvider,
 } from './auth-providers';
+import {
+  getTokenExpirationMs,
+  validateProviderAccessToken,
+} from './auth-token-utils';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -19,10 +23,6 @@ import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
 import snakeCase from 'lodash-es/snakeCase';
 import { TokenSet } from 'openid-client';
-import {
-  getTokenExpirationMs,
-  validateProviderAccessToken,
-} from './auth-token-utils';
 
 const waitRefreshTokenTimeout = 5;
 const CREDENTIALS_ACCOUNT_TYPE = 'credentials';
@@ -234,7 +234,9 @@ const handleCredentialsAccountJwt = async (options: JwtCallbackOptions) => {
     | { accessToken?: string; provider?: string }
     | undefined;
   const credentialsAccessToken =
-    typeof credUser?.accessToken === 'string' ? credUser.accessToken : undefined;
+    typeof credUser?.accessToken === 'string'
+      ? credUser.accessToken
+      : undefined;
   const signInProvider =
     typeof credUser?.provider === 'string' && credUser.provider
       ? credUser.provider
@@ -276,7 +278,9 @@ const handleCredentialsAccountJwt = async (options: JwtCallbackOptions) => {
       error: 'CredentialsAccessTokenValidationError',
     };
   }
-  const accessTokenExpires = getTokenExpirationMs(tokenValidationResult.payload);
+  const accessTokenExpires = getTokenExpirationMs(
+    tokenValidationResult.payload,
+  );
 
   if (typeof accessTokenExpires !== 'number') {
     logger.warn(

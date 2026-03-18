@@ -1370,7 +1370,7 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
             const authParams: Record<string, string> | undefined = logInHint
               ? { login_hint: logInHint }
               : undefined;
-            
+
             signIn(signInOptions?.signInProvider, undefined, authParams);
           }
         }
@@ -1395,10 +1395,10 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
           ? signInOptions.explicitToken.trim()
           : '';
       if (explicitToken) {
-        await signIn("credentials", {
+        await signIn('credentials', {
           accessToken: explicitToken,
           redirect: false,
-          provider: signInOptions?.signInProvider
+          provider: signInOptions?.signInProvider,
         });
         return;
       }
@@ -1410,7 +1410,6 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
     }),
     ignoreElements(),
   );
-
 
 const setOverlayOptionsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(

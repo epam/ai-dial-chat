@@ -8,10 +8,11 @@ import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import AzureB2CProvider from 'next-auth/providers/azure-ad-b2c';
 import CognitoProvider from 'next-auth/providers/cognito';
+import Credentials from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
-import Credentials from 'next-auth/providers/credentials';
+
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
 import {
@@ -105,7 +106,7 @@ const getAzureProvider = (config: ProviderConfig) =>
           params: {
             scope:
               config.scope || 'openid profile user.Read email offline_access',
-            audience: config.audience
+            audience: config.audience,
           },
         },
         token: tokenConfig,
@@ -266,23 +267,26 @@ const providerNames = {
   [SupportedProviders.OKTA]: 'okta',
   [SupportedProviders.GITLAB]: 'gitlab',
   [SupportedProviders.PING_ID]: 'pingId',
-  [SupportedProviders.CREDENTIALS]:  'credentials'
+  [SupportedProviders.CREDENTIALS]: 'credentials',
 };
 
 const isOAuthProvider = (provider: Provider): provider is OAuthConfig<any> => {
-  return provider.type === "oauth" 
-}
-export const getProviderConfigById = (providerId: string | undefined): OAuthConfig<any> | undefined => {
-  const result = authProviders.filter(isOAuthProvider).find(p => p.id === providerId);
+  return provider.type === 'oauth';
+};
+export const getProviderConfigById = (
+  providerId: string | undefined,
+): OAuthConfig<any> | undefined => {
+  const result = authProviders
+    .filter(isOAuthProvider)
+    .find((p) => p.id === providerId);
   return result;
-}
+};
 
 export const CREDENTIALS_PROVIDER_ID =
   providerNames[SupportedProviders.CREDENTIALS];
 
 export const isCredentialsProvider = (providerId: string | undefined) =>
   providerId === CREDENTIALS_PROVIDER_ID;
-
 
 const providerConfigMethods = {
   [SupportedProviders.AUTH0]: getAuth0Provider,
@@ -294,7 +298,7 @@ const providerConfigMethods = {
   [SupportedProviders.OKTA]: getOktaProvider,
   [SupportedProviders.GITLAB]: getGitLabProvider,
   [SupportedProviders.PING_ID]: getPingIdProvider,
-  [SupportedProviders.CREDENTIALS]: getCredentialsProvider
+  [SupportedProviders.CREDENTIALS]: getCredentialsProvider,
 };
 
 const getProviderFromConfig = (config: ProviderConfig) => {

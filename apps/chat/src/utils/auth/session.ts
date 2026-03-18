@@ -11,7 +11,7 @@ export function isClientSessionValid(session: unknown | null) {
     ![
       'RefreshAccessTokenError',
       'CredentialsAccessTokenValidationError',
-      'CredentialsAccessTokenExpired'
+      'CredentialsAccessTokenExpired',
     ].includes((session as { data?: { error?: string } }).data?.error ?? '')
   );
 }
@@ -32,7 +32,7 @@ export function isServerSessionValid(
     ![
       'RefreshAccessTokenError',
       'CredentialsAccessTokenValidationError',
-      'CredentialsAccessTokenExpired'
+      'CredentialsAccessTokenExpired',
     ].includes((session as { error?: string }).error ?? '')
   );
 }
