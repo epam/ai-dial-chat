@@ -1370,13 +1370,12 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
             const authParams: Record<string, string> | undefined = logInHint
               ? { login_hint: logInHint }
               : undefined;
-
+            
             signIn(signInOptions?.signInProvider, undefined, authParams);
           }
         }
       };
 
-      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       const isShouldLogout =
         signInOptions?.validationUserEmail &&
         AuthSelectors.selectIsShouldLogout(
@@ -1391,13 +1390,27 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
 
         return;
       }
+      const explicitToken =
+        typeof signInOptions?.explicitToken === 'string'
+          ? signInOptions.explicitToken.trim()
+          : '';
+      if (explicitToken) {
+        await signIn("credentials", {
+          accessToken: explicitToken,
+          redirect: false,
+          provider: signInOptions?.signInProvider
+        });
+        return;
+      }
 
+      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       if (isShouldLogin) {
         login();
       }
     }),
     ignoreElements(),
   );
+
 
 const setOverlayOptionsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(

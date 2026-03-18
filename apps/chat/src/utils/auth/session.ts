@@ -8,8 +8,12 @@ import { isAuthDisabled } from './auth-providers';
 export function isClientSessionValid(session: unknown | null) {
   return (
     session &&
-    (session as { data?: { error?: string } }).data?.error !==
-      'RefreshAccessTokenError'
+    ![
+      'RefreshAccessTokenError',
+      'CredentialsAccessTokenValidationError',
+      'CredentialsAccessTokenExpired',
+      'MissingProviderIdInToken'
+    ].includes((session as { data?: { error?: string } }).data?.error ?? '')
   );
 }
 
@@ -26,7 +30,12 @@ export function isServerSessionValid(
 
   return (
     !!session &&
-    (session as { error?: string }).error !== 'RefreshAccessTokenError'
+    ![
+      'RefreshAccessTokenError',
+      'CredentialsAccessTokenValidationError',
+      'CredentialsAccessTokenExpired',
+      'MissingProviderIdInToken'
+    ].includes((session as { error?: string }).error ?? '')
   );
 }
 

@@ -11,7 +11,7 @@ import CognitoProvider from 'next-auth/providers/cognito';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
-
+import Credentials from 'next-auth/providers/credentials';
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
 import {
@@ -51,6 +51,47 @@ const tokenConfig: TokenEndpointHandler = {
   },
 };
 
+const getCredentialsProvider = (config: ProviderConfig) => {
+  return Credentials({
+    id: config.id,
+    name: config.name ?? 'Credentials',
+    credentials: {
+      accessToken: { label: 'Access Token', type: 'text' },
+      provider: { label: 'Provider', type: 'text' },
+    },
+    async authorize(credentials) {
+      const accessToken =
+        typeof credentials?.accessToken === 'string'
+          ? credentials.accessToken.trim()
+          : '';
+
+      if (!accessToken) {
+        console.warn('Credentials authorize missing token');
+        return null;
+      }
+
+      const provider =
+        typeof credentials?.provider === 'string'
+          ? credentials.provider.trim()
+          : '';
+
+      return {
+        id: config.id,
+        name: null,
+        email: null,
+        accessToken,
+        provider,
+      } as {
+        id: string;
+        name: string | null;
+        email: string | null;
+        accessToken: string;
+        provider: string;
+      };
+    },
+  });
+};
+
 const getAzureProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.tenantId
     ? AzureProvider({
@@ -59,10 +100,12 @@ const getAzureProvider = (config: ProviderConfig) =>
         clientSecret: config.clientSecret,
         tenantId: config.tenantId,
         name: config.name ?? DEFAULT_NAME,
+        issuer: config.issuer,
         authorization: {
           params: {
             scope:
               config.scope || 'openid profile user.Read email offline_access',
+            audience: config.audience
           },
         },
         token: tokenConfig,
@@ -223,7 +266,23 @@ const providerNames = {
   [SupportedProviders.OKTA]: 'okta',
   [SupportedProviders.GITLAB]: 'gitlab',
   [SupportedProviders.PING_ID]: 'pingId',
+  [SupportedProviders.CREDENTIALS]:  'credentials'
 };
+
+const isOAuthProvider = (provider: Provider): provider is OAuthConfig<any> => {
+  return provider.type === "oauth" 
+}
+export const getProviderConfigById = (providerId: string | undefined): OAuthConfig<any> | undefined => {
+  const result = authProviders.filter(isOAuthProvider).find(p => p.id === providerId);
+  return result;
+}
+
+export const CREDENTIALS_PROVIDER_ID =
+  providerNames[SupportedProviders.CREDENTIALS];
+
+export const isCredentialsProvider = (providerId: string | undefined) =>
+  providerId === CREDENTIALS_PROVIDER_ID;
+
 
 const providerConfigMethods = {
   [SupportedProviders.AUTH0]: getAuth0Provider,
@@ -235,6 +294,7 @@ const providerConfigMethods = {
   [SupportedProviders.OKTA]: getOktaProvider,
   [SupportedProviders.GITLAB]: getGitLabProvider,
   [SupportedProviders.PING_ID]: getPingIdProvider,
+  [SupportedProviders.CREDENTIALS]: getCredentialsProvider
 };
 
 const getProviderFromConfig = (config: ProviderConfig) => {
@@ -250,7 +310,7 @@ const getProviderEnv = (
   return process.env[`AUTH_${provider}${indexStr}_${envName}`];
 };
 
-const getProviderConfig = (provider: SupportedProviders, index = 0) => {
+export const getProviderConfig = (provider: SupportedProviders, index = 0) => {
   const getEnv = (name: ProviderConfigFields) =>
     getProviderEnv(provider, name, index);
 
