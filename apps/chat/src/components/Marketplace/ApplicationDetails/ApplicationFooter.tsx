@@ -52,13 +52,16 @@ export const ApplicationDetailsFooter = ({
   onBookmarkClick,
 }: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
   const isAppLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+
   const screenState = useScreenState();
+
   const isScreenSmall = screenState === ScreenState.SM;
   const showContextMenu = entity.reference !== entity.id && isScreenSmall;
 

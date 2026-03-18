@@ -18,6 +18,7 @@ import {
   SourcesFilterOptions,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator } from '@playwright/test';
@@ -50,6 +51,7 @@ dialTest(
     const appName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(7);
     let initIconUrl: string;
+    let searchInput: BaseElement;
 
     await dialTest.step('Upload images to the root path', async () => {
       initIconUrl = await fileApiHelper.putFile(Attachment.appIconSvg);
@@ -144,9 +146,8 @@ dialTest(
     await dialTest.step(
       'Set random string in the search field and verify no results are displayed',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(
-          GeneratorUtil.randomString(10),
-        );
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(GeneratorUtil.randomString(10));
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
           'visible',
@@ -157,7 +158,7 @@ dialTest(
     await dialTest.step(
       'Set app name in the search field and open it for edit',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         const agentElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -198,7 +199,7 @@ dialTest(
       'Verify search string and Source filter are preserved',
       async () => {
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           appName,
         );

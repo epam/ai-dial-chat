@@ -1,17 +1,4 @@
-import {
-  Icon,
-  IconBrandOauth,
-  IconKey,
-  IconLockOff,
-  IconProps,
-} from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  ForwardRefExoticComponent,
-  RefAttributes,
-  useCallback,
-  useState,
-} from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -25,6 +12,8 @@ import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import { AUTH_TYPE_OPTIONS } from '@/src/constants/toolsets';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { RadioButton } from '@/src/components/Common/Forms/RadioButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -37,27 +26,6 @@ import {
 } from '@/src/components/ToolsetEditor/form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
-
-const authTypeOptions: Record<
-  string,
-  {
-    name: string;
-    Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
-  }
-> = {
-  [ToolsetAuthTypes.OAUTH]: {
-    name: 'OAuth',
-    Icon: IconBrandOauth,
-  },
-  [ToolsetAuthTypes.API_KEY]: {
-    name: 'API Key',
-    Icon: IconKey,
-  },
-  [ToolsetAuthTypes.NONE]: {
-    name: 'Without authentication',
-    Icon: IconLockOff,
-  },
-};
 
 interface AuthTypeSectionProps {
   type: ToolsetAuthTypes;
@@ -88,7 +56,7 @@ const AuthTypeSection = ({
 
   const isSignedIn = toolsetDetails && isToolsetSignedIn(toolsetDetails);
 
-  const { Icon, name } = authTypeOptions[type];
+  const { Icon, name } = AUTH_TYPE_OPTIONS[type];
 
   const handleOnClick = useCallback(() => {
     if (!isSignedIn) onClick(type);

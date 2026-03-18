@@ -692,7 +692,7 @@ dialOverlayTest(
       'Create one more new conversation and verify it is created inside configured folder',
       async () => {
         await overlayChatBar.createNewEntity();
-        await overlayTalkToAgentDialog.cancelButton.click();
+        await overlayTalkToAgentDialog.getCloseButton().click();
         await overlayChat.sendRequestWithButton(secondConversationName);
         await overlayHeader.leftPanelToggle.click();
         await overlayChatBarFolderAssertion.assertFolderEntityState(
