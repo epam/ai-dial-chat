@@ -71,7 +71,9 @@ dialSharedWithMeTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         agentElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: true, isEditable: true },
@@ -154,7 +156,7 @@ dialSharedWithMeTest(
           additionalShareUserTalkToAgentDialog.noResultFound,
           'visible',
         );
-        await additionalShareUserTalkToAgentDialog.cancelButton.click();
+        await additionalShareUserTalkToAgentDialog.getCloseButton().click();
       },
     );
 
@@ -163,9 +165,9 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserNavigationPanel.goToMyWorkspace();
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appEntity.name,
-        );
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         agentElement =
           await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appEntity,

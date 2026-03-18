@@ -12,7 +12,6 @@ import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FileManagerModalHeader } from '@/src/ui/webElements/fileManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
-import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
 
 export enum FileModalSection {
@@ -38,15 +37,7 @@ export class AttachFilesModal extends BaseElement {
   private sharedWithMeFolderFiles!: Folders;
   private organizationTree!: AttachFilesTree;
   private organizationFolderFiles!: Folders;
-  private search!: Search;
   public modalError!: ModalError;
-
-  getSearchInput(): BaseElement {
-    if (!this.search) {
-      this.search = new Search(this.page, this.rootLocator);
-    }
-    return this.search;
-  }
 
   getModalError(): ModalError {
     if (!this.modalError) {

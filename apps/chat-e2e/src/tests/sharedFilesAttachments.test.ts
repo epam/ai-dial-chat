@@ -18,6 +18,7 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { loadingTimeout } from '@/src/ui/pages';
+import { BaseElement } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
@@ -560,6 +561,7 @@ dialSharedWithMeTest(
 
     let dotsMenu: Locator;
     let fileRow: Locator;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'User1 uploads an image to the "All files" root',
@@ -808,9 +810,9 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step('User2 searches in files', async () => {
-      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
-        user1ImageInRequest1.replace('.jpg', ''),
-      );
+      searchInput =
+        additionalShareUserFileManagerNavigationPanel.getSearch().inputField;
+      await searchInput.fillInInput(user1ImageInRequest1.replace('.jpg', ''));
       await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
         user1ImageInRequest1,
         'visible',
@@ -820,23 +822,17 @@ dialSharedWithMeTest(
         'hidden',
       );
 
-      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
-        '',
-      );
+      await searchInput.fillInInput('');
     });
 
     await dialSharedWithMeTest.step('User2 searches in files', async () => {
-      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
-        GeneratorUtil.randomString(10),
-      );
+      await searchInput.fillInInput(GeneratorUtil.randomString(10));
       await additionalShareUserFileManagerGridAssertion.assertElementState(
         additionalShareUserFileManager.getNoDataContent(),
         'visible',
       );
 
-      await additionalShareUserFileManagerNavigationPanel.searchFieldInput.fillInInput(
-        '',
-      );
+      await searchInput.fillInInput('');
     });
 
     await dialSharedWithMeTest.step('User2 observe shared files', async () => {

@@ -158,7 +158,7 @@ dialOverlayTest(
         expect
           .soft(agents[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(expectedModel.name);
-        await overlayTalkToAgentDialog.cancelButton.click();
+        await overlayTalkToAgentDialog.getCloseButton().click();
       },
     );
 
