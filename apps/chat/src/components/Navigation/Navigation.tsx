@@ -57,7 +57,7 @@ const NavigationView = () => {
   return (
     <div
       className={classNames(
-        'order-last flex w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
+        'order-last flex w-full shrink-0 flex-row items-center justify-around sm:gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
         isOverlay ? 'h-[36px] md:w-[44px]' : 'h-[52px] md:w-[60px]',
       )}
       data-qa="navigation-panel"
