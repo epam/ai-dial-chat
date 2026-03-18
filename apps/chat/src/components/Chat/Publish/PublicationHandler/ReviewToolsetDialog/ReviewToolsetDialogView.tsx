@@ -12,6 +12,7 @@ import { Translation } from '@/src/types/translation';
 import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { NA_VERSION } from '@/src/constants/publication';
+import { AUTH_TYPE_OPTIONS } from '@/src/constants/toolsets';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -90,7 +91,9 @@ function ReviewToolsetDialogContent({
           />
           <MarketplaceEntityInfoRow
             label={t('Authentication type')}
-            value={toolset.authSettings?.authenticationType}
+            value={
+              AUTH_TYPE_OPTIONS[toolset.authSettings?.authenticationType]?.name
+            }
             dataQa="app-authentication-type"
           />
           <MarketplaceEntityInfoRow
