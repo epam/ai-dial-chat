@@ -15,7 +15,7 @@ import { HeadersNames } from '@/src/constants/server';
 
 const host = process.env.NEXT_PUBLIC_HOST;
 
-const URL = `${host}/v1/ops/client-channels/unsubscribe`;
+const URL = `${host}/v1/ops/client-channels/report`;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== HTTPMethod.POST) {
@@ -28,19 +28,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!isSessionValid) {
     return;
   }
-  let channelId = req.headers[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID] as
-    | string
-    | undefined;
-  try {
-    if (!channelId) {
-      channelId = JSON.parse(req.body)?.channelId as string;
-    }
-  } catch {
-    channelId = undefined;
-  }
 
   try {
     const token = await getFullToken({ req });
+    const channelId = req.headers[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID] as
+      | string
+      | undefined;
 
     if (!channelId) {
       throw new DialAIError(

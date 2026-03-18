@@ -13,7 +13,9 @@ import { HTTPMethod } from '@/src/types/http';
 import { errorsMessages } from '@/src/constants/errors';
 import { HeadersNames } from '@/src/constants/server';
 
-const URL = `${process.env.DIAL_API_HOST}/v1/ops/client-channels/subscribe`;
+const host = process.env.NEXT_PUBLIC_HOST;
+
+const URL = `${host}/v1/ops/client-channels/subscribe`;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== HTTPMethod.POST) {
@@ -40,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           jwt: token?.token ?? '',
           jobTitle: token?.jobTitle ?? '',
         }),
-        Accept: 'text/event-stream',
+        Accept: 'text/stream-event',
         Connection: 'keep-alive',
         ...(currentChannelId
           ? { [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: currentChannelId }
@@ -67,7 +69,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Content-Type', 'text/stream-event; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
 

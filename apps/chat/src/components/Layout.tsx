@@ -12,10 +12,16 @@ import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { Translation } from '@/src/types/translation';
 
-import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
+import {
+  AuthActions,
+  ChatEventsActions,
+  SettingsActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AuthSelectors,
+  ChatEventsSelectors,
   MarketplaceSelectors,
   SettingsSelectors,
   UISelectors,
@@ -47,6 +53,7 @@ export function Layout({
 
   const dispatch = useAppDispatch();
 
+  const channelId = useAppSelector(ChatEventsSelectors.selectChannelId);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
@@ -123,6 +130,23 @@ export function Layout({
   const handleOverlayAuth = async () => {
     signInInOverlay(`/api/auth/signin`, isSignInInSameWindow);
   };
+
+  useEffect(() => {
+    const handleCloseTab = () => {
+      navigator.sendBeacon(
+        '/api/client-channels/unsubscribe',
+        JSON.stringify({ channelId }),
+      );
+      dispatch(ChatEventsActions.unsubscribe());
+    };
+    window.addEventListener('pagehide', handleCloseTab);
+    document.addEventListener('visibilitychange', handleCloseTab);
+
+    return () => {
+      window.removeEventListener('pagehide', handleCloseTab);
+      document.removeEventListener('visibilitychange', handleCloseTab);
+    };
+  }, [dispatch, channelId]);
 
   return (
     <>

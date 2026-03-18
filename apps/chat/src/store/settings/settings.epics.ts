@@ -24,6 +24,7 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
+  ChatEventsActions,
   ConversationsActions,
   FilesActions,
   MarketplaceActions,
@@ -79,6 +80,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
+        of(ChatEventsActions.subscribe()),
       ];
     case PageType.AppsEditor:
       return [
