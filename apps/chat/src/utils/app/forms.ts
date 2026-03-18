@@ -8,15 +8,12 @@ import {
 
 import classNames from 'classnames';
 
-import { DialAIEntityModel } from '@/src/types/models';
-
 import {
   MAX_ENTITY_LENGTH,
   MIN_ENTITY_LENGTH,
 } from '@/src/constants/default-ui-settings';
 import {
   formErrors,
-  modelErrors,
   urlErrors,
   versionsErrors,
 } from '@/src/constants/form-errors';
