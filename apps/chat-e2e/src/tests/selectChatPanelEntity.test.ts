@@ -1575,9 +1575,9 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
-        await chatBar.getSearch().setSearchValue('test');
+        await chatBar.getSidebarSearch().setSearchValue('test');
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
-        await chatBar.getSearch().setSearchValue('');
+        await chatBar.getSidebarSearch().setSearchValue('');
       },
     );
 

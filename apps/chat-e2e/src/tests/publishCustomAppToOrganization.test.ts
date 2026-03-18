@@ -71,6 +71,7 @@ dialAdminTest(
     let appElement: BaseElement;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
     const filename = `${GeneratorUtil.randomString(7)}.svg`;
+    let searchInput: BaseElement;
 
     let conversation: Conversation;
 
@@ -116,7 +117,8 @@ dialAdminTest(
         await adminLocalStorageManager.setShowSideBarPanels();
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.click();
@@ -220,7 +222,7 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: false, isEditable: false },
