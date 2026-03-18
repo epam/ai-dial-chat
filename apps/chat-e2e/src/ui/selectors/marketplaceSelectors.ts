@@ -62,12 +62,11 @@ export const MarketplaceDetailsModal = {
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  searchInput: '[name="titleInput"]',
   agentsTab: '[data-qa="agents-tab"]',
   toolsetsTab: '[data-qa="toolsets-tab"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',
   filterProperty: '[data-qa="filter-property"]',
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
-  optionLabel: '[data-qa="option-label"]',
+  optionLabel: '#option-label',
 };

@@ -1,6 +1,5 @@
-import { Tags } from '@/src/ui/domData';
 import { FileManagerNavigationPanelSelectors } from '@/src/ui/selectors';
-import { BaseElement, Breadcrumb } from '@/src/ui/webElements';
+import { BaseElement, Breadcrumb, Search } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export class FileManagerNavigationPanel extends BaseElement {
@@ -13,14 +12,14 @@ export class FileManagerNavigationPanel extends BaseElement {
   }
 
   private breadcrumb!: Breadcrumb;
+  private search!: Search;
 
-  public searchField = this.getChildElementBySelector(
-    FileManagerNavigationPanelSelectors.searchField,
-  );
-
-  public searchFieldInput = this.searchField.getChildElementBySelector(
-    Tags.input,
-  );
+  getSearch(): Search {
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
+  }
 
   getBreadcrumb(): Breadcrumb {
     if (!this.breadcrumb) {
