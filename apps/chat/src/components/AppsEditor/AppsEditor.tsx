@@ -262,7 +262,6 @@ export const AppsEditor = () => {
       lastSubmittedValuesRef.current = getDefaultFormData({
         app: payload,
         type,
-        models: modelsWithFolder,
         runtime: pythonVersions[0],
         toolSupportingModelIds,
       });
@@ -277,7 +276,6 @@ export const AppsEditor = () => {
       isQuickAppJsonDirty,
       formMethods,
       type,
-      modelsWithFolder,
       pythonVersions,
       toolSupportingModelIds,
       dispatch,
