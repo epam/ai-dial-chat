@@ -56,6 +56,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         rate: value,
+        modelId: model.id,
+        conversationId: id,
+        conversationReference: reference,
         responseId,
         ...(comment && { comment }),
       }),
