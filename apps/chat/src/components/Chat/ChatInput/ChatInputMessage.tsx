@@ -149,7 +149,7 @@ export const ChatInputMessage = Inversify.register(
     const configurationSchema = useAppSelector((state) =>
       ChatSelectors.selectConfigurationSchemaByModelId(
         state,
-        selectedConversations[0].model.id,
+        selectedConversations[0]?.model.id,
         modelsMap,
       ),
     );
