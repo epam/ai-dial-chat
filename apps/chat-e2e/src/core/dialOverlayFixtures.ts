@@ -2,7 +2,6 @@ import {
   AccountSettings,
   AgentInfo,
   AgentSettings,
-  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -115,7 +114,6 @@ const dialOverlayTest = test.extend<{
   overlayToast: Toast;
   overlayRequestApiKeyModal: RequestApiKeyModal;
   overlayReportAnIssueModal: ReportAnIssueModal;
-  overlayAttachFilesModal: AttachFilesModal;
   overlayPlaybackControl: PlaybackControl;
   overlayOrganizationConversations: OrganizationConversationsTree;
   overlayFolderConversations: FolderConversations;
@@ -359,13 +357,6 @@ const dialOverlayTest = test.extend<{
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayReportAnIssueModal);
-  },
-  overlayAttachFilesModal: async ({ page, overlayHomePage }, use) => {
-    const overlayAttachFilesModal = new AttachFilesModal(
-      page,
-      overlayHomePage.getOverlayContainer().getElementLocator(),
-    );
-    await use(overlayAttachFilesModal);
   },
   overlayPlaybackControl: async ({ overlayChat }, use) => {
     const overlayPlaybackControl = overlayChat.getPlaybackControl();
