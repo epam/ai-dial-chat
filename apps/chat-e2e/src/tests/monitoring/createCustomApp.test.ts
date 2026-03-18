@@ -198,7 +198,9 @@ dialTest(
     await dialTest.step(
       'Find card of created custom app on My workspace page',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
