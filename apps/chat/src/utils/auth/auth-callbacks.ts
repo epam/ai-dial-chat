@@ -364,15 +364,6 @@ export const callbacks: Partial<
         ? options.token.providerId
         : undefined;
 
-    // If providerId is missing, we cannot safely refresh (and this often happens after
-    // Credentials sign-in validation errors where NextAuth persists only a partial token).
-    if (!providerId) {
-      return {
-        ...options.token,
-        error: options.token.error ?? 'MissingProviderIdInToken',
-      };
-    }
-
     // Credentials tokens cannot be refreshed server-side; once expired, we must re-run sign-in.
     if (isCredentialsProvider(providerId)) {
       const expiresAt =
@@ -399,7 +390,7 @@ export const callbacks: Partial<
 
     // Return previous token if the access token has not expired yet
     if (
-      options.token.providerId === 'credentials' ||
+      options.token.providerId === CREDENTIALS_PROVIDER_ID ||
       (typeof options.token.accessTokenExpires === 'number' &&
         Date.now() < options.token.accessTokenExpires)
     ) {
