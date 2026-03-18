@@ -26,7 +26,7 @@ export class ChatEventsService {
     return fromFetch('/api/client-channels/subscribe', {
       method: HTTPMethod.POST,
       headers: {
-        Accept: 'text/stream-event',
+        Accept: 'text/event-stream',
         ...(channelId && {
           [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
         }),

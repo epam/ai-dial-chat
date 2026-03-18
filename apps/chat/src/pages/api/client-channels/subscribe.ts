@@ -29,6 +29,32 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
+  let reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>> | null =
+    null;
+  let clientClosed = false;
+  const abortController = new AbortController();
+
+  const cleanup = async () => {
+    if (clientClosed) return;
+    clientClosed = true;
+
+    abortController?.abort();
+
+    try {
+      await reader?.cancel?.();
+      if (!res.writableEnded) {
+        res.end();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to cancel upstream SSE reader: ${message}`);
+    }
+  };
+
+  req.on('close', cleanup);
+  req.on('aborted', cleanup);
+  res.on('close', cleanup);
+
   try {
     const token = await getFullToken({ req });
     const currentChannelId = req.headers[
@@ -42,12 +68,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           jwt: token?.token ?? '',
           jobTitle: token?.jobTitle ?? '',
         }),
-        Accept: 'text/stream-event',
+        Accept: 'text/event-stream',
         Connection: 'keep-alive',
         ...(currentChannelId
           ? { [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: currentChannelId }
           : {}),
       },
+      signal: abortController.signal,
     });
 
     if (!upstreamResponse.ok || !upstreamResponse.body) {
@@ -69,50 +96,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/stream-event; charset=utf-8');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
 
     res.flushHeaders?.();
 
-    const reader = upstreamResponse.body.getReader();
+    reader = upstreamResponse.body.getReader();
 
-    let clientClosed = false;
+    while (!clientClosed) {
+      const { value, done } = await reader.read();
 
-    const cleanup = async () => {
-      if (clientClosed) return;
-      clientClosed = true;
-
-      try {
-        await reader.cancel();
-        res.end();
-      } catch (e) {
-        const reason = typeof e === 'string' ? e : '';
-        logger.error('Failed to cancel upstream SSE reader ' + reason);
+      if (done) {
+        break;
       }
-    };
 
-    req.on('close', cleanup);
-    req.on('aborted', cleanup);
-    res.on('close', cleanup);
-
-    try {
-      while (!clientClosed) {
-        const { value, done } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        if (value) {
-          res.write(value);
-        }
+      if (value && !res.writableEnded) {
+        res.write(value);
       }
-    } catch (error) {
-      const reason = typeof error === 'string' ? error : '';
-      logger.error('Error while reading SSE stream ' + reason);
-    } finally {
-      await cleanup();
     }
   } catch (error) {
     logger.error(error);
@@ -122,6 +122,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .send(error.message || errorsMessages.generalServer);
     }
     return res.status(500).send(errorsMessages.generalServer);
+  } finally {
+    await cleanup();
   }
 };
 
