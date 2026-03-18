@@ -838,9 +838,10 @@ dialOverlayTest(
         };
         const actualMessages =
           await overlayDialog.content.getElementInnerContent();
-        expect
-          .soft(JSON.parse(actualMessages) as CreateConversationResponse)
-          .toMatchObject(expectedConversation);
+        overlayBaseAssertion.assertValueMatchObject(
+          JSON.parse(actualMessages) as CreateConversationResponse,
+          expectedConversation,
+        );
         await overlayDialog.closeButton.click();
 
         const selectedConversationIds =
@@ -1000,64 +1001,6 @@ dialOverlayTest(
       });
     }
 
-    // Helper function to build expected conversation model
-    function buildExpectedConversationModel(
-      apiConversation: Conversation,
-      apiConversationFromList: BackendChatEntity | PublishedItem,
-      conversationType: 'pinned' | 'shared' | 'organization',
-    ) {
-      const folderId = apiConversation.folderId;
-
-      const baseModel = {
-        model: apiConversation.model,
-        name: apiConversation.name,
-        isPlayback: apiConversation.playback?.isPlayback ?? false,
-        isReplay: apiConversation.replay?.isReplay ?? false,
-        id: apiConversation.id,
-        folderId: folderId,
-        prompt: apiConversation.prompt,
-        temperature: apiConversation.temperature,
-        replay: apiConversation.replay,
-        messages: apiConversation.messages,
-        selectedAddons: apiConversation.selectedAddons,
-        status: UploadStatus.LOADED,
-        isMessageStreaming: false,
-        bucket: apiConversationFromList.bucket,
-      };
-
-      // Add type-specific properties
-      switch (conversationType) {
-        case 'pinned':
-          return {
-            ...baseModel,
-            updatedAt: apiConversationFromList.updatedAt,
-            parentPath: apiConversationFromList.parentPath,
-            permissions: (apiConversationFromList as BackendChatEntity)
-              .permissions,
-          };
-        case 'shared':
-          return {
-            ...baseModel,
-            updatedAt: apiConversation.updatedAt,
-            sharedWithMe: true,
-          };
-        case 'organization':
-          return {
-            ...baseModel,
-            updatedAt: apiConversationFromList.updatedAt,
-            publicationInfo: {
-              version: apiConversation.id.substring(
-                apiConversation.id.lastIndexOf(ItemUtil.entityIdSeparator) +
-                  ItemUtil.entityIdSeparator.length,
-              ),
-            },
-            publishedWithMe: true,
-          };
-        default:
-          return baseModel;
-      }
-    }
-
     await testSelectedConversation(
       `Select conversation from "Pinned" section, click on "Get selected conversations" btn and verify dialog with conversation json is displayed`,
       'pinned',
@@ -1082,9 +1025,9 @@ dialOverlayTest(
         const apiConversationFromList = apiConversationsList.find(
           (c) => c.url === folderConversation.conversations[0].id,
         )!;
-        const apiConversation = await overlayItemApiHelper.getItem(
+        const apiConversation = (await overlayItemApiHelper.getItem(
           apiConversationFromList.url,
-        );
+        )) as Conversation;
         return {
           conversation: apiConversation,
           conversationFromList: apiConversationFromList,
@@ -1109,9 +1052,9 @@ dialOverlayTest(
           apiSharedConversationsList.resources.find(
             (c) => c.url === sharedConversation.id,
           )!;
-        const apiSharedConversation = await overlayItemApiHelper.getItem(
+        const apiSharedConversation = (await overlayItemApiHelper.getItem(
           apiSharedConversationFromList.url,
-        );
+        )) as Conversation;
         return {
           conversation: apiSharedConversation,
           conversationFromList: apiSharedConversationFromList,
@@ -1131,9 +1074,9 @@ dialOverlayTest(
       },
       async () => {
         const apiPublishedConversationsList =
-          await overlayPublicationApiHelper.listPublishedResources(
+          (await overlayPublicationApiHelper.listPublishedResources(
             BackendResourceType.CONVERSATION,
-          )!;
+          ))!;
         const apiPublishedConversationFromList =
           apiPublishedConversationsList.items!.find((i) =>
             i.name.includes(publishedConversation.name),
@@ -1358,9 +1301,9 @@ dialOverlayTest(
       const apiConversationFromList = apiConversationsList.find((c) =>
         c.name.endsWith(expectedNameSuffix),
       )!;
-      const apiConversation = await overlayItemApiHelper.getItem(
+      const apiConversation = (await overlayItemApiHelper.getItem(
         apiConversationFromList.url,
-      );
+      )) as Conversation;
 
       // Get additional properties if function provided
       const additionalProps = getAdditionalProps
@@ -1533,7 +1476,10 @@ dialOverlayTest(
           parentPath: updateRequestResponse.response.parentPath,
         };
 
-        expect.soft(actualConversationModel).toEqual(expectedConversationModel);
+        overlayBaseAssertion.assertValuesAreEqual(
+          actualConversationModel,
+          expectedConversationModel,
+        );
         await overlayDialog.closeButton.click();
       },
     );
@@ -1615,9 +1561,9 @@ dialOverlayTest(
         const apiConversationFromList = apiConversationsList.find((c) =>
           c.name.endsWith(newEmptyConversationName),
         )!;
-        const apiConversation = await overlayItemApiHelper.getItem(
+        const apiConversation = (await overlayItemApiHelper.getItem(
           apiConversationFromList.url,
-        );
+        )) as Conversation;
 
         const expectedConversationModel = {
           isShared: false,
@@ -1635,9 +1581,10 @@ dialOverlayTest(
           isNameChanged: true,
           bucket: ExpectedConstants.localBucket,
         };
-        expect
-          .soft(JSON.parse(actualConversation) as OverlayConversation)
-          .toMatchObject(expectedConversationModel);
+        overlayBaseAssertion.assertValueMatchObject(
+          JSON.parse(actualConversation) as OverlayConversation,
+          expectedConversationModel,
+        );
         await overlayDialog.closeButton.click();
 
         await overlayChatHeaderAssertion.assertHeaderTitle(
@@ -1652,3 +1599,60 @@ dialOverlayTest(
     );
   },
 );
+
+// Helper function to build expected conversation model
+function buildExpectedConversationModel(
+  apiConversation: Conversation,
+  apiConversationFromList: BackendChatEntity | PublishedItem,
+  conversationType: 'pinned' | 'shared' | 'organization',
+) {
+  const folderId = apiConversation.folderId;
+
+  const baseModel = {
+    model: apiConversation.model,
+    name: apiConversation.name,
+    isPlayback: apiConversation.playback?.isPlayback ?? false,
+    isReplay: apiConversation.replay?.isReplay ?? false,
+    id: apiConversation.id,
+    folderId: folderId,
+    prompt: apiConversation.prompt,
+    temperature: apiConversation.temperature,
+    replay: apiConversation.replay,
+    messages: apiConversation.messages,
+    selectedAddons: apiConversation.selectedAddons,
+    status: UploadStatus.LOADED,
+    isMessageStreaming: false,
+    bucket: apiConversationFromList.bucket,
+  };
+
+  // Add type-specific properties
+  switch (conversationType) {
+    case 'pinned':
+      return {
+        ...baseModel,
+        updatedAt: apiConversationFromList.updatedAt,
+        parentPath: apiConversationFromList.parentPath,
+        permissions: (apiConversationFromList as BackendChatEntity).permissions,
+      };
+    case 'shared':
+      return {
+        ...baseModel,
+        updatedAt: apiConversation.updatedAt,
+        sharedWithMe: true,
+      };
+    case 'organization':
+      return {
+        ...baseModel,
+        updatedAt: apiConversationFromList.updatedAt,
+        publicationInfo: {
+          version: apiConversation.id.substring(
+            apiConversation.id.lastIndexOf(ItemUtil.entityIdSeparator) +
+              ItemUtil.entityIdSeparator.length,
+          ),
+        },
+        publishedWithMe: true,
+      };
+    default:
+      return baseModel;
+  }
+}
