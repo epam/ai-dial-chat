@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isApplicationType } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isTruthyQuery } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -64,8 +65,7 @@ export const AppsEditorHeader = ({
   } = useRouter();
 
   // 1 stands for true
-  const isCreatingApp =
-    !id || (typeof isCreating === 'string' && isCreating === '1');
+  const isCreatingApp = !id || isTruthyQuery(isCreating);
 
   const { t } = useTranslation(Translation.Marketplace);
 
