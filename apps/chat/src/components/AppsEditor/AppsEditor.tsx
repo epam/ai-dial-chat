@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
   isApplicationDeployed,
   isApplicationType,
@@ -70,8 +71,19 @@ const checkShouldRevokeAccess = ({
       getQuickAppDocumentUrl(newApp),
       getQuickAppDocumentUrl(oldApp),
     );
+  const differentQuickApp2DocumentUrl =
+    !!oldApp &&
+    !arraysHaveSameElements(
+      getQuick2AppDocumentUrl(newApp),
+      getQuick2AppDocumentUrl(oldApp),
+    );
 
-  return isShared && (differentSourceFolders || differentDocumentUrl);
+  return (
+    isShared &&
+    (differentSourceFolders ||
+      differentDocumentUrl ||
+      differentQuickApp2DocumentUrl)
+  );
 };
 
 export const AppsEditor = () => {
