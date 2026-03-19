@@ -678,7 +678,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Select "Unshare" option for the first file and verify arrow icon disappears for file',
+      'Select "Remove access" option for the first file and verify arrow icon disappears for file',
       async () => {
         const rowLocator = await fileManagerGrid.goToGridRowByNameCell(
           Attachment.cloudImageName,
@@ -729,7 +729,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'User 2 open File manager and verifies that the file is not visible',
+      'User 2 opens "File manager" and verifies that the file is not visible',
       async () => {
         await additionalShareUserFileManagerPage.openFileManagerPage({
           updateInstalledDeployments: false,
@@ -776,7 +776,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Select "Unshare" option for the second file and verify arrow icon disappears for file',
+      'Select "Remove access" option for the second file and verify arrow icon disappears for file',
       async () => {
         await fileManager
           .getFileManagerNavigationPanel()
@@ -809,7 +809,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'User 2 open the File manager and verifies "Shared with me" tab is empty',
+      'User 2 opens the "File manager" and verifies "Shared with me" tab is empty',
       async () => {
         await additionalShareUserFileManagerPage.reloadPage();
         await additionalShareUserFileManagerPage.waitForPageLoaded({
