@@ -27,6 +27,7 @@ interface ShareIconProps extends ShareInterface {
   iconWrapperClassName?: string;
   isMyEntity?: boolean;
   isExternal?: boolean;
+  isTooltipDisabled?: boolean;
 }
 
 export function ShareIcon({
@@ -41,6 +42,7 @@ export function ShareIcon({
   iconWrapperClassName,
   isMyEntity,
   isExternal,
+  isTooltipDisabled,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isApplication = featureType === FeatureType.Application;
@@ -79,6 +81,24 @@ export function ShareIcon({
     );
   }
 
+  const icon = (
+    <AdditionalIcon
+      size={size}
+      width={size}
+      height={size}
+      className={classNames(
+        'p-px text-accent-primary group-hover:bg-accent-primary-alpha',
+        isHighlighted && 'bg-accent-primary-alpha',
+        isPublished && '!rounded-md',
+        isApplication
+          ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
+          : 'rounded-sm stroke-[1.5]',
+        (isExternal || isMyEntityIcon) && '!stroke-[1.5]',
+        iconClassName,
+      )}
+    />
+  );
+
   return (
     <div className={containerClass} data-qa="icon-container">
       {children}
@@ -93,23 +113,11 @@ export function ShareIcon({
         )}
         data-qa={dataQA}
       >
-        <Tooltip tooltip={t(tooltip)}>
-          <AdditionalIcon
-            size={size}
-            width={size}
-            height={size}
-            className={classNames(
-              'p-px text-accent-primary group-hover:bg-accent-primary-alpha',
-              isHighlighted && 'bg-accent-primary-alpha',
-              isPublished && '!rounded-md',
-              isApplication
-                ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
-                : 'rounded-sm stroke-[1.5]',
-              (isExternal || isMyEntityIcon) && '!stroke-[1.5]',
-              iconClassName,
-            )}
-          />
-        </Tooltip>
+        {!isTooltipDisabled ? (
+          <Tooltip tooltip={t(tooltip)}>{icon}</Tooltip>
+        ) : (
+          icon
+        )}
       </div>
     </div>
   );

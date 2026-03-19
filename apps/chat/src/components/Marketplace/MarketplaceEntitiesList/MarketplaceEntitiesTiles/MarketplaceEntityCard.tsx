@@ -35,6 +35,7 @@ import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/Marketp
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface CardFooterProps<T> {
   entity: T;
@@ -130,6 +131,7 @@ export const MarketplaceEntityCard = memo(
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
+                isTooltipDisabled
                 isExternal={
                   isAgentsTab && isDialAiEntityModel(entity)
                     ? isExternalApp(entity)
@@ -140,13 +142,14 @@ export const MarketplaceEntityCard = memo(
                   entityId={entity.id}
                   entity={entity}
                   size={iconSize}
+                  isTooltipDisabled
                 />
               </ShareIcon>
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               <div
                 className={classNames(
-                  'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
+                  'mr-6 flex w-full items-center gap-1 text-xs leading-[14px] text-secondary',
                   !isMyEntity && '!mr-12',
                 )}
               >
@@ -164,16 +167,21 @@ export const MarketplaceEntityCard = memo(
 
                 <MarketplaceEntityIndicator entity={entity} />
               </div>
-              <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'flex whitespace-nowrap',
+                  !isMyEntity && !entity.version && '!mr-12',
+                )}
+              >
                 <div
                   className={classNames(
-                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyEntity && !entity.version && '!mr-12',
+                    'mr-6 flex w-full shrink text-base font-semibold leading-[20px] text-primary',
                   )}
                 >
-                  <span className="truncate" data-qa="entity-name">
-                    {entity.name}
-                  </span>
+                  <DialEllipsisTooltip
+                    text={entity.name}
+                    data-qa="entity-name"
+                  />
                 </div>
               </div>
               <div data-qa="entity-description" className="hidden xl:block">
