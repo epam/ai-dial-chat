@@ -8,7 +8,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
+import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
 
 import { cleanSchemaId } from './application-type-schema';
 
@@ -52,6 +52,9 @@ export const getPageName = ({ route, query }: BaseRouter) => {
   }
 };
 
+export const isTruthyQuery = (value?: string | string[]) =>
+  value?.toString() === QUERY_VALUE_TRUE;
+
 export const getAppEditorCreateModeRoute = (type: string) => ({
   pathname: Routes.AppsEditor,
   query: {
@@ -59,6 +62,6 @@ export const getAppEditorCreateModeRoute = (type: string) => ({
     [AppsEditorQuery.Schema]: cleanSchemaId(type),
     [AppsEditorQuery.ReturnUrl]:
       window.location.pathname + window.location.search,
-    [AppsEditorQuery.IsCreating]: '1',
+    [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
   },
 });

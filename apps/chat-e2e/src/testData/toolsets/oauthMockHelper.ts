@@ -118,20 +118,45 @@ export class OAuthMockHelper {
     return this.toolset;
   }
 
-  /**
-   * Navigate to the OAuth callback URL '/auth/toolset-signin' and wait for the response
-   */
-  async navigateToCallback(): Promise<void> {
+  // Navigate the popup to the callback URL and wait for the flow to complete.
+  //
+  // We navigate explicitly instead of relying on the automatic 302 redirect
+  // because after a cross-origin navigation (random OAuth URL → localhost),
+  // Playwright's context-level route handlers may not intercept the popup's
+  // fetch requests. Driving the popup ourselves keeps everything same-origin
+  // from the start, so the sign-in mock fires reliably.
+  //
+  // After the popup loads /auth/toolset-signin, it calls the sign-in API,
+  // then adds login-complete=1 to its URL. The main page detects that and
+  // closes the popup. If the popup is already closed (the flow finished
+  // during an earlier step), we return immediately.
+  async navigateToCallback(popup: Page): Promise<void> {
     if (!this.state.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
     }
-    const respPromise = this.page.waitForResponse((resp) =>
+    if (popup.isClosed()) return;
+
+    // Set up the response waiter before navigating so we don't miss it
+    const signInResponsePromise = popup.waitForResponse((resp) =>
       resp.url().includes(API.toolsetSignInHost()),
     );
-    await this.page.goto(this.state.callbackUrl, {
-      waitUntil: 'domcontentloaded',
-    });
-    await respPromise;
+    try {
+      await popup.goto(this.state.callbackUrl, {
+        waitUntil: 'domcontentloaded',
+      });
+    } catch (e) {
+      // Race condition: the 302 redirect completed the sign-in flow before we
+      // got here, so the main page already closed the popup. Nothing left to do.
+      if (!popup.isClosed()) throw e;
+      signInResponsePromise.catch(() => {});
+      return;
+    }
+    await signInResponsePromise;
+
+    // The main page closes the popup once it detects login-complete=1
+    if (!popup.isClosed()) {
+      await popup.waitForEvent('close');
+    }
   }
 
   /**
@@ -160,7 +185,7 @@ export class OAuthMockHelper {
   }
 
   async cleanup(): Promise<void> {
-    await this.page.unrouteAll({ behavior: 'ignoreErrors' });
+    await this.page.context().unrouteAll({ behavior: 'ignoreErrors' });
   }
 
   /**
@@ -178,9 +203,10 @@ export class OAuthMockHelper {
 
   public async setupToolsetRoutes(updatedToolset?: Toolset): Promise<void> {
     this.toolset = updatedToolset ?? this.toolset;
-    await this.page.route(
-      `**${API.api}/${this.toolset.id}`,
-      async (route, request) => {
+    // context-level so the popup can also fetch the toolset (e.g. after login)
+    await this.page
+      .context()
+      .route(`**${API.api}/${this.toolset.id}`, async (route, request) => {
         const method = request.method();
         // Allow initial GET to go through unmocked
         if (!this.state.enableMocking) {
@@ -224,53 +250,59 @@ export class OAuthMockHelper {
         } else {
           await route.continue();
         }
-      },
-    );
+      });
   }
 
   public async setupSignInRoute(): Promise<void> {
     let requestBody;
-    await this.page.route(API.toolsetSignInHost(), async (route, request) => {
-      // Intercept '/api/ops/toolset/signin' call
-      if (request.method() === 'POST') {
-        const expectedCode = this.expectedStatusCodes.backendSigInCode;
-        if (expectedCode === 200) {
-          this.state.isSignedIn = true;
-          requestBody = request.postDataJSON();
-          this.state.signInRequest = requestBody;
-          await route.fulfill({
-            status: expectedCode,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              success: true,
-              message: 'Authentication successful',
-            }),
-          });
+    // sign-in POST comes from the popup, so we need context-level interception
+    await this.page
+      .context()
+      .route(API.toolsetSignInHost(), async (route, request) => {
+        // Intercept '/api/ops/toolset/signin' call
+        if (request.method() === 'POST') {
+          const expectedCode = this.expectedStatusCodes.backendSigInCode;
+          if (expectedCode === 200) {
+            this.state.isSignedIn = true;
+            requestBody = request.postDataJSON();
+            this.state.signInRequest = requestBody;
+            await route.fulfill({
+              status: expectedCode,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: true,
+                message: 'Authentication successful',
+              }),
+            });
+          } else {
+            await route.fulfill({
+              status: expectedCode,
+              contentType: 'application/json',
+              body: undefined,
+            });
+          }
         } else {
-          await route.fulfill({
-            status: expectedCode,
-            contentType: 'application/json',
-            body: undefined,
-          });
+          await route.continue();
         }
-      } else {
-        await route.continue();
-      }
-    });
+      });
   }
 
   public async setupOAuthRedirectRoute(): Promise<void> {
     const redirectPattern = `${this.mockConfig.authorization_endpoint}*`;
-    // Intercept OAuth redirect
-    await this.page.route(redirectPattern, async (route) => {
+    // OAuth URL is opened in a popup, so page.route() won't catch it — use context
+    await this.page.context().route(redirectPattern, async (route) => {
       const url = new URL(route.request().url());
       this.state.capturedOAuthUrl = url.toString();
       this.state.capturedState = url.searchParams.get(OAuthQueryParams.state);
-      // Prepare callback URL but don't navigate inside handler
       const redirectUri = url.searchParams.get(OAuthQueryParams.redirectUri)!;
       this.state.callbackUrl = `${redirectUri}?${OAuthQueryParams.code}=${this.authorizationCode}&${OAuthQueryParams.state}=${this.state.capturedState}`;
-      // Abort the redirect
-      await route.abort('aborted');
+      // Redirect popup to callback instead of aborting — this lets
+      // the popup complete the full login flow on its own and avoids
+      // "Auth timeout" crash from signInToolset()
+      await route.fulfill({
+        status: 302,
+        headers: { location: this.state.callbackUrl },
+      });
     });
   }
 
