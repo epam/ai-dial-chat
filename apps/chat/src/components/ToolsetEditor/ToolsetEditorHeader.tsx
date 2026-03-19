@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isTruthyQuery } from '@/src/utils/app/route';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -51,8 +52,7 @@ export const ToolsetEditorHeader = ({
 
   const dispatch = useAppDispatch();
 
-  const isCreatingToolset =
-    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
+  const isCreatingToolset = !idQuery || isTruthyQuery(isCreating);
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
   const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
