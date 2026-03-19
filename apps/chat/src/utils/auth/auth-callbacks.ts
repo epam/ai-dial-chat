@@ -394,9 +394,8 @@ export const callbacks: Partial<
 
     // Return previous token if the access token has not expired yet
     if (
-      options.token.providerId === CREDENTIALS_PROVIDER_ID ||
-      (typeof options.token.accessTokenExpires === 'number' &&
-        Date.now() < options.token.accessTokenExpires)
+      typeof options.token.accessTokenExpires === 'number' &&
+      Date.now() < options.token.accessTokenExpires
     ) {
       return {
         ...options.token,
