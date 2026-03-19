@@ -15,6 +15,7 @@ const overlayOptions = {
     Feature.TopSettings,
     Feature.TopChatInfo,
     Feature.Marketplace,
+    Feature.MarketplaceTableView,
     Feature.CustomApplications,
   ],
 };
