@@ -14,6 +14,7 @@ import { Epic, EpicMiddleware, createEpicMiddleware } from 'redux-observable';
 import { applicationSlice } from './application/application.reducers';
 import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducers';
 import { authSlice } from './auth/auth.reducers';
+import { chatEventsSlice } from './chat-events/chat-events.reducer';
 import { chatSlice } from './chat/chat.reducer';
 import { codeEditorSlice } from './codeEditor/codeEditor.reducer';
 import { conversationsSlice } from './conversations/conversations.reducers';
@@ -65,6 +66,7 @@ export const rootReducer = combineReducers({
   chat: chatSlice.reducer,
   folders: foldersSlice.reducer,
   toolset: toolsetSlice.reducer,
+  chatEvents: chatEventsSlice.reducer,
 });
 
 const getMiddleware = (

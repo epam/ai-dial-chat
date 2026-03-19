@@ -16,6 +16,7 @@ import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AuthSelectors,
+  ChatEventsSelectors,
   MarketplaceSelectors,
   SettingsSelectors,
   UISelectors,
@@ -47,6 +48,8 @@ export function Layout({
 
   const dispatch = useAppDispatch();
 
+  const isSubscribed = useAppSelector(ChatEventsSelectors.selectIsSubscribed);
+  const channelId = useAppSelector(ChatEventsSelectors.selectChannelId);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
@@ -123,6 +126,26 @@ export function Layout({
   const handleOverlayAuth = async () => {
     signInInOverlay(`/api/auth/signin`, isSignInInSameWindow);
   };
+
+  useEffect(() => {
+    let unsubscribed = false;
+
+    const handleCloseTab = () => {
+      if (unsubscribed || !isSubscribed) return;
+      navigator.sendBeacon(
+        '/api/client-channels/unsubscribe',
+        JSON.stringify({ channelId }),
+      );
+      unsubscribed = true;
+    };
+    window.addEventListener('beforeunload', handleCloseTab);
+    window.addEventListener('pagehide', handleCloseTab);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleCloseTab);
+      window.removeEventListener('pagehide', handleCloseTab);
+    };
+  }, [channelId, isSubscribed]);
 
   return (
     <>
