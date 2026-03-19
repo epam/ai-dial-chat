@@ -10,9 +10,9 @@ import { getFilterLabel } from '@/src/utils/app/rules';
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   path: string;
