@@ -12,6 +12,7 @@ import { Translation } from '@/src/types/translation';
 
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   path: string;
@@ -31,7 +32,7 @@ export function RuleListItem({
   return (
     <>
       <div className="mb-1 text-xs text-secondary" data-qa="published-path">
-        {getLastPathSegment(path)}
+        <DialEllipsisTooltip text={getLastPathSegment(path)} />
       </div>
       <div className="mb-3 flex flex-wrap gap-1 text-xs" data-qa="rules-list">
         {rules.map((rule, idx) => (
