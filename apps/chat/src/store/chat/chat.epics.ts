@@ -24,6 +24,7 @@ import {
   ChatSelectors,
   ConversationsSelectors,
   FilesSelectors,
+  ModelsSelectors,
 } from '@/src/store/selectors';
 
 import { Message, Role } from '@epam/ai-dial-shared';
@@ -41,10 +42,12 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
       const formValue = ChatSelectors.selectChatFormValue(state$.value);
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const configurationSchema =
         ChatSelectors.selectConfigurationSchemaByModelId(
           state$.value,
           payload.modelId,
+          modelsMap,
         );
       const content = ChatSelectors.selectInputContent(state$.value);
 
@@ -87,10 +90,12 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatActions.getConfigurationSchema.type),
     mergeMap(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const uploadedConfigurationSchema =
         ChatSelectors.selectConfigurationSchemaByModelId(
           state$.value,
           payload.modelId,
+          modelsMap,
         );
       const loadingConfigurationSchemas =
         ChatSelectors.selectLoadingConfigurationSchemas(state$.value);
