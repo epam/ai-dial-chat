@@ -61,6 +61,7 @@ dialTest(
     let leadingSpacesSearchTerm: string;
     let leadingEndingSpacesSearchTerm: string;
     let notMatchingTerm: string;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Prepare one application visible in "My Workspace" and one available in the "Marketplace", both have common part in the name',
@@ -117,9 +118,8 @@ dialTest(
         leadingSpacesSearchTerm = ' '.repeat(2) + installedAppName;
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(
-          leadingSpacesSearchTerm,
-        );
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(leadingSpacesSearchTerm);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -132,7 +132,7 @@ dialTest(
           ExpectedMessages.searchResultsAreCorrect,
         );
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           leadingSpacesSearchTerm,
         );
@@ -144,7 +144,7 @@ dialTest(
       async () => {
         await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           leadingSpacesSearchTerm,
         );
@@ -188,9 +188,9 @@ dialTest(
         const endSpaces = ' '.repeat(3);
         leadingEndingSpacesSearchTerm = leadingSpacesSearchTerm + endSpaces;
         await navigationPanel.goToMarketplaceHome();
-        await marketplaceHeader.searchInput.click();
+        await searchInput.click();
         await page.keyboard.press(keys.end);
-        await marketplaceHeader.searchInput.typeInInput(endSpaces);
+        await searchInput.typeInInput(endSpaces);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -203,7 +203,7 @@ dialTest(
           ExpectedMessages.searchResultsAreCorrect,
         );
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           leadingEndingSpacesSearchTerm,
         );
@@ -214,7 +214,7 @@ dialTest(
       'Continue typing chars into search field and verify no results are found',
       async () => {
         notMatchingTerm = GeneratorUtil.randomString(10);
-        await marketplaceHeader.searchInput.typeInInput(notMatchingTerm);
+        await searchInput.typeInInput(notMatchingTerm);
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
           'visible',
@@ -232,7 +232,7 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           leadingEndingSpacesSearchTerm + notMatchingTerm,
         );
@@ -245,7 +245,7 @@ dialTest(
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           leadingEndingSpacesSearchTerm + notMatchingTerm,
         );
@@ -259,17 +259,17 @@ dialTest(
           GeneratorUtil.randomString(7) +
           ExpectedConstants.restrictedNameChars +
           ExpectedConstants.allowedSpecialChars;
-        await marketplaceHeader.searchInput.fillInInput(searchTerm);
+        await searchInput.fillInInput(searchTerm);
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           searchTerm,
         );
         const pageUrl = page.url();
         //cleanup search field in order to have url without params
-        await marketplaceHeader.searchInput.fillInInput('');
+        await searchInput.fillInInput('');
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           '',
         );
@@ -281,7 +281,7 @@ dialTest(
         await marketplacePage.navigateToUrl(pageUrl);
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           searchTerm,
         );
@@ -318,6 +318,7 @@ dialTest(
     let firstAppName: string;
     let secondAppName: string;
     let expectedAgents: MarketplaceEntityProperties[];
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Prepare one application with v2, another app with v1, v2, v3 available in the "Marketplace". Second app is added to the "My Workspace"',
@@ -387,7 +388,8 @@ dialTest(
       async () => {
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(secondAppFirstVersion);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(secondAppFirstVersion);
         const secondAgentElement =
           await marketplaceEntitiesSection.findEntityElement(secondAppName, {
             isWorkspaceEntity: false,
@@ -400,7 +402,7 @@ dialTest(
     await dialTest.step(
       'Search agents by the common version and verify at least 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appCommonVersion);
+        await searchInput.fillInInput(appCommonVersion);
         const allAgents = await marketplaceEntitiesSection.getAllEntities();
         expectedAgents = allAgents.filter(
           (a) =>
@@ -604,7 +606,9 @@ dialTest(
     await dialTest.step(
       'Set first app name in the search field and verify at least one app is filtered',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(firstAppName);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(firstAppName);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertNumberIsGreaterThanOrEqual(
           actualAgents.length,
@@ -706,7 +710,9 @@ dialTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         for (const searchTerm of searchTermResultMap.keys()) {
-          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          await marketplaceHeader
+            .getSearch()
+            .inputField.fillInInput(searchTerm);
           const actualAgents =
             await marketplaceEntitiesSection.getAllEntities();
           const filteredAgents = actualAgents.filter(
@@ -772,6 +778,7 @@ dialTest(
       thirdAppName,
     ]);
     searchTermResultMap.set(firstTerm.concat('1567'), [thirdAppName]);
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Prepare the set of custom applications with mixture of terms in the name and version',
@@ -810,7 +817,8 @@ dialTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         for (const searchTerm of searchTermResultMap.keys()) {
-          await marketplaceHeader.searchInput.fillInInput(searchTerm);
+          searchInput = marketplaceHeader.getSearch().inputField;
+          await searchInput.fillInInput(searchTerm);
           const actualAgents =
             await marketplaceEntitiesSection.getAllEntities();
           const filteredAgents = actualAgents.filter(
@@ -833,9 +841,7 @@ dialTest(
     await dialTest.step(
       'Type "71234.71234.915555" in the search field and verify no results are found',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(
-          firstTerm.concat('15555'),
-        );
+        await searchInput.fillInInput(firstTerm.concat('15555'));
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
           'visible',

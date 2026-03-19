@@ -417,7 +417,9 @@ dialTest(
     await dialTest.step(
       'Open toolset card menu and verify "Login with my creds" option is not available',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
         const toolsetElement =
           await marketplaceEntitiesSection.findEntityElement(
             toolsetEntity.name,
@@ -484,6 +486,7 @@ dialTest(
       toolsetEntity.version,
       secondToolsetVersion,
     ]);
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Precondition: Create toolset via API to avoid inconsistent naming. Issue 4236',
@@ -596,14 +599,15 @@ dialTest(
         );
         await marketplacePage.waitForPageLoaded();
         await entityDetailsModal.closeButton.click();
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(toolsetEntity.name);
         const toolsetElement =
           await marketplaceEntitiesSection.findEntityElement(
             toolsetEntity.name,
             { isWorkspaceEntity: true, isEditable: true },
           );
         await baseAssertion.assertElementState(toolsetElement, 'visible');
-        await marketplaceHeader.searchInput.fillInInput(defaultName);
+        await searchInput.fillInInput(defaultName);
         await baseAssertion.assertElementText(
           marketplace.noResultsFound,
           ExpectedConstants.noResults,
@@ -627,7 +631,7 @@ dialTest(
       async () => {
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        await searchInput.fillInInput(toolsetEntity.name);
         const toolsetElement =
           await marketplaceEntitiesSection.findEntityElement(
             toolsetEntity.name,
@@ -723,6 +727,7 @@ dialTest(
     let checkedOption: string;
     let toolsetElement: BaseElement;
     let oauthMockHelper: OAuthMockHelper;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       `Precondition: Create toolset via API to make filter's panel available`,
@@ -745,7 +750,8 @@ dialTest(
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.toolsetsTab.click();
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(toolsetEntity.name);
         //TODO: replace Topics filter with Sources when fixed https://github.com/epam/ai-dial-chat/issues/5085
         const filterOptions =
           await marketplaceFilter.filterByPropertyOptionLabels(
@@ -832,7 +838,7 @@ dialTest(
       async () => {
         await entityDetailsModal.closeButton.click();
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           toolsetEntity.name,
         );

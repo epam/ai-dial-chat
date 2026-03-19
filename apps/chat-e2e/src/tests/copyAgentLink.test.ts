@@ -93,7 +93,7 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appName);
         await agentElement.click();

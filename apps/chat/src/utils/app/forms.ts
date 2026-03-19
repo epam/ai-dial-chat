@@ -12,7 +12,11 @@ import {
   MAX_ENTITY_LENGTH,
   MIN_ENTITY_LENGTH,
 } from '@/src/constants/default-ui-settings';
-import { formErrors, versionsErrors } from '@/src/constants/form-errors';
+import {
+  formErrors,
+  urlErrors,
+  versionsErrors,
+} from '@/src/constants/form-errors';
 
 import {
   doesHaveDotsInTheEnd,
@@ -72,14 +76,14 @@ export const getFieldClassnames = <T extends FieldValues>(
 export const FormValidations = {
   checkUrl: (v: string | undefined): boolean | string => {
     if (!v) {
-      return formErrors.notValidUrl;
+      return urlErrors.notValidUrl;
     }
 
     try {
       new URL(v);
       return true;
     } catch {
-      return formErrors.notValidUrl;
+      return urlErrors.notValidUrl;
     }
   },
   notEmpty: (v: string | undefined): boolean | string => {

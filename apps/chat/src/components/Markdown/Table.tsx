@@ -30,6 +30,7 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
 
   return (
     <IconComponent
+      stroke={1.5}
       className="cursor-pointer text-secondary hover:text-accent-primary"
       size={DEFAULT_ICON_SIZES.STANDARD}
       data-qa={type.concat('-icon')}

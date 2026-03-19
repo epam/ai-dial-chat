@@ -386,6 +386,7 @@ dialTest(
     let visibleTopicsCount: number;
     const hiddenTopicsCountRegExp = /\+\d+/;
     let randomModel: DialAIEntityModel | undefined;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Create a custom application with one version and four topics',
@@ -550,7 +551,8 @@ dialTest(
         if (randomModel !== undefined) {
           await talkToAgentDialog.goToMyWorkspace();
           await marketplacePage.waitForPageLoaded();
-          await marketplaceHeader.searchInput.fillInInput(randomModel.name);
+          searchInput = marketplaceHeader.getSearch().inputField;
+          await searchInput.fillInInput(randomModel.name);
           const randomModelElement =
             await marketplaceEntitiesSection.findEntityElement(randomModel, {
               isWorkspaceEntity: true,
@@ -635,7 +637,7 @@ dialTest(
       async () => {
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         await marketplaceEntitiesSection.findAndUseAgent(agent, {
           isWorkspaceAgent: true,
           isEditable: true,
@@ -684,7 +686,7 @@ dialTest(
           visibleTopicsElement,
           topics.slice(0, visibleTopicsCount),
         );
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
       },
     );
 
