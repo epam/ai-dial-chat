@@ -19,7 +19,7 @@ import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/Marketp
 import { TopicsList } from './TopicsList';
 
 import { FeatureType } from '@epam/ai-dial-shared';
-import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialEllipsisTooltip, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface EntityHeaderProps<T> {
   entity: T;
@@ -105,10 +105,10 @@ export function EntityHeader<T extends MarketplaceEntity>({
               )}
               <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
                 <div
-                  className="shrink truncate text-lg font-semibold leading-6 md:text-xl"
+                  className="w-full shrink text-lg font-semibold leading-6 md:text-xl"
                   data-qa="entity-name"
                 >
-                  {entity.name}
+                  <DialEllipsisTooltip text={entity.name} />
                 </div>
               </div>
             </div>
