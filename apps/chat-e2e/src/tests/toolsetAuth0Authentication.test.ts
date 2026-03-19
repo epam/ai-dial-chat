@@ -15,6 +15,7 @@ import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { Page } from '@playwright/test';
 
 dialTest(
   'Create toolset with OAuth (without configuration).\n' +
@@ -53,6 +54,7 @@ dialTest(
     let realToolset: Toolset;
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
+    let loginPopup: Page;
 
     await dialTest.step('Open toolset creation page directly', async () => {
       await marketplacePage.openCreateToolsetPage();
@@ -106,9 +108,10 @@ dialTest(
       async () => {
         // need to enable mocking before clicking 'Log In'
         oauthMockHelper.enableMocking();
-        await toolsetEditorViewForm.clickLoginButton(
+        // store popup — it's needed in the 'Navigate to OAuth callback' step below
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
+        ))!;
       },
     );
 
@@ -144,7 +147,7 @@ dialTest(
     await dialTest.step(
       'Navigate to OAuth callback and wait for sign-in API was called',
       async () => {
-        await oauthMockHelper.navigateToCallback();
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -288,10 +291,10 @@ dialTest(
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -351,10 +354,10 @@ dialTest(
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -393,10 +396,10 @@ dialTest(
         //update real toolset endpoint
         realToolset.endpoint = updatedEndpoint;
         await toolsetApiHelper.createToolset(realToolset);
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -444,6 +447,7 @@ dialTest(
     };
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
+    let loginPopup: Page;
 
     await dialTest.step('Open toolset creation page directly', async () => {
       await marketplacePage.openCreateToolsetPage();
@@ -536,10 +540,10 @@ dialTest(
 
         await oauthMockHelper.setupMocks();
 
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -567,10 +571,10 @@ dialTest(
     await dialTest.step(
       'Login the toolset again and verify it is successful',
       async () => {
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
