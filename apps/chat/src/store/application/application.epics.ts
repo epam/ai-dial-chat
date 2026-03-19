@@ -489,18 +489,16 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             ? true
             : undefined;
 
-          actions.push(
-            of(
-              ApplicationActions.getSuccess({
+          const successAction = acceptSharedWithMe
+            ? ApplicationActions.setAppDetails() // Avoid to set app details on accepting share. We need them only for the editor.
+            : ApplicationActions.getSuccess({
                 ...application,
-                sharedWithMe:
-                  acceptSharedWithMe ?? modelFromState?.sharedWithMe,
-                permissions:
-                  payload.acceptSharePermissions ?? modelFromState?.permissions,
+                sharedWithMe: modelFromState?.sharedWithMe,
+                permissions: modelFromState?.permissions,
                 isShared: modelFromState?.isShared,
-              }),
-            ),
-          );
+              });
+
+          actions.push(of(successAction));
 
           if (!modelFromState) {
             actions.push(
