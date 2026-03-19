@@ -77,24 +77,23 @@ export const ChatStarters = memo(function ChatStarters() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const conversationModelReference = selectedConversations[0]?.model.id;
-  const conversationModelId =
-    modelsMap[conversationModelReference]?.id ?? conversationModelReference;
   const schema = useAppSelector((state) =>
     ChatSelectors.selectConfigurationSchemaByModelId(
       state,
-      conversationModelId,
+      selectedConversations[0]?.model.id,
+      modelsMap,
     ),
   );
   const isSchemaLoading = useAppSelector((state) =>
     ChatSelectors.selectIsConfigurationSchemaLoading(
       state,
-      conversationModelId,
+      selectedConversations[0]?.model.id,
+      modelsMap,
     ),
   );
 
