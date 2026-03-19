@@ -1,5 +1,10 @@
 import config from '../../config/chat.playwright.config';
-import { DialHomePage, EntityEditorPage, FileManagerPage, MarketplacePage } from '../ui/pages';
+import {
+  DialHomePage,
+  EntityEditorPage,
+  FileManagerPage,
+  MarketplacePage,
+} from '../ui/pages';
 import {
   AgentInfo,
   Breadcrumb,
@@ -112,7 +117,14 @@ import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion'
 import { ToolsetEditorViewFormAssertion } from '@/src/assertions/toolsetEditorViewFormAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ApplicationApiHelper, ChatApiHelper, FileApiHelper, IconApiHelper, ShareApiHelper, ToolsetApiHelper } from '@/src/testData/api';
+import {
+  ApplicationApiHelper,
+  ChatApiHelper,
+  FileApiHelper,
+  IconApiHelper,
+  ShareApiHelper,
+  ToolsetApiHelper,
+} from '@/src/testData/api';
 import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
 import { ModelApiHelper } from '@/src/testData/api/modelApiHelper';
 import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
@@ -128,7 +140,21 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { ConversationsTree, FolderConversations, FolderPrompts, Folders, OrganizationConversationsTree, PromptsTree, PublishApplicationsTree, PublishConversationsTree, PublishFolder, PublishFolderConversations, PublishPromptsTree, SharedFolderConversations, SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree';
+import {
+  ConversationsTree,
+  FolderConversations,
+  FolderPrompts,
+  Folders,
+  OrganizationConversationsTree,
+  PromptsTree,
+  PublishApplicationsTree,
+  PublishConversationsTree,
+  PublishFolder,
+  PublishFolderConversations,
+  PublishPromptsTree,
+  SharedFolderConversations,
+  SharedWithMeConversationsTree,
+} from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
@@ -168,7 +194,6 @@ import { CustomApplicationPublishingUtil } from '@/src/utils/customApplicationPu
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
-
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
@@ -1772,7 +1797,8 @@ const dialTest = test.extend<{
     await use(fileManagerGrid);
   },
   fileManagerNavigationPanel: async ({ fileManager }, use) => {
-    const fileManagerNavigationPanel = fileManager.getFileManagerNavigationPanel();
+    const fileManagerNavigationPanel =
+      fileManager.getFileManagerNavigationPanel();
     await use(fileManagerNavigationPanel);
   },
   fileManagerBreadcrumb: async ({ fileManagerNavigationPanel }, use) => {
