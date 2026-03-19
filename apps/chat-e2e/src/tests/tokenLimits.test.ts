@@ -8,6 +8,7 @@ dialTest(
   'Prompt exceeded the limit is not copied into input message field.\n' +
     'Amount of tokens in the message is calculated',
   async ({
+    page,
     dialHomePage,
     confirmationDialog,
     confirmationDialogAssertion,
@@ -60,6 +61,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
+        if (randomModel.tokenizer?.encoding) {
+          await page.waitForLoadState('networkidle');
+        }
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.promptLimitExceededTitle,
@@ -75,8 +79,7 @@ dialTest(
       },
     );
 
-    //TODO: need to investigate token's limit calculation
-    await dialTest.step.skip(
+    await dialTest.step(
       'Set short request and request with exceeded tokens count on next line and verify warning popup is displayed, only first request is preserved in the input',
       async () => {
         await sendMessage.fillRequestData(firstRequestLine);
