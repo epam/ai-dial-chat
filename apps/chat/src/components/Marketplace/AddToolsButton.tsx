@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { Routes } from '@/src/constants/routes';
+import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
@@ -39,7 +39,7 @@ export function AddToolsButton() {
               query: {
                 [ToolsetEditorQuery.ReturnUrl]:
                   window.location.pathname + window.location.search,
-                [ToolsetEditorQuery.IsCreating]: '1',
+                [ToolsetEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
               },
             });
           },

@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isTruthyQuery } from '@/src/utils/app/route';
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
@@ -37,8 +38,7 @@ export const ToolsetEditor = () => {
     [ToolsetEditorQuery.Id]: idQuery,
     [ToolsetEditorQuery.IsCreating]: isCreating,
   } = router.query;
-  const isCreatingToolset =
-    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
+  const isCreatingToolset = !idQuery || isTruthyQuery(isCreating);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
