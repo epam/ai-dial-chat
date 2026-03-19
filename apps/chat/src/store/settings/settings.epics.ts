@@ -79,6 +79,8 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
+        // TODO: uncomment when core api for chat events is ready
+        // of(ChatEventsActions.subscribe()),
       ];
     case PageType.AppsEditor:
       return [
