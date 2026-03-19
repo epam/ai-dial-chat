@@ -66,6 +66,9 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ entity }) => {
 
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const isToolsetLoading = useAppSelector(
+    ToolsetSelectors.selectIsToolsetDetailsLoading,
+  );
   const authType = entity.authSettings.authenticationType;
   const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
 
@@ -317,6 +320,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ entity }) => {
               onLogout={handleLogout}
               hideConfigFields
               fieldsInfo={fieldsInfo}
+              disabled={isToolsetLoading}
             />
           )}
         </div>

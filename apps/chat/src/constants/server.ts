@@ -47,4 +47,5 @@ export const mappingServerUrls: Record<string, { response: boolean }> = {
 
 export enum HeadersNames {
   CONTENT_SECURITY_POLICY = 'content-security-policy',
+  X_DIAL_CLIENT_CHANNEL_ID = 'x-dial-client-channel-id',
 }

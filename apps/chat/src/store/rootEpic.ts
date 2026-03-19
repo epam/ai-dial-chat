@@ -2,6 +2,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ApplicationEpics } from './application/application.epics';
 import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epics';
+import { ChatEventsEpics } from './chat-events/chat-events.epics';
 import { ChatEpics } from './chat/chat.epics';
 import { CodeEditorEpics } from './codeEditor/codeEditor.epics';
 import { ConversationsEpics } from './conversations/conversations.epics';
@@ -38,4 +39,5 @@ export const rootEpic = combineEpics(
   ChatEpics,
   MarketplaceEpics,
   ToolsetEpics,
+  ChatEventsEpics,
 );

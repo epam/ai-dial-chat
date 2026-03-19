@@ -13,6 +13,7 @@ import {
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 import { getValidFormFields } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isTruthyQuery } from '@/src/utils/app/route';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import {
@@ -85,8 +86,7 @@ export const AppsEditor = () => {
     [AppsEditorQuery.Id]: idQuery,
   } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
-  const isCreatingApp =
-    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
+  const isCreatingApp = !idQuery || isTruthyQuery(isCreating);
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
