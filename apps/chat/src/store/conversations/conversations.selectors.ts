@@ -773,10 +773,12 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     const conversationsModelsIds = conversations.map(
       (conversation) => conversation.model.id,
     );
+    const modelsMap = ModelsSelectors.selectModelsMap(state);
     const isConfigurationBlocksInput =
       ChatSelectors.selectIsConfigurationBlocksInput(
         state,
         conversationsModelsIds,
+        modelsMap,
       );
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
