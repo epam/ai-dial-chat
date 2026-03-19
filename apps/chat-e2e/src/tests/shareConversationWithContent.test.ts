@@ -568,7 +568,7 @@ dialSharedWithMeTest(
     fileManagerGrid,
     fileManagerGridRowDropdownMenu,
     conversationData,
-    fileManager,
+    fileManagerBreadcrumb,
     fileApiHelper,
     dataInjector,
     mainUserShareApiHelper,
@@ -687,6 +687,7 @@ dialSharedWithMeTest(
         const rowDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.cloudImageName,
         );
+        await rowLocator.hover();
         await rowDotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.removeAccess,
@@ -778,11 +779,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select "Remove access" option for the second file and verify arrow icon disappears for file',
       async () => {
-        await fileManager
-          .getFileManagerNavigationPanel()
-          .getBreadcrumb()
-          .itemByName(FileManagerToolbarTabs.MyFiles)
-          .click();
+        await fileManagerBreadcrumb.clickBreadcrumbByName(
+          FileManagerToolbarTabs.MyFiles,
+        );
         const rowLocator = await fileManagerGrid.goToGridRowByNameCell(
           Attachment.sunImageName,
         );
@@ -790,6 +789,7 @@ dialSharedWithMeTest(
         const rowDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.sunImageName,
         );
+        await rowLocator.hover();
         await rowDotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.removeAccess,
