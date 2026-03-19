@@ -119,25 +119,35 @@ export const AppsEditor = () => {
     [models],
   );
 
+  const toolSupportingModelIds = useAppSelector(
+    ModelsSelectors.selectToolSupportingModelIds,
+  );
+
+  const defaultFormData = useMemo(
+    () =>
+      getDefaultFormData({
+        app: appDetails,
+        models: modelsWithFolder,
+        type: type,
+        runtime: pythonVersions[0],
+        toolSupportingModelIds,
+      }),
+    [
+      appDetails,
+      modelsWithFolder,
+      type,
+      pythonVersions,
+      toolSupportingModelIds,
+    ],
+  );
+
   const formMethods = useForm<AppsEditorFormType>({
-    defaultValues: getDefaultFormData({
-      app: appDetails,
-      models: modelsWithFolder,
-      type: type,
-      runtime: pythonVersions[0],
-    }),
+    defaultValues: defaultFormData,
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(getValidationSchema(type)),
   });
-  const lastSubmittedValuesRef = useRef<AppsEditorFormType>(
-    getDefaultFormData({
-      app: appDetails,
-      models: modelsWithFolder,
-      type,
-      runtime: pythonVersions[0],
-    }),
-  );
+  const lastSubmittedValuesRef = useRef<AppsEditorFormType>(defaultFormData);
   const isDirty = formMethods.formState.isDirty;
   const isQuickAppJsonDirty = (
     formMethods.formState.dirtyFields as Record<keyof QuickApp2Form, boolean>
@@ -253,6 +263,7 @@ export const AppsEditor = () => {
         app: payload,
         type,
         runtime: pythonVersions[0],
+        toolSupportingModelIds,
       });
       isSimpleViewSwitchRef.current = false;
       changeEditorTabRef.current = null;
@@ -260,20 +271,21 @@ export const AppsEditor = () => {
       redirectToChatRef.current = false;
     },
     [
-      isQuickAppJsonDirty,
+      marketplaceEntities,
       appDetails,
-      dispatch,
+      isQuickAppJsonDirty,
       formMethods,
-      isAppDeployed,
-      isCreatingApp,
+      type,
+      pythonVersions,
+      toolSupportingModelIds,
+      dispatch,
+      schema,
       isSchemaApplicationType,
       isShared,
-      marketplaceEntities,
+      isAppDeployed,
       publicationUrl,
-      pythonVersions,
-      schema,
+      isCreatingApp,
       t,
-      type,
     ],
   );
 
