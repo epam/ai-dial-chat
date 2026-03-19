@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendResourceType } from '@/chat/types/common';
 import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
@@ -9,6 +10,7 @@ import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
   API,
   ExpectedConstants,
+  ExpectedMessages,
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
@@ -235,6 +237,7 @@ dialOverlayTest(
     overlayHomePage,
     overlayActions,
     overlayDialog,
+    overlayPublicationApiHelper,
     conversationData,
     overlayChatHeader,
     overlayBaseAssertion,
@@ -314,38 +317,45 @@ dialOverlayTest(
           conversations: expectedConversationsArray,
         };
 
-        //build expected conversations published with user
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
-        // const actualPublishedConversationsList =
-        //   await overlayPublicationApiHelper.listPublishedResources(BackendResourceType.CONVERSATION);
-        // for (const actualPublishedConversation of actualPublishedConversationsList.items!) {
-        //   const conversation =
-        //     await overlayPublicationApiHelper.getPublishedConversation(
-        //       actualPublishedConversation.url,
-        //     );
-        //   const permissions = conversation.permissions;
-        //   const parentPath = actualPublishedConversation.parentPath;
-        //   expectedConversationsArray.push({
-        //     model: conversation.model,
-        //     name: conversation.name,
-        //     isPlayback: conversation.playback?.isPlayback ?? false,
-        //     isReplay: conversation.replay?.isReplay ?? false,
-        //     publicationInfo: {
-        //       version: actualPublishedConversation.name.substring(
-        //         actualPublishedConversation.name.lastIndexOf(
-        //           ItemUtil.conversationIdSeparator,
-        //         ) + ItemUtil.conversationIdSeparator.length,
-        //       ),
-        //     },
-        //     id: conversation.id,
-        //     folderId: conversation.folderId,
-        //     publishedWithMe: !parentPath,
-        //     updatedAt: actualPublishedConversation.updatedAt,
-        //     bucket: actualPublishedConversation.bucket,
-        //     ...(parentPath && { parentPath }),
-        //    ...(permissions && { permissions }),
-        //   });
-        // }
+        //build expected conversations published to user
+        const actualPublishedConversationsList =
+          await overlayPublicationApiHelper.listPublishedResources(
+            BackendResourceType.CONVERSATION,
+          );
+        for (const actualPublishedConversation of actualPublishedConversationsList.items!) {
+          const conversation =
+            await overlayPublicationApiHelper.getPublishedConversation(
+              actualPublishedConversation.url,
+            );
+          const permissions = conversation.permissions;
+          const isPlayback = conversation.playback?.isPlayback;
+          const isReplay = conversation.replay?.isReplay;
+          const parentPath = actualPublishedConversation.parentPath;
+          expectedConversationsArray.push({
+            model: isPlayback
+              ? { id: PseudoModel.playback }
+              : isReplay
+                ? { id: PseudoModel.replay }
+                : conversation.model,
+            name: conversation.name,
+            isPlayback: isPlayback ?? false,
+            isReplay: isReplay ?? false,
+            publicationInfo: {
+              version: actualPublishedConversation.name.substring(
+                actualPublishedConversation.name.lastIndexOf(
+                  ItemUtil.entityIdSeparator,
+                ) + ItemUtil.entityIdSeparator.length,
+              ),
+            },
+            id: conversation.id,
+            folderId: conversation.folderId,
+            publishedWithMe: !parentPath,
+            updatedAt: actualPublishedConversation.updatedAt,
+            bucket: actualPublishedConversation.bucket,
+            ...(parentPath && { parentPath }),
+            ...(permissions && { permissions }),
+          });
+        }
 
         //build expected conversations created by user
         let actualConversationsList = await overlayItemApiHelper.listItems(
@@ -449,12 +459,14 @@ dialOverlayTest(
         }
 
         //compare conversations from bucket storage
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
-        // expect(actualConversationsModels.conversations.length).toBe(
-        //   expectedConversationsModel.conversations.length + 1,
-        // );
-        expect(actualConversationsModels.conversations).toEqual(
-          expect.arrayContaining(expectedConversationsModel.conversations),
+        overlayBaseAssertion.assertValue(
+          actualConversationsModels.conversations.length,
+          expectedConversationsModel.conversations.length + 1,
+        );
+        overlayBaseAssertion.assertArrayIncludesAll(
+          actualConversationsModels.conversations,
+          expectedConversationsModel.conversations,
+          ExpectedMessages.conversationsListIsValid,
         );
 
         //check newly created 'New conversation 1' is displayed
@@ -465,11 +477,11 @@ dialOverlayTest(
         actualConversationsModels.conversations.find(
           (c) => c.id === selectedConversationIds[0],
         );
-        expect(
+        overlayBaseAssertion.assertValueIsNotUndefined(
           actualConversationsModels.conversations.find(
             (c) => c.id === selectedConversationIds[0],
           ),
-        ).toBeDefined();
+        );
         await overlayDialog.closeButton.click();
       },
     );
@@ -488,9 +500,10 @@ dialOverlayTest(
         const actualConversationModel = JSON.parse(
           actualConversation,
         ) as OverlayConversation;
-        expect
-          .soft(actualConversationModel)
-          .toStrictEqual(expectedSelectedConversation.conversation);
+        overlayBaseAssertion.assertValuesAreEqual(
+          actualConversationModel,
+          expectedSelectedConversation.conversation,
+        );
         await overlayDialog.closeButton.click();
 
         await overlayBaseAssertion.assertElementText(
