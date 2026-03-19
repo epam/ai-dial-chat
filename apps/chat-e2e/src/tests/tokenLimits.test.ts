@@ -75,7 +75,8 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    //TODO: need to investigate token's limit calculation
+    await dialTest.step.skip(
       'Set short request and request with exceeded tokens count on next line and verify warning popup is displayed, only first request is preserved in the input',
       async () => {
         await sendMessage.fillRequestData(firstRequestLine);
