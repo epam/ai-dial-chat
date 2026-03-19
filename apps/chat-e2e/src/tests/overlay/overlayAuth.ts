@@ -52,6 +52,7 @@ for (let i = 0; i < overlayUsernames.length; i++) {
       );
     if (options?.setEntitiesEnvVars) {
       process.env.MODELS = retrievedResponses.get(API.modelsHost);
+      process.env.THEMES = retrievedResponses.get(API.themesListingHost);
     }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
 
