@@ -62,6 +62,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         if (randomModel.tokenizer?.encoding) {
+          // eslint-disable-next-line playwright/no-networkidle
           await page.waitForLoadState('networkidle');
         }
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
