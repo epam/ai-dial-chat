@@ -1,5 +1,4 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendResourceType } from '@/chat/types/common';
 import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
@@ -15,6 +14,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
   OverlaySandboxUrls,
+  PseudoModel,
   ThemeId,
 } from '@/src/testData';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
