@@ -1,4 +1,3 @@
-import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
   ExpectedConstants,
@@ -67,7 +66,7 @@ dialOverlayTest(
       { isOverlay: true },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Verify configured model is pre-set for a new conversation',
       async () => {
         await overlayHomePage.navigateToUrl(
@@ -86,7 +85,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Click on "Change agent" btn and verify the cursor is set on the search field',
       async () => {
         await overlayChat.changeAgentButton.click();
@@ -97,16 +96,19 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step('Select a new agent and send the request', async () => {
-      await overlayTalkToAgentDialog.selectAgent(randomModel, {
-        isHttpMethodTriggered: false,
-      });
-      const request =
-        await overlayChat.sendRequestWithButton(randomAgentRequest);
-      overlayApiAssertion.assertRequestModelId(request, randomModel);
-    });
+    await dialOverlayTest.step(
+      'Select a new agent and send the request',
+      async () => {
+        await overlayTalkToAgentDialog.selectAgent(randomModel, {
+          isHttpMethodTriggered: false,
+        });
+        const request =
+          await overlayChat.sendRequestWithButton(randomAgentRequest);
+        overlayApiAssertion.assertRequestModelId(request, randomModel);
+      },
+    );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Verify dots menu, "Clear conversation messages", model name, model and gear icons are available in the chat header',
       async () => {
         await overlayBaseAssertion.assertElementState(
@@ -132,7 +134,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Hover over model icon and verify tooltip content',
       async () => {
         await overlayChatHeader.chatModelIcon.hoverOver();
@@ -143,7 +145,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Create new conversation and verify configured model is pre-set',
       async () => {
         await overlayHeader.createNewConversation();
@@ -154,7 +156,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Open "Select an agent" modal and verify configured model is selected and is on top',
       async () => {
         await overlayChat.changeAgentButton.click();
@@ -171,7 +173,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Send the request and verify configured model is sent in the request',
       async () => {
         const request =
@@ -180,7 +182,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Verify like/dislike button is available for the response',
       async () => {
         for (const rate of Object.values(Rate)) {
@@ -192,7 +194,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Verify "Set message template" button is not available for the request',
       async () => {
         const request = await overlayChatMessages.hoverOverMessage(1);
@@ -203,7 +205,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Open "Select an agent" modal for the previous conversation and verify random model is selected',
       async () => {
         await overlayHeader.leftPanelToggle.click();
@@ -215,7 +217,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step('Verify Dark theme is set', async () => {
+    await dialOverlayTest.step('Verify Dark theme is set', async () => {
       await overlayAssertion.assertOverlayTheme(overlayHomePage, ThemeId.dark);
     });
   },

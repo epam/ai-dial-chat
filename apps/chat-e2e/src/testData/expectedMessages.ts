@@ -482,4 +482,5 @@ export const MarketplaceExpectedMessages = {
   agentIsVisible: (name: string) => `Agent ${name} is visible in Marketplace`,
   filteredAgentsAreValid: 'Filtered agents are valid',
   filterOptionsAreValid: 'Filter options are valid',
+  agentMenuOptionsAreValid: 'Agent menu options are valid',
 };

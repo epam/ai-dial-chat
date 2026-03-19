@@ -425,7 +425,7 @@ dialOverlayTest(
         overlayBaseAssertion.assertArrayExcludesAll(
           actualMenuOptions,
           [MenuOptions.share],
-          MarketplaceExpectedMessages.filterOptionsAreValid,
+          MarketplaceExpectedMessages.agentMenuOptionsAreValid,
         );
       },
     );
@@ -480,7 +480,7 @@ dialOverlayTest(
         overlayBaseAssertion.assertArrayIncludesAll(
           actualMenuOptions,
           [MenuOptions.share],
-          MarketplaceExpectedMessages.filterOptionsAreValid,
+          MarketplaceExpectedMessages.agentMenuOptionsAreValid,
         );
       },
     );
