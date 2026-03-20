@@ -178,10 +178,7 @@ export const MarketplaceEntityCard = memo(
                     'mr-6 flex w-full shrink text-base font-semibold leading-[20px] text-primary',
                   )}
                 >
-                  <DialEllipsisTooltip
-                    text={entity.name}
-                    id="entity-name"
-                  />
+                  <DialEllipsisTooltip text={entity.name} id="entity-name" />
                 </div>
               </div>
               <div data-qa="entity-description" className="hidden xl:block">
