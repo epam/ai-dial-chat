@@ -2,7 +2,6 @@ import {
   AccountSettings,
   AgentInfo,
   AgentSettings,
-  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -29,6 +28,7 @@ import {
   AgentInfoAssertion,
   ApiAssertion,
   BaseAssertion,
+  ChatHeaderAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
   FolderAssertion,
@@ -59,6 +59,7 @@ import {
   FolderConversations,
   OrganizationConversationsTree,
   PromptsTree,
+  SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { ReportAnIssueModal } from '@/src/ui/webElements/footer/reportAnIssueModal';
 import { RequestApiKeyModal } from '@/src/ui/webElements/footer/requestApiKeyModal';
@@ -110,6 +111,7 @@ const dialOverlayTest = test.extend<{
   overlayAgentInfoAssertion: AgentInfoAssertion;
   overlayChatMessagesAssertion: ChatMessagesAssertion;
   overlayApiAssertion: ApiAssertion;
+  overlayChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   overlayTalkToAgentDialog: TalkToAgentDialog;
   overlayPromptBar: PromptBar;
   overlayPrompts: PromptsTree;
@@ -127,10 +129,10 @@ const dialOverlayTest = test.extend<{
   overlayToast: Toast;
   overlayRequestApiKeyModal: RequestApiKeyModal;
   overlayReportAnIssueModal: ReportAnIssueModal;
-  overlayAttachFilesModal: AttachFilesModal;
   overlayPlaybackControl: PlaybackControl;
   overlayOrganizationConversations: OrganizationConversationsTree;
   overlayFolderConversations: FolderConversations;
+  overlaySharedWithMeConversations: SharedWithMeConversationsTree;
   overlayTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   overlayAssertion: OverlayAssertion;
   overlayConversationAssertion: ConversationAssertion;
@@ -290,6 +292,12 @@ const dialOverlayTest = test.extend<{
     const overlayApiAssertion = new ApiAssertion();
     await use(overlayApiAssertion);
   },
+  overlayChatHeaderAssertion: async ({ overlayChatHeader }, use) => {
+    const overlayChatHeaderAssertion = new ChatHeaderAssertion(
+      overlayChatHeader,
+    );
+    await use(overlayChatHeaderAssertion);
+  },
   overlayTalkToAgentDialog: async ({ page, overlayHomePage }, use) => {
     const overlayTalkToAgentDialog = new TalkToAgentDialog(
       page,
@@ -405,13 +413,6 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayReportAnIssueModal);
   },
-  overlayAttachFilesModal: async ({ page, overlayHomePage }, use) => {
-    const overlayAttachFilesModal = new AttachFilesModal(
-      page,
-      overlayHomePage.getOverlayContainer().getElementLocator(),
-    );
-    await use(overlayAttachFilesModal);
-  },
   overlayPlaybackControl: async ({ overlayChat }, use) => {
     const overlayPlaybackControl = overlayChat.getPlaybackControl();
     await use(overlayPlaybackControl);
@@ -456,6 +457,11 @@ const dialOverlayTest = test.extend<{
     const overlayChatBarFolderAssertion =
       new FolderAssertion<FolderConversations>(overlayFolderConversations);
     await use(overlayChatBarFolderAssertion);
+  },
+  overlaySharedWithMeConversations: async ({ overlayChatBar }, use) => {
+    const overlaySharedWithMeConversations =
+      overlayChatBar.getSharedWithMeConversationsTree();
+    await use(overlaySharedWithMeConversations);
   },
   overlayShareApiHelper: async ({ request }, use) => {
     const overlayShareApiHelper = new ShareApiHelper(request);
