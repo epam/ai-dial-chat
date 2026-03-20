@@ -67,6 +67,7 @@ interface CodeEditorFileProps {
   isHighlighted: boolean;
   level?: number;
   isModified: boolean;
+  readOnly?: boolean;
   onSelectFile: (file: DialFile) => void;
   onDeleteFile: (fileId: string) => void;
   onSave: (fileIds: string[]) => void;
@@ -76,6 +77,7 @@ const CodeEditorFile = ({
   file,
   isHighlighted,
   isModified,
+  readOnly,
   level = 0,
   onSelectFile,
   onDeleteFile,
@@ -110,6 +112,8 @@ const CodeEditorFile = ({
         onSave={isModified ? handleSave : undefined}
         item={file}
         level={level}
+        isCodeEditorFile
+        readOnly={readOnly}
       />
     </div>
   );
@@ -582,6 +586,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                       isModified={modifiedFileIds.includes(props.item.id)}
                       level={props.level}
                       file={props.item}
+                      readOnly={readOnly}
                       onSelectFile={handleSelectFile}
                       isHighlighted={selectedFileId === props.item.id}
                       onDeleteFile={setDeletingFileId}
@@ -602,6 +607,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   isModified={modifiedFileIds.includes(file.id)}
                   key={file.id}
                   file={file}
+                  readOnly={readOnly}
                   onSelectFile={handleSelectFile}
                   isHighlighted={selectedFileId === file.id}
                   onDeleteFile={setDeletingFileId}

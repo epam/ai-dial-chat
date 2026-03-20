@@ -22,11 +22,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  CodeEditorSelectors,
-  FilesSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
@@ -48,6 +44,8 @@ interface ContextMenuProps {
   onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
   isSelected?: boolean;
+  isCodeEditorFile?: boolean;
+  readOnly?: boolean;
 }
 
 export function FileItemContextMenu({
@@ -62,6 +60,8 @@ export function FileItemContextMenu({
   onSave,
   onSelect,
   isSelected,
+  isCodeEditorFile,
+  readOnly,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -71,11 +71,6 @@ export function FileItemContextMenu({
   const isPublishingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
-  const selectFileContentSelector = useMemo(
-    () => CodeEditorSelectors.selectFileContent(file.id),
-    [file.id],
-  );
-  const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
@@ -124,7 +119,7 @@ export function FileItemContextMenu({
       },
       {
         name: t('Unshare'),
-        display: !!file.sharedWithMe && !isCodeEditorFile,
+        display: !readOnly && !!file.sharedWithMe && !isCodeEditorFile,
         dataQa: 'unshare-file',
         Icon: IconUserUnshare,
         onClick: onUnshare,
@@ -143,9 +138,10 @@ export function FileItemContextMenu({
         name: t('Delete'),
         dataQa: 'delete',
         display:
-          isCodeEditorFile ||
-          isMyEntity(file) ||
-          canEditSharedFolderOrParent(folders, file.folderId),
+          !readOnly &&
+          (!!isCodeEditorFile ||
+            isMyEntity(file) ||
+            canEditSharedFolderOrParent(folders, file.folderId)),
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -153,6 +149,7 @@ export function FileItemContextMenu({
     [
       t,
       isCodeEditorFile,
+      readOnly,
       onSave,
       handleSave,
       file,
