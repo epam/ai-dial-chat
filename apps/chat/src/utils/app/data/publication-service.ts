@@ -171,15 +171,15 @@ export class PublicationService {
         ApiUtils.encodeApiUrl(parentPath),
       )}${resultQuery ? `?${resultQuery}` : ''}`,
     ).pipe(
-      map((items: PublishedItem[]) => {
-        if (!items) {
+      map((publication: PublishedItem) => {
+        if (!publication.items) {
           return {
             folders: [],
             items: [],
           };
         }
 
-        const mappedPublicationItems = items.map((item) => ({
+        const mappedPublicationItems = publication.items.map((item) => ({
           ...item,
           url: ApiUtils.decodeApiUrl(item.url),
         }));

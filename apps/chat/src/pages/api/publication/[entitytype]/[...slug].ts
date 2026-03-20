@@ -71,6 +71,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const allItems: PublishedItem[] = [];
     let nextToken: string | undefined;
+    let lastJson: Record<string, unknown> = {};
 
     do {
       const fetchUrl = nextToken ? `${baseUrl}&token=${nextToken}` : baseUrl;
@@ -98,10 +99,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         );
       }
 
-      const json = (await proxyRes.json()) as {
+      const json = (await proxyRes.json()) as Record<string, unknown> & {
         items?: PublishedItem[];
         nextToken?: string;
       };
+
+      lastJson = json;
 
       if (json.items) {
         allItems.push(...json.items);
@@ -110,7 +113,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       nextToken = json.nextToken;
     } while (nextToken);
 
-    return res.status(200).send(allItems);
+    const { nextToken: _, ...result } = lastJson;
+    return res.status(200).send({ ...result, items: allItems });
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof DialAIError) {
