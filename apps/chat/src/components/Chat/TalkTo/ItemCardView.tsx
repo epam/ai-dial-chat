@@ -43,6 +43,8 @@ import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/Entit
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+
 export type DisabledActions = Record<string, boolean>;
 
 interface ItemCardViewProps<T extends MarketplaceEntity> {
@@ -234,7 +236,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
               )}
               data-qa="entity-name"
             >
-              {entity.name}
+              <DialEllipsisTooltip text={entity.name} />
             </div>
           </div>
           <EntityMarkdownDescription
