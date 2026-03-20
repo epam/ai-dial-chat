@@ -2405,6 +2405,7 @@ dialTest(
     setTestIds,
     baseAssertion,
     tooltipAssertion,
+    tooltip,
     entityDetailsModal,
     entityEditorPage,
     entityEditorGeneralForm,
@@ -2457,25 +2458,12 @@ dialTest(
     });
 
     await dialTest.step(
-      "Hover over app's icon - tooltip is displayed in several lines",
+      "Hover over app's icon - tooltip is not displayed",
       async () => {
         const agentIcon =
           await marketplaceEntities.getEntityIcon(reusableAgentElement);
         await agentIcon.hover();
-        await tooltipAssertion.assertTooltipContent(
-          ExpectedConstants.agentIconTooltip(
-            appEntity.name,
-            appEntity.version!,
-          ),
-        );
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.wordBreak,
-          StyleValues.breakWord,
-        );
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.textWrapMode,
-          StyleValues.wrap,
-        );
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
       },
     );
 
