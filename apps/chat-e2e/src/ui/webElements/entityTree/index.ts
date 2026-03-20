@@ -17,7 +17,6 @@ export * from './sidebar/approveRequiredConversationsTree';
 export * from './sidebar/approveRequiredPrompts';
 export * from './sidebar/organizationConversationsTree';
 export * from './sidebar/organizationPromptsTree';
-export * from './attachment/attachFilesTree';
 export * from './publication/publishConversationsTree';
 export * from './publication/publishPromptsTree';
 export * from './publication/publishApplicationsTree';

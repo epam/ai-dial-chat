@@ -299,7 +299,6 @@ export const ExpectedMessages = {
   attachmentsAreGrouped: 'Attachments are grouped',
   attachmentIsVisible: 'Attachment is visible',
   attachmentIsHidden: 'Attachment is hidden',
-  attachFilesModalIsOpened: 'Attach files modal dialog is opened',
   supportedTypesLabelIsCorrect: 'Supported types label is valid',
   fileIsUploaded: 'File is uploaded',
   fileIsNotUploaded: 'File is not uploaded',
