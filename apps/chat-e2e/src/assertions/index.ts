@@ -27,7 +27,6 @@ export * from './shareAppModalAssertion';
 export * from './sideBarAssertion';
 export * from './tooltipAssertion';
 export * from './variableModalAssertion';
-export * from './manageAttachmentsAssertion';
 export * from './selectFolderModalAssertion';
 export * from './base/baseAssertion';
 export * from './conversationInfoTooltipAssertion';
