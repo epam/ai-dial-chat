@@ -1,7 +1,6 @@
 import { DialHomePage, FileManagerPage, MarketplacePage } from '../ui/pages';
 import {
   AgentSettings,
-  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -49,7 +48,6 @@ import {
   DownloadAssertion,
   FileManagerGridAssertion,
   FoldersTreeAssertion,
-  ManageAttachmentsAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
@@ -160,10 +158,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMeFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
-  additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserToastAssertion: ToastAssertion;
   additionalShareUserChatSettingsTooltip: ChatSettingsTooltip;
-  additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
   additionalShareUserDownloadAssertion: DownloadAssertion;
   additionalShareUserChatAssertion: ChatAssertion;
   additionalShareUserConversationAssertion: ConversationAssertion;
@@ -247,14 +243,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserDownloadAssertion = new DownloadAssertion();
     await use(additionalShareUserDownloadAssertion);
   },
-  additionalShareUserManageAttachmentsAssertion: async (
-    { additionalShareUserAttachFilesModal },
-    use,
-  ) => {
-    const additionalShareUserManageAttachmentsAssertion =
-      new ManageAttachmentsAssertion(additionalShareUserAttachFilesModal);
-    await use(additionalShareUserManageAttachmentsAssertion);
-  },
   additionalShareUserToastAssertion: async (
     { additionalShareUserToast },
     use,
@@ -282,15 +270,6 @@ const dialSharedWithMeTest = dialTest.extend<{
       BucketUtil.getAdditionalShareUserBucket(),
     );
     await use(additionalShareUserFileApiHelper);
-  },
-  additionalShareUserAttachFilesModal: async (
-    { additionalShareUserPage },
-    use,
-  ) => {
-    const additionalShareUserAttachFilesModal = new AttachFilesModal(
-      additionalShareUserPage,
-    );
-    await use(additionalShareUserAttachFilesModal);
   },
   additionalShareUserAttachmentDropdownMenu: async (
     { additionalShareUserSendMessage },

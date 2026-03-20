@@ -576,4 +576,14 @@ export class BaseAssertion {
       )
       .toHaveJSProperty(scrollProperty, expectedValue);
   }
+
+  public assertValueMatchObject(
+    actualValue: unknown,
+    expectedObject: Record<string, unknown> | Array<unknown>,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
+      .toMatchObject(expectedObject);
+  }
 }

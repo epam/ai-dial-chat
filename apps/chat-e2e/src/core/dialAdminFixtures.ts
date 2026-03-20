@@ -1,6 +1,5 @@
 import { DialHomePage, FileManagerPage, MarketplacePage } from '../ui/pages';
 import {
-  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -42,7 +41,6 @@ import {
   ConversationAssertion,
   ConversationInfoTooltipAssertion,
   FileManagerGridAssertion,
-  ManageAttachmentsAssertion,
   MenuAssertion,
   PublicationReviewControlAssertion,
   PublishEntityAssertion,
@@ -174,7 +172,6 @@ const dialAdminTest = dialTest.extend<{
   adminPublishedAppReviewModalControlsAssertion: PublicationReviewControlAssertion;
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
-  adminAttachFilesModal: AttachFilesModal;
   adminFileManagerPage: FileManagerPage;
   adminFileManagerContainer: FileManagerContainer;
   adminFileManager: FileManager;
@@ -188,7 +185,6 @@ const dialAdminTest = dialTest.extend<{
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
-  adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
   adminEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
   adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
@@ -705,10 +701,6 @@ const dialAdminTest = dialTest.extend<{
       );
     await use(adminOrganizationPromptAssertion);
   },
-  adminAttachFilesModal: async ({ adminPage }, use) => {
-    const adminAttachFilesModal = new AttachFilesModal(adminPage);
-    await use(adminAttachFilesModal);
-  },
   adminFileManagerPage: async ({ adminPage }, use) => {
     const adminFileManagerPage = new FileManagerPage(adminPage);
     await use(adminFileManagerPage);
@@ -763,12 +755,6 @@ const dialAdminTest = dialTest.extend<{
     const adminPublishingRules =
       adminPublishingApprovalModal.getPublishingRules();
     await use(adminPublishingRules);
-  },
-  adminManageAttachmentsAssertion: async ({ adminAttachFilesModal }, use) => {
-    const adminManageAttachmentsAssertion = new ManageAttachmentsAssertion(
-      adminAttachFilesModal,
-    );
-    await use(adminManageAttachmentsAssertion);
   },
   adminSelectFolderModal: async ({ adminPage }, use) => {
     const adminSelectFolderModal = new SelectFolderModal(adminPage);
