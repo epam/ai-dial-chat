@@ -6,6 +6,15 @@ import { logger } from '@/src/utils/server/logger';
 import { Token } from '@/src/types/auth';
 
 import { safeParseJSON } from '../json';
+import {
+  CREDENTIALS_PROVIDER_ID,
+  getProviderConfigById,
+  isCredentialsProvider,
+} from './auth-providers';
+import {
+  getTokenExpirationMs,
+  validateProviderAccessToken,
+} from './auth-token-utils';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -16,6 +25,7 @@ import snakeCase from 'lodash-es/snakeCase';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
+const CREDENTIALS_ACCOUNT_TYPE = 'credentials';
 
 const safeDecodeJwt = (jwtToken: string) => {
   try {
@@ -213,11 +223,121 @@ async function refreshAccessToken(token: Token) {
   }
 }
 
+type JwtCallbackOptions = Parameters<
+  NonNullable<
+    CallbacksOptions<Profile & { job_title?: string }, Account>['jwt']
+  >
+>[0];
+
+const handleCredentialsAccountJwt = async (options: JwtCallbackOptions) => {
+  const credUser = options.user as
+    | { accessToken?: string; provider?: string }
+    | undefined;
+  const credentialsAccessToken =
+    typeof credUser?.accessToken === 'string'
+      ? credUser.accessToken
+      : undefined;
+  const signInProvider =
+    typeof credUser?.provider === 'string' && credUser.provider
+      ? credUser.provider
+      : undefined;
+
+  const providerConfig = getProviderConfigById(signInProvider);
+
+  if (!credentialsAccessToken) {
+    logger.warn('[Credentials] Missing access token in jwt callback');
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+
+  if (!signInProvider || !providerConfig) {
+    logger.warn(
+      `[Credentials] Missing or unsupported signInProvider in jwt callback: ${signInProvider ?? 'undefined'}`,
+    );
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+  const tokenValidationResult = await validateProviderAccessToken({
+    token: credentialsAccessToken,
+    provider: providerConfig,
+  });
+
+  if (!tokenValidationResult.ok) {
+    logger.warn(
+      `[Credentials] Token validation failed (provider=${signInProvider}): ${tokenValidationResult.error.message}`,
+    );
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+  const accessTokenExpires = getTokenExpirationMs(
+    tokenValidationResult.payload,
+  );
+
+  if (typeof accessTokenExpires !== 'number') {
+    logger.warn(
+      `[Credentials] Token validation succeeded but exp claim is missing/non-numeric (provider=${signInProvider})`,
+    );
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+
+  const validatedPayload = tokenValidationResult.payload as Record<
+    string,
+    unknown
+  >;
+  const validatedSub =
+    typeof validatedPayload.sub === 'string' ? validatedPayload.sub : undefined;
+  const validatedName =
+    typeof validatedPayload.name === 'string'
+      ? validatedPayload.name
+      : typeof validatedPayload.preferred_username === 'string'
+        ? validatedPayload.preferred_username
+        : undefined;
+  const validatedEmail =
+    typeof validatedPayload.email === 'string'
+      ? validatedPayload.email
+      : typeof validatedPayload.upn === 'string'
+        ? validatedPayload.upn
+        : typeof validatedPayload.preferred_username === 'string'
+          ? validatedPayload.preferred_username
+          : undefined;
+
+  return {
+    ...options.token,
+    sub: validatedSub ?? options.token.sub,
+    name: validatedName,
+    email: validatedEmail,
+    user: getUser(credentialsAccessToken, undefined, CREDENTIALS_PROVIDER_ID),
+    access_token: credentialsAccessToken,
+    accessTokenExpires,
+    refreshToken: undefined,
+    providerId: CREDENTIALS_PROVIDER_ID,
+    userId: validatedSub ?? options.user?.id ?? options.token.sub ?? '',
+    idToken: undefined,
+  };
+};
+
 export const callbacks: Partial<
   CallbacksOptions<Profile & { job_title?: string }, Account>
 > = {
   jwt: async (options) => {
     if (options.account) {
+      if (options.account.type === CREDENTIALS_ACCOUNT_TYPE) {
+        return handleCredentialsAccountJwt(options);
+      }
+
       const idToken = options.account.id_token;
       const access_token = options.account.access_token;
       const providerId = options.account.provider;
@@ -243,11 +363,39 @@ export const callbacks: Partial<
       };
     }
 
+    const providerId =
+      typeof options.token.providerId === 'string'
+        ? options.token.providerId
+        : undefined;
+
+    // Credentials tokens cannot be refreshed server-side; once expired, we must re-run sign-in.
+    if (isCredentialsProvider(providerId)) {
+      const expiresAt =
+        typeof options.token.accessTokenExpires === 'number'
+          ? options.token.accessTokenExpires
+          : undefined;
+
+      if (typeof expiresAt === 'number' && Date.now() >= expiresAt) {
+        return {
+          ...options.token,
+          error: 'CredentialsAccessTokenExpired',
+        };
+      }
+
+      return {
+        ...options.token,
+        user: getUser(
+          options.token.access_token,
+          options.token.idToken,
+          CREDENTIALS_PROVIDER_ID,
+        ),
+      };
+    }
+
     // Return previous token if the access token has not expired yet
     if (
-      options.token.providerId === 'credentials' ||
-      (typeof options.token.accessTokenExpires === 'number' &&
-        Date.now() < options.token.accessTokenExpires)
+      typeof options.token.accessTokenExpires === 'number' &&
+      Date.now() < options.token.accessTokenExpires
     ) {
       return {
         ...options.token,
@@ -265,6 +413,16 @@ export const callbacks: Partial<
     return refreshAccessToken(typedToken);
   },
   signIn: async (options) => {
+    if (options.account?.type === CREDENTIALS_ACCOUNT_TYPE) {
+      const credentialsAccessToken =
+        typeof (options.user as { accessToken?: unknown } | undefined)
+          ?.accessToken === 'string'
+          ? (options.user as { accessToken?: string }).accessToken
+          : undefined;
+
+      return Boolean(credentialsAccessToken);
+    }
+
     if (!options.account?.access_token) {
       return false;
     }
