@@ -227,7 +227,10 @@ const SliderGridInner = <T extends { id: string }, P>(
   const resizeDeltaTime = Date.now() - resizeTime;
 
   return (
-    <div ref={containerRef} className="flex min-h-0 flex-1 flex-col">
+    <div
+      ref={containerRef}
+      className="flex min-h-0 flex-1 flex-col overflow-auto"
+    >
       <div
         ref={sliderRef}
         className="flex w-full flex-1 items-center overflow-hidden"

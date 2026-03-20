@@ -47,4 +47,10 @@ export class MarketplaceHeader extends BaseElement {
     await this.addToolsetButton.click();
     await respPromise;
   }
+  public cardViewToggle = this.getChildElementBySelector(
+    MarketplaceSelectors.cardViewToggle,
+  );
+  public tableViewToggle = this.getChildElementBySelector(
+    MarketplaceSelectors.tableViewToggle,
+  );
 }
