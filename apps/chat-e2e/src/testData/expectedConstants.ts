@@ -30,6 +30,8 @@ export const ExpectedConstants = {
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
+  localBucket: 'local',
+  localFolderIdPath: () => `conversations/${ExpectedConstants.localBucket}`,
   signInButtonTitle: 'Sign in with Credentials',
   talkTo: 'Talk to',
   model: 'Model',
