@@ -9,7 +9,7 @@ import {
 } from '@/src/ui/selectors';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import { Button } from '@/src/ui/webElements/common/button';
-import { FileManagerModalHeader } from '@/src/ui/webElements/fileManagerModalHeader';
+import { FileManagerModalHeader } from '@/src/ui/webElements/fileManager/fileManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 
