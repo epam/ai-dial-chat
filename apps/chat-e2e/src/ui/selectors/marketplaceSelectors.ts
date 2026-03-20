@@ -17,7 +17,7 @@ export const MarketplaceSelectors = {
 
 export const MarketplaceEntitySelectors = {
   entity: '[data-qa="entity"]',
-  entityName: '[data-qa="entity-name"]',
+  entityName: '#entity-name',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',

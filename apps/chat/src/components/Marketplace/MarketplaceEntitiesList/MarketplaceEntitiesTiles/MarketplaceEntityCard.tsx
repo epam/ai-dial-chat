@@ -180,7 +180,7 @@ export const MarketplaceEntityCard = memo(
                 >
                   <DialEllipsisTooltip
                     text={entity.name}
-                    data-qa="entity-name"
+                    id="entity-name"
                   />
                 </div>
               </div>
