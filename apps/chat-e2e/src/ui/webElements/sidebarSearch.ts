@@ -4,7 +4,7 @@ import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Filter } from '@/src/ui/webElements/filter';
 import { Locator, Page } from '@playwright/test';
 
-export class Search extends BaseElement {
+export class SidebarSearch extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, SideBarSelectors.search, parentLocator);
   }

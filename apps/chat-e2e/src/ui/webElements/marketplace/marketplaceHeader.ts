@@ -4,7 +4,7 @@ import {
   MarketplaceSelectors,
   MarketplaceSideBarSelectors,
 } from '@/src/ui/selectors/marketplaceSelectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, Search } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export class MarketplaceHeader extends BaseElement {
@@ -12,15 +12,20 @@ export class MarketplaceHeader extends BaseElement {
     super(page, MarketplaceSelectors.header, parentLocator);
   }
 
+  private search!: Search;
+
+  getSearch(): Search {
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
+  }
+
   public agentsTab = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.agentsTab,
   );
   public toolsetsTab = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.toolsetsTab,
-  );
-
-  public searchInput = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.searchInput,
   );
   public addAppButton = this.getChildElementBySelector(
     MarketplaceSelectors.addApp,
@@ -42,4 +47,10 @@ export class MarketplaceHeader extends BaseElement {
     await this.addToolsetButton.click();
     await respPromise;
   }
+  public cardViewToggle = this.getChildElementBySelector(
+    MarketplaceSelectors.cardViewToggle,
+  );
+  public tableViewToggle = this.getChildElementBySelector(
+    MarketplaceSelectors.tableViewToggle,
+  );
 }

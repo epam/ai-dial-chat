@@ -112,8 +112,8 @@ export const MoveToDialog: React.FC<Props> = ({
     [handleToggleFolder],
   );
 
-  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
   }, []);
 
   const handleRenameFolder = useCallback(
