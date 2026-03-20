@@ -104,11 +104,8 @@ export function EntityHeader<T extends MarketplaceEntity>({
                 />
               )}
               <div className="flex max-w-full items-center gap-[2px] whitespace-nowrap">
-                <div
-                  className="w-full shrink text-lg font-semibold leading-6 md:text-xl"
-                  data-qa="entity-name"
-                >
-                  <DialEllipsisTooltip text={entity.name} />
+                <div className="w-full shrink text-lg font-semibold leading-6 md:text-xl">
+                  <DialEllipsisTooltip text={entity.name} id="entity-name" />
                 </div>
               </div>
             </div>

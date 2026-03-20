@@ -14,7 +14,7 @@ import {
   ToggleState,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
-import { Attributes, Cursors, StyleValues, Styles } from '@/src/ui/domData';
+import { Attributes, Cursors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
