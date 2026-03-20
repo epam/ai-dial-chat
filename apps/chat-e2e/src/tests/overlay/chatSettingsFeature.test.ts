@@ -1,9 +1,9 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
-import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
   Attachment,
+  ExpectedMessages,
   MockedChatApiResponseBodies,
   OverlaySandboxUrls,
 } from '@/src/testData';
@@ -41,7 +41,7 @@ dialOverlayTest(
 
     let attachmentConversation: Conversation;
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Create conversation with attachment in the request',
       async () => {
         const imageUrl = await overlayFileApiHelper.putFile(
@@ -58,7 +58,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Open conversation with attachment and verify clip icon is not available in the Send field',
       async () => {
         await overlayHomePage.navigateToUrl(
@@ -76,7 +76,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Verify gear icon is not available in the header',
       async () => {
         await overlayBaseAssertion.assertElementState(
@@ -86,7 +86,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Clear all conversation messages and verify "Configure settings" link is available',
       async () => {
         await overlayChatHeader.clearConversation.click();
@@ -98,7 +98,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Create a new conversation and verify "Configure settings", "Change agent" links are available',
       async () => {
         await overlayHeader.createNewConversation();
@@ -139,7 +139,7 @@ dialOverlayTest(
 
     let attachmentConversation: Conversation;
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Create conversation with attachment in the request',
       async () => {
         attachmentConversation =
@@ -152,7 +152,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Open conversation with attachment and verify clip icon is available in the Send field',
       async () => {
         await overlayHomePage.navigateToUrl(
@@ -184,7 +184,7 @@ dialOverlayTest(
   }) => {
     setTestIds('EPMRTC-4868', 'EPMRTC-5694');
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Open sandbox and verify "Change agent" link is not displayed for a new conversation',
       async () => {
         await overlayHomePage.navigateToUrl(
@@ -198,7 +198,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Click on + button in the header and verify "Select agent" modal is not displayed',
       async () => {
         await overlayHeader.createNewConversation();
@@ -227,7 +227,7 @@ dialOverlayTest(
   }) => {
     setTestIds('EPMRTC-3780', 'EPMRTC-3765', 'EPMRTC-4846');
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Open sandbox and verify model information, send request field and "Change agent" link are available',
       async () => {
         await overlayHomePage.navigateToUrl(
@@ -261,7 +261,7 @@ dialOverlayTest(
       },
     );
 
-    await dialTest.step(
+    await dialOverlayTest.step(
       'Send the request and verify Edit, Delete, Copy and Regenerate buttons are available for the response',
       async () => {
         await overlayHomePage.mockChatTextResponse(
@@ -289,6 +289,50 @@ dialOverlayTest(
         await overlayChatMessagesAssertion.assertElementState(
           overlayChatMessages.messageRegenerateIcon(2),
           'visible',
+        );
+      },
+    );
+  },
+);
+
+dialOverlayTest(
+  '[Overlay] any amount of default RECENT_MODELS_IDS is allowed',
+  async ({
+    overlayHomePage,
+    localStorageManager,
+    overlayBaseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6311');
+    let agents: DialAIEntityModel[];
+
+    await dialOverlayTest.step(
+      'Set more than 5 agents to the "recentModelsIds" local storage key',
+      async () => {
+        agents = GeneratorUtil.randomArrayElements(ModelsUtil.getModels(), 7);
+        await localStorageManager.setRecentModelsIds(...agents);
+      },
+    );
+
+    await dialOverlayTest.step(
+      'Open overlay app and verify all agents are set in the local storage',
+      async () => {
+        await overlayHomePage.navigateToUrl(
+          OverlaySandboxUrls.enableHideUserSettingsUrl,
+        );
+        await overlayHomePage.waitForPageLoaded();
+        const actualAgents = await localStorageManager.getRecentModelsIds(
+          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+        );
+        overlayBaseAssertion.assertArrayIncludesAll(
+          actualAgents,
+          agents.map((a) => a.id),
+          ExpectedMessages.recentEntitiesIsValid,
+        );
+        overlayBaseAssertion.assertValue(
+          actualAgents.length,
+          agents.length,
+          ExpectedMessages.recentEntitiesIsValid,
         );
       },
     );

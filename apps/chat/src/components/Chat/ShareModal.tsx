@@ -196,13 +196,13 @@ function ShareModalView() {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full max-w-[424px]"
+      containerClassName="flex flex-col w-full max-w-[424px]"
       dataQa="share-modal"
       state={modalState}
       onClose={handleClose}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="px-3 py-4 md:p-6">
+      <div className="flex min-h-0 flex-1 flex-col px-3 py-4 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
           <div
             className="flex w-full items-center gap-2 pr-6"
@@ -213,7 +213,7 @@ function ShareModalView() {
           </div>
         </h4>
 
-        <div className="flex flex-col justify-between gap-2">
+        <div className="flex flex-col justify-between gap-2 overflow-auto">
           {entity?.version && (
             <span data-qa="entity-version">Version: {entity.version}</span>
           )}

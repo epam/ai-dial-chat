@@ -29,7 +29,10 @@ export class ItemApiHelper extends BaseApiHelper {
     );
   }
 
-  public async listItems(url: string, bucket?: string) {
+  public async listItems(
+    url: string,
+    bucket?: string,
+  ): Promise<BackendChatEntity[]> {
     const bucketToUse = this.userBucket ?? bucket;
     return this.getItems(`${url}/${bucketToUse ?? BucketUtil.getBucket()}`);
   }
