@@ -234,9 +234,8 @@ export const ItemCardView = <T extends MarketplaceEntity>({
                 !isMyEntity && !entity.version && 'mr-6',
                 isUnavailableModel ? 'text-secondary' : 'text-primary',
               )}
-              data-qa="entity-name"
             >
-              <DialEllipsisTooltip text={entity.name} />
+              <DialEllipsisTooltip text={entity.name} id='entity-name' />
             </div>
           </div>
           <EntityMarkdownDescription
