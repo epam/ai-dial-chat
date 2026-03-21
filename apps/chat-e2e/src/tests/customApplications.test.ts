@@ -18,7 +18,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
-import { Cursors, StyleValues, Styles } from '@/src/ui/domData';
+import { Cursors, StyleValues } from '@/src/ui/domData';
 import { BaseElement, EntityEditSteps } from '@/src/ui/webElements';
 import {
   DateUtil,
