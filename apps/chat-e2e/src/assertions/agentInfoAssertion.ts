@@ -29,9 +29,12 @@ export class AgentInfoAssertion extends BaseAssertion {
       );
     } else {
       if (expectedModel.description) {
+        const rawDescription =
+          expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '';
+        const expectedText = rawDescription.replace(/<[^>]+>/g, '');
         await this.assertElementText(
           this.agentInfo.agentDescription,
-          expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '',
+          expectedText,
           ExpectedMessages.agentDescriptionIsValid,
         );
       } else {
