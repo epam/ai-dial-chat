@@ -1,36 +1,32 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
-import {
-  excludeSystemMessages,
-  getSystemMessageContent,
-} from '@/src/utils/app/conversation';
+
+
+import { excludeSystemMessages, getSystemMessageContent } from '@/src/utils/app/conversation';
 import { getConfigurationValue } from '@/src/utils/app/form-schema';
-import {
-  doesModelAllowSystemPrompt,
-  doesModelAllowTemperature,
-} from '@/src/utils/app/models';
+import { doesModelAllowSystemPrompt, doesModelAllowTemperature } from '@/src/utils/app/models';
 import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
-import {
-  chatErrorHandler,
-  getUserMessageCustomContent,
-  limitMessagesByTokens,
-} from '@/src/utils/server/chat';
+import { chatErrorHandler, getUserMessageCustomContent, limitMessagesByTokens } from '@/src/utils/server/chat';
 import { getFullToken } from '@/src/utils/server/server';
+
+
 
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
+
+
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
-import {
-  DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_TEMPERATURE, FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+
+
 import { Message, Role } from '@epam/ai-dial-shared';
+
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -171,7 +167,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: process.env.COMPLETION_BODY_SIZE_LIMIT || '10mb',
+      sizeLimit: '10mb',
     },
   },
 };
