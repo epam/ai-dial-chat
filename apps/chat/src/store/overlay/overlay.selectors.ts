@@ -17,6 +17,9 @@ const selectOptionsReceived = (state: RootState) =>
 const selectReadyToInteractSent = (state: RootState) =>
   rootSelector(state).readyToInteractSent;
 
+const selectOverlayExplicitToken = (state: RootState) =>
+  rootSelector(state).explicitToken;
+
 const selectCustomButtons = (state: RootState) =>
   rootSelector(state).customMessageButtons;
 
@@ -61,6 +64,7 @@ export const OverlaySelectors = {
   selectOverlaySystemPrompt,
   selectOptionsReceived,
   selectReadyToInteractSent,
+  selectOverlayExplicitToken,
   selectCustomButtons,
   selectContentAppendedButtonsForMessage,
   selectPrependedDefaultButtonsForMessage,

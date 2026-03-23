@@ -37,6 +37,7 @@ const initialState: OverlayState = {
 
   systemPrompt: null,
   validationUserEmail: null,
+  explicitToken: null,
   newConversationsFolder: null,
   readyToInteractSent: false,
 };
@@ -125,6 +126,9 @@ export const overlaySlice = createSlice({
     ) => {
       state.hostDomain = payload.hostDomain;
       state.newConversationsFolder = payload.newConversationsFolderId ?? null;
+      const raw = payload.signInOptions?.explicitToken;
+      state.explicitToken =
+        typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : null;
     },
     setOverlayOptionsSuccess: (
       state,

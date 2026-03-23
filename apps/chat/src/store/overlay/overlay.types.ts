@@ -14,5 +14,7 @@ export interface OverlayState {
   optionsReceived?: boolean;
   validationUserEmail: string | null;
 
+  explicitToken: string | null;
+
   customMessageButtons: MessageButtons[];
 }
