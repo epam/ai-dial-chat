@@ -20,7 +20,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
-  const [isOpen, setIsOpen] = useState(false);
+
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
   const { session, handleLogout } = useLogout();
@@ -33,7 +33,6 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
     <>
       <Menu
         className="flex w-full items-center"
-        onOpenChange={setIsOpen}
         listClassName="!w-[280px] border border-secondary"
         placement="bottom-end"
         trigger={
@@ -50,7 +49,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         <div className="flex flex-row items-center gap-3 border-b border-secondary p-3">
           <UserIcon userName={session?.user?.name || t('User')} />
 
-          <p className="dial-small-semi-text">{session?.user?.name}</p>
+          <p className="font-semibold text-[14px]/[20px]">{session?.user?.name}</p>
         </div>
         {!isHideUserSettingsEnabled && (
           <MenuItem
