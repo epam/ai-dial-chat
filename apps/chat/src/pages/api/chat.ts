@@ -170,7 +170,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: {
+      sizeLimit: process.env.BODY_SIZE_LIMIT || '10mb',
+    },
   },
 };
 

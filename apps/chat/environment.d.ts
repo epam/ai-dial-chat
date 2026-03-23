@@ -13,6 +13,7 @@ declare global {
       EXTERNAL_APPS_SCHEMA_ID?: string;
 
       DIAL_API_VERSION?: string;
+      BODY_SIZE_LIMIT?: string;
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
