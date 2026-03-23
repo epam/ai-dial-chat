@@ -91,17 +91,17 @@ Both `CUSTOM_VISUALIZERS` and `APPLICATION_VISUALIZERS` support optional flags t
 
 When `true`, the current user's session data is included in the layout sent to the visualizer:
 
-| Layout field | Value |
-|---|---|
-| `logInHint` | User's email address |
+| Layout field | Value                                     |
+| ------------ | ----------------------------------------- |
+| `logInHint`  | User's email address                      |
 | `providerId` | OAuth provider ID from the active session |
 
 ### `passExplicitToken`
 
 When `true`, the access token supplied by the parent application in [overlay mode](`signInOptions.explicitToken`) is forwarded to the visualizer:
 
-| Layout field | Value |
-|---|---|
+| Layout field  | Value                              |
+| ------------- | ---------------------------------- |
 | `accessToken` | Bearer token from the overlay host |
 
 This is useful when the visualizer itself needs to call DIAL APIs and the chat is embedded as an overlay widget authenticated via an explicit token from the parent app. If no overlay token is present (e.g. standalone mode), `accessToken` is omitted.
