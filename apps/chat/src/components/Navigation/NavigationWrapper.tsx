@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
@@ -40,7 +42,13 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
 
   return (
     <div className="size-full">
-      <div className="flex size-full flex-col md:flex-row ">
+      <div
+        className={classNames(
+          'flex size-full flex-col md:flex-row',
+          enabledFeatures.has(Feature.ShowLayoutDividers) &&
+            'sidebar-overlay:divide-x-[15px] sidebar-overlay:divide-accent-tertiary',
+        )}
+      >
         {shouldShowNavigation && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && (

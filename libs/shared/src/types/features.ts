@@ -6,6 +6,7 @@ export enum Feature {
   PromptsSection = 'prompts-section', // Display prompts sidebar
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
   ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
+  ShowLayoutDividers = 'show-layout-dividers', // show dividers between chat and sidebars
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
   ChatFullWidthByDefault = 'chat-full-width-by-default', // Enforce chat full-width
 
