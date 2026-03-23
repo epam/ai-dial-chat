@@ -98,6 +98,10 @@ export interface DialAIEntityModel
     maxRequestTokens: number;
     isMaxRequestTokensCustom: boolean;
   };
+  tokenizer?: {
+    encoding?: TiktokenEncoding;
+    tokensPerMessage?: number;
+  };
   type: EntityType;
   reference: string;
   isDefault: boolean;

@@ -51,6 +51,8 @@ interface Props {
   additionalItemData?: AdditionalItemData;
   iconClassNames?: string;
   wrapperClassNames?: string;
+  isCodeEditorFile?: boolean;
+  readOnly?: boolean;
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
   onSave?: (fileId: string) => void;
 }
@@ -66,6 +68,8 @@ export const FileItem = ({
   additionalItemData,
   iconClassNames,
   wrapperClassNames,
+  isCodeEditorFile,
+  readOnly,
   onEvent,
   onSave,
 }: Props) => {
@@ -290,6 +294,8 @@ export const FileItem = ({
               isContextMenu ? 'block' : 'hidden',
             )}
             onSave={onSave}
+            isCodeEditorFile={isCodeEditorFile}
+            readOnly={readOnly}
           />
         )}
       </div>

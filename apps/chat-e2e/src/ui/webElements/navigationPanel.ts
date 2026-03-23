@@ -1,4 +1,5 @@
 import { API } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { NavigationPanelSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Button } from '@/src/ui/webElements/common/button';
@@ -12,12 +13,21 @@ export class NavigationPanel extends BaseElement {
   public backToChatButton = this.getChildElementBySelector(
     NavigationPanelSelectors.backToChatButton,
   );
+  public backToChatButtonIcon = this.getChildElementBySelector(
+    NavigationPanelSelectors.backToChatButton,
+  ).getChildElementBySelector(Tags.svg);
   public marketplaceHomeButton = this.getChildElementBySelector(
     NavigationPanelSelectors.marketplaceHomeButton,
   );
+  public marketplaceHomeButtonIcon = this.getChildElementBySelector(
+    NavigationPanelSelectors.marketplaceHomeButton,
+  ).getChildElementBySelector(Tags.svg);
   public myWorkspaceButton = this.getChildElementBySelector(
     NavigationPanelSelectors.myWorkspaceButton,
   );
+  public myWorkspaceButtonIcon = this.getChildElementBySelector(
+    NavigationPanelSelectors.myWorkspaceButton,
+  ).getChildElementBySelector(Tags.svg);
   public filesButton = new Button(this.page, 'Files', this.rootLocator);
   public buttonLabel = (button: BaseElement) =>
     button.getChildElementBySelector(NavigationPanelSelectors.buttonLabel);

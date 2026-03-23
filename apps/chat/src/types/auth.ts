@@ -19,6 +19,7 @@ export enum SupportedProviders {
   OKTA = 'OKTA',
   GITLAB = 'GITLAB',
   PING_ID = 'PING_ID',
+  CREDENTIALS = 'CREDENTIALS',
 }
 
 export enum ProviderConfigFields {

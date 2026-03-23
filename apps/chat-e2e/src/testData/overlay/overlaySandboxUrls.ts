@@ -29,4 +29,9 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/enabled-hide-user-settings-sandbox', //sandbox to test 'EPMRTC-5692'
   newConversationsFolderIdSetUrl:
     '/cases/overlay/new-conversations-folder-id-set-sandbox',
+  disabledCustomAppUrl: '/cases/overlay/disabled-custom-app-sandbox',
+  enabledCodeAppUrl: '/cases/overlay/enabled-code-app-sandbox',
+  enabledMarketplaceTableViewUrl:
+    '/cases/overlay/enabled-marketplace-table-view-sandbox',
+  enabledAppSharingUrl: '/cases/overlay/enabled-app-sharing-sandbox',
 };
