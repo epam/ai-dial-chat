@@ -141,7 +141,9 @@ const UserMobileView = Inversify.register('UserMobile', () => {
       data-qa="profile-panel"
     >
       <CloseSidebarButton onClose={handleClose} isLeftSide={false} />
-      <div className="border-b border-tertiary p-4 dial-body-semi-text">{t('User profile')}</div>
+      <div className="dial-body-semi-text border-b border-tertiary p-4">
+        {t('User profile')}
+      </div>
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>

@@ -36,8 +36,8 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
       <Menu
         className="flex w-full items-center"
         onOpenChange={setIsOpen}
-        listClassName='!w-[280px] border border-secondary'
-        placement='bottom-end'
+        listClassName="!w-[280px] border border-secondary"
+        placement="bottom-end"
         trigger={
           <div
             className="flex w-full cursor-pointer items-center justify-between gap-2 pr-3"
@@ -49,10 +49,10 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           </div>
         }
       >
-        <div className="flex flex-row items-center border-b border-secondary p-3 gap-3">
+        <div className="flex flex-row items-center gap-3 border-b border-secondary p-3">
           <UserIcon userName={session?.user?.name || t('User')} />
 
-          <p className='dial-small-semi-text'>{session?.user?.name}</p>
+          <p className="dial-small-semi-text">{session?.user?.name}</p>
         </div>
         {!isHideUserSettingsEnabled && (
           <MenuItem
