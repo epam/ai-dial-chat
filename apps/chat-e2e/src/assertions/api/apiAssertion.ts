@@ -56,6 +56,27 @@ export class ApiAssertion extends BaseAssertion {
       .toMatch(ExpectedConstants.responseFileUrlContentPattern(modelId));
   }
 
+  public async assertResponseAudioAttachment(
+    response: APIResponse,
+    modelId: string,
+  ) {
+    const respBody = await response.text();
+    const result = respBody.match(ExpectedConstants.responseFileUrlPattern);
+    const audioUrl = result ? result[0] : undefined;
+    expect
+      .soft(
+        audioUrl,
+        `${ExpectedMessages.audioUrlReturnedInResponse}${modelId}`,
+      )
+      .toBeDefined();
+    expect
+      .soft(
+        audioUrl?.length ?? 0,
+        `${ExpectedMessages.audioUrlReturnedInResponse}${modelId}`,
+      )
+      .toBeGreaterThan(0);
+  }
+
   public assertRequestModelId(
     request: ChatBody,
     expectedModel: DialAIEntityModel | ConversationEntityModel,
