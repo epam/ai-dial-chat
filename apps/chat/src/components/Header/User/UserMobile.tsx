@@ -33,7 +33,7 @@ const UserInfo = () => {
   return (
     <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
-        <UserIcon className="mx-2" fallbackIconClassName="text-secondary" />
+        <UserIcon className="mx-2" />
 
         <DialEllipsisTooltip
           contentClassName="grow"

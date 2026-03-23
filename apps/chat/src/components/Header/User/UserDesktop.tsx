@@ -15,10 +15,8 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import { UserIcon } from './UserIcon';
 
-import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
