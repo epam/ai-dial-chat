@@ -575,7 +575,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is available',
+      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is hidden',
       async () => {
         const attachmentLocator =
           await fileManagerModalGrid.goToGridRowByNameCell(Attachment.textName);
@@ -595,7 +595,7 @@ dialTest(
         await attachmentLocator.hover();
         await fileManagerModalGridAssertion.assertElementState(
           dotsMenu,
-          'visible',
+          'hidden',
         );
         await fileManagerModalGridAssertion.assertElementActionabilityState(
           fileManagerModalGrid.gridHeaderCheckbox.checkboxInput,
