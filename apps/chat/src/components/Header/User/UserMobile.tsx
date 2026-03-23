@@ -115,6 +115,7 @@ const UserMenu = () => {
 };
 
 const UserMobileView = Inversify.register('UserMobile', () => {
+  const { t } = useTranslation(Translation.Header);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const dispatch = useAppDispatch();
@@ -140,6 +141,7 @@ const UserMobileView = Inversify.register('UserMobile', () => {
       data-qa="profile-panel"
     >
       <CloseSidebarButton onClose={handleClose} isLeftSide={false} />
+      <div className="border-b border-tertiary p-4 dial-body-semi-text">{t('User profile')}</div>
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>

@@ -36,33 +36,24 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
       <Menu
         className="flex w-full items-center"
         onOpenChange={setIsOpen}
+        listClassName='!w-[280px] border border-secondary'
+        placement='bottom-end'
         trigger={
           <div
-            className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 pr-3"
+            className="flex w-full cursor-pointer items-center justify-between gap-2 pr-3"
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              <UserIcon />
-
-              <DialEllipsisTooltip
-                contentClassName="grow"
-                text={
-                  <span data-qa="username">
-                    {session?.user?.name || t('User')}
-                  </span>
-                }
-              />
+              <UserIcon userName={session?.user?.name || t('User')} />
             </div>
-            <ChevronDownIcon
-              className={`shrink-0 text-primary transition-all ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-              width={18}
-              height={18}
-            />
           </div>
         }
       >
+        <div className="flex flex-row items-center border-b border-secondary p-3 gap-3">
+          <UserIcon userName={session?.user?.name || t('User')} />
+
+          <p className='dial-small-semi-text'>{session?.user?.name}</p>
+        </div>
         {!isHideUserSettingsEnabled && (
           <MenuItem
             id="user-settings-menu-item"
@@ -78,12 +69,13 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             }}
           />
         )}
+
         <MenuItem
           id="logout-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
-              <IconLogout width={18} height={18} className="text-secondary" />
+              <IconLogout size={18} className="text-secondary" />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }
