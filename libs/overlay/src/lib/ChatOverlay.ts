@@ -346,7 +346,10 @@ export class ChatOverlay {
     );
     this.requests.push(request);
 
-    this.iframe.contentWindow.postMessage(request.toPostMessage(), '*');
+    this.iframe.contentWindow.postMessage(
+      request.toPostMessage(),
+      new URL(this.options.domain).origin,
+    );
 
     return request.promise;
   }
