@@ -5,7 +5,7 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getFullToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -56,16 +56,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       body: JSON.stringify(req.body),
     });
 
+    let json: unknown;
+
     if (!response.ok) {
-      const errorText = await response.text();
+      json = await ServerUtils.getErrorMessageFromResponse(response);
       throw new DialAIError(
-        errorText || errorsMessages.generalServer,
+        (typeof json === 'string' && json) || errorsMessages.generalServer,
         response.status,
         req,
       );
     }
 
-    return res.status(200).end();
+    json = await response.json();
+
+    return res.status(200).send(json);
   } catch (error) {
     logger.error(error);
     if (error instanceof DialAIError) {

@@ -719,9 +719,6 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
               credentialsLevel: payload.authLevel,
               isAdmin,
             };
-            const isPublic =
-              isEntityIdPublic({ id: payload.toolset.id }) ||
-              isPredefinedEntity({ id: payload.toolset.id });
 
             const url = new URL(authSettings.authorizationEndpoint);
             url.searchParams.set('response_type', 'code');
@@ -759,18 +756,10 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
                             concat(
                               of(actions),
                               of(
-                                UIActions.showSuccessToast(
-                                  translate(
-                                    getLoginSuccessMessage(
-                                      isAdmin && isPublic,
-                                      payload.authLevel,
-                                    ),
-                                    {
-                                      name: payload.toolset.name,
-                                      version: payload.toolset.version,
-                                    },
-                                  ),
-                                ),
+                                ToolsetActions.logInToolsetSuccess({
+                                  toolsetId: payload.toolset.id,
+                                  authLevel: payload.authLevel,
+                                }),
                               ),
                             ),
                           ),
@@ -808,27 +797,6 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
 
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
-          const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
-          const isPublic =
-            isEntityIdPublic({ id: payload.toolsetId }) ||
-            isPredefinedEntity({ id: payload.toolsetId });
-          const name = getEntityNameFromId(payload.toolsetId, {
-            removeVersion: true,
-          });
-          const version = getVersionFromId(payload.toolsetId);
-
-          const toastAction$ = of(
-            UIActions.showSuccessToast(
-              translate(
-                getLoginSuccessMessage(
-                  (payload.isAdmin ?? isAdmin) && isPublic,
-                  payload.authLevel,
-                ),
-                { name, version },
-              ),
-            ),
-          );
-
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
             if (payload.isPopup) {
               void router.push(
@@ -846,13 +814,29 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
             }
 
             return concat(
-              toastAction$,
-              of(ToolsetActions.logInToolsetSuccess()),
+              of(
+                ToolsetActions.logInToolsetSuccess({
+                  toolsetId: payload.toolsetId,
+                  authLevel: payload.authLevel,
+                  isAdmin: payload.isAdmin,
+                }),
+              ),
             );
           }
 
           return refreshToolset$(payload.toolsetId, state$.value).pipe(
-            mergeMap((actions) => concat(of(actions), toastAction$)),
+            mergeMap((actions) =>
+              concat(
+                of(actions),
+                of(
+                  ToolsetActions.logInToolsetSuccess({
+                    toolsetId: payload.toolsetId,
+                    authLevel: payload.authLevel,
+                    isAdmin: payload.isAdmin,
+                  }),
+                ),
+              ),
+            ),
           );
         }),
         catchError((err) => {
@@ -862,6 +846,31 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           }
           return concat(of(ToolsetActions.logInToolsetFail()));
         }),
+      );
+    }),
+  );
+
+const loginToolsetSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ToolsetActions.logInToolsetSuccess.type),
+    map(({ payload }) => {
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+      const isPublic =
+        isEntityIdPublic({ id: payload.toolsetId }) ||
+        isPredefinedEntity({ id: payload.toolsetId });
+      const name = getEntityNameFromId(payload.toolsetId, {
+        removeVersion: true,
+      });
+      const version = getVersionFromId(payload.toolsetId);
+
+      return UIActions.showSuccessToast(
+        translate(
+          getLoginSuccessMessage(
+            (payload.isAdmin ?? isAdmin) && isPublic,
+            payload.authLevel,
+          ),
+          { name, version },
+        ),
       );
     }),
   );
@@ -1086,6 +1095,7 @@ export const ToolsetEpics = combineEpics(
   //Signin
   startSignInProcessEpic,
   logInToolsetEpic,
+  loginToolsetSuccessEpic,
   loginToolsetFailEpic,
   logOutToolsetEpic,
   logOutToolsetFailEpic,
