@@ -35,6 +35,7 @@ interface OverlaySignInOptions {
   logInHint?: string;
   signInInNewWindow?: boolean;
   validationUserEmail?: string;
+  explicitToken?: string;
 }
 
 export enum MessageButtonPlacement {
