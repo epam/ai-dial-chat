@@ -63,7 +63,11 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
+import {
+  QUERY_VALUE_FALSE,
+  QUERY_VALUE_TRUE,
+  Routes,
+} from '@/src/constants/routes';
 import {
   ToolsetEditorQuery,
   ToolsetLoginQuery,
@@ -750,11 +754,12 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
                 from(signInToolset(url.href)).pipe(
                   switchMap((isPopup) =>
                     !isPopup
-                      ? EMPTY
+                      ? of(ToolsetActions.logInToolsetFail())
                       : refreshToolset$(payload.toolset.id, state$.value).pipe(
                           mergeMap((actions) =>
                             concat(
                               of(actions),
+                              of(ToolsetActions.logInToolsetSuccess()),
                               of(
                                 ToolsetActions.logInToolsetSuccess({
                                   toolsetId: payload.toolset.id,
@@ -842,7 +847,20 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
           if (payload.authType === ToolsetAuthTypes.OAUTH) {
-            void router.push(new URL(callbackUrl));
+            if (payload.isPopup) {
+              void router.push(
+                {
+                  pathname: router.pathname,
+                  query: {
+                    [ToolsetLoginQuery.LoginComplete]: QUERY_VALUE_FALSE,
+                  },
+                },
+                undefined,
+                { shallow: true },
+              );
+            } else {
+              void router.push(new URL(callbackUrl));
+            }
           }
           return concat(of(ToolsetActions.logInToolsetFail()));
         }),
