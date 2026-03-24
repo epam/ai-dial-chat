@@ -118,6 +118,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .send(error.message || errorsMessages.generalServer);
     }
     return res.status(500).send(errorsMessages.generalServer);
+  } finally {
+    req.off('close', cleanup);
+    req.off('aborted', cleanup);
+    res.off('close', cleanup);
   }
 };
 

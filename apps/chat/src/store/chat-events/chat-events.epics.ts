@@ -8,6 +8,7 @@ import {
   mergeMap,
   of,
   switchMap,
+  timer,
 } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
@@ -32,21 +33,22 @@ import { ChatEventsSelectors } from '@/src/store/selectors';
 
 import groupBy from 'lodash-es/groupBy';
 
+const RECONNECT_INTERVAL = 3_000;
+const RECONNECT_RETRY_COUNT = 5;
+
 const subscribeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(
-      ChatEventsActions.subscribe.type,
-      // TODO: uncomment when core api for chat events is ready
-      // ConversationsActions.sendMessage.type,
-    ),
+    ofType(ChatEventsActions.subscribe.type),
     filter(() => !ChatEventsSelectors.selectIsSubscribed(state$.value)),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const decoder = new TextDecoder();
+      let retryAttempt = payload?.retryAttempt ?? 0;
 
       return ChatEventsService.subscribe(channelId).pipe(
         mergeMap((resp) => {
           if (resp.channelId) {
+            retryAttempt = 0;
             return concat(
               of(ChatEventsActions.setIsSubscribed(true)),
               of(ChatEventsActions.setChannelId(resp.channelId)),
@@ -71,10 +73,29 @@ const subscribeEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ChatEventsActions.setIsSubscribed(false));
+          return of(ChatEventsActions.subscribeFailure({ retryAttempt }));
         }),
       );
     }),
+  );
+
+const reconnectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ChatEventsActions.subscribeFailure.type),
+    filter(
+      ({ payload }) =>
+        !ChatEventsSelectors.selectIsSubscribed(state$.value) &&
+        (payload?.retryAttempt ?? 0) <= RECONNECT_RETRY_COUNT,
+    ),
+    switchMap(({ payload }) =>
+      timer(RECONNECT_INTERVAL).pipe(
+        map(() =>
+          ChatEventsActions.subscribe({
+            retryAttempt: (payload?.retryAttempt ?? 0) + 1,
+          }),
+        ),
+      ),
+    ),
   );
 
 const unsubscribeEpic: AppEpic = (action$, state$) =>
@@ -203,6 +224,7 @@ const declineAllEventsSuccessEpic: AppEpic = (action$) =>
 
 export const ChatEventsEpics = combineEpics(
   subscribeEpic,
+  reconnectEpic,
   unsubscribeEpic,
   reportEventEpic,
   resolveToolsetLoginEpic,

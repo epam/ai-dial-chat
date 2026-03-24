@@ -12,8 +12,11 @@ import { HeadersNames } from '@/src/constants/server';
 export class ChatEventsService {
   private static abortController: AbortController | null = null;
 
-  private static getAbortController() {
-    if (this.abortController) return this.abortController;
+  private static createAbortController() {
+    if (this.abortController && !this.abortController.signal.aborted) {
+      return this.abortController;
+    }
+
     this.abortController = new AbortController();
     return this.abortController;
   }
@@ -23,6 +26,9 @@ export class ChatEventsService {
       channelId?: string | null;
     }
   > {
+    if (this.abortController?.signal && !this.abortController.signal.aborted) {
+      this.abortController.abort();
+    }
     return fromFetch('/api/client-channels/subscribe', {
       method: HTTPMethod.POST,
       headers: {
@@ -31,7 +37,7 @@ export class ChatEventsService {
           [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
         }),
       },
-      signal: this.getAbortController().signal,
+      signal: this.createAbortController().signal,
     }).pipe(
       switchMap((response) => {
         const body = response.body;
@@ -54,9 +60,9 @@ export class ChatEventsService {
           subscriber.next({
             done: false,
             value: undefined as unknown as Uint8Array<ArrayBufferLike>,
-            channelId: response.headers.get(
-              HeadersNames.X_DIAL_CLIENT_CHANNEL_ID,
-            ),
+            channelId:
+              channelId ??
+              response.headers.get(HeadersNames.X_DIAL_CLIENT_CHANNEL_ID),
           });
 
           const run = async () => {

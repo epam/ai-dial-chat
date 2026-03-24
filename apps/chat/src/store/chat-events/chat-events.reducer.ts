@@ -16,7 +16,16 @@ export const chatEventsSlice = createSlice({
   name: 'chat-events',
   initialState,
   reducers: {
-    subscribe: (state) => state,
+    subscribe: (
+      state,
+      _action: PayloadAction<{ retryAttempt?: number } | undefined>,
+    ) => state,
+    subscribeFailure: (
+      state,
+      _action: PayloadAction<{ retryAttempt?: number } | undefined>,
+    ) => {
+      state.isSubscribed = false;
+    },
     unsubscribe: (state) => state,
     setChannelId: (state, { payload }: PayloadAction<string>) => {
       state.channelId = payload;
