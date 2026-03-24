@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { isTruthyQuery } from '@/src/utils/app/route';
 import { decodeToolsetRedirectState } from '@/src/utils/app/toolsets';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
@@ -35,7 +34,7 @@ function ToolsetSignin() {
     } = router.query;
     let parsedState: ToolsetRedirectState;
 
-    if (isTruthyQuery(loginComplete)) return;
+    if (loginComplete) return;
 
     window.history.replaceState({}, document.title, window.location.pathname);
 
