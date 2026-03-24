@@ -1579,15 +1579,17 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
+      const isApplication = chatBody?.model?.type === EntityType.Application;
 
       return from(
         fetch('/api/chat', {
           method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
-            ...(channelId && {
-              [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
-            }),
+            ...(channelId &&
+              isApplication && {
+                [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
+              }),
           },
           body: JSON.stringify(chatBody),
           signal: conversationSignal.signal,
