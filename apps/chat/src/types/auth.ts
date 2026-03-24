@@ -1,7 +1,7 @@
 import { TokenSet } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 
-import { z as zodValidation } from 'zod';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 export interface Token extends JWT {
   providerId?: string;

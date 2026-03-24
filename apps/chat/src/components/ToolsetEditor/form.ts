@@ -1,5 +1,6 @@
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
@@ -9,7 +10,6 @@ import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
 
 import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
-import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
