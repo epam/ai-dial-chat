@@ -10,6 +10,7 @@ import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
+import { PublishedItem } from '@/src/types/publication';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -66,26 +67,50 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   searchParams.set('permissions', 'true');
 
   try {
-    const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
-      headers: getApiHeaders({ jwt }),
-    });
+    const baseUrl = `${sanitizeUri(url)}/?${searchParams}`;
 
-    let json: unknown;
-    if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch {
-        json = undefined;
+    const allItems: PublishedItem[] = [];
+    let nextToken: string | undefined;
+    let json: PublishedItem & { nextToken?: string } = {} as PublishedItem & {
+      nextToken?: string;
+    };
+
+    do {
+      const fetchUrl = nextToken ? `${baseUrl}&token=${nextToken}` : baseUrl;
+
+      const proxyRes = await fetch(fetchUrl, {
+        headers: getApiHeaders({ jwt }),
+      });
+
+      if (proxyRes.status === 404) {
+        break;
       }
 
-      throw new DialAIError(
-        (typeof json === 'string' && json) || proxyRes.statusText,
-        proxyRes.status,
-        req,
-      );
-    }
-    json = await proxyRes.json();
-    return res.status(200).send(json);
+      if (!proxyRes.ok) {
+        let errorBody: unknown;
+        try {
+          errorBody = await proxyRes.json();
+        } catch {
+          errorBody = undefined;
+        }
+
+        throw new DialAIError(
+          (typeof errorBody === 'string' && errorBody) || proxyRes.statusText,
+          proxyRes.status,
+          req,
+        );
+      }
+
+      json = (await proxyRes.json()) as PublishedItem & { nextToken?: string };
+
+      if (json.items) {
+        allItems.push(...json.items);
+      }
+
+      nextToken = json.nextToken;
+    } while (nextToken);
+
+    return res.status(200).send({ ...json, items: allItems });
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof DialAIError) {
