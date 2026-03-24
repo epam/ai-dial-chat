@@ -157,7 +157,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
     <div className="mt-7 max-w-full overflow-auto" data-qa="table">
       {!isLastMessageStreaming && (
         <div
-          className="flex max-w-full justify-end bg-layer-3 px-2 py-1 border border-tertiary rounded-t border-b-0"
+          className="flex max-w-full justify-end rounded-t border border-b-0 border-tertiary bg-layer-3 px-2 py-1"
           data-qa="table-controls"
         >
           <div data-no-context-menu className="flex gap-2">
