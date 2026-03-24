@@ -41,7 +41,7 @@ export const UserIcon = ({ iconSize = 28, className, userName }: Props) => {
   return (
     <Tooltip tooltip={userName}>
       {showFallbackIcon ? (
-        <div className="font-normal text-[12px]/[16px] flex size-[28px] items-center justify-center rounded-full bg-success">
+        <div className="flex size-[28px] items-center justify-center rounded-full bg-success text-[12px]/[16px] font-normal">
           {shortName}
         </div>
       ) : (

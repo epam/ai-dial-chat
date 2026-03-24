@@ -49,7 +49,9 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         <div className="flex flex-row items-center gap-3 border-b border-secondary p-3">
           <UserIcon userName={session?.user?.name || t('User')} />
 
-          <p className="font-semibold text-[14px]/[20px]">{session?.user?.name}</p>
+          <p className="text-[14px]/[20px] font-semibold">
+            {session?.user?.name}
+          </p>
         </div>
         {!isHideUserSettingsEnabled && (
           <MenuItem
