@@ -19,10 +19,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ApplicationTypesSchemasSelectors,
-  PublicationSelectors,
-} from '@/src/store/selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
 
 import { NA_VERSION } from '@/src/constants/publication';
 
@@ -49,9 +46,6 @@ export function ReviewApplicationDialogView({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
@@ -82,17 +76,11 @@ export function ReviewApplicationDialogView({
       ApplicationActions.enterEditMode({
         entity: application,
         applicationType,
-        detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
         publicationUrl: selectedPublicationUrl as string,
       }),
     );
     dispatch(PublicationActions.setIsApplicationReview(false));
-  }, [
-    application,
-    detailedApplicationTypeSchema?.$id,
-    dispatch,
-    selectedPublicationUrl,
-  ]);
+  }, [application, dispatch, selectedPublicationUrl]);
 
   const featuresValue =
     !isCodeApp && !isQuickAppTwo && !isEmpty(application.features)
