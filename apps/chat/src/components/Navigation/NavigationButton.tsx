@@ -3,6 +3,10 @@ import { ReactNode } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import { ScreenState } from '@/src/types/common';
+
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -39,12 +43,14 @@ export const NavigationButton = ({
   const streaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+
+  const isSmallScreen = useScreenState() === ScreenState.SM;
   const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isClickAllowed = (!selected || allowClickSelected) && !disabled;
   return (
     <Tooltip
-      tooltip={tooltip}
+      tooltip={!isSmallScreen ? tooltip : undefined}
       isTriggerClickable
       triggerClassName={classNames(
         'flex shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',

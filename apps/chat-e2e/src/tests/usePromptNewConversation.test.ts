@@ -45,7 +45,10 @@ dialTest(
       'EPMRTC-5497',
     );
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment(true, [
+        Attachment.allTypesExtension,
+        Attachment.imageTypesExtension,
+      ]),
     );
     await localStorageManager.setRecentModelsIdsAndUseLastModel(
       modelWithAttachment,
