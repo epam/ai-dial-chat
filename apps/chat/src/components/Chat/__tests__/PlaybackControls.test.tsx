@@ -226,7 +226,7 @@ describe('PlaybackControls', () => {
     await userEvent.click(prevBtn);
 
     expect(playbackPrevMessage).not.toHaveBeenCalled();
-    expect(controlContent).eq('Type a message');
+    expect(controlContent).eq('Talk to your agent');
   });
 
   it('handles clicking on the previous message button', async () => {
