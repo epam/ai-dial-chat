@@ -55,7 +55,7 @@ const subscribeEpic: AppEpic = (action$, state$) =>
             );
           }
           if (resp.done) {
-            return of(ChatEventsActions.setIsSubscribed(false));
+            return of(ChatEventsActions.subscribeFailure({ retryAttempt }));
           }
 
           return of(resp).pipe(
