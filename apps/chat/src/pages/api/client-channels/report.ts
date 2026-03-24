@@ -5,7 +5,7 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils, getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -13,9 +13,9 @@ import { HTTPMethod } from '@/src/types/http';
 import { errorsMessages } from '@/src/constants/errors';
 import { HeadersNames } from '@/src/constants/server';
 
-const host = process.env.NEXT_PUBLIC_HOST;
+const host = process.env.DIAL_API_HOST;
 
-const URL = `${host}/v1/ops/client-channels/report`;
+const URL = `${host}/v1/ops/client-channel/report`;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== HTTPMethod.POST) {
@@ -30,7 +30,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const token = await getFullToken({ req });
+    const jwt = await getToken({ req });
     const channelId = req.headers[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID] as
       | string
       | undefined;
@@ -47,10 +47,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       method: HTTPMethod.POST,
       headers: {
         'Content-Type': 'application/json',
-        ...getApiHeaders({
-          jwt: token?.token ?? '',
-          jobTitle: token?.jobTitle ?? '',
-        }),
+        ...getApiHeaders({ jwt }),
         [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
       },
       body: JSON.stringify(req.body),

@@ -5,7 +5,7 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -13,9 +13,8 @@ import { HTTPMethod } from '@/src/types/http';
 import { errorsMessages } from '@/src/constants/errors';
 import { HeadersNames } from '@/src/constants/server';
 
-const host = process.env.NEXT_PUBLIC_HOST;
-
-const URL = `${host}/v1/ops/client-channels/subscribe`;
+const host = process.env.DIAL_API_HOST;
+const URL = `${host}/v1/ops/client-channel/subscribe`;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== HTTPMethod.POST) {
@@ -56,7 +55,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   res.on('close', cleanup);
 
   try {
-    const token = await getFullToken({ req });
+    const jwt = await getToken({ req });
     const currentChannelId = req.headers[
       HeadersNames.X_DIAL_CLIENT_CHANNEL_ID
     ] as string | undefined;
@@ -64,10 +63,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const upstreamResponse = await fetch(URL, {
       method: HTTPMethod.POST,
       headers: {
-        ...getApiHeaders({
-          jwt: token?.token ?? '',
-          jobTitle: token?.jobTitle ?? '',
-        }),
+        ...getApiHeaders({ jwt }),
         Accept: 'text/event-stream',
         Connection: 'keep-alive',
         ...(currentChannelId
@@ -78,8 +74,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     if (!upstreamResponse.ok || !upstreamResponse.body) {
-      const errorText = await upstreamResponse.text();
-
+      const errorText =
+        await ServerUtils.getErrorMessageFromResponse(upstreamResponse);
       throw new DialAIError(
         errorText || errorsMessages.generalServer,
         upstreamResponse.status,
@@ -96,7 +92,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
 
     res.flushHeaders?.();
@@ -122,8 +118,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .send(error.message || errorsMessages.generalServer);
     }
     return res.status(500).send(errorsMessages.generalServer);
-  } finally {
-    await cleanup();
   }
 };
 
