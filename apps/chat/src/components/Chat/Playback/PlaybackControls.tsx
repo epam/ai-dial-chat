@@ -329,7 +329,7 @@ export const PlaybackControls = ({
                     data-qa="playback-message-content"
                   >
                     {phase === PlaybackPhases.EMPTY
-                      ? t('Type a message')
+                      ? t('Talk to your agent1')
                       : (activeMessage.content ?? '')}
                   </span>
 
