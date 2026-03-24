@@ -29,6 +29,7 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { HeadersNames } from '@/src/constants/server';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
@@ -119,6 +120,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ? limits?.maxRequestTokens
         : undefined,
       configurationSchemaValue: configurationValue,
+      channelId:
+        req.headers[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]?.toString?.() ??
+        undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('Content-Type', 'application/octet-stream');
