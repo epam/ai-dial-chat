@@ -43,14 +43,17 @@ export const usePublicationResources = <
   items: T[],
 ) => {
   // find selected items only which could be displayed in sidebars to avoid duplicates and highlight items properly
-  const { selectedPromptId } = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
+  const selectedPromptId = useAppSelector(
+    (state) => PromptsSelectors.selectSelectedPromptId(state).selectedPromptId,
   );
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
   const allSelectedIds = useMemo(
-    () => [selectedPromptId, ...selectedConversationIds],
+    () =>
+      selectedPromptId
+        ? [selectedPromptId, ...selectedConversationIds]
+        : selectedConversationIds,
     [selectedPromptId, selectedConversationIds],
   );
 
@@ -79,8 +82,11 @@ export const usePublicationResources = <
   }, [resourceUrls, items]);
 
   const selectedItem = useMemo(
-    () => rootItems.find((item) => allSelectedIds.includes(item.id)),
-    [rootItems, allSelectedIds],
+    () =>
+      [...rootItems, ...folderItems].find((item) =>
+        allSelectedIds.includes(item.id),
+      ),
+    [rootItems, folderItems, allSelectedIds],
   );
   const itemsToDisplay = useMemo(
     () => deduplicateByVersion(rootItems, selectedItem),
