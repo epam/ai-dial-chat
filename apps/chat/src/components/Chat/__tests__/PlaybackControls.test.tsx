@@ -1,31 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-
-
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-
-
 import { MutableRefObject } from 'react';
 
-
-
 import { AppAction } from '@/src/types/store';
-
-
 
 import { ConversationsActions } from '@/src/store/actions';
 import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
-
-
 import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControls';
 
-
-
 import { Role } from '@epam/ai-dial-shared';
-
 
 vi.mock('@/src/store/hooks', async () => {
   return {
