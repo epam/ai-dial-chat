@@ -98,6 +98,8 @@ export const useAppEditorValidation = () => {
         )
     ) {
       // if slug is not equal to application type
+      console.error('application', application);
+      console.error('applicationData', applicationData);
       console.error(
         'NotFound',
         `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? applicationData) as DialAIEntityModel))}`,
