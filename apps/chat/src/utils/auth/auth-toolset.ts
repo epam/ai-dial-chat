@@ -6,6 +6,31 @@ import {
   ToolsetLoginQuery,
 } from '@/src/constants/toolsets';
 
+const POPUP_TIMEOUT = 60_000;
+
+const getPopupFeatures = () => {
+  const features = {
+    popup: 'yes',
+    width: 600,
+    height: 700,
+    left: 0,
+    top: 100,
+  };
+
+  if (window) {
+    features.left = Math.round(
+      window.screenX + Math.max(0, (window.outerWidth - features.width) / 2),
+    );
+    features.top = Math.round(
+      window.screenY + Math.max(0, (window.outerHeight - features.height) / 2),
+    );
+  }
+
+  return Object.entries(features)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',');
+};
+
 export const signInToolset = async (
   url: string,
   isSignInInSameWindow?: boolean,
@@ -15,11 +40,7 @@ export const signInToolset = async (
     return Promise.resolve(false);
   }
 
-  const popup = window.open(
-    url,
-    TOOLSET_AUTH_POPUP_NAME,
-    'popup=yes,width=600,height=700,top=100',
-  );
+  const popup = window.open(url, TOOLSET_AUTH_POPUP_NAME, getPopupFeatures());
 
   if (!popup) {
     console.error('Unable to open popup');
@@ -36,7 +57,7 @@ export const signInToolset = async (
         console.error('Could not close popup');
       }
       reject(new Error('Auth timeout'));
-    }, 30000);
+    }, POPUP_TIMEOUT);
 
     const intervalId = window.setInterval(() => {
       let popupUrl: URL | undefined = undefined;
@@ -47,26 +68,29 @@ export const signInToolset = async (
         // ignore
       }
 
-      if (
-        popupUrl?.origin === window.origin &&
-        popupUrl?.pathname === Routes.ToolsetSignIn &&
-        isTruthyQuery(
-          popupUrl?.searchParams?.get(
-            ToolsetLoginQuery.LoginComplete,
-          ) as string,
-        )
-      ) {
-        cleanup();
-        try {
-          popup.close();
-        } catch {
-          console.error('Could not close popup');
-        }
-        resolve(true);
-      }
       if (popup.closed) {
         cleanup();
         reject(new Error('Auth window closed'));
+      }
+
+      const loginCompleteQuery =
+        popupUrl?.origin === window.origin &&
+        popupUrl?.pathname === Routes.ToolsetSignIn
+          ? popupUrl?.searchParams?.get(ToolsetLoginQuery.LoginComplete)
+          : null;
+
+      if (!loginCompleteQuery) return;
+
+      if (isTruthyQuery(loginCompleteQuery)) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+      cleanup();
+      try {
+        popup.close();
+      } catch {
+        console.error('Could not close popup');
       }
     }, 300);
 
