@@ -126,6 +126,9 @@ export const ChatHeader = Inversify.register(
       Feature.DisallowChangeAgent,
     );
     const isChatbarEnabled = enabledFeatures.has(Feature.ConversationsSection);
+    const isChatHeaderBorderEnabled = enabledFeatures.has(
+      Feature.ChatHeaderBorder,
+    );
 
     const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
       return modelsMap[conversation.model.id];
@@ -185,6 +188,7 @@ export const ChatHeader = Inversify.register(
         <div
           className={classNames(
             'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
+            isChatHeaderBorderEnabled && 'border-b border-secondary',
             isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
           )}
           data-qa="chat-header"
