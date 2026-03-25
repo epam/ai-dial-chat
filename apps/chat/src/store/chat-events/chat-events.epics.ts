@@ -29,7 +29,9 @@ import {
   ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
-import { ChatEventsSelectors } from '@/src/store/selectors';
+import { ChatEventsSelectors, SettingsSelectors } from '@/src/store/selectors';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const RECONNECT_INTERVAL = 3_000;
 const RECONNECT_RETRY_COUNT = 5;
@@ -37,7 +39,14 @@ const RECONNECT_RETRY_COUNT = 5;
 const subscribeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatEventsActions.subscribe.type),
-    filter(() => !ChatEventsSelectors.selectIsSubscribed(state$.value)),
+    filter(
+      () =>
+        !ChatEventsSelectors.selectIsSubscribed(state$.value) &&
+        SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.LiveChatInteraction,
+        ),
+    ),
     switchMap(({ payload }) => {
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const decoder = new TextDecoder();
