@@ -224,7 +224,14 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
     },
-    logInToolsetSuccess: (state) => {
+    logInToolsetSuccess: (
+      state,
+      _action: PayloadAction<{
+        authLevel: ToolsetCredentialsLevel;
+        toolsetId: string;
+        isAdmin?: boolean;
+      }>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     logInToolsetFail: (state) => {
