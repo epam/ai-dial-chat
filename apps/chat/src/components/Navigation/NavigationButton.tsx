@@ -1,22 +1,31 @@
 import { Icon } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 
+
+
 import classNames from 'classnames';
+
+
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
+
+
 import { ScreenState } from '@/src/types/common';
 
+
+
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  ConversationsSelectors,
-  ModelsSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+import { ConversationsSelectors, ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
+
+
 
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
+
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
 
 interface NavigationButtonProps {
   onClick: () => void;
@@ -44,7 +53,8 @@ export const NavigationButton = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
-  const isSmallScreen = useScreenState() === ScreenState.SM;
+  const state = useScreenState();
+  const isSmallScreen = state === ScreenState.SM || state === ScreenState.MD;
   const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isClickAllowed = (!selected || allowClickSelected) && !disabled;
