@@ -156,10 +156,7 @@ export const MarketplaceEntityCard = memo(
                 {(isCreatedMarketplaceEntity(entity) || entity.version) && (
                   <>
                     {t('Version: ')}
-                    <span
-                      className="mr-1 max-w-full overflow-hidden truncate whitespace-nowrap"
-                      data-qa="version"
-                    >
+                    <span className="mr-1 truncate" data-qa="version">
                       {entity.version || t(NA_VERSION)}
                     </span>
                   </>

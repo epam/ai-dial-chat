@@ -32,7 +32,7 @@ for (const entity of entityPlusAttachmentRequests) {
         conversation.prompt = entity.systemPrompt;
       }
       const response = await chatApiHelper.postRequest(conversation);
-      apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
         entity.entityId,
@@ -72,7 +72,11 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     const modelResponse = await chatApiHelper.postRequest(replayConversation);
-    apiAssertion.assertResponseCode(modelResponse, replayEntity.entityId, 200);
+    await apiAssertion.assertResponseCode(
+      modelResponse,
+      replayEntity.entityId,
+      200,
+    );
     await apiAssertion.assertResponseTextContent(
       modelResponse,
       replayEntity.entityId,

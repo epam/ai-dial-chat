@@ -17,6 +17,7 @@ import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import {
   CustomApplicationModel,
@@ -70,7 +71,6 @@ import { ShareEntity } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 import { nanoid } from 'nanoid';
-import { z as zodValidation } from 'zod';
 
 export enum AppsEditorSchemaTypes {
   CustomApp = 'Custom app',
