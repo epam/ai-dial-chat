@@ -43,6 +43,8 @@ import {
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
 
+const gridLayout = 'grid grid-cols-[5fr_3fr] md:grid-cols-[2fr_1fr_1fr]';
+
 interface ToolsetLoginEventsProps {
   events: (ChatEvent & { method: ChatEventOperations.ToolsetSignIn })[];
 }
@@ -127,8 +129,6 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
   useEffect(() => {
     dispatch(ToolsetActions.getToolsets());
   }, [dispatch]);
-
-  const gridLayout = 'grid grid-cols-[5fr_3fr] md:grid-cols-[2fr_1fr_1fr]';
 
   // TODO: rework events list with DialGrid component
   return (
