@@ -37,11 +37,10 @@ export const chatEventsSlice = createSlice({
     setIsSubscribed: (state, { payload }: PayloadAction<boolean>) => {
       state.isSubscribed = payload;
     },
-    addEvent: (state, { payload }: PayloadAction<ChatEvent>) => {
-      state.events = {
-        ...state.events,
-        [payload.id]: payload,
-      };
+    addEvents: (state, { payload }: PayloadAction<ChatEvent[]>) => {
+      const newEvents = { ...state.events };
+      payload.forEach((v) => (newEvents[v.id] = v));
+      state.events = newEvents;
     },
     reportEvent: (
       state,

@@ -15,6 +15,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { ChatEventsService } from '@/src/utils/app/data/chat-events-service';
 import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ChatEvent,
@@ -35,6 +36,17 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const RECONNECT_INTERVAL = 3_000;
 const RECONNECT_RETRY_COUNT = 5;
+const EVENTS_SEPARATOR = 'data:';
+
+const mapChatEventFromApi = (event: ChatEvent): ChatEvent => ({
+  ...event,
+  params: {
+    ...event.params,
+    ...(event.params.toolsetId && {
+      toolsetId: ApiUtils.decodeApiUrl(event.params.toolsetId),
+    }),
+  },
+});
 
 const subscribeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -71,10 +83,15 @@ const subscribeEpic: AppEpic = (action$, state$) =>
             ),
             filter((value) => value.includes('data:')),
             mergeMap((value) => {
-              const data = value.split('data:')[1].trim();
-              const parsedData = JSON.parse(data) as ChatEvent;
+              const data = value
+                .split(EVENTS_SEPARATOR)
+                .map((v) => v?.trim())
+                .filter((v) => !!v);
+              const parsedData = (
+                data.map((v) => JSON.parse(v)) as ChatEvent[]
+              ).map(mapChatEventFromApi);
 
-              return of(ChatEventsActions.addEvent(parsedData));
+              return of(ChatEventsActions.addEvents(parsedData));
             }),
           );
         }),

@@ -53,20 +53,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       body: JSON.stringify(req.body),
     });
 
-    let json: unknown;
-
     if (!response.ok) {
-      json = await ServerUtils.getErrorMessageFromResponse(response);
+      const errorText = await ServerUtils.getErrorMessageFromResponse(response);
       throw new DialAIError(
-        (typeof json === 'string' && json) || errorsMessages.generalServer,
+        errorText || errorsMessages.generalServer,
         response.status,
         req,
       );
     }
 
-    json = await response.json();
-
-    return res.status(200).send(json);
+    return res.status(200).send({ ok: true });
   } catch (error) {
     logger.error(error);
     if (error instanceof DialAIError) {
