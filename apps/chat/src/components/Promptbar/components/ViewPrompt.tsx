@@ -46,9 +46,9 @@ const PromptField: React.FC<PromptFieldProps> = ({
   const { t } = useTranslation(Translation.PromptBar);
 
   return (
-    <li className="flex flex-col gap-2.5 sm:flex-row">
+    <li className="flex flex-col gap-y-1 gap-x-2.5 sm:flex-row">
       <p
-        className="mb-1 flex min-w-28 text-secondary"
+        className="flex min-w-28 text-secondary"
         data-qa={`prompt-${dataQa}-label`}
       >
         {`${t(label)}: `}
