@@ -255,6 +255,8 @@ export const ExpectedMessages = {
   responseTextIsValid: 'Response text is valid for entity: ',
   imageUrlReturnedInResponse:
     'Image url is returned in the response for model: ',
+  audioUrlReturnedInResponse:
+    'Audio url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
   attachmentIsSuccessfullyDownloaded:
     'Conversation attachment is successfully downloaded',

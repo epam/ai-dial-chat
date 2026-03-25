@@ -603,6 +603,7 @@ export const Attachment = {
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
   appIconSvg: 'appIcon.svg',
+  sttAudioName: 'stt_audio.mp3',
 };
 
 export enum Side {
