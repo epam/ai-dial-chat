@@ -759,7 +759,6 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
                           mergeMap((actions) =>
                             concat(
                               of(actions),
-                              of(ToolsetActions.logInToolsetSuccess()),
                               of(
                                 ToolsetActions.logInToolsetSuccess({
                                   toolsetId: payload.toolset.id,

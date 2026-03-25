@@ -61,8 +61,8 @@ export class ChatEventsService {
             done: false,
             value: undefined as unknown as Uint8Array<ArrayBufferLike>,
             channelId:
-              channelId ??
-              response.headers.get(HeadersNames.X_DIAL_CLIENT_CHANNEL_ID),
+              response.headers.get(HeadersNames.X_DIAL_CLIENT_CHANNEL_ID) ??
+              channelId,
           });
 
           const run = async () => {
