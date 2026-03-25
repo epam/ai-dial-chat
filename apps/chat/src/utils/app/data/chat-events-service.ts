@@ -111,6 +111,7 @@ export class ChatEventsService {
     return ApiUtils.request('/api/client-channels/report', {
       method: HTTPMethod.POST,
       headers: {
+        'Content-Type': 'application/json',
         [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
       },
       body: JSON.stringify(toClientChannelFormat(data)),
