@@ -44,7 +44,8 @@ export const NavigationButton = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
-  const isSmallScreen = useScreenState() === ScreenState.SM;
+  const state = useScreenState();
+  const isSmallScreen = state === ScreenState.SM || state === ScreenState.MD;
   const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isClickAllowed = (!selected || allowClickSelected) && !disabled;
