@@ -1,6 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ChatEvent, ChatEventOperations } from '@/src/types/chat-events';
+import {
+  ChatEvent,
+  ChatEventOperations,
+  ChatEventResult,
+} from '@/src/types/chat-events';
 
 import { ChatEventsState } from '@/src/store/chat-events/chat-events.types';
 
@@ -39,14 +43,23 @@ export const chatEventsSlice = createSlice({
         [payload.id]: payload,
       };
     },
-    reportEvent: (state, _action: PayloadAction<ChatEvent>) => {
+    reportEvent: (
+      state,
+      _action: PayloadAction<{ event: ChatEvent; result: ChatEventResult }>,
+    ) => {
       state.isReporting = true;
     },
-    reportEventSuccess: (state, { payload }: PayloadAction<ChatEvent>) => {
+    reportEventSuccess: (
+      state,
+      { payload }: PayloadAction<{ event: ChatEvent; result: ChatEventResult }>,
+    ) => {
       state.isReporting = false;
-      state.events = omit(state.events, payload.id);
+      state.events = omit(state.events, payload.event.id);
     },
-    reportEventFailure: (state, _action: PayloadAction<ChatEvent>) => {
+    reportEventFailure: (
+      state,
+      _action: PayloadAction<{ event: ChatEvent; result: ChatEventResult }>,
+    ) => {
       state.isReporting = false;
     },
     declineAllEvents: (

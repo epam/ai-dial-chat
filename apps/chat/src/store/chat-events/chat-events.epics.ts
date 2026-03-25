@@ -31,8 +31,6 @@ import {
 } from '@/src/store/actions';
 import { ChatEventsSelectors } from '@/src/store/selectors';
 
-import groupBy from 'lodash-es/groupBy';
-
 const RECONNECT_INTERVAL = 3_000;
 const RECONNECT_RETRY_COUNT = 5;
 
@@ -123,8 +121,8 @@ const reportEventEpic: AppEpic = (action$, state$) =>
       if (!channelId) return of(ChatEventsActions.reportEventFailure(payload));
 
       const data: ChatEventResponse = {
-        id: payload.id,
-        result: ChatEventResult.Success,
+        id: payload.event.id,
+        result: payload.result,
       };
 
       return ChatEventsService.report({ data, channelId }).pipe(
@@ -148,30 +146,46 @@ const resolveToolsetLoginEpic: AppEpic = (action$, state$) =>
 
       if (!resolvingEvent) return EMPTY;
 
-      return of(ChatEventsActions.reportEvent(resolvingEvent));
+      return of(
+        ChatEventsActions.reportEvent({
+          event: resolvingEvent,
+          result: ChatEventResult.Success,
+        }),
+      );
     }),
   );
 
-const reportEventSuccessEpic: AppEpic = (action$, state$) =>
+const reportEventSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatEventsActions.reportEventSuccess.type),
     switchMap(({ payload }) => {
-      const events = ChatEventsSelectors.selectEventsList(state$.value);
-      const { [ChatEventOperations.ToolsetSignIn]: toolsetSignInEvents } =
-        groupBy(events, 'method');
-
       if (
-        !toolsetSignInEvents?.length &&
-        payload.method === ChatEventOperations.ToolsetSignIn
+        payload.event.method === ChatEventOperations.ToolsetSignIn &&
+        payload.result === ChatEventResult.Denied
       ) {
         return of(
           UIActions.showSuccessToast(
-            translate('All toolset sign in requests resolved'),
+            translate('Toolset sign in request declined'),
           ),
         );
       }
 
       return EMPTY;
+    }),
+  );
+
+const reportEventFailureEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ChatEventsActions.reportEventFailure.type),
+    switchMap(({ payload }) => {
+      const reportAction =
+        payload.result === ChatEventResult.Success ? 'resolve' : 'decline';
+
+      return of(
+        UIActions.showErrorToast(
+          translate(`Failed to ${reportAction} request`),
+        ),
+      );
     }),
   );
 
@@ -222,13 +236,25 @@ const declineAllEventsSuccessEpic: AppEpic = (action$) =>
     }),
   );
 
+const declineAllEventsFailureEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ChatEventsActions.declineAllEventsFailure.type),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(translate(`Failed to decline all requests`)),
+      );
+    }),
+  );
+
 export const ChatEventsEpics = combineEpics(
   subscribeEpic,
   reconnectEpic,
   unsubscribeEpic,
   reportEventEpic,
-  resolveToolsetLoginEpic,
   reportEventSuccessEpic,
+  reportEventFailureEpic,
+  resolveToolsetLoginEpic,
   declineAllEventsEpic,
   declineAllEventsSuccessEpic,
+  declineAllEventsFailureEpic,
 );

@@ -1,5 +1,7 @@
-import { IconLogin } from '@tabler/icons-react';
+import { IconDotsVertical, IconLogin } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo } from 'react';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -7,7 +9,11 @@ import { getEntityNameFromId, isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getVersionFromId } from '@/src/utils/server/api';
 
-import { ChatEvent, ChatEventOperations } from '@/src/types/chat-events';
+import {
+  ChatEvent,
+  ChatEventOperations,
+  ChatEventResult,
+} from '@/src/types/chat-events';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
@@ -31,6 +37,7 @@ import {
   ButtonAppearance,
   ButtonVariant,
   DialButton,
+  DialDropdown,
   DialPopup,
   ElementSize,
   PopupSize,
@@ -44,6 +51,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
+  const eventsMap = useAppSelector(ChatEventsSelectors.selectEvents);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const areToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
   const isReporting = useAppSelector(ChatEventsSelectors.selectIsReporting);
@@ -93,22 +101,48 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
     );
   }, [dispatch]);
 
+  const handleDecline = useCallback(
+    (event: ChatEvent) => {
+      dispatch(
+        ChatEventsActions.reportEvent({
+          event,
+          result: ChatEventResult.Denied,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleMenuDeclineClick = useCallback(
+    ({ key }: { key: string }) => {
+      const event = eventsMap[key];
+
+      if (!event) return;
+
+      handleDecline(event);
+    },
+    [handleDecline, eventsMap],
+  );
+
   useEffect(() => {
     dispatch(ToolsetActions.getToolsets());
   }, [dispatch]);
+
+  const gridLayout = 'grid grid-cols-[5fr_3fr] md:grid-cols-[2fr_1fr_1fr]';
 
   // TODO: rework events list with DialGrid component
   return (
     <DialPopup
       open
       header={t('Toolset login required')}
+      headerClassName="px-3 md:px-6 pt-4 md:pt-6"
       hideClose
       portalId="chat"
       size={PopupSize.Md}
       dividers={false}
-      className="!bg-layer-2"
+      className="mx-3 !h-auto !max-h-[600px] !bg-layer-2 md:m-0"
       footer={
-        <div className="flex justify-end border-t border-t-tertiary px-6 py-4">
+        <div className="flex justify-end border-t border-t-tertiary px-3 py-4 md:px-6">
           <DialButton
             label={t('Decline all')}
             onClick={handleDeclineAllClick}
@@ -124,7 +158,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
           <Spinner size={24} />
         </div>
       ) : (
-        <div className="p-6 pt-0">
+        <div className="p-3 !pt-0 md:p-6">
           <h2 className="mb-4 text-sm text-secondary">
             {t(
               'The toolsets that "Quick app" uses to generate a response require a login',
@@ -132,31 +166,51 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
           </h2>
 
           <div className="divide-y divide-tertiary rounded border border-secondary">
-            <div className="grid grid-cols-[2fr_1fr_1fr] bg-layer-1">
-              <div className="p-3 text-sm text-secondary">{t('Toolset')}</div>
-              <div className="p-3 text-sm text-secondary">{t('Version')}</div>
+            <div className={classNames(gridLayout, 'bg-layer-1')}>
+              <div className="p-2 text-sm text-secondary md:p-3">
+                {t('Toolset')}
+              </div>
+              <div className="hidden p-2 text-sm text-secondary md:block">
+                {t('Version')}
+              </div>
               <div />
             </div>
 
             {loginToolsets.map(({ event, toolset, name, version }) => (
               <div
                 key={event.id}
-                className="grid grid-cols-[2fr_1fr_1fr] bg-layer-3"
+                className={classNames(gridLayout, 'bg-layer-3')}
               >
-                <div className="flex items-center gap-2 p-3">
+                <div className="flex items-center gap-2 overflow-hidden p-2 md:p-3">
                   <ModelIcon
                     size={20}
                     entityId={event.params.toolsetId}
                     entity={toolset}
                   />
-                  <span className="text-sm text-primary">
-                    {toolset?.name ?? name}
-                  </span>
+                  <div className="flex flex-col gap-1 truncate">
+                    <span className="truncate text-sm text-primary">
+                      {toolset?.name ?? name}
+                    </span>
+                    <span className="text-xs text-secondary md:hidden">
+                      {toolset?.version ?? version}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center p-3 text-sm text-primary">
+
+                <div className="hidden items-center truncate p-3 text-sm text-primary md:flex">
                   {toolset?.version ?? version}
                 </div>
-                <div className="flex items-center justify-end gap-2 p-3">
+
+                <div className="flex items-center justify-end gap-2 p-2 md:p-3">
+                  <DialButton
+                    className="hidden md:flex"
+                    label={t('Decline')}
+                    onClick={() => handleDecline(event)}
+                    size={ElementSize.Small}
+                    appearance={ButtonAppearance.Ghost}
+                    variant={ButtonVariant.Primary}
+                    disabled={isReporting}
+                  />
                   <DialButton
                     label={t('Log in')}
                     iconBefore={<IconLogin size={16} />}
@@ -165,6 +219,22 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
                     onClick={() => toolset && handleLoginClick(toolset)}
                     disabled={isReporting || !toolset}
                   />
+                  <DialDropdown
+                    className="md:hidden"
+                    placement="bottom-start"
+                    allowedPlacements={['top-start', 'top-end']}
+                    menu={{
+                      onClick: handleMenuDeclineClick,
+                      items: [
+                        {
+                          key: event.id,
+                          label: t('Decline'),
+                        },
+                      ],
+                    }}
+                  >
+                    <IconDotsVertical size={20} className="text-secondary" />
+                  </DialDropdown>
                 </div>
               </div>
             ))}
