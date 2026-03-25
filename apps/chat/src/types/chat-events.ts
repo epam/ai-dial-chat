@@ -2,6 +2,11 @@ export enum ChatEventOperations {
   ToolsetSignIn = 'toolset/signin',
 }
 
+export enum ChatEventResult {
+  Success = 'success',
+  Denied = 'denied',
+}
+
 export interface ChatEvent {
   id: string;
   method: ChatEventOperations;
@@ -10,6 +15,9 @@ export interface ChatEvent {
   };
 }
 
-export type ChatEventResponse = ({ result: string } | { error: string }) & {
+export type ChatEventResponse = (
+  | { result: ChatEventResult }
+  | { error: string }
+) & {
   id: string;
 };
