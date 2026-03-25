@@ -31,20 +31,19 @@ export function AddAppButton() {
 
   const { t } = useTranslation(Translation.Marketplace);
 
+  const router = useRouter();
+
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
-  const router = useRouter();
-
-  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
-
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
   const detailedApplicationTypeSchema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+
+  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
 
   const openEditor = useCallback(
     (type: string) => {
@@ -67,6 +66,9 @@ export function AddAppButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             openEditor(ApplicationType.CUSTOM_APP);
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
           },
         },
         {
@@ -77,6 +79,9 @@ export function AddAppButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             openEditor(ApplicationType.CODE_APP);
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
