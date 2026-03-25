@@ -1,9 +1,9 @@
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
+
 import { PublicationFunctions } from '@/src/types/publication';
 
 import '@/src/constants/default-ui-settings';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
-
-import { z as zodValidation } from 'zod';
 
 export enum PublishRequestFieldsNames {
   PUBLISH_REQUEST_NAME = 'publishRequestName',
