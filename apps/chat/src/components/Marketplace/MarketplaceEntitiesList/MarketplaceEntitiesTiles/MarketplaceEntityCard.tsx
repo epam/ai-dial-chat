@@ -147,7 +147,6 @@ export const MarketplaceEntityCard = memo(
               <div
                 className={classNames(
                   'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
-                  !isMyEntity && '!mr-12',
                 )}
               >
                 {(isCreatedMarketplaceEntity(entity) || entity.version) && (
