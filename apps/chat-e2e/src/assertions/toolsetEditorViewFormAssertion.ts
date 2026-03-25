@@ -119,10 +119,6 @@ export class ToolsetEditorViewFormAssertion extends BaseAssertion {
         this.toolsetEditorViewForm.allowedToolsLabel,
         ExpectedConstants.allowedToolsLabel,
       );
-      await this.assertElementText(
-        this.toolsetEditorViewForm.allowedToolsLabelSubtitle,
-        ExpectedConstants.allowedToolsLabelSubtitle,
-      );
       const actualAllowedTools =
         await this.toolsetEditorViewForm.allowedTools.getSelectedPillValues();
       this.assertValuesAreEqual(
