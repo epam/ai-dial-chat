@@ -122,6 +122,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     req.off('close', cleanup);
     req.off('aborted', cleanup);
     res.off('close', cleanup);
+    await cleanup();
   }
 };
 
