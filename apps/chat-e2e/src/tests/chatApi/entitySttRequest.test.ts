@@ -28,7 +28,7 @@ for (const entity of sttRequestModels) {
           audioUrl,
         );
       const response = await chatApiHelper.postRequest(conversation);
-      apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
         entity.entityId,

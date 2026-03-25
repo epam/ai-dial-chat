@@ -19,7 +19,7 @@ for (const entity of ttsRequestModels) {
           entity.entityId,
         );
       const response = await chatApiHelper.postRequest(conversation);
-      apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseAudioAttachment(
         response,
         entity.entityId,

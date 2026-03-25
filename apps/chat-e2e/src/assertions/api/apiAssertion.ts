@@ -9,16 +9,18 @@ import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
 
 export class ApiAssertion extends BaseAssertion {
-  public assertResponseCode(
+  public async assertResponseCode(
     response: APIResponse,
     entityId: string | undefined,
     expectedStatus: number,
   ) {
     const status = response.status();
+    const body = await response.text();
+    const bodySuffix = body ? `. Body: ${body}` : '';
     this.assertValue(
       status,
       expectedStatus,
-      `${ExpectedMessages.responseCodeIsValid}${entityId !== undefined ? entityId : ''}`,
+      `${ExpectedMessages.responseCodeIsValid}${entityId !== undefined ? entityId : ''}${bodySuffix}`,
     );
   }
 
