@@ -56,18 +56,15 @@ const credsTabs = [
 ];
 
 interface ToolsetLoginDialogProps {
-  entity: { toolset: ToolsetModel; disableAdminView?: boolean };
+  toolset: ToolsetModel;
 }
 
-const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
-  entity: loginParams,
-}) => {
+const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
   const { route } = useRouter();
 
-  const { toolset, disableAdminView } = loginParams;
-
+  const loginEntity = useAppSelector(MarketplaceSelectors.selectLoginEntity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const isToolsetLoading = useAppSelector(
@@ -96,7 +93,8 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     resolver: zodResolver(ToolsetLoginFormSchema),
   });
 
-  const isOrganizationView = isAdmin && isPublic && !disableAdminView;
+  const isOrganizationView =
+    isAdmin && isPublic && !loginEntity?.disableAdminView;
   const isSignedIn = isToolsetSignedIn(
     toolset,
     isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL,
@@ -112,13 +110,14 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   );
 
   const organizationFormTitle = useMemo(() => {
+    const isSignedIn = isToolsetSignedIn(toolset, authLevel);
     switch (authLevel) {
       case ToolsetCredentialsLevel.USER:
-        return isToolsetSignedIn(toolset, authLevel)
+        return isSignedIn
           ? t('Log out of the toolset using personal credentials.')
           : t('Log in with personal credentials.');
       case ToolsetCredentialsLevel.GLOBAL:
-        return isToolsetSignedIn(toolset, authLevel) ? (
+        return isSignedIn ? (
           <>
             {t('Log out of the toolset ')}
             <strong>{t('for all users in the organization ')}</strong>
@@ -337,5 +336,5 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
 
 export const ToolsetLoginDialog =
   withRenderWhenEntities<ToolsetLoginDialogProps>({
-    entity: MarketplaceSelectors.selectLoginEntity,
+    toolset: (state) => MarketplaceSelectors.selectLoginEntity(state)?.toolset,
   })(ToolsetLoginDialogView);
