@@ -11,6 +11,8 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareSelectors } from '@/src/store/selectors';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { ConfirmDialog } from './ConfirmDialog';
 import { withRenderWhen } from './RenderWhen';
 
@@ -98,10 +100,10 @@ function UnshareDialogView() {
   return (
     <ConfirmDialog
       isOpen
-      heading={t('Confirm removing access')}
+      heading={t(CommonI18nKeys.ConfirmRemovingAccess)}
       description={description}
-      confirmLabel={t('Confirm')}
-      cancelLabel={t('Cancel')}
+      confirmLabel={t(CommonI18nKeys.Confirm)}
+      cancelLabel={t(CommonI18nKeys.Cancel)}
       onClose={handleConfirmUnshare}
     />
   );
@@ -113,3 +115,4 @@ export const UnshareDialog = withRenderWhen((state) => {
 
   return !!unshareModel || !!unshareResource;
 })(UnshareDialogView);
+d;

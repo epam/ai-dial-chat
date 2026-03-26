@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { Title } from '@/src/components/Title';
 
 function Custom404() {
@@ -16,17 +18,15 @@ function Custom404() {
     >
       <Title />
       <h1 className="text-6xl font-bold md:text-7xl" data-qa="not-found-header">
-        {t('404')}
+        {t(CommonI18nKeys.NotFound)}
       </h1>
 
       <div className="space-y-2">
         <p className="text-xl font-bold md:text-2xl" data-qa="not-found-title">
-          {t('Page not found')}
+          {t(CommonI18nKeys.PageNotFound)}
         </p>
         <p className="text-base text-secondary" data-qa="not-found-description">
-          {t(
-            "It seems like the page you're looking for doesn't exist or you don't have access.",
-          )}
+          {t(CommonI18nKeys.PageNotFoundDescription)}
         </p>
       </div>
 
@@ -36,7 +36,7 @@ function Custom404() {
         data-qa="new-conversation-btn"
       >
         <IconPlus size={18} />
-        {t('New Conversation')}
+        {t(CommonI18nKeys.NewConversation)}
       </a>
     </div>
   );

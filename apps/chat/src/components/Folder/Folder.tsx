@@ -76,6 +76,8 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
+import { CommonI18nKeys } from '../../constants/i18n';
+
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { Checkbox } from '@/src/components/Common/Checkbox';
@@ -1327,8 +1329,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               ? '\nDeleting will stop sharing and other users will no longer see this folder.'
               : '',
           )}`}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(CommonI18nKeys.Delete)}
+          cancelLabel={t(CommonI18nKeys.Cancel)}
           onClose={(result) => {
             setIsDeletingConfirmDialog(false);
             if (result) {
