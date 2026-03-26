@@ -93,7 +93,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
-import { constants } from 'node:buffer';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
