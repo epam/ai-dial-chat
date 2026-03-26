@@ -10,6 +10,9 @@ export enum Feature {
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
   ChatFullWidthByDefault = 'chat-full-width-by-default', // Enforce chat full-width
 
+  // Chat Header
+  ChatHeaderBorder = 'chat-header-border', // Display a separator line below the chat header
+
   // Conversation Header
   HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
   TopSettings = 'top-settings', // Display conversation top header
@@ -25,6 +28,7 @@ export enum Feature {
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
+  LiveChatInteraction = 'live-chat-interaction',
 
   // Edit assistant message
   EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
@@ -41,6 +45,7 @@ export enum Feature {
 
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
+  ChatInputBorder = 'chat-input-border', // Display border around chat input area
 
   // Send button
   DisabledSend = 'disabled-send', // Disable input

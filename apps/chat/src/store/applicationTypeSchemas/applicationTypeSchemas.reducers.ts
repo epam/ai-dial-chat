@@ -38,6 +38,7 @@ export const applicationTypesSchemasSlice = createSlice({
       state,
       _action: PayloadAction<string>,
     ) => {
+      state.detailedApplicationTypeSchema = null;
       state.detailedApplicationTypeSchemaLoading = UploadStatus.LOADING;
     },
     fetchDetailedApplicationTypeSchemaSuccess: (

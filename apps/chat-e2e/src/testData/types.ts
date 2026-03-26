@@ -51,6 +51,10 @@ export interface EntityPlusAttachmentRequest extends Entity {
   response: string;
 }
 
+export interface SttRequestEntity extends Entity {
+  response?: string;
+}
+
 export enum MarketplaceFilterTypes {
   type = 'Type',
   topics = 'Topics',
