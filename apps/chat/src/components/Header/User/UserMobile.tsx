@@ -15,6 +15,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
@@ -59,7 +61,7 @@ const UserSettings = () => {
       onClick={onClick}
     >
       <IconSettings className="text-secondary" size={18} />
-      <span>{t('Settings')}</span>
+      <span>{t(HeaderI18nKeys.Settings)}</span>
     </div>
   );
 };
@@ -84,14 +86,16 @@ const Logout = () => {
         }}
       >
         <IconLogout className="text-secondary" size={18} />
-        <span>{session ? t('Log out') : t('Login')}</span>
+        <span>
+          {session ? t(HeaderI18nKeys.Login) : t(HeaderI18nKeys.Login)}
+        </span>
       </div>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?')}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(HeaderI18nKeys.ConfirmLoggingOut)}
+        description={t(HeaderI18nKeys.AreYouSureLogOut)}
+        confirmLabel={t(HeaderI18nKeys.LogOut)}
+        cancelLabel={t(HeaderI18nKeys.Cancel)}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {

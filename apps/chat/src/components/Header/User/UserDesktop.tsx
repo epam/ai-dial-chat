@@ -10,6 +10,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -48,7 +50,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                 contentClassName="grow"
                 text={
                   <span data-qa="username">
-                    {session?.user?.name || t('User')}
+                    {session?.user?.name || t(HeaderI18nKeys.User)}
                   </span>
                 }
               />
@@ -70,7 +72,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             item={
               <div className="flex">
                 <IconSettings size={18} className="text-secondary" />
-                <span className="ml-3">{t('Settings')}</span>
+                <span className="ml-3">{t(HeaderI18nKeys.Settings)}</span>
               </div>
             }
             onClick={() => {
@@ -83,8 +85,10 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
-              <IconLogout width={18} height={18} className="text-secondary" />
-              <span>{session ? t('Log out') : t('Login')}</span>
+              <IconLogout size={18} className="text-secondary" />
+              <span>
+                {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
+              </span>
             </div>
           }
           onClick={() => {
@@ -98,10 +102,10 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
       </Menu>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?')}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(HeaderI18nKeys.ConfirmLoggingOut)}
+        description={t(HeaderI18nKeys.AreYouSureLogOut)}
+        confirmLabel={t(HeaderI18nKeys.LogOut)}
+        cancelLabel={t(HeaderI18nKeys.Cancel)}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {
