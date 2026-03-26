@@ -452,6 +452,10 @@ export const callbacks: Partial<
         : '';
     options.session.providerId = providerId;
 
+    const accessToken = options.token?.access_token;
+    if (accessToken) {
+      options.session.accessToken = accessToken;
+    }
     return options.session;
   },
 };

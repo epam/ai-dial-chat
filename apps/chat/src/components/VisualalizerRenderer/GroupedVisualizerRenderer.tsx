@@ -17,7 +17,6 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
-  OverlaySelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -83,27 +82,24 @@ export const GroupedVisualizerRenderer = ({
 
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
-  const overlayExplicitToken = useAppSelector(
-    OverlaySelectors.selectOverlayExplicitToken,
-  );
-
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    const sessionAccessToken = session?.accessToken;
     const tokenField =
-      passExplicitToken && overlayExplicitToken != null
-        ? { accessToken: overlayExplicitToken }
+      passExplicitToken && sessionAccessToken != null
+        ? { accessToken: sessionAccessToken }
         : {};
 
     if (!passAuthInfo) return tokenField;
     if (!session) return tokenField;
 
     const email = session.user?.email ?? undefined;
-    const providerId = (session as { providerId?: string }).providerId;
+    const providerId = (session as { providerId?: string } | null)?.providerId;
     return {
       ...(email != null && { logInHint: email }),
       ...(providerId != null && { providerId }),
       ...tokenField,
     };
-  }, [passAuthInfo, passExplicitToken, session, overlayExplicitToken]);
+  }, [passAuthInfo, passExplicitToken, session]);
 
   const loadedCustomAttachmentsData = useAppSelector(
     ConversationsSelectors.selectLoadedCustomAttachments,

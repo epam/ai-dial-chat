@@ -17,7 +17,6 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
-  OverlaySelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -77,14 +76,11 @@ export const VisualizerRenderer = ({
 
   const dispatch = useAppDispatch();
 
-  const overlayExplicitToken = useAppSelector(
-    OverlaySelectors.selectOverlayExplicitToken,
-  );
-
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    const sessionAccessToken = session?.accessToken;
     const tokenField =
-      passExplicitToken && overlayExplicitToken != null
-        ? { accessToken: overlayExplicitToken }
+      passExplicitToken && sessionAccessToken != null
+        ? { accessToken: sessionAccessToken }
         : {};
 
     if (!passAuthInfo || !session) return tokenField;
@@ -96,7 +92,7 @@ export const VisualizerRenderer = ({
       ...(providerId != null && { providerId }),
       ...tokenField,
     };
-  }, [passAuthInfo, passExplicitToken, session, overlayExplicitToken]);
+  }, [passAuthInfo, passExplicitToken, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
