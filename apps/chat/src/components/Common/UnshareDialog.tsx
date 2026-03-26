@@ -115,4 +115,3 @@ export const UnshareDialog = withRenderWhen((state) => {
 
   return !!unshareModel || !!unshareResource;
 })(UnshareDialogView);
-d;
