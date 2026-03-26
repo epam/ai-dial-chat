@@ -39,9 +39,6 @@ export function AddAppButton() {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
 
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
 
@@ -101,14 +98,7 @@ export function AddAppButton() {
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
-    [
-      t,
-      isCodeAppsEnabled,
-      applicationTypeSchemas,
-      openEditor,
-      detailedApplicationTypeSchema?.$id,
-      dispatch,
-    ],
+    [t, isCodeAppsEnabled, applicationTypeSchemas, openEditor, dispatch],
   );
 
   return (
