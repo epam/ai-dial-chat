@@ -32,6 +32,12 @@ import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  NOT_ALLOWED_SPACES,
+  NOT_ALLOWED_SPACES_REGEXP,
+  NOT_ALLOWED_SYMBOLS,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
+} from '@epam/ai-dial-ui-kit';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import { extensions, lookup } from 'mime-types';
@@ -158,13 +164,20 @@ export const getFilesWithInvalidFileType = (
         (file) => !isAllowedMimeType(allowedFileTypes, getFileMimeType(file)),
       );
 };
-export const notAllowedSymbols = ':;,=/{}%&\\"';
-export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
+
+// Regular expressions and restricted symbols from DIAL UI Kit
+export const notAllowedSymbols = NOT_ALLOWED_SYMBOLS;
+export const notAllowedSpaces = NOT_ALLOWED_SPACES;
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
+  NOT_ALLOWED_SYMBOLS_REGEXP.source,
   'gm',
 );
-export const notAllowedSpacesRegex = new RegExp(notAllowedSpaces, 'gm');
+
+export const notAllowedSpacesRegex = new RegExp(
+  NOT_ALLOWED_SPACES_REGEXP.source,
+  'gm',
+);
+
 export const doesHaveNotAllowedSymbols = (name: string) =>
   !!name.match(notAllowedSymbolsRegex);
 
