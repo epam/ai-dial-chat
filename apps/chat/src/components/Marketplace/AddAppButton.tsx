@@ -31,24 +31,21 @@ export function AddAppButton() {
 
   const { t } = useTranslation(Translation.Marketplace);
 
+  const router = useRouter();
+
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
-  const router = useRouter();
-
-  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
-
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
+
+  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
 
   const openEditor = useCallback(
     (type: string) => {
       void router.push(getAppEditorCreateModeRoute(type));
+      dispatch(ApplicationActions.setAppDetails());
       dispatch(
         ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
       );
@@ -66,6 +63,9 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
             openEditor(ApplicationType.CUSTOM_APP);
           },
         },
@@ -76,6 +76,9 @@ export function AddAppButton() {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
             openEditor(ApplicationType.CODE_APP);
           },
         },
@@ -86,25 +89,16 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            if (detailedApplicationTypeSchema?.$id !== schema.id) {
-              dispatch(
-                ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-                  schema.id,
-                ),
-              );
-            }
+            dispatch(
+              ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+                schema.id,
+              ),
+            );
             openEditor(schema.id);
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
-    [
-      t,
-      isCodeAppsEnabled,
-      applicationTypeSchemas,
-      openEditor,
-      detailedApplicationTypeSchema?.$id,
-      dispatch,
-    ],
+    [t, isCodeAppsEnabled, applicationTypeSchemas, openEditor, dispatch],
   );
 
   return (
