@@ -5,7 +5,7 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -13,9 +13,9 @@ import { HTTPMethod } from '@/src/types/http';
 import { errorsMessages } from '@/src/constants/errors';
 import { HeadersNames } from '@/src/constants/server';
 
-const host = process.env.NEXT_PUBLIC_HOST;
+const host = process.env.DIAL_API_HOST;
 
-const URL = `${host}/v1/ops/client-channels/unsubscribe`;
+const URL = `${host}/v1/ops/client-channel/unsubscribe`;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== HTTPMethod.POST) {
@@ -40,7 +40,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const token = await getFullToken({ req });
+    const jwt = await getToken({ req });
 
     if (!channelId) {
       throw new DialAIError(
@@ -53,16 +53,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const response = await fetch(URL, {
       method: HTTPMethod.POST,
       headers: {
-        ...getApiHeaders({
-          jwt: token?.token ?? '',
-          jobTitle: token?.jobTitle ?? '',
-        }),
+        ...getApiHeaders({ jwt }),
         [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
       },
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorText = await ServerUtils.getErrorMessageFromResponse(response);
       throw new DialAIError(
         errorText || errorsMessages.generalServer,
         response.status,
@@ -70,7 +67,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       );
     }
 
-    return res.status(200).end();
+    return res.status(200).json({ ok: true });
   } catch (error) {
     logger.error(error);
     if (error instanceof DialAIError) {

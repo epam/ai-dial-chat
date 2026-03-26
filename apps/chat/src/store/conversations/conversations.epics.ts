@@ -106,6 +106,7 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import {
+  ChatEventsSelectors,
   ConversationsSelectors,
   MarketplaceSelectors,
   ModelsSelectors,
@@ -127,6 +128,7 @@ import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
+import { HeadersNames } from '@/src/constants/server';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import {
@@ -1571,17 +1573,23 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       };
     }),
     mergeMap(({ payload, chatBody }) => {
+      const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
+      const isApplication = chatBody?.model?.type === EntityType.Application;
 
       return from(
         fetch('/api/chat', {
           method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
+            ...(channelId &&
+              isApplication && {
+                [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
+              }),
           },
           body: JSON.stringify(chatBody),
           signal: conversationSignal.signal,

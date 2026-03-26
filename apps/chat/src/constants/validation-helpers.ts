@@ -4,6 +4,7 @@ import {
   isVersionValid,
 } from '@/src/utils/app/common';
 import { notAllowedSpaces, notAllowedSymbols } from '@/src/utils/app/file';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import {
   MAX_ENTITY_LENGTH,
@@ -17,7 +18,6 @@ import {
 } from '@/src/constants/form-errors';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
-import { z as zodValidation } from 'zod';
 
 const specialCharactersRegex = new RegExp(
   `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,

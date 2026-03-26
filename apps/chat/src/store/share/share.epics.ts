@@ -17,7 +17,9 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   getApplicationType,
+  getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  isQuickApp2,
 } from '@/src/utils/app/application';
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
@@ -344,7 +346,8 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
 
       if (
         (applicationType === ApplicationType.CODE_APP ||
-          schema?.displayName === 'Quick App') &&
+          schema?.displayName === 'Quick App' ||
+          isQuickApp2(application)) &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(
@@ -381,7 +384,9 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      const docUrl = getQuickAppDocumentUrl(applicationDetails);
+      const docUrl =
+        getQuickAppDocumentUrl(applicationDetails) ??
+        getQuick2AppDocumentUrl(applicationDetails);
       if (docUrl?.length) {
         docUrl.forEach((url) =>
           resources.push({
