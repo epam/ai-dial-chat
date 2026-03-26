@@ -113,6 +113,20 @@ const selectModelTypeAgents = createSelector(
   },
 );
 
+const selectToolSupportingModels = createSelector(
+  [(state) => selectModelTypeAgents(state, true)],
+  (models) => {
+    return models.filter((model) => model.features?.tools);
+  },
+);
+
+const selectToolSupportingModelIds = createSelector(
+  [selectToolSupportingModels],
+  (models) => {
+    return models.map((model) => model.id);
+  },
+);
+
 const selectPublishRequestModels = (state: RootState) =>
   rootSelector(state).publishRequestModels;
 
@@ -193,4 +207,6 @@ export const ModelsSelectors = {
   selectIsRecentModelsLoaded,
   selectDefaultModelOption,
   selectDefaultModelReference,
+  selectToolSupportingModels,
+  selectToolSupportingModelIds,
 };

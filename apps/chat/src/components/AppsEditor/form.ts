@@ -15,7 +15,9 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import {
   CustomApplicationModel,
@@ -69,7 +71,6 @@ import { ShareEntity } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 import { nanoid } from 'nanoid';
-import { z as zodValidation } from 'zod';
 
 export enum AppsEditorSchemaTypes {
   CustomApp = 'Custom app',
@@ -210,6 +211,9 @@ export const QuickApp2Schema = zodValidation
     maxInputAttachments: MaxInputAttachmentsSchema.optional(),
     isJsonView: zodValidation.boolean(),
     agentsAndToolsetsJson: zodValidation.string(),
+    toolSupportingModelIds: zodValidation
+      .array(zodValidation.string())
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -220,16 +224,26 @@ export const QuickApp2Schema = zodValidation
           ctx.addIssue({
             code: 'custom',
             path: ['agentsAndToolsetsJson'],
-            message: 'Should be an array',
+            message: translate('Should be an array'),
           });
         }
       } catch {
         ctx.addIssue({
           code: 'custom',
           path: ['agentsAndToolsetsJson'],
-          message: 'Should be a valid JSON',
+          message: translate('Should be a valid JSON'),
         });
       }
+    }
+    if (
+      data.toolSupportingModelIds &&
+      !data.toolSupportingModelIds.includes(data.model)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['model'],
+        message: translate('Selected model does not support tools'),
+      });
     }
   });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
@@ -322,7 +336,10 @@ const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   type: AppsEditorSchemaTypes.CustomApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
-  completionUrl: app ? (app.completionUrl ?? '') : MANDATORY_FIELD_PLACEHOLDER,
+  completionUrl:
+    app && !app.applicationTypeSchemaId
+      ? (app.completionUrl ?? '') // for custom apps
+      : app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER, // fallback for schema-applications
   features: safeStringifyApplicationFeatures(app?.features),
 });
 
@@ -396,15 +413,28 @@ export const getAgentsAndToolsetsFormValue = (
   });
 };
 
-const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
+const getQuickApp2FormData = (
+  app?: CustomApplicationModel,
+  toolSupportingModelIds?: string[],
+): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
+  // show selected model for existing Quick Apps
+  let model = appProperties?.orchestrator?.deployment?.name;
+  if (!model) {
+    const defaultModelId = DefaultsService.get(
+      'quickAppsModel',
+      DEFAULT_QUICK_APPS_MODEL,
+    );
+    // check if default model for quick app is configured correctly
+    model = toolSupportingModelIds?.includes(defaultModelId)
+      ? defaultModelId // use default quick app model
+      : (toolSupportingModelIds?.[0] ?? ''); // use first from list
+  }
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
     documentRelativeUrl: getQuick2AppDocumentUrl(app) ?? [],
-    model:
-      appProperties?.orchestrator?.deployment?.name ??
-      DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+    model,
     instructions: appProperties?.orchestrator?.system_prompt?.content ?? '',
     temperature:
       appProperties?.orchestrator?.deployment?.parameters?.temperature ??
@@ -422,6 +452,7 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
       2,
     ),
     isJsonView: false,
+    toolSupportingModelIds,
   };
 };
 
@@ -494,10 +525,12 @@ const getSettingsFormData = ({
   app,
   type,
   runtime,
+  toolSupportingModelIds,
 }: {
   app?: CustomApplicationModel;
   type: AppsEditorSchemaTypes;
   runtime?: string;
+  toolSupportingModelIds?: string[];
 }) => {
   switch (type) {
     case AppsEditorSchemaTypes.ExternalApp:
@@ -507,7 +540,7 @@ const getSettingsFormData = ({
     case AppsEditorSchemaTypes.QuickApp:
       return getQuickAppFormData(app);
     case AppsEditorSchemaTypes.QuickApp2:
-      return getQuickApp2FormData(app);
+      return getQuickApp2FormData(app, toolSupportingModelIds);
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return getCustomAppFormData(app);
@@ -519,17 +552,20 @@ export const getDefaultFormData = ({
   models,
   runtime,
   type,
+  toolSupportingModelIds,
 }: {
   type: string;
   app?: CustomApplicationModel;
   models?: ShareEntity[];
   runtime?: string;
+  toolSupportingModelIds?: string[];
 }): AppsEditorFormType => ({
   ...getBaseFormData({ app, models }),
   ...getSettingsFormData({
     app,
     runtime,
     type: getEditorSchemaType(type),
+    toolSupportingModelIds,
   }),
 });
 

@@ -206,7 +206,9 @@ export const toolsetSlice = createSlice({
         apiKey?: string;
         toolset: ToolsetModel;
       }>,
-    ) => state,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
     logInToolset: (
       state,
       _action: PayloadAction<{
@@ -217,11 +219,19 @@ export const toolsetSlice = createSlice({
         apiKey?: string;
         callbackUrl?: string;
         isAdmin?: boolean;
+        isPopup?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
     },
-    logInToolsetSuccess: (state) => {
+    logInToolsetSuccess: (
+      state,
+      _action: PayloadAction<{
+        authLevel: ToolsetCredentialsLevel;
+        toolsetId: string;
+        isAdmin?: boolean;
+      }>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     logInToolsetFail: (state) => {
@@ -236,6 +246,9 @@ export const toolsetSlice = createSlice({
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    logOutToolsetSuccess: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     logOutToolsetFail: (state) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;

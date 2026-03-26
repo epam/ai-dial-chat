@@ -2,6 +2,7 @@ import {
   EMPTY,
   catchError,
   concat,
+  exhaustMap,
   filter,
   forkJoin,
   from,
@@ -326,12 +327,47 @@ const getFileFoldersEpic: AppEpic = (action$) =>
 const getFilesWithFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFilesWithFolders.type),
-    switchMap(({ payload }) => {
-      return concat(
-        of(FilesActions.getFolders(payload)),
-        of(FilesActions.getFiles(payload)),
+    exhaustMap(({ payload }) => {
+      const trigger$ = from([
+        FilesActions.getFolders(payload),
+        FilesActions.getFiles(payload),
+      ]);
+
+      const wait$ = action$.pipe(
+        ofType(
+          FilesActions.getFoldersSuccess.type,
+          FilesActions.getFoldersFail.type,
+          FilesActions.getFilesSuccess.type,
+          FilesActions.getFilesFail.type,
+        ),
+        take(2),
       );
+
+      return concat(trigger$, wait$.pipe(ignoreElements()));
     }),
+  );
+
+const getFilesWithFoldersFailToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.getFoldersFail.type, FilesActions.getFilesFail.type),
+    scan(
+      (acc) => {
+        acc.count += 1;
+        return acc;
+      },
+      { count: 0 },
+    ),
+    filter(({ count }) => count === 2),
+    take(1),
+    map(() =>
+      UIActions.showToast({
+        type: ToastType.Error,
+        title: translate('Failed to load files and folders'),
+        message: translate(
+          'Please check your internet connection and try again.',
+        ),
+      }),
+    ),
   );
 
 const getFoldersListEpic: AppEpic = (action$) =>
@@ -1066,6 +1102,7 @@ export const FilesEpics = combineEpics(
   renameFolderEpic,
   renameFolderFailEpic,
   getFilesWithFoldersEpic,
+  getFilesWithFoldersFailToastEpic,
   deleteFileEpic,
   getFoldersListEpic,
   deleteMultipleFilesEpic,

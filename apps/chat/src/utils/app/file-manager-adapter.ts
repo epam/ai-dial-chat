@@ -208,19 +208,44 @@ export const buildFileTree = (
     getFileRootId(getEntityBucket({ id: rootItems?.[0]?.id || '' })) ||
     getFileRootId();
 
+  const allRootBucketIds = new Set<string>();
+  allRootBucketIds.add(effectiveRootId);
+
+  files.forEach((file) => {
+    const bucket = getEntityBucket({ id: file.id });
+    if (bucket) {
+      allRootBucketIds.add(getFileRootId(bucket));
+    }
+  });
+  folders.forEach((folder) => {
+    const bucket = getEntityBucket({ id: folder.id });
+    if (bucket) {
+      allRootBucketIds.add(getFileRootId(bucket));
+    }
+  });
+
   uikitFiles.forEach((file) => {
     const parentFolderId = file.folderId;
     const parentFolder = folderMap.get(parentFolderId);
 
     if (parentFolder && parentFolder.items && file.id) {
-      parentFolder.items.push(file);
-      placedFileIds.add(file.id);
+      if (allRootBucketIds.has(parentFolderId)) {
+        rootItems.push(file);
+        placedFileIds.add(file.id);
+      } else {
+        parentFolder.items.push(file);
+        placedFileIds.add(file.id);
+      }
     }
   });
 
   uikitFiles.forEach((file) => {
     if (file.id && !placedFileIds.has(file.id)) {
-      if (file.folderId === effectiveRootId || !file.folderId) {
+      if (
+        allRootBucketIds.has(file.folderId) ||
+        file.folderId === effectiveRootId ||
+        !file.folderId
+      ) {
         rootItems.push(file);
       }
     }

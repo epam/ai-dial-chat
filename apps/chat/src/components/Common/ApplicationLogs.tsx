@@ -18,11 +18,7 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  DialButton,
-  DialNeutralButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const LogsHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -93,26 +89,17 @@ const LogsFooter = () => {
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
       <Tooltip tooltip={t('Reload logs')}>
-        <DialButton
+        <DialGhostIconButton
           onClick={uploadLogs}
           data-qa="application-reload-logs"
           disabled={isLogsLoading}
-          iconBefore={
-            <IconRefresh
-              className={classNames(
-                isLogsLoading
-                  ? 'text-controls-disable'
-                  : 'text-secondary hover:text-accent-primary',
-              )}
-            />
-          }
+          icon={<IconRefresh />}
         />
       </Tooltip>
       {applicationLogs && (
         <Tooltip tooltip={t('Download logs')}>
           <DialNeutralButton
             label={t('Download')}
-            size={ElementSize.Small}
             onClick={() => downloadApplicationLogs(applicationLogs)}
             data-qa="application-download-logs"
             disabled={isLogsLoading}

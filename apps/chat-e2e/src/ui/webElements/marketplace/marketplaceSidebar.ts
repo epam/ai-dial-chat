@@ -1,3 +1,4 @@
+import { SideBarSelectors } from '@/src/ui/selectors';
 import { MarketplaceSideBarSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
@@ -19,4 +20,8 @@ export class MarketplaceSidebar extends BaseElement {
     }
     return this.marketplaceFilter;
   }
+
+  public closeButton = this.getChildElementBySelector(
+    SideBarSelectors.closeSidebar,
+  );
 }

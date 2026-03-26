@@ -281,10 +281,14 @@ export class BaseAssertion {
   public async assertElementColor(
     element: BaseElement | Locator,
     expectedColor: string,
+    expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     await expect
-      .soft(elementLocator, ExpectedMessages.entityBackgroundColorIsValid)
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.entityBackgroundColorIsValid,
+      )
       .toHaveCSS(Styles.color, expectedColor);
   }
 
@@ -571,5 +575,15 @@ export class BaseAssertion {
         ExpectedMessages.scrollPositionIsCorrect,
       )
       .toHaveJSProperty(scrollProperty, expectedValue);
+  }
+
+  public assertValueMatchObject(
+    actualValue: unknown,
+    expectedObject: Record<string, unknown> | Array<unknown>,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
+      .toMatchObject(expectedObject);
   }
 }

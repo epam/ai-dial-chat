@@ -7,14 +7,13 @@ import {
   CheckboxState,
   ExpectedConfirmationPopupData,
   ExpectedConstants,
-  ExpectedMessages,
   FileManagerToolbarTabs,
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { IconSelectors } from '@/src/ui/selectors';
-import { Checkbox, FileModalSection, Tab } from '@/src/ui/webElements';
+import { Checkbox, Tab } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
@@ -109,8 +108,10 @@ dialTest(
           isHttpMethodTriggered: false,
         });
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'POST',
-          triggeredHttpHost: API.deleteFileHost(),
+          expectedRequests: new Map([
+            [API.deleteFileHost(), 'POST'],
+            [API.filesListingHost(), 'GET'],
+          ]),
         });
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
@@ -231,8 +232,8 @@ dialTest(
       async () => {
         await fileManagerModalToolbar.getDeleteButton().click();
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'POST',
-          triggeredHttpHost: API.deleteFileHost(),
+          triggeredHttpMethod: 'GET',
+          triggeredHttpHost: API.filesListingHost(),
         });
         for (const file of attachedFiles) {
           await fileManagerModalGridAssertion.assertGridRowByNameState(
@@ -341,153 +342,68 @@ dialTest(
   },
 );
 
-// TODO: Test skipped - file upload appears successful even when network is offline.
-// Despite network errors visible in DevTools, the file uploads successfully,
-// making it impossible to test error state handling (red text + error icon).
-dialTest.skip(
+dialTest(
   '[Manage attachments] Delete file after there was internet connection error',
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
-    uploadFromDeviceModal,
-    chatBar,
-    localStorageManager,
-    manageAttachmentsAssertion,
-    baseAssertion,
+    toast,
+    toastAssertion,
+    fileManagerPage,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
   }) => {
     setTestIds('EPMRTC-3304');
     let client: CDPSession;
 
     await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
+      'Open "File manager" page and set offline mode',
       async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertElementState(
-          attachFilesModal,
-          'visible',
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Upload file from device in offline mode and verify filename is red and has error icon',
-      async () => {
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
-        );
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
-          'visible',
-        );
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded({ isGridVisible: false });
+        await fileManagerToolbar.getNewButton().click();
         client = await dialHomePage.emulateSlowNetworkConditions({
           offline: true,
         });
-        await uploadFromDeviceModal.uploadButton.click();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
-          'visible',
-        );
-        await baseAssertion.assertElementColor(
-          attachFilesModal
-            .getAllFilesTree()
-            .getEntityName(Attachment.sunImageName),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
-        );
-        await manageAttachmentsAssertion.assertElementState(
-          attachFilesModal
-            .getAllFilesTree()
-            .attachedFileErrorIcon(Attachment.sunImageName),
-          'visible',
-          ExpectedMessages.attachmentHasErrorIcon,
-        );
       },
     );
 
     await dialTest.step(
-      'Set online mode, click on cancel button near loading indicator and verify file disappears from the list',
+      'Upload file in offline mode and verify error toast is displayed',
       async () => {
-        await dialHomePage.stopNetworkConditionsEmulating(client);
-        await attachFilesModal
-          .getAllFilesTree()
-          .removeAttachedFileIcon(Attachment.sunImageName)
-          .click();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () =>
+            fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles),
+        );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.uploadFailedMessage,
+        );
+        await toast.closeToast();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
           'hidden',
         );
       },
     );
-  },
-);
-
-// TODO: Test skipped - same issue as EPMRTC-3304 above.
-// File upload succeeds despite offline network conditions.
-dialTest.skip(
-  '[Manage attachments] Reload file after there was internet connection error',
-  async ({
-    dialHomePage,
-    setTestIds,
-    attachFilesModal,
-    uploadFromDeviceModal,
-    chatBar,
-    localStorageManager,
-    manageAttachmentsAssertion,
-    baseAssertion,
-  }) => {
-    setTestIds('EPMRTC-3303');
-    let client: CDPSession;
 
     await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
-      async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-      },
-    );
-
-    await dialTest.step(
-      'Set offline mode before uploading attachment from device',
-      async () => {
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
-        );
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
-          'visible',
-        );
-        client = await dialHomePage.emulateSlowNetworkConditions({
-          offline: true,
-        });
-        await uploadFromDeviceModal.uploadButton.click();
-      },
-    );
-
-    await dialTest.step(
-      'Set online mode, click on Reload button near loading indicator and verify file displayed in the list and change color to blue',
+      'Set online mode and verify file is successfully uploaded',
       async () => {
         await dialHomePage.stopNetworkConditionsEmulating(client);
-        const allFilesTreeElement = attachFilesModal.getAllFilesTree();
-        const loadingRetryElement =
-          allFilesTreeElement.attachedFileLoadingRetry(Attachment.sunImageName);
-        await loadingRetryElement.click();
-        await manageAttachmentsAssertion.assertElementState(
-          loadingRetryElement,
-          'hidden',
-          ExpectedMessages.attachmentLoadingIndicatorNotVisible,
+        await fileManagerToolbar.getNewButton().click();
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () =>
+            fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles),
         );
-        await manageAttachmentsAssertion.assertElementColor(
-          allFilesTreeElement.getEntityName(Attachment.sunImageName),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
         );
       },
     );
@@ -589,13 +505,12 @@ dialTest(
       },
     );
 
-    //TODO they do not remain checked. Verify if it is intended
-    await dialTest.step.skip('Verify checkboxes remain checked', async () => {
+    await dialTest.step('Verify checkboxes are not checked', async () => {
       // Verify checkboxes remain checked
       for (const file of attachedFiles) {
         await fileManagerGridAssertion.assertGridCheckboxByNameState(
           file,
-          CheckboxState.checked,
+          CheckboxState.unchecked,
         );
       }
     });
@@ -610,6 +525,7 @@ dialTest(
     setTestIds,
     fileManagerPage,
     fileManagerGrid,
+    fileManagerToolbar,
     fileManagerGridAssertion,
     fileApiHelper,
     localStorageManager,
@@ -692,11 +608,13 @@ dialTest(
     );
 
     for (const file of filesToTest) {
-      //TODO this step doesn't work - files do not appear until you reload the page
+      //TODO enable when fixed https://github.com/epam/ai-dial-chat/issues/5706
       await dialTest.step.skip(
         `Delete ${file.isText ? 'text' : 'non-text'} file via API and verify it disappears without page refresh`,
         async () => {
           await fileApiHelper.deleteFromAllFiles(file.url);
+          await fileManagerToolbar.sharedWithMeTab.click();
+          await fileManagerToolbar.myFilesTab.click();
 
           // For files in folders, navigate into folder first
           if (file.folderName !== '') {

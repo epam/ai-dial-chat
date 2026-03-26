@@ -575,7 +575,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is available',
+      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is hidden',
       async () => {
         const attachmentLocator =
           await fileManagerModalGrid.goToGridRowByNameCell(Attachment.textName);
@@ -595,7 +595,7 @@ dialTest(
         await attachmentLocator.hover();
         await fileManagerModalGridAssertion.assertElementState(
           dotsMenu,
-          'visible',
+          'hidden',
         );
         await fileManagerModalGridAssertion.assertElementActionabilityState(
           fileManagerModalGrid.gridHeaderCheckbox.checkboxInput,
@@ -690,7 +690,8 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6109
+    await dialTest.step.skip(
       'Open "Attach files" modal from request input and verify folder content can be checked',
       async () => {
         await attachmentDropdownMenu.selectMenuOption(

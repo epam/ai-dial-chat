@@ -30,6 +30,8 @@ export const ExpectedConstants = {
   renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
+  localBucket: 'local',
+  localFolderIdPath: () => `conversations/${ExpectedConstants.localBucket}`,
   signInButtonTitle: 'Sign in with Credentials',
   talkTo: 'Talk to',
   model: 'Model',
@@ -370,6 +372,8 @@ export const ExpectedConstants = {
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
   failedToMoveFileMessage: 'Failed to move files. Please try again later.',
   uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
+  uploadFailedMessage:
+    'Upload failedPlease check your internet connection and try again.',
 };
 
 export enum Types {
@@ -518,6 +522,7 @@ export const API = {
   shareEntityHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
+  revokeAccessHost: '/api/share/revoke',
   installedEntityFolder: 'clientdata',
   installedDeploymentsFile: 'installed_deployments.json',
   installedToolsetsFile: 'installed_toolsets.json',
@@ -598,6 +603,7 @@ export const Attachment = {
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
   appIconSvg: 'appIcon.svg',
+  sttAudioName: 'stt_audio.mp3',
 };
 
 export enum Side {

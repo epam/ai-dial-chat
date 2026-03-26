@@ -144,13 +144,16 @@ export const ChatInputMessage = Inversify.register(
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+    const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const configurationSchema = useAppSelector((state) =>
       ChatSelectors.selectConfigurationSchemaByModelId(
         state,
         selectedConversations[0]?.model.id,
+        modelsMap,
       ),
     );
+
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
     );
@@ -162,6 +165,9 @@ export const ChatInputMessage = Inversify.register(
     );
     const disabledInputFeatureData = useAppSelector((state) =>
       SettingsSelectors.selectFeatureData(state, Feature.DisabledSend),
+    );
+    const isChatInputBorderEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.ChatInputBorder),
     );
 
     const shouldRegenerate =
@@ -554,7 +560,10 @@ export const ChatInputMessage = Inversify.register(
         )}
       >
         <div
-          className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
+          className={classNames(
+            'relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
+            isChatInputBorderEnabled && 'border border-primary',
+          )}
           data-qa="message"
         >
           <AdjustedTextarea

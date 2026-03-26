@@ -1376,7 +1376,6 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
         }
       };
 
-      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       const isShouldLogout =
         signInOptions?.validationUserEmail &&
         AuthSelectors.selectIsShouldLogout(
@@ -1391,7 +1390,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
 
         return;
       }
+      const explicitToken =
+        typeof signInOptions?.explicitToken === 'string'
+          ? signInOptions.explicitToken.trim()
+          : '';
+      if (explicitToken) {
+        await signIn('credentials', {
+          accessToken: explicitToken,
+          redirect: false,
+          provider: signInOptions?.signInProvider,
+        });
+        return;
+      }
 
+      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       if (isShouldLogin) {
         login();
       }

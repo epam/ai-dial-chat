@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ChatSelectors,
   ConversationsSelectors,
+  ModelsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
@@ -79,16 +80,20 @@ export const ChatStarters = memo(function ChatStarters() {
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
   const schema = useAppSelector((state) =>
     ChatSelectors.selectConfigurationSchemaByModelId(
       state,
       selectedConversations[0]?.model.id,
+      modelsMap,
     ),
   );
   const isSchemaLoading = useAppSelector((state) =>
     ChatSelectors.selectIsConfigurationSchemaLoading(
       state,
       selectedConversations[0]?.model.id,
+      modelsMap,
     ),
   );
 

@@ -213,7 +213,6 @@ export const ChatSettingsModalSelectors = {
 
 export const TalkToAgentDialogSelectors = {
   talkToAgentModal: '[data-qa="talk-to-agent"]',
-  searchAgent: '[data-qa="search-agents"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
   goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
   myAgentsTab: '[data-qa="workspace"]',
@@ -378,7 +377,6 @@ export const ReplaceConfirmationModalSelectors = {
 export const UploadProgressDialogSelectors = {
   title: 'div:has-text("Uploading items")',
   itemName: '#name',
-  fileTypeIcon: '[aria-label="File type icon"]',
   uploadingIndicator: '[data-qa="uploading-indicator"]',
   uploadingItemsCount: '[data-qa="uploading-items-count"]',
 };

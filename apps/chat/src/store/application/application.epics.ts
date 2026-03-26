@@ -489,18 +489,16 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
             ? true
             : undefined;
 
-          actions.push(
-            of(
-              ApplicationActions.getSuccess({
+          const successAction = acceptSharedWithMe
+            ? ApplicationActions.setAppDetails() // Avoid to set app details on accepting share. We need them only for the editor.
+            : ApplicationActions.getSuccess({
                 ...application,
-                sharedWithMe:
-                  acceptSharedWithMe ?? modelFromState?.sharedWithMe,
-                permissions:
-                  payload.acceptSharePermissions ?? modelFromState?.permissions,
+                sharedWithMe: modelFromState?.sharedWithMe,
+                permissions: modelFromState?.permissions,
                 isShared: modelFromState?.isShared,
-              }),
-            ),
-          );
+              });
+
+          actions.push(of(successAction));
 
           if (!modelFromState) {
             actions.push(
@@ -759,25 +757,22 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.enterEditMode.type),
     switchMap(({ payload }) => {
-      const { entity, applicationType, detailedApplicationTypeSchemaId } =
-        payload;
+      const { entity, applicationType } = payload;
 
       const selectedConversationIds =
         ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-      const initialActions: AppAction[] = [
+      const initialAction$ = of(
         ApplicationActions.setReturnConversationIds(
           selectedConversationIds.filter((id) => !isEntityIdLocal({ id })),
         ),
-      ];
+      );
 
       const actions: AppAction[] = [
         ApplicationActions.get({ applicationId: entity.id }),
       ];
 
-      const needSchema =
-        !isApplicationType(applicationType) &&
-        detailedApplicationTypeSchemaId !== applicationType;
+      const needSchema = !isApplicationType(applicationType);
 
       if (needSchema) {
         actions.push(
@@ -785,16 +780,9 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
             applicationType,
           ),
         );
-      } else if (isApplicationType(applicationType)) {
-        initialActions.push(
-          ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
-        );
       }
 
       const dispatchActions$ = concat(...actions.map((action) => of(action)));
-      const dispatchInitialActions$ = concat(
-        ...initialActions.map((action) => of(action)),
-      );
 
       const waitForAppLoad$ = action$.pipe(
         ofType(ApplicationActions.getSuccess.type),
@@ -834,11 +822,7 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         map(() => ApplicationActions.enterEditModeComplete()),
       );
 
-      return concat(
-        dispatchInitialActions$,
-        dispatchActions$,
-        waitForData$,
-      ).pipe(
+      return concat(initialAction$, dispatchActions$, waitForData$).pipe(
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
@@ -941,6 +925,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       actions.push(of(UIActions.setEditorLoader(false)));
 
       if (!publicationUrl) {
+        actions.push(
+          of(
+            ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+          ),
+        );
         actions.push(of(ApplicationActions.setAppDetails()));
       }
 

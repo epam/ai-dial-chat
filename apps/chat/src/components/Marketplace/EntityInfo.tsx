@@ -43,7 +43,7 @@ export function EntityInfo({ entityInfo }: Props) {
         </button> */}
       </div>
 
-      <div className="flex gap-12 text-sm">
+      <div className="flex flex-col gap-6 text-sm sm:flex-row sm:gap-12">
         <InfoColumn infoLabel={t('Author')} dataQa="author">
           {entityInfo?.author ?? t('Unknown')}
         </InfoColumn>

@@ -15,6 +15,7 @@ export const ExpectedMessages = {
   sendMessageButtonIsNotVisible:
     'Send message button is not visible in chat input',
   conversationsCountIsValid: 'Conversations count is valid',
+  conversationsListIsValid: 'Conversations list is valid',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
   folderIsNotVisible: 'Folder is not visible',
@@ -254,6 +255,8 @@ export const ExpectedMessages = {
   responseTextIsValid: 'Response text is valid for entity: ',
   imageUrlReturnedInResponse:
     'Image url is returned in the response for model: ',
+  audioUrlReturnedInResponse:
+    'Audio url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
   attachmentIsSuccessfullyDownloaded:
     'Conversation attachment is successfully downloaded',
@@ -298,7 +301,6 @@ export const ExpectedMessages = {
   attachmentsAreGrouped: 'Attachments are grouped',
   attachmentIsVisible: 'Attachment is visible',
   attachmentIsHidden: 'Attachment is hidden',
-  attachFilesModalIsOpened: 'Attach files modal dialog is opened',
   supportedTypesLabelIsCorrect: 'Supported types label is valid',
   fileIsUploaded: 'File is uploaded',
   fileIsNotUploaded: 'File is not uploaded',
@@ -481,4 +483,5 @@ export const MarketplaceExpectedMessages = {
   agentIsVisible: (name: string) => `Agent ${name} is visible in Marketplace`,
   filteredAgentsAreValid: 'Filtered agents are valid',
   filterOptionsAreValid: 'Filter options are valid',
+  agentMenuOptionsAreValid: 'Agent menu options are valid',
 };

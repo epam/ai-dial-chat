@@ -59,6 +59,7 @@ dialTest(
     let marketplaceAgentElement: BaseElement;
     let removeBookmarkIcon: BaseElement;
     let configAgents: DialAIEntityModel[];
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Prepare an application with two versions available in the "Marketplace"',
@@ -91,7 +92,8 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         agentToAddElement =
           await marketplaceEntitiesSection.findEntityElement(appName);
         const addBookmarkIcon =
@@ -226,7 +228,7 @@ dialTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         await workspaceAgentElement.click();
         await entityDetailsModalAssertion.assertEntityVersion(
           threeSortedVersions[0],
@@ -411,7 +413,7 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         agentToAddElement =
           await marketplaceEntitiesSection.findEntityElement(appName);
         await agentToAddElement.click();
@@ -539,7 +541,7 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         agentToAddElement =
           await marketplaceEntitiesSection.findEntityElement(appName);
         await agentToAddElement.click();

@@ -180,7 +180,6 @@ export const QuickAppForm = () => {
         label={t('Instructions')}
         placeholder={t('Instructions of your application')}
         rows={4}
-        className="resize-none"
         id="instructions"
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}

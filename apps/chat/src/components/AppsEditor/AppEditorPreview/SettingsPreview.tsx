@@ -22,7 +22,7 @@ import {
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
-import { ApplicationType } from '@/src/types/applications';
+import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -116,7 +116,14 @@ const ChatPreview = () => {
         isAppDeploymentInProgress ? (
           <div className="flex size-full flex-col items-center justify-center gap-4">
             <Spinner size={60} />
-            <span>{t('Deploying...')}</span>
+            <span>
+              {modelFromState?.functionStatus === ApplicationStatus.REDEPLOYING
+                ? t('Redeploying...')
+                : modelFromState?.functionStatus ===
+                    ApplicationStatus.UNDEPLOYING
+                  ? t('Undeploying...')
+                  : t('Deploying...')}
+            </span>
           </div>
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-4">

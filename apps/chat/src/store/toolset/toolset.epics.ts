@@ -6,6 +6,7 @@ import {
   defer,
   filter,
   forkJoin,
+  from,
   iif,
   map,
   mergeMap,
@@ -34,6 +35,7 @@ import {
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
+import { signInToolset } from '@/src/utils/auth/auth-toolset';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -61,8 +63,15 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
-import { ToolsetEditorQuery } from '@/src/constants/toolsets';
+import {
+  QUERY_VALUE_FALSE,
+  QUERY_VALUE_TRUE,
+  Routes,
+} from '@/src/constants/routes';
+import {
+  ToolsetEditorQuery,
+  ToolsetLoginQuery,
+} from '@/src/constants/toolsets';
 
 import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
@@ -741,10 +750,27 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
 
             return concat(
               autoUpdateAction$,
-              defer(() => {
-                window.location.assign(url.toString());
-                return EMPTY;
-              }),
+              defer(() =>
+                from(signInToolset(url.href)).pipe(
+                  switchMap((isPopup) =>
+                    !isPopup
+                      ? of(ToolsetActions.logInToolsetFail())
+                      : refreshToolset$(payload.toolset.id, state$.value).pipe(
+                          mergeMap((actions) =>
+                            concat(
+                              of(actions),
+                              of(
+                                ToolsetActions.logInToolsetSuccess({
+                                  toolsetId: payload.toolset.id,
+                                  authLevel: payload.authLevel,
+                                }),
+                              ),
+                            ),
+                          ),
+                        ),
+                  ),
+                ),
+              ),
             );
           }
 
@@ -775,47 +801,93 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
 
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
-          const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
-          const isPublic =
-            isEntityIdPublic({ id: payload.toolsetId }) ||
-            isPredefinedEntity({ id: payload.toolsetId });
-          const name = getEntityNameFromId(payload.toolsetId, {
-            removeVersion: true,
-          });
-          const version = getVersionFromId(payload.toolsetId);
-
-          const toastAction$ = of(
-            UIActions.showSuccessToast(
-              translate(
-                getLoginSuccessMessage(
-                  (payload.isAdmin ?? isAdmin) && isPublic,
-                  payload.authLevel,
-                ),
-                { name, version },
-              ),
-            ),
-          );
-
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            void router.push(callbackUrl);
+            if (payload.isPopup) {
+              void router.push(
+                {
+                  pathname: router.pathname,
+                  query: {
+                    [ToolsetLoginQuery.LoginComplete]: QUERY_VALUE_TRUE,
+                  },
+                },
+                undefined,
+                { shallow: true },
+              );
+            } else {
+              void router.push(callbackUrl);
+            }
 
             return concat(
-              toastAction$,
-              of(ToolsetActions.logInToolsetSuccess()),
+              of(
+                ToolsetActions.logInToolsetSuccess({
+                  toolsetId: payload.toolsetId,
+                  authLevel: payload.authLevel,
+                  isAdmin: payload.isAdmin,
+                }),
+              ),
             );
           }
 
           return refreshToolset$(payload.toolsetId, state$.value).pipe(
-            mergeMap((actions) => concat(of(actions), toastAction$)),
+            mergeMap((actions) =>
+              concat(
+                of(actions),
+                of(
+                  ToolsetActions.logInToolsetSuccess({
+                    toolsetId: payload.toolsetId,
+                    authLevel: payload.authLevel,
+                    isAdmin: payload.isAdmin,
+                  }),
+                ),
+              ),
+            ),
           );
         }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
           if (payload.authType === ToolsetAuthTypes.OAUTH) {
-            void router.push(new URL(callbackUrl));
+            if (payload.isPopup) {
+              void router.push(
+                {
+                  pathname: router.pathname,
+                  query: {
+                    [ToolsetLoginQuery.LoginComplete]: QUERY_VALUE_FALSE,
+                  },
+                },
+                undefined,
+                { shallow: true },
+              );
+            } else {
+              void router.push(new URL(callbackUrl));
+            }
           }
           return concat(of(ToolsetActions.logInToolsetFail()));
         }),
+      );
+    }),
+  );
+
+const loginToolsetSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ToolsetActions.logInToolsetSuccess.type),
+    map(({ payload }) => {
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+      const isPublic =
+        isEntityIdPublic({ id: payload.toolsetId }) ||
+        isPredefinedEntity({ id: payload.toolsetId });
+      const name = getEntityNameFromId(payload.toolsetId, {
+        removeVersion: true,
+      });
+      const version = getVersionFromId(payload.toolsetId);
+
+      return UIActions.showSuccessToast(
+        translate(
+          getLoginSuccessMessage(
+            (payload.isAdmin ?? isAdmin) && isPublic,
+            payload.authLevel,
+          ),
+          { name, version },
+        ),
       );
     }),
   );
@@ -862,6 +934,7 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
                     ),
                   ),
                 ),
+                of(ToolsetActions.logOutToolsetSuccess()),
               ),
             ),
           );
@@ -1039,6 +1112,7 @@ export const ToolsetEpics = combineEpics(
   //Signin
   startSignInProcessEpic,
   logInToolsetEpic,
+  loginToolsetSuccessEpic,
   loginToolsetFailEpic,
   logOutToolsetEpic,
   logOutToolsetFailEpic,
