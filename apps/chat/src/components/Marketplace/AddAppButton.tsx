@@ -48,6 +48,7 @@ export function AddAppButton() {
   const openEditor = useCallback(
     (type: string) => {
       void router.push(getAppEditorCreateModeRoute(type));
+      dispatch(ApplicationActions.setAppDetails());
       dispatch(
         ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
       );
@@ -65,10 +66,10 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            openEditor(ApplicationType.CUSTOM_APP);
             dispatch(
               ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
             );
+            openEditor(ApplicationType.CUSTOM_APP);
           },
         },
         {
@@ -78,10 +79,10 @@ export function AddAppButton() {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            openEditor(ApplicationType.CODE_APP);
             dispatch(
               ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
             );
+            openEditor(ApplicationType.CODE_APP);
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
@@ -91,13 +92,11 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            if (detailedApplicationTypeSchema?.$id !== schema.id) {
-              dispatch(
-                ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-                  schema.id,
-                ),
-              );
-            }
+            dispatch(
+              ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+                schema.id,
+              ),
+            );
             openEditor(schema.id);
           },
         })) ?? []),
