@@ -1,3 +1,4 @@
+import { ChatEventsModal } from '@/src/components/Chat/ChatEventsModal/ChatEventsModal';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { InfoModal } from '@/src/components/Common/InfoModal';
 import { ReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
@@ -31,6 +32,7 @@ export function ChatModalsManager() {
       <ToolsetDialogs />
       <DeleteMarketplaceEntityDialog />
       <SettingDialog />
+      <ChatEventsModal />
     </>
   );
 }

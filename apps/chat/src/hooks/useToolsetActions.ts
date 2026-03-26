@@ -124,7 +124,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(MarketplaceActions.setLoginEntity(toolset));
+      dispatch(MarketplaceActions.setLoginEntity({ toolset }));
     },
     [dispatch, toolset],
   );

@@ -24,6 +24,7 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
+  ChatEventsActions,
   ConversationsActions,
   FilesActions,
   MarketplaceActions,
@@ -79,8 +80,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
-        // TODO: uncomment when core api for chat events is ready
-        // of(ChatEventsActions.subscribe()),
+        of(ChatEventsActions.subscribe()),
       ];
     case PageType.AppsEditor:
       return [
@@ -91,6 +91,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
+        of(ChatEventsActions.subscribe()),
       ];
     default:
       return [

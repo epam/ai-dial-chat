@@ -165,13 +165,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         />
       </FormSection>
 
-      <FormSection
-        title={t('Allowed tools')}
-        subtitle={t(
-          'The list of tools will be available after filling in the definition and authentication section',
-        )}
-        className="px-3 pt-4 md:px-5"
-      >
+      <FormSection title={t('Allowed tools')} className="px-3 pt-4 md:px-5">
         <Controller
           name="allowedTools"
           control={control}
