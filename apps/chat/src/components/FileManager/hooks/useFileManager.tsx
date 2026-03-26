@@ -279,15 +279,8 @@ export const useFileManager = ({
         pathRootAlias = MY_FILES_SECTION;
         break;
       case DialFileManagerTabs.Shared:
+        filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
-        filteredFiles = [
-          ...filterFilesByFilters(files, SharedWithMeFilters),
-          ...files.filter((file) =>
-            filteredFolders.some((folder) =>
-              file.id.startsWith(`${folder.id}/`),
-            ),
-          ),
-        ];
         pathRootAlias = SHARED_WITH_ME_FILES_SECTION;
         visibleColumns.push(FileManagerColumnKey.Author);
         break;

@@ -21,9 +21,11 @@ import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { FALLBACK_CONTENT_TYPE } from '@/src/constants/file';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { constructPath, getMimeTypeByFileName } from '../file';
 import { getFileRootId } from '../id';
+import { BucketService } from './bucket-service';
 
 import {
   DialCopiedItem,
@@ -45,6 +47,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
     ? ApiUtils.decodeApiUrl(file.parentPath)
     : undefined;
+  const userBucket = BucketService.getBucket();
 
   return {
     id: constructPath(ApiKeys.Files, file.bucket, relativePath, file.name),
@@ -57,6 +60,8 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     serverSynced: true,
     updatedAt: file.updatedAt,
     permissions: file.permissions,
+    sharedWithMe:
+      file.bucket !== userBucket && file.bucket !== PUBLIC_URL_PREFIX,
   };
 };
 

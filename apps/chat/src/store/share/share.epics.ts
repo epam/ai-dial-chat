@@ -981,6 +981,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .map((res) => ({
                   ...res,
                   sharedWithMe: true,
+                  isRootSharedItem: true,
                 })),
               reviewFolder: codeEditorFolderOnReview,
             }),
@@ -991,6 +992,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               folders: folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
+                isRootSharedItem: true,
               })) as FolderInterface[],
             }),
           );

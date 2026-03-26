@@ -81,7 +81,7 @@ const PermissionMap: Record<SharePermission, DialFilePermission> = {
 
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
   const fullPath = file.id;
-  const folderId = file.sharedWithMe ? '' : file.folderId;
+  const folderId = file.isRootSharedItem ? '' : file.folderId;
 
   const parentPath = file.folderId || null;
 
