@@ -168,7 +168,11 @@ export const marketplaceSlice = createSlice({
     },
     setLoginEntity: (
       state,
-      { payload }: PayloadAction<ToolsetModel | undefined>,
+      {
+        payload,
+      }: PayloadAction<
+        { toolset: ToolsetModel; disableAdminView?: boolean } | undefined
+      >,
     ) => {
       state.loginEntity = payload;
     },
