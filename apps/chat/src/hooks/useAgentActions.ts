@@ -14,6 +14,7 @@ import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
+  ApplicationTypesSchemasActions,
   MarketplaceActions,
   PublicationActions,
   ShareActions,
@@ -104,6 +105,10 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.preventDefault();
       e.stopPropagation();
       const applicationType = getApplicationType(entity);
+      dispatch(ApplicationActions.setAppDetails());
+      dispatch(
+        ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+      );
       dispatch(
         ApplicationActions.enterEditMode({
           entity,
