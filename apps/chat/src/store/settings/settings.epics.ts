@@ -91,6 +91,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
+        of(ChatEventsActions.subscribe()),
       ];
     default:
       return [

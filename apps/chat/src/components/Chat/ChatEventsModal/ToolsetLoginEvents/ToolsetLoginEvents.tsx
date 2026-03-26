@@ -23,11 +23,7 @@ import {
   ToolsetActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  AuthSelectors,
-  ChatEventsSelectors,
-  ToolsetSelectors,
-} from '@/src/store/selectors';
+import { ChatEventsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -57,7 +53,6 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const areToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
   const isReporting = useAppSelector(ChatEventsSelectors.selectIsReporting);
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const loginToolsets = useMemo(
     () =>
@@ -76,11 +71,13 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
     (t: ToolsetModel) => {
       const isPublic = isEntityIdPublic(t) || isPredefinedEntity(t);
 
-      if (
-        (isPublic && isAdmin) ||
-        t.authSettings?.authenticationType !== ToolsetAuthTypes.OAUTH
-      ) {
-        dispatch(MarketplaceActions.setLoginEntity(t));
+      if (t.authSettings?.authenticationType !== ToolsetAuthTypes.OAUTH) {
+        dispatch(
+          MarketplaceActions.setLoginEntity({
+            toolset: t,
+            disableAdminView: true,
+          }),
+        );
       } else {
         dispatch(
           ToolsetActions.startSignInProcess({
@@ -92,7 +89,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
         );
       }
     },
-    [dispatch, isAdmin],
+    [dispatch],
   );
 
   const handleDeclineAllClick = useCallback(() => {
