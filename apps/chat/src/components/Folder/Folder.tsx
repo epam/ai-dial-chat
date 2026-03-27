@@ -76,7 +76,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { CommonI18nKeys } from '../../constants/i18n';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
