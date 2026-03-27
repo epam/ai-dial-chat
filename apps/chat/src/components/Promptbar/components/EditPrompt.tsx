@@ -29,6 +29,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
@@ -92,7 +94,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
         dispatch(
           UIActions.showErrorToast(
-            t('Prompt with name "{{newName}}" already exists in this folder.', {
+            t(PromptBarI18nKeys.AlreadyExistsInThisFolder, {
               ns: Translation.PromptBar,
               newName,
             }),
@@ -104,7 +106,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       if (doesHaveDotsInTheEnd(newName)) {
         dispatch(
           UIActions.showErrorToast(
-            t('Using a dot at the end of a name is not permitted.'),
+            t(PromptBarI18nKeys.UsingADotAtTheEndOfANameIsNotPermitted),
           ),
         );
         return;
@@ -194,7 +196,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
             className="mb-1 flex text-xs text-secondary"
             htmlFor="promptName"
           >
-            {t('Name')}
+            {t(PromptBarI18nKeys.Name)}
             <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
@@ -205,7 +207,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
                 'border-error hover:border-error focus:border-error',
               inputClassName,
             )}
-            placeholder={t('A name for your prompt.')}
+            placeholder={t(PromptBarI18nKeys.NamePlaceholder)}
             value={name}
             required
             type="text"
@@ -217,8 +219,8 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
             isShown={isDotError}
             text={t(
               isDotError
-                ? 'Using a dot at the end of a name is not permitted.'
-                : 'Please fill in all required fields',
+                ? PromptBarI18nKeys.UsingADotAtTheEndOfANameIsNotPermitted
+                : PromptBarI18nKeys.PleaseFillInAllRequiredFields,
             )}
           />
         </div>
@@ -228,13 +230,13 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
             className="mb-1 flex text-xs text-secondary"
             htmlFor="description"
           >
-            {t('Description')}
+            {t(PromptBarI18nKeys.Description)}
           </label>
           <textarea
             name="description"
             className={inputClassName}
             style={{ resize: 'none' }}
-            placeholder={t('A description for your prompt.')}
+            placeholder={t(PromptBarI18nKeys.DescriptionPlaceholder)}
             value={description}
             onChange={descriptionOnChangeHandler}
             rows={3}
@@ -243,16 +245,14 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
         </div>
         <div>
           <label className="mb-1 flex text-xs text-secondary" htmlFor="content">
-            {t('Prompt')}
+            {t(PromptBarI18nKeys.Prompt)}
             <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <textarea
             name="content"
             className={inputClassName}
             style={{ resize: 'none' }}
-            placeholder={t(
-              'Prompt content. Use {{}} to denote a variable.\nEx: {{name|defaultValue}} is a {{adjective}} {{noun|defaultValue}}',
-            )}
+            placeholder={t(PromptBarI18nKeys.ContentUseVariables)}
             value={content}
             onChange={contentOnChangeHandler}
             onBlur={contentOnBlurHandler}
@@ -266,7 +266,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       <div className="flex justify-end px-3 md:px-6">
         <Tooltip
           isTriggerClickable
-          tooltip={t('Please fill in all required fields')}
+          tooltip={t(PromptBarI18nKeys.PleaseFillInAllRequiredFields)}
           hideTooltip={!saveDisabled}
         >
           <DialPrimaryButton
@@ -274,19 +274,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
             data-qa="save-prompt"
             onClick={(e) => handleSubmit(e, prompt)}
             disabled={saveDisabled}
-            label={t('Save')}
+            label={t(PromptBarI18nKeys.Save)}
           />
         </Tooltip>
       </div>
       {confirmClose && (
         <ConfirmDialog
           isOpen
-          heading={t('Unsaved changes')}
-          description={t(
-            'There are unsaved changes. Do you want to save them before closing?',
-          )}
-          confirmLabel={t('Save')}
-          cancelLabel={t("Don't save")}
+          heading={t(PromptBarI18nKeys.UnsavedChanges)}
+          description={t(PromptBarI18nKeys.UnsavedChangesCaption)}
+          confirmLabel={t(PromptBarI18nKeys.Save)}
+          cancelLabel={t(PromptBarI18nKeys.NotSave)}
           onClose={handleConfirmClose}
         />
       )}

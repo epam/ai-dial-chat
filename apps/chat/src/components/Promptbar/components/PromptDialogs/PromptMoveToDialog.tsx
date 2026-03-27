@@ -13,6 +13,7 @@ import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
@@ -54,7 +55,7 @@ const PromptMoveToDialogComponent: FC<PromptMoveToDialogProps> = ({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t('Prompt with name "{{name}}" already exists in this folder.', {
+            t(PromptBarI18nKeys.AlreadyExistsInThisFolder, {
               ns: Translation.PromptBar,
               name: moveToPrompt.name,
             }),

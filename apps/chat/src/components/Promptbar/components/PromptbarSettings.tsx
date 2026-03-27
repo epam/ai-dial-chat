@@ -23,6 +23,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
 import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -51,12 +52,10 @@ export function PromptbarSettings() {
 
   const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
-  const deleteTerm = isSelectMode ? 'selected' : 'all';
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Select all'),
+        name: t(PromptBarI18nKeys.SelectAll),
         dataQa: 'select-all',
         Icon: IconSquareCheck,
         onClick: () => {
@@ -65,7 +64,7 @@ export function PromptbarSettings() {
         display: isMyItemsExist,
       },
       {
-        name: t('Unselect all'),
+        name: t(PromptBarI18nKeys.UnselectAll),
         dataQa: 'unselect-all',
         Icon: IconSquareOff,
         onClick: () => {
@@ -74,7 +73,7 @@ export function PromptbarSettings() {
         display: isSelectMode,
       },
       {
-        name: t('Create new folder'),
+        name: t(PromptBarI18nKeys.CreateNewFolder),
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
@@ -95,7 +94,7 @@ export function PromptbarSettings() {
         display: !isSelectMode,
       },
       {
-        name: t('Import prompts'),
+        name: t(PromptBarI18nKeys.ImportPrompts),
         onClick: (promptsJSON: unknown) => {
           const typedJson = promptsJSON as { content: unknown };
           dispatch(
@@ -111,7 +110,7 @@ export function PromptbarSettings() {
       },
       {
         display: isMyItemsExist && !isSelectMode,
-        name: t('Export prompts'),
+        name: t(PromptBarI18nKeys.ExportPrompts),
         dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: () => {
@@ -119,7 +118,11 @@ export function PromptbarSettings() {
         },
       },
       {
-        name: t(`Delete ${deleteTerm} prompts`),
+        name: t(
+          isSelectMode
+            ? PromptBarI18nKeys.DeleteSelectedPrompts
+            : PromptBarI18nKeys.DeleteAllPrompts,
+        ),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -128,7 +131,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [collapsedSections, deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
+    [collapsedSections, dispatch, isMyItemsExist, isSelectMode, t],
   );
 
   return (
@@ -137,12 +140,18 @@ export function PromptbarSettings() {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t(`Confirm deleting ${deleteTerm} prompts`)}
-        description={t(
-          `Are you sure that you want to delete ${deleteTerm} prompts?`,
+        heading={t(
+          isSelectMode
+            ? PromptBarI18nKeys.ConfirmDeletingSelectedPrompts
+            : PromptBarI18nKeys.ConfirmDeletingAllPrompts,
         )}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
+        description={t(
+          isSelectMode
+            ? PromptBarI18nKeys.ConfirmDeletingSelectedPromptsCaption
+            : PromptBarI18nKeys.ConfirmDeletingAllPromptsCaption,
+        )}
+        confirmLabel={t(PromptBarI18nKeys.Delete)}
+        cancelLabel={t(PromptBarI18nKeys.Cancel)}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {

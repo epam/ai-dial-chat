@@ -20,6 +20,8 @@ import {
   PromptsSelectors,
 } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
@@ -111,12 +113,12 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   return (
     <>
       <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
-        <PromptField label="Name" dataQa="name">
+        <PromptField label={PromptBarI18nKeys.Name} dataQa="name">
           {prompt.name}
         </PromptField>
         {prompt.description && (
           <PromptField
-            label="Description"
+            label={PromptBarI18nKeys.Description}
             dataQa="description"
             valueClassName="whitespace-pre-wrap"
           >
@@ -125,7 +127,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
         )}
         {prompt.content && (
           <PromptField
-            label="Prompt"
+            label={PromptBarI18nKeys.Prompt}
             dataQa="content"
             valueClassName="whitespace-pre-wrap"
           >
