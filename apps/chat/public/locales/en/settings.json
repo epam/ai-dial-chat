@@ -1,1 +1,22 @@
-{}
+{
+  "Reporting an issue in progress...": "Reporting an issue in progress...",
+  "Report an issue": "Report an issue",
+  "Title": "Title",
+  "Description": "Description",
+  "Submit": "Submit",
+  "Theme": "Theme",
+  "Settings": "Settings",
+  "Custom logo": "Custom logo",
+  "Show chat full screen width": "Show chat full screen width",
+  "Chat width": "Chat width",
+  "ON": "ON",
+  "OFF": "OFF",
+  "Keyboard shortcuts": "Keyboard shortcuts",
+  "Save": "Save",
+  "Enter": "Enter",
+  "send messages": "send messages",
+  "Shift + Enter": "Shift + Enter",
+  "new line": "new line",
+  "Ctrl": "Ctrl",
+  "Start chat with": "Start chat with",
+}

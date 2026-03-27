@@ -21,6 +21,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { SettingsI18nKeys } from '../../constants/i18n';
 import { BYTES_IN_MB } from '@/src/constants/file';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
@@ -189,7 +190,9 @@ const SettingDialogView: FC = () => {
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="mb-4 text-base font-bold">{t('Settings')}</div>
+      <div className="mb-4 text-base font-bold">
+        {t(SettingsI18nKeys.Settings)}
+      </div>
       <div className="mb-4 flex flex-col gap-4">
         <ThemeSelect
           localTheme={localTheme}
@@ -205,7 +208,7 @@ const SettingDialogView: FC = () => {
                 : ((localLogoFile && localLogoFile.name) ??
                   customLogoLocalStoreName)
             }
-            title={t('Custom logo')}
+            title={t(SettingsI18nKeys.CustomLogo)}
             maxSelectableFileSize={BYTES_IN_MB * 0.5}
             isFormView
           />
@@ -218,20 +221,20 @@ const SettingDialogView: FC = () => {
 
         {screenState > ScreenState.SM && !isChatFullWidthByDefault && (
           <ToggleSwitchLabel
-            label={t('Chat width')}
+            label={t(SettingsI18nKeys.ChatWidth)}
             isOn={isChatFullWidthLocal}
-            labelText={t('Show chat full screen width')}
+            labelText={t(SettingsI18nKeys.ShowChatFullScreenWidth)}
             labelClassName="grow"
             handleSwitch={onChangeHandlerFullWidth}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
+            switchOnText={t(SettingsI18nKeys.ON)}
+            switchOFFText={t(SettingsI18nKeys.OFF)}
             isLabelOnRight
             className="mt-1"
           />
         )}
         {!isTouchable() && (
           <EnterTypeSelectLabeled
-            label={t('Keyboard shortcuts')}
+            label={t(SettingsI18nKeys.KeyboardShortcuts)}
             value={enterType}
             onValueChange={(value) => setEnterType(value as EnterType)}
           />
@@ -240,7 +243,7 @@ const SettingDialogView: FC = () => {
 
       <div className="flex justify-end">
         <DialPrimaryButton
-          label={t('Save')}
+          label={t(SettingsI18nKeys.Save)}
           onClick={handleSave}
           data-qa="save"
           ref={saveBtnRef}

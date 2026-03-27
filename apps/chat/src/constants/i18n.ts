@@ -16,6 +16,38 @@ export const HeaderI18nKeys = {
   Conversations: 'Conversations',
 };
 
+// markdown.json
+export enum MarkdownI18nKeys {
+  Copy = 'Copy',
+  Copied = 'Copied',
+  Download = 'Download',
+  EnterFileName = 'Enter file name',
+}
+
+// settings.json
+export enum SettingsI18nKeys {
+  ReportAnIssue = 'Report an issue',
+  Title = 'Title',
+  Description = 'Description',
+  ReportingAnIssueInProgress = 'Reporting an issue in progress...',
+  Submit = 'Submit',
+  Theme = 'Theme',
+  Settings = 'Settings',
+  CustomLogo = 'Custom logo',
+  ShowChatFullScreenWidth = 'Show chat full screen width',
+  ChatWidth = 'Chat width',
+  KeyboardShortcuts = 'Keyboard shortcuts',
+  Save = 'Save',
+  ON = 'ON',
+  OFF = 'OFF',
+  Enter = 'Enter',
+  SendMessages = 'send messages',
+  ShiftEnter = 'Shift + Enter',
+  NewLine = 'new line',
+  Ctrl = 'Ctrl',
+  StartChatWith = 'Start chat with',
+}
+
 // common.json
 export const CommonI18nKeys = {
   NotFound: '404',

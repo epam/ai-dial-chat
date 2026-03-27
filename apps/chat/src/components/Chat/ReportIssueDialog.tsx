@@ -22,6 +22,8 @@ import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ServiceSelectors } from '@/src/store/selectors';
 
+import { SettingsI18nKeys } from '../../constants/i18n';
+
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -81,7 +83,9 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
 
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showLoadingToast(t('Reporting an issue in progress...')),
+          UIActions.showLoadingToast(
+            t(SettingsI18nKeys.ReportingAnIssueInProgress),
+          ),
         );
         dispatch(ServiceActions.reportIssue({ title, description }));
         handleClose();
@@ -110,7 +114,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
       }}
     >
       <div className="flex justify-between pb-4 text-base font-bold">
-        {t('Report an issue')}
+        {t(SettingsI18nKeys.ReportAnIssue)}
       </div>
 
       <div className="mb-4">
@@ -118,7 +122,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
           className="mb-1 flex text-xs text-secondary"
           htmlFor="projectNameInput"
         >
-          {t('Title')}
+          {t(SettingsI18nKeys.Title)}
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input
@@ -140,7 +144,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
           className="mb-1 flex text-xs text-secondary"
           htmlFor="businessJustificationInput"
         >
-          {t('Description')}
+          {t(SettingsI18nKeys.Description)}
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <textarea
@@ -157,7 +161,10 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
         <EmptyRequiredInputMessage />
       </div>
       <div className="flex justify-end">
-        <DialPrimaryButton type="submit" label={t('Report an issue')} />
+        <DialPrimaryButton
+          type="submit"
+          label={t(SettingsI18nKeys.ReportAnIssue)}
+        />
       </div>
     </Modal>
   );
