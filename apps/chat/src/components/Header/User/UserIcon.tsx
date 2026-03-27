@@ -10,6 +10,9 @@ import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { readableColor } from 'polished';
+import randomColor from 'randomcolor';
+
 interface Props {
   userName?: string;
   iconSize?: number;
@@ -22,6 +25,13 @@ export const UserIcon = ({ iconSize = 28, className, userName }: Props) => {
   const [showFallbackIcon, setShowFallbackIcon] = useState(
     !session?.user?.image,
   );
+
+  const bg = randomColor({
+    luminosity: 'bright',
+    seed: session?.user?.email || '',
+  });
+
+  const textColor = readableColor(bg);
 
   const shortName = useMemo(() => {
     const [part1, part2] = session?.user?.name?.split(' ') ?? [];
@@ -41,7 +51,10 @@ export const UserIcon = ({ iconSize = 28, className, userName }: Props) => {
   return (
     <Tooltip tooltip={userName}>
       {showFallbackIcon ? (
-        <div className="flex size-[28px] items-center justify-center rounded-full bg-success text-[12px]/[16px] font-normal">
+        <div
+          className="flex size-[28px] items-center justify-center rounded-full text-[12px]/[16px] font-normal"
+          style={{ backgroundColor: bg, color: textColor }}
+        >
           {shortName}
         </div>
       ) : (
