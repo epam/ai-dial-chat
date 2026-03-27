@@ -751,7 +751,7 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
             return concat(
               autoUpdateAction$,
               defer(() =>
-                from(signInToolset(url.href)).pipe(
+                from(signInToolset(url.href, true)).pipe(
                   switchMap((isPopup) =>
                     !isPopup
                       ? of(ToolsetActions.logInToolsetFail())
@@ -793,7 +793,10 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
         authenticationType: payload.authType,
         credentialsLevel: payload.authLevel,
         ...(payload.authType === ToolsetAuthTypes.OAUTH
-          ? { code: payload.code as string }
+          ? {
+              code: payload.code as string,
+              redirectUri: getToolsetRedirectUri(),
+            }
           : { apiKey: payload.apiKey as string }),
       };
 
