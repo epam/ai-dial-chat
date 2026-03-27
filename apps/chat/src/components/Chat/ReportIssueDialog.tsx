@@ -22,7 +22,7 @@ import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ServiceSelectors } from '@/src/store/selectors';
 
-import { SettingsI18nKeys } from '../../constants/i18n';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
@@ -83,9 +83,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
 
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showLoadingToast(
-            t(SettingsI18nKeys.ReportingAnIssueInProgress),
-          ),
+          UIActions.showLoadingToast(t(SettingsI18nKeys.ReportingInProgress)),
         );
         dispatch(ServiceActions.reportIssue({ title, description }));
         handleClose();
@@ -114,7 +112,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
       }}
     >
       <div className="flex justify-between pb-4 text-base font-bold">
-        {t(SettingsI18nKeys.ReportAnIssue)}
+        {t(SettingsI18nKeys.ReportIssue)}
       </div>
 
       <div className="mb-4">
@@ -163,7 +161,7 @@ export const ReportIssueDialog: FC<Props> = ({ onClose }) => {
       <div className="flex justify-end">
         <DialPrimaryButton
           type="submit"
-          label={t(SettingsI18nKeys.ReportAnIssue)}
+          label={t(SettingsI18nKeys.ReportIssue)}
         />
       </div>
     </Modal>

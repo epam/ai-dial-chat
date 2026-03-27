@@ -223,7 +223,7 @@ const SettingDialogView: FC = () => {
           <ToggleSwitchLabel
             label={t(SettingsI18nKeys.ChatWidth)}
             isOn={isChatFullWidthLocal}
-            labelText={t(SettingsI18nKeys.ShowChatFullScreenWidth)}
+            labelText={t(SettingsI18nKeys.ShowChatFullScreen)}
             labelClassName="grow"
             handleSwitch={onChangeHandlerFullWidth}
             switchOnText={t(SettingsI18nKeys.ON)}

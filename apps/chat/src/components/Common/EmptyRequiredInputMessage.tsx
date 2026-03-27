@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { SettingsI18nKeys } from '../../constants/i18n';
+
 interface Props {
   text?: string;
   useDisplay?: boolean;
@@ -12,7 +14,7 @@ interface Props {
 }
 
 export const EmptyRequiredInputMessage = ({
-  text = 'Please fill in all required fields',
+  text = SettingsI18nKeys.PleaseFillInAllRequiredFields,
   useDisplay = false,
   className,
   isShown,
