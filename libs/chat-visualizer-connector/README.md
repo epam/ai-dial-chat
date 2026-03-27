@@ -36,6 +36,7 @@ interface CustomVisualizer {
   contentType: string;
   url: string;
   passAuthInfo?: boolean;
+  passExplicitToken?: boolean;
 }
 ```
 
@@ -65,6 +66,7 @@ interface ApplicationVisualizerConfig {
   contentType: string;
   url: string;
   passAuthInfo?: boolean;
+  passExplicitToken?: boolean;
 }
 ```
 
@@ -80,6 +82,43 @@ APPLICATION_VISUALIZERS={
 ```
 
 **Key difference:** The key in `APPLICATION_VISUALIZERS` must match the `applicationId` (from `message.model.id`) that generates the attachments.
+
+## Authentication Options
+
+Both `CUSTOM_VISUALIZERS` and `APPLICATION_VISUALIZERS` support optional flags to forward auth information from DIAL Chat into the visualizer via `layout` fields.
+
+### `passAuthInfo`
+
+When `true`, the current user's session data is included in the layout sent to the visualizer:
+
+| Layout field | Value                                     |
+| ------------ | ----------------------------------------- |
+| `logInHint`  | User's email address                      |
+| `providerId` | OAuth provider ID from the active session |
+
+### `passExplicitToken`
+
+When `true`, the access token supplied by the parent application in [overlay mode](`signInOptions.explicitToken`) is forwarded to the visualizer:
+
+| Layout field  | Value                              |
+| ------------- | ---------------------------------- |
+| `accessToken` | Bearer token from the overlay host |
+
+This is useful when the visualizer itself needs to call DIAL APIs and the chat is embedded as an overlay widget authenticated via an explicit token from the parent app. If no overlay token is present (e.g. standalone mode), `accessToken` is omitted.
+
+Both flags are independent and can be combined:
+
+```json
+{
+  "applicationId": {
+    "title": "MY_VISUALIZER",
+    "contentType": "application/vnd.custom+json",
+    "url": "https://my-visualizer.example.com",
+    "passAuthInfo": true,
+    "passExplicitToken": true
+  }
+}
+```
 
 ## Data Structures
 
@@ -97,6 +136,7 @@ export interface CustomVisualizerDataLayout {
   themeId?: string;
   logInHint?: string;
   providerId?: string;
+  accessToken?: string;
 }
 
 export interface CustomVisualizerData {
