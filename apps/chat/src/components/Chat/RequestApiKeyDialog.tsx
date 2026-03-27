@@ -307,7 +307,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span>
             <span>3.</span>
             <span className="ml-1">
-              {t(SettingsI18nKeys.ProjectTechLeadResponsibleForApiTokenUsage)}
+              {t(SettingsI18nKeys.ProjectTechLeadResponsible)}
             </span>
           </span>
           <span className="ml-1">

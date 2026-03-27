@@ -11,6 +11,7 @@ import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '../../constants/i18n';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -65,19 +66,19 @@ const MarketplaceNavigationView = () => {
     <>
       <NavigationButton
         onClick={handleHomeClick}
-        tooltip={t('DIAL Marketplace')}
+        tooltip={t(SideBarI18nKeys.DIALMarketplace)}
         Icon={IconLayoutGrid}
         selected={isMarketplace && currentTab === MarketplaceTabs.HOME}
         dataQa="marketplace-home-page"
-        caption={t('Apps')}
+        caption={t(SideBarI18nKeys.Apps)}
       />
       <NavigationButton
         onClick={handleMyAppsClick}
-        tooltip={t('My workspace')}
+        tooltip={t(SideBarI18nKeys.MyWorkspace)}
         Icon={IconHomeRibbon}
         selected={isMarketplace && currentTab === MarketplaceTabs.MY_WORKSPACE}
         dataQa="my-workspace"
-        caption={t('Workspace')}
+        caption={t(SideBarI18nKeys.Workspace)}
       />
     </>
   );

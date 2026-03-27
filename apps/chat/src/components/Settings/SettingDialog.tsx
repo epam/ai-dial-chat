@@ -21,8 +21,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { SettingsI18nKeys } from '../../constants/i18n';
 import { BYTES_IN_MB } from '@/src/constants/file';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { withLabel } from '@/src/components/Common/Forms/Label';

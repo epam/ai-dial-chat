@@ -92,8 +92,8 @@ const Logout = () => {
       </div>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t(HeaderI18nKeys.ConfirmLoggingOut)}
-        description={t(HeaderI18nKeys.AreYouSureLogOut)}
+        heading={t(HeaderI18nKeys.ConfirmLogout)}
+        description={t(HeaderI18nKeys.ConfirmLogoutDescription)}
         confirmLabel={t(HeaderI18nKeys.LogOut)}
         cancelLabel={t(HeaderI18nKeys.Cancel)}
         onClose={(result) => {

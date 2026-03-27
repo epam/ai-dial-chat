@@ -34,6 +34,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '../../constants/i18n';
+
 import { ContextMenu } from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -132,7 +134,7 @@ export const FolderContextMenu = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t(isSelected ? 'Unselect' : 'Select'),
+        name: t(isSelected ? SideBarI18nKeys.Unselect : SideBarI18nKeys.Select),
         display:
           !isExternal &&
           !!onSelect &&
@@ -142,7 +144,7 @@ export const FolderContextMenu = ({
         onClick: onSelect,
       },
       {
-        name: t('Upload'),
+        name: t(SideBarI18nKeys.Upload),
         display: !!onUpload && isMyOrCanEdit,
         dataQa: 'upload',
         Icon: IconUpload,
@@ -150,7 +152,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Rename'),
+        name: t(SideBarI18nKeys.Rename),
         display:
           !!onRename &&
           (!isExternal || isPublicationReviewFolder || isTemporaryFolder) &&
@@ -161,7 +163,7 @@ export const FolderContextMenu = ({
         disabled: disableAll && !isNameInvalid,
       },
       {
-        name: t('Share'),
+        name: t(SideBarI18nKeys.Share),
         display: !isEmpty && isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
@@ -169,7 +171,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Unshare'),
+        name: t(SideBarI18nKeys.Unshare),
         display: !!onUnshare && !!folder.sharedWithMe,
         dataQa: 'unshare',
         Icon: IconUserUnshare,
@@ -177,7 +179,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Publish'),
+        name: t(SideBarI18nKeys.Publish),
         dataQa: 'publish',
         display:
           !isEmpty &&
@@ -190,7 +192,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Update'),
+        name: t(SideBarI18nKeys.Update),
         dataQa: 'update-publishing',
         display:
           !isEmpty &&
@@ -202,7 +204,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Unpublish'),
+        name: t(SideBarI18nKeys.Unpublish),
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
@@ -215,7 +217,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Delete'),
+        name: t(SideBarI18nKeys.Delete),
         display: !!onDelete && (isMyEntity(folder) || isTemporaryFolder),
         dataQa: 'delete',
         Icon: IconTrashX,
@@ -223,7 +225,7 @@ export const FolderContextMenu = ({
       },
 
       {
-        name: t('Add new folder'),
+        name: t(SideBarI18nKeys.AddNewFolder),
         display:
           !!onAddFolder &&
           (isMyOrCanEdit || !!additionalItemData?.isChangePathFolder),

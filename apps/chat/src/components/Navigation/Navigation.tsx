@@ -17,6 +17,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '../../constants/i18n';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { Routes } from '@/src/constants/routes';
 
@@ -64,11 +65,11 @@ const NavigationView = () => {
     >
       <NavigationButton
         onClick={handleChatClick}
-        tooltip={t('Chat')}
+        tooltip={t(SideBarI18nKeys.Chat)}
         Icon={IconMessage2}
         selected={router.route === Routes.Chat}
         dataQa="back-to-chat"
-        caption={t('Chat')}
+        caption={t(SideBarI18nKeys.Chat)}
       />
       <MarketplaceNavigation />
       <FilesNavigation />

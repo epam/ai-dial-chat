@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { SideBarI18nKeys } from '../../constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { NavigationButton } from './NavigationButton';
@@ -23,10 +24,10 @@ export const FilesNavigation = () => {
   return (
     <NavigationButton
       onClick={handleFilesClick}
-      tooltip={t('Files')}
+      tooltip={t(SideBarI18nKeys.Files)}
       Icon={IconFolderOpen}
       selected={router.route === Routes.FileManager}
-      caption={t('Files')}
+      caption={t(SideBarI18nKeys.Files)}
     />
   );
 };

@@ -23,6 +23,8 @@ import {
 } from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper';
 
 import { Loader } from './Common/Loader';
@@ -153,7 +155,7 @@ export function Layout({
       {shouldOverlayLogin ? (
         <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
           <DialNeutralButton
-            label={t('Login')}
+            label={t(ChatI18nKeys.Login)}
             onClick={handleOverlayAuth}
             disabled={authStatus === 'loading'}
           />

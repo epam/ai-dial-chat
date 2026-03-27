@@ -24,6 +24,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '../../constants/i18n';
+
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { DownloadRenderer } from './Download';
@@ -80,14 +82,14 @@ export function FileItemContextMenu({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t(isSelected ? 'Unselect' : 'Select'),
+        name: t(isSelected ? SideBarI18nKeys.Unselect : SideBarI18nKeys.Select),
         dataQa: 'select',
         display: !!onSelect && !isOverlay,
         Icon: isSelected ? IconSquareOff : IconSquareCheck,
         onClick: onSelect,
       },
       {
-        name: t('Save'),
+        name: t(SideBarI18nKeys.Save),
         dataQa: 'save',
         additionalNameNode: isCodeEditorFile ? (
           <span className="pl-2 text-secondary">
@@ -99,7 +101,7 @@ export function FileItemContextMenu({
         onClick: handleSave,
       },
       {
-        name: t('Download'),
+        name: t(SideBarI18nKeys.Download),
         display:
           file.status !== UploadStatus.LOADING &&
           file.status !== UploadStatus.FAILED,
@@ -110,7 +112,7 @@ export function FileItemContextMenu({
         CustomTriggerRenderer: DownloadRenderer,
       },
       {
-        name: t('Remove access'),
+        name: t(SideBarI18nKeys.RemoveAccess),
         dataQa: 'unshare',
         display:
           isSharingConversationEnabled && !!onRemoveAccess && !!file.isShared,
@@ -118,14 +120,14 @@ export function FileItemContextMenu({
         onClick: onRemoveAccess,
       },
       {
-        name: t('Unshare'),
+        name: t(SideBarI18nKeys.Unshare),
         display: !readOnly && !!file.sharedWithMe && !isCodeEditorFile,
         dataQa: 'unshare-file',
         Icon: IconUserUnshare,
         onClick: onUnshare,
       },
       {
-        name: t('Unpublish'),
+        name: t(SideBarI18nKeys.Unpublish),
         dataQa: 'unpublish',
         display:
           isPublishingConversationEnabled &&
@@ -135,7 +137,7 @@ export function FileItemContextMenu({
         onClick: onUnpublish,
       },
       {
-        name: t('Delete'),
+        name: t(SideBarI18nKeys.Delete),
         dataQa: 'delete',
         display:
           !readOnly &&

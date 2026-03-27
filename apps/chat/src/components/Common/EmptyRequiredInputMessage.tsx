@@ -4,7 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { SettingsI18nKeys } from '../../constants/i18n';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 interface Props {
   text?: string;

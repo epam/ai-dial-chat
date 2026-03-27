@@ -24,8 +24,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
-import { SettingsI18nKeys } from '../../../constants/i18n';
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';

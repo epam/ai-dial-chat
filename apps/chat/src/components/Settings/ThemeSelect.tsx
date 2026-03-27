@@ -9,7 +9,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
-import { SettingsI18nKeys } from '../../constants/i18n';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Label } from '@/src/components/Common/Forms/Label';
