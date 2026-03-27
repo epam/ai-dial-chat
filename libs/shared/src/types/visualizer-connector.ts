@@ -19,6 +19,7 @@ export interface CustomVisualizerDataLayout {
   themeId?: string;
   logInHint?: string;
   providerId?: string;
+  accessToken?: string;
 }
 export interface CustomVisualizerData {
   layout: CustomVisualizerDataLayout;
