@@ -7,6 +7,13 @@ export const HeaderI18nKeys = {
   Cancel: 'Cancel',
   User: 'User',
   Settings: 'Settings',
+  UserAvatar: 'User avatar',
+  AccountSettings: 'Account settings',
+  NewConversation: 'New conversation',
+  NewPrompt: 'New prompt',
+  Filters: 'Filters',
+  Prompts: 'Prompts',
+  Conversations: 'Conversations',
 };
 
 // common.json

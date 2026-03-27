@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import UserDefaultIcon from '@/public/images/icons/user.svg';
 
 interface Props {
@@ -49,7 +51,7 @@ export const UserIcon = ({
       src={session?.user?.image ?? ''}
       width={iconSize}
       height={iconSize}
-      alt={t('User avatar')}
+      alt={t(HeaderI18nKeys.UserAvatar)}
       onError={() => setShowFallbackIcon(true)}
     />
   );
