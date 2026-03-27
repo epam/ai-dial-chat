@@ -751,7 +751,7 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
             return concat(
               autoUpdateAction$,
               defer(() =>
-                from(signInToolset(url.href, true)).pipe(
+                from(signInToolset(url.href)).pipe(
                   switchMap((isPopup) =>
                     !isPopup
                       ? of(ToolsetActions.logInToolsetFail())
