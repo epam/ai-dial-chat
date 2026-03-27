@@ -452,9 +452,11 @@ export const callbacks: Partial<
         : '';
     options.session.providerId = providerId;
 
-    const accessToken = options.token?.access_token;
-    if (accessToken) {
-      options.session.accessToken = accessToken;
+    if (process.env.ALLOW_TOKEN_IN_SESSION) {
+      const accessToken = options.token?.access_token;
+      if (accessToken) {
+        options.session.accessToken = accessToken;
+      }
     }
     return options.session;
   },
