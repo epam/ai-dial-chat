@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ModelsUtil } from '@/src/utils';
@@ -25,7 +26,9 @@ export class ChatApiHelper extends BaseApiHelper {
     return {
       id: `conversations/${BucketUtil.getBucket()}/` + conversation.id,
       messages: [userMessage],
-      model: ModelsUtil.getOpenAIEntity(conversation.model.id),
+      model:
+        ModelsUtil.getOpenAIEntity(conversation.model.id) ??
+        ({ id: conversation.model.id } as DialAIEntityModel),
       prompt: conversation.prompt,
       temperature: conversation.temperature,
     };

@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "^0.8.0-rc.33",
+    "@epam/ai-dial-ui-kit": "^0.8.0-rc.44",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
@@ -193,20 +193,12 @@
     "playwright-chromium": "^1.55.1"
   },
   "overrides": {
-    "esbuild": "0.27.3",
-    "tmp": "0.2.5",
     "koa": "3.1.2",
-    "@module-federation/node": "2.7.14",
     "prismjs": "1.30.0",
-    "nodemailer": "7.0.10",
     "dompurify": "3.3.2",
-    "js-yaml": "4.1.1",
-    "glob": "11.1.0",
-    "@modern-js/utils": "2.70.8",
-    "qs": "6.15.0",
-    "diff": "8.0.3",
     "minimatch": "10.2.4",
-    "serialize-javascript": "7.0.3"
+    "serialize-javascript": "7.0.3",
+    "picomatch": "4.0.4"
   },
   "engines": {
     "node": ">=24.11.1",

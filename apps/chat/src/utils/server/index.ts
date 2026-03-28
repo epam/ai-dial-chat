@@ -7,6 +7,7 @@ import {
   DIAL_API_VERSION,
 } from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { HeadersNames } from '@/src/constants/server';
 
 import { ApiUtils } from './api';
 import { hardLimitMessages } from './chat';
@@ -61,6 +62,7 @@ export const OpenAIStream = async ({
   jobTitle,
   maxRequestTokens,
   configurationSchemaValue,
+  channelId,
 }: {
   model: DialAIEntityModel;
   temperature: number | undefined;
@@ -70,6 +72,7 @@ export const OpenAIStream = async ({
   jobTitle: string | undefined;
   maxRequestTokens: number | undefined;
   configurationSchemaValue?: MessageFormValue;
+  channelId?: string;
 }) => {
   let messagesToSend = messages;
   const url = getUrl(model);
@@ -79,6 +82,10 @@ export const OpenAIStream = async ({
     jwt: userJWT,
     jobTitle,
   });
+
+  if (channelId) {
+    requestHeaders[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID] = channelId;
+  }
 
   let retries = 0;
   let body;

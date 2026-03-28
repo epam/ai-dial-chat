@@ -14,13 +14,13 @@ import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
+  ApplicationTypesSchemasActions,
   MarketplaceActions,
   PublicationActions,
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
+import { useAppDispatch } from '@/src/store/hooks';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
@@ -35,10 +35,6 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
 
   const { handleDeploy, handleRedeploy, handleUndeploy } =
     useApplicationStatusActions(entity.id);
-
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
 
   const handleRedeployWrapper = useCallback(
     (e: React.MouseEvent) => {
@@ -109,15 +105,18 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.preventDefault();
       e.stopPropagation();
       const applicationType = getApplicationType(entity);
+      dispatch(ApplicationActions.setAppDetails());
+      dispatch(
+        ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+      );
       dispatch(
         ApplicationActions.enterEditMode({
           entity,
           applicationType,
-          detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
         }),
       );
     },
-    [entity, dispatch, detailedApplicationTypeSchema?.$id],
+    [entity, dispatch],
   );
 
   const handlePublish = useCallback(

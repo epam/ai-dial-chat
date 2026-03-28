@@ -155,7 +155,7 @@ export function DropdownSelector({
           }),
           control: (styles, state) => ({
             ...styles,
-            paddingLeft: state.hasValue ? 0 : '8px',
+            paddingLeft: state.hasValue ? '8px' : '8px',
             display: 'flex',
             cursor: 'text',
             backgroundColor: 'bg-transparent',
