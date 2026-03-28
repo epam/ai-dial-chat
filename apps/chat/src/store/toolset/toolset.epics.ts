@@ -793,7 +793,10 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
         authenticationType: payload.authType,
         credentialsLevel: payload.authLevel,
         ...(payload.authType === ToolsetAuthTypes.OAUTH
-          ? { code: payload.code as string }
+          ? {
+              code: payload.code as string,
+              redirectUri: getToolsetRedirectUri(),
+            }
           : { apiKey: payload.apiKey as string }),
       };
 

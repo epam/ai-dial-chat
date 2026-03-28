@@ -1235,6 +1235,9 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           );
 
           if (!shouldLogIn) {
+            // Trigger sharing and publication listings
+
+            // Conversations
             if (features.includes(Feature.ConversationsSharing)) {
               actions.push(
                 of(ShareActions.triggerGettingSharedConversationListings()),
@@ -1251,6 +1254,13 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
               );
             }
 
+            // Prompts
+            if (features.includes(Feature.PromptsSharing)) {
+              actions.push(
+                of(ShareActions.triggerGettingSharedPromptListings()),
+              );
+            }
+
             if (features.includes(Feature.PromptsPublishing)) {
               actions.push(
                 of(
@@ -1261,6 +1271,14 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
               );
             }
 
+            // Applications
+            if (features.includes(Feature.ApplicationsSharing)) {
+              actions.push(
+                of(ShareActions.triggerGettingSharedApplicationsListings()),
+              );
+            }
+
+            // Admin publications
             if (
               AuthSelectors.selectIsAdmin(state$.value) &&
               (features.includes(Feature.ConversationsPublishing) ||
