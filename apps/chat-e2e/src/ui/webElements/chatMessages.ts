@@ -173,7 +173,7 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.plotlyContainer);
   }
 
-  public getAttachmentLinkIcon(message: string | number) {
+  public getAttachmentLink(message: string | number) {
     return this.getChatMessage(message).locator(
       `${Tags.a}[${Attributes.href}]`,
     );
@@ -193,6 +193,10 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(
       ErrorLabelSelectors.errorContainer,
     );
+  }
+
+  public getChatMessageContent(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.messageContent);
   }
 
   public async expandChatMessageAttachment(
@@ -241,6 +245,10 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessageAttachmentsGroup(message: string | number) {
     return this.getChatMessage(message).locator(ChatSelectors.attachmentsGroup);
+  }
+
+  public getChatMessageImage(message: number) {
+    return this.getChatMessageContent(message).locator(Tags.img);
   }
 
   public getMessageJumpingIconLocator(messageLocator: Locator) {

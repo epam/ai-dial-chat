@@ -1,5 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -167,5 +168,25 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expect
       .soft(downloadUrl, ExpectedMessages.attachmentUrlIsValid)
       .toContain(expectedUrl);
+  }
+
+  public async assertMessageImageLoaded(message: number) {
+    await this.assertEntityIcon(this.chatMessages.getChatMessageImage(message));
+  }
+
+  public async assertMessageImageLink(message: number, expectedLink: string) {
+    await this.assertElementAttribute(
+      this.chatMessages.getAttachmentLink(message),
+      Attributes.href,
+      expectedLink,
+    );
+  }
+
+  public async assertMessageImageOpenedInNewTab(message: number) {
+    await this.assertElementAttribute(
+      this.chatMessages.getAttachmentLink(message),
+      Attributes.target,
+      AttributeValues.blank,
+    );
   }
 }

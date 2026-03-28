@@ -23,7 +23,6 @@ export enum Attributes {
   ariaExpanded = 'aria-expanded',
   ariaDetails = 'aria-details',
   ariaColcount = 'aria-colcount',
-  blank = '_blank',
   checked = 'checked',
 }
 
@@ -39,4 +38,5 @@ export enum AttributeValues {
   mixed = 'mixed',
   truncate = 'truncate',
   lineClamp = 'line-clamp-',
+  blank = '_blank',
 }
