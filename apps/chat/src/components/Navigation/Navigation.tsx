@@ -17,8 +17,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { SideBarI18nKeys } from '../../constants/i18n';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';

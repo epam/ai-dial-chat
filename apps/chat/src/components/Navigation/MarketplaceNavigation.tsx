@@ -11,7 +11,7 @@ import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
-import { SideBarI18nKeys } from '../../constants/i18n';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 

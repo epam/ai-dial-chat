@@ -34,7 +34,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import { SideBarI18nKeys } from '../../constants/i18n';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 
 import { ContextMenu } from './ContextMenu';
 

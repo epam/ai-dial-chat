@@ -23,7 +23,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
-import { MarkdownI18nKeys } from '../../constants/i18n';
+import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';

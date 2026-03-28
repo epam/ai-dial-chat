@@ -24,7 +24,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import { SideBarI18nKeys } from '../../constants/i18n';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 

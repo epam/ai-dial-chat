@@ -7,7 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { SideBarI18nKeys } from '../../constants/i18n';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { NavigationButton } from './NavigationButton';
