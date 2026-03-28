@@ -39,6 +39,8 @@ export const DislikeCommentModal = ({
       <DialTextarea
         id="dislike-comment"
         data-qa="dislike-comment-input"
+        className='size-full'
+        containerClassName='flex-1 mt-3'
         placeholder="Type an optional comment to your feedback"
         value={comment}
         onChange={(value) => setComment(value ?? '')}
