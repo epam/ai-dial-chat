@@ -71,19 +71,28 @@ export const VisualizerRenderer = ({
     title: visualizerTitle,
     requestTimeout,
     passAuthInfo,
+    passExplicitToken,
   } = renderer;
 
   const dispatch = useAppDispatch();
 
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
-    if (!passAuthInfo || !session) return {};
+    const sessionAccessToken = session?.accessToken;
+    const tokenField =
+      passExplicitToken && sessionAccessToken != null
+        ? { accessToken: sessionAccessToken }
+        : {};
+
+    if (!passAuthInfo || !session) return tokenField;
+
     const email = session.user?.email ?? undefined;
     const providerId = (session as { providerId?: string }).providerId;
     return {
       ...(email != null && { logInHint: email }),
       ...(providerId != null && { providerId }),
+      ...tokenField,
     };
-  }, [passAuthInfo, session]);
+  }, [passAuthInfo, passExplicitToken, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,

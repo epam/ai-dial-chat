@@ -6,6 +6,7 @@ export interface CustomVisualizer {
   url: string;
   requestTimeout?: number;
   passAuthInfo?: boolean;
+  passExplicitToken?: boolean;
 }
 
 export type MappedVisualizers = Record<string, CustomVisualizer[]>;
@@ -17,6 +18,7 @@ export interface ApplicationVisualizerConfig {
   contentType: string;
   url: string;
   passAuthInfo?: boolean;
+  passExplicitToken?: boolean;
 }
 
 export type ApplicationVisualizers = Record<
