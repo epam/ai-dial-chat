@@ -64,6 +64,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       clientId: data.auth_settings.client_id,
       clientSecret: data.auth_settings.client_secret,
       authorizationEndpoint: data.auth_settings.authorization_endpoint,
+      // TODO: remove redirectUri after toolset login is stable with new flow (redirectUri will be sent in login request)
       redirectUri: data.auth_settings.redirect_uri,
       apiKeyHeader: data.auth_settings.api_key_header,
       codeChallenge: data.auth_settings.code_challenge,
@@ -84,6 +85,7 @@ const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
     case ToolsetAuthTypes.OAUTH:
       return {
         authentication_type: data.authSettings.authenticationType,
+        // TODO: remove redirectUri after toolset login is stable with new flow (redirectUri will be sent in login request)
         redirect_uri: data.authSettings.redirectUri,
         ...(data.authSettings.clientId && {
           client_id: data.authSettings.clientId,
@@ -228,6 +230,7 @@ export const getToolsetPayload = (
     ...(authType === ToolsetAuthTypes.API_KEY && {
       apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? '',
     }),
+    // TODO: remove redirectUri after toolset login is stable with new flow (redirectUri will be sent in login request)
     ...(authType === ToolsetAuthTypes.OAUTH && {
       redirectUri: getToolsetRedirectUri(),
     }),
