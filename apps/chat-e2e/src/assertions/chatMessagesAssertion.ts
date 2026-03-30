@@ -189,4 +189,8 @@ export class ChatMessagesAssertion extends BaseAssertion {
       AttributeValues.blank,
     );
   }
+
+  public assertCopiedMessage(copiedMessage: string, expectedMessage: string) {
+    this.assertValue(copiedMessage.replace(/\r\n/g, '\n'), expectedMessage);
+  }
 }

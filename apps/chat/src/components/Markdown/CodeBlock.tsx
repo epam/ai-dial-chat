@@ -94,6 +94,7 @@ export const CodeBlock: FC<Props> = memo(
               ? 'border-primary bg-layer-3'
               : 'border-secondary bg-layer-1',
           )}
+          data-qa="code-title-container"
         >
           <span>{lowercaseLanguage}</span>
 
@@ -106,6 +107,7 @@ export const CodeBlock: FC<Props> = memo(
                 size={ElementSize.Small}
                 onClick={copyToClipboard}
                 disabled={isCopied}
+                aria-label="Copy-code"
                 icon={
                   isCopied ? (
                     <Tooltip tooltip={t('Copied!')}>
@@ -129,6 +131,7 @@ export const CodeBlock: FC<Props> = memo(
                       height={DEFAULT_ICON_SIZES.SMALL}
                     />
                   }
+                  aria-label="Download"
                 />
               </Tooltip>
             </div>

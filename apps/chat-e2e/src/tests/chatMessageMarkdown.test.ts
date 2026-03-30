@@ -4,6 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { API, Attachment } from '@/src/testData';
 import { FileUtil } from '@/src/utils';
 import path from 'path';
+import removeMd from 'remove-markdown';
 
 const resolvedImagePath = path.resolve(
   Attachment.attachmentPath,
@@ -159,6 +160,89 @@ dialTest(
             await dialHomePage.navigateBack();
           }
         }
+      },
+    );
+  },
+);
+
+dialTest(
+  'LaTex syntax support in response.\n' +
+    `[Code block] Copy the whole answer (the message with code block) using 'Copy text' button.\n` +
+    `[Code block] Copy the whole answer (the message with code block) using 'Copy markdown' button`,
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversations,
+    conversationData,
+    dataInjector,
+    localStorageManager,
+    chatMessages,
+    chatMessagesAssertion,
+  }) => {
+    setTestIds('EPMRTC-6142', 'EPMRTC-431', 'EPMRTC-8313');
+
+    let conversation: Conversation;
+    const codeTitle = 'latex';
+    const codeContent = `1. Inline:\n\\( E = mc^2 \\)`;
+    const markdownResponse =
+      'Sure — here is **LaTeX formula**:\n\n```' +
+      `${codeTitle}\n${codeContent}`;
+    const rowResponse = removeMd(markdownResponse);
+
+    await dialTest.step(
+      'Prepare conversations with LaTex formula in the response',
+      async () => {
+        conversation =
+          conversationData.prepareConversationWithTextContent(markdownResponse);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open conversation and verify LaTex is displayed as a code block',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.getChatMessageCodeTitleContainer(2),
+          codeTitle,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageCodeTitleCopyButton(2),
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageCodeTitleDownloadButton(2),
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.getChatMessageCode(2),
+          codeContent,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `'Click on 'Copy text' btn and verify the response is copied without markdown'`,
+      async () => {
+        await chatMessages.messageCopyTextButton(2).click();
+        chatMessagesAssertion.assertCopiedMessage(
+          await dialHomePage.readTextFromClipboard(),
+          rowResponse,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `'Click on 'Copy markdown' btn and verify the response is copied with markdown'`,
+      async () => {
+        await chatMessages.messageCopyMarkdownButton(2).click();
+        chatMessagesAssertion.assertCopiedMessage(
+          await dialHomePage.readTextFromClipboard(),
+          markdownResponse,
+        );
       },
     );
   },

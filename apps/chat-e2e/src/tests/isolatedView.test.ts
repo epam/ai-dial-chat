@@ -231,7 +231,7 @@ dialTest(
 
     await dialTest.step('Check model-response actions', async () => {
       await chatMessagesAssertion.assertElementState(
-        chatMessages.messageCopyIcon(2),
+        chatMessages.messageCopyTextButton(2),
         'visible',
       );
       await chatMessagesAssertion.assertElementState(
