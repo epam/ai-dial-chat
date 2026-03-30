@@ -236,6 +236,8 @@ export enum FilesI18nKeys {
   Add = 'Add',
   SelectFiles = 'Select files',
   NoDocumentsAdded = 'No documents added',
+  HideTechnicalItems = 'Hide technical items',
+  ShowTechnicalItems = 'Show technical items',
   UploadingFailed = 'Uploading failed. Please, try again',
   AttachFiles = 'Attach files',
   NoAttachmentsAllowed = 'No attachments allowed',
