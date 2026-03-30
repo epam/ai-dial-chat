@@ -119,6 +119,7 @@ export enum CommonI18nKeys {
   IfYouHaveAProblemPlease = 'If you have a problem please ',
   ContactUs = 'contact us.',
   ItemsDeletingFailed = 'Items deleting failed',
+  ItemVerbSuccessfully = 'Item {{verb}} successfully',
 }
 
 // sidebar.json
@@ -253,7 +254,6 @@ export enum FilesI18nKeys {
   FailedToDeleteFiles = 'Failed to delete files. Please try again later.',
   FailedToDownloadFiles = 'Failed to download files. Please try again later.',
   FailedToUploadArchive = 'Failed to upload archive. Please try again later.',
-  ItemVerbSuccessfully = 'Item {{verb}} successfully',
   FileNameVerbToFolder = '“{{fileName}}” {{verb}} to {{folder}}',
   ItemsVerbToFolder = '{{count}} items {{verb}} to {{folder}}',
   AndOtherItems = ' and {{count}} other items',

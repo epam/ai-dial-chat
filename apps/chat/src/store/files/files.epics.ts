@@ -54,8 +54,8 @@ import {
 } from '@/src/store/actions';
 import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
-import { CommonI18nKeys, FilesI18nKeys } from '@/src/constants/i18n';
 import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
+import { CommonI18nKeys, FilesI18nKeys } from '@/src/constants/i18n';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
@@ -897,7 +897,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
         if (items.length === 1) {
           return UIActions.showToast({
             type: ToastType.Success,
-            title: translate(FilesI18nKeys.ItemVerbSuccessfully, {
+            title: translate(CommonI18nKeys.ItemVerbSuccessfully, {
               ns: Translation.Common,
               verb: verbPast,
             }),
@@ -912,7 +912,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
 
         return UIActions.showToast({
           type: ToastType.Success,
-          title: translate(FilesI18nKeys.ItemVerbSuccessfully, {
+          title: translate(CommonI18nKeys.ItemVerbSuccessfully, {
             ns: Translation.Common,
             verb: verbPast,
           }),

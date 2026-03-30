@@ -1,35 +1,22 @@
 import { IconPlus } from '@tabler/icons-react';
 import React, { MouseEvent, useCallback, useState } from 'react';
 
-
-
 import { useTranslation } from '@/src/hooks/useTranslation';
-
-
 
 import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-
-
 import { FilesI18nKeys } from '@/src/constants/i18n';
-
-
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
-
-
 
 import { ConfirmDialog } from '../ConfirmDialog';
 import { NoFiles } from './NoFiles';
 import { SelectedFile } from './SelectedFile';
 
-
-
 import { DialLinkButton } from '@epam/ai-dial-ui-kit';
-
 
 interface Props {
   files: string[];

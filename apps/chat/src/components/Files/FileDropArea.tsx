@@ -1,26 +1,15 @@
 import { IconFileTextFilled, IconFileXFilled } from '@tabler/icons-react';
 import { DragEvent, ReactNode, useCallback, useState } from 'react';
 
-
-
 import classNames from 'classnames';
-
-
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-
-
 import { getFilesFromDataTransferItems } from '@/src/utils/app/file';
-
-
 
 import { Translation } from '@/src/types/translation';
 
-
-
 import { FilesI18nKeys } from '@/src/constants/i18n';
-
 
 const containerId = 'file-drop-area';
 
