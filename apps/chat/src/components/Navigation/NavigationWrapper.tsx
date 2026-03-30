@@ -46,7 +46,7 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
         className={classNames(
           'flex size-full flex-col md:flex-row',
           enabledFeatures.has(Feature.ShowLayoutDividers) &&
-            'sidebar-overlay:divide-x-[15px] sidebar-overlay:divide-accent-tertiary',
+            'sidebar-overlay:divide-x-[15px] sidebar-overlay:divide-tertiary',
         )}
       >
         {shouldShowNavigation && <Navigation />}
