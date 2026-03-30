@@ -118,6 +118,7 @@ export enum CommonI18nKeys {
   ChatsLowercase = 'chats',
   IfYouHaveAProblemPlease = 'If you have a problem please ',
   ContactUs = 'contact us.',
+  ItemsDeletingFailed = 'Items deleting failed',
 }
 
 // sidebar.json
@@ -182,6 +183,9 @@ export enum PromptBarI18nKeys {
   Description = 'Description',
   DescriptionPlaceholder = 'A description for your prompt.',
   Prompt = 'Prompt',
+  SearchFilters = 'Search filters',
+  SharedByMe = 'Shared by me',
+  PublishedByMe = 'Published by me',
   ContentUseVariables = 'Prompt content. Use {{}} to denote a variable.\nEx: {{name|defaultValue}} is a {{adjective}} {{noun|defaultValue}}',
   Save = 'Save',
   UnsavedChanges = 'Unsaved changes',
@@ -203,6 +207,8 @@ export enum PromptBarI18nKeys {
   CreateNewFolder = 'Create new folder',
   ImportPrompts = 'Import prompts',
   ExportPrompts = 'Export prompts',
+  Use = 'Use',
+  UsePrompt = 'Use prompt',
   DeleteSelectedPrompts = 'Delete selected prompts',
   DeleteAllPrompts = 'Delete all prompts',
   ConfirmDeletingSelectedPrompts = 'Confirm deleting selected prompts',
@@ -221,4 +227,33 @@ export enum ChatI18nKeys {
   ON = 'ON',
   OFF = 'OFF',
   Detailed = 'Detailed',
+}
+
+// files.json
+export enum FilesI18nKeys {
+  Cancel = 'Cancel',
+  Confirm = 'Confirm',
+  Add = 'Add',
+  SelectFiles = 'Select files',
+  NoDocumentsAdded = 'No documents added',
+  UploadingFailed = 'Uploading failed. Please, try again',
+  AttachFiles = 'Attach files',
+  NoAttachmentsAllowed = 'No attachments allowed',
+  AttachmentsCantBeAdded = "Attachments can't be added to the message",
+  DropFilesHere = 'Drop files here to attach them to the message',
+  ConfirmRemovingAccess = 'Confirm removing access: {{fileName}}',
+  ConfirmRemovingAccessCaption = 'Are you sure you want to remove access to the file for all users?',
+  FailedToDownload = 'Failed to download the file. Please, try again',
+  FailedToDelete = 'Deleting file {{fileName}} failed. Please try again later',
+  FailedToRename = 'Renaming folder {{folderName}} failed. Please try again later',
+  FailedToCopy = 'Failed to copy files. Please try again later.',
+  FailedToMove = 'Failed to move files. Please try again later.',
+  FailedToDeleteFiles = 'Failed to delete files. Please try again later.',
+  FailedToDownloadFiles = 'Failed to download files. Please try again later.',
+  FailedToUploadArchive = 'Failed to upload archive. Please try again later.',
+  ItemVerbSuccessfully = 'Item {{verb}} successfully',
+  FileNameVerbToFolder = '“{{fileName}}” {{verb}} to {{folder}}',
+  ItemsVerbToFolder = '{{count}} items {{verb}} to {{folder}}',
+  AndOtherItems = ' and {{count}} other items',
+  SomeItemsNotSomething = '{{files}}{{rest}} were not {{verb}}. Please try again.',
 }

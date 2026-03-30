@@ -82,7 +82,7 @@ export const Promptbar = () => {
           ) {
             dispatch(
               UIActions.showErrorToast(
-                t(PromptBarI18nKeys.AlreadyExistsAtRoot, {
+                t(PromptBarI18nKeys.ExistsAtRoot, {
                   ns: Translation.PromptBar,
                   name: prompt.name,
                 }),

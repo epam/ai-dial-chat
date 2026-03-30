@@ -166,7 +166,9 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 data-qa="use-prompt"
                 iconBefore={<InsertPromptIcon className="size-[18px]" />}
                 label={
-                  screenState <= ScreenState.SM ? t('Use') : t('Use prompt')
+                  screenState <= ScreenState.SM
+                    ? t(PromptBarI18nKeys.Use)
+                    : t(PromptBarI18nKeys.UsePrompt)
                 }
               />
             </>

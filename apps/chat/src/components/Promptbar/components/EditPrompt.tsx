@@ -94,7 +94,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
         dispatch(
           UIActions.showErrorToast(
-            t(PromptBarI18nKeys.AlreadyExistsInThisFolder, {
+            t(PromptBarI18nKeys.ExistsInThisFolder, {
               ns: Translation.PromptBar,
               newName,
             }),

@@ -55,7 +55,7 @@ const PromptMoveToDialogComponent: FC<PromptMoveToDialogProps> = ({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t(PromptBarI18nKeys.AlreadyExistsInThisFolder, {
+            t(PromptBarI18nKeys.ExistsInThisFolder, {
               ns: Translation.PromptBar,
               name: moveToPrompt.name,
             }),

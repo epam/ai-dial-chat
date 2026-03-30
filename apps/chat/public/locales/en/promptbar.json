@@ -14,6 +14,9 @@
   "Prompt": "Prompt",
   "Prompt content. Use {{}} to denote a variable.\nEx: {{name|defaultValue}} is a {{adjective}} {{noun|defaultValue}}": "Prompt content. Use {{}} to denote a variable.\nEx: {{name|defaultValue}} is a {{adjective}} {{noun|defaultValue}}",
   "Save": "Save",
+  "Published by me": "Published by me",
+  "Shared by me": "Shared by me",
+  "Search filters": "Search filters",
   "Unsaved changes": "Unsaved changes",
   "There are unsaved changes. Do you want to save them before closing?": "There are unsaved changes. Do you want to save them before closing?",
   "Don't save": "Don't save",
@@ -38,5 +41,8 @@
   "Confirm deleting selected prompts": "Confirm deleting selected prompts",
   "Confirm deleting all prompts": "Confirm deleting all prompts",
   "Are you sure that you want to delete selected prompts?": "Are you sure that you want to delete selected prompts?",
-  "Are you sure that you want to delete all prompts?": "Are you sure that you want to delete all prompts?"
+  "Are you sure that you want to delete all prompts?": "Are you sure that you want to delete all prompts?",
+  "v.": "v.",
+  "Use": "Use",
+  "Use prompt": "Use prompt"
 }

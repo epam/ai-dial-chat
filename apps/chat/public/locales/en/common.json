@@ -45,5 +45,9 @@
   "Confirm removing access": "Confirm removing access",
   "If you have a problem please ": "If you have a problem please ",
   "contact us.": "contact us.",
-  "Delete": "Delete"
+  "Delete": "Delete",
+  "Items {{verb}} failed": "Items {{verb}} failed",
+  "Item {{verb}} successfully": "Item {{verb}} successfully",
+  "Items {{verb}} successfully": "Items {{verb}} successfully",
+  "Items deleting failed": "Items deleting failed"
 }
