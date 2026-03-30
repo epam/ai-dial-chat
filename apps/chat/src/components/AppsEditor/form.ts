@@ -326,7 +326,7 @@ const getBaseFormData = ({
   name:
     app?.name ??
     getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-  version: app ? app.version : DEFAULT_VERSION,
+  version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: app?.description ?? '',
   topics: app?.topics ?? [],
