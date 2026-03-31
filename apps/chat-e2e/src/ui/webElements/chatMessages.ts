@@ -14,6 +14,7 @@ import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
+import { Button } from '@/src/ui/webElements/common/button';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Locator, Page } from '@playwright/test';
 
@@ -111,6 +112,17 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).getByAltText('Attachment image');
   }
 
+  public getChatMessageAttachmentTitle(
+    message: string | number,
+    title: string,
+  ) {
+    return this.getChatMessage(message).getByTitle(title);
+  }
+
+  public getChatMessageAttachmentIcon(message: string | number) {
+    return this.getChatMessage(message).locator(IconSelectors.fileIcon);
+  }
+
   public getDownloadAttachmentIcon(message: string | number) {
     return this.getChatMessage(message).locator(
       `${Tags.a}[${Attributes.download}]`,
@@ -186,6 +198,62 @@ export class ChatMessages extends BaseElement {
   public getCollapsedChatMessageAttachment(message: string | number) {
     return this.getChatMessage(message).locator(
       ChatSelectors.attachmentCollapsed,
+    );
+  }
+
+  public getExpandedChatMessageAttachment(message: string | number) {
+    return this.getChatMessage(message).locator(
+      ChatSelectors.attachmentExpanded,
+    );
+  }
+
+  public getAttachmentMaximizeButton(parentLocator: Locator) {
+    return new Button(this.page, 'Maximize', parentLocator);
+  }
+
+  public getAttachmentMinimizeButton(parentLocator: Locator) {
+    return new Button(this.page, 'Minimize', parentLocator);
+  }
+
+  public getCollapsedAttachmentMaximizeButton(message: string | number) {
+    return this.getAttachmentMaximizeButton(
+      this.getCollapsedChatMessageAttachment(message),
+    );
+  }
+
+  public getExpandedAttachmentMaximizeButton(message: string | number) {
+    return this.getAttachmentMaximizeButton(
+      this.getExpandedChatMessageAttachment(message),
+    );
+  }
+
+  public getExpandedAttachmentMaximizeButtonIcon(
+    message: string | number | Button,
+  ) {
+    const maximizeElement =
+      typeof message === 'string' || typeof message === 'number'
+        ? this.getExpandedAttachmentMaximizeButton(message)
+        : message;
+    return maximizeElement.getChildElementBySelector(
+      IconSelectors.arrowsMaximizeIcon,
+    );
+  }
+
+  public getExpandedAttachmentMinimizeButton(message: string | number) {
+    return this.getAttachmentMinimizeButton(
+      this.getExpandedChatMessageAttachment(message),
+    );
+  }
+
+  public getExpandedAttachmentMinimizeButtonIcon(
+    message: string | number | Button,
+  ) {
+    const minimizeElement =
+      typeof message === 'string' || typeof message === 'number'
+        ? this.getExpandedAttachmentMinimizeButton(message)
+        : message;
+    return minimizeElement.getChildElementBySelector(
+      IconSelectors.arrowsMinimizeIcon,
     );
   }
 

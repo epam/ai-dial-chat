@@ -261,6 +261,8 @@ export const ExpectedMessages = {
   attachmentIsSuccessfullyDownloaded:
     'Conversation attachment is successfully downloaded',
   attachmentIsExpanded: 'Conversation attachment is expanded',
+  attachmentIsOpenedOnFullScreen:
+    'Conversation attachment is opened on full screen',
   attachmentIsCollapsed: 'Conversation attachment is collapsed',
   attachmentNameColorIsValid: 'Attachment name color is valid',
   attachmentHasErrorIcon: 'Attachment has error icon',

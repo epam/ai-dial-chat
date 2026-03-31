@@ -1,5 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
+import { AttributeValues } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -167,5 +168,16 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expect
       .soft(downloadUrl, ExpectedMessages.attachmentUrlIsValid)
       .toContain(expectedUrl);
+  }
+
+  public async assertFullScreenMessageAttachment(message: string | number) {
+    await this.assertElementClass(
+      this.chatMessages.getOpenedChatMessageAttachment(message),
+      new RegExp(
+        `^(?=.*${AttributeValues.maxHFull})(?=.*${AttributeValues.maxWFull}).+$`,
+        'gm',
+      ),
+      ExpectedMessages.attachmentIsOpenedOnFullScreen,
+    );
   }
 }

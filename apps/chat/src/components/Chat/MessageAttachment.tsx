@@ -499,6 +499,7 @@ export const MessageAttachment = ({
                     size={ElementSize.Small}
                     icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                     onClick={handleToggleFullScreen}
+                    aria-label={isFullScreen ? "Minimize" : "Maximize"}
                   />
                 )}
                 {!isFullScreen && (
