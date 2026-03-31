@@ -38,6 +38,13 @@
   "Requesting API key in progress...": "Requesting API key in progress...",
   "Enter a value for {{key}}...": "Enter a value for {{key}}...",
   "Please fill in all required fields": "Please fill in all required fields",
-  "Please fill out all variables": "Please fill out all variables"
+  "Please fill out all variables": "Please fill out all variables",
+  "No custom logo": "No custom logo",
+  "Change": "Change",
+  "Add": "Add",
+  "Select custom logo": "Select custom logo",
+  "Select file": "Select file",
+  "Confirm": "Confirm",
+  "Cancel": "Cancel"
 }
 

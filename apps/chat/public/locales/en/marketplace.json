@@ -131,5 +131,7 @@
   "Explore our AI offerings with your data and see how they boost your productivity!": "Explore our AI offerings with your data and see how they boost your productivity!",
   "Here you can manage the  AI agents used in your daily work": "Here you can manage the  AI agents used in your daily work",
   "Here you can manage the toolsets used in your daily work": "Here you can manage the toolsets used in your daily work",
-  "You cannot change the {{context}} of a shared application.": "You cannot change the {{context}} of a shared application."
+  "You cannot change the {{context}} of a shared application.": "You cannot change the {{context}} of a shared application.",
+  "Add {{label}}": "Add {{label}}",
+  "Application is {{status}}": "Application is {{status}}"
 }

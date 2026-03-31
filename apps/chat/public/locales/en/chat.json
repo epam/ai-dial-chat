@@ -288,5 +288,6 @@
   "Select folder": "Select folder",
   "chat.error.incorrect-selected_model": "Not available agent selected. Please, change the agent to proceed",
   "chat.error.agent-not-available": "Agent is not available. Please, {{click}} {{agentId}} to proceed.",
-  "chat.error.agents-not-available": "Agents are not available. Please, change the agents {{agentId}} and {{agentId}} to proceed."
+  "chat.error.agents-not-available": "Agents are not available. Please, change the agents {{agentId}} and {{agentId}} to proceed.",
+  "change the agent": "change the agent"
 }

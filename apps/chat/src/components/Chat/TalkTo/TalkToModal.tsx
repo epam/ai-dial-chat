@@ -219,7 +219,7 @@ const TalkToModalView = ({
         id: conversation.model.id,
         name: conversation.model.id,
         reference: conversation.model.id,
-        description: t('chat.error.incorrect-selected', {
+        description: t(ChatI18nKeys.IncorrectSelectedModel, {
           context: EntityType.Model,
         }),
         type: EntityType.Model,

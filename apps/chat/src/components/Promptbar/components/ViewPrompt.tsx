@@ -147,7 +147,8 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 )}
                 data-qa="version"
               >
-                {t('v.')} {prompt.publicationInfo?.version}
+                {t(PromptBarI18nKeys.VersionPrefix)}{' '}
+                {prompt.publicationInfo?.version}
               </p>
               <PublicationControls entity={prompt} />
             </>

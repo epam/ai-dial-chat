@@ -45,7 +45,7 @@ export function AddMarketplaceEntityButton({
     return (
       <DialPrimaryButton
         onClick={visibleActions[0].onClick}
-        label={t(`Add ${label}`)}
+        label={t(MarketplaceI18nKeys.AddLabel, { label })}
         iconBefore={<IconPlus size={18} />}
         className="shrink-0"
         data-qa={dataQa}
@@ -65,7 +65,7 @@ export function AddMarketplaceEntityButton({
           label={
             isScreenSmall
               ? t(MarketplaceI18nKeys.AddMarketplace)
-              : t(`Add ${label}`)
+              : t(MarketplaceI18nKeys.AddLabel, { label })
           }
           className="shrink-0"
           iconAfter={

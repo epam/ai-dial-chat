@@ -65,7 +65,9 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
       return t(MarketplaceI18nKeys.ApplicationIsDeploying);
     }
     if (isUpdating || isUndeploying) {
-      return t(`Application is ${entity.functionStatus?.toLowerCase()}`);
+      return t(MarketplaceI18nKeys.ApplicationIsStatus, {
+        status: entity.functionStatus?.toLowerCase(),
+      });
     }
     if (isButtonDisabled && !hasDeployAccess) {
       if (isPublicApp) {
