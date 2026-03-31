@@ -120,6 +120,7 @@ export enum CommonI18nKeys {
   ContactUs = 'contact us.',
   ItemsDeletingFailed = 'Items deleting failed',
   ItemVerbSuccessfully = 'Item {{verb}} successfully',
+  ItemsVerbSuccessfully = 'Items {{verb}} successfully',
 }
 
 // sidebar.json
