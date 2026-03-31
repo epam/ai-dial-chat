@@ -148,13 +148,13 @@ dialTest(
           chatMessages
             .getChatMessageTableHeaderColumns(expectedChatMessageIndex)
             .first(),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4, theme),
         );
         await chatMessagesAssertion.assertElementBackgroundColors(
           chatMessages
             .getChatMessageTableRows(expectedChatMessageIndex)
             .first(),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer3),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer3, theme),
         );
       },
     );
