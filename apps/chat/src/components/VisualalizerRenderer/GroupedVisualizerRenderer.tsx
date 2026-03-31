@@ -72,6 +72,7 @@ export const GroupedVisualizerRenderer = ({
     url: rendererUrl,
     title: visualizerTitle = 'Visualizer',
     passAuthInfo,
+    passExplicitToken,
   } = visualizerConfig;
 
   const dispatch = useAppDispatch();
@@ -83,14 +84,23 @@ export const GroupedVisualizerRenderer = ({
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
-    if (!passAuthInfo || !session) return {};
+    const sessionAccessToken = session?.accessToken;
+    const tokenField =
+      passExplicitToken && sessionAccessToken != null
+        ? { accessToken: sessionAccessToken }
+        : {};
+
+    if (!passAuthInfo) return tokenField;
+    if (!session) return tokenField;
+
     const email = session.user?.email ?? undefined;
-    const providerId = (session as { providerId?: string }).providerId;
+    const providerId = (session as { providerId?: string } | null)?.providerId;
     return {
       ...(email != null && { logInHint: email }),
       ...(providerId != null && { providerId }),
+      ...tokenField,
     };
-  }, [passAuthInfo, session]);
+  }, [passAuthInfo, passExplicitToken, session]);
 
   const loadedCustomAttachmentsData = useAppSelector(
     ConversationsSelectors.selectLoadedCustomAttachments,
