@@ -31,7 +31,6 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '../../constants/i18n';
 import {
   AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
@@ -40,6 +39,7 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';

@@ -190,7 +190,7 @@ export const ToolsetEditorHeader = ({
       <ConfirmDialog
         isOpen={saveDraftDialog}
         heading={t(MarketplaceI18nKeys.OnlyValidDataWillBeSaved)}
-        description={t(MarketplaceI18nKeys.SomeFieldsInvalidDescription)}
+        description={t(MarketplaceI18nKeys.SomeFieldsAreInvalid)}
         confirmLabel={t(MarketplaceI18nKeys.SaveValidData)}
         cancelLabel={t(MarketplaceI18nKeys.ContinueEditing)}
         onClose={handleCloseConfirmDialog}

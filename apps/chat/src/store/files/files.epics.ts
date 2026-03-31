@@ -360,10 +360,12 @@ const getFilesWithFoldersFailToastEpic: AppEpic = (action$) =>
     map(() =>
       UIActions.showToast({
         type: ToastType.Error,
-        title: translate('Failed to load files and folders'),
-        message: translate(
-          'Please check your internet connection and try again.',
-        ),
+        title: translate(CommonI18nKeys.FailedToLoadFilesAndFolders, {
+          ns: Translation.Common,
+        }),
+        message: translate(CommonI18nKeys.CheckInternetConnection, {
+          ns: Translation.Common,
+        }),
       }),
     ),
   );
@@ -810,10 +812,12 @@ const uploadFilesEpic: AppEpic = (action$) =>
             actions.push(
               UIActions.showToast({
                 type: ToastType.Error,
-                title: translate('Upload failed'),
-                message: translate(
-                  'Please check your internet connection and try again.',
-                ),
+                title: translate(CommonI18nKeys.UploadFailed, {
+                  ns: Translation.Common,
+                }),
+                message: translate(CommonI18nKeys.CheckInternetConnection, {
+                  ns: Translation.Common,
+                }),
               }),
               FilesActions.uploadFilesFail(),
             );

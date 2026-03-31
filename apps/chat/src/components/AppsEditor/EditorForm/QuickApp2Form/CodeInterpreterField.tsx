@@ -114,8 +114,8 @@ export const CodeInterpreterField: FC = () => {
           info={t(MarketplaceI18nKeys.CodeInterpreterInfo)}
           isOn={field.value}
           handleSwitch={handleValueChange}
-          switchOnText={t(MarketplaceI18nKeys.ONMarketplace)}
-          switchOFFText={t(MarketplaceI18nKeys.OFFMarketplace)}
+          switchOnText={t(MarketplaceI18nKeys.OnToggle)}
+          switchOFFText={t(MarketplaceI18nKeys.OffToggle)}
           additionalText={t(MarketplaceI18nKeys.UseToExecuteCustomPythonCode)}
           className="mt-1 flex w-fit items-center gap-2"
           disabled={isAppPublic}

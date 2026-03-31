@@ -5,10 +5,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
-import {
-  ChangeMarketplaceTabs,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
 
 import { NoResultsFound } from './NoResultsFound';
 import { SuggestionButton } from './SuggestionButton';
