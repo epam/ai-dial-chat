@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '../../constants/i18n';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { GroupedVisualizerRenderer } from '@/src/components/VisualalizerRenderer/GroupedVisualizerRenderer';
 

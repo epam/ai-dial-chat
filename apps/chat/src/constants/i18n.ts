@@ -671,7 +671,7 @@ export enum ChatI18nKeys {
   TooManyFilesDescription = 'You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.',
   MaxSizeSupportedTypes = 'Maximum size: {{maxSelectableFileSize}}. Supported types: {{allowedExtensions}}.',
   UpToFiles = 'Up to {{maxAttachmentsAmount}} files.',
-  All = 'all',
+  all = 'all',
   ProcessingFiles = 'Processing files...',
   MaxAllowedAttachmentsNumberSelected = 'Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}',
   MaxFileSizeSupportedTypes = 'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
