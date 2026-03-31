@@ -348,6 +348,16 @@ export enum ChatI18nKeys {
   YourTemplateUseVariable = 'Your template. Use {{}} to denote a variable',
   FormSchemaInvalid = 'Form schema is invalid',
   BelowYouCanSeeActionSelection = 'Below you can see your action selection.',
+  Yes = 'Yes',
+  No = 'No',
+  FormSchemaMissing = 'Form schema is missing',
+  AgentIsNotAvailable = 'Agent is not available',
+  ApplyChanges = 'Apply changes',
+  TypeTextOrPrompt = 'Type a text or «/» to use a prompt...',
+  HigherValuesTemperature = 'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+  Precise = 'Precise',
+  Neutral = 'Neutral',
+  Creative = 'Creative',
 }
 
 // files.json
