@@ -108,7 +108,7 @@ export const PreUploadDialog = ({
   const folderPath = getRelativePath(selectedFolderId);
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
-      return [t(ChatI18nKeys.All)];
+      return [t(ChatI18nKeys.all)];
     }
 
     return getShortExtensionsListFromMimeType(allowedTypes, t);

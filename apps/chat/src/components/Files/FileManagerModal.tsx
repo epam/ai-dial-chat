@@ -136,7 +136,7 @@ export const FileManagerModal = memo(
 
     const allowedExtensions = useMemo(() => {
       if (allowedTypesArray.includes('*/*')) {
-        return [t(ChatI18nKeys.All)];
+        return [t(ChatI18nKeys.all)];
       }
 
       return getShortExtensionsListFromMimeType(allowedTypesArray, t);
