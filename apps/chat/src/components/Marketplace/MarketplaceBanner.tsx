@@ -4,11 +4,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, UISelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,

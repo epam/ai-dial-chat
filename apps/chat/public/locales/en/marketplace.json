@@ -126,15 +126,10 @@
   "Split preview": "Split preview",
   "Add toolset": "Add toolset",
   "Edit toolset": "Edit toolset",
-  "Only valid data will be saved": "Only valid data will be saved",
-  "Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?": "Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?",
-  "Save valid data": "Save valid data",
-  "Continue editing": "Continue editing",
-  "ON": "ON",
-  "OFF": "OFF",
   "Welcome to DIAL Marketplace": "Welcome to DIAL Marketplace",
   "My workspace": "My workspace",
   "Explore our AI offerings with your data and see how they boost your productivity!": "Explore our AI offerings with your data and see how they boost your productivity!",
   "Here you can manage the  AI agents used in your daily work": "Here you can manage the  AI agents used in your daily work",
-  "Here you can manage the toolsets used in your daily work": "Here you can manage the toolsets used in your daily work"
+  "Here you can manage the toolsets used in your daily work": "Here you can manage the toolsets used in your daily work",
+  "You cannot change the {{context}} of a shared application.": "You cannot change the {{context}} of a shared application."
 }

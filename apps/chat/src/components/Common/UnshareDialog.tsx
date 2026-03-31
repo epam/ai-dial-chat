@@ -35,13 +35,14 @@ function UnshareDialogView() {
   const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
 
   const description = isFolder
-    ? t(
-        `Are you sure you want to remove access for all users to ${shareResourceName}?`,
-      )
+    ? t(CommonI18nKeys.ConfirmRemoveAllUsersAccess, {
+        name: shareResourceName,
+      })
     : t(
-        `Are you sure you want to remove ${
-          unshareEntity?.isShared ? 'access for all users' : 'your access'
-        } to ${unshareEntity ? unshareEntity?.name : shareResourceName}?`,
+        unshareEntity?.isShared
+          ? CommonI18nKeys.ConfirmRemoveAllUsersAccess
+          : CommonI18nKeys.ConfirmRemoveYourAccess,
+        { name: unshareEntity ? unshareEntity?.name : shareResourceName },
       );
 
   const handleConfirmUnshare = useCallback(

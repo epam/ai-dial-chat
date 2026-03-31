@@ -64,4 +64,18 @@
   "Sources": "Sources",
   "Filters": "Filters",
   "No filters as you currently have no agents": "No filters as you currently have no agents",
-  "No filters as you currently have no toolsets": "No filters as you currently have no toolsets"
+  "No filters as you currently have no toolsets": "No filters as you currently have no toolsets",
+  "Published": "Published",
+  "External application": "External application",
+  "Shared": "Shared",
+  "Created by me": "Created by me",
+  "Allow editing by other users": "Allow editing by other users",
+  "Copied!": "Copied!",
+  "Copy URL": "Copy URL",
+  "Remove access for all users": "Remove access for all users",
+  "This app has not been shared with anyone yet.": "This app has not been shared with anyone yet.",
+  "This folder has not been shared with anyone yet.": "This folder has not been shared with anyone yet.",
+  "This chat has not been shared with anyone yet.": "This chat has not been shared with anyone yet.",
+  "This prompt has not been shared with anyone yet.": "This prompt has not been shared with anyone yet.",
+  "Processing files...": "Processing files..."
+}

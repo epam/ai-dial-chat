@@ -16,11 +16,10 @@ import {
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';

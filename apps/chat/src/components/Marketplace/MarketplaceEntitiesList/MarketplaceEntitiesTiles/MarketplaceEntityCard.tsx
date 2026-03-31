@@ -17,11 +17,10 @@ import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   CardIconSizes,
   MarketplaceEntitiesTabs,

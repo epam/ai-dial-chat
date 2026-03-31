@@ -11,12 +11,11 @@ import { isTruthyQuery } from '@/src/utils/app/route';
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -177,7 +176,11 @@ export const ToolsetEditorHeader = ({
         errorTabsSet={errorSteps}
         isEditing={isExistingToolset}
         onTabClick={handleTabClick}
-        title={t(isCreatingToolset ? MarketplaceI18nKeys.AddToolset : MarketplaceI18nKeys.EditToolset)}
+        title={t(
+          isCreatingToolset
+            ? MarketplaceI18nKeys.AddToolset
+            : MarketplaceI18nKeys.EditToolset,
+        )}
         saveLabel={saveLabel}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
@@ -187,9 +190,7 @@ export const ToolsetEditorHeader = ({
       <ConfirmDialog
         isOpen={saveDraftDialog}
         heading={t(MarketplaceI18nKeys.OnlyValidDataWillBeSaved)}
-        description={t(
-          MarketplaceI18nKeys.SomeFieldsInvalidDescription,
-        )}
+        description={t(MarketplaceI18nKeys.SomeFieldsInvalidDescription)}
         confirmLabel={t(MarketplaceI18nKeys.SaveValidData)}
         cancelLabel={t(MarketplaceI18nKeys.ContinueEditing)}
         onClose={handleCloseConfirmDialog}

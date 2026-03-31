@@ -11,7 +11,6 @@ import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-
 import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
@@ -162,8 +161,8 @@ export const ToolsetPreview = ({
           handleSwitch={handleSwitch}
           labelText="Detailed"
           isLabelOnRight
-          switchOnText={t('ON')}
-          switchOFFText={t('OFF')}
+          switchOnText={t(MarketplaceI18nKeys.OnToggle)}
+          switchOFFText={t(MarketplaceI18nKeys.OffToggle)}
         />
       </div>
     </div>

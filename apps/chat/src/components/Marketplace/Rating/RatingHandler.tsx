@@ -54,7 +54,10 @@ export const RatingHandler = ({ onRatingApply, onClose }: Props) => {
         ))}
       </div>
       <div className="mt-3 flex w-full justify-end gap-2">
-        <DialNeutralButton onClick={onClose} label={t(MarketplaceI18nKeys.CancelMarketplace)} />
+        <DialNeutralButton
+          onClick={onClose}
+          label={t(MarketplaceI18nKeys.CancelMarketplace)}
+        />
         <DialPrimaryButton
           disabled={!selectedRating}
           label={t(MarketplaceI18nKeys.SendMarketplace)}
