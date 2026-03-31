@@ -532,7 +532,7 @@ const AgentAndToolsetModalView = ({
       >
         <DialNeutralButton label={t(ChatI18nKeys.Cancel)} onClick={onClose} />
         <DialPrimaryButton
-          label={t(ChatI18nKeys.ConfirmChat)}
+          label={t(ChatI18nKeys.Confirm)}
           onClick={handleConfirm}
         />
       </div>

@@ -778,7 +778,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           description={t(ChatI18nKeys.AreYouSureDeletePermanently, {
             name: getLastPathSegment(deletingFileId ?? ''),
           })}
-          confirmLabel={t(ChatI18nKeys.ConfirmChat)}
+          confirmLabel={t(ChatI18nKeys.Confirm)}
           cancelLabel={t(ChatI18nKeys.Cancel)}
           onClose={handleDeleteFile}
         />
