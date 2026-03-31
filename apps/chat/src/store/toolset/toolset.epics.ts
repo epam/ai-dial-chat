@@ -823,6 +823,7 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
             return concat(
               of(
                 ToolsetActions.logInToolsetSuccess({
+                  skipToastMessage: payload.isPopup,
                   toolsetId: payload.toolsetId,
                   authLevel: payload.authLevel,
                   isAdmin: payload.isAdmin,
@@ -864,7 +865,13 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
               void router.push(new URL(callbackUrl));
             }
           }
-          return concat(of(ToolsetActions.logInToolsetFail()));
+          return concat(
+            of(
+              ToolsetActions.logInToolsetFail({
+                skipToastMessage: payload.isPopup,
+              }),
+            ),
+          );
         }),
       );
     }),
@@ -873,6 +880,7 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
 const loginToolsetSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolsetSuccess.type),
+    filter(({ payload }) => !payload.skipToastMessage),
     map(({ payload }) => {
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
       const isPublic =
@@ -898,6 +906,7 @@ const loginToolsetSuccessEpic: AppEpic = (action$, state$) =>
 const loginToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolsetFail.type),
+    filter(({ payload }) => !payload?.skipToastMessage),
     map(() =>
       UIActions.showErrorToast(translate(errorsMessages.toolsetSignInFailed)),
     ),
