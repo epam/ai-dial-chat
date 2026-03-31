@@ -96,7 +96,6 @@
   "Please type a message": "Please type a message",
   "Talk to your agent": "Talk to your agent",
   "Prompt limit exceeded": "Prompt limit exceeded",
-  "Confirm": "Confirm",
   "Prompt limit is {{maxTokensLength}} tokens. {{limitDescription}}": "Prompt limit is {{maxTokensLength}} tokens. {{limitDescription}}",
   "Please, enter variables for the template:": "Please, enter variables for the template:",
   "Compare Mode is unavailable with agents requiring a configuration. Please either select a single chat or switch to agents without configuration schema to continue.": "Compare Mode is unavailable with agents requiring a configuration. Please either select a single chat or switch to agents without configuration schema to continue.",

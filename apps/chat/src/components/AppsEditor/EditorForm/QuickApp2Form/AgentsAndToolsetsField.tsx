@@ -333,7 +333,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                 }
                 isOn
                 handleSwitch={handleJsonViewChange}
-                switchOnText={t(MarketplaceI18nKeys.ONMarketplace)}
+                switchOnText={t(MarketplaceI18nKeys.OnToggle)}
                 additionalText={t(MarketplaceI18nKeys.JSONLabel)}
                 className="mb-2 flex w-fit items-center gap-2"
                 tooltip={t(MarketplaceI18nKeys.SwitchToMarketplaceView)}
