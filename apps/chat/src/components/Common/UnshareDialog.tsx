@@ -1,9 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { isMyBucket, splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
 
@@ -11,8 +11,9 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareSelectors } from '@/src/store/selectors';
 
-import { ConfirmDialog } from './ConfirmDialog';
 import { withRenderWhen } from './RenderWhen';
+
+import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 
 function UnshareDialogView() {
   const { t } = useTranslation(Translation.Common);
@@ -30,17 +31,23 @@ function UnshareDialogView() {
     ShareSelectors.selectShareFeatureType,
   );
 
-  const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
+  const resourceId = unshareEntity?.id ?? unshareResourceId ?? '';
 
-  const description = isFolder
-    ? t(
-        `Are you sure you want to remove access for all users to ${shareResourceName}?`,
-      )
-    : t(
-        `Are you sure you want to remove ${
-          unshareEntity?.isShared ? 'access for all users' : 'your access'
-        } to ${unshareEntity ? unshareEntity?.name : shareResourceName}?`,
-      );
+  const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
+  const { bucket, name } = splitEntityId(resourceId);
+
+  const isAuthor = isMyBucket(bucket);
+
+  const description = useMemo(
+    () => (
+      <span>
+        {t('Are you sure you want to remove')}{' '}
+        <strong>{t(isAuthor ? 'access for all users' : 'your access')}</strong>{' '}
+        {t('to {{name}}', { name: shareResourceName ?? name })}
+      </span>
+    ),
+    [isAuthor, shareResourceName, name, t],
+  );
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
@@ -96,13 +103,14 @@ function UnshareDialogView() {
   );
 
   return (
-    <ConfirmDialog
-      isOpen
-      heading={t('Confirm removing access')}
+    <DialConfirmationPopup
+      open
+      header={t('Confirm unsharing')}
       description={description}
-      confirmLabel={t('Confirm')}
+      confirmLabel={t('Unshare')}
       cancelLabel={t('Cancel')}
-      onClose={handleConfirmUnshare}
+      onClose={() => handleConfirmUnshare(false)}
+      onConfirm={() => handleConfirmUnshare(true)}
     />
   );
 }

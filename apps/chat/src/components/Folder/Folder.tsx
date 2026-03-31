@@ -37,7 +37,7 @@ import {
   isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
-import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
+import { isEntityIdExternal, isMyEntity, isRootId } from '@/src/utils/app/id';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   hasParentWithAttribute,
@@ -91,7 +91,11 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import {
+  DialConfirmationPopup,
+  DialGhostIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -765,7 +769,6 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       if (!onUnshareFolder) {
         return;
       }
-
       e.stopPropagation();
       setIsUnshareConfirmDialog(true);
     },
@@ -880,6 +883,19 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     canSelectFolders && isContextMenu && isTabletScreen();
   const isTemporaryFolder =
     'temporary' in currentFolder && currentFolder.temporary;
+
+  const isAuthor = isMyEntity(currentFolder);
+
+  const unshareDescription = useMemo(
+    () => (
+      <span>
+        {t('Are you sure you want to remove')}{' '}
+        <strong>{t(isAuthor ? 'access for all users' : 'your access')}</strong>{' '}
+        {t('to {{name}}', { name: currentFolder.name })}
+      </span>
+    ),
+    [isAuthor, t, currentFolder.name],
+  );
 
   return (
     <div
@@ -1338,20 +1354,16 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         />
       )}
       {onUnshareFolder && (
-        <ConfirmDialog
-          isOpen={isUnshareConfirmDialog}
-          showHeadingTooltip
-          heading={t('Confirm unsharing: {{folderName}}', {
-            folderName: currentFolder.name,
-          })}
-          description={`${t('Are you sure that you want to unshare this folder?')}`}
+        <DialConfirmationPopup
+          open={isUnshareConfirmDialog}
+          header={t('Confirm unsharing')}
+          description={unshareDescription}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
-          onClose={(result) => {
+          onClose={() => setIsUnshareConfirmDialog(false)}
+          onConfirm={() => {
             setIsUnshareConfirmDialog(false);
-            if (result) {
-              onUnshareFolder(currentFolder.id);
-            }
+            onUnshareFolder(currentFolder.id);
           }}
         />
       )}
