@@ -58,4 +58,10 @@
   "Replay": "Replay",
   "Playback": "Playback",
   "Move to": "Move to",
-  "Info": "Info"
+  "Info": "Info",
+  "Type": "Type",
+  "Topics": "Topics",
+  "Sources": "Sources",
+  "Filters": "Filters",
+  "No filters as you currently have no agents": "No filters as you currently have no agents",
+  "No filters as you currently have no toolsets": "No filters as you currently have no toolsets"

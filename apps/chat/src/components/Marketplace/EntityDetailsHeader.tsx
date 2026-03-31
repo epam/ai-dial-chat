@@ -10,6 +10,7 @@ import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { HeaderIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -123,7 +124,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
           onClick={shareAction.onShare}
           data-qa="share"
           iconBefore={<IconUserShare size={18} />}
-          label={t('Share')}
+          label={t(MarketplaceI18nKeys.ShareMarketplace)}
         />
       )}
 

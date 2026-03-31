@@ -18,6 +18,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetTypes } from '@/src/constants/quick-apps';
 
 import { QuickApp2Form as QuickApp2FormType } from '@/src/components/AppsEditor/form';
@@ -109,15 +110,13 @@ export const CodeInterpreterField: FC = () => {
       control={control}
       render={({ field }) => (
         <ToggleSwitchField
-          label={t('Code Interpreter')}
-          info={t(
-            'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
-          )}
+          label={t(MarketplaceI18nKeys.CodeInterpreter)}
+          info={t(MarketplaceI18nKeys.CodeInterpreterInfo)}
           isOn={field.value}
           handleSwitch={handleValueChange}
-          switchOnText={t('ON')}
-          switchOFFText={t('OFF')}
-          additionalText={t('Use to execute custom Python code')}
+          switchOnText={t(MarketplaceI18nKeys.ONMarketplace)}
+          switchOFFText={t(MarketplaceI18nKeys.OFFMarketplace)}
+          additionalText={t(MarketplaceI18nKeys.UseToExecuteCustomPythonCode)}
           className="mt-1 flex w-fit items-center gap-2"
           disabled={isAppPublic}
           tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}

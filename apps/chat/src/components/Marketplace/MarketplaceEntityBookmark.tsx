@@ -16,6 +16,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -59,8 +60,16 @@ export const MarketplaceEntityBookmark = <T extends MarketplaceEntity>({
     ? installedModelIds.has(entity.reference)
     : installedToolsetsSet.has(entity.reference);
   const [Bookmark, tooltip, dataQa] = isBookmarked
-    ? [IconBookmarkFilled, 'Remove from My workspace', 'remove-bookmark']
-    : [IconBookmark, 'Add to My workspace', 'add-bookmark'];
+    ? ([
+        IconBookmarkFilled,
+        MarketplaceI18nKeys.RemoveFromMyWorkspace,
+        'remove-bookmark',
+      ] as const)
+    : ([
+        IconBookmark,
+        MarketplaceI18nKeys.AddToMyWorkspace,
+        'add-bookmark',
+      ] as const);
 
   return (
     <div

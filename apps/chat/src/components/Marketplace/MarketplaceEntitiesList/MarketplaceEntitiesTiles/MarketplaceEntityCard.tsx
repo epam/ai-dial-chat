@@ -17,6 +17,8 @@ import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
@@ -151,7 +153,7 @@ export const MarketplaceEntityCard = memo(
               >
                 {(isCreatedMarketplaceEntity(entity) || entity.version) && (
                   <>
-                    {t('Version: ')}
+                    {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
                     <span className="mr-1 truncate" data-qa="version">
                       {entity.version || t(NA_VERSION)}
                     </span>

@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, UISelectors } from '@/src/store/selectors';
 
@@ -20,13 +22,15 @@ import lightBanner from '@/public/images/banners/welcome-light.jpg';
 const getBannerText = (tab: MarketplaceEntitiesTabs) => {
   return {
     title: {
-      [MarketplaceTabs.HOME]: 'Welcome to DIAL Marketplace',
-      [MarketplaceTabs.MY_WORKSPACE]: 'My workspace',
+      [MarketplaceTabs.HOME]: MarketplaceI18nKeys.WelcomeToDIALMarketplace,
+      [MarketplaceTabs.MY_WORKSPACE]: MarketplaceI18nKeys.MyWorkspace,
     },
     subtitle: {
-      [MarketplaceTabs.HOME]:
-        'Explore our AI offerings with your data and see how they boost your productivity!',
-      [MarketplaceTabs.MY_WORKSPACE]: `Here you can manage the ${tab === MarketplaceEntitiesTabs.AGENTS ? ' AI agents' : 'toolsets'} used in your daily work`,
+      [MarketplaceTabs.HOME]: MarketplaceI18nKeys.ExploreAIOfferings,
+      [MarketplaceTabs.MY_WORKSPACE]:
+        tab === MarketplaceEntitiesTabs.AGENTS
+          ? MarketplaceI18nKeys.ManageAIAgentsDaily
+          : MarketplaceI18nKeys.ManageToolsetsDaily,
     },
   };
 };

@@ -7,6 +7,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const starIdxs = [1, 2, 3, 4, 5];
@@ -52,10 +54,10 @@ export const RatingHandler = ({ onRatingApply, onClose }: Props) => {
         ))}
       </div>
       <div className="mt-3 flex w-full justify-end gap-2">
-        <DialNeutralButton onClick={onClose} label={t('Cancel')} />
+        <DialNeutralButton onClick={onClose} label={t(MarketplaceI18nKeys.CancelMarketplace)} />
         <DialPrimaryButton
           disabled={!selectedRating}
-          label={t('Send')}
+          label={t(MarketplaceI18nKeys.SendMarketplace)}
           onClick={onRatingApply}
         />
       </div>

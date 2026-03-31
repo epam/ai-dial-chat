@@ -11,6 +11,8 @@ import { isTruthyQuery } from '@/src/utils/app/route';
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
@@ -175,7 +177,7 @@ export const ToolsetEditorHeader = ({
         errorTabsSet={errorSteps}
         isEditing={isExistingToolset}
         onTabClick={handleTabClick}
-        title={t(isCreatingToolset ? 'Add toolset' : 'Edit toolset')}
+        title={t(isCreatingToolset ? MarketplaceI18nKeys.AddToolset : MarketplaceI18nKeys.EditToolset)}
         saveLabel={saveLabel}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
@@ -184,12 +186,12 @@ export const ToolsetEditorHeader = ({
 
       <ConfirmDialog
         isOpen={saveDraftDialog}
-        heading={t('Only valid data will be saved')}
+        heading={t(MarketplaceI18nKeys.OnlyValidDataWillBeSaved)}
         description={t(
-          'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
+          MarketplaceI18nKeys.SomeFieldsInvalidDescription,
         )}
-        confirmLabel={t('Save valid data')}
-        cancelLabel={t('Continue editing')}
+        confirmLabel={t(MarketplaceI18nKeys.SaveValidData)}
+        cancelLabel={t(MarketplaceI18nKeys.ContinueEditing)}
         onClose={handleCloseConfirmDialog}
       />
     </>

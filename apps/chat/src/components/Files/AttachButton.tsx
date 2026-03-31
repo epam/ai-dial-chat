@@ -130,7 +130,11 @@ export const AttachButton = ({
       [
         {
           name: t(
-            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
+            canAttachFiles && canAttachFolders
+              ? ChatI18nKeys.AttachFoldersAndUploadedFiles
+              : canAttachFolders
+                ? ChatI18nKeys.AttachFolders
+                : ChatI18nKeys.AttachUploadedFiles,
           ),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,

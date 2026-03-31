@@ -3,7 +3,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';

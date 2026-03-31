@@ -16,6 +16,8 @@ import {
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
@@ -52,7 +54,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
       <DialPrimaryButton
         iconBefore={<IconKey size={18} />}
         onClick={handleLogin}
-        label={t('Manage creds')}
+        label={t(MarketplaceI18nKeys.ManageCreds)}
         data-qa="login-button"
       />
     );

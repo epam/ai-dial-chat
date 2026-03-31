@@ -10,6 +10,8 @@ import { PreviewMode } from '@/src/types/marketplace';
 import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
@@ -114,7 +116,7 @@ export const ToolsetPreview = ({
         data-qa="preview-toggle-container"
       >
         <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
-          {t('Preview')}
+          {t(MarketplaceI18nKeys.PreviewMarketplace)}
         </span>
         <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">
           <ToggleSwitchLabeled
@@ -122,8 +124,8 @@ export const ToolsetPreview = ({
             handleSwitch={handleSwitch}
             labelText="Detailed"
             isLabelOnRight
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
+            switchOnText={t(MarketplaceI18nKeys.OnToggle)}
+            switchOFFText={t(MarketplaceI18nKeys.OffToggle)}
           />
         </div>
 

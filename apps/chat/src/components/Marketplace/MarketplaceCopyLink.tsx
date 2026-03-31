@@ -12,6 +12,8 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface MarketplaceCopyLinkProps {
@@ -53,7 +55,15 @@ export function MarketplaceCopyLink({
 
   return (
     <Tooltip
-      tooltip={hasTooltip ? t(urlCopied ? 'Copied!' : 'Copy link') : undefined}
+      tooltip={
+        hasTooltip
+          ? t(
+              urlCopied
+                ? MarketplaceI18nKeys.CopiedMarketplace
+                : MarketplaceI18nKeys.CopyLink,
+            )
+          : undefined
+      }
     >
       {urlCopied ? (
         <div
@@ -61,7 +71,7 @@ export function MarketplaceCopyLink({
           data-qa="copied-link"
         >
           <IconCheck size={size} data-qa="copied-icon" />
-          {withText && <span>{t('Copied!')}</span>}
+          {withText && <span>{t(MarketplaceI18nKeys.CopiedMarketplace)}</span>}
         </div>
       ) : (
         <a
@@ -71,7 +81,11 @@ export function MarketplaceCopyLink({
           href={link}
         >
           <IconLink size={size} data-qa="copy-icon" />
-          {withText && <span data-qa="copy-link-text">{t('Copy link')}</span>}
+          {withText && (
+            <span data-qa="copy-link-text">
+              {t(MarketplaceI18nKeys.CopyLink)}
+            </span>
+          )}
         </a>
       )}
     </Tooltip>
