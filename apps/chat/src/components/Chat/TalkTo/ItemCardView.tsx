@@ -31,6 +31,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -208,7 +209,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           <div className="flex items-center gap-2">
             {!!versionsToSelect.length && (
               <div className="flex items-center truncate">
-                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
+                <p className="mr-1 text-xs text-secondary">
+                  {t(MarketplaceI18nKeys.Version)}:{' '}
+                </p>
                 <ModelVersionSelect
                   readonly={
                     conversation && isPlaybackConversation(conversation)
@@ -267,9 +270,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         >
           {isOldReplay && (
             <span className="text-xs leading-[15px] text-error">
-              {t(
-                'Some messages were created in an older DIAL version and may not replay as expected.',
-              )}
+              {t(MarketplaceI18nKeys.OldReplayWarning)}
             </span>
           )}
           {entity.topics && <TopicsList topics={entity.topics} />}

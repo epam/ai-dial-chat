@@ -1,3 +1,16 @@
 {
-  "N/A": "N/A"
+  "N/A": "N/A",
+  "Version": "Version",
+  "Some messages were created in an older DIAL version and may not replay as expected.": "Some messages were created in an older DIAL version and may not replay as expected.",
+  "Application logs": "Application logs",
+  "No logs found": "No logs found",
+  "Reload logs": "Reload logs",
+  "Download logs": "Download logs",
+  "Download": "Download",
+  "No folder": "No folder",
+  "Change": "Change",
+  "Add": "Add",
+  "Confirm": "Confirm",
+  "Cancel": "Cancel",
+  "Add example \"{{exampleType}}\"": "Add example \"{{exampleType}}\""
 }

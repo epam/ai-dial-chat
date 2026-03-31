@@ -88,8 +88,6 @@ export const ChatbarSettings = () => {
     [dispatch],
   );
 
-  const deleteTerm = isSelectMode ? 'selected' : 'all';
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -164,7 +162,11 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t(`Delete ${deleteTerm} conversations`),
+        name: t(
+          isSelectMode
+            ? SideBarI18nKeys.DeleteSelectedConversations
+            : SideBarI18nKeys.DeleteAllConversations,
+        ),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -189,7 +191,6 @@ export const ChatbarSettings = () => {
       isMyItemsExist,
       isStreaming,
       isSelectMode,
-      deleteTerm,
       dispatch,
       collapsedSections,
       jsonImportHandler,
@@ -209,16 +210,22 @@ export const ChatbarSettings = () => {
           onClose={() => {
             setIsSelectFilesDialogOpened(false);
           }}
-          headerLabel={t('Manage attachments')}
+          headerLabel={t(SideBarI18nKeys.ManageAttachments)}
           forceShowSelectCheckBox
         />
       )}
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t(`Confirm deleting ${deleteTerm} conversations`)}
+        heading={t(
+          isSelectMode
+            ? SideBarI18nKeys.ConfirmDeletingSelectedConversations
+            : SideBarI18nKeys.ConfirmDeletingAllConversations,
+        )}
         description={t(
-          `Are you sure that you want to delete ${deleteTerm} conversations?`,
+          isSelectMode
+            ? SideBarI18nKeys.AreYouSureDeleteSelectedConversations
+            : SideBarI18nKeys.AreYouSureDeleteAllConversations,
         )}
         confirmLabel={t(SideBarI18nKeys.Delete)}
         cancelLabel={t(SideBarI18nKeys.Cancel)}

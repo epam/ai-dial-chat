@@ -42,6 +42,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -558,7 +559,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
       >
         <div className="flex max-h-full flex-col divide-y divide-tertiary overflow-hidden rounded-l border border-tertiary bg-layer-3">
           <div className="flex w-fit shrink-0 border-r border-tertiary px-3 py-2">
-            <Tooltip tooltip={t('Hide file list')} isTriggerClickable>
+            <Tooltip tooltip={t(ChatI18nKeys.HideFileList)} isTriggerClickable>
               <DialGhostIconButton
                 size={ElementSize.Small}
                 onClick={handleSidebarToggle}
@@ -658,7 +659,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           </div>
           {!readOnly && (
             <div className="flex items-center gap-3 px-3 py-2.5">
-              <Tooltip tooltip={t('Add new folder')}>
+              <Tooltip tooltip={t(ChatI18nKeys.AddNewFolderChat)}>
                 <DialGhostIconButton
                   size={ElementSize.Small}
                   onClick={() =>
@@ -674,7 +675,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   }
                 />
               </Tooltip>
-              <Tooltip tooltip={t('Create file')}>
+              <Tooltip tooltip={t(ChatI18nKeys.CreateFile)}>
                 <DialGhostIconButton
                   size={ElementSize.Small}
                   onClick={() => {
@@ -685,7 +686,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                   icon={<IconFilePlus size={DEFAULT_ICON_SIZES.SMALL} />}
                 />
               </Tooltip>
-              <Tooltip tooltip={t('Upload file')}>
+              <Tooltip tooltip={t(ChatI18nKeys.UploadFile)}>
                 <DialGhostIconButton
                   size={ElementSize.Small}
                   onClick={openUploadDialog}
@@ -693,7 +694,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
                 />
               </Tooltip>
               {!!modifiedFileIds.length && (
-                <Tooltip tooltip={t('Save all')}>
+                <Tooltip tooltip={t(ChatI18nKeys.SaveAll)}>
                   <DialGhostIconButton
                     size={ElementSize.Small}
                     onClick={() => handleSaveFiles(modifiedFileIds)}
@@ -714,7 +715,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
             {!isSidebarOpen && (
               <div className="flex w-fit border-r border-tertiary px-3 py-2">
                 <Tooltip
-                  tooltip={t('Show file list')}
+                  tooltip={t(ChatI18nKeys.ShowFileList)}
                   isTriggerClickable
                   triggerClassName="mr-auto"
                 >
@@ -728,7 +729,13 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
             )}
 
             <div className="flex w-fit border-l border-tertiary px-3 py-2">
-              <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
+              <Tooltip
+                tooltip={t(
+                  isFullScreen
+                    ? ChatI18nKeys.Minimize
+                    : ChatI18nKeys.FullScreenLabel,
+                )}
+              >
                 <DialGhostIconButton
                   size={ElementSize.Small}
                   onClick={(e) => {
@@ -767,15 +774,12 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
         )}
         <ConfirmDialog
           isOpen={!!deletingFileId}
-          heading={t('Confirm deleting')}
-          description={t(
-            'Are you sure that you want to delete "{{name}}" permanently?',
-            {
-              name: getLastPathSegment(deletingFileId ?? ''),
-            },
-          )}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
+          heading={t(ChatI18nKeys.ConfirmDeletingFile)}
+          description={t(ChatI18nKeys.AreYouSureDeletePermanently, {
+            name: getLastPathSegment(deletingFileId ?? ''),
+          })}
+          confirmLabel={t(ChatI18nKeys.ConfirmChat)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
           onClose={handleDeleteFile}
         />
       </div>

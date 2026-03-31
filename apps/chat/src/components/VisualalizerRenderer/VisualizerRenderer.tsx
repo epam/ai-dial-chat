@@ -25,6 +25,7 @@ import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -265,7 +266,7 @@ export const VisualizerRenderer = ({
               visualizer.current && sendMessage(visualizer.current)
             }
             iconBefore={<IconRefresh size={18} />}
-            label={t('Refresh')}
+            label={t(ChatI18nKeys.Refresh)}
           />
 
           {isBorderless && (

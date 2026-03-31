@@ -42,5 +42,20 @@
     "Widgets": "Widgets",
     "Save": "Save",
     "Download": "Download",
-     "Remove access": "Remove access"
-}
+     "Remove access": "Remove access",
+  "Delete selected conversations": "Delete selected conversations",
+  "Delete all conversations": "Delete all conversations",
+  "Manage attachments": "Manage attachments",
+  "Confirm deleting selected conversations": "Confirm deleting selected conversations",
+  "Confirm deleting all conversations": "Confirm deleting all conversations",
+  "Are you sure that you want to delete selected conversations?": "Are you sure that you want to delete selected conversations?",
+  "Are you sure that you want to delete all conversations?": "Are you sure that you want to delete all conversations?",
+  "Use": "Use",
+  "View": "View",
+  "Edit": "Edit",
+  "Compare": "Compare",
+  "Duplicate": "Duplicate",
+  "Replay": "Replay",
+  "Playback": "Playback",
+  "Move to": "Move to",
+  "Info": "Info"

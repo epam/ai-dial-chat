@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 interface ErrorBoundaryProps {
@@ -30,9 +32,9 @@ function DefaultFallbackComponent({ onClick }: DefaultFallbackComponentProps) {
 
   return (
     <div className="w-fit p-6">
-      <h2 className="text-lg">{t('Oops, something went wrong...')}</h2>
+      <h2 className="text-lg">{t(ChatI18nKeys.OopsSomethingWentWrong)}</h2>
       <DialNeutralButton
-        title={t('Back')}
+        title={t(ChatI18nKeys.Back)}
         onClick={handleBack}
         data-qa="back-button"
       />

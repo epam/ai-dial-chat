@@ -42,6 +42,7 @@ import {
 } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   ChangeMarketplaceTabs,
   MarketplaceQueryParams,
@@ -199,7 +200,7 @@ const TalkToModalView = ({
     if (isPlayback) {
       orderedModels.unshift({
         id: PseudoModel.Playback,
-        name: t('Playback'),
+        name: t(ChatI18nKeys.Playback),
         reference: PseudoModel.Playback,
         type: EntityType.Model,
         isDefault: false,
@@ -207,10 +208,8 @@ const TalkToModalView = ({
     } else if (isReplay) {
       orderedModels.unshift({
         id: REPLAY_AS_IS_MODEL,
-        name: t('Replay as is'),
-        description: t(
-          'This mode replicates user requests from the original conversation including settings set in each message.',
-        ),
+        name: t(ChatI18nKeys.ReplayAsIs),
+        description: t(ChatI18nKeys.ReplayAsIsDescription),
         reference: REPLAY_AS_IS_MODEL,
         type: EntityType.Model,
         isDefault: false,
@@ -319,7 +318,11 @@ const TalkToModalView = ({
     <>
       <h3 className="text-base font-semibold">
         {t(
-          `Select an agent for ${isCompareMode ? (isRight ? 'right side' : 'left side') : ''} conversation`,
+          isCompareMode
+            ? isRight
+              ? ChatI18nKeys.SelectAgentForRightSideConversation
+              : ChatI18nKeys.SelectAgentForLeftSideConversation
+            : ChatI18nKeys.SelectAgentForConversation,
         )}
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col">
@@ -331,7 +334,7 @@ const TalkToModalView = ({
             containerClassName="flex-1"
             data-qa="search-agents"
             autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-            placeholder={t('Search')}
+            placeholder={t(ChatI18nKeys.Search)}
             value={searchTerm}
             onChange={setSearchTerm}
           />
@@ -379,7 +382,11 @@ const TalkToModalView = ({
           )}
           data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'}
         >
-          {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
+          {t(
+            isMyWorkspace
+              ? ChatI18nKeys.GoToMyWorkspace
+              : ChatI18nKeys.GoToDIALMarketplace,
+          )}
         </Link>
       )}
     </>
