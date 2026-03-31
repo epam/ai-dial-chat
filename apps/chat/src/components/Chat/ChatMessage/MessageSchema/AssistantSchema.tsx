@@ -10,6 +10,8 @@ import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -113,7 +115,7 @@ export const AssistantSchema = memo(function AssistantSchema({
   if (!isFormSchemaValid(schema))
     return (
       <div className="mt-2">
-        <ErrorMessage error={t('Form schema is invalid')} />
+        <ErrorMessage error={t(ChatI18nKeys.FormSchemaInvalid)} />
       </div>
     );
 
@@ -125,7 +127,7 @@ export const AssistantSchema = memo(function AssistantSchema({
   )
     return (
       <div className="text-base italic text-primary">
-        {t('Below you can see your action selection.')}
+        {t(ChatI18nKeys.BelowYouCanSeeActionSelection)}
       </div>
     );
 

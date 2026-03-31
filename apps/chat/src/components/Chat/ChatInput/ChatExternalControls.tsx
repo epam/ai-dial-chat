@@ -8,6 +8,8 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -86,9 +88,11 @@ export function ChatExternalControls({
           }
           label={
             isChatReadyForInput && !isReadOnly
-              ? t('Duplicate')
+              ? t(ChatI18nKeys.Duplicate)
               : t(
-                  `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
+                  conversationsToDuplicate.length > 1
+                    ? ChatI18nKeys.DuplicateConversationsToEdit
+                    : ChatI18nKeys.DuplicateConversationToEdit,
                 )
           }
         />

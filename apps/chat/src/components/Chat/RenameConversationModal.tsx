@@ -19,6 +19,8 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
@@ -76,7 +78,7 @@ function RenameConversationView({
       dispatch(
         UIActions.showErrorToast(
           t(
-            'Conversation with name "{{newName}}" already exists in this folder.',
+            ChatI18nKeys.ConversationNameExistsInFolder,
             {
               ns: Translation.Chat,
               newName,
@@ -91,7 +93,7 @@ function RenameConversationView({
     if (doesHaveDotsInTheEnd(newName)) {
       dispatch(
         UIActions.showErrorToast(
-          t('Using a dot at the end of a name is not permitted.'),
+          t(ChatI18nKeys.DotAtEndNotPermitted),
         ),
       );
       return;
@@ -135,7 +137,7 @@ function RenameConversationView({
       hideClose
     >
       <h4 className="text-base font-semibold" data-qa="title">
-        {t('Rename conversation')}
+        {t(ChatI18nKeys.RenameConversation)}
       </h4>
       <input
         name="titleInput"
@@ -156,11 +158,11 @@ function RenameConversationView({
         <DialNeutralButton
           onClick={handleClose}
           data-qa="cancel"
-          label={t('Cancel')}
+          label={t(ChatI18nKeys.Cancel)}
         />
 
         <DialPrimaryButton
-          label={t('Save')}
+          label={t(ChatI18nKeys.Save)}
           onClick={handleRename}
           data-qa="save"
           disabled={

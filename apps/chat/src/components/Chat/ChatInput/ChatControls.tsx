@@ -7,6 +7,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -89,7 +91,7 @@ export const ChatControls: FC<Props> = ({
       data-replay-variables
       icon={
         <Tooltip
-          tooltip={isError ? t('Try again') : t('Continue replay')}
+          tooltip={isError ? t(ChatI18nKeys.TryAgain) : t(ChatI18nKeys.ContinueReplay)}
           isTriggerClickable
         >
           <Icon

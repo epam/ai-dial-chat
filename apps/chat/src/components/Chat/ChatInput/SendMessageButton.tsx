@@ -10,6 +10,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -62,7 +64,7 @@ export const SendMessageButton = Inversify.register(
             isLastMessageError && 'text-error',
             isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
-          aria-label={t('Send a message')}
+          aria-label={t(ChatI18nKeys.SendAMessage)}
           onClick={onSend}
           data-qa="regenerate"
           iconBefore={
@@ -88,7 +90,7 @@ export const SendMessageButton = Inversify.register(
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
-        aria-label={t('Send a message')}
+        aria-label={t(ChatI18nKeys.SendAMessage)}
         iconBefore={
           <Tooltip
             hideTooltip={!disabled && !messageIsStreaming}

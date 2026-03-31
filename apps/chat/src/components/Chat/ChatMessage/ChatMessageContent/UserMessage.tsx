@@ -40,6 +40,8 @@ import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -604,7 +606,7 @@ export const UserMessage = memo(function UserMessage({
 
           <div className="relative flex gap-3">
             <DialNeutralButton
-              label={t('Cancel')}
+              label={t(ChatI18nKeys.Cancel)}
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
@@ -614,7 +616,7 @@ export const UserMessage = memo(function UserMessage({
             />
             {!isInputHidden && (
               <DialPrimaryButton
-                label={t('Save & Submit')}
+                label={t(ChatI18nKeys.SaveAndSubmit)}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
                   isUploadingAttachmentPresent || isContentEmptyAndNoAttachments

@@ -10,6 +10,8 @@ import {
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
@@ -85,7 +87,7 @@ export const TemperatureSlider: FC<Props> = ({
               tooltip={
                 <EntityMarkdownDescription>
                   {t(
-                    'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+                    ChatI18nKeys.HigherValuesTemperature,
                   )}
                 </EntityMarkdownDescription>
               }
@@ -115,9 +117,9 @@ export const TemperatureSlider: FC<Props> = ({
           />
         </div>
         <div className="grid h-4 w-full grid-cols-3 text-xs">
-          <span className="">{t('Precise')}</span>
-          <span className="text-center">{t('Neutral')}</span>
-          <span className="text-right">{t('Creative')}</span>
+          <span className="">{t(ChatI18nKeys.Precise)}</span>
+          <span className="text-center">{t(ChatI18nKeys.Neutral)}</span>
+          <span className="text-right">{t(ChatI18nKeys.Creative)}</span>
         </div>
       </div>
     </Tooltip>

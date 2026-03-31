@@ -4,6 +4,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
 
@@ -134,7 +136,7 @@ export const ChatSettings = ({
       dismissProps={MOUSE_OUTSIDE_PRESS_EVENT}
     >
       <div className="mb-3 !border-t-0 px-3 text-base font-semibold md:px-6">
-        {t('Conversation settings')}
+        {t(ChatI18nKeys.ConversationSettings)}
       </div>
 
       {conversations.length === 2 && (
@@ -159,7 +161,7 @@ export const ChatSettings = ({
                     (isCreatedMarketplaceEntity(model) || model.version) && (
                       <div className="flex items-center">
                         <p className="mr-1 text-xs text-secondary">
-                          {t('Version')}: {model.version || t(NA_VERSION)}
+                          {t(ChatI18nKeys.Version)}: {model.version || t(NA_VERSION)}
                         </p>
                       </div>
                     )}
@@ -202,7 +204,7 @@ export const ChatSettings = ({
       {isSomethingConfigurable && (
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
           <DialPrimaryButton
-            label={t('Apply changes')}
+            label={t(ChatI18nKeys.ApplyChanges)}
             onClick={handleOnApplySettings}
             data-qa="apply-changes"
           />

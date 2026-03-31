@@ -25,6 +25,7 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -199,9 +200,7 @@ const EmptyChatDescriptionView = ({
                   className="!text-base"
                   isShortDescription
                 >
-                  {t(
-                    'This mode replicates user requests from the original conversation including settings set in each message.',
-                  )}
+                  {t(ChatI18nKeys.ReplayAsIsDescription)}
                 </EntityMarkdownDescription>
               </span>
               {isOldReplay && (
@@ -210,9 +209,7 @@ const EmptyChatDescriptionView = ({
                     className="!text-sm"
                     isShortDescription
                   >
-                    {t(
-                      'Some messages were created in an older DIAL version and may not replay as expected.',
-                    )}
+                    {t(ChatI18nKeys.OldReplayWarning)}
                   </EntityMarkdownDescription>
                 </span>
               )}
@@ -250,7 +247,7 @@ const EmptyChatDescriptionView = ({
             <DialLinkButton
               data-qa="change-agent"
               onClick={handleOpenChangeModel}
-              label={t('Change agent')}
+              label={t(ChatI18nKeys.ChangeAgent)}
               className="px-0"
             />
           )}
@@ -258,7 +255,7 @@ const EmptyChatDescriptionView = ({
             <DialLinkButton
               data-qa="configure-settings"
               onClick={handleOpenSettings}
-              label={t('Configure settings')}
+              label={t(ChatI18nKeys.ConfigureSettings)}
               className="rounded-none border-y-0 px-3"
             />
           )}

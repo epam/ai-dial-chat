@@ -6,6 +6,8 @@ import classNames from 'classnames';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import {
   getFormButtonType,
   getFormCheckboxDefinitionOptions,
@@ -319,8 +321,8 @@ const ButtonsProperty = ({
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
         )}
-        confirmLabel={t('Yes')}
-        cancelLabel={t('No')}
+        confirmLabel={t(ChatI18nKeys.Yes)}
+        cancelLabel={t(ChatI18nKeys.No)}
         onClose={handleCloseConfirmation}
       />
     </>

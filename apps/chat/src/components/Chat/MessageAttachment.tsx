@@ -31,6 +31,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '../../constants/i18n';
 import {
   AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
@@ -477,9 +478,11 @@ export const MessageAttachment = ({
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
               )}
-              title={attachment.title || attachment.url || t('Attachment')}
+              title={
+                attachment.title || attachment.url || t(ChatI18nKeys.Attachment)
+              }
             >
-              {attachment.title || attachment.url || t('Attachment')}
+              {attachment.title || attachment.url || t(ChatI18nKeys.Attachment)}
             </span>
 
             {isOpenable && !isFolder ? (
@@ -560,7 +563,7 @@ export const MessageAttachment = ({
               rel="noopener noreferrer"
               className="mt-3 block text-accent-primary"
             >
-              {t('Reference...')}
+              {t(ChatI18nKeys.Reference)}
             </a>
           )}
         </div>

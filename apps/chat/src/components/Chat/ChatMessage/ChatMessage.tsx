@@ -10,6 +10,8 @@ import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
@@ -246,10 +248,10 @@ export const ChatMessage: FC<Props> = memo(
         )}
         <ConfirmDialog
           isOpen={isDeleteConfirmationOpened}
-          heading={t('Confirm deleting message')}
-          description={t('Are you sure that you want to delete the message?')}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
+          heading={t(ChatI18nKeys.ConfirmDeletingMessage)}
+          description={t(ChatI18nKeys.AreYouSureDeleteMessage)}
+          confirmLabel={t(ChatI18nKeys.Delete)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
           onClose={(result) => {
             setIsDeleteConfirmationOpened(false);
             if (result) handleDeleteMessage();

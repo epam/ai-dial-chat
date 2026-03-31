@@ -11,6 +11,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '../../constants/i18n';
+
 import { GroupedVisualizerRenderer } from '@/src/components/VisualalizerRenderer/GroupedVisualizerRenderer';
 
 import { MessageAttachment } from './MessageAttachment';
@@ -121,7 +123,7 @@ export const MessageAttachments = ({
             textClassName="text-sm font-normal"
             onClick={() => setIsSectionOpened((val) => !val)}
             data-qa="grouped-attachments"
-            label={t('Attachments')}
+            label={t(ChatI18nKeys.Attachment)}
             iconAfter={
               <ChevronDown
                 height={18}

@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
 import {
   doesModelAllowSystemPrompt,
@@ -61,7 +63,7 @@ function EmptySettings() {
   return (
     <SettingContainer>
       <FieldContainer>
-        {t('There are no conversation settings for this agent ')}
+        {t(ChatI18nKeys.NoConversationSettings)}
       </FieldContainer>
     </SettingContainer>
   );
@@ -87,7 +89,7 @@ export const ConversationSettings = Inversify.register(
     if (!model) {
       return (
         <SettingContainer>
-          <FieldContainer>{t('Agent is not available')}</FieldContainer>
+          <FieldContainer>{t(ChatI18nKeys.AgentIsNotAvailable)}</FieldContainer>
         </SettingContainer>
       );
     }
@@ -114,7 +116,7 @@ export const ConversationSettings = Inversify.register(
         {doesModelAllowTemperature(model) && (
           <FieldContainer>
             <TemperatureSlider
-              label={t('Temperature')}
+              label={t(ChatI18nKeys.Temperature)}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
               disabled={isPlayback}

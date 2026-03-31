@@ -1,5 +1,7 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Translation } from '@/src/types/translation';
 
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
@@ -13,7 +15,7 @@ const InvalidSchemaMessage = () => {
 
   return (
     <div className="mt-2">
-      <ErrorMessage error={t('Form schema is invalid')} />
+      <ErrorMessage error={t(ChatI18nKeys.FormSchemaInvalid)} />
     </div>
   );
 };
