@@ -18,8 +18,6 @@ import { getMessageCustomContent } from '@/src/utils/app/conversation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -27,6 +25,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -116,7 +115,11 @@ export const MessageUserButtons = ({
             </Tooltip>
           )}
           {isEditAvailable && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t(ChatI18nKeys.Edit)}>
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t(ChatI18nKeys.Edit)}
+            >
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
                 size={ElementSize.Small}
@@ -126,7 +129,11 @@ export const MessageUserButtons = ({
             </Tooltip>
           )}
           {onDelete && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t(ChatI18nKeys.Delete)}>
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t(ChatI18nKeys.Delete)}
+            >
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
                 size={ElementSize.Small}
@@ -235,7 +242,11 @@ export const MessageAssistantButtons = ({
         />
       ))}
       {onRegenerate && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t(ChatI18nKeys.Regenerate)}>
+        <Tooltip
+          placement="top"
+          isTriggerClickable
+          tooltip={t(ChatI18nKeys.Regenerate)}
+        >
           <DialPrimaryIconButton
             appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
@@ -262,7 +273,11 @@ export const MessageAssistantButtons = ({
         </>
       )}
       {onToggleEditing && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t(ChatI18nKeys.Edit)}>
+        <Tooltip
+          placement="top"
+          isTriggerClickable
+          tooltip={t(ChatI18nKeys.Edit)}
+        >
           <DialPrimaryIconButton
             appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
@@ -484,7 +499,9 @@ export const MessageMobileButtons = ({
                   height={18}
                   width={18}
                 />
-                <p className="whitespace-nowrap">{t(ChatI18nKeys.SetTemplate)}</p>
+                <p className="whitespace-nowrap">
+                  {t(ChatI18nKeys.SetTemplate)}
+                </p>
               </div>
             }
           />

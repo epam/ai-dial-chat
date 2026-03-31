@@ -2,8 +2,6 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
 import {
   doesModelAllowSystemPrompt,
@@ -18,6 +16,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
@@ -62,9 +62,7 @@ function EmptySettings() {
 
   return (
     <SettingContainer>
-      <FieldContainer>
-        {t(ChatI18nKeys.NoConversationSettings)}
-      </FieldContainer>
+      <FieldContainer>{t(ChatI18nKeys.NoConversationSettings)}</FieldContainer>
     </SettingContainer>
   );
 }

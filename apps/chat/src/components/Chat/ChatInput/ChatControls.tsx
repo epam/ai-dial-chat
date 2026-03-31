@@ -7,8 +7,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -16,6 +14,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
@@ -91,7 +90,9 @@ export const ChatControls: FC<Props> = ({
       data-replay-variables
       icon={
         <Tooltip
-          tooltip={isError ? t(ChatI18nKeys.TryAgain) : t(ChatI18nKeys.ContinueReplay)}
+          tooltip={
+            isError ? t(ChatI18nKeys.TryAgain) : t(ChatI18nKeys.ContinueReplay)
+          }
           isTriggerClickable
         >
           <Icon

@@ -4,14 +4,13 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
-
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { NA_VERSION } from '@/src/constants/publication';
 

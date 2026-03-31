@@ -14,10 +14,10 @@ import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -104,7 +104,10 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
                 <IconCheck size={18} />
               </Tooltip>
             ) : (
-              <Tooltip isTriggerClickable tooltip={t(ChatI18nKeys.CopyStageContent)}>
+              <Tooltip
+                isTriggerClickable
+                tooltip={t(ChatI18nKeys.CopyStageContent)}
+              >
                 <IconCopy size={18} />
               </Tooltip>
             )

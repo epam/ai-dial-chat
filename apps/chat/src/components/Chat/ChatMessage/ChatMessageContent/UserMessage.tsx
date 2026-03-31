@@ -40,8 +40,6 @@ import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -53,6 +51,7 @@ import {
 } from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';

@@ -55,7 +55,9 @@ export const HeaderSettingsTooltip = ({
         )}
         {systemPrompt && (
           <>
-            <span className="text-secondary">{t(ChatI18nKeys.SystemPrompt)}:</span>
+            <span className="text-secondary">
+              {t(ChatI18nKeys.SystemPrompt)}:
+            </span>
             <div
               className={classNames('whitespace-pre-wrap', lineClampClass)}
               data-qa="prompt-info"
@@ -66,7 +68,9 @@ export const HeaderSettingsTooltip = ({
         )}
         {temperature !== null && (
           <>
-            <span className="text-secondary">{t(ChatI18nKeys.Temperature)}:</span>
+            <span className="text-secondary">
+              {t(ChatI18nKeys.Temperature)}:
+            </span>
             <div data-qa="temp-info">{temperature}</div>
           </>
         )}

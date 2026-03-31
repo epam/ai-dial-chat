@@ -10,8 +10,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -19,6 +17,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Spinner } from '@/src/components/Common/Spinner';

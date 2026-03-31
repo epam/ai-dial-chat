@@ -14,12 +14,11 @@ import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Modal } from '@/src/components/Common/Modal';
@@ -175,9 +174,7 @@ export const ChatMessageTemplatesModal = ({
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
             >
-              {t(
-                ChatI18nKeys.CopyPartOfMessage,
-              )}
+              {t(ChatI18nKeys.CopyPartOfMessage)}
             </p>
             <p
               data-qa="original-message-label"
@@ -203,7 +200,11 @@ export const ChatMessageTemplatesModal = ({
                   <DialLinkButton
                     onClick={() => setCollapsed(!collapsed)}
                     data-qa={collapsed ? 'show-more' : 'show-less'}
-                    label={t(!collapsed ? ChatI18nKeys.ShowLess : ChatI18nKeys.ShowMore)}
+                    label={t(
+                      !collapsed
+                        ? ChatI18nKeys.ShowLess
+                        : ChatI18nKeys.ShowMore,
+                    )}
                   />
                 )}
               </span>

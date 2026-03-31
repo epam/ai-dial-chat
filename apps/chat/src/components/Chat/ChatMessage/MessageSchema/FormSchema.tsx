@@ -6,8 +6,6 @@ import classNames from 'classnames';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import {
   getFormButtonType,
   getFormCheckboxDefinitionOptions,
@@ -22,6 +20,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';

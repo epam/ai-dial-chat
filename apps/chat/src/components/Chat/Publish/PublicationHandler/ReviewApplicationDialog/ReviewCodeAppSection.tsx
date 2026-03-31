@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewApplicationPropsSection';
 import { CodeEditor } from '@/src/components/Common/CodeEditor';
@@ -54,7 +55,7 @@ const ReviewCodeAppSectionView = ({
       )}
 
       <MarketplaceEntityInfoRow
-        label={t('Source folder')}
+        label={t(ChatI18nKeys.SourceFolder)}
         value={
           isFilesLoading ? (
             <div className="flex size-full items-center justify-center rounded border border-tertiary">

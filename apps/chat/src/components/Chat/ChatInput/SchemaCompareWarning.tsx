@@ -13,9 +13,7 @@ export const SchemaCompareWarning = () => {
     <div className="flex justify-center">
       <div className="max-w-2xl">
         <ErrorMessage
-          error={t(
-            ChatI18nKeys.CompareModeUnavailable,
-          )}
+          error={t(ChatI18nKeys.CompareModeUnavailable)}
           type="warning"
         />
       </div>

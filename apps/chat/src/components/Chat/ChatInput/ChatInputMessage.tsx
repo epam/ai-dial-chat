@@ -26,8 +26,6 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import {
   ChatActions,
   ConversationsActions,
@@ -44,6 +42,7 @@ import {
 } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
@@ -509,14 +508,10 @@ export const ChatInputMessage = Inversify.register(
         return t(ChatI18nKeys.StopGenerating);
       }
       if (!areModelsLoaded) {
-        return t(
-          ChatI18nKeys.WaitForModelsToLoad,
-        );
+        return t(ChatI18nKeys.WaitForModelsToLoad);
       }
       if (isReplay) {
-        return t(
-          ChatI18nKeys.ContinueReplayToWork,
-        );
+        return t(ChatI18nKeys.ContinueReplayToWork);
       }
       if (shouldRegenerate) {
         return t(ChatI18nKeys.RegenerateResponse);
@@ -663,13 +658,13 @@ export const ChatInputMessage = Inversify.register(
         <ConfirmDialog
           isOpen={isPromptLimitModalOpen}
           heading={t(ChatI18nKeys.PromptLimitExceeded)}
-          description={t(
-            ChatI18nKeys.PromptLimitDescription,
-            {
+          description={t(ChatI18nKeys.PromptLimitDescription, {
+            maxTokensLength,
+            limitDescription: getPromptLimitDescription(
+              getTokensLength(content),
               maxTokensLength,
-              limitDescription: getPromptLimitDescription(getTokensLength(content), maxTokensLength),
-            },
-          )}
+            ),
+          })}
           confirmLabel={t(ChatI18nKeys.Confirm)}
           onClose={() => {
             setIsPromptLimitModalOpen(false);

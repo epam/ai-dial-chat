@@ -4,8 +4,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
 
@@ -17,6 +15,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 import { NA_VERSION } from '@/src/constants/publication';
 
@@ -161,7 +160,8 @@ export const ChatSettings = ({
                     (isCreatedMarketplaceEntity(model) || model.version) && (
                       <div className="flex items-center">
                         <p className="mr-1 text-xs text-secondary">
-                          {t(ChatI18nKeys.Version)}: {model.version || t(NA_VERSION)}
+                          {t(ChatI18nKeys.Version)}:{' '}
+                          {model.version || t(NA_VERSION)}
                         </p>
                       </div>
                     )}

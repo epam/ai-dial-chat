@@ -10,8 +10,6 @@ import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -19,6 +17,8 @@ import {
   ConversationsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';

@@ -11,8 +11,6 @@ import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
@@ -20,6 +18,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { PromptList } from '@/src/components/Chat/ChatInput/PromptList';

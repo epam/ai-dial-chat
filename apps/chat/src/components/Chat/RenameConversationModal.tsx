@@ -19,12 +19,11 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -77,13 +76,10 @@ function RenameConversationView({
     ) {
       dispatch(
         UIActions.showErrorToast(
-          t(
-            ChatI18nKeys.ConversationNameExistsInFolder,
-            {
-              ns: Translation.Chat,
-              newName,
-            },
-          ),
+          t(ChatI18nKeys.ConversationNameExistsInFolder, {
+            ns: Translation.Chat,
+            newName,
+          }),
         ),
       );
 
@@ -91,11 +87,7 @@ function RenameConversationView({
     }
 
     if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(
-        UIActions.showErrorToast(
-          t(ChatI18nKeys.DotAtEndNotPermitted),
-        ),
-      );
+      dispatch(UIActions.showErrorToast(t(ChatI18nKeys.DotAtEndNotPermitted)));
       return;
     }
 

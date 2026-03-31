@@ -17,8 +17,6 @@ import {
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import {
   ChatEventsActions,
   MarketplaceActions,
@@ -26,6 +24,8 @@ import {
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ChatEventsSelectors, ToolsetSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -159,9 +159,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
       ) : (
         <div className="p-3 !pt-0 md:p-6">
           <h2 className="mb-4 text-sm text-secondary">
-            {t(
-              ChatI18nKeys.ToolsetsRequireLogin,
-            )}
+            {t(ChatI18nKeys.ToolsetsRequireLogin)}
           </h2>
 
           <div className="divide-y divide-tertiary rounded border border-secondary">

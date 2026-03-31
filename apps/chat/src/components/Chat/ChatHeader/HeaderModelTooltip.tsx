@@ -26,7 +26,12 @@ export const HeaderModelTooltip = ({
       data-qa="chat-model-tooltip"
     >
       <div className="font-semibold" data-qa="tooltip-title">
-        {t(disallowChangeAgent ? ChatI18nKeys.CurrentAgent : ChatI18nKeys.ChangeCurrentAgent)}:
+        {t(
+          disallowChangeAgent
+            ? ChatI18nKeys.CurrentAgent
+            : ChatI18nKeys.ChangeCurrentAgent,
+        )}
+        :
       </div>
       <div className="mt-3 grid grid-cols-[auto,1fr] gap-x-4 gap-y-2">
         <>

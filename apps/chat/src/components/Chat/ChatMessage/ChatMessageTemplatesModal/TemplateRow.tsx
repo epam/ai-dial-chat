@@ -17,9 +17,8 @@ import { templateMatchContent } from '@/src/utils/app/prompts';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { TemplateInput } from './TemplateInput';

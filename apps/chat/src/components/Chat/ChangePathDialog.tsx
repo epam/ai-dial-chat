@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -37,6 +35,7 @@ import {
   MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   TEMPORARY_FOLDER_ROOT_ID,
 } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
@@ -270,9 +269,7 @@ export const ChangePathDialog = ({
 
     if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
-        UIActions.showErrorToast(
-          t(ChatI18nKeys.NotAllowedMoreNestedFolders),
-        ),
+        UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoreNestedFolders)),
       );
       return;
     }

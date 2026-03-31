@@ -6,7 +6,6 @@ import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';

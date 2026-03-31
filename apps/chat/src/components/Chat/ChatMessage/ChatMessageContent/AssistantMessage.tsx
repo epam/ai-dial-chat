@@ -25,14 +25,14 @@ import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { useAppSelector } from '@/src/store/hooks';
 import {
   PublicationSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';

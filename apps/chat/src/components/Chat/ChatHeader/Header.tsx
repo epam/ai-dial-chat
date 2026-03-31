@@ -34,8 +34,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
 import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
@@ -231,7 +231,8 @@ export const ChatHeader = Inversify.register(
                       className={classNames(isUnpublishing && 'text-error')}
                       data-qa="version"
                     >
-                      {t(ChatI18nKeys.VersionPrefix)} {conversation.publicationInfo?.version}
+                      {t(ChatI18nKeys.VersionPrefix)}{' '}
+                      {conversation.publicationInfo?.version}
                     </p>
                   )}
                 </span>

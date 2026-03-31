@@ -10,11 +10,10 @@ import {
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -86,9 +85,7 @@ export const TemperatureSlider: FC<Props> = ({
               triggerClassName="text-secondary"
               tooltip={
                 <EntityMarkdownDescription>
-                  {t(
-                    ChatI18nKeys.HigherValuesTemperature,
-                  )}
+                  {t(ChatI18nKeys.HigherValuesTemperature)}
                 </EntityMarkdownDescription>
               }
             >
