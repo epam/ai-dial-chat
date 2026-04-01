@@ -8,9 +8,7 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 
-import Link from 'next/link';
-
-import classNames from 'classnames';
+import { useRouter } from 'next/router';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -58,7 +56,7 @@ import { TalkToNotFound } from '@/src/components/Common/TalkToNotFound';
 import { TalkToSliderItem, TalkToSliderItemProps } from './TalkToSliderItem';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { DialSearch } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton, DialSearch } from '@epam/ai-dial-ui-kit';
 import orderBy from 'lodash-es/orderBy';
 
 interface TabButtonProps {
@@ -99,6 +97,7 @@ const TalkToModalView = ({
   const headerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
@@ -291,13 +290,16 @@ const TalkToModalView = ({
 
   const handleGoToWorkspace = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
+      const url = `/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`;
+
+      router.push(url);
       if (isPlayback) {
         e.preventDefault();
       } else {
         dispatch(ConversationsActions.setTalkToConversationId(null));
       }
     },
-    [isPlayback, dispatch],
+    [conversation.id, isMyWorkspace, tab, router, isPlayback, dispatch],
   );
 
   const sliderItemProps = useMemo(
@@ -366,22 +368,22 @@ const TalkToModalView = ({
           prevActiveSlide={prevActiveSlide}
           onSetActiveSlide={setActiveSlide}
           onSetPrevActiveSlide={setPrevActiveSlide}
+          footer={
+            isMarketplaceEnabled && (
+              <DialLinkButton
+                onClick={handleGoToWorkspace}
+                disabled={isPlayback}
+                data-qa={
+                  isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'
+                }
+                label={t(
+                  `Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`,
+                )}
+              />
+            )
+          }
         />
       </div>
-      {isMarketplaceEnabled && (
-        <Link
-          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`}
-          shallow
-          onClick={handleGoToWorkspace}
-          className={classNames(
-            'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
-            isPlayback && 'cursor-not-allowed',
-          )}
-          data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'}
-        >
-          {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
-        </Link>
-      )}
     </>
   );
 };
