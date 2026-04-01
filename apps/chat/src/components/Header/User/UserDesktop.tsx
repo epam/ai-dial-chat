@@ -43,7 +43,9 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              <UserIcon userName={session?.user?.name || t(HeaderI18nKeys.User)} />
+              <UserIcon
+                userName={session?.user?.name || t(HeaderI18nKeys.User)}
+              />
             </div>
           </div>
         }
@@ -77,7 +79,9 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           item={
             <div className="flex gap-3">
               <IconLogout size={18} className="text-secondary" />
-              <span>{session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}</span>
+              <span>
+                {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
+              </span>
             </div>
           }
           onClick={() => {

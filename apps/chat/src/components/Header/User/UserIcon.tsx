@@ -8,9 +8,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { HeaderI18nKeys } from '@/src/constants/i18n';
 import { readableColor } from 'polished';
 import randomColor from 'randomcolor';
 
