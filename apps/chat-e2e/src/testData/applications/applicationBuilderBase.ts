@@ -17,14 +17,8 @@ export class ApplicationBuilderBase<T extends ApiApplicationModelBase> {
       display_version: ExpectedConstants.defaultEntityVersion,
       icon_url: '',
       description: '',
-      features: undefined,
       input_attachment_types: [],
       description_keywords: [],
-      max_input_attachments: 0,
-      url: undefined,
-      defaults: undefined,
-      applicationTypeSchemaId: undefined,
-      applicationProperties: undefined,
       reference: webcrypto.randomUUID(),
     } as unknown as T;
     return this.application;
