@@ -32,9 +32,9 @@ export class AgentInfoAssertion extends BaseAssertion {
         const rawDescription =
           expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '';
         const expectedText = rawDescription
-          .replace("'", '"')
-          .replace("'>", ';">')
-          .replace(':', ': ');
+          .replace(/'/g, '"')
+          .replace(/'>/g, ';">')
+          .replace(/:/g, ': ');
         await this.assertElementInnerHtml(
           this.agentInfo.agentDescription,
           expectedText,
