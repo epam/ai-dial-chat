@@ -29,7 +29,11 @@ import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
-import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialInput,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface RenameConversationViewProps {
   renamingConversation: ConversationInfo;
@@ -137,21 +141,21 @@ function RenameConversationView({
       <h4 className="text-base font-semibold" data-qa="title">
         {t('Rename conversation')}
       </h4>
-      <input
+
+      <DialInput
         name="titleInput"
         type="text"
-        ref={inputRef}
+        inputRef={inputRef}
         value={newConversationName}
         onFocus={(e) => e.target.select()}
-        onChange={(e) =>
+        onChange={(value) =>
           setNewConversationName(
-            e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+            value?.replaceAll(notAllowedSymbolsRegex, '') ?? '',
           )
         }
         onKeyDown={handleEnterDown}
-        className="w-full rounded border border-primary bg-transparent px-3 py-2.5 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-        autoComplete="off"
       />
+
       <div className="relative flex justify-end gap-3">
         <DialNeutralButton
           onClick={handleClose}
