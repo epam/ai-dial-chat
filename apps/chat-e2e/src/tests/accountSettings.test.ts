@@ -24,21 +24,18 @@ dialTest(
     setTestIds('EPMRTC-812');
 
     await dialTest.step(
-      'Open account menu and verify icon is changed to expanded',
+      'Open account menu and verify menu options',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
-        await accountSettingsAssertion.assertCaretState('expanded');
+        await accountDropdownMenuAssertion.assertMenuState('visible');
+        await accountDropdownMenuAssertion.assertMenuOptions(
+          Object.values(AccountMenuOptions),
+        );
       },
     );
-
-    await dialTest.step('Verify account menu options', async () => {
-      await accountDropdownMenuAssertion.assertMenuOptions(
-        Object.values(AccountMenuOptions),
-      );
-    });
 
     await dialTest.step(
       'Click out of account menu and verify it is closed',
