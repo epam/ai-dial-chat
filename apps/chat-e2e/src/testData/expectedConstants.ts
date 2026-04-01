@@ -39,7 +39,7 @@ export const ExpectedConstants = {
   replayConversation: '[Replay] ',
   playbackLabel: 'Playback',
   playbackConversation: '[Playback] ',
-  emptyPlaybackMessage: 'Type a message',
+  emptyPlaybackMessage: 'Talk to your agen',
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel: 'Try again',
