@@ -230,11 +230,15 @@ export const toolsetSlice = createSlice({
         authLevel: ToolsetCredentialsLevel;
         toolsetId: string;
         isAdmin?: boolean;
+        skipToastMessage?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
-    logInToolsetFail: (state) => {
+    logInToolsetFail: (
+      state,
+      _action: PayloadAction<{ skipToastMessage?: boolean } | undefined>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     logOutToolset: (
