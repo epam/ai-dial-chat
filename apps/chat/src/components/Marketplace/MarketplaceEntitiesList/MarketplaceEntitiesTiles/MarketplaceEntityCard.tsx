@@ -131,7 +131,6 @@ export const MarketplaceEntityCard = memo(
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
-                isTooltipDisabled
                 isExternal={
                   isAgentsTab && isDialAiEntityModel(entity)
                     ? isExternalApp(entity)
