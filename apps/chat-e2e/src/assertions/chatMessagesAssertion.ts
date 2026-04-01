@@ -2,7 +2,7 @@ import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
 import { AttributeValues } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 
 export class ChatMessagesAssertion extends BaseAssertion {
   readonly chatMessages: ChatMessages;
@@ -170,14 +170,29 @@ export class ChatMessagesAssertion extends BaseAssertion {
       .toContain(expectedUrl);
   }
 
-  public async assertFullScreenMessageAttachment(message: string | number) {
+  public async assertFullScreenMessageImageAttachment(
+    message: string | number,
+  ) {
     await this.assertElementClass(
-      this.chatMessages.getOpenedChatMessageAttachment(message),
+      this.chatMessages.getOpenedChatMessageImageAttachment(message),
       new RegExp(
         `^(?=.*${AttributeValues.maxHFull})(?=.*${AttributeValues.maxWFull}).+$`,
         'gm',
       ),
       ExpectedMessages.attachmentIsOpenedOnFullScreen,
     );
+  }
+
+  public async assertMessageImageAttachmentState(
+    message: string | number | Locator,
+    expectedState: ElementState,
+  ) {
+    const imgLocator =
+      typeof message === 'string' || typeof message === 'number'
+        ? this.chatMessages.getOpenedChatMessageImageAttachment(message)
+        : message;
+    expectedState === 'visible'
+      ? await this.assertEntityIcon(imgLocator)
+      : await this.assertElementState(imgLocator, expectedState);
   }
 }

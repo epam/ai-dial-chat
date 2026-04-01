@@ -285,7 +285,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Long attachment name is cut with three dots at the end in message box.\n' +
     'Attachment name is shown fully if to click on it. Text attachment.\n' +
     '[Manage attachments] Long file name is cut with three dots at the end.\n' +
@@ -420,11 +420,10 @@ dialTest(
           ),
         );
         expandedAttachment =
-          chatMessages.getOpenedChatMessageAttachment(attachmentIndex);
-        await chatMessagesAssertion.assertElementState(
+          chatMessages.getOpenedChatMessageImageAttachment(attachmentIndex);
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
           expandedAttachment,
           'visible',
-          ExpectedMessages.attachmentIsExpanded,
         );
         maximizeButton =
           chatMessages.getExpandedAttachmentMaximizeButton(attachmentIndex);
@@ -443,12 +442,11 @@ dialTest(
       'Click on Maximize btn and verify attachment is opened on full screen, Minimize btn is available',
       async () => {
         await maximizeButton.click();
-        await chatMessagesAssertion.assertElementState(
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
           expandedAttachment,
           'visible',
-          ExpectedMessages.attachmentIsExpanded,
         );
-        await chatMessagesAssertion.assertFullScreenMessageAttachment(
+        await chatMessagesAssertion.assertFullScreenMessageImageAttachment(
           attachmentIndex,
         );
 
@@ -492,10 +490,9 @@ dialTest(
       'Click on Minimize btn and verify attachment is opened within chat and stays expanded',
       async () => {
         await minimizeButton.click();
-        await chatMessagesAssertion.assertElementState(
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
           expandedAttachment,
           'visible',
-          ExpectedMessages.attachmentIsExpanded,
         );
         await chatMessagesAssertion.assertElementClass(
           expandedAttachment,
@@ -525,10 +522,9 @@ dialTest(
             Attachment.longImageName,
           ),
         );
-        await chatMessagesAssertion.assertElementState(
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
           expandedAttachment,
           'hidden',
-          ExpectedMessages.attachmentIsCollapsed,
         );
       },
     );

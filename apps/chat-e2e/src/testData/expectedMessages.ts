@@ -243,6 +243,7 @@ export const ExpectedMessages = {
   dotsMenuIsVisible: 'Three dots menu is visible',
   iconColorIsValid: 'Icon color is valid',
   iconIsHidden: 'Icon is hidden',
+  imageIsLoaded: 'Image is loaded',
   bannerMessageIsValid: 'Announcement banner message is valid',
   bannerWidthIsValid: 'Announcement banner width is valid',
   bannerIsClosed: 'Announcement banner is closed',

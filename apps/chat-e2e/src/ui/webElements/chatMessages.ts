@@ -108,7 +108,7 @@ export class ChatMessages extends BaseElement {
     );
   }
 
-  public getOpenedChatMessageAttachment(message: string | number) {
+  public getOpenedChatMessageImageAttachment(message: string | number) {
     return this.getChatMessage(message).getByAltText('Attachment image');
   }
 
@@ -298,7 +298,7 @@ export class ChatMessages extends BaseElement {
 
   public async getChatMessageAttachmentUrl(message: string | number) {
     const openedMessageAttachment =
-      this.getOpenedChatMessageAttachment(message);
+      this.getOpenedChatMessageImageAttachment(message);
     return openedMessageAttachment.getAttribute(Attributes.src);
   }
 
