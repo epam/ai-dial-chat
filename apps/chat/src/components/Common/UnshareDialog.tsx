@@ -11,9 +11,9 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareSelectors } from '@/src/store/selectors';
 
-import { withRenderWhen } from './RenderWhen';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
-import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
+import { withRenderWhen } from './RenderWhen';
 
 function UnshareDialogView() {
   const { t } = useTranslation(Translation.Common);
@@ -103,14 +103,13 @@ function UnshareDialogView() {
   );
 
   return (
-    <DialConfirmationPopup
-      open
-      header={t('Confirm unsharing')}
+    <ConfirmDialog
+      isOpen
+      heading={t('Confirm unsharing')}
       description={description}
       confirmLabel={t('Unshare')}
       cancelLabel={t('Cancel')}
-      onClose={() => handleConfirmUnshare(false)}
-      onConfirm={() => handleConfirmUnshare(true)}
+      onClose={handleConfirmUnshare}
     />
   );
 }

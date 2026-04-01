@@ -91,11 +91,7 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
-import {
-  DialConfirmationPopup,
-  DialGhostIconButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -897,6 +893,16 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [isAuthor, t, currentFolder.name],
   );
 
+  const handleCloseUnshareConfirmation = useCallback(
+    (result: boolean) => {
+      setIsUnshareConfirmDialog(false);
+      if (result) {
+        onUnshareFolder?.(currentFolder.id);
+      }
+    },
+    [currentFolder.id, onUnshareFolder],
+  );
+
   return (
     <div
       id="folder"
@@ -1354,17 +1360,13 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         />
       )}
       {onUnshareFolder && (
-        <DialConfirmationPopup
-          open={isUnshareConfirmDialog}
-          header={t('Confirm unsharing')}
+        <ConfirmDialog
+          isOpen={isUnshareConfirmDialog}
+          heading={t('Confirm unsharing')}
           description={unshareDescription}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
-          onClose={() => setIsUnshareConfirmDialog(false)}
-          onConfirm={() => {
-            setIsUnshareConfirmDialog(false);
-            onUnshareFolder(currentFolder.id);
-          }}
+          onClose={handleCloseUnshareConfirmation}
         />
       )}
       <ConfirmDialog
