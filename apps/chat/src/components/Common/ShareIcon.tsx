@@ -29,6 +29,7 @@ interface ShareIconProps extends ShareInterface {
   iconWrapperClassName?: string;
   isMyEntity?: boolean;
   isExternal?: boolean;
+  isDraggingOver?: boolean;
 }
 
 export function ShareIcon({
@@ -43,6 +44,7 @@ export function ShareIcon({
   iconWrapperClassName,
   isMyEntity,
   isExternal,
+  isDraggingOver,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isApplication = featureType === FeatureType.Application;
@@ -107,7 +109,7 @@ export function ShareIcon({
             height={size}
             className={classNames(
               'p-px text-accent-primary group-hover:bg-accent-primary-alpha',
-              isHighlighted && 'bg-accent-primary-alpha',
+              (isHighlighted || isDraggingOver) && 'bg-accent-primary-alpha',
               isPublished && '!rounded-md',
               isApplication
                 ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'

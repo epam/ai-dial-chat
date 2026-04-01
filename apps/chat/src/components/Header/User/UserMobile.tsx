@@ -35,7 +35,7 @@ const UserInfo = () => {
   return (
     <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
-        <UserIcon className="mx-2" fallbackIconClassName="text-secondary" />
+        <UserIcon className="mx-2" />
 
         <DialEllipsisTooltip
           contentClassName="grow"
@@ -119,6 +119,7 @@ const UserMenu = () => {
 };
 
 const UserMobileView = Inversify.register('UserMobile', () => {
+  const { t } = useTranslation(Translation.Header);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const dispatch = useAppDispatch();
@@ -144,6 +145,9 @@ const UserMobileView = Inversify.register('UserMobile', () => {
       data-qa="profile-panel"
     >
       <CloseSidebarButton onClose={handleClose} isLeftSide={false} />
+      <div className="border-b border-tertiary p-4 text-[16px]/[24px] font-semibold">
+        {t('User profile')}
+      </div>
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>

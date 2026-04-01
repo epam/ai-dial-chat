@@ -947,11 +947,30 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.featureType === FeatureType.File) {
         if (payload.sharedWith === ShareRelations.others) {
           const files = FilesSelectors.selectFiles(state$.value);
+          const folders = FilesSelectors.selectFolders(state$.value);
 
           actions.push(
             FilesActions.setSharedFileIds({
               ids: payload.resources.entities.map((entity) => entity.id),
             }),
+          );
+
+          actions.push(
+            ...(payload.resources.folders
+              .map((item) => {
+                const isShared = folders.find((res) => res.id === item.id);
+
+                if (isShared) {
+                  return FilesActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AppAction[]),
           );
 
           actions.push(

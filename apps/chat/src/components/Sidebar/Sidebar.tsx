@@ -36,7 +36,7 @@ interface Props<T> {
   side: SidebarSide;
   filteredItems: T[];
   filteredFolders: FolderInterface[];
-  itemComponent: ReactNode;
+  itemComponent: ReactNode | ((isDraggingOver: boolean) => ReactNode);
   folderComponent: ReactNode;
   footerComponent?: ReactNode;
   searchTerm: string;

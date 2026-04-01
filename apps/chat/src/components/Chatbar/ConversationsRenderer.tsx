@@ -15,6 +15,7 @@ import { ConversationComponent } from './Conversation';
 interface ConversationsRendererProps {
   conversations: Conversation[];
   label: string;
+  isDraggingOver?: boolean;
 }
 
 const additionalConvData = {
@@ -24,6 +25,7 @@ const additionalConvData = {
 export const ConversationsRenderer = ({
   conversations,
   label,
+  isDraggingOver = false,
 }: ConversationsRendererProps) => {
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -59,6 +61,7 @@ export const ConversationsRenderer = ({
         {conversations.map((conversation) => (
           <ConversationComponent
             key={conversation.id}
+            isDraggingOver={isDraggingOver}
             item={conversation}
             additionalItemData={additionalConvData}
           />

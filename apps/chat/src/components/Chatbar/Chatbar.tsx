@@ -148,9 +148,12 @@ export const Chatbar = () => {
       featureType={FeatureType.Chat}
       side={SidebarSide.Left}
       isOpen={showChatbar}
-      itemComponent={
-        <Conversations conversations={rootFilteredConversations} />
-      }
+      itemComponent={(isDraggingOver: boolean) => (
+        <Conversations
+          conversations={rootFilteredConversations}
+          isDraggingOver={isDraggingOver}
+        />
+      )}
       folderComponent={<ChatFolders />}
       filteredItems={rootFilteredConversations}
       filteredFolders={filteredFolders}

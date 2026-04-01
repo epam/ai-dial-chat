@@ -60,6 +60,7 @@ interface ViewProps {
   isSelectMode?: boolean;
   additionalItemData?: AdditionalItemData;
   isContextMenu: boolean;
+  isDraggingOver?: boolean;
 }
 
 function ConversationView({
@@ -70,6 +71,7 @@ function ConversationView({
   isSelectMode,
   additionalItemData,
   isContextMenu,
+  isDraggingOver,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -125,6 +127,7 @@ function ConversationView({
       <ShareIcon
         {...conversation}
         isHighlighted={isHighlighted}
+        isDraggingOver={isDraggingOver}
         featureType={FeatureType.Chat}
         containerClassName={classNames(
           isSelectMode && !isExternal && 'group-hover:hidden',
@@ -187,10 +190,16 @@ interface Props {
   item: ConversationInfo;
   level?: number;
   additionalItemData?: AdditionalItemData;
+  isDraggingOver?: boolean;
 }
 
 export const ConversationComponent = memo(
-  ({ item: conversation, level, additionalItemData }: Props) => {
+  ({
+    item: conversation,
+    level,
+    additionalItemData,
+    isDraggingOver,
+  }: Props) => {
     const dispatch = useAppDispatch();
 
     const isSelected = useAppSelector((state) =>
@@ -332,6 +341,7 @@ export const ConversationComponent = memo(
             isSelectMode={isSelectMode}
             additionalItemData={additionalItemData}
             isContextMenu={isContextMenu}
+            isDraggingOver={isDraggingOver}
           />
         </button>
 

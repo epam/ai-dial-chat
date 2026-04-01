@@ -187,7 +187,6 @@ const EmptyChatDescriptionView = ({
               >
                 {getModelName(conversation, model)}
               </span>
-              {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
           {isReplayAsIs && (
@@ -217,13 +216,16 @@ const EmptyChatDescriptionView = ({
           )}
           {model && !(isPlayback || isReplayAsIs) && (
             <>
-              <ModelVersionSelect
-                className="h-max w-fit self-center"
-                entities={versions}
-                onSelect={handleSelectVersion}
-                currentEntity={model}
-                showVersionPrefix
-              />
+              <div className="flex items-center justify-center gap-2">
+                <ModelVersionSelect
+                  className="h-max w-fit self-center"
+                  entities={versions}
+                  onSelect={handleSelectVersion}
+                  currentEntity={model}
+                  showVersionPrefix
+                />
+                {model && <FunctionStatusIndicator entity={model} />}
+              </div>
               {!!getModelDescription(model) && (
                 <span
                   className="whitespace-pre-wrap text-secondary"

@@ -167,7 +167,7 @@ export function Layout({
         >
           {showFloatingOverlay && (
             <FloatingOverlay
-              className="z-30 bg-blackout sidebar-overlay:hidden"
+              className="z-40 bg-blackout sidebar-overlay:hidden"
               onClick={handleCloseOverlay}
             />
           )}
