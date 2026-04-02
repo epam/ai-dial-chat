@@ -42,10 +42,7 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
-import {
-  doesModelHaveConfiguration,
-  mergeFeatures,
-} from '@/src/utils/app/models';
+import { mergeFeatures } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 

@@ -1,18 +1,19 @@
 import { type OnValidate } from '@monaco-editor/react';
 import { type PreviewType } from '@uiw/react-md-editor';
 import {
+  type FC,
+  type ReactNode,
   useCallback,
   useEffect,
   useState,
-  type FC,
-  type ReactNode,
 } from 'react';
 
 import dynamic from 'next/dynamic';
 
 import { Label } from '@/src/components/Common/Forms/Label';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
-import { EditorThemes, DialMarkdownEditor } from './MarkdownEditor';
+
+import { DialMarkdownEditor, EditorThemes } from './MarkdownEditor';
 
 // Dynamic import to avoid SSR issues with Monaco Editor
 const MonacoEditor = dynamic(

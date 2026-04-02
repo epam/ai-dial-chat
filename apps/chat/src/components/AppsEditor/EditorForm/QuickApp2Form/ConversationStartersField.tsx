@@ -32,7 +32,9 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
     field: keyof ConversationStarter,
     val: string,
   ) => {
-    const updated = value.map((s, i) => (i === index ? { ...s, [field]: val } : s));
+    const updated = value.map((s, i) =>
+      i === index ? { ...s, [field]: val } : s,
+    );
     const isLastRow = index === value.length - 1;
     const updatedItem = updated[index];
 
