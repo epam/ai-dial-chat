@@ -79,6 +79,14 @@ export const TalkToSliderItem = ({
         isPlaybackConversation(conversation) &&
         groupItem.reference !== PseudoModel.Playback
       }
+      tooltip={
+        isPlaybackConversation(conversation) &&
+        groupItem.reference !== PseudoModel.Playback
+          ? t(
+              'Editing conversation settings is not available in playback mode.',
+            )
+          : undefined
+      }
       key={groupItem.id}
       entity={groupItem as DialAIEntityModel}
       onClick={onSelectModel}
