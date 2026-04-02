@@ -639,6 +639,26 @@ export const filesSlice = createSlice({
         return folder;
       });
     },
+    updateFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId: string;
+        values: Partial<FolderInterface>;
+      }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            ...payload.values,
+          };
+        }
+
+        return folder;
+      });
+    },
     setSharedFileIds: (
       state,
       {
