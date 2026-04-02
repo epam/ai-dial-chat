@@ -13,6 +13,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 import { ApplicationDetailsContent } from '@/src/components/Marketplace/ApplicationDetails/ApplicationContent';
 import { ApplicationDetailsHeader } from '@/src/components/Marketplace/ApplicationDetails/ApplicationHeader';
@@ -65,16 +67,16 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
         data-qa="preview-toggle-container"
       >
         <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary">
-          {t('Preview')}
+          {t(ChatI18nKeys.Preview)}
         </span>
         <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">
           <ToggleSwitchLabeled
             isOn={isDetailed}
             handleSwitch={handleSwitch}
-            labelText="Detailed"
+            labelText={t(ChatI18nKeys.Detailed)}
             isLabelOnRight
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
+            switchOnText={t(ChatI18nKeys.ON)}
+            switchOFFText={t(ChatI18nKeys.OFF)}
           />
         </div>
         <PreviewModeButton
@@ -107,10 +109,10 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
         <ToggleSwitchLabeled
           isOn={isDetailed}
           handleSwitch={handleSwitch}
-          labelText="Detailed"
+          labelText={t(ChatI18nKeys.Detailed)}
           isLabelOnRight
-          switchOnText={t('ON')}
-          switchOFFText={t('OFF')}
+          switchOnText={t(ChatI18nKeys.ON)}
+          switchOFFText={t(ChatI18nKeys.OFF)}
         />
       </div>
     </div>

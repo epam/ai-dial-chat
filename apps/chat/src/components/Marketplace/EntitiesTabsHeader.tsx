@@ -8,13 +8,17 @@ import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 
 const entitiesTabs = [
-  { key: MarketplaceEntitiesTabs.AGENTS, label: 'Agents' },
-  { key: MarketplaceEntitiesTabs.TOOLSETS, label: 'Toolsets' },
+  { key: MarketplaceEntitiesTabs.AGENTS, label: MarketplaceI18nKeys.Agents },
+  {
+    key: MarketplaceEntitiesTabs.TOOLSETS,
+    label: MarketplaceI18nKeys.Toolsets,
+  },
 ];
 
 export function EntitiesTabsHeader() {

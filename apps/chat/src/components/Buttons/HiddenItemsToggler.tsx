@@ -5,6 +5,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { FilesI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -29,8 +30,8 @@ export const HiddenItemsToggler = ({
   const [Icon, tooltip] = useMemo(
     () =>
       areItemsVisible
-        ? [IconEyeOff, 'Hide technical items']
-        : [IconEye, 'Show technical items'],
+        ? [IconEyeOff, FilesI18nKeys.HideTechnicalItems]
+        : [IconEye, FilesI18nKeys.ShowTechnicalItems],
     [areItemsVisible],
   );
 

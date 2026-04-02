@@ -51,6 +51,7 @@ import {
 } from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
@@ -604,7 +605,7 @@ export const UserMessage = memo(function UserMessage({
 
           <div className="relative flex gap-3">
             <DialNeutralButton
-              label={t('Cancel')}
+              label={t(ChatI18nKeys.Cancel)}
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
@@ -614,7 +615,7 @@ export const UserMessage = memo(function UserMessage({
             />
             {!isInputHidden && (
               <DialPrimaryButton
-                label={t('Save & Submit')}
+                label={t(ChatI18nKeys.SaveAndSubmit)}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
                   isUploadingAttachmentPresent || isContentEmptyAndNoAttachments

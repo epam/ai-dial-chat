@@ -23,6 +23,7 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -33,10 +34,10 @@ import capitalize from 'lodash/capitalize';
 
 const tabKeysInfo = {
   [MarketplaceEditorSteps.General]: {
-    label: 'General info',
+    label: MarketplaceI18nKeys.GeneralInfo,
   },
   [MarketplaceEditorSteps.Settings]: {
-    label: 'App settings',
+    label: MarketplaceI18nKeys.AppSettings,
   },
 };
 
@@ -135,7 +136,7 @@ export const AppsEditorHeader = ({
     return steps;
   }, [errors, isValid]);
 
-  const title = `${t(isCreatingApp ? 'Add' : 'Edit')} ${applicationTypeDisplayName}`;
+  const title = `${t(isCreatingApp ? MarketplaceI18nKeys.AddMarketplace : MarketplaceI18nKeys.EditMarketplace)} ${applicationTypeDisplayName}`;
 
   const handleTabClick = useCallback(
     (tab: { key: MarketplaceEditorSteps; disabled: boolean }) => {
@@ -239,12 +240,10 @@ export const AppsEditorHeader = ({
 
       <ConfirmDialog
         isOpen={saveDraftDialog}
-        heading={t('Only valid data will be saved')}
-        description={t(
-          'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
-        )}
-        confirmLabel={t('Save valid data')}
-        cancelLabel={t('Continue editing')}
+        heading={t(MarketplaceI18nKeys.OnlyValidDataWillBeSaved)}
+        description={t(MarketplaceI18nKeys.SomeFieldsAreInvalid)}
+        confirmLabel={t(MarketplaceI18nKeys.SaveValidData)}
+        cancelLabel={t(MarketplaceI18nKeys.ContinueEditing)}
         onClose={handleCloseConfirmDialog}
       />
     </>

@@ -8,6 +8,8 @@ import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { SettingsI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Label } from '@/src/components/Common/Forms/Label';
@@ -139,7 +141,7 @@ export const CustomLogoSelect = ({
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo || customPlaceholder || t('No custom logo')}
+          {localLogo || customPlaceholder || t(SettingsI18nKeys.NoCustomLogo)}
         </div>
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
@@ -147,7 +149,9 @@ export const CustomLogoSelect = ({
               onClick={onClickAddHandler}
               disabled={disabled}
               data-qa={localLogo ? 'change-icon' : 'add-icon'}
-              label={localLogo ? t('Change') : t('Add')}
+              label={
+                localLogo ? t(SettingsI18nKeys.Change) : t(SettingsI18nKeys.Add)
+              }
             />
             {localLogo && (
               <CloseButtonSmall
@@ -165,8 +169,10 @@ export const CustomLogoSelect = ({
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={handleOnClose}
-          headerLabel={fileManagerModalTitle || t('Select custom logo')}
-          customButtonLabel={t('Select file')}
+          headerLabel={
+            fileManagerModalTitle || t(SettingsI18nKeys.SelectCustomLogo)
+          }
+          customButtonLabel={t(SettingsI18nKeys.SelectFile)}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
@@ -179,8 +185,8 @@ export const CustomLogoSelect = ({
           isOpen
           heading={t(confirmDialogValues.heading)}
           description={t(confirmDialogValues.description)}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(SettingsI18nKeys.ConfirmSettings)}
+          cancelLabel={t(SettingsI18nKeys.CancelSettings)}
           onClose={handleConfirmClose}
         />
       )}

@@ -25,6 +25,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -191,7 +192,7 @@ export const PromptVariablesDialog: FC<Props> = ({
               style={{ resize: 'none' }}
               required
               title=""
-              placeholder={t('Enter a value for {{key}}...', {
+              placeholder={t(SettingsI18nKeys.EnterAValueForKey, {
                 key: variable.key,
               })}
               value={variable.value}
@@ -203,13 +204,15 @@ export const PromptVariablesDialog: FC<Props> = ({
               }}
               rows={3}
             />
-            <EmptyRequiredInputMessage text="Please fill out all variables" />
+            <EmptyRequiredInputMessage
+              text={SettingsI18nKeys.PleaseFillOutAllVariables}
+            />
           </div>
         ))}
 
         <div className="mt-1 flex justify-end">
           <DialPrimaryButton
-            label={t('Submit')}
+            label={t(SettingsI18nKeys.Submit)}
             type="submit"
             data-qa="submit-variable"
           />
