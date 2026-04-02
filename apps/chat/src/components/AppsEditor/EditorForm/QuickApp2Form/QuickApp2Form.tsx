@@ -219,7 +219,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               error={errors.inputAttachmentTypes?.message}
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
-              dataQa={'attachment-types-field'}
+              dataQa="attachment-types-field"
               {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
@@ -234,7 +234,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           name="maxInputAttachments"
           disabled={isAppPublic}
           tooltip={isAppPublicTooltip}
-          dataQa={'max-attachment-number-field'}
+          dataQa="max-attachment-number-field"
         />
       </FormCollapsibleSection>
 
