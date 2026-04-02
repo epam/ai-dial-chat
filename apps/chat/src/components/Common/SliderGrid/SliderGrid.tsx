@@ -232,7 +232,7 @@ const SliderGridInner = <T extends { id: string }, P>(
     <div ref={containerRef} className="flex min-h-0 flex-1 flex-col">
       <div
         ref={sliderRef}
-        className="flex w-full flex-1 items-center overflow-auto"
+        className="flex w-full flex-1 items-center overflow-x-hidden overflow-y-auto"
         style={{
           minHeight: `${
             sliderRowsCount * (maxChunksCountConfig.cardHeight + gridGap) -
