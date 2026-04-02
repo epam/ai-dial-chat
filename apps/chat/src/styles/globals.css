@@ -187,7 +187,7 @@ pre:has(div.codeblock) {
   .context-menu-prompt {
     --text-accent-primary: var(--text-accent-tertiary, #a972ff);
     --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
-    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff26);
+    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff2e);
     --bg-accent-primary: var(--bg-accent-tertiary, #a972ff);
   }
 }
