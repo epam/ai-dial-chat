@@ -128,6 +128,7 @@ export const ChatbarSettings = () => {
               parentId: getConversationRootId(),
             }),
           );
+          dispatch(ConversationsActions.resetSearch());
         },
         display: !isSelectMode,
         disabled: isStreaming,
