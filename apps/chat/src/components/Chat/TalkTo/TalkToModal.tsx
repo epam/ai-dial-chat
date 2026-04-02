@@ -368,7 +368,7 @@ const TalkToModalView = ({
           prevActiveSlide={prevActiveSlide}
           onSetActiveSlide={setActiveSlide}
           onSetPrevActiveSlide={setPrevActiveSlide}
-          footer={
+          footerButton={
             isMarketplaceEnabled && (
               <DialLinkButton
                 onClick={handleGoToWorkspace}
