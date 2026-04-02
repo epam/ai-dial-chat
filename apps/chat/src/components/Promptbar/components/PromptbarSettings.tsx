@@ -91,6 +91,7 @@ export function PromptbarSettings() {
               parentId: getPromptRootId(),
             }),
           );
+          dispatch(PromptsActions.resetSearch());
         },
         display: !isSelectMode,
       },
