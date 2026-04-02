@@ -101,6 +101,7 @@ export interface FolderProps<T, P = unknown> {
     readonly?: boolean;
     additionalItemData?: AdditionalItemData;
     onEvent?: (eventId: string, data: P) => void;
+    isDraggingOver?: boolean;
   }>;
   allItems?: T[];
   allFolders: FolderInterface[];
@@ -978,6 +979,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   <ShareIcon
                     {...currentFolder}
                     isHighlighted
+                    isDraggingOver={isDraggingOver}
                     featureType={featureType}
                     containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
@@ -1123,6 +1125,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   <ShareIcon
                     {...currentFolder}
                     isHighlighted={isContextMenu}
+                    isDraggingOver={isDraggingOver}
                     featureType={featureType}
                     containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
@@ -1334,6 +1337,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   level: level + 1,
                   readonly,
                   additionalItemData,
+                  isDraggingOver,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>
