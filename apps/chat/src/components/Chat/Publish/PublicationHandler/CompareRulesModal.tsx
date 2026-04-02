@@ -4,6 +4,8 @@ import { ModalState } from '@/src/types/modal';
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Modal } from '@/src/components/Common/Modal';
 
 import { RuleListItem } from '../RuleListItem';
@@ -51,11 +53,15 @@ export function CompareRulesModal({
       containerClassName="m-auto flex max-h-full w-full flex-col overflow-y-auto py-6 xl:max-w-[1000px]"
       onClose={onClose}
       headingClassName="px-6"
-      heading={t('Comparison')}
+      heading={t(ChatI18nKeys.Comparison)}
     >
       <div className="grid grid-cols-2 gap-x-5">
-        <p className="mb-3 pl-6 text-sm">{t('Previous Access Settings')}</p>
-        <p className="mb-3 pr-6 text-sm">{t('Current Access Settings')}</p>
+        <p className="mb-3 pl-6 text-sm">
+          {t(ChatI18nKeys.PreviousAccessSettings)}
+        </p>
+        <p className="mb-3 pr-6 text-sm">
+          {t(ChatI18nKeys.CurrentAccessSettings)}
+        </p>
         <div className="pl-6">
           <div>
             {allRuleEntries.map(([path, rules]) => (

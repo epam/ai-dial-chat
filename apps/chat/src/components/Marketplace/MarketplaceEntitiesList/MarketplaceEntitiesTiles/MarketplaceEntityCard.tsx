@@ -20,6 +20,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   CardIconSizes,
   MarketplaceEntitiesTabs,
@@ -151,7 +152,7 @@ export const MarketplaceEntityCard = memo(
               >
                 {(isCreatedMarketplaceEntity(entity) || entity.version) && (
                   <>
-                    {t('Version: ')}
+                    {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
                     <span className="mr-1 truncate" data-qa="version">
                       {entity.version || t(NA_VERSION)}
                     </span>

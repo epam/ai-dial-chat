@@ -35,6 +35,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -83,21 +84,25 @@ export const useToolsetMenuItems = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Copy link'),
+        name: t(MarketplaceI18nKeys.CopyLink),
         dataQa: 'toolset-copy-link',
         display: isPublicApp && disabledActions.copyLink !== true,
         Icon: IconLink,
         onClick: handleCopy,
       },
       {
-        name: t(isAppIdPublic ? 'View' : 'Edit'),
+        name: t(
+          isAppIdPublic
+            ? MarketplaceI18nKeys.ViewMarketplace
+            : MarketplaceI18nKeys.EditMarketplace,
+        ),
         dataQa: 'edit',
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
       },
       {
-        name: t('Manage creds'),
+        name: t(MarketplaceI18nKeys.ManageCreds),
         dataQa: 'toolset-login',
         display:
           disabledActions.login !== true &&
@@ -142,21 +147,21 @@ export const useToolsetMenuItems = ({
       //   onClick: handleOpenUnshare,
       // },
       {
-        name: t('Publish'),
+        name: t(MarketplaceI18nKeys.PublishMarketplace),
         dataQa: 'publish',
         display: isMyAppOrPreview && disabledActions.publish !== true,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
       {
-        name: t('Unpublish'),
+        name: t(MarketplaceI18nKeys.UnpublishMarketplace),
         dataQa: 'unpublish',
         display: isAppIdPublic && disabledActions.unpublish !== true,
         Icon: UnpublishIcon,
         onClick: handleUnpublish,
       },
       {
-        name: t('Delete'),
+        name: t(MarketplaceI18nKeys.DeleteMarketplace),
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         Icon: IconTrashX,

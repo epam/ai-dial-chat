@@ -12,6 +12,7 @@ import {
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
@@ -79,7 +80,7 @@ export const RulesInput = ({
                   <Fragment key={index}>
                     {index > 0 && (
                       <span className="italic" data-qa="inner-operator">
-                        {t('or')}
+                        {t(ChatI18nKeys.Or)}
                       </span>
                     )}
                     <span className="font-semibold" data-qa="rule-value">
@@ -94,7 +95,7 @@ export const RulesInput = ({
               className="text-xs italic text-secondary"
               data-qa="rule-operator"
             >
-              {t('or')}
+              {t(ChatI18nKeys.Or)}
             </span>
           </div>
         ))}

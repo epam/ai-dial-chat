@@ -23,6 +23,7 @@ import {
   CONFIRM_DOCUMENT_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentsAndToolsetsField';
 import { CodeInterpreterField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/CodeInterpreterField';
@@ -92,7 +93,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         control={control}
         render={({ field }) => (
           <FilesSelectorField
-            label={t('Document relative URLs')}
+            label={t(MarketplaceI18nKeys.DocumentRelativeURLs)}
             onAddFiles={(documents) =>
               field.onChange(uniq([...(field.value ?? []), ...documents]))
             }
@@ -101,10 +102,12 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             }
             readonly={isSharedWithMe || isAppPublic}
             error={errors.documentRelativeUrl?.message}
-            fileManagerTitle={t('Select documents')}
+            fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
             files={field.value ?? []}
             addBtnTooltip={
-              isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
+              isSharedWithMe
+                ? getSharedTooltip(t(MarketplaceI18nKeys.DocumentsLowercase))
+                : undefined
             }
             confirmDialogValues={
               appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
@@ -119,7 +122,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         control={control}
         render={({ field }) => (
           <ModelsSelectorField
-            label={t('Model')}
+            label={t(MarketplaceI18nKeys.ModelMarketplace)}
             value={field.value}
             onChange={field.onChange}
             mandatory
@@ -135,8 +138,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
       <FieldTextArea
         {...register('instructions')}
-        label={t('Instructions')}
-        placeholder={t('Instructions of your application')}
+        label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+        placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
         rows={4}
         id="instructions"
         disabled={isAppPublic}
@@ -148,13 +151,13 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         control={control}
         render={({ field }) => (
           <ComboBoxField
-            label={t('Attachment types')}
-            info={t("Input the MIME type and press 'Enter' to add")}
+            label={t(MarketplaceI18nKeys.AttachmentTypes)}
+            info={t(MarketplaceI18nKeys.InputMIMEType)}
             initialSelectedItems={field.value}
             getItemLabel={getItemLabel}
             getItemValue={getItemLabel}
             onChangeSelectedItems={field.onChange}
-            placeholder={t('Enter one or more attachment types')}
+            placeholder={t(MarketplaceI18nKeys.EnterAttachmentTypes)}
             id="attachmentTypes"
             className={classNames(
               'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
@@ -173,8 +176,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       />
 
       <ControlledField
-        label={t('Max. attachments number')}
-        placeholder={t('Enter the maximum number of attachments')}
+        label={t(MarketplaceI18nKeys.MaxAttachmentsNumber)}
+        placeholder={t(MarketplaceI18nKeys.EnterMaxAttachments)}
         id="maxInputAttachments"
         error={errors.maxInputAttachments?.message}
         control={control}
@@ -192,7 +195,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           control={control}
           render={({ field }) => (
             <Slider
-              label={t('Temperature')}
+              label={t(MarketplaceI18nKeys.TemperatureMarketplace)}
               temperature={field.value}
               disabled={isAppPublic}
               tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}

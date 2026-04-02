@@ -14,6 +14,7 @@ import {
   DEFAULT_HEADER_ICON_SIZE,
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
+import { HeaderI18nKeys } from '@/src/constants/i18n';
 
 import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
 
@@ -118,7 +119,7 @@ export const Header = Inversify.register('Header', () => {
           {enabledFeatures.has(Feature.ConversationsSection) && (
             <ToggleSidebarButton
               iconSize={headerIconSize}
-              tooltip="Conversations"
+              tooltip={HeaderI18nKeys.Conversations}
               isOpened={showChatbar}
               onToggle={handleToggleChatbar}
               dataQa="left-panel-toggle"
@@ -137,7 +138,7 @@ export const Header = Inversify.register('Header', () => {
         enabledFeatures.has(Feature.PromptsSection) && (
           <ToggleSidebarButton
             iconSize={headerIconSize}
-            tooltip="Prompts"
+            tooltip={HeaderI18nKeys.Prompts}
             isOpened={showPromptbar}
             onToggle={handleTogglePromtbar}
             dataQa="right-panel-toggle"

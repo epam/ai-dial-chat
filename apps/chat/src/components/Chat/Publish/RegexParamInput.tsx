@@ -6,6 +6,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 interface RegexParamInputProps {
   regEx: string;
   onRegExChange: (regExp: string) => void;
@@ -36,7 +38,7 @@ export function RegexParamInput({
       <input
         className="w-full bg-transparent py-1 pl-2 text-xs outline-none placeholder:text-secondary"
         type="text"
-        placeholder={t('Enter regular expression...') || ''}
+        placeholder={t(ChatI18nKeys.EnterRegularExpression) || ''}
         value={regEx}
         onChange={handleRegExChange}
       />

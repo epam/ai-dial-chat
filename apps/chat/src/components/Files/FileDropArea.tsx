@@ -9,6 +9,8 @@ import { getFilesFromDataTransferItems } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
 
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
 const containerId = 'file-drop-area';
 
 interface FileDropAreaProps {
@@ -112,13 +114,13 @@ export const FileDropArea = ({
                   className="mb-4 text-lg font-semibold text-primary"
                   data-qa="drag-file-title"
                 >
-                  {t('Attach files')}
+                  {t(FilesI18nKeys.AttachFiles)}
                 </h5>
                 <p
                   className="text-sm text-primary"
                   data-qa="drag-file-description"
                 >
-                  {t('Drop files here to attach them to the message')}
+                  {t(FilesI18nKeys.DropFilesHere)}
                 </p>
               </>
             ) : (
@@ -132,13 +134,13 @@ export const FileDropArea = ({
                   className="mb-4 text-lg font-semibold text-primary"
                   data-qa="drag-file-title"
                 >
-                  {t('No attachments allowed')}
+                  {t(FilesI18nKeys.NoAttachmentsAllowed)}
                 </h5>
                 <p
                   className="text-sm text-primary"
                   data-qa="drag-file-description"
                 >
-                  {t("Attachments can't be added to the message")}
+                  {t(FilesI18nKeys.AttachmentsCantBeAdded)}
                 </p>
               </>
             )}

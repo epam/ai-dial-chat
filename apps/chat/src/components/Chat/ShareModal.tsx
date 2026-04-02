@@ -23,6 +23,7 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
@@ -208,7 +209,7 @@ function ShareModalView() {
             className="flex w-full items-center gap-2 pr-6"
             data-qa="modal-entity-name"
           >
-            <p>{t('Share')}:</p>
+            <p>{t(SideBarI18nKeys.Share)}:</p>
             <DialEllipsisTooltip text={shareResourceName?.trim()} />
           </div>
         </h4>
@@ -218,7 +219,7 @@ function ShareModalView() {
             <span data-qa="entity-version">Version: {entity.version}</span>
           )}
           <p className="text-sm text-secondary" data-qa="share-message">
-            {t('share.modal.link.description')}
+            {t(SideBarI18nKeys.LinkDescription)}
           </p>
           <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link', { context: sharingType })}
@@ -226,7 +227,7 @@ function ShareModalView() {
           {shareFeatureType === FeatureType.Application && (
             <div className="mt-2 flex gap-2">
               <ShareAccessOption
-                filterValue={t('Allow editing by other users')}
+                filterValue={t(SideBarI18nKeys.AllowEditingByOtherUsers)}
                 selected={editAccess}
                 onSelect={onChangeSharePermissionHandler}
               />
@@ -254,11 +255,11 @@ function ShareModalView() {
             </Tooltip>
             <div className="absolute right-3 top-3">
               {urlCopied ? (
-                <Tooltip tooltip={t('Copied!')}>
+                <Tooltip tooltip={t(SideBarI18nKeys.CopiedSideBar)}>
                   <IconCheck size={20} className="text-secondary" />
                 </Tooltip>
               ) : (
-                <Tooltip tooltip={t('Copy URL')}>
+                <Tooltip tooltip={t(SideBarI18nKeys.CopyURL)}>
                   <DialGhostIconButton
                     size={ElementSize.Small}
                     onClick={handleCopy}
@@ -275,18 +276,16 @@ function ShareModalView() {
         <ShareAccessSection
           isShared={!!entity?.isShared}
           onUnshare={handleOpenUnshare}
-          notSharedMessage={t('This app has not been shared with anyone yet.')}
-          unshareLabel={t('Remove access for all users')}
+          notSharedMessage={t(SideBarI18nKeys.NotSharedAppYet)}
+          unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
         />
       )}
       {isFolder ? (
         <ShareAccessSection
           isShared={!!isResourceShared}
           onUnshare={handleOpenUnshareResource}
-          notSharedMessage={t(
-            'This folder has not been shared with anyone yet.',
-          )}
-          unshareLabel={t('Remove access for all users')}
+          notSharedMessage={t(SideBarI18nKeys.NotSharedFolderYet)}
+          unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
         />
       ) : (
         (shareFeatureType === FeatureType.Chat ||
@@ -295,9 +294,11 @@ function ShareModalView() {
             isShared={!!isResourceShared}
             onUnshare={handleOpenUnshareResource}
             notSharedMessage={t(
-              `This ${shareFeatureType} has not been shared with anyone yet.`,
+              shareFeatureType === FeatureType.Chat
+                ? SideBarI18nKeys.NotSharedChatYet
+                : SideBarI18nKeys.NotSharedPromptYet,
             )}
-            unshareLabel={t('Remove access for all users')}
+            unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
           />
         )
       )}
