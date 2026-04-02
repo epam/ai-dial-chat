@@ -19,7 +19,7 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         ref={ref}
         disabled={disabled}
         className={classnames(
-          'input-form input-invalid peer mx-0',
+          'input-form input-invalid peer mx-0 min-h-[40px]',
           error && 'border-error hover:border-error focus:border-error',
           disabled && 'cursor-not-allowed hover:border-primary',
           className,
