@@ -7,6 +7,7 @@ import {
   flip,
   offset,
   shift,
+  useClick,
   useDismiss,
   useFloating,
   useFocus,
@@ -36,6 +37,7 @@ interface TooltipContainerOptions {
   initialOpen?: boolean;
   placement?: Placement;
   isTriggerClickable?: boolean;
+  isHoverDisabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -44,6 +46,7 @@ function useTooltip({
   initialOpen = false,
   placement = 'bottom',
   isTriggerClickable = false,
+  isHoverDisabled = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: TooltipContainerOptions = {}) {
@@ -77,22 +80,30 @@ function useTooltip({
 
   const context = data.context;
 
+  const uncontrolled = controlledOpen == null;
+
   const hover = useHover(context, {
     move: false,
-    enabled: controlledOpen == null,
+    enabled: uncontrolled && !isHoverDisabled,
     mouseOnly: isTriggerClickable,
     delay: {
       open: 500,
       close: 0,
     },
   });
+
   const focus = useFocus(context, {
-    enabled: controlledOpen == null,
+    enabled: uncontrolled && !isHoverDisabled,
   });
+
+  const click = useClick(context, {
+    enabled: uncontrolled && isHoverDisabled,
+  });
+
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: 'tooltip' });
 
-  const interactions = useInteractions([hover, focus, dismiss, role]);
+  const interactions = useInteractions([hover, focus, click, dismiss, role]);
 
   return useMemo(
     () => ({

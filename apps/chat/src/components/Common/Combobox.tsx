@@ -23,6 +23,8 @@ import { isMobile } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from './Tooltip';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
@@ -255,7 +257,7 @@ export const Combobox = <T,>({
             ))
           ) : (
             <li className="px-3 py-2" data-qa="no-available-items">
-              {notFoundPlaceholder || t('No available items')}
+              {notFoundPlaceholder || t(CommonI18nKeys.NoAvailableItems)}
             </li>
           ))}
       </ul>

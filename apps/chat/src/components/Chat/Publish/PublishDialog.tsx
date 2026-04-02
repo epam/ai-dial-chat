@@ -46,6 +46,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -139,9 +140,7 @@ const PublishDialogContainer = ({
       !filteredEntities.length &&
       action !== PublishActions.DELETE
     ) {
-      dispatch(
-        UIActions.showErrorToast(t('There are no valid items to publish')),
-      );
+      dispatch(UIActions.showErrorToast(t(ChatI18nKeys.NoValidItemsToPublish)));
       dispatch(PublicationActions.setPublishModel());
     }
   }, [

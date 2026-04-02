@@ -10,6 +10,8 @@ import { getFilterLabel } from '@/src/utils/app/rules';
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
@@ -61,7 +63,7 @@ export function RuleListItem({
                 <Fragment key={index}>
                   {index > 0 && (
                     <span className="italic" data-qa="inner-operator">
-                      {t('or')}
+                      {t(ChatI18nKeys.Or)}
                     </span>
                   )}
                   <span
@@ -78,7 +80,7 @@ export function RuleListItem({
                 className="mx-1 italic text-secondary"
                 data-qa="rule-operator"
               >
-                {t('or')}
+                {t(ChatI18nKeys.Or)}
               </span>
             )}
           </div>

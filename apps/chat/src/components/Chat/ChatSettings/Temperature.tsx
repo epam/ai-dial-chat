@@ -13,6 +13,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -84,9 +85,7 @@ export const TemperatureSlider: FC<Props> = ({
               triggerClassName="text-secondary"
               tooltip={
                 <EntityMarkdownDescription>
-                  {t(
-                    'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
-                  )}
+                  {t(ChatI18nKeys.HigherValuesTemperature)}
                 </EntityMarkdownDescription>
               }
             >
@@ -115,9 +114,9 @@ export const TemperatureSlider: FC<Props> = ({
           />
         </div>
         <div className="grid h-4 w-full grid-cols-3 text-xs">
-          <span className="">{t('Precise')}</span>
-          <span className="text-center">{t('Neutral')}</span>
-          <span className="text-right">{t('Creative')}</span>
+          <span className="">{t(ChatI18nKeys.Precise)}</span>
+          <span className="text-center">{t(ChatI18nKeys.Neutral)}</span>
+          <span className="text-right">{t(ChatI18nKeys.Creative)}</span>
         </div>
       </div>
     </Tooltip>
