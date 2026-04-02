@@ -10,6 +10,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -41,13 +43,15 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              <UserIcon userName={session?.user?.name || t('User')} />
+              <UserIcon
+                userName={session?.user?.name || t(HeaderI18nKeys.User)}
+              />
             </div>
           </div>
         }
       >
         <div className="flex flex-row items-center gap-3 border-b border-secondary p-3">
-          <UserIcon userName={session?.user?.name || t('User')} />
+          <UserIcon userName={session?.user?.name || t(HeaderI18nKeys.User)} />
 
           <p className="text-[14px]/[20px] font-semibold">
             {session?.user?.name}
@@ -60,7 +64,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             item={
               <div className="flex">
                 <IconSettings size={18} className="text-secondary" />
-                <span className="ml-3">{t('Settings')}</span>
+                <span className="ml-3">{t(HeaderI18nKeys.Settings)}</span>
               </div>
             }
             onClick={() => {
@@ -75,7 +79,9 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           item={
             <div className="flex gap-3">
               <IconLogout size={18} className="text-secondary" />
-              <span>{session ? t('Log out') : t('Login')}</span>
+              <span>
+                {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
+              </span>
             </div>
           }
           onClick={() => {
@@ -89,10 +95,10 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
       </Menu>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?')}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(HeaderI18nKeys.ConfirmLogout)}
+        description={t(HeaderI18nKeys.ConfirmLogoutDescription)}
+        confirmLabel={t(HeaderI18nKeys.LogOut)}
+        cancelLabel={t(HeaderI18nKeys.Cancel)}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {

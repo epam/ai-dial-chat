@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 export const NoData = () => {
   const { t } = useTranslation(Translation.Common);
 
@@ -19,7 +21,7 @@ export const NoData = () => {
         className="text-secondary"
         data-qa="no-data-icon"
       />
-      <span>{t('No data')}</span>
+      <span>{t(CommonI18nKeys.NoData)}</span>
     </div>
   );
 };

@@ -18,6 +18,8 @@ import { ApplicationStatus } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -42,10 +44,10 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   const isDeploying = entity.functionStatus === ApplicationStatus.DEPLOYING;
   const isRedeploying = entity.functionStatus === ApplicationStatus.REDEPLOYING;
   const buttonStatus = isDeploying
-    ? t('Deploying')
+    ? t(MarketplaceI18nKeys.DeployingMarketplace)
     : isRedeploying
-      ? t('Redeploying')
-      : t('Undeploying');
+      ? t(MarketplaceI18nKeys.RedeployingMarketplace)
+      : t(MarketplaceI18nKeys.UndeployingMarketplace);
 
   if (!isExecutableApp(entity) || !hasDeployAccess) {
     return null;
@@ -65,7 +67,7 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
   if (isAppDeployed) {
     return (
       <DialNeutralButton
-        label={t('Undeploy')}
+        label={t(MarketplaceI18nKeys.UndeployMarketplace)}
         iconBefore={<IconCloudDownload size={18} />}
         onClick={handleUndeploy}
         data-qa="undeploy-in-details"
@@ -75,7 +77,7 @@ const DeployUndeployButton = ({ entity }: ActionButtonProps) => {
 
   return (
     <DialPrimaryButton
-      label={t('Deploy')}
+      label={t(MarketplaceI18nKeys.DeployMarketplace)}
       iconBefore={<IconCloudUpload size={18} />}
       onClick={handleDeploy}
       data-qa="deploy-in-details"
@@ -98,7 +100,7 @@ const RedeployButton = ({ entity }: ActionButtonProps) => {
 
   return (
     <DialNeutralButton
-      label={t('Redeploy')}
+      label={t(MarketplaceI18nKeys.Redeploy)}
       iconBefore={<IconRefresh size={18} />}
       onClick={handleRedeploy}
       data-qa="redeploy-in-details"
