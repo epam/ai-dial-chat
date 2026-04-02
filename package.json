@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.44.0-rc",
+  "version": "0.45.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "^0.8.0",
+    "@epam/ai-dial-ui-kit": "^0.9.0-rc.6",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
@@ -86,7 +86,9 @@
     "pino-opentelemetry-transport": "^1.0.0",
     "pino-pretty": "^10.2.0",
     "plotly.js": "^2.30.0",
+    "polished": "^4.3.1",
     "qrcode.react": "^4.2.0",
+    "randomcolor": "^0.6.2",
     "rc-slider": "^10.2.1",
     "re-resizable": "^6.9.11",
     "react": "19.2.4",
@@ -146,6 +148,7 @@
     "@types/lodash-es": "^4.17.12",
     "@types/mime-types": "^2.1.4",
     "@types/node": "22.18.11",
+    "@types/randomcolor": "^0.5.9",
     "@types/react": "19.0.0",
     "@types/react-dom": "19.0.0",
     "@types/react-plotly.js": "^2.6.3",
