@@ -19,6 +19,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -174,14 +175,14 @@ export function TargetAudienceFilterComponent({
         dataQa="mobile-filters-select"
         containerClassName="inline-block flex flex-col w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 h-full xl:max-w-[720px] 2xl:max-w-[780px]"
         state={ModalState.OPENED}
-        heading={t('Add filter')}
+        heading={t(SideBarI18nKeys.AddFilter)}
         onClose={onCloseFilter}
       >
         <div className="flex h-full flex-col justify-between">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
-                {t('Category')}
+                {t(SideBarI18nKeys.Category)}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
@@ -194,7 +195,7 @@ export function TargetAudienceFilterComponent({
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
-                {t('Condition')}
+                {t(SideBarI18nKeys.Condition)}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
@@ -210,7 +211,7 @@ export function TargetAudienceFilterComponent({
             {/* {!isTrueOrFalseFilterSelected && ( */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
-                {t('Options')}
+                {t(SideBarI18nKeys.Options)}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               {filterFunction === PublicationFunctions.Regex ? (
@@ -226,7 +227,7 @@ export function TargetAudienceFilterComponent({
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={t('Enter one or more options...')}
+                  placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
                 />
               )}
             </div>
@@ -234,7 +235,7 @@ export function TargetAudienceFilterComponent({
           {/* )} */}
           <div className="flex justify-end">
             <DialPrimaryButton
-              label={t('Add filter')}
+              label={t(SideBarI18nKeys.AddFilter)}
               onClick={handleSaveFilter}
               disabled={isSaveBtnDisabled}
             />
@@ -281,7 +282,7 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
           fontSize="text-xs"
-          placeholder={t('Enter one or more options...')}
+          placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
           dataQa="filter-values-container"
         />
       )}

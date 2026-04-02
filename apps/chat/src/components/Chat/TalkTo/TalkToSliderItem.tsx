@@ -17,6 +17,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { SuggestionButton } from '@/src/components/Common/SuggestionButton';
@@ -63,7 +64,7 @@ export const TalkToSliderItem = ({
         onClick={onOpenMarketplaceTab}
         key={SuggestedCard.id}
       >
-        <h3 className="text-base">{t("Couldn't find what you need?")}</h3>
+        <h3 className="text-base">{t(ChatI18nKeys.CouldntFindWhatYouNeed)}</h3>
         <SuggestionButton />
       </div>
     );
@@ -78,6 +79,14 @@ export const TalkToSliderItem = ({
       disabled={
         isPlaybackConversation(conversation) &&
         groupItem.reference !== PseudoModel.Playback
+      }
+      tooltip={
+        isPlaybackConversation(conversation) &&
+        groupItem.reference !== PseudoModel.Playback
+          ? t(
+              'Editing conversation settings is not available in playback mode.',
+            )
+          : undefined
       }
       key={groupItem.id}
       entity={groupItem as DialAIEntityModel}

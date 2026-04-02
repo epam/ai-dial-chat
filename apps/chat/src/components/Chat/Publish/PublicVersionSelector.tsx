@@ -18,6 +18,7 @@ import {
 } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -200,7 +201,7 @@ export function PublicVersionSelector({
           )}
           label={
             overrideTriggerText ??
-            `${textBeforeSelector ?? t('v.')} ${currentVersion}`
+            `${textBeforeSelector ?? t(ChatI18nKeys.VersionPrefix)} ${currentVersion}`
           }
           iconAfter={
             mappedAllVersions.length > 1 && (
@@ -246,7 +247,7 @@ export function PublicVersionSelector({
               });
             }}
           />
-          <p>{t('All')}</p>
+          <p>{t(ChatI18nKeys.All)}</p>
         </li>
       )}
       {mappedAllVersions.map(({ id, version }) => {

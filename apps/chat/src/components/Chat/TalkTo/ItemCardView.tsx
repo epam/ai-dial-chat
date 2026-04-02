@@ -31,6 +31,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -39,6 +40,7 @@ import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
@@ -55,6 +57,7 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   isUnavailableModel?: boolean;
   hasContextMenu?: boolean;
   className?: string;
+  tooltip?: string;
   selectedBaseIdsSet?: Set<string>;
   overrideDisabledActions?: Partial<DisabledActions>;
 }
@@ -86,6 +89,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   className,
   selectedBaseIdsSet,
   overrideDisabledActions,
+  tooltip,
 }: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -139,7 +143,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
     entity.id === REPLAY_AS_IS_MODEL &&
     isOldConversationReplay(conversation.replay);
 
-  return (
+  const cardContent = (
     <div
       onClick={() => {
         if (!disabled) {
@@ -208,7 +212,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           <div className="flex items-center gap-2">
             {!!versionsToSelect.length && (
               <div className="flex items-center truncate">
-                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
+                <p className="mr-1 text-xs text-secondary">
+                  {t(MarketplaceI18nKeys.Version)}:{' '}
+                </p>
                 <ModelVersionSelect
                   readonly={
                     conversation && isPlaybackConversation(conversation)
@@ -267,14 +273,18 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         >
           {isOldReplay && (
             <span className="text-xs leading-[15px] text-error">
-              {t(
-                'Some messages were created in an older DIAL version and may not replay as expected.',
-              )}
+              {t(MarketplaceI18nKeys.OldReplayWarning)}
             </span>
           )}
           {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
       </div>
     </div>
+  );
+
+  return tooltip ? (
+    <Tooltip tooltip={tooltip}>{cardContent}</Tooltip>
+  ) : (
+    cardContent
   );
 };

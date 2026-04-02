@@ -16,6 +16,7 @@ import {
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
@@ -54,7 +55,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
       e.stopPropagation();
       const link = getToolsetLink(toolset);
       writeTextToClipboard(link, () => {
-        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+        dispatch(UIActions.showSuccessToast(t(MarketplaceI18nKeys.LinkCopied)));
       });
     },
     [dispatch, t, toolset],

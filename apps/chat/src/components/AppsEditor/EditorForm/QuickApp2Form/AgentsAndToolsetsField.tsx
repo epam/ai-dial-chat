@@ -29,6 +29,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetTypes } from '@/src/constants/quick-apps';
 
 import {
@@ -274,14 +275,14 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   );
 
   const shortEditorError = editorError
-    ? t('App settings are not matching the schema')
+    ? t(MarketplaceI18nKeys.AppSettingsNotMatchingSchema)
     : undefined;
 
   const EditorButtons = useCallback(
     () => (
       <div className="flex h-full grow items-center justify-end gap-2 pr-3">
         <DialButton
-          label={t('Discard')}
+          label={t(MarketplaceI18nKeys.DiscardMarketplace)}
           variant={ButtonVariant.Neutral}
           size={ElementSize.Small}
           appearance={ButtonAppearance.Outlined}
@@ -289,7 +290,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           disabled={!dirtyFields.agentsAndToolsetsJson && !editorError}
         />
         <DialButton
-          label={t('Save JSON')}
+          label={t(MarketplaceI18nKeys.SaveJSON)}
           variant={ButtonVariant.Primary}
           size={ElementSize.Small}
           onClick={handleSaveJson}
@@ -332,17 +333,15 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                 }
                 isOn
                 handleSwitch={handleJsonViewChange}
-                switchOnText={t('ON')}
-                additionalText={t('JSON')}
+                switchOnText={t(MarketplaceI18nKeys.OnToggle)}
+                additionalText={t(MarketplaceI18nKeys.JSONLabel)}
                 className="mb-2 flex w-fit items-center gap-2"
-                tooltip={t(
-                  'Switch to marketplace view for Agents and Toolsets',
-                )}
+                tooltip={t(MarketplaceI18nKeys.SwitchToMarketplaceView)}
               />
             </div>
 
             <JsonEditor
-              label={t('Agents & Toolsets')}
+              label={t(MarketplaceI18nKeys.AgentsAndToolsets)}
               error={errors.agentsAndToolsetsJson?.message || shortEditorError}
               height={280}
               allowFullScreen
@@ -372,7 +371,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   value={sortedAgentsAndToolsets}
                   onChange={handleAgentsAndToolsetsChange}
                   allItemsMap={allEntitiesMap}
-                  label={t('Agents & Toolsets')}
+                  label={t(MarketplaceI18nKeys.AgentsAndToolsets)}
                   readonly={isAppPublic}
                   tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
                   onItemClick={handleItemClick}
@@ -406,12 +405,10 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
       <DialConfirmationPopup
         variant={ConfirmationPopupVariant.Danger}
         open={isDiscardingJson}
-        header={t('Discard changes')}
-        description={t(
-          'Are you sure you want to lose all recent changes made to the JSON?',
-        )}
-        confirmLabel={t('Discard')}
-        cancelLabel={t('Continue editing')}
+        header={t(MarketplaceI18nKeys.DiscardChanges)}
+        description={t(MarketplaceI18nKeys.DiscardJsonChangesConfirmation)}
+        confirmLabel={t(MarketplaceI18nKeys.DiscardMarketplace)}
+        cancelLabel={t(MarketplaceI18nKeys.ContinueEditing)}
         onConfirm={() => handleCloseDiscard(true)}
         onCancel={() => handleCloseDiscard(false)}
         onClose={() => handleCloseDiscard(false)}

@@ -18,6 +18,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import {
   ENTITY_TYPES,
   FilterTypes,
@@ -170,7 +171,7 @@ function FiltersRenderer({
     <div className="flex grow flex-col divide-y divide-tertiary overflow-y-auto">
       {showEntityTypesSection && (
         <FilterSection
-          sectionName={t('Type')}
+          sectionName={t(SideBarI18nKeys.Type)}
           filterValues={ENTITY_TYPES}
           openedSections={openedSections}
           selectedFilters={selectedFilters}
@@ -181,7 +182,7 @@ function FiltersRenderer({
         />
       )}
       <FilterSection
-        sectionName={t('Topics')}
+        sectionName={t(SideBarI18nKeys.Topics)}
         filterValues={topics}
         openedSections={openedSections}
         selectedFilters={selectedFilters}
@@ -191,7 +192,7 @@ function FiltersRenderer({
       />
       {sourceTypes.length > 1 && (
         <FilterSection
-          sectionName={t('Sources')}
+          sectionName={t(SideBarI18nKeys.Sources)}
           filterValues={sourceTypes}
           openedSections={openedSections}
           selectedFilters={selectedFilters}
@@ -296,7 +297,9 @@ export const MarketplaceFilterbar = memo(() => {
             isOverlay ? 'min-h-[35px]' : 'min-h-12',
           )}
         >
-          <p className="text-base font-semibold">{t('Filters')}</p>
+          <p className="text-base font-semibold">
+            {t(SideBarI18nKeys.FiltersSideBar)}
+          </p>
         </div>
         {noEntities ? (
           <div className="flex grow flex-col items-center justify-center gap-3">
@@ -307,7 +310,9 @@ export const MarketplaceFilterbar = memo(() => {
             />
             <p className="text-center text-sm leading-[24px] text-primary">
               {t(
-                `No filters as you currently have no ${isAgentsTab ? 'agents' : 'toolsets'}`,
+                isAgentsTab
+                  ? SideBarI18nKeys.NoFiltersAgents
+                  : SideBarI18nKeys.NoFiltersToolsets,
               )}
             </p>
           </div>

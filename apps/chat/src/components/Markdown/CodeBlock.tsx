@@ -23,6 +23,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
+import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -61,7 +62,10 @@ export const CodeBlock: FC<Props> = memo(
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
         `ai-chat-code-${getDownLoadCurrentDate()}${fileExtension}`;
-      const fileName = window.prompt(t('Enter file name'), suggestedFileName);
+      const fileName = window.prompt(
+        t(MarkdownI18nKeys.EnterFileName),
+        suggestedFileName,
+      );
 
       if (!fileName) {
         // User pressed cancel on prompt
@@ -110,17 +114,23 @@ export const CodeBlock: FC<Props> = memo(
                 aria-label="Copy-code"
                 icon={
                   isCopied ? (
-                    <Tooltip tooltip={t('Copied!')}>
+                    <Tooltip tooltip={t(MarkdownI18nKeys.Copied)}>
                       <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
                     </Tooltip>
                   ) : (
-                    <Tooltip isTriggerClickable tooltip={t('Copy code')}>
+                    <Tooltip
+                      isTriggerClickable
+                      tooltip={t(MarkdownI18nKeys.Copy)}
+                    >
                       <IconCopy size={DEFAULT_ICON_SIZES.SMALL} />
                     </Tooltip>
                   )
                 }
               />
-              <Tooltip isTriggerClickable tooltip={t('Download')}>
+              <Tooltip
+                isTriggerClickable
+                tooltip={t(MarkdownI18nKeys.Download)}
+              >
                 <DialGhostIconButton
                   size={ElementSize.Small}
                   className="flex items-center rounded bg-none hover:text-accent-primary"

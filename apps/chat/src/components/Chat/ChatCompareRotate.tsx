@@ -2,6 +2,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import Rotate from '@/public/images/icons/rotate.svg';
 
 export const ChatCompareRotate = () => {
@@ -13,7 +15,7 @@ export const ChatCompareRotate = () => {
         <Rotate width={60} height={60} />
       </div>
       <div className="text-base">
-        {t('Please rotate the screen to use compare mode')}
+        {t(ChatI18nKeys.PleaseRotateScreenToUseCompareMode)}
       </div>
     </div>
   );

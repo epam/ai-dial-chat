@@ -46,6 +46,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
@@ -225,7 +226,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           modelsVersionGroup.length === itemVersionsSelected.length ||
           toolsetVersionGroup.length === itemVersionsSelected.length;
 
-        return t(isAllVersionsSelected ? 'All' : 'Few');
+        return t(isAllVersionsSelected ? ChatI18nKeys.All : ChatI18nKeys.Few);
       } else if (itemVersionsSelected.length === 1) {
         return getVersionFromId(itemVersionsSelected[0]);
       }
@@ -265,7 +266,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           triggerTextClassName={classNames(
             isDeleteAction && 'text-xs text-error',
           )}
-          textBeforeSelector={!isDeleteAction ? t('Last: ') : ''}
+          textBeforeSelector={!isDeleteAction ? t(ChatI18nKeys.LastColon) : ''}
           btnClassNames={classNames(
             'shrink-0',
             isDeleteAction && 'text-error hover:text-error',

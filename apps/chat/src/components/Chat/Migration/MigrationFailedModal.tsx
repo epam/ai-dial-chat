@@ -35,6 +35,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
@@ -283,45 +285,49 @@ export const MigrationFailedWindow = ({
           <div className="px-6">
             <h1 className="text-base font-semibold">
               {showSelectToMigrateWindow
-                ? t('Now your data will be available on all your devices')
-                : t('Some items failed to migrate, retry migration?')}
+                ? t(CommonI18nKeys.NowYourDataWillBeAvailableOnAllYourDevices)
+                : t(CommonI18nKeys.SomeItemsFailedToMigrateRetryMigration)}
             </h1>
             <p className="mt-2 text-secondary">
               {showSelectToMigrateWindow ? (
                 <>
-                  {t('All current conversations')}
+                  {t(CommonI18nKeys.AllCurrentConversations)}
                   <wbr />
                   /
                   <wbr />
                   {t(
-                    'prompts from all devices will be migrated to the central storage. Select items to migrate or discard. ',
+                    CommonI18nKeys.PromptsFromAllDevicesWillBeMigratedToTheCentralStorageSelectItemsToMigrateOrDiscard,
                   )}
                 </>
               ) : (
                 <>
                   {t(
-                    'Retry migration or discard the unsuccessfully migrated conversations',
+                    CommonI18nKeys.RetryMigrationOrDiscardTheUnsuccessfullyMigratedConversations,
                   )}
                   <wbr />
                   /
                   <wbr />
-                  {t('prompts. ')}
+                  {t(CommonI18nKeys.PromptsShort)}
                 </>
               )}
-              {t('All discarded items will be ')}
-              <strong>{t('PERMANENTLY LOST')}</strong>.
+              {t(CommonI18nKeys.AllDiscardedItemsWillBe)}
+              <strong>{t(CommonI18nKeys.PermanentlyLost)}</strong>.
             </p>
             <div className="mt-4 flex justify-end overflow-y-scroll">
               <div className="flex w-[100px] text-xs">
                 <p className="flex w-[50px] justify-center">
-                  {showSelectToMigrateWindow ? t('Migrate') : t('Retry')}
+                  {showSelectToMigrateWindow
+                    ? t(CommonI18nKeys.Migrate)
+                    : t(CommonI18nKeys.Retry)}
                 </p>
-                <p className="flex w-[50px] justify-center">{t('Discard')}</p>
+                <p className="flex w-[50px] justify-center">
+                  {t(CommonI18nKeys.Discard)}
+                </p>
               </div>
             </div>
             <div className="my-2 flex justify-between overflow-y-scroll border-b border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
-                {t('All items')}
+                {t(CommonI18nKeys.AllItems)}
               </div>
               <div className="flex w-[100px] items-center justify-around">
                 <AllItemsCheckboxes
@@ -394,16 +400,22 @@ export const MigrationFailedWindow = ({
                 </div>
                 <p className="text-secondary">
                   {t(
-                    "I don't want to backup conversations/prompts and I’m ready ",
+                    CommonI18nKeys.IDontWantToBackupConversationsPromptsAndImReady,
                   )}
-                  <span className="font-semibold">{t('TO LOSE DATA')}</span>
+                  <span className="font-semibold">
+                    {t(CommonI18nKeys.ToLoseData)}
+                  </span>
                 </p>
               </div>
             )}
             <div className="mt-3 flex w-full justify-end">
               {!!failedMigratedPrompts.length && (
                 <DialNeutralButton
-                  label={!isScreenSmall ? t('Backup prompts') : t('prompts')}
+                  label={
+                    !isScreenSmall
+                      ? t(CommonI18nKeys.BackupPrompts)
+                      : t(CommonI18nKeys.PromptsLowercase)
+                  }
                   className="mr-3 flex min-w-[73px] items-center capitalize md:normal-case"
                   onClick={handleBackupPrompts}
                   data-qa="skip-migration"
@@ -421,7 +433,11 @@ export const MigrationFailedWindow = ({
               )}
               {!!failedMigratedConversations.length && (
                 <DialNeutralButton
-                  label={!isScreenSmall ? t('Backup chats') : t('chats')}
+                  label={
+                    !isScreenSmall
+                      ? t(CommonI18nKeys.BackupChats)
+                      : t(CommonI18nKeys.ChatsLowercase)
+                  }
                   className="mr-3 flex min-w-[73px] items-center capitalize md:normal-case"
                   onClick={handleBackupChats}
                   data-qa="skip-migration"
@@ -438,7 +454,7 @@ export const MigrationFailedWindow = ({
                 />
               )}
               <DialPrimaryButton
-                label={t('Next')}
+                label={t(CommonI18nKeys.Next)}
                 className="mr-3 flex items-center"
                 onClick={retryMigration}
                 data-qa="skip-migration"
@@ -449,11 +465,11 @@ export const MigrationFailedWindow = ({
         </div>
       </div>
       <p className="mt-6 text-secondary">
-        {t('If you have a problem please ')}
+        {t(CommonI18nKeys.IfYouHaveAProblemPlease)}
         <DialLinkButton
           onClick={() => setIsReportIssueDialogOpen(true)}
           className="px-0 underline"
-          label={t('contact us.')}
+          label={t(CommonI18nKeys.ContactUs)}
         />
       </p>
       {enabledFeatures.has(Feature.ReportAnIssue) &&
