@@ -1,5 +1,4 @@
 import {
-  MouseEvent,
   useCallback,
   useLayoutEffect,
   useMemo,
@@ -288,19 +287,14 @@ const TalkToModalView = ({
     [conversation, dispatch, installedModelIdsSet, modelsMap, onClose],
   );
 
-  const handleGoToWorkspace = useCallback(
-    (e: MouseEvent<HTMLAnchorElement>) => {
-      const url = `/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`;
+  const handleGoToWorkspace = useCallback(() => {
+    const url = `/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`;
 
-      router.push(url);
-      if (isPlayback) {
-        e.preventDefault();
-      } else {
-        dispatch(ConversationsActions.setTalkToConversationId(null));
-      }
-    },
-    [conversation.id, isMyWorkspace, tab, router, isPlayback, dispatch],
-  );
+    router.push(url);
+    if (!isPlayback) {
+      dispatch(ConversationsActions.setTalkToConversationId(null));
+    }
+  }, [conversation.id, isMyWorkspace, tab, router, isPlayback, dispatch]);
 
   const sliderItemProps = useMemo(
     () => ({
