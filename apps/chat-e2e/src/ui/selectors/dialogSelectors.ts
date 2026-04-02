@@ -268,7 +268,7 @@ export const EntityEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="entity-preview-general-info-full-container"]',
   entityPreviewGeneralInfoContainer: '[data-qa="entity-preview-general-info"]',
   previewIconContainer: '[data-qa="icon-container"]',
-  previewEntityName: '[data-qa="entity-name"]',
+  previewEntityName: '#entity-name',
   previewTopicsContainer: '[data-qa="entity-topics"]',
   previewInformationSection: '[data-qa="entity-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',

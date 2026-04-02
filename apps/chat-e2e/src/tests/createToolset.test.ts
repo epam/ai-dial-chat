@@ -14,7 +14,7 @@ import {
   ToggleState,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
-import { Attributes, Cursors, StyleValues, Styles } from '@/src/ui/domData';
+import { Attributes, Cursors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
@@ -714,6 +714,7 @@ dialTest(
     toastAssertion,
     customAppEditorAppSettingsPreviewBody,
     entityEditorGeneralForm,
+    tooltip,
     tooltipAssertion,
     page,
   }) => {
@@ -853,7 +854,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Find created toolset, hover over the icon and verify name displaying on the tooltip',
+      'Find created toolset, hover over the icon and verify no tooltip is displayed',
       async () => {
         await marketplaceFilter
           .filterByPropertyOptionInput(
@@ -868,14 +869,7 @@ dialTest(
         await marketplaceEntities
           .getToolsetDefaultIcon(toolsetElement)
           .hoverOver();
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.overflow_wrap,
-          StyleValues.breakWord,
-        );
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.wordBreak,
-          StyleValues.breakWord,
-        );
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
       },
     );
 
