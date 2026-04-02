@@ -42,7 +42,10 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
-import { mergeFeatures } from '@/src/utils/app/models';
+import {
+  doesModelHaveConfiguration,
+  mergeFeatures,
+} from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -57,6 +60,7 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
+  ChatActions,
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
@@ -381,6 +385,17 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
                     );
                   }
+                }
+
+                if (updatedCustomApplication.applicationTypeSchemaId) {
+                  actions.push(
+                    of(
+                      ChatActions.getConfigurationSchema({
+                        modelId: updatedCustomApplication.id,
+                        replaceExisting: true,
+                      }),
+                    ),
+                  );
                 }
 
                 return concat(...actions);

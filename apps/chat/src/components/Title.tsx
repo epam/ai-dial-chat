@@ -11,7 +11,9 @@ import { SettingsState } from '@/src/store/settings/settings.types';
 
 export function Title({ settings }: { settings?: SettingsState }) {
   const router = useRouter();
+
   const { t } = useTranslation(Translation.Common);
+
   const pageName = t(getPageName(router));
 
   return (

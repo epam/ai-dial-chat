@@ -67,6 +67,7 @@ import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings/ChatSettingsModal';
 import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
+import { IntroText } from './IntroText';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
@@ -907,6 +908,13 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
+                        {selectedConversations.length === 1 && (
+                          <IntroText
+                            isWideLayout={isWideLayout}
+                            modelId={selectedConversations[0].model.id}
+                          />
+                        )}
+
                         {!isWideLayout && <ChatStarters />}
 
                         {!isPlayback && (
