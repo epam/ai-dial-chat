@@ -29,6 +29,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -329,7 +331,7 @@ export const PlaybackControls = ({
                     data-qa="playback-message-content"
                   >
                     {phase === PlaybackPhases.EMPTY
-                      ? t('Type a message')
+                      ? t(ChatI18nKeys.TypeAMessage)
                       : (activeMessage.content ?? '')}
                   </span>
 

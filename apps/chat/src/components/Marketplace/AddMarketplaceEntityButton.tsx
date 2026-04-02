@@ -10,6 +10,8 @@ import { ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { FeatureType } from '@epam/ai-dial-shared';
@@ -43,7 +45,7 @@ export function AddMarketplaceEntityButton({
     return (
       <DialPrimaryButton
         onClick={visibleActions[0].onClick}
-        label={t(`Add ${label}`)}
+        label={t(MarketplaceI18nKeys.AddLabel, { label })}
         iconBefore={<IconPlus size={18} />}
         className="shrink-0"
         data-qa={dataQa}
@@ -60,7 +62,11 @@ export function AddMarketplaceEntityButton({
       TriggerCustomRenderer={
         <DialPrimaryButton
           data-qa={dataQa}
-          label={isScreenSmall ? t('Add') : t(`Add ${label}`)}
+          label={
+            isScreenSmall
+              ? t(MarketplaceI18nKeys.AddMarketplace)
+              : t(MarketplaceI18nKeys.AddLabel, { label })
+          }
           className="shrink-0"
           iconAfter={
             <IconChevronDown

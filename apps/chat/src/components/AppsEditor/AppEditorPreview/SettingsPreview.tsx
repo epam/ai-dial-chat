@@ -39,6 +39,7 @@ import {
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { GeneralPreview } from '@/src/components/AppsEditor/AppEditorPreview/GeneralPreview';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -118,11 +119,11 @@ const ChatPreview = () => {
             <Spinner size={60} />
             <span>
               {modelFromState?.functionStatus === ApplicationStatus.REDEPLOYING
-                ? t('Redeploying...')
+                ? t(ChatI18nKeys.Redeploying)
                 : modelFromState?.functionStatus ===
                     ApplicationStatus.UNDEPLOYING
-                  ? t('Undeploying...')
-                  : t('Deploying...')}
+                  ? t(ChatI18nKeys.Undeploying)
+                  : t(ChatI18nKeys.Deploying)}
             </span>
           </div>
         ) : (
@@ -131,20 +132,18 @@ const ChatPreview = () => {
               <IconMessages size={60} stroke={0.5} />
             </div>
             <DialLinkButton
-              label={t('Deploy code app')}
+              label={t(ChatI18nKeys.DeployCodeApp)}
               onClick={handleDeploy}
               disabled={!isApplicationValid}
               data-qa="deploy-code-app"
               iconBefore={<IconCloudUpload size={18} />}
             />
             <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
-              {t(
-                'Please fill the mandatory fields and deploy the application to enable preview. To keep your preview up-to-date,',
-              )}
+              {t(ChatI18nKeys.FillMandatoryFieldsAndDeploy)}
               <span className="font-semibold">
-                {t(' make sure to redeploy ')}
+                {t(ChatI18nKeys.MakeSureToRedeploy)}
               </span>
-              {t('after making changes.')}
+              {t(ChatI18nKeys.AfterMakingChanges)}
             </div>
           </div>
         )
@@ -266,12 +265,12 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
         data-qa="preview-header"
       >
         <div className="mr-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
-          <span>{t('Preview')}:</span>
+          <span>{t(ChatI18nKeys.Preview)}:</span>
           <span data-qa="preview-app-name" className="min-w-0 shrink truncate">
             {appDetails?.name}
           </span>
           <span data-qa="preview-app-version" className="text-nowrap">
-            {t('v.')} {appDetails?.version}
+            {t(ChatI18nKeys.VersionPrefix)} {appDetails?.version}
           </span>
         </div>
 
@@ -282,7 +281,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
               disabled={!isApplicationValid}
               onClick={handleRedeploy}
               iconBefore={<IconRefresh size={18} />}
-              label={t('Redeploy')}
+              label={t(ChatI18nKeys.Redeploy)}
             />
           )}
           {isPreviewHalf && (

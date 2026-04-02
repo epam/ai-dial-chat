@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileName,
@@ -60,7 +62,7 @@ export const FilesUploadingModal = ({
       footer={
         <div className="flex justify-end gap-2 px-6 py-4">
           <DialNeutralButton
-            label={t('Cancel')}
+            label={t(CommonI18nKeys.Cancel)}
             onClick={() => {
               setIsOpen(false);
               onCancel?.();

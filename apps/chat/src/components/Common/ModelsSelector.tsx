@@ -13,6 +13,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
@@ -56,9 +58,7 @@ const ModelSelectRow = ({
         {isNotAllowed && (
           <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
-              {t('chat.error.incorrect-selected', {
-                context: EntityType.Model,
-              })}
+              {t(ChatI18nKeys.IncorrectSelectedModel)}
             </EntityMarkdownDescription>
           </span>
         )}

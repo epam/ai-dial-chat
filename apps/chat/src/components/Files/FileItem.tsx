@@ -26,6 +26,8 @@ import { Translation } from '@/src/types/translation';
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
@@ -197,7 +199,7 @@ export const FileItem = ({
             item.status === UploadStatus.FAILED && (
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Uploading failed. Please, try again')}
+                tooltip={t(FilesI18nKeys.UploadingFailed)}
               >
                 <IconExclamationCircle
                   className="shrink-0 text-error"
@@ -303,14 +305,12 @@ export const FileItem = ({
         <ConfirmDialog
           isOpen={isRemoveAccessConfirmOpened}
           showHeadingTooltip
-          heading={t('Confirm removing access: {{fileName}}', {
+          heading={t(FilesI18nKeys.ConfirmRemovingAccess, {
             fileName: item.name,
           })}
-          description={t(
-            'Are you sure you want to remove access to the file for all users?',
-          )}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
+          description={t(FilesI18nKeys.ConfirmRemovingAccessCaption)}
+          confirmLabel={t(FilesI18nKeys.Confirm)}
+          cancelLabel={t(FilesI18nKeys.Cancel)}
           onClose={(result) => {
             setIsRemoveAccessConfirmOpened(false);
             if (result) {

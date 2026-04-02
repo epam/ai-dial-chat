@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
@@ -24,7 +25,7 @@ const NoAgentsAndToolsets: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center rounded border border-primary py-4">
       <IconLayoutGrid size={60} className="mb-2 text-secondary" stroke={0.5} />
-      <span>{t('No Agents & Toolsets added')}</span>
+      <span>{t(CommonI18nKeys.NoAgentsAndToolsetsAdded)}</span>
     </div>
   );
 };
@@ -89,13 +90,15 @@ export const AgentAndToolsetSelector: React.FC<
       <div className="flex flex-col">
         <div className="absolute right-0 top-[-29px] flex items-center">
           <Tooltip
-            tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
+            tooltip={
+              addBtnTooltip ?? tooltip ?? t(CommonI18nKeys.AddAgentsAndToolsets)
+            }
           >
             <DialLinkButton
               disabled={readonly}
               onClick={handleOpenSelectModal}
               iconBefore={<IconPlus size={18} />}
-              label={t('Add')}
+              label={t(CommonI18nKeys.AddCommon)}
             />
           </Tooltip>
           {!!onJsonSwitchClick && (
@@ -105,13 +108,13 @@ export const AgentAndToolsetSelector: React.FC<
                 isOn={false}
                 handleSwitch={onJsonSwitchClick}
                 disabled={readonly}
-                switchOFFText={t('OFF')}
-                additionalText={t('JSON')}
+                switchOFFText={t(CommonI18nKeys.OFFCommon)}
+                additionalText={t(CommonI18nKeys.JSONCommon)}
                 className="flex w-fit items-center gap-2"
                 tooltip={t(
                   !readonly
-                    ? 'Switch to JSON view for Agents and Toolsets'
-                    : 'This application is public and cannot be edited',
+                    ? CommonI18nKeys.SwitchToJsonView
+                    : CommonI18nKeys.AppIsPublicCannotBeEdited,
                 )}
               />
             </>

@@ -15,6 +15,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
@@ -119,9 +120,7 @@ function PublicationFiltersView({
         isEditMode || publicationModel ? editedPublishToUrl : undefined,
       ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
-          {t(
-            'This publication will be available to all users in the organization',
-          )}
+          {t(ChatI18nKeys.PublicationAvailableToAll)}
         </p>
       )}
       {oldRules.map(([path, rules]) => (

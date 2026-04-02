@@ -21,6 +21,7 @@ import { ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -180,18 +181,16 @@ function ReplaceConfirmationModalView() {
     >
       <div className="flex h-fit flex-col gap-2 px-3 md:px-6">
         <h2 className="text-base font-semibold">
-          {t('Some items failed to import due to duplicate names')}
+          {t(ChatI18nKeys.SomeItemsFailedToImportDuplicateNames)}
         </h2>
         <p className="text-secondary">
-          {t(
-            'Add a postfix, ignore or replace existing items with importing ones.',
-          )}
+          {t(ChatI18nKeys.AddPostfixIgnoreOrReplace)}
         </p>
         <div
           className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b border-tertiary pl-3"
           data-qa="all-items-selector"
         >
-          <span>{t('All items')}</span>
+          <span>{t(ChatI18nKeys.AllItems)}</span>
           <ReplaceSelector
             selectedOption={actionForAllItems}
             onOptionChangeHandler={handleOnChangeAllAction}
@@ -228,12 +227,12 @@ function ReplaceConfirmationModalView() {
       <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6 md:pb-4">
         <DialNeutralButton
           onClick={handleCancel}
-          label={t('Cancel')}
+          label={t(ChatI18nKeys.Cancel)}
           data-qa="cancel-import"
         />
         <DialPrimaryButton
           onClick={handleContinueImport}
-          label={t('Continue')}
+          label={t(ChatI18nKeys.ContinueImport)}
           data-qa="continue-import"
         />
       </div>

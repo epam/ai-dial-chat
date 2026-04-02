@@ -5,6 +5,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -48,7 +49,7 @@ export const DislikeCommentModal = ({
 
       <DialPrimaryButton
         className="mt-4 self-end"
-        label={t('Send')}
+        label={t(ChatI18nKeys.Send)}
         onClick={handleSubmit}
         data-qa="dislike-send-button"
       />

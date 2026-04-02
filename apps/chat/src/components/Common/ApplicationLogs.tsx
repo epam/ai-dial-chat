@@ -13,6 +13,8 @@ import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -25,7 +27,9 @@ const LogsHeader = () => {
 
   return (
     <div className="px-3 pb-4 pt-6 md:px-6">
-      <h2 className="text-base font-semibold">{t('Application logs')}</h2>
+      <h2 className="text-base font-semibold">
+        {t(MarketplaceI18nKeys.ApplicationLogs)}
+      </h2>
     </div>
   );
 };
@@ -46,7 +50,7 @@ const LogsView = () => {
         {isLogsLoading ? (
           <Spinner size={30} className="mx-auto" />
         ) : (
-          t('No logs found')
+          t(MarketplaceI18nKeys.NoLogsFound)
         )}
       </div>
     );
@@ -88,7 +92,7 @@ const LogsFooter = () => {
 
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
-      <Tooltip tooltip={t('Reload logs')}>
+      <Tooltip tooltip={t(MarketplaceI18nKeys.ReloadLogs)}>
         <DialGhostIconButton
           onClick={uploadLogs}
           data-qa="application-reload-logs"
@@ -97,9 +101,9 @@ const LogsFooter = () => {
         />
       </Tooltip>
       {applicationLogs && (
-        <Tooltip tooltip={t('Download logs')}>
+        <Tooltip tooltip={t(MarketplaceI18nKeys.DownloadLogs)}>
           <DialNeutralButton
-            label={t('Download')}
+            label={t(MarketplaceI18nKeys.Download)}
             onClick={() => downloadApplicationLogs(applicationLogs)}
             data-qa="application-download-logs"
             disabled={isLogsLoading}

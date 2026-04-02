@@ -16,6 +16,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 import { CODE_APPS_EXAMPLES, ExampleTypes } from '@/src/constants/code-apps';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { CodeData } from '../form';
 
@@ -101,7 +102,7 @@ export const CodeAppExampleLink = ({
       className={classNames('cursor-pointer text-accent-primary', className)}
       onClick={handleClick}
     >
-      {t('Add example "{{exampleType}}"', { exampleType })}
+      {t(MarketplaceI18nKeys.AddExample, { exampleType })}
     </span>
   );
 };

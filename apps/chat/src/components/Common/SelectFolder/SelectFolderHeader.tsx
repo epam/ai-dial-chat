@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -43,7 +45,7 @@ export const SelectFolderHeader = ({
       <DialSearch
         name="titleInput"
         data-qa="search-folder"
-        placeholder={t('Search folders')}
+        placeholder={t(ChatI18nKeys.SearchFolders)}
         value={searchQuery}
         onChange={onSearch}
       />

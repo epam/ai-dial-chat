@@ -12,6 +12,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
@@ -23,9 +25,9 @@ const previewModeIcons = {
   [PreviewMode.half]: IconLayoutSidebarLeftCollapse,
 };
 const previewModeTooltips = {
-  [PreviewMode.full]: 'Expand preview',
-  [PreviewMode.closed]: 'Hide preview',
-  [PreviewMode.half]: 'Split preview',
+  [PreviewMode.full]: MarketplaceI18nKeys.ExpandPreview,
+  [PreviewMode.closed]: MarketplaceI18nKeys.HidePreview,
+  [PreviewMode.half]: MarketplaceI18nKeys.SplitPreview,
 };
 
 interface PreviewModeButtonProps {

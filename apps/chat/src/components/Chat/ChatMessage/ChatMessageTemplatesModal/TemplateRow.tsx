@@ -18,6 +18,7 @@ import { templateMatchContent } from '@/src/utils/app/prompts';
 import { Translation } from '@/src/types/translation';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { TemplateInput } from './TemplateInput';
@@ -55,10 +56,10 @@ export const TemplateRow = ({
           ? setValidationContentError
           : setValidationTemplateError;
       if (!element.value.trim()) {
-        setMethod(t('Please fill in this required field'));
+        setMethod(t(ChatI18nKeys.FillInRequiredField));
         return;
       }
-      const foundError = t('This part was not found in the original message');
+      const foundError = t(ChatI18nKeys.PartNotFoundInMessage);
       if (
         element === contentRef.current &&
         element.value &&
@@ -74,10 +75,10 @@ export const TemplateRow = ({
         element.value &&
         !PROMPT_VARIABLE_REGEX_TEST.test(element.value)
       ) {
-        setMethod(t('Template must have at least one variable'));
+        setMethod(t(ChatI18nKeys.TemplateMustHaveVariable));
         return;
       }
-      const matchError = t("Template doesn't match the message text");
+      const matchError = t(ChatI18nKeys.TemplateDoesntMatchMessage);
       if (
         contentRef.current?.value.trim() &&
         templateRef.current?.value.trim() &&
@@ -147,7 +148,7 @@ export const TemplateRow = ({
         <TemplateInput
           value={content}
           dataQA="template-content"
-          placeholder={t('A part of the message')}
+          placeholder={t(ChatI18nKeys.APartOfTheMessage)}
           ref={contentRef}
           onInput={handleChange}
           onBlur={handleBlur}
@@ -158,8 +159,8 @@ export const TemplateRow = ({
           dataQA="template-value"
           placeholder={t(
             isSmallScreen()
-              ? 'Your template with {{variable}}'
-              : 'Your template. Use {{}} to denote a variable',
+              ? ChatI18nKeys.YourTemplateWithVariable
+              : ChatI18nKeys.YourTemplateUseVariable,
           )}
           ref={templateRef}
           onInput={handleChange}

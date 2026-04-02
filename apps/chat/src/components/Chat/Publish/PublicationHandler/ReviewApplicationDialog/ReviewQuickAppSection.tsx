@@ -16,6 +16,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
@@ -58,17 +60,17 @@ const ReviewQuickAppSectionView = ({
   return (
     <>
       <MarketplaceEntityInfoRow
-        label={t('Model')}
+        label={t(ChatI18nKeys.Model)}
         value={modelsMap[config.model]?.name}
         valueClassName="max-w-[414px] break-all text-primary"
       />
       <MarketplaceEntityInfoRow
-        label={t('Temperature')}
+        label={t(ChatI18nKeys.Temperature)}
         value={config.temperature}
         valueClassName="max-w-[414px] break-all text-primary"
       />
       <MarketplaceEntityInfoRow
-        label={t('Document URLs')}
+        label={t(ChatI18nKeys.DocumentUrls)}
         value={
           config.document_relative_url?.length ? (
             <div className="flex min-w-0 flex-col gap-2">
@@ -81,12 +83,12 @@ const ReviewQuickAppSectionView = ({
         valueClassName=""
       />
       <MarketplaceEntityInfoRow
-        label={t('Instructions')}
+        label={t(ChatI18nKeys.Instructions)}
         value={config.instructions}
         valueClassName="grow break-all text-primary"
       />
       <MarketplaceEntityInfoRow
-        label={t('Toolsets')}
+        label={t(ChatI18nKeys.Toolsets)}
         value={
           config.web_api_toolset || config.mcp_toolset ? (
             <MonacoEditor
