@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isMyBucket, splitEntityId } from '@/src/utils/app/shared-utils';
+import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
@@ -34,20 +35,23 @@ function UnshareDialogView() {
   const resourceId = unshareEntity?.id ?? unshareResourceId ?? '';
 
   const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
-  const { bucket, name } = splitEntityId(resourceId);
 
-  const isAuthor = isMyBucket(bucket);
+  const description = useMemo(() => {
+    const { bucket } = splitEntityId(resourceId);
+    const isAuthor = isMyBucket(bucket);
+    const { name } = parseEntityApiKey(resourceId, {
+      parseVersion: false,
+      parseModel: false,
+    });
 
-  const description = useMemo(
-    () => (
+    return (
       <span>
         {t('Are you sure you want to remove')}{' '}
         <strong>{t(isAuthor ? 'access for all users' : 'your access')}</strong>{' '}
-        {t('to {{name}}', { name: shareResourceName ?? name })}
+        {t('to {{name}}?', { name: shareResourceName ?? name })}
       </span>
-    ),
-    [isAuthor, shareResourceName, name, t],
-  );
+    );
+  }, [shareResourceName, t, resourceId]);
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
