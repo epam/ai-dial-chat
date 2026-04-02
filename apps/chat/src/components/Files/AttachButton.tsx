@@ -25,6 +25,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
@@ -129,7 +130,11 @@ export const AttachButton = ({
       [
         {
           name: t(
-            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
+            canAttachFiles && canAttachFolders
+              ? ChatI18nKeys.AttachFoldersAndUploadedFiles
+              : canAttachFolders
+                ? ChatI18nKeys.AttachFolders
+                : ChatI18nKeys.AttachUploadedFiles,
           ),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,
@@ -137,14 +142,14 @@ export const AttachButton = ({
           onClick: handleOpenAttachmentsModal,
         },
         {
-          name: t('Upload from device'),
+          name: t(ChatI18nKeys.UploadFromDevice),
           dataQa: 'upload_from_device',
           display: canAttachFiles,
           Icon: IconUpload,
           onClick: handleAttachFromComputer,
         },
         {
-          name: t('Attach link'),
+          name: t(ChatI18nKeys.AttachLink),
           dataQa: 'attach_link',
           display: canAttachLinks,
           Icon: IconLink,
@@ -165,9 +170,9 @@ export const AttachButton = ({
   if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
 
   const label = canAttachFiles
-    ? 'Attach files'
+    ? ChatI18nKeys.AttachFiles
     : canAttachFolders
-      ? 'Attach folders'
+      ? ChatI18nKeys.AttachFolders
       : '';
 
   return (
@@ -190,7 +195,7 @@ export const AttachButton = ({
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
-          customButtonLabel={t('Attach')}
+          customButtonLabel={t(ChatI18nKeys.Attach)}
           selectedFilesIds={selectedFilesIds}
           onClose={handleCloseFileManagerModal}
         />

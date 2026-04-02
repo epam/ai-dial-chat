@@ -20,6 +20,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -94,12 +95,12 @@ export const ApplicationDetailsFooter = ({
 
   const buttonLabel = showAsUseButton
     ? isScreenSmall
-      ? t('Use')
-      : t('Use {{modelType}}', {
+      ? t(MarketplaceI18nKeys.UseMarketplace)
+      : t(MarketplaceI18nKeys.UseModelType, {
           ns: Translation.Marketplace,
           modelType: entity.type,
         })
-    : t('Deploy');
+    : t(MarketplaceI18nKeys.DeployMarketplace);
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -170,8 +171,12 @@ export const ApplicationDetailsFooter = ({
                 data-qa="external-link"
               >
                 <IconExternalLink size={18} />
-                <span className="hidden md:block">{t('Open in New Tab')}</span>
-                <span className="block md:hidden">{t('Open')}</span>
+                <span className="hidden md:block">
+                  {t(MarketplaceI18nKeys.OpenInNewTab)}
+                </span>
+                <span className="block md:hidden">
+                  {t(MarketplaceI18nKeys.OpenMarketplace)}
+                </span>
               </Link>
             )}
           </Tooltip>

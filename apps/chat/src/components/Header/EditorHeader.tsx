@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { PartialBy } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Stepper } from '@/src/components/Common/Stepper';
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
 
@@ -138,7 +140,7 @@ export const EditorHeader = <T extends string>({
             onClick={onSave}
             data-qa="save-and-exit"
             iconBefore={<IconLogout size={20} stroke={1.5} />}
-            label={t(saveLabel ?? 'Save and exit')}
+            label={t(saveLabel ?? ChatI18nKeys.SaveAndExit)}
           />
         </div>
       }

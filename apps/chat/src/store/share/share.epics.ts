@@ -91,6 +91,7 @@ import {
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
@@ -1275,8 +1276,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                 UIActions.showSuccessToast(
                   translate(
                     payload.isFolder
-                      ? 'Folder "{{itemName}}" has been unshared successfully'
-                      : '"{{itemName}}" has been unshared successfully',
+                      ? CommonI18nKeys.FolderUnsharedSuccessfully
+                      : CommonI18nKeys.ItemUnsharedSuccessfully,
                     {
                       ns: Translation.Common,
                       itemName: name,
@@ -1297,8 +1298,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                 UIActions.showErrorToast(
                   translate(
                     payload.isFolder
-                      ? 'Failed to unshare folder "{{itemName}}". Please try again later'
-                      : 'Failed to unshare "{{itemName}}". Please try again later',
+                      ? CommonI18nKeys.FailedToUnshareFolder
+                      : CommonI18nKeys.FailedToUnshareItem,
                     {
                       ns: Translation.Common,
                       itemName: name,

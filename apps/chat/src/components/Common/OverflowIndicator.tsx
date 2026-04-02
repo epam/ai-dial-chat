@@ -51,6 +51,8 @@ export const OverflowIndicator = ({
       open={open}
       onOpenChange={setOpen}
       placement={placement}
+      isTriggerClickable
+      isHoverDisabled
     >
       <DialLinkButton
         className={classNames(
@@ -63,8 +65,6 @@ export const OverflowIndicator = ({
           stopBubbling(event);
           handleDelayShow(!open);
         }}
-        onMouseEnter={() => handleDelayShow(true)}
-        onMouseLeave={() => handleDelayShow(false)}
         data-qa={dataQA}
         label={`+${count}`}
       />

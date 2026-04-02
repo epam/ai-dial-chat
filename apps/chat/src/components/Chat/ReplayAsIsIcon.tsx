@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   ICON_TO_CONTAINER_RATIO_DENOMINATOR,
   ICON_TO_CONTAINER_RATIO_NUMERATOR,
@@ -53,7 +54,7 @@ export const ReplayAsIsIcon = ({
               {...props}
             />
           }
-          tooltipContent={t('Replay as is')}
+          tooltipContent={t(ChatI18nKeys.ReplayAsIs)}
           isCustomTooltip={isCustomTooltip}
         />
       </div>

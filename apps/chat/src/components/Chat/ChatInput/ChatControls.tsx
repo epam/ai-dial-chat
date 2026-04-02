@@ -14,6 +14,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
@@ -89,7 +90,9 @@ export const ChatControls: FC<Props> = ({
       data-replay-variables
       icon={
         <Tooltip
-          tooltip={isError ? t('Try again') : t('Continue replay')}
+          tooltip={
+            isError ? t(ChatI18nKeys.TryAgain) : t(ChatI18nKeys.ContinueReplay)
+          }
           isTriggerClickable
         >
           <Icon

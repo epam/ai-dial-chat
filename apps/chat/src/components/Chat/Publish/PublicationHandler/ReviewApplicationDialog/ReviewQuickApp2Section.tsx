@@ -30,6 +30,8 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
@@ -124,23 +126,23 @@ const ReviewQuickApp2SectionView = ({
     <>
       {isCodeInterpreterEnabled && isCodeInterpreter && (
         <MarketplaceEntityInfoRow
-          label={t('Code Interpreter')}
-          value={t('On')}
+          label={t(ChatI18nKeys.CodeInterpreter)}
+          value={t(ChatI18nKeys.On)}
           valueClassName="max-w-[414px] break-all text-primary"
         />
       )}
       <MarketplaceEntityInfoRow
-        label={t('Model')}
+        label={t(ChatI18nKeys.Model)}
         value={orchestratorName}
         valueClassName="max-w-[414px] break-all text-primary"
       />
       <MarketplaceEntityInfoRow
-        label={t('Temperature')}
+        label={t(ChatI18nKeys.Temperature)}
         value={config.orchestrator.deployment.parameters.temperature}
         valueClassName="max-w-[414px] break-all text-primary"
       />
       <MarketplaceEntityInfoRow
-        label={t('Document URLs')}
+        label={t(ChatI18nKeys.DocumentUrls)}
         value={
           config.contexts?.length ? (
             <div className="flex min-w-0 flex-col gap-2">
@@ -153,12 +155,12 @@ const ReviewQuickApp2SectionView = ({
         valueClassName=""
       />
       <MarketplaceEntityInfoRow
-        label={t('Instructions')}
+        label={t(ChatI18nKeys.Instructions)}
         value={config.orchestrator.system_prompt.content}
         valueClassName="grow break-all text-primary"
       />
       <MarketplaceEntityInfoRow
-        label={t('Agents')}
+        label={t(ChatI18nKeys.Agents)}
         value={
           agents.length ? (
             <div className="flex flex-wrap gap-2 text-primary">
@@ -179,7 +181,7 @@ const ReviewQuickApp2SectionView = ({
         valueClassName=""
       />
       <MarketplaceEntityInfoRow
-        label={t('Toolsets')}
+        label={t(ChatI18nKeys.Toolsets)}
         value={
           hasToolsets ? (
             <div className="flex flex-wrap gap-2 text-primary">

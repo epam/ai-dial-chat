@@ -22,6 +22,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -57,7 +59,7 @@ export function AddAppButton() {
     () =>
       [
         {
-          name: t('Custom app'),
+          name: t(MarketplaceI18nKeys.CustomApp),
           type: ApplicationType.CUSTOM_APP,
           dataQa: 'add-custom-app',
           display: true,
@@ -70,7 +72,7 @@ export function AddAppButton() {
           },
         },
         {
-          name: t('Code app'),
+          name: t(MarketplaceI18nKeys.CodeApp),
           dataQa: 'add-startable-app',
           type: ApplicationType.CODE_APP,
           display: isCodeAppsEnabled,

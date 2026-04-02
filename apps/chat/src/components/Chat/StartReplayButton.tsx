@@ -8,6 +8,8 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import Play from '@/public/images/icons/play.svg';
 import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
@@ -35,7 +37,7 @@ export const StartReplayButton = () => {
       data-qa="start-replay"
       data-replay-variables
       iconBefore={<Play height={18} width={18} />}
-      label={t('Start replay')}
+      label={t(ChatI18nKeys.StartReplay)}
     />
   );
 };

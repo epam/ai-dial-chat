@@ -19,6 +19,7 @@ import {
 } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { HeaderI18nKeys } from '@/src/constants/i18n';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -108,7 +109,7 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
 
   return (
     <CreateNewEntityButton
-      tooltip="New conversation"
+      tooltip={HeaderI18nKeys.NewConversation}
       isDisabled={messageIsStreaming}
       onClick={handleCreate}
       iconSize={iconSize}
@@ -138,7 +139,7 @@ export const CreateNewPrompt: React.FC<Props> = ({ iconSize }) => {
 
   return (
     <CreateNewEntityButton
-      tooltip="New prompt"
+      tooltip={HeaderI18nKeys.NewPrompt}
       onClick={handleCreate}
       iconSize={iconSize}
       colorsClass="bg-accent-tertiary-alpha text-accent-tertiary hover:border-accent-tertiary"

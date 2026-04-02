@@ -17,6 +17,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -62,7 +63,7 @@ export const SendMessageButton = Inversify.register(
             isLastMessageError && 'text-error',
             isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
-          aria-label={t('Send a message')}
+          aria-label={t(ChatI18nKeys.SendAMessage)}
           onClick={onSend}
           data-qa="regenerate"
           iconBefore={
@@ -88,7 +89,7 @@ export const SendMessageButton = Inversify.register(
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
-        aria-label={t('Send a message')}
+        aria-label={t(ChatI18nKeys.SendAMessage)}
         iconBefore={
           <Tooltip
             hideTooltip={!disabled && !messageIsStreaming}

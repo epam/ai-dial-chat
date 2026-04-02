@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { readableColor } from 'polished';
@@ -63,7 +65,7 @@ export const UserIcon = ({ iconSize = 28, className, userName }: Props) => {
           src={session?.user?.image ?? ''}
           width={iconSize}
           height={iconSize}
-          alt={t('User avatar')}
+          alt={t(HeaderI18nKeys.UserAvatar)}
           onError={() => setShowFallbackIcon(true)}
         />
       )}
