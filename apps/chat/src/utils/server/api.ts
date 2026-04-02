@@ -168,8 +168,10 @@ export class ApiUtils {
       ...path.split('/').map((part) => this.safeEncodeURIComponent(part)),
     );
 
-  static decodeApiUrl = (path: string): string =>
-    constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
+  static decodeApiUrl = (path?: string): string =>
+    constructPath(
+      ...(path?.split('/').map((part) => decodeURIComponent(part)) || []),
+    );
 
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, {
