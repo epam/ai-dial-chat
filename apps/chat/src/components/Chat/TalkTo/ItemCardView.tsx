@@ -282,7 +282,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   );
 
   return tooltip ? (
-    <Tooltip title={tooltip}>{cardContent}</Tooltip>
+    <Tooltip tooltip={tooltip}>{cardContent}</Tooltip>
   ) : (
     cardContent
   );
