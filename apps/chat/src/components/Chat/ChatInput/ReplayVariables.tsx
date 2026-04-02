@@ -15,6 +15,8 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 
 import isEmpty from 'lodash-es/isEmpty';
@@ -101,7 +103,7 @@ const ReplayVariablesDialog = () => {
     content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
     folderId: '',
-    name: t('Please, enter variables for the template:'),
+    name: t(ChatI18nKeys.EnterVariablesForTemplate),
     description: template,
   };
 

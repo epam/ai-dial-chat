@@ -39,6 +39,7 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
@@ -477,9 +478,11 @@ export const MessageAttachment = ({
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
               )}
-              title={attachment.title || attachment.url || t('Attachment')}
+              title={
+                attachment.title || attachment.url || t(ChatI18nKeys.Attachment)
+              }
             >
-              {attachment.title || attachment.url || t('Attachment')}
+              {attachment.title || attachment.url || t(ChatI18nKeys.Attachment)}
             </span>
 
             {isOpenable && !isFolder ? (
@@ -561,7 +564,7 @@ export const MessageAttachment = ({
               rel="noopener noreferrer"
               className="mt-3 block text-accent-primary"
             >
-              {t('Reference...')}
+              {t(ChatI18nKeys.Reference)}
             </a>
           )}
         </div>

@@ -11,6 +11,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { DialLinkButton } from '@epam/ai-dial-ui-kit';
@@ -49,7 +51,7 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
 
   if (items.length === 1) {
     const [item] = items;
-    const messageWithMarker = t('chat.error.agent-not-available', {
+    const messageWithMarker = t(ChatI18nKeys.AgentNotAvailable, {
       click: INTERNAL_CLICK_MARKER,
       agentId: ` "${item.agentName}" `,
     });
@@ -64,16 +66,14 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
           onClick={() => handleChangeModel(item.conversationId)}
           className={BUTTON_CLASS_NAME}
           data-qa="change-agent-btn"
-          label={t('change the agent')}
+          label={t(ChatI18nKeys.ChangeTheAgent)}
         />
         {afterText && <span>{afterText}</span>}
       </>
     );
   }
 
-  const messageParts = t('chat.error.agents-not-available').split(
-    '{{agentId}}',
-  );
+  const messageParts = t(ChatI18nKeys.AgentsNotAvailable).split('{{agentId}}');
   const [firstItem, secondItem] = items;
 
   return (

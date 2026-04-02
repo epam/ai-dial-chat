@@ -35,6 +35,7 @@ import {
 } from '@/src/store/selectors';
 
 import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
@@ -230,7 +231,8 @@ export const ChatHeader = Inversify.register(
                       className={classNames(isUnpublishing && 'text-error')}
                       data-qa="version"
                     >
-                      {t('v.')} {conversation.publicationInfo?.version}
+                      {t(ChatI18nKeys.VersionPrefix)}{' '}
+                      {conversation.publicationInfo?.version}
                     </p>
                   )}
                 </span>
@@ -312,7 +314,7 @@ export const ChatHeader = Inversify.register(
                 !conversation.publishedWithMe && (
                   <Tooltip
                     isTriggerClickable={!isMessageStreaming}
-                    tooltip={t('Clear conversation messages')}
+                    tooltip={t(ChatI18nKeys.ClearConversationMessages)}
                   >
                     <DialGhostIconButton
                       size={ElementSize.Small}
@@ -344,8 +346,8 @@ export const ChatHeader = Inversify.register(
                   data-qa="cancel-playback-mode"
                   label={
                     screenState === ScreenState.SM
-                      ? t('Stop')
-                      : t('Stop playback')
+                      ? t(ChatI18nKeys.Stop)
+                      : t(ChatI18nKeys.StopPlayback)
                   }
                 />
               )}
@@ -353,7 +355,7 @@ export const ChatHeader = Inversify.register(
               {isCompareMode && selectedConversationIds.length > 1 && (
                 <Tooltip
                   isTriggerClickable
-                  tooltip={t('Delete conversation from compare mode')}
+                  tooltip={t(ChatI18nKeys.DeleteConversationFromCompare)}
                 >
                   <CloseButtonSmall
                     onClick={() => onUnselectConversation(conversation.id)}
@@ -367,10 +369,10 @@ export const ChatHeader = Inversify.register(
         </div>
         <ConfirmDialog
           isOpen={isClearConversationModalOpen}
-          heading={t('Confirm deleting all messages in the conversation')}
-          description={t('Are you sure that you want to delete all messages?')}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
+          heading={t(ChatI18nKeys.ConfirmDeletingAllMessages)}
+          description={t(ChatI18nKeys.AreYouSureDeleteAllMessages)}
+          confirmLabel={t(ChatI18nKeys.Delete)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
           onClose={(result) => {
             setIsClearConversationModalOpen(false);
             if (result) {

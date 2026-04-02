@@ -27,6 +27,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { TEntity } from './view-props';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
@@ -174,7 +176,7 @@ function PublicationControlsView({
         onClick={handleClearReviewSelection}
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
-        label={t('Back to publication request')}
+        label={t(ChatI18nKeys.BackToPublicationRequest)}
       />
       {children}
     </div>

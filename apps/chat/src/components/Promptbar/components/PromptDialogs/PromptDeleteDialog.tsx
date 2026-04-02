@@ -9,6 +9,8 @@ import { PromptsActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
@@ -36,20 +38,18 @@ const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
 
     if (deletingPrompt.sharedWithMe) {
       return {
-        heading: t('Confirm unshare prompt'),
-        description: t('Are you sure that you want to unshare a prompt?'),
-        confirmLabel: t('Unshare'),
+        heading: t(PromptBarI18nKeys.ConfirmUnsharePrompt),
+        description: t(PromptBarI18nKeys.ConfirmUnsharePromptCaption),
+        confirmLabel: t(PromptBarI18nKeys.Unshare),
       };
     }
 
     return {
-      heading: t('Confirm deleting prompt'),
-      description: `${t('Are you sure that you want to delete a prompt?')}${t(
-        deletingPrompt.isShared
-          ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-          : '',
-      )}`,
-      confirmLabel: t('Delete'),
+      heading: t(PromptBarI18nKeys.ConfirmDeletingPrompt),
+      description: `${t(PromptBarI18nKeys.ConfirmDeletingPromptCaption)}${
+        deletingPrompt.isShared ? t(PromptBarI18nKeys.DeletingWillStop) : ''
+      }`,
+      confirmLabel: t(PromptBarI18nKeys.Delete),
     };
   }, [deletingPrompt, t]);
 
@@ -91,7 +91,7 @@ const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
       heading={dialogProps.heading}
       description={dialogProps.description}
       confirmLabel={dialogProps.confirmLabel}
-      cancelLabel={t('Cancel')}
+      cancelLabel={t(PromptBarI18nKeys.Cancel)}
       onClose={handleConfirmDelete}
     />
   );
