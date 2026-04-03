@@ -43,6 +43,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
@@ -166,7 +167,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const [isFormChanged, setIsFormChanged] = useState(false);
 
   const publicationAuthor = useMemo(() => {
-    return extractNameFromEmail(publication.author) ?? t('Unknown');
+    return extractNameFromEmail(publication.author) ?? t(ChatI18nKeys.Unknown);
   }, [publication.author, t]);
   const initialState = useMemo(() => {
     const { entities, folders } = getDefaultAllEditEntities(
@@ -466,7 +467,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
               <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
                 <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                   <div className="flex flex-col px-3 pb-4 md:px-5">
-                    <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+                    <h2 className="mb-4 font-semibold">
+                      {t(ChatI18nKeys.GeneralInfo)}
+                    </h2>
                     {(publicationModel &&
                       publicationModel.action !== PublishActions.DELETE) ||
                     (isEditMode && !isSomeResourceIsUnpublish) ? (
@@ -480,8 +483,8 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                         label={t(
                           publicationModel &&
                             publicationModel.action === PublishActions.DELETE
-                            ? 'Unpublish from'
-                            : 'Publish to',
+                            ? ChatI18nKeys.UnpublishFrom
+                            : ChatI18nKeys.PublishTo,
                         )}
                         valueDataQa="publish-path"
                         valueToDisplay={displayPublishToUrl}
@@ -496,7 +499,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     {isReview && (
                       <PublicationInfoSection
                         labelDataQa="publication-author-label"
-                        label={t('Author')}
+                        label={t(ChatI18nKeys.Author)}
                         valueDataQa="publication-author"
                         valueToDisplay={publicationAuthor}
                       />
@@ -509,7 +512,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                             isReview ? t(AUTHOR_PUBLIC_NAME_TOOLTIP) : undefined
                           }
                           label={t(
-                            isReview ? "Author's public name" : 'Author',
+                            isReview
+                              ? ChatI18nKeys.AuthorPublicName
+                              : ChatI18nKeys.Author,
                           )}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
@@ -525,7 +530,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       ) : (
                         <PublicationInfoSection
                           labelDataQa="publication-display-author-label"
-                          label={t("Author's public name")}
+                          label={t(ChatI18nKeys.AuthorPublicName)}
                           valueDataQa="publication-display-author"
                           valueToDisplay={publication.displayAuthor ?? ''}
                           infoTooltip={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
@@ -535,7 +540,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     {isReview && (
                       <PublicationInfoSection
                         labelDataQa="creation-date-label"
-                        label={t('Request created')}
+                        label={t(ChatI18nKeys.RequestCreated)}
                         valueDataQa="creation-date"
                         valueToDisplay={formatDate(publication.createdAt)}
                       />
@@ -548,7 +553,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     <h2 className="mb-4 flex items-center gap-2 text-sm">
                       <div className="flex w-full justify-between">
                         <p data-qa="allow-access-label">
-                          {t('Allow access if all match')}
+                          {t(ChatI18nKeys.AllowAccessIfAllMatch)}
                         </p>
                         {isReview && (
                           <>
@@ -558,14 +563,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 className="cursor-pointer text-accent-primary"
                                 data-qa="see-changes"
                               >
-                                {t('See changes')}
+                                {t(ChatI18nKeys.SeeChanges)}
                               </span>
                             ) : (
                               <span
                                 className="text-secondary"
                                 data-qa="no-changes-label"
                               >
-                                {t('No changes')}
+                                {t(ChatI18nKeys.NoChanges)}
                               </span>
                             )}
                           </>
@@ -580,7 +585,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       editedPublishToUrl={editedPublishToUrl}
                       error={
                         formMethods.formState.errors.rules
-                          ? t('Please fix the rules to proceed')
+                          ? t(ChatI18nKeys.PleaseFixRulesToProceed)
                           : undefined
                       }
                     />
@@ -632,10 +637,10 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                               sectionTooltip={
                                 isReview && (
                                   <>
-                                    {t('Publish')},
+                                    {t(ChatI18nKeys.Publish)},
                                     <span className="text-error">
                                       {' '}
-                                      {t('Unpublish')}
+                                      {t(ChatI18nKeys.Unpublish)}
                                     </span>
                                   </>
                                 )
@@ -658,8 +663,8 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                       ({ reviewUrl }) =>
                                         isConversationId(reviewUrl),
                                     ).length < 2
-                                      ? "This conversation doesn't contain any files"
-                                      : "These conversations don't contain any files",
+                                      ? ChatI18nKeys.ConversationNoFiles
+                                      : ChatI18nKeys.ConversationsNoFiles,
                                   )}
                                 </p>
                               )}
@@ -679,7 +684,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     </>
                   ) : (
                     <p className="my-3">
-                      {t('This publication has no resources')}
+                      {t(ChatI18nKeys.PublicationNoResources)}
                     </p>
                   )}
                 </div>

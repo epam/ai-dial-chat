@@ -11,6 +11,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { UserIcon } from './UserIcon';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -39,7 +41,7 @@ export const ProfileButton = () => {
       className="flex items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
       data-qa="account-settings"
-      aria-label={t('Account settings')}
+      aria-label={t(HeaderI18nKeys.AccountSettings)}
       iconBefore={
         isProfileOpen ? (
           <IconX

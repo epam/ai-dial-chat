@@ -15,6 +15,8 @@ import { ScreenState } from '@/src/types/common';
 import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
 
@@ -90,7 +92,7 @@ export const MarketplaceEditorView = ({
             onClick={onPreviewModeChange}
             className="w-full"
           >
-            {t('Preview')}
+            {t(MarketplaceI18nKeys.PreviewMarketplace)}
           </TabButton>
         </div>
 

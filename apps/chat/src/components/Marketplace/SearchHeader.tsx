@@ -6,6 +6,7 @@ import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
@@ -52,7 +53,7 @@ export const SearchHeader = () => {
       <DialSearch
         wrapperClassName="lg:max-w-[500px]"
         containerClassName="flex-1 min-w-0 lg:max-w-[500px] lg:flex-none"
-        placeholder={t('Search')}
+        placeholder={t(MarketplaceI18nKeys.SearchMarketplace)}
         value={searchTerm}
         onChange={onSearchChange}
       />

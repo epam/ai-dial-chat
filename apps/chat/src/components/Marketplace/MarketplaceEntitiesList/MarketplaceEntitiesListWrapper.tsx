@@ -14,6 +14,7 @@ import { stripQueryParamsFromUrl } from '@/src/utils/app/url/query-params';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { MarketplaceEntitiesListWrapperRef } from './view-props';
@@ -95,7 +96,7 @@ export const MarketplaceEntitiesListWrapper = forwardRef<
           }}
           data-qa="marketplace-suggestions-label"
         >
-          {t('Suggested results from DIAL Marketplace')}
+          {t(MarketplaceI18nKeys.SuggestedResults)}
         </span>
       )}
 

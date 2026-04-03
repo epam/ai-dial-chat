@@ -23,6 +23,8 @@ import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 export const useApplicationDeployment = (entity: DialAIEntityModel) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
@@ -60,18 +62,18 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
       return;
     }
     if (wasDeployClicked && !isDeployed) {
-      return t(`Application is deploying`);
+      return t(MarketplaceI18nKeys.ApplicationIsDeploying);
     }
     if (isUpdating || isUndeploying) {
-      return t(`Application is ${entity.functionStatus?.toLowerCase()}`);
+      return t(MarketplaceI18nKeys.ApplicationIsStatus, {
+        status: entity.functionStatus?.toLowerCase(),
+      });
     }
     if (isButtonDisabled && !hasDeployAccess) {
       if (isPublicApp) {
-        return t(
-          'Ask your administrator to deploy this application to be able to use it',
-        );
+        return t(MarketplaceI18nKeys.AskAdminToDeploy);
       }
-      return t('Ask author to deploy the application to be able to use it');
+      return t(MarketplaceI18nKeys.AskAuthorToDeploy);
     }
     return '';
     // eslint-disable-next-line react-hooks/exhaustive-deps

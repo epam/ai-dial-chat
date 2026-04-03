@@ -32,6 +32,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
@@ -206,14 +208,14 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
       <div className="flex items-center justify-end">
         <div className="relative flex gap-3">
           <DialNeutralButton
-            label={t('Cancel')}
+            label={t(ChatI18nKeys.Cancel)}
             onClick={handleCancelEditing}
             data-qa="cancel"
           />
 
           {!isInputHidden && (
             <DialPrimaryButton
-              label={t('Save & Submit')}
+              label={t(ChatI18nKeys.SaveAndSubmit)}
               onClick={() => handleEditMessage(formValue, messageContent)}
               disabled={!messageContent}
               data-qa="save-and-submit"

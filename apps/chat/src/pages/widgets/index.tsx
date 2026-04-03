@@ -10,6 +10,7 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { Translation } from '@/src/types/translation';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { getLayout } from '@/src/pages/_app';
@@ -47,7 +48,7 @@ function WidgetsPage() {
 
             <div className="flex flex-col justify-center gap-1 truncate">
               <span className="text-start text-xs text-secondary">
-                {`${t('Version')}: ${model.version}`}
+                {`${t(SideBarI18nKeys.Version)}: ${model.version}`}
               </span>
               <span className="truncate text-start text-sm font-semibold text-primary">
                 {model.name}

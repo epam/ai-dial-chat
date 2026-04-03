@@ -16,6 +16,8 @@ import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
@@ -103,9 +105,9 @@ export const ToolsetLoginForm = ({
           >
             <Field
               {...register('keyHeader')}
-              label={t('API Key parameter name')}
+              label={t(CommonI18nKeys.ApiKeyParameterName)}
               mandatory
-              placeholder={t('Enter key name')}
+              placeholder={t(CommonI18nKeys.EnterKeyName)}
               id="keyHeader"
               autoComplete="username"
               error={errors.keyHeader?.message}
@@ -116,10 +118,10 @@ export const ToolsetLoginForm = ({
           {withLogin === WithLogin.WithLogin && (
             <Field
               {...register('apiKey')}
-              label={t('API Key')}
+              label={t(CommonI18nKeys.ApiKeyCommon)}
               mandatory
               type="password"
-              placeholder={t('Enter API Key')}
+              placeholder={t(CommonI18nKeys.EnterApiKey)}
               id="apiKey"
               autoComplete="current-password"
               error={errors.apiKey?.message}
@@ -137,8 +139,8 @@ export const ToolsetLoginForm = ({
           <>
             <Field
               {...register('clientId')}
-              label={t('Client ID')}
-              placeholder={t('Enter client ID')}
+              label={t(CommonI18nKeys.ClientIdCommon)}
+              placeholder={t(CommonI18nKeys.EnterClientId)}
               id="clientId"
               disabled={disabled}
               error={errors.clientId?.message}
@@ -146,8 +148,8 @@ export const ToolsetLoginForm = ({
             />
             <Field
               {...register('clientSecret')}
-              label={t('Client Secret')}
-              placeholder={t('Enter client secret')}
+              label={t(CommonI18nKeys.ClientSecretCommon)}
+              placeholder={t(CommonI18nKeys.EnterClientSecret)}
               id="clientSecret"
               disabled={disabled}
               error={errors.clientSecret?.message}
@@ -157,16 +159,16 @@ export const ToolsetLoginForm = ({
             />
             <Field
               {...register('authorizationEndpoint')}
-              label={t('Authorization endpoint')}
-              placeholder={t('Enter authorization endpoint')}
+              label={t(CommonI18nKeys.AuthorizationEndpoint)}
+              placeholder={t(CommonI18nKeys.EnterAuthorizationEndpoint)}
               id="authorizationEndpoint"
               disabled={disabled}
               tooltip={fieldsTooltip}
             />
             <Field
               {...register('tokenEndpoint')}
-              label={t('Token endpoint')}
-              placeholder={t('Enter token endpoint')}
+              label={t(CommonI18nKeys.TokenEndpoint)}
+              placeholder={t(CommonI18nKeys.EnterTokenEndpoint)}
               id="tokenEndpoint"
               disabled={disabled}
               tooltip={fieldsTooltip}
@@ -176,13 +178,13 @@ export const ToolsetLoginForm = ({
               control={control}
               render={({ field }) => (
                 <ComboBoxField
-                  label={t('Supported scopes')}
-                  info={t('Type in scope and press ENTER to add')}
+                  label={t(CommonI18nKeys.SupportedScopes)}
+                  info={t(CommonI18nKeys.TypeInScopeAndPressEnter)}
                   initialSelectedItems={field.value}
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={field.onChange}
-                  placeholder={t('Enter one or more supported scopes')}
+                  placeholder={t(CommonI18nKeys.EnterOneOrMoreScopes)}
                   id="scopes"
                   className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 hover:border-primary md:max-w-full"
                   hasDeleteAll
@@ -201,7 +203,11 @@ export const ToolsetLoginForm = ({
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
           iconBefore={<LoginIcon size={18} />}
-          label={t(isSignedIn ? 'Log out' : 'Log in')}
+          label={t(
+            isSignedIn
+              ? CommonI18nKeys.LogOutCommon
+              : CommonI18nKeys.LogInCommon,
+          )}
         />
       )}
     </div>
