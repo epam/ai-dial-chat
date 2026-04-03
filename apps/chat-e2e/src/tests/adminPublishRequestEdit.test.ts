@@ -574,7 +574,11 @@ dialAdminTest(
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) =>
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+      ),
     );
     const newPrompt = 'what is on the picture?';
 

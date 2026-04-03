@@ -38,11 +38,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
-import {
-  ButtonAppearance,
-  DialButton,
-  DialLinkButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface AttachmentInfo {
@@ -337,11 +333,10 @@ export const GroupedVisualizerRenderer = ({
             />
 
             {isBorderless && (
-              <DialButton
+              <DialLinkButton
                 className="text-secondary hover:text-accent-primary"
                 iconBefore={<FullScreenIcon size={18} />}
                 onClick={handleToggleFullScreen}
-                appearance={ButtonAppearance.Link}
               />
             )}
           </div>
