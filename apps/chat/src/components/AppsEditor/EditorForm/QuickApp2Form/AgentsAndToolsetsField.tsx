@@ -50,11 +50,10 @@ import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/Too
 
 import { Feature } from '@epam/ai-dial-shared';
 import {
-  ButtonAppearance,
-  ButtonVariant,
   ConfirmationPopupVariant,
-  DialButton,
   DialConfirmationPopup,
+  DialNeutralButton,
+  DialPrimaryButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
@@ -281,17 +280,14 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const EditorButtons = useCallback(
     () => (
       <div className="flex h-full grow items-center justify-end gap-2 pr-3">
-        <DialButton
+        <DialNeutralButton
           label={t(MarketplaceI18nKeys.DiscardMarketplace)}
-          variant={ButtonVariant.Neutral}
           size={ElementSize.Small}
-          appearance={ButtonAppearance.Outlined}
           onClick={() => setIsDiscardingJson(true)}
           disabled={!dirtyFields.agentsAndToolsetsJson && !editorError}
         />
-        <DialButton
+        <DialPrimaryButton
           label={t(MarketplaceI18nKeys.SaveJSON)}
-          variant={ButtonVariant.Primary}
           size={ElementSize.Small}
           onClick={handleSaveJson}
           disabled={
