@@ -7,7 +7,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getFilterLabel } from '@/src/utils/app/rules';
-import { translate } from '@/src/utils/app/translation';
 
 import { ModalState } from '@/src/types/modal';
 import {
@@ -35,7 +34,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
-const emptySelector = translate('Select');
+const emptySelector = SideBarI18nKeys.Select;
 
 interface Props {
   onSaveFilter: (filter: TargetAudienceFilterData) => void;

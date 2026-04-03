@@ -1,8 +1,9 @@
 import { translate } from '@/src/utils/app/translation';
 
 import { ApiKeys, ConfirmDialogValueTypes } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
-import { SettingsI18nKeys } from '@/src/constants/i18n';
+import { CommonI18nKeys, SettingsI18nKeys } from '@/src/constants/i18n';
 
 export const FEATURES_ENDPOINTS = {
   chat_completion: 'chat_completion',
@@ -54,5 +55,8 @@ export enum AppsEditorQuery {
 }
 
 export const PUBLIC_APP_TOOLTIP = translate(
-  'This application is public and cannot be edited',
+  CommonI18nKeys.AppIsPublicCannotBeEdited,
+  {
+    ns: Translation.Common,
+  },
 );

@@ -3,35 +3,65 @@ import { translate } from '@/src/utils/app/translation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ErrorsI18nKeys } from '@/src/constants/i18n';
+
 import { MAX_ENTITY_LENGTH, MIN_ENTITY_LENGTH } from './default-ui-settings';
 
 export const formErrors = {
-  required: translate('This field is required'),
+  required: translate(ErrorsI18nKeys.ThisFieldIsRequired, {
+    ns: Translation.Errors,
+  }),
   notValidString: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
-    translate(
-      `${name} should be ${MIN_ENTITY_LENGTH} to ${maxLength} characters long and should not contain special characters`,
-    ),
-  hasSpecialCharacters: (name = 'Name') =>
-    translate(
-      `${name} should not contain special symbols ${notAllowedSymbols}`,
-    ),
-  tooShort: (name = 'Name', minLength = MIN_ENTITY_LENGTH) =>
-    translate(`${name} should be at least ${minLength} characters long`),
-  tooLong: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
-    translate(`${name} should be at most ${maxLength} characters long`),
-  noDotInTheEnd: (name = 'Name') =>
-    translate(`Using a dot at the end of a ${name} is not permitted.`),
-  notUniqName: (name = 'Name', newName: string) =>
-    translate(`${name} "{{newName}}" already exists in this folder.`, {
+    translate(ErrorsI18nKeys.NameShouldBeMinToMaxCharsNoSpecial, {
       ns: Translation.Errors,
+      name,
+      minLength: MIN_ENTITY_LENGTH,
+      maxLength,
+    }),
+  hasSpecialCharacters: (name = 'Name') =>
+    translate(ErrorsI18nKeys.NameShouldNotContainSpecialSymbols, {
+      ns: Translation.Errors,
+      name,
+      notAllowedSymbols,
+    }),
+  tooShort: (name = 'Name', minLength = MIN_ENTITY_LENGTH) =>
+    translate(ErrorsI18nKeys.NameShouldBeAtLeastChars, {
+      ns: Translation.Errors,
+      name,
+      minLength,
+    }),
+  tooLong: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
+    translate(ErrorsI18nKeys.NameShouldBeAtMostChars, {
+      ns: Translation.Errors,
+      name,
+      maxLength,
+    }),
+  noDotInTheEnd: (name = 'Name') =>
+    translate(ErrorsI18nKeys.DotAtEndOfNameNotPermitted, {
+      ns: Translation.Errors,
+      name,
+    }),
+  notUniqName: (name = 'Name', newName: string) =>
+    translate(ErrorsI18nKeys.NameAlreadyExistsInFolder, {
+      ns: Translation.Errors,
+      name,
       newName,
     }),
 };
 
 export const urlErrors = {
-  notValidUrl: translate('URL is not correct'),
-  notValidProtocol: translate('URL must start with a valid protocol'),
-  notValidEnding: translate('Endpoint cannot end with . or //'),
+  notValidUrl: translate(ErrorsI18nKeys.UrlIsNotCorrect, {
+    ns: Translation.Errors,
+  }),
+  notValidProtocol: translate(ErrorsI18nKeys.UrlMustStartWithValidProtocol, {
+    ns: Translation.Errors,
+  }),
+  notValidEnding: translate(
+    ErrorsI18nKeys.EndpointCannotEndWithDotOrDoubleSlash,
+    {
+      ns: Translation.Errors,
+    },
+  ),
 };
 
 export const versionsErrors = {
