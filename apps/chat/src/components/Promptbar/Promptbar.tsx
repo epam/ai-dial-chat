@@ -16,6 +16,7 @@ import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
@@ -81,7 +82,7 @@ export const Promptbar = () => {
           ) {
             dispatch(
               UIActions.showErrorToast(
-                t('Prompt with name "{{name}}" already exists at the root.', {
+                t(PromptBarI18nKeys.ExistsAtRoot, {
                   ns: Translation.PromptBar,
                   name: prompt.name,
                 }),

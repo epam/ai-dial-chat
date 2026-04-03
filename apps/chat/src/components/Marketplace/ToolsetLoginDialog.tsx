@@ -22,6 +22,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 import { Routes } from '@/src/constants/routes';
 
@@ -102,7 +103,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
 
   const fieldsInfo = useMemo(
     () => ({
-      apiKey: t('Enter your API key value for "{{header}}" header', {
+      apiKey: t(MarketplaceI18nKeys.EnterApiKeyForHeader, {
         header: toolset.authSettings.apiKeyHeader,
       }),
     }),
@@ -114,21 +115,19 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
     switch (authLevel) {
       case ToolsetCredentialsLevel.USER:
         return isSignedIn
-          ? t('Log out of the toolset using personal credentials.')
-          : t('Log in with personal credentials.');
+          ? t(MarketplaceI18nKeys.LogOutToolsetPersonal)
+          : t(MarketplaceI18nKeys.LogInWithPersonalCreds);
       case ToolsetCredentialsLevel.GLOBAL:
         return isSignedIn ? (
           <>
-            {t('Log out of the toolset ')}
-            <strong>{t('for all users in the organization ')}</strong>
-            {t('using these credentials.')}
+            {t(MarketplaceI18nKeys.LogOutToolsetAll)}
+            <strong>{t(MarketplaceI18nKeys.ForAllUsersInOrg)}</strong>
+            {t(MarketplaceI18nKeys.UsingTheseCreds)}
           </>
         ) : (
           <>
-            {t(
-              'Log in with credentials that will be available to other users in the ',
-            )}
-            <strong>{t('organization.')}</strong>
+            {t(MarketplaceI18nKeys.LogInWithCredsForOrg)}
+            <strong>{t(MarketplaceI18nKeys.OrganizationMarketplace)}</strong>
           </>
         );
       default:
@@ -232,10 +231,10 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
     return (
       <ConfirmDialog
         isOpen
-        heading={t('Logging out')}
-        description={t('Are you sure you want to log out?') as string}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(MarketplaceI18nKeys.LoggingOut)}
+        description={t(MarketplaceI18nKeys.AreYouSureLogOut) as string}
+        confirmLabel={t(MarketplaceI18nKeys.LogOutMarketplace)}
+        cancelLabel={t(MarketplaceI18nKeys.CancelMarketplace)}
         onClose={handleCloseLogoutModal}
       />
     );
@@ -251,7 +250,11 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
     >
       <div className="px-6 py-4">
         <p className="text-base font-semibold text-primary">
-          {t(isOrganizationView ? 'Manage credentials' : 'Login')}
+          {t(
+            isOrganizationView
+              ? MarketplaceI18nKeys.ManageCredentials
+              : MarketplaceI18nKeys.LoginMarketplace,
+          )}
         </p>
       </div>
 
@@ -260,7 +263,9 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
         <div className="flex flex-col justify-between">
           <h3 className="text-sm font-semibold text-primary">{toolset.name}</h3>
           <div className="flex items-center gap-1">
-            <span className="text-xs text-primary">{t('Version: ')}</span>
+            <span className="text-xs text-primary">
+              {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
+            </span>
 
             {toolset.version ? (
               <ModelVersionSelect

@@ -25,6 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -87,12 +88,10 @@ export const ChatbarSettings = () => {
     [dispatch],
   );
 
-  const deleteTerm = isSelectMode ? 'selected' : 'all';
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Select all'),
+        name: t(SideBarI18nKeys.SelectAll),
         dataQa: 'select-all',
         Icon: IconSquareCheck,
         onClick: () => {
@@ -102,7 +101,7 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t('Unselect all'),
+        name: t(SideBarI18nKeys.UnselectAll),
         dataQa: 'unselect-all',
         Icon: IconSquareOff,
         onClick: () => {
@@ -112,7 +111,7 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t('Create new folder'),
+        name: t(SideBarI18nKeys.CreateNewFolder),
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
@@ -135,7 +134,7 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t('Import conversations'),
+        name: t(SideBarI18nKeys.ImportConversations),
         onClick: (importArgs: unknown) => {
           const typedArgs = importArgs as { content: unknown; zip?: boolean };
 
@@ -153,7 +152,7 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t('Export conversations without attachments'),
+        name: t(SideBarI18nKeys.ExportConversationsWithoutAttachments),
         dataQa: 'export',
         className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
@@ -164,7 +163,11 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t(`Delete ${deleteTerm} conversations`),
+        name: t(
+          isSelectMode
+            ? SideBarI18nKeys.DeleteSelectedConversations
+            : SideBarI18nKeys.DeleteAllConversations,
+        ),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -174,7 +177,7 @@ export const ChatbarSettings = () => {
         disabled: isStreaming,
       },
       {
-        name: t('Compare mode'),
+        name: t(SideBarI18nKeys.CompareMode),
         dataQa: 'compare',
         Icon: IconScale,
         disabled: isStreaming,
@@ -189,7 +192,6 @@ export const ChatbarSettings = () => {
       isMyItemsExist,
       isStreaming,
       isSelectMode,
-      deleteTerm,
       dispatch,
       collapsedSections,
       jsonImportHandler,
@@ -209,19 +211,25 @@ export const ChatbarSettings = () => {
           onClose={() => {
             setIsSelectFilesDialogOpened(false);
           }}
-          headerLabel={t('Manage attachments')}
+          headerLabel={t(SideBarI18nKeys.ManageAttachments)}
           forceShowSelectCheckBox
         />
       )}
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t(`Confirm deleting ${deleteTerm} conversations`)}
-        description={t(
-          `Are you sure that you want to delete ${deleteTerm} conversations?`,
+        heading={t(
+          isSelectMode
+            ? SideBarI18nKeys.ConfirmDeletingSelectedConversations
+            : SideBarI18nKeys.ConfirmDeletingAllConversations,
         )}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
+        description={t(
+          isSelectMode
+            ? SideBarI18nKeys.AreYouSureDeleteSelectedConversations
+            : SideBarI18nKeys.AreYouSureDeleteAllConversations,
+        )}
+        confirmLabel={t(SideBarI18nKeys.Delete)}
+        cancelLabel={t(SideBarI18nKeys.Cancel)}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {

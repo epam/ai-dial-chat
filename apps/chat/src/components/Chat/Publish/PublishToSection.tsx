@@ -7,6 +7,7 @@ import { constructPath } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -61,7 +62,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
   return (
     <section className="mb-3">
       <h3 className="mb-1 flex text-xs text-secondary" data-qa="publish-label">
-        {t('Publish to')}
+        {t(ChatI18nKeys.PublishTo)}
       </h3>
       <div
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
@@ -80,7 +81,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
           <DialLinkButton
             data-qa="change-button"
             onClick={handleFolderChange}
-            label={t('Change')}
+            label={t(ChatI18nKeys.Change)}
           />
         </div>
       </div>

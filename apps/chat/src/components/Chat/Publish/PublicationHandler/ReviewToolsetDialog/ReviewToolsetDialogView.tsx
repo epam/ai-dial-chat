@@ -11,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ToolsetSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 import { AUTH_TYPE_OPTIONS } from '@/src/constants/toolsets';
 
@@ -43,33 +44,33 @@ function ReviewToolsetDialogContent({
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
-        <h2 className="text-base font-semibold">{t('Toolset')}</h2>
+        <h2 className="text-base font-semibold">{t(ChatI18nKeys.Toolset)}</h2>
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
-            label={t('Name')}
+            label={t(ChatI18nKeys.Name)}
             value={toolset.name}
             dataQa="app-name"
           />
           <MarketplaceEntityInfoRow
-            label={t('Version')}
+            label={t(ChatI18nKeys.Version)}
             value={toolset.version ?? NA_VERSION}
             dataQa="app-version"
           />
           <MarketplaceEntityInfoRow
-            label={t('Icon')}
+            label={t(ChatI18nKeys.Icon)}
             value={
               <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
             }
             valueClassName=""
           />
           <MarketplaceEntityInfoRow
-            label={t('Description')}
+            label={t(ChatI18nKeys.Description)}
             value={description}
             dataQa="app-description"
           />
           {toolset.topics?.length > 0 && (
             <MarketplaceEntityInfoRow
-              label={t('Topics')}
+              label={t(ChatI18nKeys.Topics)}
               value={
                 <div className="flex flex-wrap gap-1">
                   {toolset.topics.map((topic) => (
@@ -80,24 +81,24 @@ function ReviewToolsetDialogContent({
             />
           )}
           <MarketplaceEntityInfoRow
-            label={t('Endpoint')}
+            label={t(ChatI18nKeys.Endpoint)}
             value={toolset.endpoint}
             dataQa="app-endpoint"
           />
           <MarketplaceEntityInfoRow
-            label={t('Transport protocol')}
+            label={t(ChatI18nKeys.TransportProtocol)}
             value={toolset.transport}
             dataQa="app-transport"
           />
           <MarketplaceEntityInfoRow
-            label={t('Authentication type')}
+            label={t(ChatI18nKeys.AuthenticationType)}
             value={
               AUTH_TYPE_OPTIONS[toolset.authSettings?.authenticationType]?.name
             }
             dataQa="app-authentication-type"
           />
           <MarketplaceEntityInfoRow
-            label={t('Allowed tools')}
+            label={t(ChatI18nKeys.AllowedTools)}
             value={toolset.allowedTools?.join(', ')}
             dataQa="app-allowed-tools"
           />

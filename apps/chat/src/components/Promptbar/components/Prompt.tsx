@@ -49,6 +49,7 @@ import {
 } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -409,10 +410,10 @@ export const PromptComponent = memo(
         {isUnshared && (
           <ConfirmDialog
             isOpen
-            heading={t('Confirm unshare prompt')}
-            description={t('Are you sure that you want to unshare a prompt?')}
-            confirmLabel={t('Unshare')}
-            cancelLabel={t('Cancel')}
+            heading={t(ChatI18nKeys.ConfirmUnsharePrompt)}
+            description={t(ChatI18nKeys.ConfirmUnsharePromptCaption)}
+            confirmLabel={t(ChatI18nKeys.Unshare)}
+            cancelLabel={t(ChatI18nKeys.Cancel)}
             onClose={(result) => {
               setIsUnshared(false);
               if (result) handleUnsharing();

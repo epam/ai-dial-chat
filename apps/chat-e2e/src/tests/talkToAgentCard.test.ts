@@ -494,9 +494,9 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over collapsed icon and verify colorful topics are displayed on the tooltip',
+      'Click on collapsed icon and verify colorful topics are displayed on the tooltip',
       async () => {
-        await hiddenTopicsElement.hoverOver();
+        await hiddenTopicsElement.click();
         await tooltipAssertion.assertElementState(topicsTooltip, 'visible');
         await tooltipAssertion.assertTooltipContent(
           topics.slice(visibleTopicsCount).join('\n'),

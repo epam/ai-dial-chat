@@ -639,8 +639,15 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
 
               if (
                 application.function?.status === ApplicationStatus.DEPLOYED ||
+                application.function?.status === ApplicationStatus.REDEPLOYED ||
                 application.function?.status === ApplicationStatus.UNDEPLOYED
               ) {
+                const status =
+                  payload.status === ApplicationStatus.REDEPLOYING &&
+                  application.function.status === ApplicationStatus.DEPLOYED
+                    ? ApplicationStatus.REDEPLOYED
+                    : application.function.status;
+
                 return concat(
                   of(
                     ModelsActions.updateFunctionStatus({
@@ -651,7 +658,7 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
                   of(
                     ApplicationActions.updateFunctionStatus({
                       id: payload.id,
-                      status: application.function.status,
+                      status,
                     }),
                   ),
                 );
@@ -677,6 +684,7 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
                   (ApplicationActions.updateFunctionStatus.match(action) &&
                     [
                       ApplicationStatus.DEPLOYED,
+                      ApplicationStatus.REDEPLOYED,
                       ApplicationStatus.UNDEPLOYED,
                     ].includes(action.payload.status))) &&
                 payload.id === action.payload.id,
@@ -691,9 +699,11 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.updateFunctionStatus.type),
     filter(({ payload }) =>
-      [ApplicationStatus.DEPLOYED, ApplicationStatus.UNDEPLOYED].includes(
-        payload.status,
-      ),
+      [
+        ApplicationStatus.DEPLOYED,
+        ApplicationStatus.REDEPLOYED,
+        ApplicationStatus.UNDEPLOYED,
+      ].includes(payload.status),
     ),
     switchMap(({ payload }) => {
       const { name } = parseEntityApiKey(payload.id, { parseVersion: true });
@@ -730,7 +740,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
         ),
         of(
           UIActions.showErrorToast(
-            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase()} failed`,
+            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
           ),
         ),
       );

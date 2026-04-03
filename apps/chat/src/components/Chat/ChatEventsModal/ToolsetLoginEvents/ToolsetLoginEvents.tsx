@@ -25,6 +25,8 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ChatEventsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -131,7 +133,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
   return (
     <DialPopup
       open
-      header={t('Toolset login required')}
+      header={t(ChatI18nKeys.ToolsetLoginRequired)}
       headerClassName="px-3 md:px-6 pt-4 md:pt-6"
       hideClose
       portalId="chat"
@@ -141,7 +143,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
       footer={
         <div className="flex justify-end border-t border-t-tertiary px-3 py-4 md:px-6">
           <DialButton
-            label={t('Decline all')}
+            label={t(ChatI18nKeys.DeclineAll)}
             onClick={handleDeclineAllClick}
             appearance={ButtonAppearance.Ghost}
             variant={ButtonVariant.Primary}
@@ -157,18 +159,16 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
       ) : (
         <div className="p-3 !pt-0 md:p-6">
           <h2 className="mb-4 text-sm text-secondary">
-            {t(
-              'The toolsets that "Quick app" uses to generate a response require a login',
-            )}
+            {t(ChatI18nKeys.ToolsetsRequireLogin)}
           </h2>
 
           <div className="divide-y divide-tertiary rounded border border-secondary">
             <div className={classNames(gridLayout, 'bg-layer-1')}>
               <div className="p-2 text-sm text-secondary md:p-3">
-                {t('Toolset')}
+                {t(ChatI18nKeys.Toolset)}
               </div>
               <div className="hidden p-2 text-sm text-secondary md:block">
-                {t('Version')}
+                {t(ChatI18nKeys.Version)}
               </div>
               <div />
             </div>
@@ -201,7 +201,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
                 <div className="flex items-center justify-end gap-2 p-2 md:p-3">
                   <DialButton
                     className="hidden md:flex"
-                    label={t('Decline')}
+                    label={t(ChatI18nKeys.Decline)}
                     onClick={() => handleDecline(event)}
                     size={ElementSize.Small}
                     appearance={ButtonAppearance.Ghost}
@@ -209,7 +209,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
                     disabled={isReporting}
                   />
                   <DialButton
-                    label={t('Log in')}
+                    label={t(ChatI18nKeys.LogIn)}
                     iconBefore={<IconLogin size={16} />}
                     size={ElementSize.Small}
                     variant={ButtonVariant.Primary}
@@ -225,7 +225,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
                       items: [
                         {
                           key: event.id,
-                          label: t('Decline'),
+                          label: t(ChatI18nKeys.Decline),
                         },
                       ],
                     }}

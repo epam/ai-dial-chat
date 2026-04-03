@@ -42,6 +42,7 @@ import {
 } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
@@ -504,23 +505,19 @@ export const ChatInputMessage = Inversify.register(
         return disabledInputFeatureData.description;
       }
       if (messageIsStreaming) {
-        return t('Stop generating');
+        return t(ChatI18nKeys.StopGenerating);
       }
       if (!areModelsLoaded) {
-        return t(
-          'Please wait for models will be loaded to continue working with conversation',
-        );
+        return t(ChatI18nKeys.WaitForModelsToLoad);
       }
       if (isReplay) {
-        return t(
-          'Please continue replay to continue working with conversation',
-        );
+        return t(ChatI18nKeys.ContinueReplayToWork);
       }
       if (shouldRegenerate) {
-        return t('Regenerate response');
+        return t(ChatI18nKeys.RegenerateResponse);
       }
       if (isUploadingFilePresent) {
-        return t('Please wait for the attachment to load');
+        return t(ChatI18nKeys.WaitForAttachmentToLoad);
       }
       if (isConversationNameInvalid) {
         return t(errorsMessages.entityNameInvalid);
@@ -529,14 +526,14 @@ export const ChatInputMessage = Inversify.register(
         return t(errorsMessages.entityPathInvalid);
       }
       if (!isSchemaValueValid) {
-        return t('Please select one of the options above');
+        return t(ChatI18nKeys.SelectOneOfOptions);
       }
-      return t('Please type a message');
+      return t(ChatI18nKeys.PleaseTypeMessage);
     };
 
     const chatInputPlaceholder = useMemo(() => {
       if (isChatInputDisabled) return '';
-      return t('Talk to your agent');
+      return t(ChatI18nKeys.TalkToYourAgent);
     }, [isChatInputDisabled, t]);
 
     const isDisabled = useMemo(
@@ -660,11 +657,15 @@ export const ChatInputMessage = Inversify.register(
 
         <ConfirmDialog
           isOpen={isPromptLimitModalOpen}
-          heading={t('Prompt limit exceeded')}
-          description={t(
-            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
-          )}
-          confirmLabel={t('Confirm')}
+          heading={t(ChatI18nKeys.PromptLimitExceeded)}
+          description={t(ChatI18nKeys.PromptLimitDescription, {
+            maxTokensLength,
+            limitDescription: getPromptLimitDescription(
+              getTokensLength(content),
+              maxTokensLength,
+            ),
+          })}
+          confirmLabel={t(ChatI18nKeys.Confirm)}
           onClose={() => {
             setIsPromptLimitModalOpen(false);
           }}

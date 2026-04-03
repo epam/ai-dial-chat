@@ -17,6 +17,7 @@ import { Translation } from '@/src/types/translation';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
@@ -55,7 +56,8 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
 
     const author = isDialAiEntityModel(entity) ? entity.owner : entity.author;
     const displayedAuthor =
-      (isMyApplication(entity) ? userName : author) ?? t('Unknown');
+      (isMyApplication(entity) ? userName : author) ??
+      t(MarketplaceI18nKeys.UnknownMarketplace);
 
     const { visibleTopics, hiddenTopics } = useMemo<{
       visibleTopics: string[];
@@ -136,7 +138,7 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
             {entity?.createdAt ? (
               <DateRenderer dateValue={entity.createdAt} />
             ) : (
-              t('Unknown')
+              t(MarketplaceI18nKeys.UnknownMarketplace)
             )}
           </p>
         </div>

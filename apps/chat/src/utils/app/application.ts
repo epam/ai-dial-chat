@@ -36,6 +36,7 @@ import { Translation } from '@/src/types/translation';
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -410,10 +411,10 @@ export const isApplicationType = (value: unknown): value is ApplicationType => {
   return Object.values(ApplicationType).includes(value as ApplicationType);
 };
 export const getSharedTooltip = (context: string) => {
-  return translate(
-    `You cannot change the ${context} of a shared application.`,
-    { ns: Translation.Marketplace },
-  );
+  return translate(MarketplaceI18nKeys.CannotChangeSharedApp, {
+    ns: Translation.Marketplace,
+    context,
+  });
 };
 
 export const isMarketplaceEntityPublic = (

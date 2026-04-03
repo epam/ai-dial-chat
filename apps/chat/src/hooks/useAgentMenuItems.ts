@@ -39,6 +39,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   PlayerContextButtonClasses,
   PlayerContextIconClasses,
@@ -118,7 +119,7 @@ export const useAgentMenuItems = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Copy link'),
+        name: t(MarketplaceI18nKeys.CopyLink),
         dataQa: 'application-copy-link',
         display: isPublicApp && disabledActions.copyLink !== true,
         Icon: IconLink,
@@ -135,7 +136,7 @@ export const useAgentMenuItems = ({
         onClick: handleUpdateFunctionStatus,
       },
       {
-        name: t('Redeploy'),
+        name: t(MarketplaceI18nKeys.Redeploy),
         dataQa: 'redeploy',
         display: showRedeploy && disabledActions.deploy !== true,
         Icon: PlayerContextIcons[SimpleApplicationStatus.REDEPLOY],
@@ -145,7 +146,11 @@ export const useAgentMenuItems = ({
         onClick: handleRedeploy,
       },
       {
-        name: t(isAppIdPublic ? 'View' : 'Edit'),
+        name: t(
+          isAppIdPublic
+            ? MarketplaceI18nKeys.ViewMarketplace
+            : MarketplaceI18nKeys.EditMarketplace,
+        ),
         dataQa: 'edit',
         disabled:
           isExecutable && playerStatus === SimpleApplicationStatus.UPDATING,
@@ -154,7 +159,7 @@ export const useAgentMenuItems = ({
         onClick: handleEdit,
       },
       {
-        name: t('Share'),
+        name: t(MarketplaceI18nKeys.ShareMarketplace),
         dataQa: 'share',
         display:
           isMyApp &&
@@ -164,7 +169,7 @@ export const useAgentMenuItems = ({
         onClick: handleOpenSharing,
       },
       {
-        name: t('Unshare'),
+        name: t(MarketplaceI18nKeys.UnshareMarketplace),
         dataQa: 'unshare',
         display:
           !!entity.sharedWithMe &&
@@ -174,21 +179,21 @@ export const useAgentMenuItems = ({
         onClick: handleOpenUnshare,
       },
       {
-        name: t('Publish'),
+        name: t(MarketplaceI18nKeys.PublishMarketplace),
         dataQa: 'publish',
         display: isMyAppOrPreview && disabledActions.publish !== true,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
       {
-        name: t('Unpublish'),
+        name: t(MarketplaceI18nKeys.UnpublishMarketplace),
         dataQa: 'unpublish',
         display: isAppIdPublic && disabledActions.unpublish !== true,
         Icon: UnpublishIcon,
         onClick: handleUnpublish,
       },
       {
-        name: t('Logs'),
+        name: t(MarketplaceI18nKeys.Logs),
         dataQa: 'app-logs',
         display:
           !!isExecutable &&
@@ -198,7 +203,7 @@ export const useAgentMenuItems = ({
         onClick: handleOpenApplicationLogs,
       },
       {
-        name: t('Delete'),
+        name: t(MarketplaceI18nKeys.DeleteMarketplace),
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         disabled: isModifyDisabled,

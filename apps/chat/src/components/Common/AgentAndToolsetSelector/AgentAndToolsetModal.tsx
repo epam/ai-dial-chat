@@ -41,6 +41,7 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
@@ -448,7 +449,7 @@ const AgentAndToolsetModalView = ({
   return (
     <>
       <h3 className="w-full px-6 pt-6 text-base font-semibold">
-        {t('Select agents and toolsets')}
+        {t(ChatI18nKeys.SelectAgentsAndToolsets)}
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col px-5 pb-2">
         <div ref={headerRef} className="mb-2">
@@ -457,7 +458,7 @@ const AgentAndToolsetModalView = ({
               containerClassName="flex-1"
               data-qa="search-agents"
               autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-              placeholder={t('Search')}
+              placeholder={t(ChatI18nKeys.Search)}
               value={searchTerm}
               onChange={handleSetSearchTerm}
             />
@@ -477,7 +478,7 @@ const AgentAndToolsetModalView = ({
             </div>
           </div>
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
-            {t('Selected')}
+            {t(ChatI18nKeys.SelectedLabel)}
           </span>
           <div className="my-2 flex h-[34px] items-center">
             {selectedIds.length ? (
@@ -489,12 +490,12 @@ const AgentAndToolsetModalView = ({
               />
             ) : (
               <span className="flex h-[34px] items-center text-xs">
-                {t('No resources selected')}
+                {t(ChatI18nKeys.NoResourcesSelected)}
               </span>
             )}
           </div>
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
-            {t('All')}
+            {t(ChatI18nKeys.All)}
           </span>
         </div>
         {!!(headerHeight && footerHeight) && (
@@ -529,8 +530,11 @@ const AgentAndToolsetModalView = ({
         ref={footerRef}
         className="absolute bottom-0 flex w-full justify-end gap-3 border-t border-tertiary px-6 py-[14px]"
       >
-        <DialNeutralButton label={t('Cancel')} onClick={onClose} />
-        <DialPrimaryButton label={t('Confirm')} onClick={handleConfirm} />
+        <DialNeutralButton label={t(ChatI18nKeys.Cancel)} onClick={onClose} />
+        <DialPrimaryButton
+          label={t(ChatI18nKeys.Confirm)}
+          onClick={handleConfirm}
+        />
       </div>
     </>
   );
