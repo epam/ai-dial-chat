@@ -1193,6 +1193,20 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.File) {
+        if (payload.isFolder) {
+          return concat(
+            ...payload.resourceIds.map((id) =>
+              of(
+                FilesActions.updateFolder({
+                  folderId: id,
+                  values: {
+                    isShared: false,
+                  },
+                }),
+              ),
+            ),
+          );
+        }
         return concat(
           ...payload.resourceIds.map((id) =>
             of(
