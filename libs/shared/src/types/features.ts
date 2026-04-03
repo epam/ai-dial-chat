@@ -28,7 +28,7 @@ export enum Feature {
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
-  LiveChatInteraction = 'live-chat-interaction',
+  LiveChatInteraction = 'live-chat-interaction', // Enable interactive tool login flow during chat completion when agent tools are logged out
 
   // Edit assistant message
   EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
