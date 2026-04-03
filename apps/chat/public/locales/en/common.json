@@ -221,5 +221,6 @@
   "Revoking access failed. Please try again later.": "Revoking access failed. Please try again later.",
   "Unsharing shared with you resource failed. Please try again later.": "Unsharing shared with you resource failed. Please try again later.",
   "Agent by this link not found": "Agent by this link not found",
-  "Toolset by this link not found": "Toolset by this link not found"
+  "Toolset by this link not found": "Toolset by this link not found",
+  "Cannot fetch application schema. Please try again later.": "Cannot fetch application schema. Please try again later."
 }

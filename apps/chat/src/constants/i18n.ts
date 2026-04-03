@@ -310,6 +310,7 @@ export enum CommonI18nKeys {
   DiscardSharedWithMeFailed = 'Unsharing shared with you resource failed. Please try again later.',
   AgentByThisLinkNotFound = 'Agent by this link not found',
   ToolsetByThisLinkNotFound = 'Toolset by this link not found',
+  CannotFetchApplicationSchema = 'Cannot fetch application schema. Please try again later.',
 }
 
 // errors.json
@@ -810,6 +811,10 @@ export enum ChatI18nKeys {
   FilesAlreadyExistInSelectedFolder = "The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}",
   FilesHaveSameNamesInUploadList = "The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}",
   MaxFileSizeSupportedTypes = 'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+  MaxFileSizeUpTo512MbNextFilesHaventBeenUploaded = "Max file size up to 512 Mb. Next files haven't been uploaded: {{fileNames}}",
+  TryingToUploadFilesWithIncorrectType = "You're trying to upload files with incorrect type: {{fileNames}}",
+  MBUnit = 'MB',
+  KBUnit = 'KB',
   UploadTo = 'Upload to',
   AllFiles = 'All files',
   Files = 'Files',
