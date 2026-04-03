@@ -23,6 +23,7 @@ import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -135,7 +136,7 @@ export const FileManagerModal = memo(
 
     const allowedExtensions = useMemo(() => {
       if (allowedTypesArray.includes('*/*')) {
-        return [t('all')];
+        return [t(ChatI18nKeys.all)];
       }
 
       return getShortExtensionsListFromMimeType(allowedTypesArray, t);
@@ -186,10 +187,8 @@ export const FileManagerModal = memo(
         dispatch(
           UIActions.showToast({
             type: ToastType.Info,
-            title: t('Unsupported files skipped'),
-            message: t(
-              'Some files in the selected folder(-s) weren’t attached because their type isn’t supported.',
-            ),
+            title: t(ChatI18nKeys.UnsupportedFilesSkipped),
+            message: t(ChatI18nKeys.UnsupportedFilesDescription),
           }),
         );
       }
@@ -228,14 +227,11 @@ export const FileManagerModal = memo(
         dispatch(
           UIActions.showToast({
             type: ToastType.Error,
-            title: t('Too many files selected'),
-            message: t(
-              'You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.',
-              {
-                count: accumulatedIds.size,
-                limit: maximumAttachmentsAmount,
-              },
-            ),
+            title: t(ChatI18nKeys.TooManyFilesSelected),
+            message: t(ChatI18nKeys.TooManyFilesDescription, {
+              count: accumulatedIds.size,
+              limit: maximumAttachmentsAmount,
+            }),
           }),
         );
         return;
@@ -348,22 +344,19 @@ export const FileManagerModal = memo(
             </div>
             {(canAttachFiles || forceShowSelectCheckBox) && (
               <p id={descriptionId} data-qa="supported-attributes">
-                {t(
-                  'Maximum size: {{maxSelectableFileSize}}. Supported types: {{allowedExtensions}}.',
-                  {
-                    maxSelectableFileSize: maxSelectableFileSize
-                      ? formatFileSize(maxSelectableFileSize)
-                      : '512 MB',
-                    allowedExtensions:
-                      typesLabel ||
-                      allowedExtensions.join(', ') ||
-                      'no available extensions',
-                  },
-                )}
+                {t(ChatI18nKeys.MaxSizeSupportedTypes, {
+                  maxSelectableFileSize: maxSelectableFileSize
+                    ? formatFileSize(maxSelectableFileSize)
+                    : '512 MB',
+                  allowedExtensions:
+                    typesLabel ||
+                    allowedExtensions.join(', ') ||
+                    'no available extensions',
+                })}
                 &nbsp;
                 {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
                   !!maximumAttachmentsAmount &&
-                  t('Up to {{maxAttachmentsAmount}} files.', {
+                  t(ChatI18nKeys.UpToFiles, {
                     maxAttachmentsAmount: maximumAttachmentsAmount,
                   })}
               </p>
@@ -410,7 +403,10 @@ export const FileManagerModal = memo(
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
-                <DialLoader size={48} ariaLabel={t('Processing files...')} />
+                <DialLoader
+                  size={48}
+                  ariaLabel={t(ChatI18nKeys.ProcessingFiles)}
+                />
               </div>
             )}
             {operationLoaderModalOptions && !isRenaming && (
@@ -424,7 +420,7 @@ export const FileManagerModal = memo(
           <div className="flex justify-end">
             <DialPrimaryButton
               onClick={handleAttachFiles}
-              label={customButtonLabel ?? t('Attach')}
+              label={customButtonLabel ?? t(ChatI18nKeys.Attach)}
               disabled={
                 selectedFilesIds.length === 0 && selectedFolderIds.length === 0
               }

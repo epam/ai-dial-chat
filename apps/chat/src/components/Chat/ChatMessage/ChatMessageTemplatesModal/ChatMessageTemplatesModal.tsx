@@ -18,6 +18,7 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Modal } from '@/src/components/Common/Modal';
@@ -141,7 +142,7 @@ export const ChatMessageTemplatesModal = ({
       onClose={handleClose}
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
-      heading={t('Message template')}
+      heading={t(ChatI18nKeys.MessageTemplate)}
       headingClassName="md:px-6 px-3 pt-4 md:pt-6 mb-3"
     >
       <div className="flex gap-4 px-3 pb-4 md:px-6">
@@ -150,7 +151,7 @@ export const ChatMessageTemplatesModal = ({
           onClick={() => setPreviewMode(false)}
           dataQA="set-template-tab"
         >
-          {t('Set template')}
+          {t(ChatI18nKeys.SetTemplate)}
         </TabButton>
         <TabButton
           selected={previewMode}
@@ -158,7 +159,7 @@ export const ChatMessageTemplatesModal = ({
           dataQA="preview-tab"
           disabled={isInvalid}
         >
-          {t('Preview')}
+          {t(ChatI18nKeys.Preview)}
         </TabButton>
       </div>
       <div className="relative flex min-h-20 shrink flex-col">
@@ -173,15 +174,13 @@ export const ChatMessageTemplatesModal = ({
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
             >
-              {t(
-                'Copy a part of the message into the first input and provide a template with template variables into the second input',
-              )}
+              {t(ChatI18nKeys.CopyPartOfMessage)}
             </p>
             <p
               data-qa="original-message-label"
               className="whitespace-pre-wrap pt-1 text-secondary"
             >
-              {t('Original message:')}
+              {t(ChatI18nKeys.OriginalMessage)}
             </p>
             <div className="whitespace-pre-wrap text-primary">
               <span className="mr-2" data-qa="original-message-content">
@@ -201,7 +200,11 @@ export const ChatMessageTemplatesModal = ({
                   <DialLinkButton
                     onClick={() => setCollapsed(!collapsed)}
                     data-qa={collapsed ? 'show-more' : 'show-less'}
-                    label={t(!collapsed ? 'Show less' : 'Show more')}
+                    label={t(
+                      !collapsed
+                        ? ChatI18nKeys.ShowLess
+                        : ChatI18nKeys.ShowMore,
+                    )}
                   />
                 )}
               </span>
@@ -245,7 +248,7 @@ export const ChatMessageTemplatesModal = ({
       </div>
       <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6">
         <DialPrimaryButton
-          label={t('Save')}
+          label={t(ChatI18nKeys.Save)}
           onClick={handleSaveTemplate}
           data-qa="save-button"
           disabled={isInvalid}

@@ -2,6 +2,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
@@ -24,7 +25,7 @@ export const SelectFolderFooter = ({
   onToggleHiddenFolders,
   areHiddenFoldersVisible = false,
   disableSelect,
-  selectBtnText = 'Select folder',
+  selectBtnText = ChatI18nKeys.SelectFolderChat,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 

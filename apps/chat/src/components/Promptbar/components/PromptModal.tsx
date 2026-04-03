@@ -17,6 +17,8 @@ import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
@@ -105,10 +107,10 @@ const PromptModalView = () => {
   );
 
   const promptModalTitle = isViewMode
-    ? 'View prompt'
+    ? PromptBarI18nKeys.ViewPrompt
     : isNewPromptCreating
-      ? 'Create prompt'
-      : 'Edit prompt';
+      ? PromptBarI18nKeys.CreatePrompt
+      : PromptBarI18nKeys.EditPrompt;
 
   const dispatch = useAppDispatch();
 

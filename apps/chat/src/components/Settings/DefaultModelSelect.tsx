@@ -12,6 +12,7 @@ import {
   LAST_USED_MODEL_OPTION,
   SPECIAL_DEFAULT_MODEL_DIC,
 } from '@/src/constants/chat';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 import { Label } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
@@ -57,7 +58,7 @@ export const DefaultModelSelect = ({
 
   return (
     <div className="flex flex-col" data-qa="default-model">
-      <Label>{t('Start chat with')}</Label>
+      <Label>{t(SettingsI18nKeys.StartChatWith)}</Label>
       <div className="flex h-[38px] grow items-center gap-8 overflow-hidden rounded border-y border-primary">
         <ModelsSelector
           value={selectedModel.id}

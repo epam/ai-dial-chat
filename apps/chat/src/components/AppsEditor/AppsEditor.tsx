@@ -38,6 +38,7 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
@@ -218,7 +219,7 @@ export const AppsEditor = () => {
         if (isAppDeployed) {
           dispatch(
             UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
+              t(MarketplaceI18nKeys.SavedChangesWillBeApplied),
             ),
           );
         }

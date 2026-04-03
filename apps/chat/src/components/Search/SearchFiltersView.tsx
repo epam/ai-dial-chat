@@ -18,6 +18,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -56,7 +58,7 @@ export function SearchFiltersView({
               ? Feature.ConversationsSharing
               : Feature.PromptsSharing,
           ),
-          name: t('Shared by me'),
+          name: t(PromptBarI18nKeys.SharedByMe),
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
@@ -93,7 +95,10 @@ export function SearchFiltersView({
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
       onOpenChange={setIsOpen}
       TriggerCustomRenderer={
-        <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
+        <Tooltip
+          tooltip={t(PromptBarI18nKeys.SearchFilters)}
+          hideTooltip={isOpen}
+        >
           <IconFilter
             size={18}
             className={classNames('text-secondary hover:text-accent-primary')}

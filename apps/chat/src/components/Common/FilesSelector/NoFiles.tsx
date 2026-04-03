@@ -5,12 +5,14 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
 interface Props {
   caption?: string;
 }
 
 export const NoFiles: React.FC<Props> = ({
-  caption = 'No documents added',
+  caption = FilesI18nKeys.NoDocumentsAdded,
 }) => {
   const { t } = useTranslation(Translation.Files);
 

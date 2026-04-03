@@ -28,6 +28,8 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { FileItemEventIds } from '@/src/constants/file';
 
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -187,7 +189,7 @@ export const FileItem = ({
             item.status === UploadStatus.FAILED && (
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Uploading failed. Please, try again')}
+                tooltip={t(FilesI18nKeys.UploadingFailed)}
               >
                 <IconExclamationCircle
                   className="shrink-0 text-error"

@@ -5,7 +5,7 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Styles, Tags } from '@/src/ui/domData';
+import { Tags } from '@/src/ui/domData';
 import { Page } from '@playwright/test';
 
 export class ConversationToCompare extends BaseElement {
@@ -45,10 +45,8 @@ export class ConversationToCompare extends BaseElement {
     );
   }
 
-  public getCompareConversationArrowIconColor(name: string) {
-    return this.createElementFromLocator(
-      this.getCompareConversationAdditionalIcon(name).locator(Tags.svg),
-    ).getComputedStyleProperty(Styles.color);
+  public getCompareConversationArrowIcon(name: string) {
+    return this.getCompareConversationAdditionalIcon(name).locator(Tags.svg);
   }
 
   public async selectCompareConversation(
