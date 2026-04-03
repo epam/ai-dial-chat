@@ -255,9 +255,7 @@ export class PublishingApprovalModal extends BaseElement {
     folderName: string,
     newFolderName: string,
   ) {
-    if (await this.editButton.isVisible()) {
-      await this.editButton.click();
-    }
+    await this.editButton.click();
     const conversationFolders =
       this.getFolderConversationsToApprove().getFolderNameInput(folderName);
 
