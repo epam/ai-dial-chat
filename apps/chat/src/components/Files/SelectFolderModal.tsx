@@ -17,7 +17,6 @@ import {
   AlertVariant,
   DialDestinationFolderPopup,
   type DialFileManagerActionsRef,
-  DialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -75,7 +74,6 @@ export const SelectFolderModal = ({
         my_files: [],
         shared: [],
         organization: [],
-        [DialFileManagerTabs.Review]: [],
       },
     },
     toolbarOptions: {
