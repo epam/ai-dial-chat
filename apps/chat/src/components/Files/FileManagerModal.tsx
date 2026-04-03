@@ -314,7 +314,6 @@ export const FileManagerModal = memo(
           ],
           shared: [DialFileManagerActions.Download],
           organization: [DialFileManagerActions.Download],
-          [DialFileManagerTabs.Review]: [],
         },
       },
       toolbarOptions: {
