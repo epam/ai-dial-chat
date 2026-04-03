@@ -36,6 +36,7 @@ import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/Marketp
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface CardFooterProps<T> {
   entity: T;
@@ -141,6 +142,7 @@ export const MarketplaceEntityCard = memo(
                   entityId={entity.id}
                   entity={entity}
                   size={iconSize}
+                  isTooltipDisabled
                 />
               </ShareIcon>
             </div>
@@ -161,16 +163,18 @@ export const MarketplaceEntityCard = memo(
 
                 <MarketplaceEntityIndicator entity={entity} />
               </div>
-              <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'flex whitespace-nowrap',
+                  !isMyEntity && !entity.version && '!mr-12',
+                )}
+              >
                 <div
                   className={classNames(
-                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyEntity && !entity.version && '!mr-12',
+                    'mr-6 flex w-full shrink text-base font-semibold leading-[20px] text-primary',
                   )}
                 >
-                  <span className="truncate" data-qa="entity-name">
-                    {entity.name}
-                  </span>
+                  <DialEllipsisTooltip text={entity.name} id="entity-name" />
                 </div>
               </div>
               <div data-qa="entity-description" className="hidden xl:block">

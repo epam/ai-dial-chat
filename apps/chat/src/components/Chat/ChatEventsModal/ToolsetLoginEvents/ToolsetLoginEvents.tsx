@@ -33,10 +33,9 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
-  ButtonVariant,
-  DialButton,
   DialDropdown,
   DialPopup,
+  DialPrimaryButton,
   ElementSize,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
@@ -142,11 +141,10 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
       className="mx-3 !h-auto !max-h-[600px] !bg-layer-2 md:m-0"
       footer={
         <div className="flex justify-end border-t border-t-tertiary px-3 py-4 md:px-6">
-          <DialButton
+          <DialPrimaryButton
             label={t(ChatI18nKeys.DeclineAll)}
             onClick={handleDeclineAllClick}
             appearance={ButtonAppearance.Ghost}
-            variant={ButtonVariant.Primary}
             disabled={areToolsetsLoading || isReporting}
           />
         </div>
@@ -199,20 +197,18 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
                 </div>
 
                 <div className="flex items-center justify-end gap-2 p-2 md:p-3">
-                  <DialButton
+                  <DialPrimaryButton
                     className="hidden md:flex"
                     label={t(ChatI18nKeys.Decline)}
                     onClick={() => handleDecline(event)}
                     size={ElementSize.Small}
                     appearance={ButtonAppearance.Ghost}
-                    variant={ButtonVariant.Primary}
                     disabled={isReporting}
                   />
-                  <DialButton
+                  <DialPrimaryButton
                     label={t(ChatI18nKeys.LogIn)}
                     iconBefore={<IconLogin size={16} />}
                     size={ElementSize.Small}
-                    variant={ButtonVariant.Primary}
                     onClick={() => toolset && handleLoginClick(toolset)}
                     disabled={isReporting || !toolset}
                   />
