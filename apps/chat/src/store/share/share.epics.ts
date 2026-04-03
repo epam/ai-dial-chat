@@ -88,7 +88,6 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,

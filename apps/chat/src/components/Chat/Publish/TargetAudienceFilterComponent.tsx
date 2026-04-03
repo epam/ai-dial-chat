@@ -34,7 +34,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
-const emptySelector = SideBarI18nKeys.Select;
+const emptySelector: string = SideBarI18nKeys.Select;
 
 interface Props {
   onSaveFilter: (filter: TargetAudienceFilterData) => void;
