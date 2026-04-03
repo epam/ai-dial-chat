@@ -6,6 +6,7 @@ export enum HeaderI18nKeys {
   ConfirmLogoutDescription = 'Are you sure that you want to log out?',
   Cancel = 'Cancel',
   User = 'User',
+  UserProfile = 'User profile',
   Settings = 'Settings',
   UserAvatar = 'User avatar',
   AccountSettings = 'Account settings',
@@ -76,6 +77,12 @@ export enum SettingsI18nKeys {
   SelectFile = 'Select file',
   ConfirmSettings = 'Confirm',
   CancelSettings = 'Cancel',
+  ConfirmChangingSourceFolder = 'Confirm changing source folder',
+  ChangingSourceFolderDescription = 'Changing the source folder will immediately stop sharing, and other users will no longer see this application.',
+  ConfirmChangingIconFile = 'Confirm changing icon file',
+  ChangingIconFileDescription = 'Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.',
+  ConfirmChangingDocumentUrls = 'Confirm changing document relative URLs',
+  ChangingDocumentUrlsDescription = 'Changing document relative URLs will immediately stop sharing, and other users will no longer see this application.',
 }
 
 // common.json
@@ -210,6 +217,7 @@ export enum CommonI18nKeys {
   CheckServerLogs = 'Check the server logs for more information.',
   NoPermissionToSignIn = 'You do not have permission to sign in.',
   SignIn = 'Sign in',
+  SignInWith = 'Sign in with:',
   SignInLinkNoLongerValid = 'The sign in link is no longer valid.',
   SignInLinkMayHaveBeenUsed = 'It may have been used already or it may have expired.',
   FailedToLoadFilesAndFolders = 'Failed to load files and folders',
@@ -219,6 +227,15 @@ export enum CommonI18nKeys {
   ItemUnsharedSuccessfully = '"{{itemName}}" has been unshared successfully',
   FailedToUnshareFolder = 'Failed to unshare folder "{{itemName}}". Please try again later',
   FailedToUnshareItem = 'Failed to unshare "{{itemName}}". Please try again later',
+  PageMyWorkspace = 'My Workspace',
+  PageMarketplace = 'Marketplace',
+  PageAppEditor = 'App Editor',
+  PageToolsetEditor = 'Toolset Editor',
+  PageToolsetSignIn = 'Toolset Sign In',
+  PageFiles = 'Files',
+  PageWidgets = 'Widgets',
+  PageSelectedWidget = 'Selected Widget',
+  PageNotFoundTitle = 'Not Found',
 }
 
 // sidebar.json
@@ -552,6 +569,11 @@ export enum ChatI18nKeys {
   ConversationNoFiles = "This conversation doesn't contain any files",
   ConversationsNoFiles = "These conversations don't contain any files",
   PublicationNoResources = 'This publication has no resources',
+  Organization = 'Organization',
+  SharedWithMe = 'Shared with me',
+  IconUsedForEntityIsInSectionCannotBePublished = 'The icon used for this {{entityType}} is in the "{{section}}" section and cannot be published. Please replace the icon, otherwise the {{entityType}} will be published with the default one.',
+  EntityHasAlreadyBeenUnpublishedCantApproveRequest = "has already been unpublished. You can't approve this request.",
+  EntitiesHaveAlreadyBeenUnpublishedCantApproveRequest = "have already been unpublished. You can't approve this request.",
   Comparison = 'Comparison',
   PreviousAccessSettings = 'Previous Access Settings',
   CurrentAccessSettings = 'Current Access Settings',
@@ -674,6 +696,8 @@ export enum ChatI18nKeys {
   all = 'all',
   ProcessingFiles = 'Processing files...',
   MaxAllowedAttachmentsNumberSelected = 'Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}',
+  FilesAlreadyExistInSelectedFolder = "The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}",
+  FilesHaveSameNamesInUploadList = "The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}",
   MaxFileSizeSupportedTypes = 'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
   UploadTo = 'Upload to',
   AllFiles = 'All files',
@@ -682,6 +706,10 @@ export enum ChatI18nKeys {
   Upload = 'Upload',
   AddChat = 'Add',
   SelectFolderChat = 'Select folder',
+  AuthorPublicNameTooltip = "This name will be displayed instead of the author's name for this publication.",
+  TypePublicationRequestName = 'Type publication request name...',
+  TypeUnpublishRequestName = 'Type unpublish request name...',
+  EditingNotAvailableInPlayback = 'Editing conversation settings is not available in playback mode.',
 }
 
 // files.json
@@ -851,4 +879,7 @@ export enum MarketplaceI18nKeys {
   CannotChangeSharedApp = 'You cannot change the {{context}} of a shared application.',
   AddLabel = 'Add {{label}}',
   ApplicationIsStatus = 'Application is {{status}}',
+  MyCredentials = 'My credentials',
+  EntireOrganizationCredentials = 'Entire organization credentials',
+  LoggedIn = 'LOGGED IN',
 }

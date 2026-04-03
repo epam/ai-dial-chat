@@ -155,6 +155,11 @@
   "This conversation doesn't contain any files": "This conversation doesn't contain any files",
   "These conversations don't contain any files": "These conversations don't contain any files",
   "This publication has no resources": "This publication has no resources",
+  "Organization": "Organization",
+  "Shared with me": "Shared with me",
+  "The icon used for this {{entityType}} is in the \"{{section}}\" section and cannot be published. Please replace the icon, otherwise the {{entityType}} will be published with the default one.": "The icon used for this {{entityType}} is in the \"{{section}}\" section and cannot be published. Please replace the icon, otherwise the {{entityType}} will be published with the default one.",
+  "has already been unpublished. You can't approve this request.": "has already been unpublished. You can't approve this request.",
+  "have already been unpublished. You can't approve this request.": "have already been unpublished. You can't approve this request.",
   "Comparison": "Comparison",
   "Previous Access Settings": "Previous Access Settings",
   "Current Access Settings": "Current Access Settings",
@@ -278,6 +283,8 @@
   "all": "all",
   "Processing files...": "Processing files...",
   "Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}": "Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}",
+  "The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}": "The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}",
+  "The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}": "The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}",
   "Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.": "Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.",
   "Upload to": "Upload to",
   "All files": "All files",
@@ -288,5 +295,9 @@
   "chat.error.incorrect-selected_model": "Not available agent selected. Please, change the agent to proceed",
   "chat.error.agent-not-available": "Agent is not available. Please, {{click}} {{agentId}} to proceed.",
   "chat.error.agents-not-available": "Agents are not available. Please, change the agents {{agentId}} and {{agentId}} to proceed.",
-  "change the agent": "change the agent"
+  "change the agent": "change the agent",
+  "This name will be displayed instead of the author's name for this publication.": "This name will be displayed instead of the author's name for this publication.",
+  "Type publication request name...": "Type publication request name...",
+  "Type unpublish request name...": "Type unpublish request name...",
+  "Editing conversation settings is not available in playback mode.": "Editing conversation settings is not available in playback mode."
 }

@@ -4,6 +4,7 @@ import { PageType } from '@/src/types/common';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceQueryParams,
   MarketplaceTabs,
@@ -31,22 +32,22 @@ export const getPageName = ({ route, query }: BaseRouter) => {
   switch (route) {
     case Routes.Marketplace:
       return query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE
-        ? 'My Workspace'
-        : 'Marketplace';
+        ? CommonI18nKeys.PageMyWorkspace
+        : CommonI18nKeys.PageMarketplace;
     case Routes.AppsEditor:
-      return 'App Editor';
+      return CommonI18nKeys.PageAppEditor;
     case Routes.ToolsetEditor:
-      return 'Toolset Editor';
+      return CommonI18nKeys.PageToolsetEditor;
     case Routes.ToolsetSignIn:
-      return 'Toolset Sign In';
+      return CommonI18nKeys.PageToolsetSignIn;
     case Routes.FileManager:
-      return 'Files';
+      return CommonI18nKeys.PageFiles;
     case Routes.Widgets:
-      return 'Widgets';
+      return CommonI18nKeys.PageWidgets;
     case Routes.SelectedWidget:
-      return 'Selected Widget';
+      return CommonI18nKeys.PageSelectedWidget;
     case Routes.NotFound:
-      return 'Not Found';
+      return CommonI18nKeys.PageNotFoundTitle;
     default:
       return '';
   }

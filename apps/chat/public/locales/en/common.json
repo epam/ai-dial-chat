@@ -129,6 +129,7 @@
   "Check the server logs for more information.": "Check the server logs for more information.",
   "You do not have permission to sign in.": "You do not have permission to sign in.",
   "Sign in": "Sign in",
+  "Sign in with:": "Sign in with:",
   "The sign in link is no longer valid.": "The sign in link is no longer valid.",
   "It may have been used already or it may have expired.": "It may have been used already or it may have expired.",
   "Failed to load files and folders": "Failed to load files and folders",
@@ -137,5 +138,14 @@
   "Folder \"{{itemName}}\" has been unshared successfully": "Folder \"{{itemName}}\" has been unshared successfully",
   "\"{{itemName}}\" has been unshared successfully": "\"{{itemName}}\" has been unshared successfully",
   "Failed to unshare folder \"{{itemName}}\". Please try again later": "Failed to unshare folder \"{{itemName}}\". Please try again later",
-  "Failed to unshare \"{{itemName}}\". Please try again later": "Failed to unshare \"{{itemName}}\". Please try again later"
+  "Failed to unshare \"{{itemName}}\". Please try again later": "Failed to unshare \"{{itemName}}\". Please try again later",
+  "My Workspace": "My Workspace",
+  "Marketplace": "Marketplace",
+  "App Editor": "App Editor",
+  "Toolset Editor": "Toolset Editor",
+  "Toolset Sign In": "Toolset Sign In",
+  "Files": "Files",
+  "Widgets": "Widgets",
+  "Selected Widget": "Selected Widget",
+  "Not Found": "Not Found"
 }

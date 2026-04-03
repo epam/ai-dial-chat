@@ -75,9 +75,6 @@ import { PublishActions } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import isEqual from 'lodash-es/isEqual';
 
-const AUTHOR_PUBLIC_NAME_TOOLTIP =
-  "This name will be displayed instead of the author's name for this publication.";
-
 const entityNamePreprocessor = {
   setValueAs: (name: string) => {
     return replaceSpacesFromString(name.trim());
@@ -445,7 +442,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                   entityNamePreprocessor,
                 )}
                 placeholder={t(
-                  `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
+                  publicationModel.action === PublishActions.ADD
+                    ? ChatI18nKeys.TypePublicationRequestName
+                    : ChatI18nKeys.TypeUnpublishRequestName,
                 )}
                 id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
                 error={formMethods.formState.errors.publishRequestName?.message}
@@ -509,7 +508,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       (isEditMode || !isReview ? (
                         <Field
                           info={
-                            isReview ? t(AUTHOR_PUBLIC_NAME_TOOLTIP) : undefined
+                            isReview
+                              ? t(ChatI18nKeys.AuthorPublicNameTooltip)
+                              : undefined
                           }
                           label={t(
                             isReview
@@ -533,7 +534,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           label={t(ChatI18nKeys.AuthorPublicName)}
                           valueDataQa="publication-display-author"
                           valueToDisplay={publication.displayAuthor ?? ''}
-                          infoTooltip={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
+                          infoTooltip={t(ChatI18nKeys.AuthorPublicNameTooltip)}
                         />
                       ))}
 
@@ -673,7 +674,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                   <ErrorMessage
                                     type="warning"
                                     error={t(
-                                      `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: publicationModel.entity.iconUrl ?? '' }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
+                                      ChatI18nKeys.IconUsedForEntityIsInSectionCannotBePublished,
+                                      {
+                                        entityType: errorMessageEntityType,
+                                        section: t(
+                                          isEntityIdPublic({
+                                            id:
+                                              publicationModel.entity.iconUrl ??
+                                              '',
+                                          })
+                                            ? ChatI18nKeys.Organization
+                                            : ChatI18nKeys.SharedWithMe,
+                                        ),
+                                      },
                                     )}
                                   />
                                 )}

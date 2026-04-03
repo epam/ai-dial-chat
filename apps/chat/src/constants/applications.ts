@@ -2,6 +2,8 @@ import { translate } from '@/src/utils/app/translation';
 
 import { ApiKeys, ConfirmDialogValueTypes } from '@/src/types/common';
 
+import { SettingsI18nKeys } from '@/src/constants/i18n';
+
 export const FEATURES_ENDPOINTS = {
   chat_completion: 'chat_completion',
   rate: 'rate',
@@ -26,21 +28,18 @@ export enum CODEAPPS_REQUIRED_FILES {
 }
 
 export const CONFIRM_SOURCE_FOLDER_VALUES: ConfirmDialogValueTypes = {
-  heading: 'Confirm changing source folder',
-  description:
-    'Changing the source folder will immediately stop sharing, and other users will no longer see this application.',
+  heading: SettingsI18nKeys.ConfirmChangingSourceFolder,
+  description: SettingsI18nKeys.ChangingSourceFolderDescription,
 };
 
 export const CONFIRM_ICON_FILE_VALUES: ConfirmDialogValueTypes = {
-  heading: 'Confirm changing icon file',
-  description:
-    'Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.',
+  heading: SettingsI18nKeys.ConfirmChangingIconFile,
+  description: SettingsI18nKeys.ChangingIconFileDescription,
 };
 
 export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
-  heading: 'Confirm changing document relative URLs',
-  description:
-    'Changing document relative URLs will immediately stop sharing, and other users will no longer see this application.',
+  heading: SettingsI18nKeys.ConfirmChangingDocumentUrls,
+  description: SettingsI18nKeys.ChangingDocumentUrlsDescription,
 };
 
 export const DRAFT_APPLICATION_ID = `${ApiKeys.Applications}/draft`;

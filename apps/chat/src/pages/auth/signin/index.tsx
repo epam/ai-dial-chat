@@ -28,6 +28,8 @@ import { Translation } from '@/src/types/translation';
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
@@ -179,7 +181,7 @@ export default function Signin({
           error={errorMessage}
           className="my-4 items-center text-sm"
         />
-        <div className="my-4 text-center">{t('Sign in with:')}</div>
+        <div className="my-4 text-center">{t(CommonI18nKeys.SignInWith)}</div>
         <div className="flex flex-col gap-4">
           {Object.values(providers ?? []).map((provider: Provider) => (
             <DialNeutralButton
