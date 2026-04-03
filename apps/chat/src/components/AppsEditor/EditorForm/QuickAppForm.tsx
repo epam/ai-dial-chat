@@ -22,6 +22,7 @@ import {
   CONFIRM_DOCUMENT_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { QuickAppForm as QuickAppFormType } from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
@@ -123,7 +124,7 @@ export const QuickAppForm = () => {
         control={control}
         render={({ field }) => (
           <FilesSelectorField
-            label={t('Document relative URLs')}
+            label={t(MarketplaceI18nKeys.DocumentRelativeURLs)}
             onAddFiles={(documents) =>
               field.onChange(uniq([...(field.value ?? []), ...documents]))
             }
@@ -132,11 +133,13 @@ export const QuickAppForm = () => {
             }
             readonly={isSharedWithMe || isAppPublic}
             error={errors.documentRelativeUrl?.message}
-            fileManagerTitle={t('Select documents')}
+            fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
             filesFilter={myFilesFilter}
             files={field.value ?? []}
             addBtnTooltip={
-              isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
+              isSharedWithMe
+                ? getSharedTooltip(t(MarketplaceI18nKeys.DocumentsLowercase))
+                : undefined
             }
             confirmDialogValues={
               appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
@@ -151,7 +154,7 @@ export const QuickAppForm = () => {
         control={control}
         render={({ field }) => (
           <ModelsSelectorField
-            label={t('Model')}
+            label={t(MarketplaceI18nKeys.ModelMarketplace)}
             value={field.value}
             onChange={field.onChange}
             mandatory
@@ -164,7 +167,7 @@ export const QuickAppForm = () => {
       />
 
       <ToolsetEditor
-        label={t('Configure toolsets')}
+        label={t(MarketplaceI18nKeys.ConfigureToolsets)}
         error={errors[activeTabId]?.message}
         height={200}
         allowFullScreen
@@ -177,8 +180,8 @@ export const QuickAppForm = () => {
 
       <FieldTextArea
         {...register('instructions')}
-        label={t('Instructions')}
-        placeholder={t('Instructions of your application')}
+        label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+        placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
         rows={4}
         id="instructions"
         disabled={isAppPublic}
@@ -190,7 +193,7 @@ export const QuickAppForm = () => {
         control={control}
         render={({ field }) => (
           <Slider
-            label={t('Temperature')}
+            label={t(MarketplaceI18nKeys.TemperatureMarketplace)}
             temperature={field.value}
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}

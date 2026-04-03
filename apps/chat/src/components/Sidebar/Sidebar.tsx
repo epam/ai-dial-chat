@@ -17,6 +17,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { Loader } from '@/src/components/Common/Loader';
 import {
   CreateNewConversation,
@@ -117,12 +119,16 @@ export const Sidebar = <T,>({
             )}
           >
             <p className="text-base font-semibold">
-              {t(isLeftSidebar ? 'Conversations' : 'Prompts')}
+              {t(
+                isLeftSidebar
+                  ? PromptBarI18nKeys.Conversations
+                  : PromptBarI18nKeys.Prompts,
+              )}
             </p>
             <CreateNewEntity iconSize={createIconSize} />
           </div>
           <Search
-            placeholder={t('Search {{name}}...', {
+            placeholder={t(PromptBarI18nKeys.Search, {
               name: trimEnd(
                 EnumMapper.getApiKeyByFeatureType(featureType),
                 's',

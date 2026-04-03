@@ -9,6 +9,8 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+
 import { FilesUploadingModal } from './FilesUploadingModal';
 import { OperationLoaderModal } from './OperationLoaderModal';
 
@@ -135,7 +137,10 @@ export const FileManager: React.FC = () => {
       )}
       {isAnyOperationInProgress && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
-          <DialLoader size={48} ariaLabel={t('Processing files...')} />
+          <DialLoader
+            size={48}
+            ariaLabel={t(SideBarI18nKeys.ProcessingFiles)}
+          />
         </div>
       )}
       {operationLoaderModalOptions && !isRenaming && (

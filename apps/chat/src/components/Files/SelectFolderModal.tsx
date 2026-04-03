@@ -11,10 +11,13 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import {
   AlertVariant,
   DialDestinationFolderPopup,
   type DialFileManagerActionsRef,
+  DialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -72,6 +75,7 @@ export const SelectFolderModal = ({
         my_files: [],
         shared: [],
         organization: [],
+        [DialFileManagerTabs.Review]: [],
       },
     },
     toolbarOptions: {
@@ -151,13 +155,13 @@ export const SelectFolderModal = ({
       onClose={handleClose}
       onConfirm={handleConfirm}
       mode="move"
-      moveLabel={t('Select folder')}
-      addFolderLabel={t('Add folder')}
-      header={t('Select folder')}
+      moveLabel={t(CommonI18nKeys.SelectFolder)}
+      addFolderLabel={t(CommonI18nKeys.AddFolder)}
+      header={t(CommonI18nKeys.SelectFolder)}
       path={currentPath}
       onFolderPopupPathChange={setCurrentPath}
       sourceFolder={rootFolderId}
-      disabledPathTooltip={t('Root folder cannot be selected')}
+      disabledPathTooltip={t(CommonI18nKeys.RootFolderCannotBeSelected)}
       items={fileTreeItems}
       rootItem={rootFolder}
       filesLoading={areFoldersLoading}

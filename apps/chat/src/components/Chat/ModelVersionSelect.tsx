@@ -10,6 +10,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { NA_VERSION } from '@/src/constants/publication';
 
@@ -24,8 +25,8 @@ const VersionPrefix = () => {
 
   return (
     <div className="mr-2 flex items-center">
-      <span className="hidden md:block">{t('Version: ')}</span>
-      <span className="md:hidden">{t('v. ')}</span>
+      <span className="hidden md:block">{t(ChatI18nKeys.VersionColon)}</span>
+      <span className="md:hidden">{t(ChatI18nKeys.VersionPrefixShort)}</span>
     </div>
   );
 };
@@ -79,7 +80,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {entities[0].version ?? t(NA_VERSION)}
+            {entities[0].version ?? t(MarketplaceI18nKeys.NA)}
           </span>
         </div>
       );

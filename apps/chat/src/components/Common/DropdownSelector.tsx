@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from './Tooltip';
@@ -171,7 +172,7 @@ export function DropdownSelector({
             color: 'var(--text-primary)',
           }),
         }}
-        noOptionsMessage={() => t('No options')}
+        noOptionsMessage={() => t(CommonI18nKeys.NoOptions)}
       />
     </Tooltip>
   );

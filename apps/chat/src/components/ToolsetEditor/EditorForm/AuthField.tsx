@@ -12,6 +12,7 @@ import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { AUTH_TYPE_OPTIONS } from '@/src/constants/toolsets';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -67,7 +68,7 @@ const AuthTypeSection = ({
   return (
     <Tooltip
       hideTooltip={(!isSignedIn && !isDisabled) || isSelected}
-      tooltip={tooltip ?? t('Log out before changing authentication type')}
+      tooltip={tooltip ?? t(CommonI18nKeys.LogOutBeforeChangingAuthType)}
       triggerClassName="w-full"
     >
       <AuthAccordion
@@ -86,7 +87,7 @@ const AuthTypeSection = ({
               <RadioButton
                 id={WithLogin.WithLogin}
                 name="with-auth"
-                caption={t(WithLogin.WithLogin)}
+                caption={t(CommonI18nKeys.WithLoginLabel)}
                 onChange={onWithLoginChange}
                 value={WithLogin.WithLogin}
                 checked={withLogin === WithLogin.WithLogin}
@@ -98,7 +99,7 @@ const AuthTypeSection = ({
                 <RadioButton
                   id={WithLogin.WithConfig}
                   name="with-auth"
-                  caption={t(WithLogin.WithConfig)}
+                  caption={t(CommonI18nKeys.WithLoginAndConfig)}
                   onChange={onWithLoginChange}
                   value={WithLogin.WithConfig}
                   checked={withLogin === WithLogin.WithConfig}
@@ -111,7 +112,7 @@ const AuthTypeSection = ({
                 <RadioButton
                   id={WithLogin.WithoutLogin}
                   name="with-auth"
-                  caption={t(WithLogin.WithoutLogin)}
+                  caption={t(CommonI18nKeys.WithoutLoginLabel)}
                   onChange={onWithLoginChange}
                   value={WithLogin.WithoutLogin}
                   checked={withLogin === WithLogin.WithoutLogin}
@@ -289,10 +290,10 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
 
       <ConfirmDialog
         isOpen={logoutModal}
-        heading={t('Logging out')}
-        description={t('Are you sure you want to log out?')}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(CommonI18nKeys.LoggingOutCommon)}
+        description={t(CommonI18nKeys.AreYouSureLogOutCommon)}
+        confirmLabel={t(CommonI18nKeys.LogOutCommon)}
+        cancelLabel={t(CommonI18nKeys.Cancel)}
         onClose={handleLogoutClose}
       />
     </div>

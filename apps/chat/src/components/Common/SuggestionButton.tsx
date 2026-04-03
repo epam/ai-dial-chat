@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
@@ -29,7 +30,7 @@ export const SuggestionButton = ({
   return (
     <DialLinkButton
       onClick={handleClick}
-      label={t('{{baseText}} {{tabName}}', {
+      label={t(ChatI18nKeys.BaseTextTabName, {
         baseText: t(customText),
         tabName: t(ChangeMarketplaceTabs[MarketplaceTabs.HOME]),
       })}

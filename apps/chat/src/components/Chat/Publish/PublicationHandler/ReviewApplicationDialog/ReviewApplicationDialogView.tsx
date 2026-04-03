@@ -21,6 +21,7 @@ import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
@@ -115,21 +116,23 @@ export function ReviewApplicationDialogView({
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
-        <h2 className="text-base font-semibold">{t('Application')}</h2>
+        <h2 className="text-base font-semibold">
+          {t(ChatI18nKeys.Application)}
+        </h2>
 
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
-            label={t('Name')}
+            label={t(ChatI18nKeys.Name)}
             value={application.name}
             dataQa="app-name"
           />
           <MarketplaceEntityInfoRow
-            label={t('Version')}
+            label={t(ChatI18nKeys.Version)}
             value={application.version ?? NA_VERSION}
             dataQa="app-version"
           />
           <MarketplaceEntityInfoRow
-            label={t('Icon')}
+            label={t(ChatI18nKeys.Icon)}
             value={
               <ModelIcon
                 entity={application}
@@ -140,12 +143,12 @@ export function ReviewApplicationDialogView({
             valueClassName=""
           />
           <MarketplaceEntityInfoRow
-            label={t('Description')}
+            label={t(ChatI18nKeys.Description)}
             value={description}
             dataQa="app-description"
           />
           <MarketplaceEntityInfoRow
-            label={t('Topics')}
+            label={t(ChatI18nKeys.Topics)}
             value={
               application.topics?.length ? (
                 <div className="flex flex-wrap gap-1">
@@ -157,23 +160,23 @@ export function ReviewApplicationDialogView({
             }
           />
           <MarketplaceEntityInfoRow
-            label={t('Features data')}
+            label={t(ChatI18nKeys.FeaturesData)}
             value={featuresValue}
             dataQa="app-feature"
             valueClassName="max-w-[414px] whitespace-pre-wrap leading-5 text-primary break-all"
           />
           <MarketplaceEntityInfoRow
-            label={t('Attachment types')}
+            label={t(ChatI18nKeys.AttachmentTypes)}
             value={attachmentTypesValue}
             valueClassName="max-w-[414px]"
           />
           <MarketplaceEntityInfoRow
-            label={t('Max. attachments number')}
+            label={t(ChatI18nKeys.MaxAttachmentsNumber)}
             value={application.maxInputAttachments}
             dataQa="app-max-attach"
           />
           <MarketplaceEntityInfoRow
-            label={t('Completion URL')}
+            label={t(ChatI18nKeys.CompletionUrl)}
             value={completionUrl}
             dataQa="app-completion-url"
             valueClassName="max-w-[414px] break-all text-primary"
@@ -194,7 +197,7 @@ export function ReviewApplicationDialogView({
       >
         {!isResourceUnpublishing && (
           <IconButton
-            name={t('Edit application')}
+            name={t(ChatI18nKeys.EditApplication)}
             dataQa="admin-edit-application"
             Icon={IconPencilMinus}
             onClick={handleEditApplication}

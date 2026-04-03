@@ -22,6 +22,8 @@ import { FilesActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const validateFiles = (
@@ -82,13 +84,10 @@ export const useUploadFilesHandler = (
       if (attachmentsAmount > maximumAttachmentsAmount) {
         dispatch(
           UIActions.showErrorToast(
-            t(
-              `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}`,
-              {
-                maxAttachmentsAmount: maximumAttachmentsAmount,
-                attachmentsAmount,
-              },
-            ),
+            t(ChatI18nKeys.MaxAllowedAttachmentsNumber, {
+              maxAttachmentsAmount: maximumAttachmentsAmount,
+              attachmentsAmount,
+            }),
           ),
         );
         return;

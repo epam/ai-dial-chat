@@ -11,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
@@ -27,7 +28,7 @@ export function AddToolsButton() {
     () =>
       [
         {
-          name: t('Toolset'),
+          name: t(MarketplaceI18nKeys.ToolsetMarketplace),
           dataQa: 'add-toolset',
           type: FeatureType.Toolset,
           display: true,

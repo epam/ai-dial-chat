@@ -16,6 +16,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
@@ -86,9 +88,11 @@ export function ChatExternalControls({
           }
           label={
             isChatReadyForInput && !isReadOnly
-              ? t('Duplicate')
+              ? t(ChatI18nKeys.Duplicate)
               : t(
-                  `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
+                  conversationsToDuplicate.length > 1
+                    ? ChatI18nKeys.DuplicateConversationsToEdit
+                    : ChatI18nKeys.DuplicateConversationToEdit,
                 )
           }
         />

@@ -10,6 +10,7 @@ import {
   DEFAULT_HEADER_ICON_SIZE,
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
+import { HeaderI18nKeys } from '@/src/constants/i18n';
 
 import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
@@ -38,7 +39,7 @@ export const MarketplaceHeader = () => {
       LeftItems={
         <ToggleSidebarButton
           iconSize={headerIconSize}
-          tooltip="Filters"
+          tooltip={HeaderI18nKeys.Filters}
           isOpened={showFilterbar}
           onToggle={handleToggleFilterbar}
           dataQa="left-panel-toggle"

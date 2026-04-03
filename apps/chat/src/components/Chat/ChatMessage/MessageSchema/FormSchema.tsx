@@ -21,6 +21,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
@@ -319,8 +321,8 @@ const ButtonsProperty = ({
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
         )}
-        confirmLabel={t('Yes')}
-        cancelLabel={t('No')}
+        confirmLabel={t(ChatI18nKeys.Yes)}
+        cancelLabel={t(ChatI18nKeys.No)}
         onClose={handleCloseConfirmation}
       />
     </>
