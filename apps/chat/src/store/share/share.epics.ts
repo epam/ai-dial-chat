@@ -19,6 +19,7 @@ import {
   getApplicationType,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  isQuickApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
@@ -346,7 +347,8 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       if (
         (applicationType === ApplicationType.CODE_APP ||
           schema?.displayName === 'Quick App' ||
-          isQuickApp2(application)) &&
+          isQuickApp2(application) ||
+          isQuickApp(application)) &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(
@@ -386,10 +388,12 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       const docUrl =
         getQuickAppDocumentUrl(applicationDetails) ??
         getQuick2AppDocumentUrl(applicationDetails);
-      if (docUrl?.length) {
+
+      if (hasWritePermission(payload.permissions) && docUrl?.length) {
         docUrl.forEach((url) =>
           resources.push({
             url: ApiUtils.encodeApiUrl(url),
+            permissions: payload.permissions,
           }),
         );
       }

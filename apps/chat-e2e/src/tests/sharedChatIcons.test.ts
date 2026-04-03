@@ -580,6 +580,7 @@ dialTest(
     dataInjector,
     tooltip,
     compareConversation,
+    baseAssertion,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     setTestIds,
@@ -628,14 +629,13 @@ dialTest(
             ExpectedMessages.sharedEntityIconIsVisible,
           )
           .toBeVisible();
-
-        const arrowIconColor =
-          await compareConversation.getCompareConversationArrowIconColor(
+        await baseAssertion.assertElementColor(
+          compareConversation.getCompareConversationArrowIcon(
             secondSharedConversation.name,
-          );
-        expect
-          .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
+          ),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+          ExpectedMessages.sharedIconColorIsValid,
+        );
       },
     );
 
