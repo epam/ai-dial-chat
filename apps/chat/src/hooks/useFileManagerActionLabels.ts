@@ -45,7 +45,6 @@ const DEFAULT_TAB_ACTIONS: ActionsByTab = {
     DialFileManagerActions.Info,
   ],
   organization: [DialFileManagerActions.Download, DialFileManagerActions.Info],
-  [DialFileManagerTabs.Review]: [],
 };
 
 const buildLabelMap = (actions: FileAction[], t: TranslationFn) =>
