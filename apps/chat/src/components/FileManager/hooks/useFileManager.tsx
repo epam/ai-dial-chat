@@ -35,6 +35,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MY_FILES_SECTION,
   ORGANIZATION_FILES_SECTION,
+  REVIEW_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
 } from '@/src/constants/fileManager';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
@@ -79,12 +80,14 @@ interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
   toolbarOptions?: ToolbarOptions;
   availableTabs?: Set<string>;
+  reviewBucket?: string;
 }
 
 export const useFileManager = ({
   actionLabelsOptions,
   toolbarOptions: externalToolbarOptions,
   availableTabs,
+  reviewBucket,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
 
@@ -188,6 +191,7 @@ export const useFileManager = ({
     my_files: MY_FILES_SECTION,
     shared: SHARED_WITH_ME_FILES_SECTION,
     organization: ORGANIZATION_FILES_SECTION,
+    review: REVIEW_FILES_SECTION,
   });
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
@@ -293,6 +297,16 @@ export const useFileManager = ({
         pathRootAlias = ORGANIZATION_FILES_SECTION;
         uploadEnabled = false;
         break;
+      case DialFileManagerTabs.Review:
+        filteredFiles = files.filter(
+          (f) => getEntityBucket(f) === reviewBucket,
+        );
+        filteredFolders = folders.filter(
+          (f) => getEntityBucket(f) === reviewBucket,
+        );
+        pathRootAlias = REVIEW_FILES_SECTION;
+        uploadEnabled = false;
+        break;
       default:
         break;
     }
@@ -339,7 +353,7 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, previousActiveTabRef, currentPath]);
+  }, [files, folders, activeTab, reviewBucket, currentPath]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
