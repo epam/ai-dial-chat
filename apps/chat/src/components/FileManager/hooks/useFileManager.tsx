@@ -199,6 +199,7 @@ export const useFileManager = ({
     my_files: MY_FILES_SECTION,
     shared: SHARED_WITH_ME_FILES_SECTION,
     organization: ORGANIZATION_FILES_SECTION,
+    [DialFileManagerTabs.Review]: '',
   });
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
