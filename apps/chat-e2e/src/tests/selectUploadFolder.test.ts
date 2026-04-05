@@ -326,15 +326,11 @@ dialTest(
     await dialTest.step(
       'Click "Create new folder" many times and verify "Select folder" modal height does not exceed browser window height and scroll appears',
       async () => {
-        // Each click on "Add folder" does not create a new folder immediately —
-        // it waits for the user to enter a name first.
-        // Therefore, clicking many times should not stack up folders and should not cause a scroll to appear.
         for (let i = 1; i <= 20; i++) {
           await selectFolderManagerModal.getAddFolderButton().click();
-          const input = selectFolderManagerModalGrid
-            .getRenameInput()
-            .getElementLocator();
-          await input.press('Enter');
+          await selectFolderManagerModalGrid.setFolderName(
+            GeneratorUtil.randomString(5),
+          );
         }
         const selectFolderBounding =
           await selectFolderManagerModal.getElementBoundingBox();
@@ -347,7 +343,7 @@ dialTest(
         );
         baseAssertion.assertBooleanCondition(
           await selectFolderManagerModalGrid.gridViewPort.isElementScrollableVertically(),
-          false,
+          true,
           ExpectedMessages.selectFolderAreaIsScrollable,
         );
       },
@@ -395,7 +391,7 @@ dialTest(
       'Create first folder with a valid name (will be used for duplicate test)',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        await selectFolderManagerModalGrid.setFolderName(folder1Name, false);
+        await selectFolderManagerModalGrid.setFolderName(folder1Name);
         await baseAssertion.assertElementState(
           selectFolderManagerModalGrid.gridRowByNameCell(folder1Name),
           'visible',
@@ -434,16 +430,14 @@ dialTest(
       },
     );
 
-    //TODO issue id 5875
-    await dialTest.step.skip(
+    await dialTest.step(
       'Create new folder with leading dot name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        await selectFolderManagerModalGrid.setFolderName(
-          nameWithLeadingDot,
-          false,
-        );
-        await selectFolderManagerModalGridAssertion.assertInputError(
+        await selectFolderManagerModalGrid
+          .getRenameInput()
+          .fillInInput(nameWithLeadingDot);
+        await selectFolderManagerModalGridAssertion.assertInputWarning(
           'visible',
           nameWithLeadingDot,
         );
