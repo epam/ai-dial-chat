@@ -103,6 +103,7 @@ declare global {
       AUTH_OKTA_CLIENT_SECRET?: string;
       AUTH_OKTA_ISSUER?: string;
       AUTH_OKTA_SCOPE?: string;
+      AUTH_OKTA_NAME?: string;
     }
   }
 }
