@@ -192,18 +192,20 @@ export const GroupedVisualizerRenderer = ({
 
     const maxWidth = maxLayoutMetric(
       attachmentLayouts,
-      (l) => l.width,
+      (layout) => layout.width,
       DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
     );
     const maxHeight = maxLayoutMetric(
       attachmentLayouts,
-      (l) => l.height,
+      (layout) => layout.height,
       DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
     );
     const maxMobileHeight = attachmentLayouts.length
       ? Math.max(
-          ...attachmentLayouts.map((l) =>
-            Number(l.mobileHeight ?? DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT),
+          ...attachmentLayouts.map((layout) =>
+            Number(
+              layout.mobileHeight ?? DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT,
+            ),
           ),
         )
       : DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT;
