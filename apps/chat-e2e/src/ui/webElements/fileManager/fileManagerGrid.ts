@@ -105,7 +105,9 @@ export class FileManagerGrid extends Grid {
           resp.ok(),
       );
       await this.page.keyboard.press(keys.enter);
+      await this.loadingIndicator.waitForState();
       await requestPromise;
+      await this.loadingIndicator.waitForState({ state: 'hidden' });
     } else {
       await this.page.keyboard.press(keys.enter);
     }

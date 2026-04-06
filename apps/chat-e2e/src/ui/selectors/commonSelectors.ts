@@ -48,7 +48,6 @@ export const GridSelectors = {
     `${GridSelectors.gridHeaderContainer} [role="columnheader"]${GridSelectors.gridColumn(columnId)}`,
   gridHeaderColumnName: '.ag-header-cell-text',
   gridRowsContainer: '.ag-center-cols-container',
-  gridLoader: '.ag-overlay-loading-center',
   gridRow: () => `${GridSelectors.gridRowsContainer} [role="row"]`,
   gridColumn: (columnId: string) => `[col-id="${columnId}"]`,
   gridCell: (columnId: string) =>
