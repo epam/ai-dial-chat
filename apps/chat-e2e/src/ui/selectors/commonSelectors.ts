@@ -51,7 +51,7 @@ export const GridSelectors = {
   gridRow: () => `${GridSelectors.gridRowsContainer} [role="row"]`,
   gridColumn: (columnId: string) => `[col-id="${columnId}"]`,
   gridCell: (columnId: string) =>
-    `[role="gridcell"]${GridSelectors.gridColumn(columnId)}[dataqa]`,
+    `[role="gridcell"]${GridSelectors.gridColumn(columnId)}`,
   gridCellValue: '#name',
   loadingIndicator: '.ag-overlay-loading-center',
   gridViewPort: '.ag-body-viewport',

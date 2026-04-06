@@ -96,7 +96,7 @@ export class FileManagerGrid extends Grid {
   }
 
   public async setFolderName(folderName: string, waitForRequest = true) {
-    await this.getRenameInput().typeInInput(folderName);
+    await this.getRenameInput().fillInInput(folderName);
     if (waitForRequest) {
       const requestPromise = this.page.waitForResponse(
         (resp) =>
@@ -105,9 +105,7 @@ export class FileManagerGrid extends Grid {
           resp.ok(),
       );
       await this.page.keyboard.press(keys.enter);
-      await this.loadingIndicator.waitForState();
       await requestPromise;
-      await this.loadingIndicator.waitForState({ state: 'hidden' });
     } else {
       await this.page.keyboard.press(keys.enter);
     }
@@ -121,7 +119,7 @@ export class FileManagerGrid extends Grid {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
     await dotsMenu.click({ force: true });
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
-    await this.getRenameInput().typeInInput(newName);
+    await this.getRenameInput().fillInInput(newName);
     if (isHttpMethodTriggered) {
       const hostsMap = new Map([
         [API.moveHost, 'POST'],
