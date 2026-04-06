@@ -364,7 +364,6 @@ dialTest.only(
     selectFolderManagerModal,
     selectFolderManagerModalGrid,
     selectFolderManagerModalGridAssertion,
-    baseAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718');
@@ -392,8 +391,8 @@ dialTest.only(
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(folder1Name);
-        await baseAssertion.assertElementState(
-          selectFolderManagerModalGrid.gridRowByNameCell(folder1Name),
+        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          folder1Name,
           'visible',
         );
       },
