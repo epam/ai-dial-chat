@@ -1,14 +1,14 @@
 export enum Translation {
-  Chat = 'chat',
   Common = 'common',
-  Markdown = 'markdown',
+  SideBar = 'sidebar',
+  Header = 'header',
+  Chat = 'chat',
+  Marketplace = 'marketplace',
   PromptBar = 'promptbar',
   Settings = 'settings',
-  SideBar = 'sidebar',
-  Files = 'files',
-  Marketplace = 'marketplace',
-  Header = 'header',
+  Markdown = 'markdown',
   Errors = 'errors',
+  Files = 'files',
 }
 
 export type TranslationOptions = Record<string, unknown> & {

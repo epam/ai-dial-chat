@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { StatusMessage } from './StatusMessage';
 
 interface ChipTooltipContentProps {
@@ -41,7 +43,9 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 flex-col text-sm">
           <span className="w-full truncate">{name}</span>
-          {version && <span>{t('v. {{version}}', { version })}</span>}
+          {version && (
+            <span>{t(CommonI18nKeys.VersionShort, { version })}</span>
+          )}
         </div>
       </div>
     </div>

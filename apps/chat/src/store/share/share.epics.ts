@@ -19,6 +19,7 @@ import {
   getApplicationType,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  isQuickApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
@@ -87,6 +88,7 @@ import {
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
@@ -343,7 +345,8 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       if (
         (applicationType === ApplicationType.CODE_APP ||
           schema?.displayName === 'Quick App' ||
-          isQuickApp2(application)) &&
+          isQuickApp2(application) ||
+          isQuickApp(application)) &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(
@@ -383,10 +386,12 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       const docUrl =
         getQuickAppDocumentUrl(applicationDetails) ??
         getQuick2AppDocumentUrl(applicationDetails);
-      if (docUrl?.length) {
+
+      if (hasWritePermission(payload.permissions) && docUrl?.length) {
         docUrl.forEach((url) =>
           resources.push({
             url: ApiUtils.encodeApiUrl(url),
+            permissions: payload.permissions,
           }),
         );
       }
@@ -942,11 +947,30 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.featureType === FeatureType.File) {
         if (payload.sharedWith === ShareRelations.others) {
           const files = FilesSelectors.selectFiles(state$.value);
+          const folders = FilesSelectors.selectFolders(state$.value);
 
           actions.push(
             FilesActions.setSharedFileIds({
               ids: payload.resources.entities.map((entity) => entity.id),
             }),
+          );
+
+          actions.push(
+            ...(payload.resources.folders
+              .map((item) => {
+                const isShared = folders.find((res) => res.id === item.id);
+
+                if (isShared) {
+                  return FilesActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AppAction[]),
           );
 
           actions.push(
@@ -1237,8 +1261,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                 UIActions.showSuccessToast(
                   translate(
                     payload.isFolder
-                      ? 'Folder "{{itemName}}" has been unshared successfully'
-                      : '"{{itemName}}" has been unshared successfully',
+                      ? CommonI18nKeys.FolderUnsharedSuccessfully
+                      : CommonI18nKeys.ItemUnsharedSuccessfully,
                     {
                       ns: Translation.Common,
                       itemName: name,
@@ -1259,8 +1283,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                 UIActions.showErrorToast(
                   translate(
                     payload.isFolder
-                      ? 'Failed to unshare folder "{{itemName}}". Please try again later'
-                      : 'Failed to unshare "{{itemName}}". Please try again later',
+                      ? CommonI18nKeys.FailedToUnshareFolder
+                      : CommonI18nKeys.FailedToUnshareItem,
                     {
                       ns: Translation.Common,
                       itemName: name,

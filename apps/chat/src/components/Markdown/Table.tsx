@@ -14,6 +14,7 @@ import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -157,11 +158,16 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
     <div className="mt-7 max-w-full overflow-auto" data-qa="table">
       {!isLastMessageStreaming && (
         <div
-          className="flex max-w-full justify-end bg-layer-3 px-2 py-1"
+          className="flex max-w-full justify-end rounded-t border border-b-0 border-tertiary bg-layer-3 px-2 py-1"
           data-qa="table-controls"
         >
           <div data-no-context-menu className="flex gap-2">
-            <Tooltip placement="top" tooltip={t('Copy as CSV')}>
+            <Tooltip
+              placement="top"
+              tooltip={t(MarkdownI18nKeys.CopyAsCSV, {
+                ns: Translation.Markdown,
+              })}
+            >
               <CopyIcon
                 Icon={IconCsv}
                 onClick={copyTableToCSV}
@@ -169,7 +175,12 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 type={CopyTableType.CSV}
               />
             </Tooltip>
-            <Tooltip placement="top" tooltip={t('Copy as TXT')}>
+            <Tooltip
+              placement="top"
+              tooltip={t(MarkdownI18nKeys.CopyAsTXT, {
+                ns: Translation.Markdown,
+              })}
+            >
               <CopyIcon
                 Icon={IconTxt}
                 onClick={copyTableToTXT}
@@ -177,7 +188,12 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 type={CopyTableType.TXT}
               />
             </Tooltip>
-            <Tooltip placement="top" tooltip={t('Copy as MD')}>
+            <Tooltip
+              placement="top"
+              tooltip={t(MarkdownI18nKeys.CopyAsMD, {
+                ns: Translation.Markdown,
+              })}
+            >
               <CopyIcon
                 Icon={IconMarkdown}
                 onClick={copyTableToMD}

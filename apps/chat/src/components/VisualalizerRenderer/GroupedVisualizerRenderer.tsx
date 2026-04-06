@@ -25,6 +25,7 @@ import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -37,11 +38,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
-import {
-  ButtonAppearance,
-  DialButton,
-  DialLinkButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface AttachmentInfo {
@@ -71,6 +68,7 @@ export const GroupedVisualizerRenderer = ({
     url: rendererUrl,
     title: visualizerTitle = 'Visualizer',
     passAuthInfo,
+    passExplicitToken,
   } = visualizerConfig;
 
   const dispatch = useAppDispatch();
@@ -82,14 +80,23 @@ export const GroupedVisualizerRenderer = ({
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
-    if (!passAuthInfo || !session) return {};
+    const sessionAccessToken = session?.accessToken;
+    const tokenField =
+      passExplicitToken && sessionAccessToken != null
+        ? { accessToken: sessionAccessToken }
+        : {};
+
+    if (!passAuthInfo) return tokenField;
+    if (!session) return tokenField;
+
     const email = session.user?.email ?? undefined;
-    const providerId = (session as { providerId?: string }).providerId;
+    const providerId = (session as { providerId?: string } | null)?.providerId;
     return {
       ...(email != null && { logInHint: email }),
       ...(providerId != null && { providerId }),
+      ...tokenField,
     };
-  }, [passAuthInfo, session]);
+  }, [passAuthInfo, passExplicitToken, session]);
 
   const loadedCustomAttachmentsData = useAppSelector(
     ConversationsSelectors.selectLoadedCustomAttachments,
@@ -322,15 +329,14 @@ export const GroupedVisualizerRenderer = ({
                 visualizer.current && sendMessage(visualizer.current)
               }
               iconBefore={<IconRefresh size={18} />}
-              label={t('Refresh')}
+              label={t(ChatI18nKeys.Refresh)}
             />
 
             {isBorderless && (
-              <DialButton
+              <DialLinkButton
                 className="text-secondary hover:text-accent-primary"
                 iconBefore={<FullScreenIcon size={18} />}
                 onClick={handleToggleFullScreen}
-                appearance={ButtonAppearance.Link}
               />
             )}
           </div>

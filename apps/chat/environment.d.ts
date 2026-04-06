@@ -23,6 +23,7 @@ declare global {
       CUSTOM_VISUALIZERS?: string;
       APPLICATION_VISUALIZERS?: string;
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
+      ALLOW_TOKEN_IN_SESSION?: boolean;
       ENABLED_FEATURES?: string;
       PUBLICATION_FILTERS?: string;
       ADMIN_ROLE_NAMES?: string;

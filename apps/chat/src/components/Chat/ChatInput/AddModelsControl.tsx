@@ -8,6 +8,8 @@ import { ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
@@ -55,7 +57,9 @@ export const AddModelsControl = ({
           data-qa="add-model-to-workspace"
           iconBefore={<IconPlayerPlay size={18} />}
           label={t(
-            `Add the agent${modelIdsToInstall.length > 1 ? 's' : ''} to My workspace to continue`,
+            modelIdsToInstall.length > 1
+              ? ChatI18nKeys.AddAgentsToWorkspace
+              : ChatI18nKeys.AddAgentToWorkspace,
           )}
         />
         {showScrollDownButton && (

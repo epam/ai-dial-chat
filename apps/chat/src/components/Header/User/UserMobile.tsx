@@ -15,6 +15,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
@@ -33,7 +35,7 @@ const UserInfo = () => {
   return (
     <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
-        <UserIcon className="mx-2" fallbackIconClassName="text-secondary" />
+        <UserIcon className="mx-2" />
 
         <DialEllipsisTooltip
           contentClassName="grow"
@@ -59,7 +61,7 @@ const UserSettings = () => {
       onClick={onClick}
     >
       <IconSettings className="text-secondary" size={18} />
-      <span>{t('Settings')}</span>
+      <span>{t(HeaderI18nKeys.Settings)}</span>
     </div>
   );
 };
@@ -84,14 +86,16 @@ const Logout = () => {
         }}
       >
         <IconLogout className="text-secondary" size={18} />
-        <span>{session ? t('Log out') : t('Login')}</span>
+        <span>
+          {session ? t(HeaderI18nKeys.Login) : t(HeaderI18nKeys.Login)}
+        </span>
       </div>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?')}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(HeaderI18nKeys.ConfirmLogout)}
+        description={t(HeaderI18nKeys.ConfirmLogoutDescription)}
+        confirmLabel={t(HeaderI18nKeys.LogOut)}
+        cancelLabel={t(HeaderI18nKeys.Cancel)}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {
@@ -115,6 +119,7 @@ const UserMenu = () => {
 };
 
 const UserMobileView = Inversify.register('UserMobile', () => {
+  const { t } = useTranslation(Translation.Header);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const dispatch = useAppDispatch();
@@ -140,6 +145,9 @@ const UserMobileView = Inversify.register('UserMobile', () => {
       data-qa="profile-panel"
     >
       <CloseSidebarButton onClose={handleClose} isLeftSide={false} />
+      <div className="border-b border-tertiary p-4 text-[16px]/[24px] font-semibold">
+        {t('User profile')}
+      </div>
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>

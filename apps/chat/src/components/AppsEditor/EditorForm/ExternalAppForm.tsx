@@ -12,6 +12,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   ExternalAppForm as ExternalAppFormType,
@@ -54,9 +55,9 @@ export const ExternalAppForm = () => {
     >
       <Field
         {...register('externalUrl')}
-        label={t('External URL')}
+        label={t(MarketplaceI18nKeys.ExternalURL)}
         mandatory
-        placeholder={t('Type chat external URL')}
+        placeholder={t(MarketplaceI18nKeys.TypeChatExternalURL)}
         id="externalUrl"
         error={errors.externalUrl?.message}
         data-qa="external-url"

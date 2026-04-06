@@ -30,6 +30,7 @@ import {
 } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   APPROVE_REQUIRED_SECTION_NAME,
   ORGANIZATION_SECTION_NAME,
@@ -161,7 +162,7 @@ const PromptFolderTemplate = ({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t('Folder with name "{{name}}" already exists at the root.', {
+            t(ChatI18nKeys.FolderNameExistsAtRoot, {
               ns: Translation.Chat,
               name: folder.name,
             }),

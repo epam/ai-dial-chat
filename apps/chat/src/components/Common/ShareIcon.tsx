@@ -11,6 +11,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from './Tooltip';
 
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
@@ -27,6 +29,7 @@ interface ShareIconProps extends ShareInterface {
   iconWrapperClassName?: string;
   isMyEntity?: boolean;
   isExternal?: boolean;
+  isDraggingOver?: boolean;
 }
 
 export function ShareIcon({
@@ -41,6 +44,7 @@ export function ShareIcon({
   iconWrapperClassName,
   isMyEntity,
   isExternal,
+  isDraggingOver,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isApplication = featureType === FeatureType.Application;
@@ -59,11 +63,16 @@ export function ShareIcon({
 
   const [AdditionalIcon, dataQA, tooltip] = useMemo(() => {
     if (isPublished && isPublishingEnabled)
-      return [World, 'world-icon', 'Published'];
+      return [World, 'world-icon', SideBarI18nKeys.Published] as const;
     if (isExternal)
-      return [IconExternalLink, 'external-icon', 'External application'];
-    if (isShared) return [ArrowUpRight, 'arrow-icon', 'Shared'];
-    return [IconPencil, 'pencil-icon', 'Created by me'];
+      return [
+        IconExternalLink,
+        'external-icon',
+        SideBarI18nKeys.ExternalApplication,
+      ] as const;
+    if (isShared)
+      return [ArrowUpRight, 'arrow-icon', SideBarI18nKeys.Shared] as const;
+    return [IconPencil, 'pencil-icon', SideBarI18nKeys.CreatedByMe] as const;
   }, [isPublished, isPublishingEnabled, isExternal, isShared]);
 
   if (
@@ -100,7 +109,7 @@ export function ShareIcon({
             height={size}
             className={classNames(
               'p-px text-accent-primary group-hover:bg-accent-primary-alpha',
-              isHighlighted && 'bg-accent-primary-alpha',
+              (isHighlighted || isDraggingOver) && 'bg-accent-primary-alpha',
               isPublished && '!rounded-md',
               isApplication
                 ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'

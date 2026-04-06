@@ -12,6 +12,7 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
@@ -32,7 +33,7 @@ export const ReviewExternalAppSection = ({
 
   return (
     <MarketplaceEntityInfoRow
-      label={t('External URL')}
+      label={t(ChatI18nKeys.ExternalUrl)}
       dataQa="app-external-url-label"
       value={
         <Link
@@ -42,7 +43,7 @@ export const ReviewExternalAppSection = ({
           className="flex flex-nowrap items-center gap-1 break-all text-accent-primary"
           data-qa="app-external-url"
         >
-          {externalUrl}
+          <p className="min-w-0 flex-1"> {externalUrl}</p>
           <IconExternalLink size={DEFAULT_ICON_SIZES.SMALL} />
         </Link>
       }

@@ -4,10 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import {
-  ChangeMarketplaceTabs,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { NoResultsFound } from './NoResultsFound';
 import { SuggestionButton } from './SuggestionButton';
@@ -29,10 +26,10 @@ export const TalkToNotFound = ({
     return (
       <div className="flex size-full flex-col items-center justify-center gap-3">
         <IconClipboardX className="text-secondary" size={60} stroke={0.5} />
-        <span>{t('No Agents and Toolsets')}</span>
+        <span>{t(ChatI18nKeys.NoAgentsAndToolsets)}</span>
         {isMyWorkspace && (
           <SuggestionButton
-            customText={t('Go to')}
+            customText={t(ChatI18nKeys.GoTo)}
             onSetTab={onOpenMarketplaceTab}
           />
         )}
@@ -43,11 +40,7 @@ export const TalkToNotFound = ({
   return (
     <div className="flex size-full items-center justify-center">
       <NoResultsFound
-        additionalText={
-          isMyWorkspace
-            ? t(` in ${ChangeMarketplaceTabs[MarketplaceTabs.MY_WORKSPACE]}`)
-            : ''
-        }
+        additionalText={isMyWorkspace ? t(ChatI18nKeys.InMyWorkspace) : ''}
       >
         {isMyWorkspace && <SuggestionButton onSetTab={onOpenMarketplaceTab} />}
       </NoResultsFound>
