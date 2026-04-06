@@ -9,6 +9,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
+
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { ApplicationVisualizerConfig } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
@@ -23,6 +26,7 @@ import {
 
 import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+  DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -31,6 +35,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
   AttachmentItem,
+  CustomVisualizerData,
   CustomVisualizerDataLayout,
   GroupedAttachmentsData,
   Role,
@@ -52,6 +57,32 @@ interface Props {
   forceDefaultView?: boolean;
 }
 
+function getLoadedLayoutsForAttachments(
+  attachments: AttachmentInfo[],
+  loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[],
+): CustomVisualizerDataLayout[] {
+  return attachments
+    .map(
+      ({ url }) =>
+        loadedCustomAttachmentsData.find((d) => d.url === url)?.data?.layout,
+    )
+    .filter((layout): layout is CustomVisualizerDataLayout => layout != null);
+}
+
+function maxLayoutMetric(
+  layouts: CustomVisualizerDataLayout[],
+  read: (layout: CustomVisualizerDataLayout) => number | undefined,
+  fallback: number,
+): number {
+  if (!layouts.length) return fallback;
+  return Math.max(
+    ...layouts.map((layout) => {
+      const value = Number(read(layout));
+      return Number.isFinite(value) ? value : fallback;
+    }),
+  );
+}
+
 export const GroupedVisualizerRenderer = ({
   attachments,
   visualizerConfig,
@@ -63,6 +94,13 @@ export const GroupedVisualizerRenderer = ({
 
   const [ready, setReady] = useState<boolean>();
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isScreenSmall, setIsScreenSmall] = useState(isSmallScreen());
+
+  const handleResize = useCallback(() => {
+    setIsScreenSmall(isSmallScreen());
+  }, []);
+  useWindowResizeEvent(handleResize);
+
   const { data: session } = useSession();
   const {
     url: rendererUrl,
@@ -145,6 +183,49 @@ export const GroupedVisualizerRenderer = ({
     );
   }, [attachments, loadedCustomAttachmentsData]);
 
+  const groupedVisualizerLayout: CustomVisualizerDataLayout = useMemo(() => {
+    const attachmentLayouts = getLoadedLayoutsForAttachments(
+      attachments,
+      loadedCustomAttachmentsData,
+    );
+    const referenceLayout = attachmentLayouts[0];
+
+    const maxWidth = maxLayoutMetric(
+      attachmentLayouts,
+      (l) => l.width,
+      DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
+    );
+    const maxHeight = maxLayoutMetric(
+      attachmentLayouts,
+      (l) => l.height,
+      DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+    );
+    const maxMobileHeight = attachmentLayouts.length
+      ? Math.max(
+          ...attachmentLayouts.map((l) =>
+            Number(l.mobileHeight ?? DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT),
+          ),
+        )
+      : DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT;
+
+    return {
+      ...referenceLayout,
+      width: scrollWidth ? scrollWidth : maxWidth,
+      height: isFullScreen && containerHeight ? containerHeight : maxHeight,
+      mobileHeight: maxMobileHeight,
+      themeId,
+      ...authLayoutFields,
+    };
+  }, [
+    attachments,
+    loadedCustomAttachmentsData,
+    authLayoutFields,
+    scrollWidth,
+    containerHeight,
+    isFullScreen,
+    themeId,
+  ]);
+
   const groupedAttachmentsData: GroupedAttachmentsData | null = useMemo(() => {
     if (!allAttachmentsLoaded) return null;
 
@@ -160,29 +241,15 @@ export const GroupedVisualizerRenderer = ({
       },
     );
 
-    const layout: CustomVisualizerDataLayout = {
-      width: scrollWidth ?? DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
-      height:
-        isFullScreen && containerHeight
-          ? containerHeight
-          : DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
-      themeId,
-      ...authLayoutFields,
-    };
-
     return {
       attachments: attachmentItems,
-      layout,
+      layout: groupedVisualizerLayout,
     };
   }, [
     allAttachmentsLoaded,
     attachments,
     loadedCustomAttachmentsData,
-    authLayoutFields,
-    scrollWidth,
-    containerHeight,
-    isFullScreen,
-    themeId,
+    groupedVisualizerLayout,
   ]);
 
   const sendMessage = useCallback(
@@ -301,10 +368,6 @@ export const GroupedVisualizerRenderer = ({
     return null;
   }
 
-  const iframeContainerClassNames = isFullScreen
-    ? 'h-[calc(100%-30px)]'
-    : `h-[${groupedAttachmentsData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT}px]`;
-
   return (
     <div
       data-no-context-menu
@@ -343,7 +406,17 @@ export const GroupedVisualizerRenderer = ({
         </div>
         <div
           ref={iframeContainerRef}
-          className={classNames('size-full', iframeContainerClassNames)}
+          className={classNames(
+            'size-full',
+            isFullScreen && 'h-[calc(100%-30px)]',
+          )}
+          style={{
+            height: !isFullScreen
+              ? isScreenSmall
+                ? groupedVisualizerLayout.mobileHeight
+                : groupedVisualizerLayout.height
+              : undefined,
+          }}
         >
           {(!ready || attachmentDataLoading || !allAttachmentsLoaded) && (
             <div className="absolute z-10 flex size-full items-center bg-layer-1">
