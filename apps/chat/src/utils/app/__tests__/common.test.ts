@@ -431,10 +431,22 @@ describe('utils/app/common.ts', () => {
   describe('misc helpers', () => {
     it('extractNameFromEmail: extracts local part only for valid email-like strings', () => {
       expect(extractNameFromEmail(undefined)).toBeUndefined();
-      expect(extractNameFromEmail('palina@epample.com')).toBe('palina');
+      expect(extractNameFromEmail('palina@example.com')).toBe('palina');
+      expect(extractNameFromEmail('palina@example')).toBe('palina@example');
       expect(extractNameFromEmail('palina @@@')).toBe('palina @@@');
       expect(extractNameFromEmail('palina @ test')).toBe('palina @ test');
       expect(extractNameFromEmail('palina@')).toBe('palina@');
+      expect(extractNameFromEmail('palina@q')).toBe('palina@q');
+      expect(
+        extractNameFromEmail(
+          'OpenAI"s o3-mini is a cost-efficient reasoning model optimized for coding, math, and science tasks, offering faster responses and improved accuracy over its predecessors.',
+        ),
+      ).toBe(
+        'OpenAI"s o3-mini is a cost-efficient reasoning model optimized for coding, math, and science tasks, offering faster responses and improved accuracy over its predecessors.',
+      );
+      expect(extractNameFromEmail("test_user10_(\\~!@#$^*-_+[]'|<>.?)")).toBe(
+        "test_user10_(\\~!@#$^*-_+[]'|<>.?)",
+      );
     });
 
     it('parseCommaSeparatedList: trims items; returns default when undefined', () => {

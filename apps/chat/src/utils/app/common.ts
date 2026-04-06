@@ -331,8 +331,11 @@ export const castToString = (value: unknown): string => value as string;
 export const extractNameFromEmail = (author: string | undefined) => {
   if (typeof author !== 'string') return;
 
-  // Extract name only from valid email-like strings (e.g. name@domain.tld).
-  const match = author.match(/^([^\s@]+)@([^\s@]+\.[^\s@]+)$/);
+  // Extract name only from standard email-like strings (e.g. name@domain.tld).
+  // Keeps malformed/special-character strings unchanged.
+  const match = author.match(
+    /^([A-Za-z0-9._%+-]+)@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})$/,
+  );
 
   return match ? match[1] : author;
 };
