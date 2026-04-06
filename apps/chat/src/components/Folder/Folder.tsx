@@ -866,15 +866,11 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const isAuthor = isMyEntity(currentFolder);
 
-  const unshareDescription = useMemo(
-    () => (
-      <span>
-        {t('Are you sure you want to remove')}{' '}
-        <strong>{t(isAuthor ? 'access for all users' : 'your access')}</strong>{' '}
-        {t('to {{name}}', { name: currentFolder.name })}
-      </span>
-    ),
-    [isAuthor, t, currentFolder.name],
+  const unshareDescription = t(
+    isAuthor
+      ? ChatI18nKeys.ConfirmRemoveAllUsersAccess
+      : ChatI18nKeys.ConfirmRemoveYourAccess,
+    { name: currentFolder.name },
   );
 
   const handleCloseUnshareConfirmation = useCallback(
@@ -1349,10 +1345,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onUnshareFolder && (
         <ConfirmDialog
           isOpen={isUnshareConfirmDialog}
-          heading={t('Confirm unsharing')}
+          heading={t(ChatI18nKeys.ConfirmUnsharing)}
           description={unshareDescription}
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(ChatI18nKeys.Unshare)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
           onClose={handleCloseUnshareConfirmation}
         />
       )}

@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isConversationId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isMyBucket, splitEntityId } from '@/src/utils/app/shared-utils';
 import { parseEntityApiKey } from '@/src/utils/server/api';
@@ -11,6 +12,8 @@ import { Translation } from '@/src/types/translation';
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareSelectors } from '@/src/store/selectors';
+
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -27,31 +30,28 @@ function UnshareDialogView() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
-
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
+  const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
 
   const resourceId = unshareEntity?.id ?? unshareResourceId ?? '';
 
-  const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
+  const { bucket } = splitEntityId(resourceId);
+  const isAuthor = isMyBucket(bucket);
+  const { name } = parseEntityApiKey(splitEntityId(resourceId).name, {
+    parseVersion: true,
+    parseModel: isConversationId(resourceId),
+  });
 
-  const description = useMemo(() => {
-    const { bucket } = splitEntityId(resourceId);
-    const isAuthor = isMyBucket(bucket);
-    const { name } = parseEntityApiKey(resourceId, {
-      parseVersion: false,
-      parseModel: false,
-    });
-
-    return (
-      <span>
-        {t('Are you sure you want to remove')}{' '}
-        <strong>{t(isAuthor ? 'access for all users' : 'your access')}</strong>{' '}
-        {t('to {{name}}?', { name: name ?? shareResourceName })}
-      </span>
-    );
-  }, [shareResourceName, t, resourceId]);
+  const description = t(
+    isAuthor
+      ? CommonI18nKeys.ConfirmRemoveAllUsersAccess
+      : CommonI18nKeys.ConfirmRemoveYourAccess,
+    {
+      name: name ?? shareResourceName,
+    },
+  );
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
@@ -109,10 +109,10 @@ function UnshareDialogView() {
   return (
     <ConfirmDialog
       isOpen
-      heading={t('Confirm unsharing')}
+      heading={t(CommonI18nKeys.ConfirmUnsharing)}
       description={description}
-      confirmLabel={t('Unshare')}
-      cancelLabel={t('Cancel')}
+      confirmLabel={t(CommonI18nKeys.Unshare)}
+      cancelLabel={t(CommonI18nKeys.Cancel)}
       onClose={handleConfirmUnshare}
     />
   );
