@@ -27,7 +27,6 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { FileItemEventIds } from '@/src/constants/file';
-
 import { FilesI18nKeys } from '@/src/constants/i18n';
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';

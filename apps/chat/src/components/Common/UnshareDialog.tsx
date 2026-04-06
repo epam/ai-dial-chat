@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+
 import { withRenderWhen } from './RenderWhen';
 
 function UnshareDialogView() {
@@ -47,7 +48,7 @@ function UnshareDialogView() {
       <span>
         {t('Are you sure you want to remove')}{' '}
         <strong>{t(isAuthor ? 'access for all users' : 'your access')}</strong>{' '}
-        {t('to {{name}}?', { name: shareResourceName ?? name })}
+        {t('to {{name}}?', { name: name ?? shareResourceName })}
       </span>
     );
   }, [shareResourceName, t, resourceId]);
