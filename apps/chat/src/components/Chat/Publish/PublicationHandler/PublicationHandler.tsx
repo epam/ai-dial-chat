@@ -601,13 +601,20 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           ItemComponent,
                           featureType,
                         }) => {
-                          const filteredResources =
-                            publication.resources.filter(({ reviewUrl }) => {
+                          const filteredResources = publication.resources
+                            .filter(({ reviewUrl }) => {
                               const { apiKey } = splitEntityId(reviewUrl);
                               const itemFeatureType =
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
-                            });
+                            })
+                            .sort((a, b) =>
+                              splitEntityId(a.reviewUrl)
+                                .name.toLowerCase()
+                                .localeCompare(
+                                  splitEntityId(b.reviewUrl).name.toLowerCase(),
+                                ),
+                            );
 
                           const isConversationSectionAndNoFiles =
                             !isReview &&
