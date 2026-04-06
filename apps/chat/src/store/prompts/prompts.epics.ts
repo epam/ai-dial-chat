@@ -1051,7 +1051,10 @@ const selectPromptEpic: AppEpic = (action$, state$) =>
 
 const hidePromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(PromptsActions.applyPrompt.type),
+    ofType(
+      PromptsActions.applyPrompt.type,
+      PublicationActions.selectPublication.type,
+    ),
     switchMap(() =>
       isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
     ),
