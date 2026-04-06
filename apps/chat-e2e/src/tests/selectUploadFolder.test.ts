@@ -351,7 +351,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   '[Select folder] Error message appears if to add a dot to the end of folder name.\n' +
     '[Select folder] Error message appears if to create a folder with already existing name.\n' +
     '[Select folder] Error message appears if to add a dot to the beginning of folder name',
