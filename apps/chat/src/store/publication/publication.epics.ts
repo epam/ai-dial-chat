@@ -83,6 +83,7 @@ import {
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -103,8 +104,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 
 import {
   Conversation,
@@ -157,7 +157,7 @@ const publishEpic: AppEpic = (action$) =>
       if (isPublishingExternalFiles) {
         return of(
           PublicationActions.publishFail(
-            errorsMessages.publicationWithExternalFilesFailed,
+            CommonI18nKeys.PublicationWithExternalFilesFailed,
           ),
         );
       }
@@ -168,7 +168,9 @@ const publishEpic: AppEpic = (action$) =>
         switchMap(() =>
           of(
             UIActions.showSuccessToast(
-              translate('Publication request created successfully'),
+              translate(CommonI18nKeys.PublicationRequestCreatedSuccessfully, {
+                ns: Translation.Common,
+              }),
             ),
           ),
         ),
@@ -185,7 +187,9 @@ const publishFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.publishFail.type),
     map(({ payload }) => {
       return UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.publicationFailed),
+        translate(payload ?? CommonI18nKeys.PublicationFailed, {
+          ns: Translation.Common,
+        }),
       );
     }),
   );
@@ -223,7 +227,9 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationsUploadFailed),
+        translate(CommonI18nKeys.PublicationsUploadFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -448,7 +454,9 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationUploadFailed),
+        translate(CommonI18nKeys.PublicationUploadFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -645,7 +653,9 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.uploadPublishedWithMeItemsFail.type),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publishedItemsUploadFailed),
+        translate(CommonI18nKeys.PublishedItemsUploadFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -1046,7 +1056,9 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.approvePublicationFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.publicationApproveFailed),
+        translate(payload ?? CommonI18nKeys.PublicationApproveFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -1072,7 +1084,9 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.rejectPublicationFail.type),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationRejectFailed),
+        translate(CommonI18nKeys.PublicationRejectFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -1124,7 +1138,11 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
           ),
           of(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [
+                translate(ChatI18nKeys.NewConversation, {
+                  ns: Translation.Chat,
+                }),
+              ],
             }),
           ),
         );
@@ -1163,7 +1181,9 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.uploadRulesFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.rulesUploadingFailed),
+        translate(payload ?? CommonI18nKeys.RulesUploadingFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -1286,7 +1306,9 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.uploadAllPublishedWithMeItemsFail.type),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publishedItemsUploadFailed),
+        translate(CommonI18nKeys.PublishedItemsUploadFailed, {
+          ns: Translation.Common,
+        }),
       ),
     ),
   );
@@ -1306,9 +1328,10 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
       if (!publication) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication not found`,
-            ),
+            translate(CommonI18nKeys.CannotUpdateEntityPublicationNotFound, {
+              ns: Translation.Common,
+              entityType: isConversation ? 'conversation' : 'prompt',
+            }),
           ),
         );
       }
@@ -1316,9 +1339,10 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
       if (!publication.resources) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication has no resources`,
-            ),
+            translate(CommonI18nKeys.CannotUpdateEntityPublicationNoResources, {
+              ns: Translation.Common,
+              entityType: isConversation ? 'conversation' : 'prompt',
+            }),
           ),
         );
       }
@@ -1447,7 +1471,12 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
       if (!publication || !publication?.resources || !payload.publicationUrl) {
         return of(
           UIActions.showErrorToast(
-            translate('Cannot update application, publication not found'),
+            translate(
+              CommonI18nKeys.CannotUpdateApplicationPublicationNotFound,
+              {
+                ns: Translation.Common,
+              },
+            ),
           ),
         );
       }
@@ -1531,7 +1560,12 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
       if (!publication) {
         return of(
           UIActions.showErrorToast(
-            translate('Cannot update application icon, publication not found'),
+            translate(
+              CommonI18nKeys.CannotUpdateApplicationIconPublicationNotFound,
+              {
+                ns: Translation.Common,
+              },
+            ),
           ),
         );
       }
@@ -1620,7 +1654,9 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
       if (!publication) {
         return of(
           UIActions.showErrorToast(
-            translate('Cannot update folder, publication not found'),
+            translate(CommonI18nKeys.CannotUpdateFolderPublicationNotFound, {
+              ns: Translation.Common,
+            }),
           ),
         );
       }
@@ -1628,7 +1664,9 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
       if (!publication.resources) {
         return of(
           UIActions.showErrorToast(
-            translate('Cannot update folder, publication has no resources'),
+            translate(CommonI18nKeys.CannotUpdateFolderPublicationNoResources, {
+              ns: Translation.Common,
+            }),
           ),
         );
       }

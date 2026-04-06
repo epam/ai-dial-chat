@@ -45,6 +45,12 @@
   "Select custom logo": "Select custom logo",
   "Select file": "Select file",
   "Confirm": "Confirm",
-  "Cancel": "Cancel"
+  "Cancel": "Cancel",
+  "Confirm changing source folder": "Confirm changing source folder",
+  "Changing the source folder will immediately stop sharing, and other users will no longer see this application.": "Changing the source folder will immediately stop sharing, and other users will no longer see this application.",
+  "Confirm changing icon file": "Confirm changing icon file",
+  "Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.": "Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.",
+  "Confirm changing document relative URLs": "Confirm changing document relative URLs",
+  "Changing document relative URLs will immediately stop sharing, and other users will no longer see this application.": "Changing document relative URLs will immediately stop sharing, and other users will no longer see this application."
 }
 
