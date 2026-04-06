@@ -370,6 +370,12 @@ export const GroupedVisualizerRenderer = ({
     return null;
   }
 
+  const iframeContainerHeight = !isFullScreen
+    ? isScreenSmall
+      ? groupedVisualizerLayout.mobileHeight
+      : groupedVisualizerLayout.height
+    : undefined;
+
   return (
     <div
       data-no-context-menu
@@ -413,11 +419,7 @@ export const GroupedVisualizerRenderer = ({
             isFullScreen && 'h-[calc(100%-30px)]',
           )}
           style={{
-            height: !isFullScreen
-              ? isScreenSmall
-                ? groupedVisualizerLayout.mobileHeight
-                : groupedVisualizerLayout.height
-              : undefined,
+            height: iframeContainerHeight,
           }}
         >
           {(!ready || attachmentDataLoading || !allAttachmentsLoaded) && (
