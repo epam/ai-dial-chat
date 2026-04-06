@@ -248,6 +248,7 @@ const getOktaProvider = (config: ProviderConfig) =>
         clientId: config.clientId,
         clientSecret: config.clientSecret,
         issuer: config.issuer,
+        name: config.name ?? DEFAULT_NAME,
         authorization: {
           params: {
             scope: config.scope || 'openid email profile',
