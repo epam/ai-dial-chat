@@ -429,10 +429,12 @@ describe('utils/app/common.ts', () => {
   });
 
   describe('misc helpers', () => {
-    it('extractNameFromEmail: returns undefined for non-string; extracts part before @ for email-looking strings', () => {
+    it('extractNameFromEmail: extracts local part only for valid email-like strings', () => {
       expect(extractNameFromEmail(undefined)).toBeUndefined();
-      expect(extractNameFromEmail('john@doe.com')).toBe('john');
-      expect(extractNameFromEmail('not-an-email')).toBe('not-an-email');
+      expect(extractNameFromEmail('palina@epample.com')).toBe('palina');
+      expect(extractNameFromEmail('palina @@@')).toBe('palina @@@');
+      expect(extractNameFromEmail('palina @ test')).toBe('palina @ test');
+      expect(extractNameFromEmail('palina@')).toBe('palina@');
     });
 
     it('parseCommaSeparatedList: trims items; returns default when undefined', () => {
