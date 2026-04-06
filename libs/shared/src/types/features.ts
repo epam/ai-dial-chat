@@ -78,6 +78,7 @@ export enum Feature {
 
   // Applications
   CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
+  HideCustomAppCreation = 'hide-custom-app-creation', // Hide "Custom app" option in 'Add app' button/menu
   CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
   CodeInterpreter = 'code-interpreter', // Enable Code Interpreter feature
 

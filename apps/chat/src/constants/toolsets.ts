@@ -10,6 +10,9 @@ import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApiKeys } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
+
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
@@ -34,7 +37,10 @@ export enum ToolsetAuthAction {
 }
 
 export const PUBLIC_TOOLSET_TOOLTIP = translate(
-  'This toolset is public and cannot be edited',
+  CommonI18nKeys.ToolsetIsPublicCannotBeEdited,
+  {
+    ns: Translation.Common,
+  },
 );
 
 export const TOOLSET_AUTH_POPUP_NAME = 'toolset-auth';

@@ -46,12 +46,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 const credsTabs = [
   {
     key: ToolsetCredentialsLevel.USER,
-    label: 'My credentials',
+    label: MarketplaceI18nKeys.MyCredentials,
     Icon: IconUser,
   },
   {
     key: ToolsetCredentialsLevel.GLOBAL,
-    label: 'Entire organization credentials',
+    label: MarketplaceI18nKeys.EntireOrganizationCredentials,
     Icon: IconLayoutGrid,
   },
 ];
@@ -296,8 +296,8 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
                 statusBadge={{
                   label: t(
                     isToolsetSignedIn(toolset, key)
-                      ? 'LOGGED IN'
-                      : 'LOGGED OUT',
+                      ? MarketplaceI18nKeys.LoggedIn
+                      : MarketplaceI18nKeys.LoggedOut,
                   ),
                   type: isToolsetSignedIn(toolset, key) ? 'success' : 'error',
                 }}

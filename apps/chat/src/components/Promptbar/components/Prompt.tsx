@@ -233,7 +233,7 @@ export const PromptComponent = memo(
     }, [dispatch, prompt.id, prompt.sharedWithMe]);
 
     const isHighlighted = !isSelectMode
-      ? !!deletingPromptId || isSelected || isContextMenu
+      ? prompt.id === deletingPromptId || isSelected || isContextMenu
       : isChosen;
 
     const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
