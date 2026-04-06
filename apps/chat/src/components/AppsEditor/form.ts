@@ -53,6 +53,7 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -224,14 +225,14 @@ export const QuickApp2Schema = zodValidation
           ctx.addIssue({
             code: 'custom',
             path: ['agentsAndToolsetsJson'],
-            message: translate('Should be an array'),
+            message: translate(CommonI18nKeys.ShouldBeAnArray),
           });
         }
       } catch {
         ctx.addIssue({
           code: 'custom',
           path: ['agentsAndToolsetsJson'],
-          message: translate('Should be a valid JSON'),
+          message: translate(CommonI18nKeys.ShouldBeAValidJSON),
         });
       }
     }
@@ -242,7 +243,7 @@ export const QuickApp2Schema = zodValidation
       ctx.addIssue({
         code: 'custom',
         path: ['model'],
-        message: translate('Selected model does not support tools'),
+        message: translate(CommonI18nKeys.SelectedModelDoesNotSupportTools),
       });
     }
   });

@@ -53,6 +53,7 @@ import {
 } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -76,6 +77,7 @@ import {
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
@@ -177,7 +179,10 @@ const createApplicationEpic: AppEpic = (action$) =>
               of(
                 UIActions.showErrorToast(
                   translate(
-                    'An application with this name and this version already exists.',
+                    CommonI18nKeys.ApplicationNameVersionAlreadyExists,
+                    {
+                      ns: Translation.Common,
+                    },
                   ),
                 ),
               ),
@@ -307,7 +312,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       ...failActions,
                       UIActions.showErrorToast(
                         translate(
-                          'An application with this name and this version already exists.',
+                          CommonI18nKeys.ApplicationNameVersionAlreadyExists,
+                          {
+                            ns: Translation.Common,
+                          },
                         ),
                       ),
                     ],
@@ -319,7 +327,9 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   actions: [
                     ...failActions,
                     UIActions.showErrorToast(
-                      translate('Failed to move application'),
+                      translate(CommonI18nKeys.FailedToMoveApplication, {
+                        ns: Translation.Common,
+                      }),
                     ),
                   ],
                 });
@@ -395,7 +405,9 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   ),
                   of(
                     UIActions.showErrorToast(
-                      translate('Failed to update application'),
+                      translate(CommonI18nKeys.FailedToUpdateApplication, {
+                        ns: Translation.Common,
+                      }),
                     ),
                   ),
                   iif(
@@ -403,7 +415,12 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     of(
                       ApplicationActions.setEditorError(
                         err.message ??
-                          translate('App settings are not matching the schema'),
+                          translate(
+                            MarketplaceI18nKeys.AppSettingsNotMatchingSchema,
+                            {
+                              ns: Translation.Marketplace,
+                            },
+                          ),
                       ),
                     ),
                     EMPTY,
@@ -463,7 +480,11 @@ const editApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.editFail({
               oldApplication: payload.oldApplication,
             }),
-            UIActions.showErrorToast(translate('Failed to update application')),
+            UIActions.showErrorToast(
+              translate(CommonI18nKeys.FailedToUpdateApplication, {
+                ns: Translation.Common,
+              }),
+            ),
           );
         }),
       );
@@ -836,7 +857,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
-            UIActions.showErrorToast(translate('Failed to enter edit mode')),
+            UIActions.showErrorToast(
+              translate(CommonI18nKeys.FailedToEnterEditMode, {
+                ns: Translation.Common,
+              }),
+            ),
           );
         }),
       );
