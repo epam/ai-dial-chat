@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatFileSize, isAbsoluteUrl } from '../file';
+import { formatFileSize, isAbsoluteUrl, prepareFileName } from '../file';
 
 describe('File utility methods', () => {
   it.each([
@@ -42,6 +42,29 @@ describe('File utility methods', () => {
       expect(formatFileSize(1.5 * 1024 * 1024)).toBe('2 MB');
       // 100 MB
       expect(formatFileSize(100 * 1024 * 1024)).toBe('100 MB');
+    });
+  });
+
+  describe('prepareFileName', () => {
+    it('preserves extension while sanitizing invalid symbols in file name', () => {
+      expect(prepareFileName('  ab,c.txt  ')).toBe('ab_c.txt');
+    });
+
+    it('truncates the stem before the extension for long filenames', () => {
+      const result = prepareFileName(
+        'test.test.testtest.testtest.testtesttesttesttesttesttesttest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtesttesttest.json',
+      );
+
+      expect(result).toHaveLength(160);
+      expect(result.endsWith('.json')).toBe(true);
+    });
+
+    it('trims trailing dots from the full file name result', () => {
+      expect(prepareFileName('report....')).toBe('report');
+    });
+
+    it('keeps file names without extension after sanitization', () => {
+      expect(prepareFileName('  bad,name  ')).toBe('bad_name');
     });
   });
 });

@@ -18,6 +18,7 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import {
   BYTES_IN_KB,
   BYTES_IN_MB,
@@ -394,10 +395,22 @@ export const getNextFileName = (
   return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
 };
 
-export const prepareFileName = (filename: string) =>
-  prepareEntityName(
-    getFileNameWithoutExtension(filename) + getFileNameExtension(filename),
+export const prepareFileName = (filename: string) => {
+  const trimmedFilename = filename.trim();
+  const extension = getFileNameExtension(trimmedFilename);
+
+  if (!extension || extension === '.') {
+    return prepareEntityName(trimmedFilename);
+  }
+
+  const maxBaseNameLength = Math.max(MAX_ENTITY_LENGTH - extension.length, 0);
+  const preparedBaseName = prepareEntityName(
+    getFileNameWithoutExtension(trimmedFilename),
+    { maxNameLength: maxBaseNameLength },
   );
+
+  return `${preparedBaseName}${extension}`;
+};
 
 export const isAbsoluteUrl = (url: string): boolean => {
   const urlLower = url.toLowerCase();
