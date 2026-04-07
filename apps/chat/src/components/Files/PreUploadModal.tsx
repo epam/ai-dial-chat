@@ -179,10 +179,9 @@ export const PreUploadDialog = ({
 
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
-        t(
-          `${errors.length ? '\n' : ''}The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}`,
-          { fileNames: localIncorrectSameNameFiles.join(', ') },
-        ),
+        t(ChatI18nKeys.FilesAlreadyExistInSelectedFolder, {
+          fileNames: localIncorrectSameNameFiles.join(', '),
+        }),
       );
     }
 
@@ -192,12 +191,9 @@ export const PreUploadDialog = ({
 
     if (duplicateNames.length) {
       errors.push(
-        t(
-          `${errors.length ? '\n' : ''}The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}`,
-          {
-            fileNames: duplicateNames.join(', '),
-          },
-        ),
+        t(ChatI18nKeys.FilesHaveSameNamesInUploadList, {
+          fileNames: duplicateNames.join(', '),
+        }),
       );
     }
 

@@ -43,6 +43,9 @@ export function AddAppButton() {
   );
 
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
+  const hideCustomAppCreation = enabledFeatures.has(
+    Feature.HideCustomAppCreation,
+  );
 
   const openEditor = useCallback(
     (type: string) => {
@@ -62,7 +65,7 @@ export function AddAppButton() {
           name: t(MarketplaceI18nKeys.CustomApp),
           type: ApplicationType.CUSTOM_APP,
           dataQa: 'add-custom-app',
-          display: true,
+          display: !hideCustomAppCreation,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             dispatch(
@@ -100,7 +103,14 @@ export function AddAppButton() {
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
-    [t, isCodeAppsEnabled, applicationTypeSchemas, openEditor, dispatch],
+    [
+      t,
+      hideCustomAppCreation,
+      isCodeAppsEnabled,
+      applicationTypeSchemas,
+      dispatch,
+      openEditor,
+    ],
   );
 
   return (
