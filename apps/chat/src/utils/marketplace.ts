@@ -16,12 +16,14 @@ import {
 } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import {
   MarketplaceState,
   TableSort,
 } from '@/src/store/marketplace/marketplace.types';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   ApplicationTypeToSourceType,
   ENTITY_TYPES,
@@ -287,7 +289,10 @@ export const getLinkErrorMessage = (
 ) => {
   if (!detailsEntity && reference) {
     return translate(
-      `${isAgentsTab ? 'Agent' : 'Toolset'} by this link not found`,
+      isAgentsTab
+        ? CommonI18nKeys.AgentByThisLinkNotFound
+        : CommonI18nKeys.ToolsetByThisLinkNotFound,
+      { ns: Translation.Common },
     );
   }
 };

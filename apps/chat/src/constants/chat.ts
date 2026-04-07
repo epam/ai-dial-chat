@@ -4,6 +4,9 @@ import { translate } from '@/src/utils/app/translation';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ImageMIMEType } from '@epam/ai-dial-shared';
 
@@ -78,7 +81,7 @@ export const LAST_USED_AGENT = 'last-used-agent';
 export const DEFAULT_MODEL_OPTION: DialAIEntityModel = {
   id: DEFAULT_AGENT,
   reference: DEFAULT_AGENT,
-  name: translate('Default agent'),
+  name: translate(ChatI18nKeys.DefaultAgent, { ns: Translation.Chat }),
   type: EntityType.Model,
   isDefault: true,
 };
@@ -86,7 +89,7 @@ export const DEFAULT_MODEL_OPTION: DialAIEntityModel = {
 export const LAST_USED_MODEL_OPTION: DialAIEntityModel = {
   id: LAST_USED_AGENT,
   reference: LAST_USED_AGENT,
-  name: translate('Last used agent'),
+  name: translate(ChatI18nKeys.LastUsedAgent, { ns: Translation.Chat }),
   type: EntityType.Model,
   isDefault: false,
 };
