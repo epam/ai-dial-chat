@@ -363,7 +363,6 @@ const TalkToModalView = ({
             isMarketplaceEnabled && (
               <DialLinkButton
                 onClick={handleGoToWorkspace}
-                disabled={isPlayback}
                 tooltipProps={{
                   tooltip: isPlayback
                     ? t(ChatI18nKeys.EditingNotAvailableInPlayback)
