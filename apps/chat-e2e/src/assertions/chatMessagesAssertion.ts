@@ -173,16 +173,24 @@ export class ChatMessagesAssertion extends BaseAssertion {
   public async assertFullScreenMessageImageAttachment(
     message: string | number,
   ) {
-    await this.assertElementClass(
-      this.chatMessages.getOpenedChatMessageImageAttachment(message),
-      new RegExp(
-        `^(?=.*${AttributeValues.maxHFull})(?=.*${AttributeValues.maxWFull}).+$`,
-        'gm',
-      ),
-      ExpectedMessages.attachmentIsOpenedOnFullScreen,
-    );
+    const openedImageAttachmentLocator =
+      this.chatMessages.getOpenedChatMessageImageAttachment(message);
+    for (const attribute of [
+      AttributeValues.maxHFull,
+      AttributeValues.maxWFull,
+    ]) {
+      await this.assertElementClass(
+        openedImageAttachmentLocator,
+        new RegExp(attribute),
+        ExpectedMessages.attachmentIsOpenedOnFullScreen,
+      );
+    }
   }
 
+  /**
+   * The assertion depends on the expected state.
+   * When 'visible' is passed, the image is verified to be loaded and to have a non-zero width
+   */
   public async assertMessageImageAttachmentState(
     message: string | number | Locator,
     expectedState: ElementState,

@@ -109,7 +109,9 @@ export class ChatMessages extends BaseElement {
   }
 
   public getOpenedChatMessageImageAttachment(message: string | number) {
-    return this.getChatMessage(message).getByAltText('Attachment image');
+    return this.getChatMessage(message).getByAltText(
+      ChatSelectors.messageImageAttachment,
+    );
   }
 
   public getChatMessageAttachmentTitle(
