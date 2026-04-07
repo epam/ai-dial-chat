@@ -27,7 +27,11 @@ import {
   CONFIRM_DOCUMENT_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  MarketplaceI18nKeys,
+  SettingsI18nKeys,
+} from '@/src/constants/i18n';
 
 import { FormCollapsibleSection } from '@/src/components/AppsEditor/EditorForm/FormCollapsibleSection';
 import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentsAndToolsetsField';
@@ -84,15 +88,26 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const { errors } = useFormState<QuickApp2FormType>({ control });
 
   const modelId = useWatch({ control, name: 'model' });
+  const starters = useWatch({ control, name: 'starters' });
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
     return selectedModel ? doesModelAllowTemperature(selectedModel) : true;
   }, [modelId, modelsMap]);
 
+  const hasStarters = useMemo(
+    () => starters.some((s) => s.title.trim() && s.text.trim()),
+    [starters],
+  );
+
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
   const isAppPublicTooltip = isAppPublic ? PUBLIC_APP_TOOLTIP : '';
+  const startersSettingsTooltip = isAppPublic
+    ? PUBLIC_APP_TOOLTIP
+    : !hasStarters
+      ? t(MarketplaceI18nKeys.AtLeastOneStarterIsRequiredToEnableSettings)
+      : '';
 
   return (
     <div
@@ -100,7 +115,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       data-qa="entity-view-form"
     >
       <FormCollapsibleSection
-        name={t('Orchestrator')}
+        name={t(MarketplaceI18nKeys.Orchestrator)}
         openByDefault
         dataQa="orchestrator-section"
       >
@@ -196,7 +211,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
-        name={t('Attachments')}
+        name={t(ChatI18nKeys.Attachments)}
         dataQa="attachments-section"
       >
         <Controller
@@ -242,22 +257,44 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
-        name={t('Conversation starters')}
+        name={t(MarketplaceI18nKeys.ConversationStarters)}
         description={t(
           'Starters are buttons close the chat input that offer prompts to help users initiate a conversation',
         )}
         dataQa="conversation-starters-section"
       >
+        <Controller
+          name="starters"
+          control={control}
+          render={({ field }) => (
+            <ConversationStartersField
+              label={t(MarketplaceI18nKeys.ConversationStarters)}
+              value={field.value}
+              onChange={field.onChange}
+              disabled={isAppPublic}
+            />
+          )}
+        />
+
+        <div>
+          <h3 className="text-sm font-semibold">
+            {t(MarketplaceI18nKeys.StartersSettings)}
+          </h3>
+          <p className="mt-1 text-xs text-secondary">
+            {t(MarketplaceI18nKeys.AtLeastOneStarterIsRequiredToEnableSettings)}
+          </p>
+        </div>
+
         <ControlledField
-          label={t('Intro text')}
-          placeholder={t('e.g., What do you want to talk about?')}
+          label={t(MarketplaceI18nKeys.IntroText)}
+          placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
           id="introText"
           error={errors.introText?.message}
           control={control}
           name="introText"
-          info={t('Optional text shown above the conversation starters')}
-          disabled={isAppPublic}
-          tooltip={isAppPublicTooltip}
+          info={t(MarketplaceI18nKeys.OptionalTextShownAboveTheStarters)}
+          disabled={isAppPublic || !hasStarters}
+          tooltip={startersSettingsTooltip}
         />
 
         <Controller
@@ -265,24 +302,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           control={control}
           render={({ field }) => (
             <StartersBehaviourField
-              label={t('Starters behaviour')}
+              label={t(MarketplaceI18nKeys.StartersBehaviour)}
               value={field.value}
               onChange={field.onChange}
-              disabled={isAppPublic}
-              tooltip={isAppPublicTooltip}
-            />
-          )}
-        />
-
-        <Controller
-          name="starters"
-          control={control}
-          render={({ field }) => (
-            <ConversationStartersField
-              label={t('Conversation starters')}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={isAppPublic}
+              disabled={isAppPublic || !hasStarters}
+              tooltip={startersSettingsTooltip}
             />
           )}
         />
@@ -292,17 +316,17 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           control={control}
           render={({ field }) => (
             <ToggleSwitchField
-              label={t('Disable chat input')}
+              label={t(MarketplaceI18nKeys.DisableChatInput)}
               isOn={field.value}
               handleSwitch={() => field.onChange(!field.value)}
               className="mt-1 flex w-fit items-center gap-2"
-              switchOnText={t('ON')}
-              switchOFFText={t('OFF')}
+              switchOnText={t(SettingsI18nKeys.ON)}
+              switchOFFText={t(SettingsI18nKeys.OFF)}
               additionalText={t(
-                'Disable chat input so users can only use starters',
+                MarketplaceI18nKeys.DisableChatInputSoUsersCanOnlyUseStarters,
               )}
-              disabled={isAppPublic}
-              tooltip={isAppPublicTooltip}
+              disabled={isAppPublic || !hasStarters}
+              tooltip={startersSettingsTooltip}
             />
           )}
         />

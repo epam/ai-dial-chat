@@ -217,6 +217,7 @@ export const QuickApp2Schema = zodValidation
     autoSubmit: zodValidation.boolean(),
     starters: zodValidation.array(
       zodValidation.object({
+        id: zodValidation.string(),
         title: zodValidation.string(),
         text: zodValidation.string(),
       }),
@@ -465,10 +466,12 @@ const getQuickApp2FormData = (
     chatMessageInputDisabled:
       appProperties?.conversation_starters?.chat_message_input_disabled ??
       false,
-    autoSubmit: appProperties?.conversation_starters?.auto_submit ?? false,
+    autoSubmit: appProperties?.conversation_starters?.auto_submit ?? true,
     starters: [
-      ...(appProperties?.conversation_starters?.starters ?? []),
-      { title: '', text: '' },
+      ...(appProperties?.conversation_starters?.starters ?? []).map(
+        (starter) => ({ ...starter, id: nanoid() }),
+      ),
+      { id: nanoid(), title: '', text: '' },
     ],
     isJsonView: false,
     toolSupportingModelIds,
@@ -812,9 +815,9 @@ export const getApplicationPayload = ({
         model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
           ? data.temperature
           : FALLBACK_TEMPERATURE;
-      const starters = data.starters.filter(
-        (starter) => starter.text.trim() && starter.title.trim(),
-      );
+      const starters = data.starters
+        .filter((starter) => starter.text.trim() && starter.title.trim())
+        .map(({ title, text }) => ({ title, text }));
 
       return {
         ...generalData,

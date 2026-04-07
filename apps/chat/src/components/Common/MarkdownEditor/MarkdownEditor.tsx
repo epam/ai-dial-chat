@@ -15,6 +15,7 @@ export interface DialMarkdownEditorProps {
   className?: string;
 }
 
+// TODO: use from UI kit when MDEditor will be ready
 export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
   value,
   onChange,
