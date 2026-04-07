@@ -16,6 +16,7 @@ import {
   FileValidationErrors,
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import {
   BYTES_IN_KB,
@@ -27,6 +28,7 @@ import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
 } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
@@ -495,14 +497,14 @@ export const validatePreUploadFiles = (
       switch (error as FileValidationErrors) {
         case FileValidationErrors.IncorrectSize:
           return translate(
-            "Max file size up to 512 Mb. Next files haven't been uploaded: {{fileNames}}",
-            { fileNames },
+            ChatI18nKeys.MaxFileSizeUpTo512MbNextFilesHaventBeenUploaded,
+            { ns: Translation.Chat, fileNames },
           );
         case FileValidationErrors.IncorrectType:
-          return translate(
-            "You're trying to upload files with incorrect type: {{fileNames}}",
-            { fileNames },
-          );
+          return translate(ChatI18nKeys.TryingToUploadFilesWithIncorrectType, {
+            ns: Translation.Chat,
+            fileNames,
+          });
         default:
           return '';
       }
@@ -550,10 +552,10 @@ export const getFilesFromDataTransferItems = (
 
 export const formatFileSize = (sizeInBytes: number): string => {
   if (sizeInBytes >= BYTES_IN_MB) {
-    return `${Math.ceil(sizeInBytes / BYTES_IN_MB)} ${translate('MB')}`;
+    return `${Math.ceil(sizeInBytes / BYTES_IN_MB)} ${translate(ChatI18nKeys.MBUnit, { ns: Translation.Chat })}`;
   }
 
-  return `${Math.ceil(sizeInBytes / BYTES_IN_KB)} ${translate('KB')}`;
+  return `${Math.ceil(sizeInBytes / BYTES_IN_KB)} ${translate(ChatI18nKeys.KBUnit, { ns: Translation.Chat })}`;
 };
 
 export const getMyBucketAttachments = (
@@ -567,11 +569,11 @@ export const getMyBucketAttachments = (
 export const getRootFolderPlaceholderName = (bucket: string): string => {
   const userBucket = BucketService.getBucket();
   if (userBucket === bucket) {
-    return translate('My Files');
+    return translate(ChatI18nKeys.MyFiles, { ns: Translation.Chat });
   }
   if (bucket === PUBLIC_URL_PREFIX) {
-    return translate('Organization');
+    return translate(ChatI18nKeys.Organization, { ns: Translation.Chat });
   }
 
-  return translate('Shared with Me');
+  return translate(ChatI18nKeys.SharedWithMeFiles, { ns: Translation.Chat });
 };

@@ -83,9 +83,7 @@ export const TalkToSliderItem = ({
       tooltip={
         isPlaybackConversation(conversation) &&
         groupItem.reference !== PseudoModel.Playback
-          ? t(
-              'Editing conversation settings is not available in playback mode.',
-            )
+          ? t(ChatI18nKeys.EditingNotAvailableInPlayback)
           : undefined
       }
       key={groupItem.id}
