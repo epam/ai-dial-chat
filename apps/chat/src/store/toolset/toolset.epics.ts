@@ -44,6 +44,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
 } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -56,8 +57,7 @@ import { AuthSelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceEntitiesTabs,
   MarketplaceQueryParams,
@@ -163,7 +163,9 @@ const getToolsetsEpic: AppEpic = (action$) =>
           console.error('Failed to get toolsets', err);
           return of(
             UIActions.showErrorToast(
-              translate(errorsMessages.toolsetsGetFailed),
+              translate(CommonI18nKeys.ToolsetsGetFailed, {
+                ns: Translation.Common,
+              }),
             ),
           );
         }),
@@ -202,7 +204,8 @@ const createToolsetEpic: AppEpic = (action$) =>
               console.error('Failed to get toolset: ', err);
               return of(
                 UIActions.showErrorToast(
-                  translate(errorsMessages.toolsetGetFailed, {
+                  translate(CommonI18nKeys.ToolsetGetFailed, {
+                    ns: Translation.Common,
                     name: data.id,
                   }),
                 ),
@@ -215,7 +218,8 @@ const createToolsetEpic: AppEpic = (action$) =>
             return of(
               ToolsetActions.createToolsetFailed({
                 message: translate(
-                  'A toolset with this name and this version already exists.',
+                  CommonI18nKeys.ToolsetNameVersionAlreadyExists,
+                  { ns: Translation.Common },
                 ),
               }),
             );
@@ -234,7 +238,8 @@ const createToolsetFailedEpic: AppEpic = (action$) =>
       return of(
         UIActions.showErrorToast(
           payload?.message ??
-            translate(errorsMessages.createFailed, {
+            translate(CommonI18nKeys.CreateFailed, {
+              ns: Translation.Common,
               entity: 'toolset',
             }),
         ),
@@ -273,7 +278,8 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
 
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.toolsetGetFailed, {
+          translate(CommonI18nKeys.ToolsetGetFailed, {
+            ns: Translation.Common,
             name: payload?.id ?? '...',
           }),
         ),
@@ -311,7 +317,9 @@ const updateToolsetEpic: AppEpic = (action$) =>
                     actions: [
                       ...failActions,
                       UIActions.showErrorToast(
-                        translate(errorsMessages.toolsetAlreadyExists),
+                        translate(CommonI18nKeys.ToolsetAlreadyExists, {
+                          ns: Translation.Common,
+                        }),
                       ),
                     ],
                   });
@@ -322,7 +330,9 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   actions: [
                     ...failActions,
                     UIActions.showErrorToast(
-                      translate(errorsMessages.toolsetMoveFailed),
+                      translate(CommonI18nKeys.ToolsetMoveFailed, {
+                        ns: Translation.Common,
+                      }),
                     ),
                   ],
                 });
@@ -342,7 +352,8 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   if (!savedUpdatedToolset) {
                     return of(
                       UIActions.showErrorToast(
-                        translate(errorsMessages.toolsetGetFailed, {
+                        translate(CommonI18nKeys.ToolsetGetFailed, {
+                          ns: Translation.Common,
                           name: updatedToolset.id,
                         }),
                       ),
@@ -401,8 +412,9 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   UIActions.showErrorToast(
                     translate(
                       err.status === 400
-                        ? errorsMessages.toolsetOAuthNotSupported
-                        : errorsMessages.toolsetUpdateFailed,
+                        ? CommonI18nKeys.ToolsetOAuthNotSupported
+                        : CommonI18nKeys.ToolsetUpdateFailed,
+                      { ns: Translation.Common },
                     ),
                   ),
                 ),
@@ -554,11 +566,11 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              translate(
-                errorsMessages.removeFromMarketplaceFailed(
+              translate(CommonI18nKeys.RemoveFromMarketplaceFailed, {
+                ns: Translation.Common,
+                entityType:
                   payload.references.length > 1 ? 'toolsets' : 'toolset',
-                ),
-              ),
+              }),
             ),
           );
         }),
@@ -598,7 +610,10 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
               of(
                 UIActions.showSuccessToast(
                   translate(
-                    `The toolset${payload.references.length > 1 ? 's' : ''} added to my workspace`,
+                    payload.references.length > 1
+                      ? CommonI18nKeys.ToolsetsAddedToMyWorkspace
+                      : CommonI18nKeys.ToolsetAddedToMyWorkspace,
+                    { ns: Translation.Common },
                   ),
                 ),
               ),
@@ -621,11 +636,11 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
           console.error(error);
           return of(
             UIActions.showErrorToast(
-              translate(
-                errorsMessages.addToMarketplaceFailed(
+              translate(CommonI18nKeys.AddToMarketplaceFailed, {
+                ns: Translation.Common,
+                entityType:
                   payload.references.length > 1 ? 'toolsets' : 'toolset',
-                ),
-              ),
+              }),
             ),
           );
         }),
@@ -667,7 +682,11 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.deleteToolsetFail.type),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.toolsetDeleteFailed)),
+      UIActions.showErrorToast(
+        translate(CommonI18nKeys.ToolsetDeleteFailed, {
+          ns: Translation.Common,
+        }),
+      ),
     ),
   );
 
@@ -908,7 +927,11 @@ const loginToolsetFailEpic: AppEpic = (action$) =>
     ofType(ToolsetActions.logInToolsetFail.type),
     filter(({ payload }) => !payload?.skipToastMessage),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.toolsetSignInFailed)),
+      UIActions.showErrorToast(
+        translate(CommonI18nKeys.ToolsetSignInFailed, {
+          ns: Translation.Common,
+        }),
+      ),
     ),
   );
 
@@ -963,7 +986,11 @@ const logOutToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logOutToolsetFail.type),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.toolsetSignOutFailed)),
+      UIActions.showErrorToast(
+        translate(CommonI18nKeys.ToolsetSignOutFailed, {
+          ns: Translation.Common,
+        }),
+      ),
     ),
   );
 
@@ -1081,7 +1108,11 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
         actions.push(
           of(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [
+                translate(ChatI18nKeys.NewConversation, {
+                  ns: Translation.Chat,
+                }),
+              ],
             }),
           ),
         );

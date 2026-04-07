@@ -91,7 +91,7 @@ export const PlaybackControls = ({
   const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
 
   const iconClassName =
-    'absolute top-3 p-0 outline-none hover:text-accent-primary disabled:text-controls-disable size-[20px]';
+    'absolute top-3.5 p-0 outline-none hover:text-accent-primary disabled:text-controls-disable size-[20px]';
   const isActiveIndex = typeof activeIndex === 'number';
 
   const isNextMessageInStack = useMemo(() => {
@@ -323,7 +323,7 @@ export const PlaybackControls = ({
                 <>
                   <span
                     className={classNames(
-                      'break-words',
+                      'break-words text-base',
                       phase === PlaybackPhases.EMPTY && 'text-secondary',
                     )}
                     data-qa="playback-message-content"
