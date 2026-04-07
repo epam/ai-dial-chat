@@ -17,4 +17,6 @@ export const ORGANIZATION_FILES_SECTION = translate(ChatI18nKeys.Organization, {
   ns: Translation.Chat,
 });
 
-export const REVIEW_FILES_SECTION = translate('Review files');
+export const REVIEW_FILES_SECTION = translate(ChatI18nKeys.ReviewFiles, {
+  ns: Translation.Chat,
+});

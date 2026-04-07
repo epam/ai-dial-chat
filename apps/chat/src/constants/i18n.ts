@@ -674,6 +674,7 @@ export enum ChatI18nKeys {
   ApproveRequired = 'Approve required',
   SharedWithMeFiles = 'Shared with Me',
   SharedWithMe = 'Shared with me',
+  ReviewFiles = 'Review files',
   PinnedPrompts = 'Pinned prompts',
   Recent = 'Recent',
   PinnedConversations = 'Pinned conversations',
