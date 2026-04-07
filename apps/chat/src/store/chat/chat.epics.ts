@@ -12,6 +12,7 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ChatActions,
@@ -26,6 +27,8 @@ import {
   FilesSelectors,
   ModelsSelectors,
 } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
@@ -168,7 +171,9 @@ const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
     ofType(ChatActions.getConfigurationSchemaFailed.type),
     map(() => {
       return UIActions.showErrorToast(
-        translate('Failed to load chat starters'),
+        translate(ChatI18nKeys.FailedToLoadChatStarters, {
+          ns: Translation.Chat,
+        }),
       );
     }),
   );
@@ -217,7 +222,7 @@ const getEntityInfoEpic: AppEpic = (action$) =>
 
       return of(
         ChatActions.getEntityInfoFail({
-          errorText: 'Could not get entity info. Unknown entity.',
+          errorText: ChatI18nKeys.CouldNotGetEntityInfoUnknownEntity,
         }),
       );
     }),
@@ -229,7 +234,11 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return concat(
         of(ChatActions.resetInfoModal()),
-        of(UIActions.showErrorToast(translate(payload.errorText))),
+        of(
+          UIActions.showErrorToast(
+            translate(payload.errorText, { ns: Translation.Chat }),
+          ),
+        ),
       );
     }),
   );

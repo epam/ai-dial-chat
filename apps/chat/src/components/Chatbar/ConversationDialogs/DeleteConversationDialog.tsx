@@ -8,6 +8,8 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
@@ -44,14 +46,14 @@ const DeleteConversationDialogView: FC<DeleteConversationDialogProps> = ({
   return (
     <ConfirmDialog
       isOpen
-      heading={t('Confirm deleting conversation')}
-      description={`${t('Are you sure that you want to delete a conversation?')}${t(
+      heading={t(ChatI18nKeys.ConfirmDeletingConversation)}
+      description={`${t(ChatI18nKeys.AreYouSureDeleteConversation)}${t(
         conversation?.isShared
-          ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
+          ? ChatI18nKeys.DeletingWillStopConversationSharing
           : '',
       )}`}
-      confirmLabel={t('Delete')}
-      cancelLabel={t('Cancel')}
+      confirmLabel={t(ChatI18nKeys.Delete)}
+      cancelLabel={t(ChatI18nKeys.Cancel)}
       onClose={handleClose}
     />
   );

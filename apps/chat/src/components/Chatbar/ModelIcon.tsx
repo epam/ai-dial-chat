@@ -63,6 +63,7 @@ interface Props extends ModelTooltipProps {
   animate?: boolean;
   isCustomTooltip?: boolean;
   enableShrinking?: boolean;
+  isTooltipDisabled?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -210,19 +211,25 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
+  isTooltipDisabled,
 }: Props) => {
-  return (
+  const icon = (
+    <ModelIconTemplate
+      entity={entity}
+      entityId={entityId}
+      size={size}
+      animate={animate}
+    />
+  );
+  return !isTooltipDisabled ? (
     <Tooltip
       hideTooltip={isCustomTooltip}
       tooltip={<ModelTooltip entity={entity} entityId={entityId} />}
       triggerClassName="flex shrink-0 relative select-none"
     >
-      <ModelIconTemplate
-        entity={entity}
-        entityId={entityId}
-        size={size}
-        animate={animate}
-      />
+      {icon}
     </Tooltip>
+  ) : (
+    icon
   );
 };

@@ -4,6 +4,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 
 interface infoColumnProps {
@@ -35,7 +37,9 @@ export function EntityInfo({ entityInfo }: Props) {
   return (
     <>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{t('Information')}</h3>
+        <h3 className="text-lg font-semibold">
+          {t(MarketplaceI18nKeys.InformationMarketplace)}
+        </h3>
         {/*TODO implement 'Report a problem'*/}
         {/* <button className="flex items-center gap-3 text-accent-primary">
           <IconAlertCircle size={18} />
@@ -44,12 +48,18 @@ export function EntityInfo({ entityInfo }: Props) {
       </div>
 
       <div className="flex flex-col gap-6 text-sm sm:flex-row sm:gap-12">
-        <InfoColumn infoLabel={t('Author')} dataQa="author">
-          {entityInfo?.author ?? t('Unknown')}
+        <InfoColumn
+          infoLabel={t(MarketplaceI18nKeys.AuthorMarketplace)}
+          dataQa="author"
+        >
+          {entityInfo?.author ?? t(MarketplaceI18nKeys.UnknownMarketplace)}
         </InfoColumn>
 
         {entityInfo.createdAt && (
-          <InfoColumn infoLabel={t('Release date')} dataQa="created-at">
+          <InfoColumn
+            infoLabel={t(MarketplaceI18nKeys.ReleaseDateMarketplace)}
+            dataQa="created-at"
+          >
             <DateRenderer dateValue={entityInfo.createdAt} />
           </InfoColumn>
         )}

@@ -7,6 +7,8 @@ import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
@@ -111,7 +113,7 @@ export const FilesSelector: React.FC<Props> = ({
                 disabled={readonly}
                 onClick={handleOpenFilesModal}
                 iconBefore={<IconPlus size={18} />}
-                label={t('Add')}
+                label={t(FilesI18nKeys.Add)}
               />
             </Tooltip>
           </div>
@@ -137,7 +139,7 @@ export const FilesSelector: React.FC<Props> = ({
             maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
             allowedTypes={allowedTypes}
             headerLabel={fileManagerTitle ?? ''}
-            customButtonLabel={t('Select files') ?? ''}
+            customButtonLabel={t(FilesI18nKeys.SelectFiles) ?? ''}
             forceShowSelectCheckBox
             sourceFilters={filesFilter}
             warningMessage={confirmDialogValues?.description}
@@ -148,8 +150,8 @@ export const FilesSelector: React.FC<Props> = ({
             isOpen
             heading={t(confirmDialogValues.heading)}
             description={t(confirmDialogValues.description) ?? ''}
-            confirmLabel={t('Confirm')}
-            cancelLabel={t('Cancel')}
+            confirmLabel={t(FilesI18nKeys.Confirm)}
+            cancelLabel={t(FilesI18nKeys.Cancel)}
             onClose={handleConfirmClose}
           />
         )}

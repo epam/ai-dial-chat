@@ -18,6 +18,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { PromptList } from '@/src/components/Chat/ChatInput/PromptList';
@@ -150,13 +151,13 @@ export const SystemPrompt: FC<Props> = ({
 
   return (
     <div className="flex flex-col" data-qa="system-prompt-container">
-      <label className="mb-4 text-left">{t('System prompt')}</label>
+      <label className="mb-4 text-left">{t(ChatI18nKeys.SystemPrompt)}</label>
       <div className="relative flex flex-col">
         {disabled && <DisableOverlay />}
         <AdjustedTextarea
           ref={textareaRef}
           className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
-          placeholder={t('Type a text or «/» to use a prompt...')}
+          placeholder={t(ChatI18nKeys.TypeTextOrPrompt)}
           maxHeight={MAX_HEIGHT}
           value={content}
           rows={1}
@@ -187,11 +188,15 @@ export const SystemPrompt: FC<Props> = ({
 
       <ConfirmDialog
         isOpen={isPromptLimitModalOpen}
-        heading={t('Prompt limit exceeded')}
-        description={t(
-          `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,
-        )}
-        confirmLabel={t('Confirm')}
+        heading={t(ChatI18nKeys.PromptLimitExceeded)}
+        description={t(ChatI18nKeys.PromptLimitDescription, {
+          maxTokensLength,
+          limitDescription: getPromptLimitDescription(
+            getTokensLength(content) ?? 0,
+            maxTokensLength,
+          ),
+        })}
+        confirmLabel={t(ChatI18nKeys.Confirm)}
         onClose={() => {
           setIsPromptLimitModalOpen(false);
         }}

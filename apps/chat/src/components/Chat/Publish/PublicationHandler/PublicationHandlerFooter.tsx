@@ -59,6 +59,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
@@ -518,12 +519,15 @@ export const PublicationHandlerFooter = ({
                 {entity.name.substring(0, 50) === entity.name
                   ? entity.name
                   : `${entity.name.substring(0, 50)}...`}{' '}
-                {t('v')}. {entity.publicationInfo?.version ?? NA_VERSION}
+                {t(ChatI18nKeys.VersionAbbr)}.{' '}
+                {entity.publicationInfo?.version ?? NA_VERSION}
                 &quot;{idx === selectedInvalidEntities.length - 1 ? ' ' : ', '}
               </span>
             ))}
             {t(
-              `${selectedInvalidEntities.length > 1 ? 'have' : 'has'} already been unpublished. You can't approve this request.`,
+              selectedInvalidEntities.length > 1
+                ? ChatI18nKeys.EntitiesHaveAlreadyBeenUnpublishedCantApproveRequest
+                : ChatI18nKeys.EntityHasAlreadyBeenUnpublishedCantApproveRequest,
             )}
           </p>
         </div>
@@ -537,8 +541,8 @@ export const PublicationHandlerFooter = ({
             data-qa="go-to-review"
             label={t(
               resourcesToReview.some((r) => r.reviewed)
-                ? 'Continue review'
-                : 'Go to a review',
+                ? ChatI18nKeys.ContinueReviewPublication
+                : ChatI18nKeys.GoToAReview,
             )}
           />
         )
@@ -550,7 +554,7 @@ export const PublicationHandlerFooter = ({
               <>
                 {!selectedInvalidEntities.length && (
                   <IconButton
-                    name={t('Edit')}
+                    name={t(ChatI18nKeys.Edit)}
                     dataQa="edit"
                     onClick={handleToggleEditMode}
                     Icon={IconPencil}
@@ -558,7 +562,7 @@ export const PublicationHandlerFooter = ({
                   />
                 )}
                 <DialNeutralButton
-                  label={t('Reject')}
+                  label={t(ChatI18nKeys.Reject)}
                   onClick={() =>
                     dispatch(
                       PublicationActions.rejectPublication({
@@ -588,7 +592,7 @@ export const PublicationHandlerFooter = ({
         ) : (
           <>
             <DialNeutralButton
-              label={t('Cancel')}
+              label={t(ChatI18nKeys.Cancel)}
               onClick={handleToggleEditMode}
               data-qa="cancel"
             />
@@ -597,12 +601,12 @@ export const PublicationHandlerFooter = ({
               hideTooltip={!isEditDisabled}
               tooltip={t(
                 isEditInvalid
-                  ? 'Request can not be updated as some resources are invalid'
-                  : 'Make any changes to update the request',
+                  ? ChatI18nKeys.RequestCannotBeUpdated
+                  : ChatI18nKeys.MakeChangesToUpdate,
               )}
             >
               <DialPrimaryButton
-                label={t('Update request')}
+                label={t(ChatI18nKeys.UpdateRequest)}
                 textClassName="whitespace-nowrap"
                 disabled={isEditDisabled}
                 type="submit"

@@ -17,6 +17,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -90,7 +92,7 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
 
   return (
     <div className="flex justify-between gap-1 ps-1">
-      {t(`Content is too large to display (exceeds ${limit} KB).`)}
+      {t(ChatI18nKeys.ContentTooLarge, { limit })}
       <div className="flex items-center gap-2 text-secondary">
         <DialGhostIconButton
           onClick={copyToClipboard}
@@ -98,17 +100,20 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
           disabled={isCopied}
           icon={
             isCopied ? (
-              <Tooltip tooltip={t('Copied!')}>
+              <Tooltip tooltip={t(ChatI18nKeys.Copied)}>
                 <IconCheck size={18} />
               </Tooltip>
             ) : (
-              <Tooltip isTriggerClickable tooltip={t('Copy stage content')}>
+              <Tooltip
+                isTriggerClickable
+                tooltip={t(ChatI18nKeys.CopyStageContent)}
+              >
                 <IconCopy size={18} />
               </Tooltip>
             )
           }
         />
-        <Tooltip isTriggerClickable tooltip={t('Download')}>
+        <Tooltip isTriggerClickable tooltip={t(ChatI18nKeys.Download)}>
           <DialGhostIconButton
             size={ElementSize.Small}
             onClick={downloadAsFile}

@@ -19,6 +19,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   CustomAppForm as CustomAppFormType,
@@ -71,10 +72,8 @@ export const CustomAppForm = () => {
     >
       <FieldTextArea
         {...register('features')}
-        label={t('Features data')}
-        info={t(
-          'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
-        )}
+        label={t(MarketplaceI18nKeys.FeaturesData)}
+        info={t(MarketplaceI18nKeys.FeaturesDataInfo)}
         placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
         id="features"
         rows={4}
@@ -89,13 +88,13 @@ export const CustomAppForm = () => {
         control={control}
         render={({ field }) => (
           <ComboBoxField
-            label={t('Attachment types')}
-            info={t("Input the MIME type and press 'Enter' to add")}
+            label={t(MarketplaceI18nKeys.AttachmentTypes)}
+            info={t(MarketplaceI18nKeys.InputMIMEType)}
             initialSelectedItems={field.value}
             getItemLabel={getItemLabel}
             getItemValue={getItemLabel}
             onChangeSelectedItems={field.onChange}
-            placeholder={t('Enter one or more attachment types')}
+            placeholder={t(MarketplaceI18nKeys.EnterAttachmentTypes)}
             id="attachmentTypes"
             className={classNames(
               'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
@@ -114,8 +113,8 @@ export const CustomAppForm = () => {
       />
 
       <ControlledField
-        label={t('Max. attachments number')}
-        placeholder={t('Enter the maximum number of attachments')}
+        label={t(MarketplaceI18nKeys.MaxAttachmentsNumber)}
+        placeholder={t(MarketplaceI18nKeys.EnterMaxAttachments)}
         id="maxInputAttachments"
         error={errors.maxInputAttachments?.message}
         control={control}
@@ -127,9 +126,9 @@ export const CustomAppForm = () => {
 
       <Field
         {...register('completionUrl')}
-        label={t('Chat completion URL')}
+        label={t(MarketplaceI18nKeys.ChatCompletionURL)}
         mandatory
-        placeholder={t('Type chat completion URL')}
+        placeholder={t(MarketplaceI18nKeys.TypeChatCompletionURL)}
         id="completionUrl"
         error={errors.completionUrl?.message}
         data-qa="completion-url"

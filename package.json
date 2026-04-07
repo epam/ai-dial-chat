@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "^0.9.0-rc.6",
+    "@epam/ai-dial-ui-kit": "^0.9.0-rc.8",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
@@ -182,7 +182,7 @@
     "ts-node": "10.9.1",
     "ts-unused-exports": "^11.0.1",
     "typescript": "5.9.3",
-    "vite": "7.1.12",
+    "vite": "7.3.2",
     "vitest": "4.0.9"
   },
   "optionalDependencies": {
@@ -202,7 +202,8 @@
     "dompurify": "3.3.2",
     "minimatch": "10.2.4",
     "serialize-javascript": "7.0.5",
-    "picomatch": "4.0.4"
+    "picomatch": "4.0.4",
+    "lodash": "4.18.0"
   },
   "engines": {
     "node": ">=24.11.1",

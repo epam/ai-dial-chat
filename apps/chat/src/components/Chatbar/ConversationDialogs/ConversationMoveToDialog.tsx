@@ -14,6 +14,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
@@ -55,13 +56,10 @@ function ConversationMoveToDialogComponent({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t(
-              'Conversation with name "{{name}}" already exists in this folder.',
-              {
-                ns: Translation.Chat,
-                name: moveToConversation.name,
-              },
-            ),
+            t(ChatI18nKeys.ConversationNameExistsInThisFolder, {
+              ns: Translation.Chat,
+              name: moveToConversation.name,
+            }),
           ),
         );
 

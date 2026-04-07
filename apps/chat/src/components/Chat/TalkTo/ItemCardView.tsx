@@ -31,6 +31,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { CardIconSizes } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -43,6 +44,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
+
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export type DisabledActions = Record<string, boolean>;
 
@@ -156,6 +159,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         hasError && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
+        tooltip && 'size-full',
         className,
       )}
       aria-selected={isSelected}
@@ -211,7 +215,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           <div className="flex items-center gap-2">
             {!!versionsToSelect.length && (
               <div className="flex items-center truncate">
-                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
+                <p className="mr-1 text-xs text-secondary">
+                  {t(MarketplaceI18nKeys.Version)}:{' '}
+                </p>
                 <ModelVersionSelect
                   readonly={
                     conversation && isPlaybackConversation(conversation)
@@ -235,9 +241,8 @@ export const ItemCardView = <T extends MarketplaceEntity>({
                 !isMyEntity && !entity.version && 'mr-6',
                 isUnavailableModel ? 'text-secondary' : 'text-primary',
               )}
-              data-qa="entity-name"
             >
-              {entity.name}
+              <DialEllipsisTooltip text={entity.name} id="entity-name" />
             </div>
           </div>
           <EntityMarkdownDescription
@@ -270,9 +275,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         >
           {isOldReplay && (
             <span className="text-xs leading-[15px] text-error">
-              {t(
-                'Some messages were created in an older DIAL version and may not replay as expected.',
-              )}
+              {t(MarketplaceI18nKeys.OldReplayWarning)}
             </span>
           )}
           {entity.topics && <TopicsList topics={entity.topics} />}

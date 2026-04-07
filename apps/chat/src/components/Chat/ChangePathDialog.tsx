@@ -35,6 +35,7 @@ import {
   MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   TEMPORARY_FOLDER_ROOT_ID,
 } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
@@ -268,9 +269,7 @@ export const ChangePathDialog = ({
 
     if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
-        UIActions.showErrorToast(
-          t("It's not allowed to have more nested folders"),
-        ),
+        UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoreNestedFolders)),
       );
       return;
     }
@@ -283,7 +282,7 @@ export const ChangePathDialog = ({
       isOpen={isOpen}
       modalDataQa="select-folder-modal"
       onClose={onClose}
-      title={t('Change path')}
+      title={t(ChatI18nKeys.ChangePath)}
     >
       <SelectFolderHeader
         onSearch={handleSearch}

@@ -13,6 +13,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
@@ -117,12 +118,15 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
       className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 py-4 xl:py-5"
       data-qa="entity-view-form"
     >
-      <FormSection title={t('Definition')} className="px-3 md:px-5">
+      <FormSection
+        title={t(CommonI18nKeys.Definition)}
+        className="px-3 md:px-5"
+      >
         <Field
           {...register('endpoint')}
-          label={t('Endpoint')}
+          label={t(CommonI18nKeys.Endpoint)}
           mandatory
-          placeholder={t('Enter endpoint')}
+          placeholder={t(CommonI18nKeys.EnterEndpoint)}
           id="endpoint"
           error={errors.endpoint?.message}
           tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
@@ -133,7 +137,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
           control={control}
           render={({ field }) => (
             <SelectorField
-              label={t('Transport protocol')}
+              label={t(CommonI18nKeys.TransportProtocol)}
               isSearchable={false}
               isClearable={false}
               value={toOption(field.value)}
@@ -153,10 +157,8 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
       </FormSection>
 
       <FormSection
-        title={t('Authentication')}
-        subtitle={t(
-          'Select one of the methods below that will be used to authenticate',
-        )}
+        title={t(CommonI18nKeys.AuthenticationCommon)}
+        subtitle={t(CommonI18nKeys.SelectAuthMethod)}
         className="px-3 pt-4 md:px-5"
       >
         <AuthField
@@ -165,7 +167,10 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         />
       </FormSection>
 
-      <FormSection title={t('Allowed tools')} className="px-3 pt-4 md:px-5">
+      <FormSection
+        title={t(CommonI18nKeys.AllowedTools)}
+        className="px-3 pt-4 md:px-5"
+      >
         <Controller
           name="allowedTools"
           control={control}
@@ -175,7 +180,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               getItemLabel={getComboBoxLabel}
               getItemValue={getComboBoxLabel}
               onChangeSelectedItems={field.onChange}
-              placeholder={t('Enter one or more tools')}
+              placeholder={t(CommonI18nKeys.EnterOneOrMoreTools)}
               id="allowedTools"
               disabled={isToolsetPublic}
               className={classNames(

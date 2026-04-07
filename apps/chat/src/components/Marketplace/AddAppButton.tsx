@@ -22,6 +22,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -41,6 +43,9 @@ export function AddAppButton() {
   );
 
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
+  const hideCustomAppCreation = enabledFeatures.has(
+    Feature.HideCustomAppCreation,
+  );
 
   const openEditor = useCallback(
     (type: string) => {
@@ -57,10 +62,10 @@ export function AddAppButton() {
     () =>
       [
         {
-          name: t('Custom app'),
+          name: t(MarketplaceI18nKeys.CustomApp),
           type: ApplicationType.CUSTOM_APP,
           dataQa: 'add-custom-app',
-          display: true,
+          display: !hideCustomAppCreation,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             dispatch(
@@ -70,7 +75,7 @@ export function AddAppButton() {
           },
         },
         {
-          name: t('Code app'),
+          name: t(MarketplaceI18nKeys.CodeApp),
           dataQa: 'add-startable-app',
           type: ApplicationType.CODE_APP,
           display: isCodeAppsEnabled,
@@ -98,7 +103,14 @@ export function AddAppButton() {
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
-    [t, isCodeAppsEnabled, applicationTypeSchemas, openEditor, dispatch],
+    [
+      t,
+      hideCustomAppCreation,
+      isCodeAppsEnabled,
+      applicationTypeSchemas,
+      dispatch,
+      openEditor,
+    ],
   );
 
   return (

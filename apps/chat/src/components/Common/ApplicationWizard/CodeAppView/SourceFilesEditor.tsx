@@ -15,6 +15,8 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -118,7 +120,9 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
             hideTooltip={!value}
             dataQa="path"
           >
-            {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
+            {value
+              ? getIdWithoutRootPathSegments(value)
+              : t(MarketplaceI18nKeys.NoFolder)}
           </Tooltip>
           <Tooltip tooltip={tooltip}>
             <div className="flex items-center gap-3">
@@ -126,7 +130,11 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
                 data-qa="change-button"
                 disabled={disabled}
                 onClick={handleToggleFileManager}
-                label={value ? t('Change') : t('Add')}
+                label={
+                  value
+                    ? t(MarketplaceI18nKeys.Change)
+                    : t(MarketplaceI18nKeys.AddMarketplace)
+                }
               />
               {value && (
                 <CloseButtonSmall onClick={handleDelete} disabled={disabled} />
@@ -155,8 +163,8 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
           isOpen
           heading={t(confirmDialogValues.heading)}
           description={t(confirmDialogValues.description)}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(MarketplaceI18nKeys.ConfirmMarketplace)}
+          cancelLabel={t(MarketplaceI18nKeys.CancelMarketplace)}
           onClose={handleConfirmDialogClose}
         />
       )}

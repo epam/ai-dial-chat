@@ -6,6 +6,8 @@ import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import Magnifier from '@/public/images/icons/search-alt.svg';
 
 interface SuggestedMessageProps {
@@ -36,16 +38,14 @@ export const SuggestedMessage: React.FC<SuggestedMessageProps> = ({
       >
         <Magnifier height={32} width={32} className="shrink-0 text-secondary" />
         <span className="text-sm sm:text-base">
-          {t(
-            'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-          )}
+          {t(MarketplaceI18nKeys.NoResultsInMyWorkspace)}
         </span>
       </div>
       <span
         className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
         data-qa="marketplace-suggestions-label"
       >
-        {t('Suggested results from DIAL Marketplace')}
+        {t(MarketplaceI18nKeys.SuggestedResults)}
       </span>
     </div>
   );
