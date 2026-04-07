@@ -280,7 +280,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           <h3 className="text-sm font-semibold">
             {t(MarketplaceI18nKeys.StartersSettings)}
           </h3>
-          <p className="mt-1 text-xs text-secondary">
+          <p className="mt-1 text-sm text-secondary">
             {t(MarketplaceI18nKeys.AtLeastOneStarterIsRequiredToEnableSettings)}
           </p>
         </div>

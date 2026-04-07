@@ -50,7 +50,7 @@ export const IntroText: FC<Props> = ({ modelId, isWideLayout }) => {
     ChatSelectors.selectConfigurationSchemaByModelId(state, modelId, modelsMap),
   );
 
-  if (!schema) {
+  if (!schema?.properties) {
     return null;
   }
 
