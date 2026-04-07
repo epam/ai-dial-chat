@@ -500,7 +500,7 @@ dialTest(
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertEntityIcon(
-          chatMessages.getOpenedChatMessageAttachment(2),
+          chatMessages.getOpenedChatMessageImageAttachment(2),
         );
         await sendMessageAssertion.assertScrollDownButtonState('visible');
       },
