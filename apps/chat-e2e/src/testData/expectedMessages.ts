@@ -243,6 +243,7 @@ export const ExpectedMessages = {
   dotsMenuIsVisible: 'Three dots menu is visible',
   iconColorIsValid: 'Icon color is valid',
   iconIsHidden: 'Icon is hidden',
+  imageIsLoaded: 'Image is loaded',
   bannerMessageIsValid: 'Announcement banner message is valid',
   bannerWidthIsValid: 'Announcement banner width is valid',
   bannerIsClosed: 'Announcement banner is closed',
@@ -261,6 +262,8 @@ export const ExpectedMessages = {
   attachmentIsSuccessfullyDownloaded:
     'Conversation attachment is successfully downloaded',
   attachmentIsExpanded: 'Conversation attachment is expanded',
+  attachmentIsOpenedOnFullScreen:
+    'Conversation attachment is opened on full screen',
   attachmentIsCollapsed: 'Conversation attachment is collapsed',
   attachmentNameColorIsValid: 'Attachment name color is valid',
   attachmentHasErrorIcon: 'Attachment has error icon',
