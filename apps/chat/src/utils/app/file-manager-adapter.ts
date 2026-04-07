@@ -1,5 +1,6 @@
 import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 
+import { ApiKeys } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
@@ -80,6 +81,7 @@ const PermissionMap: Record<SharePermission, DialFilePermission> = {
 
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
   const fullPath = file.id;
+  const folderId = file.isRootSharedItem ? '' : file.folderId;
 
   const parentPath = file.folderId || null;
 
@@ -87,7 +89,7 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     id: file.id,
     name: file.name,
     path: fullPath,
-    folderId: file.folderId || '',
+    folderId,
     nodeType: DialFileNodeType.ITEM,
     resourceType: DialFileResourceType.FILE,
     contentLength: file.contentLength,
@@ -261,7 +263,7 @@ export const buildFileTree = (
     parentPath: null,
     label: pathRootAlias || 'Files',
     permissions:
-      effectiveRootId === `files/${BucketService.getBucket()}`
+      effectiveRootId === `${ApiKeys.Files}/${BucketService.getBucket()}`
         ? [DialFilePermission.READ, DialFilePermission.WRITE]
         : [],
   };
