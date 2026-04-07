@@ -189,9 +189,13 @@ export const SystemPrompt: FC<Props> = ({
       <ConfirmDialog
         isOpen={isPromptLimitModalOpen}
         heading={t(ChatI18nKeys.PromptLimitExceeded)}
-        description={t(
-          `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,
-        )}
+        description={t(ChatI18nKeys.PromptLimitDescription, {
+          maxTokensLength,
+          limitDescription: getPromptLimitDescription(
+            getTokensLength(content) ?? 0,
+            maxTokensLength,
+          ),
+        })}
         confirmLabel={t(ChatI18nKeys.Confirm)}
         onClose={() => {
           setIsPromptLimitModalOpen(false);
