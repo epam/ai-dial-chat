@@ -19,6 +19,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   CodeEditorActions,
@@ -32,6 +33,7 @@ import {
 } from '@/src/store/selectors';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import intersectionWith from 'lodash-es/intersectionWith';
 
@@ -80,7 +82,9 @@ const getFileTextContentEpic: AppEpic = (action$) =>
           return concat(
             of(
               UIActions.showErrorToast(
-                translate('File content request failed'),
+                translate(ChatI18nKeys.FileContentRequestFailed, {
+                  ns: Translation.Chat,
+                }),
               ),
             ),
             of(CodeEditorActions.getFileTextContentFail()),
@@ -220,7 +224,11 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
         catchError((error) => {
           console.error(error);
           return of(
-            UIActions.showErrorToast(translate('File content update failed')),
+            UIActions.showErrorToast(
+              translate(ChatI18nKeys.FileContentUpdateFailed, {
+                ns: Translation.Chat,
+              }),
+            ),
           );
         }),
       );

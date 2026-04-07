@@ -4,6 +4,7 @@ import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { translate } from '@/src/utils/app/translation';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -14,6 +15,7 @@ import {
 import { useAppDispatch } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -26,29 +28,60 @@ const getDeleteConfirmationText = (
   const translationVariables = {
     name: entity.name,
     version: entity.version
-      ? translate(' (version {{version}})', { version: entity.version })
+      ? translate(MarketplaceI18nKeys.VersionInBrackets, {
+          ns: Translation.Marketplace,
+          version: entity.version,
+        })
       : '',
   };
-  const type = isDialAiEntityModel(entity) ? 'agent' : 'toolset';
+  const isAgent = isDialAiEntityModel(entity);
 
   const deleteConfirmationText = {
     [DeleteType.DELETE]: {
-      heading: translate(`Confirm deleting ${type}`),
-      description: translate(
-        'Are you sure you want to delete the {{name}}{{version}}?',
-        translationVariables,
+      heading: translate(
+        isAgent
+          ? MarketplaceI18nKeys.ConfirmDeletingAgent
+          : MarketplaceI18nKeys.ConfirmDeletingToolset,
+        {
+          ns: Translation.Marketplace,
+        },
       ),
-      confirmLabel: translate('Delete'),
-      cancelLabel: translate('Cancel'),
+      description: translate(
+        MarketplaceI18nKeys.AreYouSureDeleteTheNameVersion,
+        {
+          ...translationVariables,
+          ns: Translation.Marketplace,
+        },
+      ),
+      confirmLabel: translate(MarketplaceI18nKeys.DeleteMarketplace, {
+        ns: Translation.Marketplace,
+      }),
+      cancelLabel: translate(MarketplaceI18nKeys.CancelMarketplace, {
+        ns: Translation.Marketplace,
+      }),
     },
     [DeleteType.REMOVE]: {
-      heading: translate(`Confirm removing ${type}`),
-      description: translate(
-        'Are you sure you want to remove {{name}} from My workspace?',
-        translationVariables,
+      heading: translate(
+        isAgent
+          ? MarketplaceI18nKeys.ConfirmRemovingAgent
+          : MarketplaceI18nKeys.ConfirmRemovingToolset,
+        {
+          ns: Translation.Marketplace,
+        },
       ),
-      confirmLabel: translate('Remove'),
-      cancelLabel: translate('Cancel'),
+      description: translate(
+        MarketplaceI18nKeys.AreYouSureRemoveNameFromMyWorkspace,
+        {
+          ...translationVariables,
+          ns: Translation.Marketplace,
+        },
+      ),
+      confirmLabel: translate(MarketplaceI18nKeys.Remove, {
+        ns: Translation.Marketplace,
+      }),
+      cancelLabel: translate(MarketplaceI18nKeys.CancelMarketplace, {
+        ns: Translation.Marketplace,
+      }),
     },
   };
 

@@ -86,9 +86,7 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import { CommonI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
@@ -175,7 +173,7 @@ const shareConversationEpic: AppEpic = (action$) =>
           if (res && isConversationHasExternalAttachments(res)) {
             return of(
               ShareActions.shareFail(
-                errorsMessages.shareWithExternalFilesFailed,
+                CommonI18nKeys.ShareWithExternalFilesFailed,
               ),
             );
           }
@@ -240,7 +238,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
           if (conversations.some(isConversationHasExternalAttachments)) {
             return of(
               ShareActions.shareFail(
-                errorsMessages.shareWithExternalFilesFailed,
+                CommonI18nKeys.ShareWithExternalFilesFailed,
               ),
             );
           }
@@ -437,7 +435,9 @@ const shareFailEpic: AppEpic = (action$) =>
     ofType(ShareActions.shareFail.type),
     map(({ payload }) => {
       return UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.shareFailed),
+        translate(payload ?? CommonI18nKeys.ShareFailed, {
+          ns: Translation.Common,
+        }),
       );
     }),
   );
@@ -479,9 +479,9 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error(err);
-          let message = errorsMessages.acceptShareFailed;
+          let message = CommonI18nKeys.AcceptShareFailed;
           if (err.message.trim().toLowerCase() === 'not found') {
-            message = errorsMessages.acceptShareNotExists;
+            message = CommonI18nKeys.AcceptShareNotExists;
           }
           return of(ShareActions.acceptShareInvitationFail({ message }));
         }),
@@ -555,7 +555,9 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
         of(ConversationsActions.initSelectedConversations()),
         of(
           UIActions.showErrorToast(
-            translate(payload.message || errorsMessages.acceptShareFailed),
+            translate(payload.message || CommonI18nKeys.AcceptShareFailed, {
+              ns: Translation.Common,
+            }),
           ),
         ),
       );
@@ -730,7 +732,9 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.shareByMeListingFailed),
+          translate(CommonI18nKeys.ShareByMeListingFailed, {
+            ns: Translation.Common,
+          }),
         ),
       );
     }),
@@ -1227,7 +1231,11 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
     ofType(ShareActions.revokeAccessFail.type),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(translate(errorsMessages.revokeAccessFailed)),
+        UIActions.showErrorToast(
+          translate(CommonI18nKeys.RevokeAccessFailed, {
+            ns: Translation.Common,
+          }),
+        ),
       );
     }),
   );
@@ -1330,7 +1338,11 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           actions.push(
             of(
               ConversationsActions.createNewConversations({
-                names: [translate(DEFAULT_CONVERSATION_NAME)],
+                names: [
+                  translate(ChatI18nKeys.NewConversation, {
+                    ns: Translation.Chat,
+                  }),
+                ],
               }),
             ),
           );
@@ -1447,7 +1459,9 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.discardSharedWithMeFailed),
+          translate(CommonI18nKeys.DiscardSharedWithMeFailed, {
+            ns: Translation.Common,
+          }),
         ),
       );
     }),

@@ -525,7 +525,9 @@ export const PublicationHandlerFooter = ({
               </span>
             ))}
             {t(
-              `${selectedInvalidEntities.length > 1 ? 'have' : 'has'} already been unpublished. You can't approve this request.`,
+              selectedInvalidEntities.length > 1
+                ? ChatI18nKeys.EntitiesHaveAlreadyBeenUnpublishedCantApproveRequest
+                : ChatI18nKeys.EntityHasAlreadyBeenUnpublishedCantApproveRequest,
             )}
           </p>
         </div>
