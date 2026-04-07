@@ -28,7 +28,6 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
@@ -159,17 +158,16 @@ export const GeneralForm = ({
         />
       </div>
       <div className="mt-auto flex justify-end gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6">
-        <Tooltip
-          tooltip={t(CommonI18nKeys.FillInAllRequiredFields)}
-          hideTooltip={isValid || isEditing}
-        >
-          <DialPrimaryButton
-            data-qa="save-entity-general-info"
-            type="submit"
-            disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
-            label={t(CommonI18nKeys.Next)}
-          />
-        </Tooltip>
+        <DialPrimaryButton
+          data-qa="save-entity-general-info"
+          type="submit"
+          disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
+          label={t(CommonI18nKeys.Next)}
+          tooltipProps={{
+            tooltip: t(CommonI18nKeys.FillInAllRequiredFields),
+            hideTooltip: isValid || isEditing,
+          }}
+        />
       </div>
     </form>
   );

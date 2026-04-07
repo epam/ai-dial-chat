@@ -18,7 +18,6 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import RefreshCW from '@/public/images/icons/refresh-cw.svg';
 import { DialIconButton } from '@epam/ai-dial-ui-kit';
@@ -85,25 +84,24 @@ export const ChatControls: FC<Props> = ({
         'absolute size-[20px] p-0',
         isOverlay ? 'bottom-2 right-3' : 'right-4 top-3 md:bottom-3',
       )}
+      tooltipProps={{
+        tooltip: isError
+          ? t(ChatI18nKeys.TryAgain)
+          : t(ChatI18nKeys.ContinueReplay),
+        isTriggerClickable: true,
+      }}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
       data-replay-variables
       icon={
-        <Tooltip
-          tooltip={
-            isError ? t(ChatI18nKeys.TryAgain) : t(ChatI18nKeys.ContinueReplay)
-          }
-          isTriggerClickable
-        >
-          <Icon
-            height={DEFAULT_ICON_SIZES.STANDARD}
-            width={DEFAULT_ICON_SIZES.STANDARD}
-            className={classNames(
-              'shrink-0 hover:text-accent-primary',
-              isError ? 'text-error' : 'text-secondary',
-            )}
-          />
-        </Tooltip>
+        <Icon
+          height={DEFAULT_ICON_SIZES.STANDARD}
+          width={DEFAULT_ICON_SIZES.STANDARD}
+          className={classNames(
+            'shrink-0 hover:text-accent-primary',
+            isError ? 'text-error' : 'text-secondary',
+          )}
+        />
       }
     />
   );

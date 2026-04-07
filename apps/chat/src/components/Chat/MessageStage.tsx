@@ -20,7 +20,6 @@ import { SettingsSelectors } from '@/src/store/selectors';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
 import { MessageAttachments } from './MessageAttachments';
@@ -95,31 +94,26 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
       {t(ChatI18nKeys.ContentTooLarge, { limit })}
       <div className="flex items-center gap-2 text-secondary">
         <DialGhostIconButton
+          tooltipProps={{
+            tooltip: isCopied
+              ? t(ChatI18nKeys.Copied)
+              : t(ChatI18nKeys.CopyStageContent),
+            isTriggerClickable: !isCopied,
+          }}
           onClick={copyToClipboard}
           size={ElementSize.Small}
           disabled={isCopied}
-          icon={
-            isCopied ? (
-              <Tooltip tooltip={t(ChatI18nKeys.Copied)}>
-                <IconCheck size={18} />
-              </Tooltip>
-            ) : (
-              <Tooltip
-                isTriggerClickable
-                tooltip={t(ChatI18nKeys.CopyStageContent)}
-              >
-                <IconCopy size={18} />
-              </Tooltip>
-            )
-          }
+          icon={isCopied ? <IconCheck size={18} /> : <IconCopy size={18} />}
         />
-        <Tooltip isTriggerClickable tooltip={t(ChatI18nKeys.Download)}>
-          <DialGhostIconButton
-            size={ElementSize.Small}
-            onClick={downloadAsFile}
-            icon={<Download width={18} height={18} />}
-          />
-        </Tooltip>
+        <DialGhostIconButton
+          tooltipProps={{
+            tooltip: t(ChatI18nKeys.Download),
+            isTriggerClickable: true,
+          }}
+          size={ElementSize.Small}
+          onClick={downloadAsFile}
+          icon={<Download width={18} height={18} />}
+        />
       </div>
     </div>
   );

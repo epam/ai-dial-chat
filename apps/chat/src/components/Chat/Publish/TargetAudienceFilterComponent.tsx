@@ -231,7 +231,6 @@ export function TargetAudienceFilterComponent({
               )}
             </div>
           </div>
-          {/* )} */}
           <div className="flex justify-end">
             <DialPrimaryButton
               label={t(SideBarI18nKeys.AddFilter)}
