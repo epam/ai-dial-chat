@@ -159,6 +159,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         hasError && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
+        tooltip && 'size-full',
         className,
       )}
       aria-selected={isSelected}

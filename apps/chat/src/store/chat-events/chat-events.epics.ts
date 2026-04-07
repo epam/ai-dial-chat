@@ -24,6 +24,7 @@ import {
   ChatEventResult,
 } from '@/src/types/chat-events';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ChatEventsActions,
@@ -31,6 +32,8 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { ChatEventsSelectors, SettingsSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -191,7 +194,9 @@ const reportEventSuccessEpic: AppEpic = (action$) =>
       ) {
         return of(
           UIActions.showSuccessToast(
-            translate('Toolset sign in request declined'),
+            translate(ChatI18nKeys.ToolsetSignInRequestDeclined, {
+              ns: Translation.Chat,
+            }),
           ),
         );
       }
@@ -204,12 +209,16 @@ const reportEventFailureEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatEventsActions.reportEventFailure.type),
     switchMap(({ payload }) => {
-      const reportAction =
-        payload.result === ChatEventResult.Success ? 'resolve' : 'decline';
-
       return of(
         UIActions.showErrorToast(
-          translate(`Failed to ${reportAction} request`),
+          translate(
+            payload.result === ChatEventResult.Success
+              ? ChatI18nKeys.FailedToResolveRequest
+              : ChatI18nKeys.FailedToDeclineRequest,
+            {
+              ns: Translation.Chat,
+            },
+          ),
         ),
       );
     }),
@@ -253,7 +262,9 @@ const declineAllEventsSuccessEpic: AppEpic = (action$) =>
       if (payload.method === ChatEventOperations.ToolsetSignIn) {
         return of(
           UIActions.showSuccessToast(
-            translate('All toolset sign in requests declined'),
+            translate(ChatI18nKeys.AllToolsetSignInRequestsDeclined, {
+              ns: Translation.Chat,
+            }),
           ),
         );
       }
@@ -267,7 +278,11 @@ const declineAllEventsFailureEpic: AppEpic = (action$) =>
     ofType(ChatEventsActions.declineAllEventsFailure.type),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(translate(`Failed to decline all requests`)),
+        UIActions.showErrorToast(
+          translate(ChatI18nKeys.FailedToDeclineAllRequests, {
+            ns: Translation.Chat,
+          }),
+        ),
       );
     }),
   );
