@@ -9,3 +9,12 @@ export const MAX_FILE_SIZE_IN_BYTES = BYTES_IN_MB * 512;
 export const MAX_VISIBLE_NOTIFICATION_ITEMS = 5;
 
 export const FALLBACK_CONTENT_TYPE = 'application/octet-stream';
+
+export enum FileItemEventIds {
+  Cancel = 'cancel',
+  Retry = 'retry',
+  Toggle = 'toggle',
+  ToggleFolder = 'toggleFolder',
+  Delete = 'delete',
+  Unshare = 'unshare',
+}
