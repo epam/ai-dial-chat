@@ -16,6 +16,7 @@ export type VisualizerConnectorRequest = DialLibRequest;
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
+  mobileHeight?: number;
   themeId?: string;
   logInHint?: string;
   providerId?: string;
