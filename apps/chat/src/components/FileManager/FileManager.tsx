@@ -133,6 +133,7 @@ export const FileManager: React.FC = () => {
           clearSearchResults={handleClearSearch}
           emptyStateTitle={emptyStateTitle}
           emptyStateDescription={emptyStateDescription}
+          hideSearchPathItemName
         />
       )}
       {isAnyOperationInProgress && (
