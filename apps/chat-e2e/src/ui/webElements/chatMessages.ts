@@ -131,7 +131,7 @@ export class ChatMessages extends BaseElement {
   public getChatMessageCodeTitleCopyButton(message: string | number) {
     return new Button(
       this.page,
-      'Copy-code',
+      ChatSelectors.copyCodeButton,
       this.getChatMessageCodeTitleContainer(message),
     );
   }
@@ -139,7 +139,7 @@ export class ChatMessages extends BaseElement {
   public getChatMessageCodeTitleDownloadButton(message: string | number) {
     return new Button(
       this.page,
-      'Download',
+      ChatSelectors.downloadButton,
       this.getChatMessageCodeTitleContainer(message),
     );
   }
@@ -527,7 +527,7 @@ export class ChatMessages extends BaseElement {
   public messageCopyTextButton = (message: string | number) => {
     return new Button(
       this.page,
-      'Copy text',
+      ChatSelectors.copyTextButton,
       this.getChatMessageContent(message),
     );
   };
@@ -535,7 +535,7 @@ export class ChatMessages extends BaseElement {
   public messageCopyMarkdownButton = (message: string | number) => {
     return new Button(
       this.page,
-      'Copy markdown',
+      ChatSelectors.copyMarkdownButton,
       this.getChatMessageContent(message),
     );
   };

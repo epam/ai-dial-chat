@@ -225,7 +225,7 @@ dialTest(
     );
 
     await dialTest.step(
-      `'Click on 'Copy text' btn and verify the response is copied without markdown'`,
+      `Click on 'Copy text' btn and verify the response is copied without markdown`,
       async () => {
         await chatMessages.messageCopyTextButton(2).click();
         chatMessagesAssertion.assertCopiedMessage(
@@ -236,7 +236,7 @@ dialTest(
     );
 
     await dialTest.step(
-      `'Click on 'Copy markdown' btn and verify the response is copied with markdown'`,
+      `Click on 'Copy markdown' btn and verify the response is copied with markdown`,
       async () => {
         await chatMessages.messageCopyMarkdownButton(2).click();
         chatMessagesAssertion.assertCopiedMessage(
