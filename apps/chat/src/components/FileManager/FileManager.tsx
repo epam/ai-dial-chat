@@ -15,7 +15,17 @@ import { FilesUploadingModal } from './FilesUploadingModal';
 import { OperationLoaderModal } from './OperationLoaderModal';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialFileManager, DialLoader } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileManager,
+  DialFileManagerTabs,
+  DialLoader,
+} from '@epam/ai-dial-ui-kit';
+
+const availableTabs = new Set([
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Organization,
+  DialFileManagerTabs.Shared,
+]);
 
 export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
@@ -72,7 +82,9 @@ export const FileManager: React.FC = () => {
 
     emptyStateDescription,
     emptyStateTitle,
-  } = useFileManager();
+  } = useFileManager({
+    availableTabs,
+  });
 
   useEffect(() => {
     if (initialDataStatus === UploadStatus.LOADED) {
@@ -121,6 +133,7 @@ export const FileManager: React.FC = () => {
           clearSearchResults={handleClearSearch}
           emptyStateTitle={emptyStateTitle}
           emptyStateDescription={emptyStateDescription}
+          hideSearchPathItemName
         />
       )}
       {isAnyOperationInProgress && (

@@ -106,7 +106,7 @@ export class FileManagerPage extends BasePage {
     if (isGridVisible) {
       const fileManagerGrid = fileManager.getFileManagerGrid();
       await fileManagerGrid.waitForState();
-      await fileManagerGrid.loader.waitForState({ state: 'hidden' });
+      await fileManagerGrid.loadingIndicator.waitForState({ state: 'hidden' });
     } else {
       await fileManager.getNoDataContent().waitForState();
     }

@@ -328,8 +328,8 @@ dialSharedWithMeTest(
       'By user2 create a conversation with attachments from File manager "Shared with me" tab',
       async () => {
         const newRequest = GeneratorUtil.randomString(10);
-        await additionalShareUserFileManagerModalFoldersTree.expandFolders(
-          { isFilesListingTriggered: false },
+        await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderState(
+          'hidden',
           specialCharsFolder,
         );
         const attachmentCheckbox =
