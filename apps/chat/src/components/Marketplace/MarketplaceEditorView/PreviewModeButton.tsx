@@ -5,8 +5,6 @@ import {
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { PreviewMode } from '@/src/types/marketplace';
@@ -14,10 +12,9 @@ import { Translation } from '@/src/types/translation';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 
 const previewModeIcons = {
   [PreviewMode.full]: IconArrowsMaximize,
@@ -56,17 +53,14 @@ export const PreviewModeButton = ({
   );
 
   return (
-    <DialButton
-      className={classNames(
-        'text-secondary hover:text-accent-primary',
-        className,
-      )}
+    <DialGhostIconButton
+      className={className}
       onClick={handlePreviewModeChange}
-      iconBefore={
-        <Tooltip tooltip={t(previewModeTooltips[mode])} isTriggerClickable>
-          <Icon size={size} />
-        </Tooltip>
-      }
+      icon={<Icon size={size} />}
+      tooltipProps={{
+        tooltip: t(previewModeTooltips[mode]),
+        isTriggerClickable: true,
+      }}
     />
   );
 };

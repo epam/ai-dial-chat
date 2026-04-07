@@ -2,17 +2,13 @@ import React, { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
 
 import { Translation } from '@/src/types/translation';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
-
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   iconSize: number;
@@ -46,25 +42,18 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   const Icon = isOpened ? MoveLeftIcon : MoveRightIcon;
 
   return (
-    <Tooltip isTriggerClickable tooltip={t(tooltip)}>
-      <DialButton
-        className={classNames(
-          'flex h-full shrink-0 items-center justify-center px-3',
-          isOverlay ? 'md:px-3' : 'md:px-5',
-        )}
-        data-qa={dataQa}
-        onClick={handleToggle}
-        iconBefore={
-          <Icon
-            className={classNames(
-              'text-secondary hover:text-accent-primary',
-              rightSide && 'rotate-180',
-            )}
-            width={iconSize}
-            height={iconSize}
-          />
-        }
-      />
-    </Tooltip>
+    <DialGhostIconButton
+      tooltipProps={{ isTriggerClickable: true, tooltip: t(tooltip) }}
+      className={isOverlay ? 'md:px-3' : 'md:px-5'}
+      data-qa={dataQa}
+      onClick={handleToggle}
+      icon={
+        <Icon
+          className={rightSide && 'rotate-180'}
+          width={iconSize}
+          height={iconSize}
+        />
+      }
+    />
   );
 };

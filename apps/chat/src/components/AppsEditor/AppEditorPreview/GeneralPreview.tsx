@@ -81,7 +81,7 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
         </div>
         <PreviewModeButton
           mode={PreviewMode.closed}
-          className="hidden pl-3 max-xl:flex"
+          className="hidden max-xl:flex"
         />
       </div>
       <div className="flex flex-1 items-center justify-center">

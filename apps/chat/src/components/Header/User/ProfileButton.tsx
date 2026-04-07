@@ -15,7 +15,7 @@ import { HeaderI18nKeys } from '@/src/constants/i18n';
 
 import { UserIcon } from './UserIcon';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialIconButton } from '@epam/ai-dial-ui-kit';
 
 export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -37,12 +37,12 @@ export const ProfileButton = () => {
   const iconSize = isOverlay ? 18 : 24;
 
   return (
-    <DialButton
+    <DialIconButton
       className="flex items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
       data-qa="account-settings"
       aria-label={t(HeaderI18nKeys.AccountSettings)}
-      iconBefore={
+      icon={
         isProfileOpen ? (
           <IconX
             className="text-secondary"

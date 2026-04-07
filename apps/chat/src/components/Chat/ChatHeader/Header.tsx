@@ -51,8 +51,8 @@ import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 import {
-  DialButton,
   DialGhostIconButton,
+  DialIconButton,
   DialLinkButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
@@ -255,11 +255,11 @@ export const ChatHeader = Inversify.register(
                       />
                     }
                   >
-                    <DialButton
+                    <DialIconButton
                       className="h-fit px-0"
                       disabled={isMessageStreaming || disallowChangeAgent}
                       onClick={() => onModelClick(conversation.id)}
-                      iconBefore={
+                      icon={
                         <ModelIcon
                           entityId={conversation.model.id}
                           entity={model}

@@ -130,7 +130,7 @@ export const ToolsetPreview = ({
 
         <PreviewModeButton
           mode={PreviewMode.closed}
-          className="hidden pl-3 max-xl:flex"
+          className="hidden max-xl:flex"
         />
       </div>
 

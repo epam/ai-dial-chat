@@ -44,7 +44,7 @@ import { Modal } from '@/src/components/Common/Modal';
 import { SelectFolderModal } from './SelectFolderModal';
 
 import {
-  DialButton,
+  DialErrorIconButton,
   DialLinkButton,
   DialPrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -399,12 +399,10 @@ export const PreUploadDialog = ({
                       </span>
                     </div>
 
-                    {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
-                    <DialButton
+                    <DialErrorIconButton
                       onClick={handleUnselectFile(index)}
                       aria-label="remove-file"
-                      className="text-secondary hover:text-accent-primary"
-                      iconBefore={<IconTrashX />}
+                      icon={<IconTrashX />}
                     />
                   </div>
                 ))}
