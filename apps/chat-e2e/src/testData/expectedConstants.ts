@@ -125,7 +125,7 @@ export const ExpectedConstants = {
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
-  removeAccessTitle: 'Confirm removing access',
+  removeAccessTitle: 'Confirm unsharing',
   unshareFileTitle: 'Confirm unsharing file',
   unshareFileMessage: 'Are you sure that you want to unshare this file?',
   attachments: 'Attachments',

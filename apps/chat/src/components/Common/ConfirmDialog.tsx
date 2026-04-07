@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useId, useRef } from 'react';
+import { MouseEvent, ReactNode, useCallback, useId, useRef } from 'react';
 
 import { ModalState } from '@/src/types/modal';
 
@@ -11,7 +11,7 @@ import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 interface Props {
   isOpen: boolean;
   heading: string;
-  description?: string;
+  description?: ReactNode;
   confirmLabel: string;
   cancelLabel?: string | null;
   headingClassName?: string;
