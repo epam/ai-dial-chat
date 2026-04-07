@@ -48,7 +48,6 @@ import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Loader } from '@/src/components/Common/Loader';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import { Folder } from '@/src/components/Folder/Folder';
@@ -356,6 +355,20 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+
+    return () => {
+      window.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isFullScreen]);
+
   const files = useMemo(
     () => allFiles.filter((file) => !isHiddenEntity(file)),
     [allFiles],
@@ -559,13 +572,15 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
       >
         <div className="flex max-h-full flex-col divide-y divide-tertiary overflow-hidden rounded-l border border-tertiary bg-layer-3">
           <div className="flex w-fit shrink-0 border-r border-tertiary px-3 py-2">
-            <Tooltip tooltip={t(ChatI18nKeys.HideFileList)} isTriggerClickable>
-              <DialGhostIconButton
-                size={ElementSize.Small}
-                onClick={handleSidebarToggle}
-                icon={<MoveLeftIcon size={DEFAULT_ICON_SIZES.SMALL} />}
-              />
-            </Tooltip>
+            <DialGhostIconButton
+              tooltipProps={{
+                tooltip: t(ChatI18nKeys.HideFileList),
+                isTriggerClickable: true,
+              }}
+              size={ElementSize.Small}
+              onClick={handleSidebarToggle}
+              icon={<MoveLeftIcon size={DEFAULT_ICON_SIZES.SMALL} />}
+            />
           </div>
           <div className="grow overflow-y-auto p-3">
             {rootFolders.map((folder) => {
@@ -659,48 +674,44 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           </div>
           {!readOnly && (
             <div className="flex items-center gap-3 px-3 py-2.5">
-              <Tooltip tooltip={t(ChatI18nKeys.AddNewFolderChat)}>
-                <DialGhostIconButton
-                  size={ElementSize.Small}
-                  onClick={() =>
-                    dispatch(
-                      FilesActions.addNewFolder({ parentId: sourcesFolderId }),
-                    )
-                  }
-                  icon={
-                    <FolderPlus
-                      width={DEFAULT_ICON_SIZES.SMALL}
-                      height={DEFAULT_ICON_SIZES.SMALL}
-                    />
-                  }
-                />
-              </Tooltip>
-              <Tooltip tooltip={t(ChatI18nKeys.CreateFile)}>
-                <DialGhostIconButton
-                  size={ElementSize.Small}
-                  onClick={() => {
-                    setNewFileFolder(sourcesFolderId);
-                    setNewFileName(getNextDefaultName('New file', rootFiles));
-                  }}
-                  disabled={!!newFileName}
-                  icon={<IconFilePlus size={DEFAULT_ICON_SIZES.SMALL} />}
-                />
-              </Tooltip>
-              <Tooltip tooltip={t(ChatI18nKeys.UploadFile)}>
-                <DialGhostIconButton
-                  size={ElementSize.Small}
-                  onClick={openUploadDialog}
-                  icon={<IconUpload size={DEFAULT_ICON_SIZES.SMALL} />}
-                />
-              </Tooltip>
-              {!!modifiedFileIds.length && (
-                <Tooltip tooltip={t(ChatI18nKeys.SaveAll)}>
-                  <DialGhostIconButton
-                    size={ElementSize.Small}
-                    onClick={() => handleSaveFiles(modifiedFileIds)}
-                    icon={<IconDeviceFloppy size={DEFAULT_ICON_SIZES.SMALL} />}
+              <DialGhostIconButton
+                tooltipProps={{ tooltip: t(ChatI18nKeys.AddNewFolderChat) }}
+                size={ElementSize.Small}
+                onClick={() =>
+                  dispatch(
+                    FilesActions.addNewFolder({ parentId: sourcesFolderId }),
+                  )
+                }
+                icon={
+                  <FolderPlus
+                    width={DEFAULT_ICON_SIZES.SMALL}
+                    height={DEFAULT_ICON_SIZES.SMALL}
                   />
-                </Tooltip>
+                }
+              />
+              <DialGhostIconButton
+                tooltipProps={{ tooltip: t(ChatI18nKeys.CreateFile) }}
+                size={ElementSize.Small}
+                onClick={() => {
+                  setNewFileFolder(sourcesFolderId);
+                  setNewFileName(getNextDefaultName('New file', rootFiles));
+                }}
+                disabled={!!newFileName}
+                icon={<IconFilePlus size={DEFAULT_ICON_SIZES.SMALL} />}
+              />
+              <DialGhostIconButton
+                tooltipProps={{ tooltip: t(ChatI18nKeys.UploadFile) }}
+                size={ElementSize.Small}
+                onClick={openUploadDialog}
+                icon={<IconUpload size={DEFAULT_ICON_SIZES.SMALL} />}
+              />
+              {!!modifiedFileIds.length && (
+                <DialGhostIconButton
+                  tooltipProps={{ tooltip: t(ChatI18nKeys.SaveAll) }}
+                  size={ElementSize.Small}
+                  onClick={() => handleSaveFiles(modifiedFileIds)}
+                  icon={<IconDeviceFloppy size={DEFAULT_ICON_SIZES.SMALL} />}
+                />
               )}
             </div>
           )}
@@ -714,37 +725,35 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
           >
             {!isSidebarOpen && (
               <div className="flex w-fit border-r border-tertiary px-3 py-2">
-                <Tooltip
-                  tooltip={t(ChatI18nKeys.ShowFileList)}
-                  isTriggerClickable
-                  triggerClassName="mr-auto"
-                >
-                  <DialGhostIconButton
-                    size={ElementSize.Small}
-                    onClick={handleSidebarToggle}
-                    icon={<MoveRightIcon size={DEFAULT_ICON_SIZES.SMALL} />}
-                  />
-                </Tooltip>
+                <DialGhostIconButton
+                  tooltipProps={{
+                    tooltip: t(ChatI18nKeys.ShowFileList),
+                    isTriggerClickable: true,
+                    triggerClassName: 'mr-auto',
+                  }}
+                  size={ElementSize.Small}
+                  onClick={handleSidebarToggle}
+                  icon={<MoveRightIcon size={DEFAULT_ICON_SIZES.SMALL} />}
+                />
               </div>
             )}
 
             <div className="flex w-fit border-l border-tertiary px-3 py-2">
-              <Tooltip
-                tooltip={t(
-                  isFullScreen
-                    ? ChatI18nKeys.Minimize
-                    : ChatI18nKeys.FullScreenLabel,
-                )}
-              >
-                <DialGhostIconButton
-                  size={ElementSize.Small}
-                  onClick={(e) => {
-                    setIsFullScreen(!isFullScreen);
-                    dispatchMouseLeaveEvent(e);
-                  }}
-                  icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
-                />
-              </Tooltip>
+              <DialGhostIconButton
+                tooltipProps={{
+                  tooltip: t(
+                    isFullScreen
+                      ? ChatI18nKeys.Minimize
+                      : ChatI18nKeys.FullScreenLabel,
+                  ),
+                }}
+                size={ElementSize.Small}
+                onClick={(e) => {
+                  setIsFullScreen(!isFullScreen);
+                  dispatchMouseLeaveEvent(e);
+                }}
+                icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
+              />
             </div>
           </div>
           <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
