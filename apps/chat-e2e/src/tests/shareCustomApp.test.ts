@@ -16,8 +16,6 @@ import { Conversation } from '@epam/ai-dial-shared';
 let appData: CustomAppAttributes;
 const getIconName = (iconUrl: string) =>
   iconUrl.substring(iconUrl.lastIndexOf('/') + 1);
-const getAppName = (id: string) =>
-  id.substring(id.lastIndexOf('/') + 1).split('__')[0];
 
 dialSharedWithMeTest(
   'Sharing custom app without editing permissions via context menu in DIAL Marketplace.\n' +
@@ -615,7 +613,7 @@ dialSharedWithMeTest(
           ExpectedConstants.removeAccessTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeYourAccessMessage(getAppName(appData.name)),
+          ExpectedConstants.removeYourAccessMessage(appData.name),
         );
       },
     );
@@ -806,7 +804,7 @@ dialSharedWithMeTest(
           ExpectedConstants.removeAccessTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeYourAccessMessage(getAppName(appData.name)),
+          ExpectedConstants.removeYourAccessMessage(appData.name),
         );
       },
     );
@@ -893,7 +891,7 @@ dialSharedWithMeTest(
           ExpectedConstants.removeAccessTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeYourAccessMessage(getAppName(appData.name)),
+          ExpectedConstants.removeYourAccessMessage(appData.name),
         );
       },
     );
