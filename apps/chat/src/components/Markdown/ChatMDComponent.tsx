@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { dataToBlobUrl } from '@/src/utils/app/dataUrl';
 import { preprocessLaTeX } from '@/src/utils/app/latex';
 
 import { ScreenState } from '@/src/types/common';
@@ -47,20 +48,6 @@ interface ChatMDComponentProps {
 
 const transformUri = (src: string): string => {
   return getMappedAttachmentUrl(src) ?? '';
-};
-
-const dataToBlobUrl = (dataUrl: string) => {
-  const arr = dataUrl.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1];
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-
-  return URL.createObjectURL(new Blob([u8arr], { type: mime }));
 };
 
 const getMDComponents = (
@@ -182,7 +169,7 @@ const getMDComponents = (
       if (href?.startsWith('data:image')) {
         const blobUrl = dataToBlobUrl(href);
         return (
-          <a href={blobUrl} target="_blank" rel="noopener noreferrer">
+          <a href={blobUrl ?? href} target="_blank" rel="noopener noreferrer">
             {children}
           </a>
         );
@@ -216,7 +203,6 @@ const rehypePlugins: Options['rehypePlugins'] = [
           // Preserve className for syntax highlighting
           ['className'],
         ],
-        img: [...(defaultSchema.attributes?.img || []), ['src']],
       },
       protocols: {
         src: [...(defaultSchema.protocols?.src ?? []), 'data'],
