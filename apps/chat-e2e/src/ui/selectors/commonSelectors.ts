@@ -25,7 +25,7 @@ export const FolderTreeSelectors = {
   foldersTreeContainer: '[aria-label="folders-tree"]',
   folder: '[aria-label="folder"]',
   folderName: '#name',
-  folderGroup: '.dial-small.group\\/item',
+  folderGroup: '.dial-small-text.group\\/item',
 };
 
 export const NoDataContentSelectors = {
