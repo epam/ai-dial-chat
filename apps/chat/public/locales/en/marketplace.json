@@ -120,6 +120,14 @@
   "Undeployed": "Undeployed",
   "Deployed": "Deployed",
   "Remove from My workspace": "Remove from My workspace",
+  "Remove": "Remove",
+  " (version {{version}})": " (version {{version}})",
+  "Confirm deleting agent": "Confirm deleting agent",
+  "Confirm deleting toolset": "Confirm deleting toolset",
+  "Confirm removing agent": "Confirm removing agent",
+  "Confirm removing toolset": "Confirm removing toolset",
+  "Are you sure you want to delete the {{name}}{{version}}?": "Are you sure you want to delete the {{name}}{{version}}?",
+  "Are you sure you want to remove {{name}} from My workspace?": "Are you sure you want to remove {{name}} from My workspace?",
   "Add to My workspace": "Add to My workspace",
   "Expand preview": "Expand preview",
   "Hide preview": "Hide preview",
@@ -133,5 +141,8 @@
   "Here you can manage the toolsets used in your daily work": "Here you can manage the toolsets used in your daily work",
   "You cannot change the {{context}} of a shared application.": "You cannot change the {{context}} of a shared application.",
   "Add {{label}}": "Add {{label}}",
-  "Application is {{status}}": "Application is {{status}}"
+  "Application is {{status}}": "Application is {{status}}",
+  "My credentials": "My credentials",
+  "Entire organization credentials": "Entire organization credentials",
+  "LOGGED IN": "LOGGED IN"
 }
