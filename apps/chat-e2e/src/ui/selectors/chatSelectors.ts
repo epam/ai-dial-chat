@@ -148,6 +148,7 @@ export const ChatSelectors = {
   showLess: '[data-qa="show-less"]',
   iconSelector: '[data-qa="entity-icon"]',
   addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
+  messageImageAttachment: 'Attachment image',
   copyCodeButton: 'Copy-code',
   downloadButton: 'Download',
   copyTextButton: 'Copy text',

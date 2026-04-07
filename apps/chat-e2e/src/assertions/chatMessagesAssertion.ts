@@ -2,7 +2,7 @@ import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
 import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 
 export class ChatMessagesAssertion extends BaseAssertion {
   readonly chatMessages: ChatMessages;
@@ -168,6 +168,40 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expect
       .soft(downloadUrl, ExpectedMessages.attachmentUrlIsValid)
       .toContain(expectedUrl);
+  }
+
+  public async assertFullScreenMessageImageAttachment(
+    message: string | number,
+  ) {
+    const openedImageAttachmentLocator =
+      this.chatMessages.getOpenedChatMessageImageAttachment(message);
+    for (const attribute of [
+      AttributeValues.maxHFull,
+      AttributeValues.maxWFull,
+    ]) {
+      await this.assertElementClass(
+        openedImageAttachmentLocator,
+        new RegExp(attribute),
+        ExpectedMessages.attachmentIsOpenedOnFullScreen,
+      );
+    }
+  }
+
+  /**
+   * The assertion depends on the expected state.
+   * When 'visible' is passed, the image is verified to be loaded and to have a non-zero width
+   */
+  public async assertMessageImageAttachmentState(
+    message: string | number | Locator,
+    expectedState: ElementState,
+  ) {
+    const imgLocator =
+      typeof message === 'string' || typeof message === 'number'
+        ? this.chatMessages.getOpenedChatMessageImageAttachment(message)
+        : message;
+    expectedState === 'visible'
+      ? await this.assertEntityIcon(imgLocator)
+      : await this.assertElementState(imgLocator, expectedState);
   }
 
   public async assertMessageImageLoaded(message: number) {
