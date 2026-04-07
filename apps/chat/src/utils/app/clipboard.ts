@@ -1,6 +1,6 @@
 import { sanitize } from 'isomorphic-dompurify';
+import markdownToTxt from 'markdown-to-txt';
 import { marked } from 'marked';
-import removeMd from 'remove-markdown';
 
 export const writeTextToClipboard = (
   content: string,
@@ -10,7 +10,7 @@ export const writeTextToClipboard = (
   if (options?.convertFromMarkdown) {
     if (navigator.clipboard?.write && window.ClipboardItem) {
       const html = sanitize(marked(content, { async: false }));
-      const plainText = removeMd(content);
+      const plainText = markdownToTxt(content);
 
       const htmlBlob = new Blob([html], { type: 'text/html' });
       const textBlob = new Blob([plainText], { type: 'text/plain' });
