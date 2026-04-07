@@ -42,6 +42,7 @@ import {
 } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
+  DialErrorIconButton,
   DialPrimaryIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
@@ -134,8 +135,7 @@ export const MessageUserButtons = ({
               isTriggerClickable
               tooltip={t(ChatI18nKeys.Delete)}
             >
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
+              <DialErrorIconButton
                 size={ElementSize.Small}
                 onClick={onDelete}
                 icon={

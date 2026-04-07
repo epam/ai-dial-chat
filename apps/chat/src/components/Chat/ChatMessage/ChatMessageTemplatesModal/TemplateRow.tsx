@@ -8,8 +8,6 @@ import {
   useState,
 } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -22,6 +20,8 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { TemplateInput } from './TemplateInput';
+
+import { DialErrorIconButton } from '@epam/ai-dial-ui-kit';
 
 interface TemplateRowProps {
   index: number;
@@ -168,14 +168,11 @@ export const TemplateRow = ({
           validationError={validationTemplateError}
         />
       </div>
-      <IconTrashX
-        size={DEFAULT_ICON_SIZES.STANDARD}
-        className={classNames(
-          'shrink-0 cursor-pointer self-center text-secondary hover:text-accent-primary',
-          lastRow && 'invisible',
-        )}
+      <DialErrorIconButton
+        className={lastRow ? 'invisible' : ''}
         onClick={handleDelete}
         name="delete-row"
+        icon={<IconTrashX size={DEFAULT_ICON_SIZES.STANDARD} />}
       />
     </div>
   );
