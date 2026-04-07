@@ -37,7 +37,7 @@ import {
   isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
-import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
+import { isEntityIdExternal, isMyEntity, isRootId } from '@/src/utils/app/id';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   hasParentWithAttribute,
@@ -751,7 +751,6 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       if (!onUnshareFolder) {
         return;
       }
-
       e.stopPropagation();
       setIsUnshareConfirmDialog(true);
     },
@@ -864,6 +863,25 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     canSelectFolders && isContextMenu && isTabletScreen();
   const isTemporaryFolder =
     'temporary' in currentFolder && currentFolder.temporary;
+
+  const isAuthor = isMyEntity(currentFolder);
+
+  const unshareDescription = t(
+    isAuthor
+      ? ChatI18nKeys.ConfirmRemoveAllUsersAccess
+      : ChatI18nKeys.ConfirmRemoveYourAccess,
+    { name: currentFolder.name },
+  );
+
+  const handleCloseUnshareConfirmation = useCallback(
+    (result: boolean) => {
+      setIsUnshareConfirmDialog(false);
+      if (result) {
+        onUnshareFolder?.(currentFolder.id);
+      }
+    },
+    [currentFolder.id, onUnshareFolder],
+  );
 
   return (
     <div
@@ -1327,19 +1345,11 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onUnshareFolder && (
         <ConfirmDialog
           isOpen={isUnshareConfirmDialog}
-          showHeadingTooltip
-          heading={t(ChatI18nKeys.ConfirmUnsharingFolder, {
-            folderName: currentFolder.name,
-          })}
-          description={`${t(ChatI18nKeys.ConfirmUnshareFolderDescription)}`}
+          heading={t(ChatI18nKeys.ConfirmUnsharing)}
+          description={unshareDescription}
           confirmLabel={t(ChatI18nKeys.Unshare)}
           cancelLabel={t(ChatI18nKeys.Cancel)}
-          onClose={(result) => {
-            setIsUnshareConfirmDialog(false);
-            if (result) {
-              onUnshareFolder(currentFolder.id);
-            }
-          }}
+          onClose={handleCloseUnshareConfirmation}
         />
       )}
       <ConfirmDialog
