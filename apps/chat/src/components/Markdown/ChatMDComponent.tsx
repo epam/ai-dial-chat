@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { dataToBlobUrl } from '@/src/utils/app/dataUrl';
 import { preprocessLaTeX } from '@/src/utils/app/latex';
 
 import { ScreenState } from '@/src/types/common';
@@ -176,6 +177,22 @@ const getMDComponents = (
           <span className="truncate">{children}</span>
           <ChevronDown height={18} width={18} className="shrink-0 transition" />
         </summary>
+      );
+    },
+    a({ href, children, ...props }) {
+      if (href?.startsWith('data:image')) {
+        const blobUrl = dataToBlobUrl(href);
+        return (
+          <a href={blobUrl ?? href} target="_blank" rel="noopener noreferrer">
+            {children}
+          </a>
+        );
+      }
+
+      return (
+        <a href={href} {...props}>
+          {children}
+        </a>
       );
     },
   };
