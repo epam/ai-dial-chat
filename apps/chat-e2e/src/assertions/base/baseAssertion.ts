@@ -40,8 +40,12 @@ export class BaseAssertion {
   ) {
     const elementLocator = BaseElement.getElementLocator(icon);
     //assert icon is loaded and displayed
-    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
-    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
+    await expect
+      .soft(elementLocator, ExpectedMessages.imageIsLoaded)
+      .toHaveJSProperty('complete', true);
+    await expect
+      .soft(elementLocator, ExpectedMessages.imageIsLoaded)
+      .not.toHaveJSProperty('naturalWidth', 0);
 
     const actualIconSource = await elementLocator
       .getAttribute(Attributes.src)
