@@ -74,6 +74,7 @@ export const SelectFolderModal = ({
         my_files: [],
         shared: [],
         organization: [],
+        review: [],
       },
     },
     toolbarOptions: {

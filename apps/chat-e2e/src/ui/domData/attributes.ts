@@ -39,4 +39,8 @@ export enum AttributeValues {
   mixed = 'mixed',
   truncate = 'truncate',
   lineClamp = 'line-clamp-',
+  textLeft = 'text-left',
+  aspectAuto = 'aspect-auto',
+  maxHFull = 'max-h-full',
+  maxWFull = 'max-w-full',
 }

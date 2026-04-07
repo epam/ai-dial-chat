@@ -34,7 +34,15 @@ import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
-const myFilesFilter = new Set([FileSourceType.MY_FILES]);
+const reviewFilesFilter = new Set([
+  FileSourceType.MY_FILES,
+  FileSourceType.REVIEW_FILES,
+]);
+const defaultFilesFilter = new Set([
+  FileSourceType.MY_FILES,
+  FileSourceType.PUBLIC,
+  FileSourceType.SHARED_WITH_ME,
+]);
 
 interface Props {
   selectedFilesIds?: string[];
@@ -123,7 +131,7 @@ export const AttachButton = ({
   );
 
   const sourceFilters =
-    isApproveRequiredEntity && isAdmin ? myFilesFilter : undefined;
+    isApproveRequiredEntity && isAdmin ? reviewFilesFilter : defaultFilesFilter;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () =>
