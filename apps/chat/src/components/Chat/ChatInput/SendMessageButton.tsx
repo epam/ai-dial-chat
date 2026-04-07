@@ -21,7 +21,6 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -66,10 +65,9 @@ export const SendMessageButton = Inversify.register(
           aria-label={t(ChatI18nKeys.SendAMessage)}
           onClick={onSend}
           data-qa="regenerate"
+          tooltipProps={{ tooltip: tooltip, isTriggerClickable: true }}
           iconBefore={
-            <Tooltip tooltip={tooltip} isTriggerClickable>
-              <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
-            </Tooltip>
+            <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
           }
         />
       );
@@ -90,18 +88,17 @@ export const SendMessageButton = Inversify.register(
         disabled={disabled}
         data-qa={dataQa}
         aria-label={t(ChatI18nKeys.SendAMessage)}
+        tooltipProps={{
+          hideTooltip: !disabled && !messageIsStreaming,
+          tooltip,
+          isTriggerClickable: true,
+        }}
         iconBefore={
-          <Tooltip
-            hideTooltip={!disabled && !messageIsStreaming}
-            tooltip={tooltip}
-            isTriggerClickable
-          >
-            {isSpinner ? (
-              <Spinner size={20} />
-            ) : (
-              <Icon size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
-            )}
-          </Tooltip>
+          isSpinner ? (
+            <Spinner size={20} />
+          ) : (
+            <Icon size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
+          )
         }
       />
     );

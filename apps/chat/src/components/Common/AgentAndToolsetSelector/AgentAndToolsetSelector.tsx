@@ -12,7 +12,6 @@ import { CommonI18nKeys } from '@/src/constants/i18n';
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';

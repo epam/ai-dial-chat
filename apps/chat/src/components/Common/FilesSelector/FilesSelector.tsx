@@ -108,14 +108,13 @@ export const FilesSelector: React.FC<Props> = ({
       <div className="relative grow space-y-4 divide-tertiary">
         <div className="flex flex-col">
           <div className="absolute right-0 top-[-22px]">
-            <Tooltip tooltip={addBtnTooltip}>
-              <DialLinkButton
-                disabled={readonly}
-                onClick={handleOpenFilesModal}
-                iconBefore={<IconPlus size={18} />}
-                label={t(FilesI18nKeys.Add)}
-              />
-            </Tooltip>
+            <DialLinkButton
+              tooltipProps={{ tooltip: addBtnTooltip }}
+              disabled={readonly}
+              onClick={handleOpenFilesModal}
+              iconBefore={<IconPlus size={18} />}
+              label={t(FilesI18nKeys.Add)}
+            />
           </div>
           {!files.length ? (
             <NoFiles />
