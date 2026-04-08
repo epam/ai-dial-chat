@@ -1025,4 +1025,7 @@ export enum MarketplaceI18nKeys {
   MyCredentials = 'My credentials',
   EntireOrganizationCredentials = 'Entire organization credentials',
   LoggedIn = 'LOGGED IN',
+  PublicationDetails = 'Publication details',
+  PublishedTo = 'Published to',
+  AllowAccessIfAllMatch = 'Allow access if all match',
 }
