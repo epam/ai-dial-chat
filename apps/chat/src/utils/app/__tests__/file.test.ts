@@ -66,5 +66,9 @@ describe('File utility methods', () => {
     it('keeps file names without extension after sanitization', () => {
       expect(prepareFileName('  bad,name  ')).toBe('bad_name');
     });
+
+    it('keeps file names with dot after sanitization', () => {
+      expect(prepareFileName('test..json')).toBe('test..json');
+    });
   });
 });

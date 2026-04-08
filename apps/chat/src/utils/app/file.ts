@@ -406,7 +406,11 @@ export const prepareFileName = (filename: string) => {
   const maxBaseNameLength = Math.max(MAX_ENTITY_LENGTH - extension.length, 0);
   const preparedBaseName = prepareEntityName(
     getFileNameWithoutExtension(trimmedFilename),
-    { maxNameLength: maxBaseNameLength },
+    {
+      forRenaming: true,
+      replaceWithSpacesForRenaming: true,
+      maxNameLength: maxBaseNameLength,
+    },
   );
 
   return `${preparedBaseName}${extension}`;
