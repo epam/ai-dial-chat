@@ -62,7 +62,6 @@ const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 const StartersBehaviourField = withLabel(StartersBehaviourRadioGroup);
-const ConversationStartersField = withLabel(ConversationStartersList);
 const ToggleSwitchField = withLabel(ToggleSwitch);
 
 const getItemLabel = (item: unknown): string => item as string;
@@ -267,8 +266,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           name="starters"
           control={control}
           render={({ field }) => (
-            <ConversationStartersField
-              label={t(MarketplaceI18nKeys.ConversationStarters)}
+            <ConversationStartersList
               value={field.value}
               onChange={field.onChange}
               disabled={isAppPublic}
@@ -276,60 +274,67 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           )}
         />
 
-        <div>
-          <h3 className="text-sm font-semibold">
-            {t(MarketplaceI18nKeys.StartersSettings)}
-          </h3>
-          <p className="mt-1 text-sm text-secondary">
-            {t(MarketplaceI18nKeys.AtLeastOneStarterIsRequiredToEnableSettings)}
-          </p>
-        </div>
-
-        <ControlledField
-          label={t(MarketplaceI18nKeys.IntroText)}
-          placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
-          id="introText"
-          error={errors.introText?.message}
-          control={control}
-          name="introText"
-          info={t(MarketplaceI18nKeys.OptionalTextShownAboveTheStarters)}
-          disabled={isAppPublic || !hasStarters}
-          tooltip={startersSettingsTooltip}
-        />
-
-        <Controller
-          name="autoSubmit"
-          control={control}
-          render={({ field }) => (
-            <StartersBehaviourField
-              label={t(MarketplaceI18nKeys.StartersBehaviour)}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={isAppPublic || !hasStarters}
-              tooltip={startersSettingsTooltip}
-            />
-          )}
-        />
-
-        <Controller
-          name="chatMessageInputDisabled"
-          control={control}
-          render={({ field }) => (
-            <ToggleSwitchField
-              label={t(MarketplaceI18nKeys.DisableChatInput)}
-              isOn={field.value}
-              handleSwitch={() => field.onChange(!field.value)}
-              className="mt-1 flex w-fit items-center gap-2"
-              switchOnText={t(SettingsI18nKeys.ON)}
-              switchOFFText={t(SettingsI18nKeys.OFF)}
-              additionalText={t(
-                MarketplaceI18nKeys.DisableChatInputSoUsersCanOnlyUseStarters,
+        <div className="mt-1 flex flex-col gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">
+              {t(MarketplaceI18nKeys.StartersSettings)}
+            </h3>
+            <p className="mt-1 text-sm text-secondary">
+              {t(
+                MarketplaceI18nKeys.AtLeastOneStarterIsRequiredToEnableSettings,
               )}
-              disabled={isAppPublic || !hasStarters}
-              tooltip={startersSettingsTooltip}
-            />
-          )}
-        />
+            </p>
+          </div>
+
+          <ControlledField
+            label={t(MarketplaceI18nKeys.IntroText)}
+            placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
+            id="introText"
+            isSubgroup
+            error={errors.introText?.message}
+            control={control}
+            name="introText"
+            info={t(MarketplaceI18nKeys.OptionalTextShownAboveTheStarters)}
+            disabled={isAppPublic || !hasStarters}
+            tooltip={startersSettingsTooltip}
+          />
+
+          <Controller
+            name="autoSubmit"
+            control={control}
+            render={({ field }) => (
+              <StartersBehaviourField
+                label={t(MarketplaceI18nKeys.StartersBehaviour)}
+                value={field.value}
+                isSubgroup
+                onChange={field.onChange}
+                disabled={isAppPublic || !hasStarters}
+                tooltip={startersSettingsTooltip}
+              />
+            )}
+          />
+
+          <Controller
+            name="chatMessageInputDisabled"
+            control={control}
+            render={({ field }) => (
+              <ToggleSwitchField
+                label={t(MarketplaceI18nKeys.DisableChatInput)}
+                isOn={field.value}
+                handleSwitch={() => field.onChange(!field.value)}
+                isSubgroup
+                className="mt-1 flex w-fit items-center gap-2"
+                switchOnText={t(SettingsI18nKeys.ON)}
+                switchOFFText={t(SettingsI18nKeys.OFF)}
+                additionalText={t(
+                  MarketplaceI18nKeys.DisableChatInputSoUsersCanOnlyUseStarters,
+                )}
+                disabled={isAppPublic || !hasStarters}
+                tooltip={startersSettingsTooltip}
+              />
+            )}
+          />
+        </div>
       </FormCollapsibleSection>
     </div>
   );

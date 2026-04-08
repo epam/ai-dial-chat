@@ -71,7 +71,7 @@ export const DialMarkdownEditorContainer: FC<
   return (
     <div className="flex w-full flex-col">
       {(label || headerContent || showSwitcher) && (
-        <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           {label && <Label>{label as string}</Label>}
           <div className="flex flex-1 items-center justify-end gap-2">
             {headerContent}
