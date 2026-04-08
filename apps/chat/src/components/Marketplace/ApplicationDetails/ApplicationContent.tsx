@@ -7,6 +7,8 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
 
+import { ApplicationPublishInfo } from '@/src/components/Marketplace/ApplicationDetails/ApplicationPublishInfo';
+
 import { EntityDetailsContent } from '../EntityDetailsContent';
 
 interface Props {
@@ -24,5 +26,10 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
     [entity, userName],
   );
 
-  return <EntityDetailsContent entity={content} />;
+  return (
+    <>
+      <EntityDetailsContent entity={content} />
+      <ApplicationPublishInfo entity={entity} />
+    </>
+  );
 };
