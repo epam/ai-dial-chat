@@ -2,6 +2,7 @@ import { useId } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { useReviewBucket } from '@/src/hooks/useReviewBucket';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -258,7 +259,7 @@ export const FileManagerModal = memo(
         [FileSourceType.MY_FILES]: DialFileManagerTabs.MyFiles,
         [FileSourceType.SHARED_WITH_ME]: DialFileManagerTabs.Shared,
         [FileSourceType.PUBLIC]: DialFileManagerTabs.Organization,
-        [FileSourceType.REVIEW_FILES]: undefined,
+        [FileSourceType.REVIEW_FILES]: DialFileManagerTabs.Review,
       };
 
       return new Set(
@@ -267,6 +268,8 @@ export const FileManagerModal = memo(
           .filter((t): t is DialFileManagerTabs => Boolean(t)),
       );
     }, [sourceFilters]);
+
+    const reviewBucket = useReviewBucket();
 
     const {
       currentPath,
@@ -314,12 +317,14 @@ export const FileManagerModal = memo(
           ],
           shared: [DialFileManagerActions.Download],
           organization: [DialFileManagerActions.Download],
+          review: [DialFileManagerActions.Download],
         },
       },
       toolbarOptions: {
         newButtonVariant: ButtonVariant.Secondary,
       },
       availableTabs,
+      reviewBucket,
     });
 
     return (
@@ -400,6 +405,7 @@ export const FileManagerModal = memo(
               onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
+              hideSearchPathItemName
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
