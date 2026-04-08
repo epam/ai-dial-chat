@@ -58,6 +58,7 @@ import { Translation } from '@/src/types/translation';
 import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
+  ChatActions,
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
@@ -391,6 +392,17 @@ const updateApplicationEpic: AppEpic = (action$) =>
                       of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
                     );
                   }
+                }
+
+                if (updatedCustomApplication.applicationTypeSchemaId) {
+                  actions.push(
+                    of(
+                      ChatActions.getConfigurationSchema({
+                        modelId: updatedCustomApplication.id,
+                        replaceExisting: true,
+                      }),
+                    ),
+                  );
                 }
 
                 return concat(...actions);

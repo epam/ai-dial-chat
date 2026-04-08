@@ -93,19 +93,21 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatActions.getConfigurationSchema.type),
     mergeMap(({ payload }) => {
+      const { modelId, replaceExisting } = payload;
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const uploadedConfigurationSchema =
         ChatSelectors.selectConfigurationSchemaByModelId(
           state$.value,
-          payload.modelId,
+          modelId,
           modelsMap,
         );
       const loadingConfigurationSchemas =
         ChatSelectors.selectLoadingConfigurationSchemas(state$.value);
 
       if (
-        uploadedConfigurationSchema ||
-        loadingConfigurationSchemas.includes(payload.modelId)
+        !replaceExisting &&
+        (uploadedConfigurationSchema ||
+          loadingConfigurationSchemas.includes(modelId))
       ) {
         return EMPTY;
       }
@@ -124,7 +126,7 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
           ...savedConfigurationSchemas.map((schema) =>
             of(
               ChatActions.getConfigurationSchemaSuccess({
-                modelId: payload.modelId,
+                modelId,
                 schema,
               }),
             ),
