@@ -42,7 +42,6 @@ dialAdminTest(
       publishConversationAssertion,
       publishingRequestDialogAssertion,
       iconApiHelper,
-      tooltipAssertion,
       adminDialHomePage,
       adminApproveRequiredConversations,
       chatBar,
@@ -158,7 +157,7 @@ dialAdminTest(
           .click();
         await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
         await publishingRequestDialog.sendRequestButton.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.nothingToPublishTooltip,
         );
       },

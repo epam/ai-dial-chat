@@ -102,7 +102,7 @@ export const ExpectedConstants = {
     'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
   regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
-  regenerateResponseTooltip: 'Regenerate',
+  regenerateResponseTooltip: 'Regenerate response',
   sharedEntityTooltip: 'Shared',
   sharedEntityName: (name: string, hasSpace?: boolean) =>
     `Share:${hasSpace ? ' ' : ''}${name}`,

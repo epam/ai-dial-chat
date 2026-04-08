@@ -443,7 +443,7 @@ dialTest(
     await dialTest.step(
       'Hover over Send button and verify it is disabled and tooltip is shown',
       async () => {
-        await sendMessage.regenerate.hoverOver();
+        await sendMessage.regenerateIcon.hoverOver();
         await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.regenerateResponseTooltip,
         );
