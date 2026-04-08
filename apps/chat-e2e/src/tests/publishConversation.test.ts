@@ -70,6 +70,7 @@ dialAdminTest(
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
+      tooltipPortalAssertion,
     },
     testInfo,
   ) => {
@@ -130,7 +131,7 @@ dialAdminTest(
       'Verify tooltip on hover "Send request" button',
       async () => {
         await publishingRequestDialog.sendRequestButton.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.noPublishNameTooltip,
         );
       },

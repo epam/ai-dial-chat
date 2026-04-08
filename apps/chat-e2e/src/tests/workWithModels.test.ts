@@ -383,7 +383,7 @@ dialTest(
     chatMessages,
     baseAssertion,
     sendMessage,
-    tooltip,
+    tooltipPortalAssertion,
     localStorageManager,
     iconApiHelper,
     talkToAgentDialog,
@@ -444,10 +444,9 @@ dialTest(
       'Hover over Send button and verify it is disabled and tooltip is shown',
       async () => {
         await sendMessage.regenerate.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseTooltip);
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.regenerateResponseTooltip,
+        );
       },
     );
 

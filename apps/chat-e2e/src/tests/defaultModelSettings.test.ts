@@ -174,6 +174,7 @@ dialTest(
     talkToAgentDialog,
     talkToAgents,
     talkToAgentDialogAssertion,
+    tooltipPortalAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
@@ -197,10 +198,9 @@ dialTest(
           .toBeFalsy();
 
         await sendMessage.sendMessageButton.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sendMessageTooltip);
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.sendMessageTooltip,
+        );
       },
     );
 
