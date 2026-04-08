@@ -58,14 +58,20 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'absolute max-h-[24px] !px-0 hover:text-accent-primary',
+            'max-h-[24px] !px-0 hover:text-accent-primary',
             isLastMessageError && 'text-error',
-            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
           aria-label={t(ChatI18nKeys.SendAMessage)}
           onClick={onSend}
           data-qa="regenerate"
-          tooltipProps={{ tooltip: tooltip, isTriggerClickable: true }}
+          tooltipProps={{
+            tooltip: tooltip,
+            isTriggerClickable: true,
+            triggerClassName: classNames(
+              'absolute max-h-[24px]',
+              isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+            ),
+          }}
           iconBefore={
             <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
           }
@@ -80,7 +86,7 @@ export const SendMessageButton = Inversify.register(
 
     return (
       <DialButton
-        className="!px-0  max-h-[24px] hover:text-accent-primary disabled:text-controls-disable"
+        className="max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable"
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
