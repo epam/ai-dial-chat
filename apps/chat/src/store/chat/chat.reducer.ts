@@ -63,7 +63,7 @@ export const chatSlice = createSlice({
 
     getConfigurationSchema: (
       state,
-      _action: PayloadAction<{ modelId: string }>,
+      _action: PayloadAction<{ modelId: string; replaceExisting?: boolean }>,
     ) => state,
     startConfigurationSchemaUploading: (
       state,
@@ -77,11 +77,11 @@ export const chatSlice = createSlice({
         payload,
       }: PayloadAction<{ modelId: string; schema: MessageFormSchema }>,
     ) => {
-      if (
-        !state.configurationSchemas.find(
-          (schema) => schema.modelId === payload.modelId,
-        )
-      ) {
+      const existingSchemaIdx = state.configurationSchemas.findIndex(
+        (schema) => schema.modelId === payload.modelId,
+      );
+
+      if (existingSchemaIdx === -1) {
         state.configurationSchemas.push(payload);
 
         if (
@@ -89,7 +89,10 @@ export const chatSlice = createSlice({
         ) {
           state.configurationSchemas.shift();
         }
+      } else {
+        state.configurationSchemas[existingSchemaIdx] = payload;
       }
+
       state.configurationSchemasLoadingIds =
         state.configurationSchemasLoadingIds.filter(
           (modelId) => modelId !== payload.modelId,

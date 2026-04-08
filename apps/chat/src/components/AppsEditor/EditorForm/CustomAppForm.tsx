@@ -121,7 +121,7 @@ export const CustomAppForm = () => {
         name="maxInputAttachments"
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-        dataQa={'max-attachment-number-field'}
+        dataQa="max-attachment-number-field"
       />
 
       <Field

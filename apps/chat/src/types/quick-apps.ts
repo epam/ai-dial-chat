@@ -58,6 +58,18 @@ export type AnyToolset =
   | CodeInterpreterToolset
   | UnknownToolset;
 
+export interface ConversationStarter {
+  title: string;
+  text: string;
+}
+
+export interface ConversationStarters {
+  intro_text?: string;
+  chat_message_input_disabled?: boolean;
+  auto_submit?: boolean;
+  starters: ConversationStarter[];
+}
+
 export interface QuickApp2Config {
   orchestrator: {
     deployment: {
@@ -74,6 +86,7 @@ export interface QuickApp2Config {
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
+  conversation_starters: ConversationStarters;
   input_attachment_types?: string[];
   max_input_attachments?: number;
 }
