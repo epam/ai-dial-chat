@@ -113,7 +113,21 @@ export class FileManagerGridAssertion extends BaseAssertion {
     await this.assertElementState(
       locator,
       expectedState,
-      ExpectedMessages.errorMessageIsShown,
+      ExpectedMessages.errorIconIsShown,
+    );
+  }
+
+  public async assertInputWarning(
+    expectedState: ElementState = 'visible',
+    name?: string,
+  ) {
+    const locator = name
+      ? this.fileManagerGrid.getRowInputWarning(name)
+      : this.fileManagerGrid.gridNameCellInput.warningIcon;
+    await this.assertElementState(
+      locator,
+      expectedState,
+      ExpectedMessages.warningIconIsShown,
     );
   }
 

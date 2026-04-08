@@ -44,9 +44,11 @@ import { Modal } from '@/src/components/Common/Modal';
 import { SelectFolderModal } from './SelectFolderModal';
 
 import {
-  DialErrorIconButton,
+  ButtonAppearance,
+  DialInput,
   DialLinkButton,
   DialPrimaryButton,
+  DialPrimaryIconButton,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -218,13 +220,8 @@ export const PreUploadDialog = ({
 
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
-      return (e: ChangeEvent<HTMLInputElement>) => {
-        const input = e.target;
-        const rawValue = input.value;
-        const cursor = input.selectionStart ?? rawValue.length;
-
-        const sanitized = rawValue.replace(notAllowedSymbolsRegex, '');
-        const diff = rawValue.length - sanitized.length;
+      return (rawValue?: string) => {
+        const sanitized = rawValue?.replace(notAllowedSymbolsRegex, '') || '';
 
         const { name: oldName } = selectedFiles[changedFileIndex];
         const ext = oldName.includes('.')
@@ -232,7 +229,6 @@ export const PreUploadDialog = ({
           : '';
 
         const newName = prepareFileName(sanitized + ext);
-
         setSelectedFiles((files) =>
           files.map((file, i) =>
             i === changedFileIndex
@@ -244,10 +240,6 @@ export const PreUploadDialog = ({
               : file,
           ),
         );
-
-        requestAnimationFrame(() => {
-          input.setSelectionRange(cursor - diff, cursor - diff);
-        });
       };
     },
     [folderPath, selectedFiles],
@@ -376,33 +368,25 @@ export const PreUploadDialog = ({
                 {selectedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3"
+                    className="flex items-center justify-between gap-3"
                     data-qa="uploaded-file"
                   >
-                    <div className="relative flex grow items-center">
-                      <IconFile
-                        className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
-                        size={18}
-                      />
-                      <input
-                        type="text"
+                    <div className="flex-1">
+                      <DialInput
                         value={getFileNameWithoutExtension(file.name)}
                         onChange={handleRenameFile(index)}
-                        className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                        postfix={getFileNameExtension(file.name)}
+                        iconBefore={
+                          <IconFile className="text-secondary" size={18} />
+                        }
                       />
-
-                      <span
-                        className="absolute right-2"
-                        data-qa="file-extension"
-                      >
-                        {getFileNameExtension(file.name)}
-                      </span>
                     </div>
 
-                    <DialErrorIconButton
+                    <DialPrimaryIconButton
+                      appearance={ButtonAppearance.Ghost}
                       onClick={handleUnselectFile(index)}
                       aria-label="remove-file"
-                      icon={<IconTrashX />}
+                      icon={<IconTrashX stroke={1.5} />}
                     />
                   </div>
                 ))}

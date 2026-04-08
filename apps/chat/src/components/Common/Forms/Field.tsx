@@ -62,7 +62,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     );
   },
 );
-
 Input.displayName = 'Input';
 
 export const Field = withErrorMessage(withLabel(Input));
