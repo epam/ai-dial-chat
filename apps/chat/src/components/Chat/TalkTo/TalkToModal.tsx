@@ -281,10 +281,10 @@ const TalkToModalView = ({
   );
 
   const handleGoToWorkspace = useCallback(() => {
-    const url = `/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`;
-
-    router.push(url);
     if (!isPlayback) {
+      const url = `/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`;
+
+      router.push(url);
       dispatch(ConversationsActions.setTalkToConversationId(null));
     }
   }, [conversation.id, isMyWorkspace, tab, router, isPlayback, dispatch]);
@@ -363,7 +363,11 @@ const TalkToModalView = ({
             isMarketplaceEnabled && (
               <DialLinkButton
                 onClick={handleGoToWorkspace}
-                disabled={isPlayback}
+                tooltipProps={{
+                  tooltip: isPlayback
+                    ? t(ChatI18nKeys.EditingNotAvailableInPlayback)
+                    : undefined,
+                }}
                 data-qa={
                   isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'
                 }
