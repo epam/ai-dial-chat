@@ -552,13 +552,13 @@ export const ChatInputMessage = Inversify.register(
     return (
       <div
         className={classNames(
-          'mx-3 mb-3 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-5',
+          'mx-3 mb-3 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-5 px-5',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
         )}
       >
         <div
           className={classNames(
-            'relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
+            'relative m-0 flex max-h-[400px] max-w-[768px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
             isChatInputBorderEnabled && 'border border-primary',
           )}
           data-qa="message"
