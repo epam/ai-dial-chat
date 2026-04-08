@@ -80,10 +80,7 @@ export const SendMessageButton = Inversify.register(
 
     return (
       <DialButton
-        className={classNames(
-          'absolute max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable',
-          isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
-        )}
+        className="!px-0  max-h-[24px] hover:text-accent-primary disabled:text-controls-disable"
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
@@ -92,6 +89,10 @@ export const SendMessageButton = Inversify.register(
           hideTooltip: !disabled && !messageIsStreaming,
           tooltip,
           isTriggerClickable: true,
+          triggerClassName: classNames(
+            'absolute max-h-[24px]',
+            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+          ),
         }}
         iconBefore={
           isSpinner ? (
