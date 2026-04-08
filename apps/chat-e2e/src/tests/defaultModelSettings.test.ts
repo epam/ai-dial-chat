@@ -167,7 +167,6 @@ dialTest(
     chat,
     sendMessage,
     chatHeader,
-    tooltip,
     chatMessages,
     page,
     localStorageManager,
@@ -242,11 +241,7 @@ dialTest(
               ExpectedMessages.sendButtonCursorIsNotAllowed,
             )
             .toBe(Cursors.notAllowed);
-
-          const tooltipContent = await tooltip.getContent();
-          expect
-            .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.sendMessageTooltip);
+          await tooltipPortalAssertion.assertTooltipContent(ExpectedConstants.sendMessageTooltip)
         }
       },
     );

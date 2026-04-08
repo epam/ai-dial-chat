@@ -143,7 +143,7 @@ dialAdminTest(
         await publishingRequestDialog.requestName.fillInInput(' '.repeat(3));
         await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
         await publishingRequestDialog.sendRequestButton.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.noPublishNameTooltip,
         );
       },

@@ -483,7 +483,6 @@ dialAdminTest(
       organizationFolderPrompts,
       folderDropdownMenu,
       publishingRequestDialogAssertion,
-      tooltipAssertion,
       localStorageManager,
       adminLocalStorageManager,
     },
@@ -622,7 +621,7 @@ dialAdminTest(
       await publishingRequestDialog.requestName.fillInInput('   ');
       await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
       await publishingRequestDialog.sendRequestButton.hoverOver();
-      await tooltipAssertion.assertTooltipContent(
+      await tooltipPortalAssertion.assertTooltipContent(
         ExpectedConstants.noPublishNameTooltip,
       );
       await publishingRequestDialog.requestName.fillInInput(''); // Clear the input field
