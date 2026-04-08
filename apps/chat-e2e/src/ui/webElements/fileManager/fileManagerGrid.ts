@@ -96,7 +96,7 @@ export class FileManagerGrid extends Grid {
   }
 
   public async setFolderName(folderName: string, waitForRequest = true) {
-    await this.gridNameCellInput.inputField.fillInInput(folderName);
+    await this.getRenameInput().fillInInput(folderName);
     if (waitForRequest) {
       const requestPromise = this.page.waitForResponse(
         (resp) =>
@@ -119,7 +119,7 @@ export class FileManagerGrid extends Grid {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
     await dotsMenu.click({ force: true });
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
-    await this.gridNameCellInput.inputField.fillInInput(newName);
+    await this.getRenameInput().fillInInput(newName);
     if (isHttpMethodTriggered) {
       const hostsMap = new Map([
         [API.moveHost, 'POST'],
@@ -149,6 +149,13 @@ export class FileManagerGrid extends Grid {
       return this.gridNameCellInput.alertIconByValue(name);
     }
     return this.gridNameCellInput.alertIcon.getElementLocator();
+  }
+
+  public getRowInputWarning(name?: string) {
+    if (name) {
+      return this.gridNameCellInput.warningIconByValue(name);
+    }
+    return this.gridNameCellInput.warningIcon.getElementLocator();
   }
 
   public getRenameInput() {
