@@ -495,7 +495,6 @@ const FormSchemaMemo = memo(function FormSchema({
     [schema],
   );
 
-  console.log('rendering form schema', { sortedProperties, formValue });
   return (
     sortedProperties.some(([_name, property]) => !property.description) && (
       <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
