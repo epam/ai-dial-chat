@@ -819,7 +819,6 @@ export enum ChatI18nKeys {
   MBUnit = 'MB',
   KBUnit = 'KB',
   UploadTo = 'Upload to',
-  AllFiles = 'All files',
   Files = 'Files',
   AddMoreFiles = 'Add more files...',
   Upload = 'Upload',
