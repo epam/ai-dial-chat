@@ -118,7 +118,7 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  fileExtension: '[data-qa="file-extension"]',
+  fileExtension: '.dial-small-text',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
