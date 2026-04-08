@@ -36,6 +36,7 @@ import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -52,6 +53,7 @@ import {
 } from '@/src/store/selectors';
 
 import { DEFAULT_AGENT } from '@/src/constants/chat';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -422,7 +424,10 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
                   of(
                     UIActions.showSuccessToast(
                       translate(
-                        `The agent${payload.references.length > 1 ? 's' : ''} added to my workspace`,
+                        payload.references.length > 1
+                          ? CommonI18nKeys.AgentsAddedToMyWorkspace
+                          : CommonI18nKeys.AgentAddedToMyWorkspace,
+                        { ns: Translation.Common },
                       ),
                     ),
                   ),

@@ -6,6 +6,8 @@ import { getModelDescription } from '@/src/utils/app/application';
 
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
 import { EntityInfo } from './EntityInfo';
@@ -19,7 +21,7 @@ export function EntityDetailsContent({ entity }: Props) {
 
   const entityInfo = useMemo(
     () => ({
-      author: entity?.author ?? t('Unknown'),
+      author: entity?.author ?? t(MarketplaceI18nKeys.UnknownMarketplace),
       createdAt: entity?.createdAt,
     }),
     [entity.author, entity?.createdAt, t],
@@ -40,7 +42,7 @@ export function EntityDetailsContent({ entity }: Props) {
         </section>
       )}
       <section
-        className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6"
+        className="flex flex-col gap-5 overflow-auto px-3 py-4 md:px-6"
         data-qa="entity-information"
       >
         <EntityInfo entityInfo={entityInfo} />

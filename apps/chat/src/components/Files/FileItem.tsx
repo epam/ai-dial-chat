@@ -26,8 +26,10 @@ import { Translation } from '@/src/types/translation';
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { FileItemEventIds } from '@/src/constants/file';
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -35,15 +37,6 @@ import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
-
-export enum FileItemEventIds {
-  Cancel = 'cancel',
-  Retry = 'retry',
-  Toggle = 'toggle',
-  ToggleFolder = 'toggleFolder',
-  Delete = 'delete',
-  Unshare = 'unshare',
-}
 
 interface Props {
   item: DialFile;
@@ -80,8 +73,6 @@ export const FileItem = ({
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
-  const [isRemoveAccessConfirmOpened, setIsRemoveAccessConfirmOpened] =
-    useState(false);
 
   const fileRef = useRef<HTMLDivElement>(null);
 
@@ -122,9 +113,9 @@ export const FileItem = ({
 
   const handleRemoveAccess: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsRemoveAccessConfirmOpened(true);
+      dispatch(ShareActions.setUnshareResourceId(item.id));
       setIsContextMenu(false);
-    }, []);
+    }, [dispatch, item]);
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -197,7 +188,7 @@ export const FileItem = ({
             item.status === UploadStatus.FAILED && (
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Uploading failed. Please, try again')}
+                tooltip={t(FilesI18nKeys.UploadingFailed)}
               >
                 <IconExclamationCircle
                   className="shrink-0 text-error"
@@ -299,31 +290,6 @@ export const FileItem = ({
           />
         )}
       </div>
-      {isRemoveAccessConfirmOpened && (
-        <ConfirmDialog
-          isOpen={isRemoveAccessConfirmOpened}
-          showHeadingTooltip
-          heading={t('Confirm removing access: {{fileName}}', {
-            fileName: item.name,
-          })}
-          description={t(
-            'Are you sure you want to remove access to the file for all users?',
-          )}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsRemoveAccessConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceIds: [item.id],
-                  featureType: FeatureType.File,
-                }),
-              );
-            }
-          }}
-        />
-      )}
     </div>
   );
 };

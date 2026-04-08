@@ -25,6 +25,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -98,7 +99,7 @@ export const MessageUserButtons = ({
             <Tooltip
               placement="top"
               isTriggerClickable
-              tooltip={t('Set message template')}
+              tooltip={t(ChatI18nKeys.SetMessageTemplate)}
             >
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
@@ -114,7 +115,11 @@ export const MessageUserButtons = ({
             </Tooltip>
           )}
           {isEditAvailable && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t(ChatI18nKeys.Edit)}
+            >
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
                 size={ElementSize.Small}
@@ -124,7 +129,11 @@ export const MessageUserButtons = ({
             </Tooltip>
           )}
           {onDelete && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t(ChatI18nKeys.Delete)}
+            >
               <DialPrimaryIconButton
                 appearance={ButtonAppearance.Ghost}
                 size={ElementSize.Small}
@@ -153,8 +162,8 @@ const CopyButton = ({
   keyPostfix = '',
   content,
   convertFromMarkdown = false,
-  copyLabel = 'Copy',
-  copiedLabel = 'Copied',
+  copyLabel = ChatI18nKeys.Copy as string,
+  copiedLabel = ChatI18nKeys.Copied as string,
   Icon = IconCopy,
 }: CopyButtonProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -233,7 +242,11 @@ export const MessageAssistantButtons = ({
         />
       ))}
       {onRegenerate && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
+        <Tooltip
+          placement="top"
+          isTriggerClickable
+          tooltip={t(ChatI18nKeys.Regenerate)}
+        >
           <DialPrimaryIconButton
             appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
@@ -247,20 +260,24 @@ export const MessageAssistantButtons = ({
         <>
           <CopyButton
             content={message.content}
-            copyLabel="Copy text"
-            copiedLabel="Text copied"
+            copyLabel={ChatI18nKeys.CopyText}
+            copiedLabel={ChatI18nKeys.TextCopied}
             convertFromMarkdown
           />
           <CopyButton
             content={message.content}
-            copyLabel="Copy markdown"
-            copiedLabel="Markdown copied"
+            copyLabel={ChatI18nKeys.CopyMarkdown}
+            copiedLabel={ChatI18nKeys.MarkdownCopied}
             Icon={IconMarkdown}
           />
         </>
       )}
       {onToggleEditing && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+        <Tooltip
+          placement="top"
+          isTriggerClickable
+          tooltip={t(ChatI18nKeys.Edit)}
+        >
           <DialPrimaryIconButton
             appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
@@ -285,8 +302,8 @@ const MobileCopyButton = ({
   keyPostfix = '',
   content,
   convertFromMarkdown = false,
-  copyLabel = 'Copy',
-  copiedLabel = 'Copied',
+  copyLabel = ChatI18nKeys.Copy as string,
+  copiedLabel = ChatI18nKeys.Copied as string,
   Icon = IconCopy,
 }: CopyButtonProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -399,14 +416,14 @@ export const MessageMobileButtons = ({
             <>
               <MobileCopyButton
                 content={message.content}
-                copyLabel="Copy text"
-                copiedLabel="Copied text"
+                copyLabel={ChatI18nKeys.CopyText}
+                copiedLabel={ChatI18nKeys.CopiedText}
                 convertFromMarkdown
               />
               <MobileCopyButton
                 content={message.content}
-                copyLabel="Copy markdown"
-                copiedLabel="Copied markdown"
+                copyLabel={ChatI18nKeys.CopyMarkdown}
+                copiedLabel={ChatI18nKeys.CopiedMarkdown}
                 Icon={IconMarkdown}
               />
             </>
@@ -419,7 +436,7 @@ export const MessageMobileButtons = ({
                 item={
                   <div className="flex items-center gap-3">
                     <IconEdit className="text-secondary" size={18} />
-                    {t('Edit')}
+                    {t(ChatI18nKeys.Edit)}
                   </div>
                 }
                 data-qa="edit"
@@ -431,7 +448,7 @@ export const MessageMobileButtons = ({
               item={
                 <div className="flex items-center gap-3">
                   <IconRefresh className="text-secondary" size={18} />
-                  {t('Regenerate')}
+                  {t(ChatI18nKeys.Regenerate)}
                 </div>
               }
               data-qa="regenerate"
@@ -482,7 +499,9 @@ export const MessageMobileButtons = ({
                   height={18}
                   width={18}
                 />
-                <p className="whitespace-nowrap">{t('Set template')}</p>
+                <p className="whitespace-nowrap">
+                  {t(ChatI18nKeys.SetTemplate)}
+                </p>
               </div>
             }
           />
@@ -494,7 +513,7 @@ export const MessageMobileButtons = ({
             item={
               <div className="flex items-center gap-3">
                 <IconEdit className="text-secondary" size={18} />
-                <p>{t('Edit')}</p>
+                <p>{t(ChatI18nKeys.Edit)}</p>
               </div>
             }
           />
@@ -506,7 +525,7 @@ export const MessageMobileButtons = ({
             item={
               <div className="flex items-center gap-3">
                 <IconTrashX className="text-secondary" size={18} />
-                <p>{t('Delete')}</p>
+                <p>{t(ChatI18nKeys.Delete)}</p>
               </div>
             }
           />

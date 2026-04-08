@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { dataToBlobUrl } from '@/src/utils/app/dataUrl';
 import { preprocessLaTeX } from '@/src/utils/app/latex';
 
 import { ScreenState } from '@/src/types/common';
@@ -127,8 +128,18 @@ const getMDComponents = (
       // In order to style the contents paddings correctly, we need to wrap them into container
       // Contents of <details> element follow the summary element unwrapped by default,
       // so styling them otherwise would be hacky.
+      let showCursor = false;
+      const childrenArray = Children.toArray(children).map((child) => {
+        if (typeof child === 'string' && child?.length) {
+          if (child.includes(modelCursorSignWithBackquote)) {
+            showCursor = true;
+            return child.replaceAll(modelCursorSignWithBackquote, '');
+          }
+        }
+        return child;
+      });
       const [summary, content] = partition(
-        Children.toArray(children),
+        childrenArray,
         (child: ReactNode) =>
           isObject(child) &&
           'type' in child &&
@@ -141,12 +152,16 @@ const getMDComponents = (
         <details
           className={classnames(
             'rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
-            ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
+            'mb-1 [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
           )}
           {...props}
+          open={showCursor || props.open}
         >
           {summary}
-          <div className="p-3">{content}</div>
+          <div className="p-3">
+            {content}
+            {showCursor && <BlinkingCursor isShowing={isShowResponseLoader} />}
+          </div>
         </details>
       );
     },
@@ -162,6 +177,22 @@ const getMDComponents = (
           <span className="truncate">{children}</span>
           <ChevronDown height={18} width={18} className="shrink-0 transition" />
         </summary>
+      );
+    },
+    a({ href, children, ...props }) {
+      if (href?.startsWith('data:image')) {
+        const blobUrl = dataToBlobUrl(href);
+        return (
+          <a href={blobUrl ?? href} target="_blank" rel="noopener noreferrer">
+            {children}
+          </a>
+        );
+      }
+
+      return (
+        <a href={href} {...props}>
+          {children}
+        </a>
       );
     },
   };

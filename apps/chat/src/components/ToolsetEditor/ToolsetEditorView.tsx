@@ -12,6 +12,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ToolsetSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 import { MarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/MarketplaceEditorView';
 import { EditorForm } from '@/src/components/ToolsetEditor/EditorForm/EditorForm';
@@ -83,8 +85,8 @@ export const ToolsetEditorView = ({
       rightContent={RightContent}
       previewMode={previewMode}
       onPreviewModeChange={setPreviewMode}
-      closedPreviewLabel={`${t('Preview')}: ${name} v. ${version}`}
-      leftTabLabel={t('Info')}
+      closedPreviewLabel={`${t(ChatI18nKeys.Preview)}: ${name} v. ${version}`}
+      leftTabLabel={t(ChatI18nKeys.InfoChat)}
       rightQa="entity-preview-settings"
     />
   );

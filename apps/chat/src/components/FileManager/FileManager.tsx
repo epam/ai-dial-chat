@@ -9,11 +9,23 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+
 import { FilesUploadingModal } from './FilesUploadingModal';
 import { OperationLoaderModal } from './OperationLoaderModal';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialFileManager, DialLoader } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileManager,
+  DialFileManagerTabs,
+  DialLoader,
+} from '@epam/ai-dial-ui-kit';
+
+const availableTabs = new Set([
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Organization,
+  DialFileManagerTabs.Shared,
+]);
 
 export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
@@ -70,7 +82,9 @@ export const FileManager: React.FC = () => {
 
     emptyStateDescription,
     emptyStateTitle,
-  } = useFileManager();
+  } = useFileManager({
+    availableTabs,
+  });
 
   useEffect(() => {
     if (initialDataStatus === UploadStatus.LOADED) {
@@ -119,11 +133,15 @@ export const FileManager: React.FC = () => {
           clearSearchResults={handleClearSearch}
           emptyStateTitle={emptyStateTitle}
           emptyStateDescription={emptyStateDescription}
+          hideSearchPathItemName
         />
       )}
       {isAnyOperationInProgress && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
-          <DialLoader size={48} ariaLabel={t('Processing files...')} />
+          <DialLoader
+            size={48}
+            ariaLabel={t(SideBarI18nKeys.ProcessingFiles)}
+          />
         </div>
       )}
       {operationLoaderModalOptions && !isRenaming && (

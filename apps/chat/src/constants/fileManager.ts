@@ -1,5 +1,22 @@
 import { translate } from '@/src/utils/app/translation';
 
-export const MY_FILES_SECTION = translate('My Files');
-export const SHARED_WITH_ME_FILES_SECTION = translate('Shared with Me');
-export const ORGANIZATION_FILES_SECTION = translate('Organization');
+import { Translation } from '@/src/types/translation';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
+export const MY_FILES_SECTION = translate(ChatI18nKeys.MyFiles, {
+  ns: Translation.Chat,
+});
+export const SHARED_WITH_ME_FILES_SECTION = translate(
+  ChatI18nKeys.SharedWithMeFiles,
+  {
+    ns: Translation.Chat,
+  },
+);
+export const ORGANIZATION_FILES_SECTION = translate(ChatI18nKeys.Organization, {
+  ns: Translation.Chat,
+});
+
+export const REVIEW_FILES_SECTION = translate(ChatI18nKeys.ReviewFiles, {
+  ns: Translation.Chat,
+});

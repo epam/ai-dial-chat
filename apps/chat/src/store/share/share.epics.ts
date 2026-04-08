@@ -19,6 +19,7 @@ import {
   getApplicationType,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
+  isQuickApp,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
@@ -30,10 +31,7 @@ import {
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
-import {
-  getEntitiesFoldersFromEntities,
-  getParentFolderIdsFromEntityId,
-} from '@/src/utils/app/folders';
+import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
 import {
   getEntityBucket,
   isApplicationId,
@@ -88,15 +86,13 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
-import uniqBy from 'lodash-es/uniqBy';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -177,7 +173,7 @@ const shareConversationEpic: AppEpic = (action$) =>
           if (res && isConversationHasExternalAttachments(res)) {
             return of(
               ShareActions.shareFail(
-                errorsMessages.shareWithExternalFilesFailed,
+                CommonI18nKeys.ShareWithExternalFilesFailed,
               ),
             );
           }
@@ -242,7 +238,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
           if (conversations.some(isConversationHasExternalAttachments)) {
             return of(
               ShareActions.shareFail(
-                errorsMessages.shareWithExternalFilesFailed,
+                CommonI18nKeys.ShareWithExternalFilesFailed,
               ),
             );
           }
@@ -347,7 +343,8 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       if (
         (applicationType === ApplicationType.CODE_APP ||
           schema?.displayName === 'Quick App' ||
-          isQuickApp2(application)) &&
+          isQuickApp2(application) ||
+          isQuickApp(application)) &&
         applicationDetails?.reference !== application.reference
       ) {
         return of(
@@ -387,10 +384,12 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       const docUrl =
         getQuickAppDocumentUrl(applicationDetails) ??
         getQuick2AppDocumentUrl(applicationDetails);
-      if (docUrl?.length) {
+
+      if (hasWritePermission(payload.permissions) && docUrl?.length) {
         docUrl.forEach((url) =>
           resources.push({
             url: ApiUtils.encodeApiUrl(url),
+            permissions: payload.permissions,
           }),
         );
       }
@@ -436,7 +435,9 @@ const shareFailEpic: AppEpic = (action$) =>
     ofType(ShareActions.shareFail.type),
     map(({ payload }) => {
       return UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.shareFailed),
+        translate(payload ?? CommonI18nKeys.ShareFailed, {
+          ns: Translation.Common,
+        }),
       );
     }),
   );
@@ -478,9 +479,9 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error(err);
-          let message = errorsMessages.acceptShareFailed;
+          let message = CommonI18nKeys.AcceptShareFailed;
           if (err.message.trim().toLowerCase() === 'not found') {
-            message = errorsMessages.acceptShareNotExists;
+            message = CommonI18nKeys.AcceptShareNotExists;
           }
           return of(ShareActions.acceptShareInvitationFail({ message }));
         }),
@@ -554,7 +555,9 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
         of(ConversationsActions.initSelectedConversations()),
         of(
           UIActions.showErrorToast(
-            translate(payload.message || errorsMessages.acceptShareFailed),
+            translate(payload.message || CommonI18nKeys.AcceptShareFailed, {
+              ns: Translation.Common,
+            }),
           ),
         ),
       );
@@ -729,7 +732,9 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.shareByMeListingFailed),
+          translate(CommonI18nKeys.ShareByMeListingFailed, {
+            ns: Translation.Common,
+          }),
         ),
       );
     }),
@@ -946,11 +951,30 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.featureType === FeatureType.File) {
         if (payload.sharedWith === ShareRelations.others) {
           const files = FilesSelectors.selectFiles(state$.value);
+          const folders = FilesSelectors.selectFolders(state$.value);
 
           actions.push(
             FilesActions.setSharedFileIds({
               ids: payload.resources.entities.map((entity) => entity.id),
             }),
+          );
+
+          actions.push(
+            ...(payload.resources.folders
+              .map((item) => {
+                const isShared = folders.find((res) => res.id === item.id);
+
+                if (isShared) {
+                  return FilesActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AppAction[]),
           );
 
           actions.push(
@@ -974,32 +998,20 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const files = payload.resources.entities as DialFile[];
-          const folders = uniqBy(
-            [
-              ...payload.resources.folders,
-              ...getEntitiesFoldersFromEntities(files, FeatureType.File).map(
-                (folder) => ({
-                  ...folder,
-                  status: UploadStatus.LOADED,
-                }),
-              ),
-            ],
-            'id',
-          );
-          const sharedWithMeFileIds = files.map((res) => res.id);
-
-          const sharedWithMeFolderIds = folders.map((res) => res.id);
-
-          actions.push(
-            FilesActions.setSharedWithMeFilesAndFoldersIds({
-              ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
-            }),
-          );
+          const folders = payload.resources.folders;
 
           const selectedCodeEditorFileId =
             CodeEditorSelectors.selectSelectedFile(state$.value);
           const codeEditorFolderOnReview = getSharedParentFolder(
             selectedCodeEditorFileId?.split('/')?.slice(0, -1)?.join('/'),
+          );
+
+          const sharedWithMeFileIds = files.map((f) => f.id);
+          const sharedWithMeFolderIds = folders.map((f) => f.id);
+          actions.push(
+            FilesActions.setSharedWithMeFilesAndFoldersIds({
+              ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
+            }),
           );
 
           actions.push(
@@ -1010,16 +1022,17 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .map((res) => ({
                   ...res,
                   sharedWithMe: true,
+                  isRootSharedItem: true,
                 })),
               reviewFolder: codeEditorFolderOnReview,
             }),
           );
-
           actions.push(
             FilesActions.addFolders({
               folders: folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
+                isRootSharedItem: true,
               })) as FolderInterface[],
             }),
           );
@@ -1173,6 +1186,20 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.File) {
+        if (payload.isFolder) {
+          return concat(
+            ...payload.resourceIds.map((id) =>
+              of(
+                FilesActions.updateFolder({
+                  folderId: id,
+                  values: {
+                    isShared: false,
+                  },
+                }),
+              ),
+            ),
+          );
+        }
         return concat(
           ...payload.resourceIds.map((id) =>
             of(
@@ -1218,7 +1245,11 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
     ofType(ShareActions.revokeAccessFail.type),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(translate(errorsMessages.revokeAccessFailed)),
+        UIActions.showErrorToast(
+          translate(CommonI18nKeys.RevokeAccessFailed, {
+            ns: Translation.Common,
+          }),
+        ),
       );
     }),
   );
@@ -1252,8 +1283,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                 UIActions.showSuccessToast(
                   translate(
                     payload.isFolder
-                      ? 'Folder "{{itemName}}" has been unshared successfully'
-                      : '"{{itemName}}" has been unshared successfully',
+                      ? CommonI18nKeys.FolderUnsharedSuccessfully
+                      : CommonI18nKeys.ItemUnsharedSuccessfully,
                     {
                       ns: Translation.Common,
                       itemName: name,
@@ -1274,8 +1305,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                 UIActions.showErrorToast(
                   translate(
                     payload.isFolder
-                      ? 'Failed to unshare folder "{{itemName}}". Please try again later'
-                      : 'Failed to unshare "{{itemName}}". Please try again later',
+                      ? CommonI18nKeys.FailedToUnshareFolder
+                      : CommonI18nKeys.FailedToUnshareItem,
                     {
                       ns: Translation.Common,
                       itemName: name,
@@ -1321,7 +1352,11 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           actions.push(
             of(
               ConversationsActions.createNewConversations({
-                names: [translate(DEFAULT_CONVERSATION_NAME)],
+                names: [
+                  translate(ChatI18nKeys.NewConversation, {
+                    ns: Translation.Chat,
+                  }),
+                ],
               }),
             ),
           );
@@ -1438,7 +1473,9 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.discardSharedWithMeFailed),
+          translate(CommonI18nKeys.DiscardSharedWithMeFailed, {
+            ns: Translation.Common,
+          }),
         ),
       );
     }),

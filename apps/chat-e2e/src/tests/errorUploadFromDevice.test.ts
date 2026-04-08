@@ -324,12 +324,11 @@ dialTest(
     await dialTest.step(
       'Verify file extension is empty and attempt to add a dot at the end',
       async () => {
-        await baseAssertion.assertElementText(
+        await baseAssertion.assertElementState(
           uploadFromDeviceModal.getUploadedFileExtension(
             Attachment.fileWithoutExtension,
           ),
-          '',
-          ExpectedMessages.fileExtensionIsValid,
+          'hidden',
         );
 
         await uploadFromDeviceModal

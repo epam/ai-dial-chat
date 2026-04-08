@@ -22,8 +22,6 @@ export class Grid extends BaseElement {
 
   public gridRows = this.getChildElementBySelector(GridSelectors.gridRow());
 
-  public loader = this.getChildElementBySelector(GridSelectors.gridLoader);
-
   public gridRowByCellValue = (columnId: string, value: string) =>
     this.gridRows.getElementLocator().filter({
       has: this.page.locator(GridSelectors.gridCell(columnId), {

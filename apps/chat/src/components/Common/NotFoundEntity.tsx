@@ -6,6 +6,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 interface Props {
   entity: string;
   containerClassName?: string;
@@ -30,7 +32,9 @@ export const NotFoundEntity = ({
       data-qa={dataQa}
     >
       <IconAlertTriangle stroke={1} className="text-secondary" size={60} />
-      <p className="mt-3 text-center text-sm">{t(`${entity} not found.`)}</p>
+      <p className="mt-3 text-center text-sm">
+        {t(CommonI18nKeys.EntityNotFound, { entity })}
+      </p>
       {additionalText && (
         <p className="mt-1 text-center text-sm">{t(additionalText)}</p>
       )}

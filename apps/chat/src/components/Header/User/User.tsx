@@ -18,13 +18,16 @@ interface Props {
 const UserView: FC<Props> = ({ className }) => {
   return (
     <div
-      className={classNames('w-[48px] overflow-hidden md:w-auto', className)}
+      className={classNames(
+        'h-full w-[48px] overflow-hidden md:w-auto',
+        className,
+      )}
     >
       <div className="flex h-full items-center justify-center md:hidden">
         <ProfileButton />
       </div>
 
-      <div className="hidden size-full md:block">
+      <div className="hidden size-full border-r border-secondary md:block">
         <UserDesktop />
       </div>
     </div>

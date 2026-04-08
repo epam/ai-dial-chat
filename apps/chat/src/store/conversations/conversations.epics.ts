@@ -93,6 +93,7 @@ import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ChatActions,
@@ -123,8 +124,8 @@ import {
   DEFAULT_TEMPERATURE,
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
@@ -299,7 +300,11 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
           if (!selectedConversations.length) {
             return of(
               ConversationsActions.createNewConversations({
-                names: [translate(DEFAULT_CONVERSATION_NAME)],
+                names: [
+                  translate(ChatI18nKeys.NewConversation, {
+                    ns: Translation.Chat,
+                  }),
+                ],
               }),
             );
           }
@@ -583,9 +588,9 @@ const createNotLocalConversationsEpic: AppEpic = (action$) =>
       return concat(
         of(
           UIActions.showErrorToast(
-            translate(
-              'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-            ),
+            translate(ChatI18nKeys.ErrorCreatingConversation, {
+              ns: Translation.Chat,
+            }),
           ),
         ),
       );
@@ -600,9 +605,9 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+              ns: Translation.Chat,
+            }),
           ),
         );
       }
@@ -658,9 +663,9 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+              ns: Translation.Chat,
+            }),
           ),
         );
       }
@@ -718,9 +723,9 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+              ns: Translation.Chat,
+            }),
           ),
         );
       }
@@ -810,9 +815,9 @@ const saveNewConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
-              ),
+              translate(ChatI18nKeys.ErrorSavingConversationExists, {
+                ns: Translation.Chat,
+              }),
             ),
           );
         }),
@@ -1011,7 +1016,11 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
             actions.push(
               of(
                 ConversationsActions.createNewConversations({
-                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  names: [
+                    translate(ChatI18nKeys.NewConversation, {
+                      ns: Translation.Chat,
+                    }),
+                  ],
                   suspendHideSidebar: isTabletScreen(),
                 }),
               ),
@@ -1057,9 +1066,10 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     !suppressErrorMessage,
                   of(
                     UIActions.showErrorToast(
-                      translate(
-                        `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
-                      ),
+                      translate(ChatI18nKeys.ErrorDeletingConversations, {
+                        ns: Translation.Chat,
+                        failedNames: failedNames.filter(Boolean).join('", "'),
+                      }),
                     ),
                   ),
                   EMPTY,
@@ -1092,9 +1102,9 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.rateMessageFail({
             ...payload,
-            error: translate(
-              'No conversation exists for rating with provided conversation id',
-            ),
+            error: translate(ChatI18nKeys.NoConversationExistsForRating, {
+              ns: Translation.Chat,
+            }),
           }),
         );
       }
@@ -1105,7 +1115,9 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.rateMessageFail({
             ...payload,
-            error: translate('Message cannot be rated'),
+            error: translate(ChatI18nKeys.MessageCannotBeRated, {
+              ns: Translation.Chat,
+            }),
           }),
         );
       }
@@ -1138,7 +1150,9 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           return of(
             ConversationsActions.rateMessageFail({
               ...payload,
-              error: translate('Failed to rate message'),
+              error: translate(ChatI18nKeys.FailedToRateMessage, {
+                ns: Translation.Chat,
+              }),
             }),
           );
         }),
@@ -1707,7 +1721,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             return of(
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
-                message: translate(errorsMessages.timeoutError),
+                message: translate(ChatI18nKeys.TimeoutError, {
+                  ns: Translation.Chat,
+                }),
               }),
             );
           }
@@ -1719,11 +1735,15 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
             const contentTooLargeError =
               cause?.status === 413 &&
-              translate(errorsMessages.bodyExeededLimit);
+              translate(ChatI18nKeys.ConversationTooLargeToProcess, {
+                ns: Translation.Chat,
+              });
             const message =
               contentTooLargeError ||
               cause?.message ||
-              translate(errorsMessages.generalServer);
+              translate(ChatI18nKeys.GeneralServerError, {
+                ns: Translation.Chat,
+              });
 
             return of(
               ConversationsActions.streamMessageFail({
@@ -1738,7 +1758,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           return of(
             ConversationsActions.streamMessageFail({
               conversation: payload.conversation,
-              message: translate(errorsMessages.generalClient),
+              message: translate(ChatI18nKeys.GeneralClientError, {
+                ns: Translation.Chat,
+              }),
             }),
           );
         }),
@@ -1808,7 +1830,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           ? of(ModelsActions.deleteModels({ references: [modelReference] }))
           : EMPTY,
 
-        of(UIActions.showErrorToast(translate(errorMessage))),
+        of(
+          UIActions.showErrorToast(
+            translate(errorMessage, { ns: Translation.Chat }),
+          ),
+        ),
         of(
           ConversationsActions.updateMessage({
             conversationId: payload.conversation.id,
@@ -2127,9 +2153,9 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
           );
           return of(
             UIActions.showErrorToast(
-              translate(
-                'An error occurred during the saving conversation folders',
-              ),
+              translate(ChatI18nKeys.ErrorSavingConversationFolders, {
+                ns: Translation.Chat,
+              }),
             ),
           );
         }),
@@ -2239,9 +2265,9 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+              ns: Translation.Chat,
+            }),
           ),
         );
       }
@@ -2262,9 +2288,9 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             UIActions.showErrorToast(
-              translate(
-                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nConversations containing form actions cannot be compared',
-              ),
+              translate(ChatI18nKeys.IncorrectConversationChosenFormActions, {
+                ns: Translation.Chat,
+              }),
             ),
           ),
         );
@@ -2272,9 +2298,9 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             UIActions.showErrorToast(
-              translate(
-                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
-              ),
+              translate(ChatI18nKeys.IncorrectConversationChosenSameMessages, {
+                ns: Translation.Chat,
+              }),
             ),
           ),
         );
@@ -2671,9 +2697,9 @@ const saveConversationEpic: AppEpic = (action$, state$) =>
           return concat(
             of(
               UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the conversation. Please refresh the page.',
-                ),
+                translate(ChatI18nKeys.ErrorSavingConversation, {
+                  ns: Translation.Chat,
+                }),
               ),
             ),
             of(ConversationsActions.saveConversationFail(conversation)),
@@ -2689,9 +2715,9 @@ const moveConversationFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(
-            'It looks like conversation already exist. Please reload the page',
-          ),
+          translate(ChatI18nKeys.ConversationAlreadyExists, {
+            ns: Translation.Chat,
+          }),
         ),
       );
     }),

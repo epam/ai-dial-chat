@@ -58,6 +58,7 @@ import {
 import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
 import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
+import { CommonI18nKeys, FilesI18nKeys } from '@/src/constants/i18n';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
@@ -227,13 +228,10 @@ const renameFolderFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast(
-          translate(
-            'Renaming folder {{folderName}} failed. Please try again later',
-            {
-              ns: Translation.Files,
-              folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
-            },
-          ),
+          translate(FilesI18nKeys.FailedToRename, {
+            ns: Translation.Files,
+            folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
+          }),
         ),
       );
     }),
@@ -365,10 +363,12 @@ const getFilesWithFoldersFailToastEpic: AppEpic = (action$) =>
     map(() =>
       UIActions.showToast({
         type: ToastType.Error,
-        title: translate('Failed to load files and folders'),
-        message: translate(
-          'Please check your internet connection and try again.',
-        ),
+        title: translate(CommonI18nKeys.FailedToLoadFilesAndFolders, {
+          ns: Translation.Common,
+        }),
+        message: translate(CommonI18nKeys.CheckInternetConnection, {
+          ns: Translation.Common,
+        }),
       }),
     ),
   );
@@ -445,13 +445,10 @@ const deleteFileFailEpic: AppEpic = (action$) =>
     ofType(FilesActions.deleteFileFail.type),
     map(({ payload }) => {
       return UIActions.showToast({
-        message: translate(
-          'Deleting file {{fileName}} failed. Please try again later',
-          {
-            ns: Translation.Files,
-            fileName: payload.fileName,
-          },
-        ),
+        message: translate(FilesI18nKeys.FailedToDelete, {
+          ns: Translation.Files,
+          fileName: payload.fileName,
+        }),
       });
     }),
     ignoreElements(),
@@ -641,7 +638,7 @@ const copyFilesEpic: AppEpic = (action$) =>
                 destinationFolder: payload.destinationFolder,
               }),
               UIActions.showErrorToast(
-                translate('Failed to copy files. Please try again later.', {
+                translate(FilesI18nKeys.FailedToCopy, {
                   ns: Translation.Files,
                 }),
               ),
@@ -698,7 +695,7 @@ const moveFilesEpic: AppEpic = (action$) =>
                 files: payload.files,
               }),
               UIActions.showErrorToast(
-                translate('Failed to move files. Please try again later.', {
+                translate(FilesI18nKeys.FailedToMove, {
                   ns: Translation.Files,
                 }),
               ),
@@ -737,7 +734,7 @@ const deleteFilesEpic: AppEpic = (action$) =>
               files: payload.files,
             }),
             UIActions.showErrorToast(
-              translate('Failed to delete files. Please try again later.', {
+              translate(FilesI18nKeys.FailedToDeleteFiles, {
                 ns: Translation.Files,
               }),
             ),
@@ -760,7 +757,7 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
           if (!filePath) {
             return of(
               UIActions.showErrorToast(
-                translate('Failed to download file. Please try again later.', {
+                translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
               ),
@@ -776,7 +773,7 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
           catchError(() => {
             return of(
               UIActions.showErrorToast(
-                translate('Failed to download files. Please try again later.', {
+                translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
               ),
@@ -890,10 +887,12 @@ const uploadFilesEpic: AppEpic = (action$) =>
             actions.push(
               UIActions.showToast({
                 type: ToastType.Error,
-                title: translate('Upload failed'),
-                message: translate(
-                  'Please check your internet connection and try again.',
-                ),
+                title: translate(CommonI18nKeys.UploadFailed, {
+                  ns: Translation.Common,
+                }),
+                message: translate(CommonI18nKeys.CheckInternetConnection, {
+                  ns: Translation.Common,
+                }),
               }),
               FilesActions.uploadFilesFail(),
             );
@@ -936,7 +935,7 @@ const uploadArchiveEpic: AppEpic = (action$) =>
         catchError(() =>
           of(
             UIActions.showErrorToast(
-              translate('Failed to upload archive. Please try again later.', {
+              translate(FilesI18nKeys.FailedToUploadArchive, {
                 ns: Translation.Files,
               }),
             ),
@@ -977,11 +976,11 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
         if (items.length === 1) {
           return UIActions.showToast({
             type: ToastType.Success,
-            title: translate('Item {{verb}} successfully', {
+            title: translate(CommonI18nKeys.ItemVerbSuccessfully, {
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
+            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
@@ -992,11 +991,11 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
 
         return UIActions.showToast({
           type: ToastType.Success,
-          title: translate('Items {{verb}} successfully', {
+          title: translate(CommonI18nKeys.ItemVerbSuccessfully, {
             ns: Translation.Common,
             verb: verbPast,
           }),
-          message: translate('{{count}} items {{verb}} to {{folder}}', {
+          message: translate(FilesI18nKeys.ItemsVerbToFolder, {
             ns: Translation.Files,
             count: items.length,
             folder: folderPlaceholder,
@@ -1015,7 +1014,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
 
         const restText =
           hiddenCount > 0
-            ? translate(' and {{count}} other items', {
+            ? translate(FilesI18nKeys.AndOtherItems, {
                 ns: Translation.Files,
                 count: hiddenCount,
               })
@@ -1023,19 +1022,16 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
 
         return UIActions.showToast({
           type: ToastType.Error,
-          title: translate('Items {{verb}} failed', {
+          title: translate(CommonI18nKeys.ItemsDeletingFailed, {
             ns: Translation.Common,
             verb: isCopy ? 'copying' : 'moving',
           }),
-          message: translate(
-            '{{files}}{{rest}} were not {{verb}}. Please try again.',
-            {
-              ns: Translation.Files,
-              files: fileNames,
-              rest: restText,
-              verb: verbPast,
-            },
-          ),
+          message: translate(FilesI18nKeys.SomeItemsNotSomething, {
+            ns: Translation.Files,
+            files: fileNames,
+            rest: restText,
+            verb: verbPast,
+          }),
         });
       }
 
@@ -1065,11 +1061,11 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
         if (items.length === 1) {
           return UIActions.showToast({
             type: ToastType.Success,
-            title: translate('Item {{verb}} successfully', {
+            title: translate(CommonI18nKeys.ItemVerbSuccessfully, {
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
+            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
@@ -1080,11 +1076,11 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
 
         return UIActions.showToast({
           type: ToastType.Success,
-          title: translate('Items {{verb}} successfully', {
+          title: translate(CommonI18nKeys.ItemsVerbSuccessfully, {
             ns: Translation.Common,
             verb: verbPast,
           }),
-          message: translate('{{count}} items {{verb}} from {{folder}}', {
+          message: translate(FilesI18nKeys.ItemsVerbToFolder, {
             ns: Translation.Files,
             count: items.length,
             folder: folderPlaceholder,
@@ -1103,7 +1099,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
 
         const restText =
           hiddenCount > 0
-            ? translate(' and {{count}} other items', {
+            ? translate(FilesI18nKeys.AndOtherItems, {
                 ns: Translation.Files,
                 count: hiddenCount,
               })
@@ -1111,18 +1107,15 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
 
         return UIActions.showToast({
           type: ToastType.Error,
-          title: translate('Items deleting failed', {
+          title: translate(CommonI18nKeys.ItemsDeletingFailed, {
             ns: Translation.Common,
           }),
-          message: translate(
-            '{{files}}{{rest}} were not {{verb}}. Please try again.',
-            {
-              ns: Translation.Files,
-              files: fileNames,
-              rest: restText,
-              verb: verbPast,
-            },
-          ),
+          message: translate(FilesI18nKeys.SomeItemsNotSomething, {
+            ns: Translation.Files,
+            files: fileNames,
+            rest: restText,
+            verb: verbPast,
+          }),
         });
       }
 

@@ -118,7 +118,7 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  fileExtension: '[data-qa="file-extension"]',
+  fileExtension: '.dial-small-text',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
@@ -268,7 +268,7 @@ export const EntityEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="entity-preview-general-info-full-container"]',
   entityPreviewGeneralInfoContainer: '[data-qa="entity-preview-general-info"]',
   previewIconContainer: '[data-qa="icon-container"]',
-  previewEntityName: '[data-qa="entity-name"]',
+  previewEntityName: '#entity-name',
   previewTopicsContainer: '[data-qa="entity-topics"]',
   previewInformationSection: '[data-qa="entity-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',

@@ -22,6 +22,7 @@ import {
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { useApplicationStatusActions } from './useApplicationStatusActions';
@@ -94,7 +95,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       const link = getApplicationLink(entity);
       writeTextToClipboard(link, () => {
-        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+        dispatch(UIActions.showSuccessToast(t(MarketplaceI18nKeys.LinkCopied)));
       });
     },
     [dispatch, entity, t],

@@ -23,13 +23,18 @@ import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
-import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialInput,
+  DialNeutralButton,
+  DialPrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface RenameConversationViewProps {
   renamingConversation: ConversationInfo;
@@ -75,13 +80,10 @@ function RenameConversationView({
     ) {
       dispatch(
         UIActions.showErrorToast(
-          t(
-            'Conversation with name "{{newName}}" already exists in this folder.',
-            {
-              ns: Translation.Chat,
-              newName,
-            },
-          ),
+          t(ChatI18nKeys.ConversationNameExistsInFolder, {
+            ns: Translation.Chat,
+            newName,
+          }),
         ),
       );
 
@@ -89,11 +91,7 @@ function RenameConversationView({
     }
 
     if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(
-        UIActions.showErrorToast(
-          t('Using a dot at the end of a name is not permitted.'),
-        ),
-      );
+      dispatch(UIActions.showErrorToast(t(ChatI18nKeys.DotAtEndNotPermitted)));
       return;
     }
 
@@ -135,32 +133,32 @@ function RenameConversationView({
       hideClose
     >
       <h4 className="text-base font-semibold" data-qa="title">
-        {t('Rename conversation')}
+        {t(ChatI18nKeys.RenameConversation)}
       </h4>
-      <input
+
+      <DialInput
         name="titleInput"
         type="text"
-        ref={inputRef}
+        inputRef={inputRef}
         value={newConversationName}
         onFocus={(e) => e.target.select()}
-        onChange={(e) =>
+        onChange={(value) =>
           setNewConversationName(
-            e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+            value?.replaceAll(notAllowedSymbolsRegex, '') ?? '',
           )
         }
         onKeyDown={handleEnterDown}
-        className="w-full rounded border border-primary bg-transparent px-3 py-2.5 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-        autoComplete="off"
       />
+
       <div className="relative flex justify-end gap-3">
         <DialNeutralButton
           onClick={handleClose}
           data-qa="cancel"
-          label={t('Cancel')}
+          label={t(ChatI18nKeys.Cancel)}
         />
 
         <DialPrimaryButton
-          label={t('Save')}
+          label={t(ChatI18nKeys.Save)}
           onClick={handleRename}
           data-qa="save"
           disabled={

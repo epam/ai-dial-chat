@@ -32,7 +32,7 @@ export class AgentInfo extends BaseElement {
   );
   public agentDescription = this.getChildElementBySelector(
     ChatSettingsSelectors.agentDescription,
-  );
+  ).getChildElementBySelector(Tags.p);
   public agentVersion = this.getChildElementBySelector(
     ChatSettingsSelectors.agentVersion,
   );

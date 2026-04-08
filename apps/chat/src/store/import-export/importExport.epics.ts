@@ -98,8 +98,7 @@ import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import { successMessages } from '@/src/constants/successMessages';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import {
   LatestExportFormat,
@@ -169,7 +168,9 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
           concat(
             of(
               UIActions.showErrorToast(
-                translate(errorsMessages.uploadingConversationsError),
+                translate(CommonI18nKeys.UploadingConversationsError, {
+                  ns: Translation.Common,
+                }),
               ),
             ),
             of(ImportExportActions.exportFail()),
@@ -215,7 +216,9 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       concat(
         of(
           UIActions.showErrorToast(
-            translate(errorsMessages.uploadingConversationsError),
+            translate(CommonI18nKeys.UploadingConversationsError, {
+              ns: Translation.Common,
+            }),
           ),
         ),
         of(ImportExportActions.exportFail()),
@@ -233,7 +236,9 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
         return concat(
           of(
             UIActions.showErrorToast(
-              translate(errorsMessages.uploadingPromptsError),
+              translate(CommonI18nKeys.UploadingPromptsError, {
+                ns: Translation.Common,
+              }),
             ),
           ),
           of(ImportExportActions.exportFail()),
@@ -282,7 +287,9 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       concat(
         of(
           UIActions.showErrorToast(
-            translate(errorsMessages.uploadingPromptsError),
+            translate(CommonI18nKeys.UploadingPromptsError, {
+              ns: Translation.Common,
+            }),
           ),
         ),
         of(ImportExportActions.exportFail()),
@@ -343,7 +350,9 @@ const importConversationsEpic: AppEpic = (action$) =>
         return concat(
           of(
             UIActions.showErrorToast(
-              errorsMessages.unsupportedConversationsDataFormat,
+              translate(CommonI18nKeys.UnsupportedConversationsDataFormat, {
+                ns: Translation.Common,
+              }),
             ),
           ),
           of(ImportExportActions.resetState()),
@@ -399,7 +408,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           of(ImportExportActions.importPromptsFail()),
           of(
             UIActions.showErrorToast(
-              translate(errorsMessages.unsupportedPromptsDataFormat, {
+              translate(CommonI18nKeys.UnsupportedPromptsDataFormat, {
                 ns: Translation.Common,
               }),
             ),
@@ -538,7 +547,8 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                     of(
                       UIActions.showSuccessToast(
                         translate(
-                          `Conversation(s) ${successMessages.importSuccess}`,
+                          CommonI18nKeys.ConversationsImportedSuccessfully,
+                          { ns: Translation.Common },
                         ),
                       ),
                     ),
@@ -551,7 +561,9 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
               return concat(
                 of(
                   UIActions.showErrorToast(
-                    translate(errorsMessages.uploadingConversationsError),
+                    translate(CommonI18nKeys.UploadingConversationsError, {
+                      ns: Translation.Common,
+                    }),
                   ),
                 ),
                 of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -633,7 +645,9 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                     of(ImportExportActions.resetState()),
                     of(
                       UIActions.showSuccessToast(
-                        translate(`Prompt(s) ${successMessages.importSuccess}`),
+                        translate(CommonI18nKeys.PromptsImportedSuccessfully, {
+                          ns: Translation.Common,
+                        }),
                       ),
                     ),
                   ),
@@ -645,7 +659,9 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
               return concat(
                 of(
                   UIActions.showErrorToast(
-                    translate(errorsMessages.uploadingPromptsError),
+                    translate(CommonI18nKeys.UploadingPromptsError, {
+                      ns: Translation.Common,
+                    }),
                   ),
                 ),
                 of(ImportExportActions.importPromptsFail()),
@@ -985,7 +1001,9 @@ const importZipEpic: AppEpic = (action$) =>
             return concat(
               of(
                 UIActions.showErrorToast(
-                  errorsMessages.unsupportedConversationsDataFormat,
+                  translate(CommonI18nKeys.UnsupportedConversationsDataFormat, {
+                    ns: Translation.Common,
+                  }),
                 ),
               ),
               of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -997,7 +1015,9 @@ const importZipEpic: AppEpic = (action$) =>
             return concat(
               of(
                 UIActions.showErrorToast(
-                  errorsMessages.unsupportedConversationsDataFormat,
+                  translate(CommonI18nKeys.UnsupportedConversationsDataFormat, {
+                    ns: Translation.Common,
+                  }),
                 ),
               ),
               of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -1011,7 +1031,10 @@ const importZipEpic: AppEpic = (action$) =>
                 return concat(
                   of(
                     UIActions.showErrorToast(
-                      errorsMessages.unsupportedConversationsDataFormat,
+                      translate(
+                        CommonI18nKeys.UnsupportedConversationsDataFormat,
+                        { ns: Translation.Common },
+                      ),
                     ),
                   ),
                   of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -1037,7 +1060,10 @@ const importZipEpic: AppEpic = (action$) =>
                 return concat(
                   of(
                     UIActions.showErrorToast(
-                      errorsMessages.unsupportedConversationsDataFormat,
+                      translate(
+                        CommonI18nKeys.UnsupportedConversationsDataFormat,
+                        { ns: Translation.Common },
+                      ),
                     ),
                   ),
                   of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -1377,7 +1403,9 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
           return concat(
             of(
               UIActions.showSuccessToast(
-                translate(successMessages.importAttachmentsSuccess),
+                translate(CommonI18nKeys.AttachmentsImportedSuccessfully, {
+                  ns: Translation.Common,
+                }),
               ),
             ),
             of(ImportExportActions.resetState()),
@@ -1393,7 +1421,8 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             of(
               UIActions.showSuccessToast(
                 translate(
-                  successMessages.importAttachmentsSuccessConversationIgnored,
+                  CommonI18nKeys.AttachmentsImportedSuccessfullyConversationIgnored,
+                  { ns: Translation.Common },
                 ),
               ),
             ),
@@ -1488,9 +1517,12 @@ const importFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast(
-          payload === FeatureType.Chat
-            ? errorsMessages.importConversationsFailed
-            : errorsMessages.importPromptsFailed,
+          translate(
+            payload === FeatureType.Chat
+              ? CommonI18nKeys.ImportConversationsFailed
+              : CommonI18nKeys.ImportPromptsFailed,
+            { ns: Translation.Common },
+          ),
         ),
       );
     }),
@@ -1500,7 +1532,11 @@ const exportFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ImportExportActions.exportFail.type),
     switchMap(() => {
-      return of(UIActions.showErrorToast(errorsMessages.exportFailed));
+      return of(
+        UIActions.showErrorToast(
+          translate(CommonI18nKeys.ExportFailed, { ns: Translation.Common }),
+        ),
+      );
     }),
   );
 
@@ -1550,7 +1586,9 @@ const handleImportStopEpic: AppEpic = (action$) =>
                 ),
                 of(
                   UIActions.showErrorToast(
-                    translate('Some conversations were not imported'),
+                    translate(CommonI18nKeys.SomeConversationsWereNotImported, {
+                      ns: Translation.Common,
+                    }),
                   ),
                 ),
               );
@@ -1586,7 +1624,9 @@ const handleImportStopEpic: AppEpic = (action$) =>
                 ),
                 of(
                   UIActions.showErrorToast(
-                    translate('Some prompts were not imported'),
+                    translate(CommonI18nKeys.SomePromptsWereNotImported, {
+                      ns: Translation.Common,
+                    }),
                   ),
                 ),
               );

@@ -5,6 +5,8 @@ import { isMacOs } from '@/src/utils/app/mobile';
 import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
+import { SettingsI18nKeys } from '@/src/constants/i18n';
+
 import { withLabel } from '@/src/components/Common/Forms/Label';
 
 import { DialRadioButton } from '@epam/ai-dial-ui-kit';
@@ -23,8 +25,10 @@ const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
         name="enter-type-select"
         label={
           <>
-            <b>{t('Enter')}</b> - {t('send message')},{' '}
-            <b>{t('Shift + Enter')}</b> - {t('new line')}
+            <b>{t(SettingsI18nKeys.Enter)}</b> -{' '}
+            {t(SettingsI18nKeys.SendMessages)},{' '}
+            <b>{t(SettingsI18nKeys.ShiftEnter)}</b> -{' '}
+            {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}
@@ -37,8 +41,13 @@ const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
         name="enter-type-select"
         label={
           <>
-            <b>{t(`${isMacOs() ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
-            {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}
+            <b>
+              {t(
+                `${isMacOs() ? '⌘' : SettingsI18nKeys.Ctrl} + ${SettingsI18nKeys.Enter}`,
+              )}
+            </b>{' '}
+            - {t(SettingsI18nKeys.SendMessages)},{' '}
+            <b>{t(SettingsI18nKeys.Enter)}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}

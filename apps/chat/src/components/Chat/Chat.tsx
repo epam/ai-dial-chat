@@ -50,6 +50,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
@@ -67,6 +68,7 @@ import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings/ChatSettingsModal';
 import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
+import { IntroText } from './IntroText';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
@@ -907,6 +909,13 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
+                        {selectedConversations.length === 1 && (
+                          <IntroText
+                            isWideLayout={isWideLayout}
+                            modelId={selectedConversations[0].model.id}
+                          />
+                        )}
+
                         {!isWideLayout && <ChatStarters />}
 
                         {!isPlayback && (
@@ -1048,7 +1057,7 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             <div className="flex w-full flex-col items-center pt-3 md:pt-5">
               <DialPrimaryButton
                 className="mb-2 flex items-center md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                label={t('Start working with the {{viewerTitle}}', {
+                label={t(ChatI18nKeys.StartWorkingWithViewer, {
                   ns: Translation.Chat,
                   viewerTitle: customViewer.title,
                 })}
@@ -1188,8 +1197,8 @@ export function Chat({ isPreview }: ChatProps) {
     return (
       <div className="h-screen pt-2">
         <NotFoundEntity
-          entity={t('Agent is')}
-          additionalText={t('Please contact your administrator.')}
+          entity={t(ChatI18nKeys.AgentIs)}
+          additionalText={t(ChatI18nKeys.PleaseContactAdministrator)}
         />
       </div>
     );
@@ -1209,8 +1218,8 @@ export function Chat({ isPreview }: ChatProps) {
   ) {
     return (
       <NotFoundEntity
-        entity={t('Conversation')}
-        additionalText={t('Please select another conversation.')}
+        entity={t(ChatI18nKeys.ConversationEntity)}
+        additionalText={t(ChatI18nKeys.PleaseSelectAnotherConversation)}
       />
     );
   }

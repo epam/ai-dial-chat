@@ -11,6 +11,8 @@ import { getEntityStatus } from '@/src/utils/marketplace';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 interface StatusMessageProps {
   id: string;
   item?: MarketplaceEntity;
@@ -45,17 +47,15 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   if (isCustomTool) {
     return (
       <div className="text-sm text-secondary">
-        {t(
-          'The agent is not available on the marketplace and was added via JSON',
-        )}
+        {t(CommonI18nKeys.AgentNotAvailableOnMarketplace)}
       </div>
     );
   }
 
   if (isInvalid) {
     const messageKey = readonly
-      ? 'Not available {{entityType}}.'
-      : 'Not available {{entityType}}. Please, change or remove {{entityType}} to proceed.';
+      ? CommonI18nKeys.NotAvailableEntityType
+      : CommonI18nKeys.NotAvailableEntityTypePleaseChange;
 
     return (
       <div className="text-sm text-error">
@@ -66,10 +66,10 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
 
   if (isLoggedOut) {
     const message = readonly
-      ? 'Logged out toolset.'
-      : `Logged out toolset. Click ${
-          isInSelectionList ? 'to scroll to' : 'on'
-        } the toolset to log in.`;
+      ? CommonI18nKeys.LoggedOutToolset
+      : isInSelectionList
+        ? CommonI18nKeys.LoggedOutToolsetClickToScroll
+        : CommonI18nKeys.LoggedOutToolsetClickOn;
 
     return <div className="text-sm text-error">{t(message)}</div>;
   }
@@ -80,17 +80,17 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   if (isUndeployed) {
     let message: string;
     if (readonly) {
-      message = 'Undeployed app.';
+      message = CommonI18nKeys.UndeployedApp;
     } else if (!hasDeployAccess) {
       if (isPublicApp) {
-        message = 'Undeployed app. Ask administrator to deploy the app.';
+        message = CommonI18nKeys.UndeployedAppAskAdmin;
       } else {
-        message = 'Undeployed app. Ask author to deploy the app.';
+        message = CommonI18nKeys.UndeployedAppAskAuthor;
       }
     } else {
-      message = `Undeployed app. Click ${
-        isInSelectionList ? 'to scroll to' : 'on'
-      } the app to deploy.`;
+      message = isInSelectionList
+        ? CommonI18nKeys.UndeployedAppClickToScroll
+        : CommonI18nKeys.UndeployedAppClickOn;
     }
 
     return <div className="text-sm text-error">{t(message)}</div>;
@@ -98,14 +98,14 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
 
   const textTemplate = !readonly
     ? isInSelectionList
-      ? 'Click to scroll to the {{entityType}}.'
-      : 'Click on the {{entityType}} to see details.'
+      ? CommonI18nKeys.ClickToScrollToEntityType
+      : CommonI18nKeys.ClickOnEntityTypeToSeeDetails
     : '';
 
   if (isDeploying) {
     return (
       <div className="text-sm text-secondary">
-        {t('Deploying app.')}
+        {t(CommonI18nKeys.DeployingApp)}
         {textTemplate &&
           ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
       </div>
@@ -115,7 +115,7 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   if (isUndeploying) {
     return (
       <div className="text-sm text-secondary">
-        {t('Undeploying app.')}
+        {t(CommonI18nKeys.UndeployingApp)}
         {textTemplate &&
           ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
       </div>
@@ -125,7 +125,7 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   if (isRedeploying) {
     return (
       <div className="text-sm text-secondary">
-        {t('Redeploying app.')}
+        {t(CommonI18nKeys.RedeployingApp)}
         {textTemplate &&
           ` ${t(textTemplate, { entityType: t(entityTypeKey) })}`}
       </div>

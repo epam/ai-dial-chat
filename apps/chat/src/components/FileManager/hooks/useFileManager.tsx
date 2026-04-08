@@ -35,8 +35,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MY_FILES_SECTION,
   ORGANIZATION_FILES_SECTION,
+  REVIEW_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
 } from '@/src/constants/fileManager';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
@@ -64,9 +66,19 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
 
 const newActions = {
-  uploadFiles: { label: translate('Upload files') },
-  newFolder: { label: translate('New folder') },
-  uploadArchive: { label: translate('Upload archive') },
+  uploadFiles: {
+    label: translate(SideBarI18nKeys.UploadFiles, {
+      ns: Translation.SideBar,
+    }),
+  },
+  newFolder: {
+    label: translate(SideBarI18nKeys.NewFolder, { ns: Translation.SideBar }),
+  },
+  uploadArchive: {
+    label: translate(SideBarI18nKeys.UploadArchive, {
+      ns: Translation.SideBar,
+    }),
+  },
 };
 
 const dateOptions = {
@@ -79,12 +91,14 @@ interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
   toolbarOptions?: ToolbarOptions;
   availableTabs?: Set<string>;
+  reviewBucket?: string;
 }
 
 export const useFileManager = ({
   actionLabelsOptions,
   toolbarOptions: externalToolbarOptions,
   availableTabs,
+  reviewBucket,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
 
@@ -139,8 +153,8 @@ export const useFileManager = ({
       percent,
     }));
 
-    const title = t('Uploading items');
-    const text = t('{{done}} of {{total}} items uploaded...', {
+    const title = t(SideBarI18nKeys.UploadingItems);
+    const text = t(SideBarI18nKeys.ItemsUploaded, {
       done: files.filter((f) => f.status !== UploadStatus.LOADING).length,
       total: files.length,
     });
@@ -188,6 +202,7 @@ export const useFileManager = ({
     my_files: MY_FILES_SECTION,
     shared: SHARED_WITH_ME_FILES_SECTION,
     organization: ORGANIZATION_FILES_SECTION,
+    review: REVIEW_FILES_SECTION,
   });
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
@@ -293,6 +308,16 @@ export const useFileManager = ({
         pathRootAlias = ORGANIZATION_FILES_SECTION;
         uploadEnabled = false;
         break;
+      case DialFileManagerTabs.Review:
+        filteredFiles = files.filter(
+          (f) => getEntityBucket(f) === reviewBucket,
+        );
+        filteredFolders = folders.filter(
+          (f) => getEntityBucket(f) === reviewBucket,
+        );
+        pathRootAlias = REVIEW_FILES_SECTION;
+        uploadEnabled = false;
+        break;
       default:
         break;
     }
@@ -339,13 +364,13 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, previousActiveTabRef, currentPath]);
+  }, [files, folders, activeTab, reviewBucket, currentPath]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
       return count === 1 && name
-        ? t('Copy "{{name}}" to', { name })
-        : t('Copy {{count}} items to', { count });
+        ? t(SideBarI18nKeys.CopyNameTo, { name })
+        : t(SideBarI18nKeys.CopyItemsTo, { count });
     },
     [t],
   );
@@ -353,8 +378,8 @@ export const useFileManager = ({
   const getDestinationFolderMoveHeader = useCallback(
     (count: number, name: string | undefined) => {
       return count === 1 && name
-        ? t('Move "{{name}}" to', { name })
-        : t('Move {{count}} items to', { count });
+        ? t(SideBarI18nKeys.MoveNameTo, { name })
+        : t(SideBarI18nKeys.MoveItemsTo, { count });
     },
     [t],
   );
@@ -366,8 +391,8 @@ export const useFileManager = ({
     (files: string[]) => {
       const count = files.length;
       return count === 1
-        ? t('Confirm Deleting Item')
-        : t('Confirm Deleting Items');
+        ? t(SideBarI18nKeys.ConfirmDeletingItem)
+        : t(SideBarI18nKeys.ConfirmDeletingItems);
     },
     [t],
   );
@@ -379,16 +404,16 @@ export const useFileManager = ({
           <p className="mb-3 text-secondary">
             {files.length === 1 ? (
               <>
-                {t('Are you sure you want to delete')}{' '}
+                {t(SideBarI18nKeys.AreYouSureDeleteItem)}{' '}
                 <span className="break-all text-primary">
                   “{files[0].split('/').pop()}”?
                 </span>
               </>
             ) : (
               <>
-                {t('Do you want to delete the following')}{' '}
+                {t(SideBarI18nKeys.DoYouWantToDeleteFollowing)}{' '}
                 <span className="text-primary">
-                  {files.length} {t('items?')}
+                  {files.length} {t(SideBarI18nKeys.ItemsQuestion)}
                 </span>
               </>
             )}
@@ -456,8 +481,12 @@ export const useFileManager = ({
       : () => dispatch(FilesActions.cancelMovingFiles());
 
     return {
-      title: t(isCopyingFiles ? 'Copying files' : 'Moving items'),
-      text: t('{{count}} items are being {{action}}…', {
+      title: t(
+        isCopyingFiles
+          ? SideBarI18nKeys.CopyingFiles
+          : SideBarI18nKeys.MovingItems,
+      ),
+      text: t(SideBarI18nKeys.ItemsBeingAction, {
         count: movingFilesCountRef.current,
         action: isCopyingFiles ? 'copied' : 'moved',
       }),
@@ -470,8 +499,8 @@ export const useFileManager = ({
       actionLabels: bulkActionLabels,
       getSelectionLabel(selectedCount: number) {
         return selectedCount === 1
-          ? t('{{count}} item selected', { count: selectedCount })
-          : t('{{count}} items selected', { count: selectedCount });
+          ? t(SideBarI18nKeys.ItemSelected, { count: selectedCount })
+          : t(SideBarI18nKeys.ItemsSelected, { count: selectedCount });
       },
     }),
     [bulkActionLabels, t],
@@ -480,7 +509,7 @@ export const useFileManager = ({
   const treeOptions = useMemo(
     () => ({
       expandedPaths,
-      header: t('Folder tree'),
+      header: t(SideBarI18nKeys.FolderTree),
       collapsed: treeCollapsedState,
       onCollapseChange: setTreeCollapsedState,
       loadedPaths: loadedFoldersPaths,
@@ -512,12 +541,12 @@ export const useFileManager = ({
     }
 
     return {
-      title: t('Information'),
-      nameLabel: t('Name: '),
-      pathLabel: t('Path: '),
-      modifiedDateLabel: t('Modified: '),
-      sizeLabel: t('Size: '),
-      authorLabel: t('Author: '),
+      title: t(SideBarI18nKeys.InformationSidebar),
+      nameLabel: t(SideBarI18nKeys.NameLabel),
+      pathLabel: t(SideBarI18nKeys.PathLabel),
+      modifiedDateLabel: t(SideBarI18nKeys.ModifiedLabel),
+      sizeLabel: t(SideBarI18nKeys.SizeLabel),
+      authorLabel: t(SideBarI18nKeys.AuthorLabel),
       loading: isFileMetadataLoading,
       fileMetadata: adjustedMetadata ?? undefined,
     };
@@ -602,9 +631,7 @@ export const useFileManager = ({
       isNewButtonDisabled:
         activeTab === DialFileManagerTabs.Organization ||
         (activeTab === DialFileManagerTabs.Shared && !canWriteCurrentFolder),
-      disabledNewButtonTooltip: t(
-        'You do not have permission to create new items here',
-      ),
+      disabledNewButtonTooltip: t(SideBarI18nKeys.NoPermissionToCreateItems),
       ...externalToolbarOptions,
     }),
     [
@@ -860,8 +887,8 @@ export const useFileManager = ({
       const schema = getEntityNameSchema({
         name:
           item.nodeType === DialFileNodeType.FOLDER
-            ? t('Folder name')
-            : t('File name'),
+            ? t(SideBarI18nKeys.FolderNameLabel)
+            : t(SideBarI18nKeys.FileNameLabel),
         checkDotsInTheEnd: true,
       });
 
@@ -883,22 +910,22 @@ export const useFileManager = ({
   const emptyStateTitle = useMemo(() => {
     switch (activeTab) {
       case DialFileManagerTabs.Shared:
-        return t('No shared files');
+        return t(SideBarI18nKeys.NoSharedFiles);
       case DialFileManagerTabs.Organization:
-        return t('No organization files');
+        return t(SideBarI18nKeys.NoOrganizationFiles);
       default:
-        return t('You don’t have any files');
+        return t(SideBarI18nKeys.YouDontHaveAnyFiles);
     }
   }, [activeTab, t]);
 
   const emptyStateDescription = useMemo(() => {
     switch (activeTab) {
       case DialFileManagerTabs.Shared:
-        return t('Files shared with you will appear here.');
+        return t(SideBarI18nKeys.SharedFilesWillAppear);
       case DialFileManagerTabs.Organization:
-        return t('Public files will appear here.');
+        return t(SideBarI18nKeys.PublicFilesWillAppear);
       default:
-        return t('Upload or drag and drop files');
+        return t(SideBarI18nKeys.UploadOrDragDropFiles);
     }
   }, [activeTab, t]);
 

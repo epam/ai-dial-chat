@@ -13,6 +13,7 @@ import { ConversationInfo, FeatureType } from '@epam/ai-dial-shared';
 
 interface Props {
   conversations: ConversationInfo[];
+  isDraggingOver?: boolean;
 }
 interface AllConversations {
   today: ConversationInfo[];
@@ -35,7 +36,7 @@ interface SortedConversations {
   other: SortedBlock;
 }
 
-const ConversationsView = ({ conversations }: Props) => {
+const ConversationsView = ({ conversations, isDraggingOver }: Props) => {
   const visibleSidebarItemsCount = useAppSelector((state) =>
     UISelectors.selectVisibleSidebarItems(state, FeatureType.Chat),
   );
@@ -155,6 +156,7 @@ const ConversationsView = ({ conversations }: Props) => {
           key={key}
           conversations={value.conversations}
           label={value.name}
+          isDraggingOver={isDraggingOver}
         />
       ))}
     </div>

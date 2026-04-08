@@ -12,6 +12,8 @@ import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-para
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 /**
@@ -54,7 +56,7 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
         <>
           <DialNeutralButton
             onClick={() => window.location.assign('/')}
-            label={t('Back to main page')}
+            label={t(CommonI18nKeys.BackToMainPage)}
           />
         </>
       ),
@@ -64,8 +66,8 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
       heading: 'Server error',
       message: (
         <>
-          <p>{t('There is a problem with the server configuration.')}</p>
-          <p>{t('Check the server logs for more information.')}</p>
+          <p>{t(CommonI18nKeys.ServerConfigProblem)}</p>
+          <p>{t(CommonI18nKeys.CheckServerLogs)}</p>
         </>
       ),
     },
@@ -74,10 +76,10 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
       heading: 'Access Denied',
       message: (
         <>
-          <div>{t('You do not have permission to sign in.')}</div>
+          <div>{t(CommonI18nKeys.NoPermissionToSignIn)}</div>
           <DialNeutralButton
             onClick={() => window.location.assign(signinPageUrl)}
-            label={t('Sign in')}
+            label={t(CommonI18nKeys.SignIn)}
           />
         </>
       ),
@@ -87,11 +89,11 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
       heading: 'Unable to sign in',
       message: (
         <>
-          <p>{t('The sign in link is no longer valid.')}</p>
-          <p>{t('It may have been used already or it may have expired.')}</p>
+          <p>{t(CommonI18nKeys.SignInLinkNoLongerValid)}</p>
+          <p>{t(CommonI18nKeys.SignInLinkMayHaveBeenUsed)}</p>
           <DialNeutralButton
             onClick={() => window.location.assign(signinPageUrl)}
-            label={t('Sign in')}
+            label={t(CommonI18nKeys.SignIn)}
           />
         </>
       ),

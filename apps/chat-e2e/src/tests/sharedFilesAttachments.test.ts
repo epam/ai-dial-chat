@@ -94,8 +94,8 @@ dialSharedWithMeTest(
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
-    let defaultModel: DialAIEntityModel;
-    let defaultModelId: string;
+    let randomModelWithImageAttachment: DialAIEntityModel;
+    let randomModelWithImageAttachmentId: string;
     let conversationInFolder: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
@@ -120,24 +120,28 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Upload image file to a conversation and prepare conversation with attachments in response',
       async () => {
-        defaultModel = GeneratorUtil.randomArrayElement(
-          ModelsUtil.getLatestModelsWithAttachment(),
+        randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getLatestModelsWithAttachment().filter(
+            (m) =>
+              m.inputAttachmentTypes?.length == 1 &&
+              m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+          ),
         );
-        defaultModelId = defaultModel.id;
+        randomModelWithImageAttachmentId = randomModelWithImageAttachment.id;
         nestedFolders = [
           AttachFilesFolders.appdata,
-          defaultModelId,
+          randomModelWithImageAttachmentId,
           AttachFilesFolders.images,
         ];
         imageUrl = await fileApiHelper.putFile(Attachment.sunImageName, {
-          parentPath: API.modelFilePath(defaultModelId),
+          parentPath: API.modelFilePath(randomModelWithImageAttachmentId),
         });
         imageUrl2 = await fileApiHelper.putFile(Attachment.cloudImageName, {
-          parentPath: API.modelFilePath(defaultModelId),
+          parentPath: API.modelFilePath(randomModelWithImageAttachmentId),
         });
         imageInConversationInFolderUrl = await fileApiHelper.putFile(
           Attachment.flowerImageName,
-          { parentPath: API.modelFilePath(defaultModelId) },
+          { parentPath: API.modelFilePath(randomModelWithImageAttachmentId) },
         );
         specialCharsImageUrl = await fileApiHelper.putFile(
           Attachment.specialSymbolsName,
@@ -153,11 +157,11 @@ dialSharedWithMeTest(
         conversationWithTwoResponses =
           conversationData.prepareHistoryConversationWithAttachmentsInRequest({
             1: {
-              model: defaultModelId,
+              model: randomModelWithImageAttachmentId,
               attachmentUrl: [imageUrl],
             },
             2: {
-              model: defaultModelId,
+              model: randomModelWithImageAttachmentId,
               attachmentUrl: [imageUrl2],
             },
           });
@@ -167,20 +171,20 @@ dialSharedWithMeTest(
         conversationInFolder =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageInConversationInFolderUrl,
-            defaultModelId,
+            randomModelWithImageAttachmentId,
             folderName,
           );
 
         conversationData.resetData();
         conversationWithSpecialChars =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            defaultModelId,
+            randomModelWithImageAttachmentId,
             true,
             undefined,
             specialCharsImageUrl,
           );
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          defaultModel,
+          randomModelWithImageAttachment,
         );
 
         //TODO EPMRTC-4135 blocked by the #1076
@@ -283,7 +287,7 @@ dialSharedWithMeTest(
       'By user2 open "File manager" and verify "Shared with Me" tree is expanded',
       async () => {
         await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
-          defaultModel,
+          randomModelWithImageAttachment,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.openHomePage();
@@ -324,8 +328,8 @@ dialSharedWithMeTest(
       'By user2 create a conversation with attachments from File manager "Shared with me" tab',
       async () => {
         const newRequest = GeneratorUtil.randomString(10);
-        await additionalShareUserFileManagerModalFoldersTree.expandFolders(
-          { isFilesListingTriggered: false },
+        await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderState(
+          'hidden',
           specialCharsFolder,
         );
         const attachmentCheckbox =
@@ -377,7 +381,7 @@ dialSharedWithMeTest(
             await talkToAgentDialog.selectAgent(
               GeneratorUtil.randomArrayElement(
                 ModelsUtil.getLatestModels().filter(
-                  (model) => model.id !== defaultModelId,
+                  (model) => model.id !== randomModelWithImageAttachmentId,
                 ),
               ),
             );

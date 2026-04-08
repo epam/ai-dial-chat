@@ -19,6 +19,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { CloseButtonSmall } from './CloseButtons';
@@ -130,7 +132,9 @@ export const MonacoEditor = memo(function MonacoEditor(
   }, [activeFile, activeFileId, props]);
 
   const errorLabel = t(
-    `{{count}} error${errorsWithIds.length > 1 ? 's' : ''}`,
+    errorsWithIds.length > 1
+      ? CommonI18nKeys.ErrorsCount
+      : CommonI18nKeys.ErrorCount,
     { count: errorsWithIds.length },
   );
 
@@ -164,7 +168,13 @@ export const MonacoEditor = memo(function MonacoEditor(
 
           {props.renderButtons?.()}
 
-          <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
+          <Tooltip
+            tooltip={t(
+              isFullScreen
+                ? CommonI18nKeys.Minimize
+                : CommonI18nKeys.FullScreen,
+            )}
+          >
             <DialButton
               className={classNames(
                 'px-[13px] py-2 text-secondary hover:text-accent-primary',

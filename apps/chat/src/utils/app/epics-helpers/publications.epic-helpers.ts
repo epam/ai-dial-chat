@@ -19,6 +19,7 @@ import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -26,6 +27,8 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { PublicationSelectors } from '@/src/store/selectors';
+
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import { getFolderIdFromEntityId } from '../folders';
 
@@ -186,9 +189,9 @@ export const getUpdateApplicationGeneralInfoAction$ = (
             console.error(err);
             return of(
               UIActions.showErrorToast(
-                translate(
-                  'Cannot fetch application schema. Please try again later.',
-                ),
+                translate(CommonI18nKeys.CannotFetchApplicationSchema, {
+                  ns: Translation.Common,
+                }),
               ),
             );
           }),

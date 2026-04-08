@@ -21,6 +21,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+
 import { CloseButtonSmall } from './CloseButtons';
 import { Tooltip } from './Tooltip';
 
@@ -354,7 +356,7 @@ export function MultipleComboBox<T>({
                 ))
               : !!inputValue?.length && (
                   <li className="px-3 py-2">
-                    {notFoundPlaceholder || t('No available items')}
+                    {notFoundPlaceholder || t(CommonI18nKeys.NoAvailableItems)}
                   </li>
                 )}
           </ul>
