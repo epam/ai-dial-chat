@@ -208,7 +208,7 @@ export class BaseAssertion {
   public async assertElementAttribute(
     element: BaseElement | Locator,
     attribute: string,
-    expectedValue: string,
+    expectedValue: string | RegExp,
     expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
@@ -422,7 +422,7 @@ export class BaseAssertion {
 
   public assertValue(
     actualValue: string | number | undefined | null,
-    expectedValue: string | number | undefined,
+    expectedValue: string | number | RegExp | undefined,
     expectedMessage?: string,
   ) {
     expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);
@@ -589,5 +589,15 @@ export class BaseAssertion {
     expect
       .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
       .toMatchObject(expectedObject);
+  }
+
+  public assertValueMatchPattern(
+    actualValue: unknown,
+    expectedObject: RegExp | string,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valueMatchPattern)
+      .toMatch(expectedObject);
   }
 }

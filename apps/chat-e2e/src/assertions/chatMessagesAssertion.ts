@@ -208,7 +208,10 @@ export class ChatMessagesAssertion extends BaseAssertion {
     await this.assertEntityIcon(this.chatMessages.getChatMessageImage(message));
   }
 
-  public async assertMessageImageLink(message: number, expectedLink: string) {
+  public async assertMessageImageLink(
+    message: number,
+    expectedLink: string | RegExp,
+  ) {
     await this.assertElementAttribute(
       this.chatMessages.getAttachmentLink(message),
       Attributes.href,

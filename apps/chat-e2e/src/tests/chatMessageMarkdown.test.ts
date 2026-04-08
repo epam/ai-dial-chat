@@ -128,7 +128,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        let expectedUrl = '';
+        let expectedUrl: string | RegExp = '';
         for (const [imgUrl, conversation] of imageConversationsMap) {
           await conversations.selectEntity(conversation.name);
           switch (imgUrl) {
@@ -136,7 +136,9 @@ dialTest(
               expectedUrl = `${API.api}/${imgUrl}`;
               break;
             case base64ImageUrl:
-              expectedUrl = base64ImageUrl;
+              expectedUrl = new RegExp(
+                `^blob:${config.use?.baseURL}\\/[\\da-f-]{36}$`,
+              );
               break;
             case externalImageUrl:
               expectedUrl = externalImageUrl;
@@ -148,15 +150,15 @@ dialTest(
             const popupPromise = page.waitForEvent('popup');
             await chatMessages.getAttachmentLink(2).click();
             const popup = await popupPromise;
-            baseAssertion.assertValue(popup.url(), expectedUrl);
-          }
-          //TODO: remove 'if' condition when fixed https://github.com/epam/ai-dial-chat/issues/6229
-          else if (imgUrl !== base64ImageUrl) {
+            baseAssertion.assertValue(popup.url(), expectedUrl as string);
+          } else {
             await chatMessages.getAttachmentLink(2).click();
-            baseAssertion.assertValue(
-              page.url(),
-              config.use?.baseURL?.concat(expectedUrl),
-            );
+            imgUrl === relativeImageUrl
+              ? baseAssertion.assertValue(
+                  page.url(),
+                  config.use?.baseURL?.concat(expectedUrl as string),
+                )
+              : baseAssertion.assertValueMatchPattern(page.url(), expectedUrl);
             await dialHomePage.navigateBack();
           }
         }
