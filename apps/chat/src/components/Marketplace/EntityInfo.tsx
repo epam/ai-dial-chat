@@ -37,7 +37,7 @@ export function EntityInfo({ entityInfo }: Props) {
   return (
     <>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-base font-semibold text-primary">
           {t(MarketplaceI18nKeys.InformationMarketplace)}
         </h3>
         {/*TODO implement 'Report a problem'*/}
