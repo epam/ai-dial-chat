@@ -463,6 +463,7 @@ dialAdminTest(
       prompts,
       promptDropdownMenu,
       publishingRequestDialog,
+      tooltipPortalAssertion,
       selectFolderModal,
       adminDialHomePage,
       adminApproveRequiredPromptsAssertion,
@@ -615,7 +616,7 @@ dialAdminTest(
     await dialTest.step('Check empty publication request name', async () => {
       await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
       await publishingRequestDialog.sendRequestButton.hoverOver();
-      await tooltipAssertion.assertTooltipContent(
+      await tooltipPortalAssertion.assertTooltipContent(
         ExpectedConstants.noPublishNameTooltip,
       );
       await publishingRequestDialog.requestName.fillInInput('   ');
