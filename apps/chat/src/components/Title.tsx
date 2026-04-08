@@ -13,7 +13,9 @@ import { CommonI18nKeys } from '@/src/constants/i18n';
 
 export function Title({ settings }: { settings?: SettingsState }) {
   const router = useRouter();
+
   const { t } = useTranslation(Translation.Common);
+
   const pageName = t(getPageName(router));
 
   return (
