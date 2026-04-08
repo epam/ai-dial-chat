@@ -62,6 +62,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import {
   ConversationInfo,
+  DialSchemaProperties,
   Feature,
   Role,
   ShareEntity,
@@ -760,6 +761,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectIsNotAllowed,
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
+    ChatSelectors.selectUploadedConfigurationSchemas,
     (state: RootState) => state,
   ],
   (
@@ -768,6 +770,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     isNotAllowedModels,
     areReadOnly,
     isAdmin,
+    uploadedConfigurationSchemas,
     state,
   ) => {
     const conversationsModelsIds = conversations.map(
@@ -785,6 +788,12 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         (resource) => resource.reviewUrl === conversation.id,
       ),
     );
+    const schema = uploadedConfigurationSchemas.find((schema) =>
+      conversations.some(
+        (conversation) =>
+          modelsMap[conversation.model.id]?.id === schema.modelId,
+      ),
+    )?.schema;
 
     return conversations.some(
       (conversation) =>
@@ -799,7 +808,9 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
-        ),
+        ) ||
+        (!conversation.messages.length &&
+          !!schema?.[DialSchemaProperties.DialChatMessageInputDisabled]),
     );
   },
 );
