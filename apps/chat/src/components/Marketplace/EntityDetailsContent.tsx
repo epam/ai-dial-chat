@@ -42,7 +42,7 @@ export function EntityDetailsContent({ entity }: Props) {
         </section>
       )}
       <section
-        className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6"
+        className="flex flex-col gap-5 overflow-auto px-3 py-4 md:px-6"
         data-qa="entity-information"
       >
         <EntityInfo entityInfo={entityInfo} />
