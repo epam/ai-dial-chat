@@ -3,8 +3,8 @@ import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
 import { API, Attachment } from '@/src/testData';
 import { FileUtil } from '@/src/utils';
+import { markdownToTxt } from 'markdown-to-txt';
 import path from 'path';
-import removeMd from 'remove-markdown';
 
 const resolvedImagePath = path.resolve(
   Attachment.attachmentPath,
@@ -189,7 +189,7 @@ dialTest(
     const markdownResponse =
       'Sure — here is **LaTeX formula**:\n\n```' +
       `${codeTitle}\n${codeContent}`;
-    const rowResponse = removeMd(markdownResponse);
+    const rowResponse = markdownToTxt(markdownResponse);
 
     await dialTest.step(
       'Prepare conversations with LaTex formula in the response',
