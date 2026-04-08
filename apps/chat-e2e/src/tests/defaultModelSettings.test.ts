@@ -241,7 +241,9 @@ dialTest(
               ExpectedMessages.sendButtonCursorIsNotAllowed,
             )
             .toBe(Cursors.notAllowed);
-          await tooltipPortalAssertion.assertTooltipContent(ExpectedConstants.sendMessageTooltip)
+          await tooltipPortalAssertion.assertTooltipContent(
+            ExpectedConstants.sendMessageTooltip,
+          );
         }
       },
     );
