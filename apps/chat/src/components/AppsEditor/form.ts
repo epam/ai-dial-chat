@@ -212,6 +212,16 @@ export const QuickApp2Schema = zodValidation
     maxInputAttachments: MaxInputAttachmentsSchema.optional(),
     isJsonView: zodValidation.boolean(),
     agentsAndToolsetsJson: zodValidation.string(),
+    introText: zodValidation.string().optional(),
+    chatMessageInputDisabled: zodValidation.boolean(),
+    autoSubmit: zodValidation.boolean(),
+    starters: zodValidation.array(
+      zodValidation.object({
+        id: zodValidation.string(),
+        title: zodValidation.string(),
+        text: zodValidation.string(),
+      }),
+    ),
     toolSupportingModelIds: zodValidation
       .array(zodValidation.string())
       .optional(),
@@ -452,6 +462,17 @@ const getQuickApp2FormData = (
       null,
       2,
     ),
+    introText: appProperties?.conversation_starters?.intro_text,
+    chatMessageInputDisabled:
+      appProperties?.conversation_starters?.chat_message_input_disabled ??
+      false,
+    autoSubmit: appProperties?.conversation_starters?.auto_submit ?? true,
+    starters: [
+      ...(appProperties?.conversation_starters?.starters ?? []).map(
+        (starter) => ({ ...starter, id: nanoid() }),
+      ),
+      { id: nanoid(), title: '', text: '' },
+    ],
     isJsonView: false,
     toolSupportingModelIds,
   };
@@ -794,6 +815,9 @@ export const getApplicationPayload = ({
         model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
           ? data.temperature
           : FALLBACK_TEMPERATURE;
+      const starters = data.starters
+        .filter((starter) => starter.text.trim() && starter.title.trim())
+        .map(({ title, text }) => ({ title, text }));
 
       return {
         ...generalData,
@@ -827,6 +851,16 @@ export const getApplicationPayload = ({
             data.isJsonView && !keepCurrentToolsets
               ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
               : getQuickApp2Toolsets({ data, allEntitiesMap }),
+          ...(starters.length
+            ? {
+                conversation_starters: {
+                  intro_text: data.introText,
+                  chat_message_input_disabled: data.chatMessageInputDisabled,
+                  auto_submit: data.autoSubmit,
+                  starters,
+                },
+              }
+            : {}),
         },
       };
     }
