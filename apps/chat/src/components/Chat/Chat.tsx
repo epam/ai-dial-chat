@@ -101,10 +101,11 @@ interface CustomViewerType {
 }
 
 interface ChatViewProps {
+  isPreview?: boolean;
   customViewer?: CustomViewerType;
 }
 
-const ChatView = memo(({ customViewer }: ChatViewProps) => {
+const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -620,6 +621,12 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
+  const shouldShowIntroText =
+    selectedConversations.length === 1 &&
+    !selectedConversations[0].messages.find(
+      (userMessage) => userMessage.role === Role.User,
+    );
+
   useEffect(() => {
     if (
       !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
@@ -916,7 +923,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
-                        {selectedConversations.length === 1 && (
+                        {shouldShowIntroText && (
                           <IntroText
                             isWideLayout={isWideLayout}
                             modelId={selectedConversations[0].model.id}
@@ -927,6 +934,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
 
                         {!isPlayback && (
                           <ChatInput
+                            isPreview={isPreview}
                             isWideLayout={isWideLayout}
                             showReplayControls={showReplayControls}
                             textareaRef={textareaRef}
@@ -1249,7 +1257,7 @@ export function Chat({ isPreview }: ChatProps) {
 
   return (
     <>
-      <ChatView customViewer={customViewer} />
+      <ChatView isPreview={isPreview} customViewer={customViewer} />
       {!isPreview && <ChatInputFooter />}
     </>
   );

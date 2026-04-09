@@ -191,7 +191,7 @@ export const ExpectedConstants = {
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file names. Please rename the file or remove it from your upload list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
-  allFilesRoot: 'All files',
+  allFilesRoot: 'My Files',
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],

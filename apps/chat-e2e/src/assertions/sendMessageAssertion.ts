@@ -4,7 +4,7 @@ import {
   ElementState,
   ExpectedMessages,
 } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
+import { getElementWidth } from '@/src/ui/domData';
 import { SendMessage } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -20,16 +20,18 @@ export class SendMessageAssertion extends BaseAssertion {
     initialWidth: number,
     option: { hasFullWidth: boolean },
   ) {
-    const sendMessageInputFullWidth = await this.sendMessage
-      .getComputedStyleProperty(Styles.width)
-      .then((w) => +w[0].replace('px', ''));
+    const sendMessageInputFullWidth = await getElementWidth(this.sendMessage);
     option.hasFullWidth
-      ? expect
-          .soft(sendMessageInputFullWidth, ExpectedMessages.elementWidthIsValid)
-          .toBeGreaterThan(initialWidth)
-      : expect
-          .soft(sendMessageInputFullWidth, ExpectedMessages.elementWidthIsValid)
-          .toBe(initialWidth);
+      ? this.assertNumberIsGreaterThan(
+          sendMessageInputFullWidth,
+          initialWidth,
+          ExpectedMessages.elementWidthIsValid,
+        )
+      : this.assertValue(
+          sendMessageInputFullWidth,
+          initialWidth,
+          ExpectedMessages.elementWidthIsValid,
+        );
   }
 
   public async assertMessageValue(expectedValue: string | undefined) {
