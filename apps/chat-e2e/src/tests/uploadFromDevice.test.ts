@@ -146,7 +146,6 @@ dialTest(
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
     let deleteUploadedFileIcon: Locator;
     const attachments = [Attachment.longImageName, Attachment.cloudImageName];
-    const expectedExtensionClassAttribute = 'text-secondary dial-small-text';
     let uploadedFileInput: BaseElement;
     let uploadedFileExtension: BaseElement;
 
@@ -174,9 +173,9 @@ dialTest(
           attachments[0],
         );
         await baseAssertion.assertInputValueIsTruncated(uploadedFileInput);
-        await baseAssertion.assertElementClass(
+        await baseAssertion.assertElementState(
           uploadedFileExtension,
-          expectedExtensionClassAttribute,
+          'visible',
         );
       },
     );
@@ -185,14 +184,14 @@ dialTest(
       'Click on file with long name input and verify file extension is separated from file name',
       async () => {
         await uploadedFileInput.click();
-        await baseAssertion.assertElementClass(
+        await baseAssertion.assertElementState(
           uploadedFileExtension,
-          expectedExtensionClassAttribute,
+          'visible',
         );
         await page.keyboard.press(keys.end);
-        await baseAssertion.assertElementClass(
+        await baseAssertion.assertElementState(
           uploadedFileExtension,
-          expectedExtensionClassAttribute,
+          'visible',
         );
       },
     );

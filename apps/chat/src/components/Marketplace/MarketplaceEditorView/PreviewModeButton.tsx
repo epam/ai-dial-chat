@@ -14,7 +14,6 @@ import { Translation } from '@/src/types/translation';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -61,12 +60,12 @@ export const PreviewModeButton = ({
         'text-secondary hover:text-accent-primary',
         className,
       )}
+      tooltipProps={{
+        tooltip: t(previewModeTooltips[mode]),
+        isTriggerClickable: true,
+      }}
       onClick={handlePreviewModeChange}
-      iconBefore={
-        <Tooltip tooltip={t(previewModeTooltips[mode])} isTriggerClickable>
-          <Icon size={size} />
-        </Tooltip>
-      }
+      iconBefore={<Icon size={size} />}
     />
   );
 };

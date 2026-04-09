@@ -37,7 +37,6 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
@@ -224,17 +223,16 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
         />
       </div>
       <div className="mt-auto flex justify-end gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6">
-        <Tooltip
-          tooltip={t(CommonI18nKeys.FillInAllRequiredFields)}
-          hideTooltip={isValid || isEditing}
-        >
-          <DialPrimaryButton
-            label={t(CommonI18nKeys.Next)}
-            data-qa="save-entity-general-info"
-            type="submit"
-            disabled={(!isValid && !isEditing) || isAppLoading}
-          />
-        </Tooltip>
+        <DialPrimaryButton
+          tooltipProps={{
+            tooltip: t(CommonI18nKeys.FillInAllRequiredFields),
+            hideTooltip: isValid || isEditing,
+          }}
+          label={t(CommonI18nKeys.Next)}
+          data-qa="save-entity-general-info"
+          type="submit"
+          disabled={(!isValid && !isEditing) || isAppLoading}
+        />
       </div>
     </form>
   );
