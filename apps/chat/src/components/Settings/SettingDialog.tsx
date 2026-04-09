@@ -193,7 +193,7 @@ const SettingDialogView: FC = () => {
       <div className="mb-4 text-base font-bold">
         {t(SettingsI18nKeys.Settings)}
       </div>
-      <div className="mb-4 flex flex-col gap-4 flex-1 min-h-0">
+      <div className="mb-4 flex min-h-0 flex-1 flex-col gap-4">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
