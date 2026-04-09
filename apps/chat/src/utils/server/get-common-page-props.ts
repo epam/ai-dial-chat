@@ -174,6 +174,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
+    asrModelId: process.env.ASR_MODEL || undefined,
     providerId: session?.providerId ?? null,
     attachmentsSettings: {
       expandedTypes: parseCommaSeparatedList(

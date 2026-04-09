@@ -40,6 +40,7 @@ export interface SettingsState {
   externalAppsSchemaId?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
+  asrModelId?: string;
   providerId: string | null;
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;

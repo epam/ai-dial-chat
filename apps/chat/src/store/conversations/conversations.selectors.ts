@@ -12,7 +12,7 @@ import {
   isReplayConversation,
   sortByDateAndName,
 } from '@/src/utils/app/conversation';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, isAllowedMimeType } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
@@ -513,6 +513,74 @@ const selectCanAttachFile = createSelector(
   },
 );
 
+const RECORDABLE_AUDIO_MIME_TYPES = [
+  'audio/ogg',
+  'audio/mp4',
+  'audio/webm',
+  'audio/wav',
+];
+
+const selectCanRecordAudio = createSelector(
+  [
+    SettingsSelectors.selectEnabledFeatures,
+    selectAvailableAttachmentsTypes,
+    SettingsSelectors.selectAsrModelId,
+  ],
+  (enabledFeatures, availableTypes, asrModelId) => {
+    if (!enabledFeatures.has(Feature.VoiceInput)) {
+      return false;
+    }
+    if (asrModelId) {
+      return true;
+    }
+    if (!availableTypes || availableTypes.length === 0) {
+      return false;
+    }
+    return RECORDABLE_AUDIO_MIME_TYPES.some((mimeType) =>
+      isAllowedMimeType(availableTypes, mimeType),
+    );
+  },
+);
+
+// Voice recording works in two modes:
+// - ASR mode: an ASR model is configured and the model does NOT accept audio attachments natively.
+//   The recording is transcribed server-side and the text is auto-sent.
+// - Native attachment mode: the model accepts audio MIME types directly.
+//   The recording is uploaded as a file attachment.
+const selectIsAsrMode = createSelector(
+  [
+    SettingsSelectors.selectEnabledFeatures,
+    selectAvailableAttachmentsTypes,
+    SettingsSelectors.selectAsrModelId,
+  ],
+  (enabledFeatures, availableTypes, asrModelId) => {
+    if (!enabledFeatures.has(Feature.VoiceInput) || !asrModelId) {
+      return false;
+    }
+    if (!availableTypes || availableTypes.length === 0) {
+      return true;
+    }
+    return !RECORDABLE_AUDIO_MIME_TYPES.some((mimeType) =>
+      isAllowedMimeType(availableTypes, mimeType),
+    );
+  },
+);
+
+const selectSupportedAudioRecordingTypes = createSelector(
+  [selectIsAsrMode, selectAvailableAttachmentsTypes],
+  (isAsrMode, availableTypes) => {
+    if (isAsrMode) {
+      return RECORDABLE_AUDIO_MIME_TYPES;
+    }
+    if (!availableTypes || availableTypes.length === 0) {
+      return [];
+    }
+    return RECORDABLE_AUDIO_MIME_TYPES.filter((mimeType) =>
+      isAllowedMimeType(availableTypes, mimeType),
+    );
+  },
+);
+
 const selectPublicFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
@@ -884,6 +952,9 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
+  selectCanRecordAudio,
+  selectIsAsrMode,
+  selectSupportedAudioRecordingTypes,
   selectPublicFolders,
   selectPublicConversations,
   selectNewAddedFolderId,

@@ -13,6 +13,7 @@ import classNames from 'classnames';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getUserCustomContent } from '@/src/utils/app/file';
@@ -51,9 +52,11 @@ import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
 import { ChatInputAttachments } from './ChatInputAttachments';
+import { MicrophoneButton } from './MicrophoneButton';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
+import { VoiceRecordingOverlay } from './VoiceRecordingOverlay';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, Message, Role } from '@epam/ai-dial-shared';
@@ -92,6 +95,8 @@ export const ChatInputMessage = Inversify.register(
     const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
     const promptTemplateMappingRef = useRef(new Map<string, string>());
+    const prevStreamingRef = useRef(false);
+    const micButtonRef = useRef<HTMLButtonElement>(null);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
     const messageIsStreaming = useAppSelector(
@@ -170,6 +175,40 @@ export const ChatInputMessage = Inversify.register(
     const isChatInputBorderEnabled = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.ChatInputBorder),
     );
+
+    const canRecordAudio = useAppSelector(
+      ConversationsSelectors.selectCanRecordAudio,
+    );
+    const isAsrMode = useAppSelector(ConversationsSelectors.selectIsAsrMode);
+    const isTranscribing = useAppSelector(ChatSelectors.selectIsTranscribing);
+    const isAsrFlowActive = useAppSelector(ChatSelectors.selectIsAsrFlowActive);
+    const supportedAudioTypes = useAppSelector(
+      ConversationsSelectors.selectSupportedAudioRecordingTypes,
+    );
+
+    const {
+      isRecording,
+      startRecording,
+      stopRecording,
+      audioBlob,
+      analyserNode,
+      error: voiceError,
+      elapsedTime,
+      fileExtension: voiceFileExtension,
+      clearAudioBlob,
+    } = useVoiceRecorder(supportedAudioTypes);
+
+    useEffect(() => {
+      if (!audioBlob) return;
+
+      dispatch(
+        ChatActions.handleVoiceRecording({
+          audioBlob,
+          fileExtension: voiceFileExtension,
+        }),
+      );
+      clearAudioBlob();
+    }, [audioBlob, voiceFileExtension, dispatch, clearAudioBlob]);
 
     const shouldRegenerate =
       isLastMessageError ||
@@ -279,7 +318,8 @@ export const ChatInputMessage = Inversify.register(
       isUploadingFilePresent ||
       isConversationNameInvalid ||
       isConversationPathInvalid ||
-      !isSchemaValueValid;
+      !isSchemaValueValid ||
+      isTranscribing;
 
     const canAttach =
       (canAttachFiles || canAttachFolders || canAttachLinks) &&
@@ -537,9 +577,26 @@ export const ChatInputMessage = Inversify.register(
     }, [isChatInputDisabled, t]);
 
     const isDisabled = useMemo(
-      () => isLoading || isChatInputDisabled,
-      [isLoading, isChatInputDisabled],
+      () => isLoading || isChatInputDisabled || isTranscribing,
+      [isLoading, isChatInputDisabled, isTranscribing],
     );
+
+    const isMicDisabled = useMemo(
+      () => isDisabled || (isAsrMode && messageIsStreaming),
+      [isDisabled, isAsrMode, messageIsStreaming],
+    );
+
+    useEffect(() => {
+      const wasStreaming = prevStreamingRef.current;
+      prevStreamingRef.current = messageIsStreaming;
+
+      if (wasStreaming && !messageIsStreaming && isAsrFlowActive) {
+        dispatch(ChatActions.clearAsrFlow());
+        if (micButtonRef.current && !micButtonRef.current.disabled) {
+          micButtonRef.current.focus();
+        }
+      }
+    }, [messageIsStreaming, isAsrFlowActive, dispatch]);
 
     const paddingLeftClass = canAttach
       ? isOverlay
@@ -548,6 +605,14 @@ export const ChatInputMessage = Inversify.register(
       : isOverlay
         ? 'pl-3'
         : 'pl-4';
+
+    const paddingRightClass = canRecordAudio
+      ? isOverlay
+        ? 'pr-[60px]'
+        : 'pr-[72px]'
+      : isOverlay
+        ? 'pr-9'
+        : 'pr-10';
 
     return (
       <div
@@ -567,7 +632,8 @@ export const ChatInputMessage = Inversify.register(
             ref={textareaRef}
             className={classNames(
               'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
-              isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
+              isOverlay ? 'py-[7px]' : 'py-2.5 text-base md:py-3',
+              paddingRightClass,
               paddingLeftClass,
             )}
             maxHeight={MAX_HEIGHT}
@@ -580,14 +646,58 @@ export const ChatInputMessage = Inversify.register(
             onChange={handleChange}
             onKeyDown={handleKeyDown}
           />
-          <ChatControls
-            showReplayControls={showReplayControls}
-            onSend={handleSend}
-            tooltip={tooltipContent()}
-            isLastMessageError={isLastMessageError}
-            isLoading={isLoading}
-            isSendDisabled={isSendDisabled}
-          />
+          {isRecording && (
+            <VoiceRecordingOverlay
+              analyserNode={analyserNode}
+              elapsedTime={elapsedTime}
+              isOverlay={isOverlay}
+            />
+          )}
+          {isTranscribing && (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center rounded bg-layer-3"
+              data-qa="transcribing-overlay"
+            >
+              <div className="flex items-center gap-2">
+                <div className="size-4 animate-spin rounded-full border-2 border-b-transparent border-l-transparent border-r-transparent border-t-current text-secondary" />
+                <span className="text-sm text-secondary">
+                  {t(ChatI18nKeys.TranscribingAudio).replace(/\.+$/, '')}
+                  <span
+                    className="inline-flex w-[1.2em] text-left"
+                    aria-hidden="true"
+                  >
+                    <span className="animate-pulse">.</span>
+                    <span className="animate-pulse [animation-delay:200ms]">
+                      .
+                    </span>
+                    <span className="animate-pulse [animation-delay:400ms]">
+                      .
+                    </span>
+                  </span>
+                </span>
+              </div>
+            </div>
+          )}
+          {canRecordAudio && (
+            <MicrophoneButton
+              ref={micButtonRef}
+              isRecording={isRecording}
+              onStartRecording={startRecording}
+              onStopRecording={stopRecording}
+              error={voiceError}
+              disabled={isMicDisabled}
+            />
+          )}
+          {!isRecording && (
+            <ChatControls
+              showReplayControls={showReplayControls}
+              onSend={handleSend}
+              tooltip={tooltipContent()}
+              isLastMessageError={isLastMessageError}
+              isLoading={isLoading}
+              isSendDisabled={isSendDisabled}
+            />
+          )}
           {canAttach && (
             <>
               <div
@@ -609,7 +719,10 @@ export const ChatInputMessage = Inversify.register(
                 selectedDialLinks.length > 0 ||
                 selectedFolders.length > 0) && (
                 <div
-                  className="mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto px-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]"
+                  className={classNames(
+                    'mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto pl-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]',
+                    canRecordAudio ? paddingRightClass : 'pr-12',
+                  )}
                   data-qa="attachment-container"
                 >
                   <ChatInputAttachments

@@ -120,6 +120,9 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isAsrFlowActive = useAppSelector(ChatSelectors.selectIsAsrFlowActive);
+  const asrFlowRef = useRef(false);
+  asrFlowRef.current = isAsrFlowActive;
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -618,9 +621,13 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   useEffect(() => {
-    if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      !asrFlowRef.current
+    ) {
       textareaRef.current?.focus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabledFeatures, selectedConversationsIds]);
 
   useEffect(() => {
