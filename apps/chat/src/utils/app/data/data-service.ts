@@ -2,6 +2,7 @@ import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { EnterType, LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { ThemesConfig } from '@/src/types/themes';
@@ -138,22 +139,21 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static getMarketPlaceSectionCollapseState(
-    section: string,
-  ): Observable<boolean> {
-    return BrowserStorage.getData(
-      `${UIStorageKeys.MarketPlaceSectionCollapseState}_${section}`,
-      true,
+  public static setFilterPanelCollapseState(
+    value: MarketplacePanelState,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.MarketPlaceSectionCollapseState,
+      value,
     );
   }
 
-  public static setMarketPlaceSectionCollapseState(
-    section: string,
-    collapseState: boolean,
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      `${UIStorageKeys.MarketPlaceSectionCollapseState}_${section}`,
-      collapseState,
+  public static getFilterPanelCollapseState(
+    defaultValue: MarketplacePanelState,
+  ): Observable<MarketplacePanelState> {
+    return BrowserStorage.getData(
+      UIStorageKeys.MarketPlaceSectionCollapseState,
+      defaultValue,
     );
   }
 

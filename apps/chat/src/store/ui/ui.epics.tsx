@@ -67,15 +67,11 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
         fileCollapsedSections: DataService.getFileCollapsedSections(),
         enterType: DataService.getEnterType(),
-        entityPanel: DataService.getMarketPlaceSectionCollapseState(
-          FilterTypes.ENTITY_TYPE,
-        ),
-        topicsPanel: DataService.getMarketPlaceSectionCollapseState(
-          FilterTypes.TOPICS,
-        ),
-        sourcesPanel: DataService.getMarketPlaceSectionCollapseState(
-          FilterTypes.SOURCES,
-        ),
+        filterPanelState: DataService.getFilterPanelCollapseState({
+          [FilterTypes.ENTITY_TYPE]: true,
+          [FilterTypes.TOPICS]: true,
+          [FilterTypes.SOURCES]: true,
+        }),
       });
     }),
     switchMap(
@@ -93,9 +89,7 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections,
         fileCollapsedSections,
         enterType,
-        entityPanel,
-        topicsPanel,
-        sourcesPanel,
+        filterPanelState,
       }) => {
         const actions: AppAction[] = [UIActions.initTheme()];
 
@@ -106,13 +100,7 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setEnterType(enterType));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
-        actions.push(
-          UIActions.setFilterPanelCollapseState({
-            [FilterTypes.ENTITY_TYPE]: entityPanel,
-            [FilterTypes.TOPICS]: topicsPanel,
-            [FilterTypes.SOURCES]: sourcesPanel,
-          }),
-        );
+        actions.push(UIActions.setFilterPanelCollapseState(filterPanelState));
         actions.push(
           UIActions.setShowMarketplaceFilterbar(showMarketplaceFilterbar),
         );
@@ -384,6 +372,15 @@ const saveIsChatFullWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const saveFilterPanelCollapseStateEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setFilterPanelCollapseState.type),
+    switchMap(({ payload }) =>
+      DataService.setFilterPanelCollapseState(payload),
+    ),
+    ignoreElements(),
+  );
+
 const resizeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(UIActions.resize.type),
@@ -478,6 +475,7 @@ export const UIEpics = combineEpics(
   savePromptbarWidthEpic,
   saveMarketplaceFilterbarWidthEpic,
   saveIsChatFullWidthEpic,
+  saveFilterPanelCollapseStateEpic,
   setCustomLogoEpic,
   setCollapsedSectionsEpic,
   deleteCustomLogoEpic,

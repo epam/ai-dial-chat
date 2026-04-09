@@ -9,7 +9,7 @@ import { MarketplaceFilters } from '@/src/types/marketplace';
 import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
