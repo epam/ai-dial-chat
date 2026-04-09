@@ -6,6 +6,7 @@ import {
 import { BaseElement } from './baseElement';
 
 import { API } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
@@ -15,7 +16,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class SendMessage extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, SendMessageSelectors.message, parentLocator);
+    super(page, SendMessageSelectors.sendMessageContainer, parentLocator);
   }
 
   private promptList!: PromptList;
@@ -64,6 +65,7 @@ export class SendMessage extends BaseElement {
     SendMessageSelectors.stopGenerating,
   );
   public regenerate = this.getChildElementBySelector(ChatSelectors.regenerate);
+  public regenerateIcon = this.regenerate.getChildElementBySelector(Tags.svg);
 
   public proceedGenerating = this.getChildElementBySelector(
     SendMessageSelectors.proceedGenerating,

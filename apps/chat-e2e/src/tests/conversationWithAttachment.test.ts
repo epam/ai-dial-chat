@@ -227,7 +227,7 @@ dialTest(
     dialHomePage,
     setTestIds,
     sendMessage,
-    tooltip,
+    tooltipPortalAssertion,
     uploadFromDeviceModal,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
@@ -276,8 +276,7 @@ dialTest(
           'disabled',
         );
         await sendMessage.sendMessageButton.hoverOver();
-        await baseAssertion.assertElementText(
-          tooltip,
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.sendMessageAttachmentLoadingTooltip,
         );
       },

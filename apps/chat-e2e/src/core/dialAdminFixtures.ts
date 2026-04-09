@@ -29,6 +29,7 @@ import {
   SendMessage,
   TalkToAgentDialog,
   Toast,
+  TooltipPortal,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -52,6 +53,7 @@ import {
   PublishingRequestDialogAssertion,
   TalkToAgentDialogAssertion,
   TooltipAssertion,
+  TooltipPortalAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
@@ -151,6 +153,7 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredConversationDropdownMenu: DropdownMenu;
   adminApproveRequiredPromptDropdownMenu: DropdownMenu;
   adminTooltip: Tooltip;
+  adminTooltipPortal: TooltipPortal;
   adminOrganizationConversations: OrganizationConversationsTree;
   adminVariableModal: VariableModalDialog;
   adminConversationDropdownMenu: DropdownMenu;
@@ -161,6 +164,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
   adminApproveRequiredConversationDropdownMenuAssertion: MenuAssertion;
   adminTooltipAssertion: TooltipAssertion;
+  adminTooltipPortalAssertion: TooltipPortalAssertion;
   adminOrganizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
   adminPublishedPromptPreviewModalControlsAssertion: PublicationReviewControlAssertion;
@@ -467,6 +471,10 @@ const dialAdminTest = dialTest.extend<{
     const adminTooltip = new Tooltip(adminPage);
     await use(adminTooltip);
   },
+  adminTooltipPortal: async ({ adminPage }, use) => {
+    const adminTooltipPortal = new TooltipPortal(adminPage);
+    await use(adminTooltipPortal);
+  },
   adminOrganizationConversations: async ({ adminChatBar }, use) => {
     const adminOrganizationConversations =
       adminChatBar.getOrganizationConversationsTree();
@@ -633,6 +641,12 @@ const dialAdminTest = dialTest.extend<{
   adminTooltipAssertion: async ({ adminTooltip }, use) => {
     const adminTooltipAssertion = new TooltipAssertion(adminTooltip);
     await use(adminTooltipAssertion);
+  },
+  adminTooltipPortalAssertion: async ({ adminTooltipPortal }, use) => {
+    const adminTooltipPortalAssertion = new TooltipPortalAssertion(
+      adminTooltipPortal,
+    );
+    await use(adminTooltipPortalAssertion);
   },
   adminOrganizationConversationAssertion: async (
     { adminOrganizationConversations },
