@@ -1,3 +1,10 @@
+import { BaseElement } from '@/src/ui/webElements';
+
+export async function getElementWidth(element: BaseElement) {
+  return await element
+    .getComputedStyleProperty(Styles.width)
+    .then((w) => +w[0].replace('px', ''));
+}
 // CSS Properties: Defines the names of CSS style properties.
 export enum Styles {
   borderBottomColor = 'border-bottom-color',

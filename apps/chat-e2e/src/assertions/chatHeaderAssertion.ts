@@ -22,15 +22,7 @@ export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
   }
 
   public async assertHeaderWidth(option: { hasFullWidth: boolean }) {
-    const headerTitleWidth =
-      await this.chatHeader.chatTitle.getComputedStyleProperty(Styles.maxWidth);
-    option.hasFullWidth
-      ? expect
-          .soft(headerTitleWidth[0], ExpectedMessages.elementWidthIsValid)
-          .toBe(StyleValues.none)
-      : expect
-          .soft(headerTitleWidth[0], ExpectedMessages.elementWidthIsValid)
-          .not.toBe(StyleValues.none);
+    await this.assertElementWidthStyle(this.chatHeader.chatTitle, option);
   }
 
   public async assertClearButtonState(expectedState: ElementState) {

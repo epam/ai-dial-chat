@@ -429,11 +429,7 @@ dialTest.skip(
           'visible',
         );
         await baseAssertion.assertElementState(
-          chatMessages.messageEditIcon(2),
-          'visible',
-        );
-        await baseAssertion.assertElementState(
-          sendMessage.regenerate,
+          sendMessage.regenerateIcon,
           'visible',
         );
       },
