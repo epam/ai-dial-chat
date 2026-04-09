@@ -26,8 +26,6 @@ import { UISelectors } from '@/src/store/selectors';
 import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
-
 import Download from '@/public/images/icons/download.svg';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
@@ -107,40 +105,38 @@ export const CodeBlock: FC<Props> = memo(
               className="flex items-center gap-2 text-secondary"
             >
               <DialGhostIconButton
+                tooltipProps={{
+                  isTriggerClickable: !isCopied,
+                  tooltip: isCopied
+                    ? t(MarkdownI18nKeys.Copied)
+                    : t(MarkdownI18nKeys.Copy),
+                }}
                 size={ElementSize.Small}
                 onClick={copyToClipboard}
                 disabled={isCopied}
                 icon={
                   isCopied ? (
-                    <Tooltip tooltip={t(MarkdownI18nKeys.Copied)}>
-                      <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
-                    </Tooltip>
+                    <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
                   ) : (
-                    <Tooltip
-                      isTriggerClickable
-                      tooltip={t(MarkdownI18nKeys.Copy)}
-                    >
-                      <IconCopy size={DEFAULT_ICON_SIZES.SMALL} />
-                    </Tooltip>
+                    <IconCopy size={DEFAULT_ICON_SIZES.SMALL} />
                   )
                 }
               />
-              <Tooltip
-                isTriggerClickable
-                tooltip={t(MarkdownI18nKeys.Download)}
-              >
-                <DialGhostIconButton
-                  size={ElementSize.Small}
-                  className="flex items-center rounded bg-none hover:text-accent-primary"
-                  onClick={downloadAsFile}
-                  icon={
-                    <Download
-                      width={DEFAULT_ICON_SIZES.SMALL}
-                      height={DEFAULT_ICON_SIZES.SMALL}
-                    />
-                  }
-                />
-              </Tooltip>
+              <DialGhostIconButton
+                size={ElementSize.Small}
+                tooltipProps={{
+                  isTriggerClickable: true,
+                  tooltip: t(MarkdownI18nKeys.Download),
+                }}
+                className="flex items-center rounded bg-none hover:text-accent-primary"
+                onClick={downloadAsFile}
+                icon={
+                  <Download
+                    width={DEFAULT_ICON_SIZES.SMALL}
+                    height={DEFAULT_ICON_SIZES.SMALL}
+                  />
+                }
+              />
             </div>
           )}
         </div>

@@ -68,7 +68,6 @@ import {
   PublishRequestFieldsNames,
 } from '@/src/components/Chat/Publish/form';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
   Conversation,
@@ -575,19 +574,18 @@ export const PublicationHandlerFooter = ({
                 />
               </>
             )}
-            <Tooltip
-              hideTooltip={!isApproveOrSendDisabled}
-              tooltip={t(getSubmitTooltipText())}
-            >
-              <DialPrimaryButton
-                label={t(getSubmitBtnText())}
-                textClassName="whitespace-nowrap"
-                onClick={publishModel ? undefined : handleApprovePublication}
-                type={publishModel ? 'submit' : 'button'}
-                disabled={isApproveOrSendDisabled}
-                data-qa="submit"
-              />
-            </Tooltip>
+            <DialPrimaryButton
+              tooltipProps={{
+                hideTooltip: !isApproveOrSendDisabled,
+                tooltip: t(getSubmitTooltipText()),
+              }}
+              label={t(getSubmitBtnText())}
+              textClassName="whitespace-nowrap"
+              onClick={publishModel ? undefined : handleApprovePublication}
+              type={publishModel ? 'submit' : 'button'}
+              disabled={isApproveOrSendDisabled}
+              data-qa="submit"
+            />
           </>
         ) : (
           <>
@@ -597,22 +595,21 @@ export const PublicationHandlerFooter = ({
               data-qa="cancel"
             />
 
-            <Tooltip
-              hideTooltip={!isEditDisabled}
-              tooltip={t(
-                isEditInvalid
-                  ? ChatI18nKeys.RequestCannotBeUpdated
-                  : ChatI18nKeys.MakeChangesToUpdate,
-              )}
-            >
-              <DialPrimaryButton
-                label={t(ChatI18nKeys.UpdateRequest)}
-                textClassName="whitespace-nowrap"
-                disabled={isEditDisabled}
-                type="submit"
-                data-qa="update"
-              />
-            </Tooltip>
+            <DialPrimaryButton
+              label={t(ChatI18nKeys.UpdateRequest)}
+              textClassName="whitespace-nowrap"
+              disabled={isEditDisabled}
+              type="submit"
+              data-qa="update"
+              tooltipProps={{
+                hideTooltip: !isEditDisabled,
+                tooltip: t(
+                  isEditInvalid
+                    ? ChatI18nKeys.RequestCannotBeUpdated
+                    : ChatI18nKeys.MakeChangesToUpdate,
+                ),
+              }}
+            />
           </>
         )}
       </div>

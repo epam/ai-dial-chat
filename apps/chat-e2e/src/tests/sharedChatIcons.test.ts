@@ -44,7 +44,7 @@ dialTest(
     shareModal,
     baseAssertion,
     shareModalAssertion,
-    tooltipAssertion,
+    tooltipPortalAssertion,
     tooltip,
     page,
     sendMessage,
@@ -122,10 +122,8 @@ dialTest(
           shareModal.copyLinkIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await tooltipAssertion.assertElementText(
-          tooltip,
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.copyUrlTooltip,
-          ExpectedMessages.tooltipContentIsValid,
         );
       },
     );

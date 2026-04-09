@@ -12,7 +12,6 @@ import { CommonI18nKeys } from '@/src/constants/i18n';
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
@@ -89,18 +88,18 @@ export const AgentAndToolsetSelector: React.FC<
     <div className="relative grow space-y-4">
       <div className="flex flex-col">
         <div className="absolute right-0 top-[-29px] flex items-center">
-          <Tooltip
-            tooltip={
-              addBtnTooltip ?? tooltip ?? t(CommonI18nKeys.AddAgentsAndToolsets)
-            }
-          >
-            <DialLinkButton
-              disabled={readonly}
-              onClick={handleOpenSelectModal}
-              iconBefore={<IconPlus size={18} />}
-              label={t(CommonI18nKeys.AddCommon)}
-            />
-          </Tooltip>
+          <DialLinkButton
+            tooltipProps={{
+              tooltip:
+                addBtnTooltip ??
+                tooltip ??
+                t(CommonI18nKeys.AddAgentsAndToolsets),
+            }}
+            disabled={readonly}
+            onClick={handleOpenSelectModal}
+            iconBefore={<IconPlus size={18} />}
+            label={t(CommonI18nKeys.AddCommon)}
+          />
           {!!onJsonSwitchClick && (
             <>
               <div className="ml-1 mr-3 h-3 w-0 border-l border-primary" />

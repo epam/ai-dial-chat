@@ -42,7 +42,7 @@ dialTest(
     chatMessagesAssertion,
     chatHeaderAssertion,
     conversationDropdownMenuAssertion,
-    tooltipAssertion,
+    tooltipPortalAssertion,
     sendMessage,
     sendMessageAssertion,
     talkToAgentDialog,
@@ -160,7 +160,7 @@ dialTest(
 
     await dialTest.step('Verify tooltip for Replay button', async () => {
       await sendMessage.proceedGenerating.hoverOver();
-      await tooltipAssertion.assertTooltipContent(
+      await tooltipPortalAssertion.assertTooltipContent(
         ExpectedConstants.continueReplayLabel,
       );
     });
@@ -371,7 +371,7 @@ dialTest(
     dataInjector,
     setTestIds,
     sendMessage,
-    tooltip,
+    tooltipPortalAssertion,
     context,
     chatMessages,
     conversations,
@@ -417,8 +417,7 @@ dialTest(
         );
         await baseAssertion.assertElementState(footer, 'visible');
         await sendMessage.proceedGenerating.hoverOver();
-        await baseAssertion.assertElementText(
-          tooltip,
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.continueReplayLabel,
         );
       },
@@ -459,7 +458,7 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
-    tooltip,
+    tooltipPortalAssertion,
     context,
     sendMessage,
     conversations,
@@ -493,14 +492,12 @@ dialTest(
     await dialTest.step('Verify error message is displayed', async () => {
       const generatedContent = await chatMessages.getLastMessageContent();
       await sendMessage.proceedGenerating.hoverOver();
-      const tooltipContent = await tooltip.getContent();
-
+      await tooltipPortalAssertion.assertTooltipContent(
+        ExpectedConstants.continueReplayAfterErrorLabel,
+      );
       expect
         .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
         .toBe(ExpectedConstants.answerError);
-      expect
-        .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
-        .toBe(ExpectedConstants.continueReplayAfterErrorLabel);
     });
 
     await dialTest.step(
