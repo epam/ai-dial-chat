@@ -339,7 +339,7 @@ export const PreUploadDialog = ({
               <span className="truncate" data-qa="path">
                 {!bucket || isMyBucket(bucket)
                   ? constructPath(
-                      t(ChatI18nKeys.AllFiles),
+                      t(ChatI18nKeys.MyFiles),
                       folderPath ?? rootFolderName,
                     )
                   : constructPath(
