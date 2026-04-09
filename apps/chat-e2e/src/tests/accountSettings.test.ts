@@ -6,7 +6,7 @@ import {
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
-import { Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemeColorAttributes, getElementWidth } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
@@ -156,9 +156,7 @@ dialTest(
     await dialTest.step(
       'Save changes and verify width of chat message box, history messages, chat name become wider',
       async () => {
-        sendMessageInputInitWidth = await sendMessage
-          .getComputedStyleProperty(Styles.width)
-          .then((w) => +w[0].replace('px', ''));
+        sendMessageInputInitWidth = await getElementWidth(sendMessage);
         await settingsModal.saveButton.click();
         await chatHeaderAssertion.assertHeaderWidth({ hasFullWidth: true });
         await chatMessagesAssertion.assertMessagesWidth({ hasFullWidth: true });
