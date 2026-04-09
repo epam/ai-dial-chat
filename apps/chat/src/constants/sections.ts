@@ -19,7 +19,7 @@ export const SHARED_WITH_ME_SECTION_NAME = translate(
     ns: Translation.Chat,
   },
 );
-export const ROOT_SECTION_NAME = translate(ChatI18nKeys.AllFiles, {
+export const ROOT_SECTION_NAME = translate(ChatI18nKeys.MyFiles, {
   ns: Translation.Chat,
 });
 
