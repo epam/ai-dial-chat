@@ -2,6 +2,7 @@ import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { EnterType, LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { ThemesConfig } from '@/src/types/themes';
@@ -136,6 +137,42 @@ export class DataService {
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
+  }
+
+  public static setAgentsFilterPanelCollapseState(
+    value: MarketplacePanelState,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.AgentsFilterPanelCollapseState,
+      value,
+    );
+  }
+
+  public static getAgentsFilterPanelCollapseState(
+    defaultValue: MarketplacePanelState,
+  ): Observable<MarketplacePanelState> {
+    return BrowserStorage.getData(
+      UIStorageKeys.AgentsFilterPanelCollapseState,
+      defaultValue,
+    );
+  }
+
+  public static setToolsetFilterPanelCollapseState(
+    value: MarketplacePanelState,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ToolsetFilterPanelCollapseState,
+      value,
+    );
+  }
+
+  public static getToolsetFilterPanelCollapseState(
+    defaultValue: MarketplacePanelState,
+  ): Observable<MarketplacePanelState> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ToolsetFilterPanelCollapseState,
+      defaultValue,
+    );
   }
 
   public static getShowMarketplaceFilterbar(

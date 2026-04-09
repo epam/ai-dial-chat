@@ -29,6 +29,7 @@ import { UIActions } from '@/src/store/actions';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { FilterTypes } from '@/src/constants/marketplace';
 import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -66,6 +67,19 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
         fileCollapsedSections: DataService.getFileCollapsedSections(),
         enterType: DataService.getEnterType(),
+        agentsFilterPanelState: DataService.getAgentsFilterPanelCollapseState({
+          [FilterTypes.ENTITY_TYPE]: true,
+          [FilterTypes.TOPICS]: true,
+          [FilterTypes.SOURCES]: true,
+        }),
+
+        toolsetFilterPanelState: DataService.getToolsetFilterPanelCollapseState(
+          {
+            [FilterTypes.ENTITY_TYPE]: false,
+            [FilterTypes.TOPICS]: true,
+            [FilterTypes.SOURCES]: true,
+          },
+        ),
       });
     }),
     switchMap(
@@ -83,6 +97,8 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections,
         fileCollapsedSections,
         enterType,
+        agentsFilterPanelState,
+        toolsetFilterPanelState,
       }) => {
         const actions: AppAction[] = [UIActions.initTheme()];
 
@@ -93,6 +109,12 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setEnterType(enterType));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
+        actions.push(
+          UIActions.setAgentsFilterPanelCollapseState(agentsFilterPanelState),
+        );
+        actions.push(
+          UIActions.setToolsetFilterPanelCollapseState(toolsetFilterPanelState),
+        );
         actions.push(
           UIActions.setShowMarketplaceFilterbar(showMarketplaceFilterbar),
         );
@@ -364,6 +386,24 @@ const saveIsChatFullWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const setAgentsFilterPanelCollapseEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setAgentsFilterPanelCollapseState.type),
+    switchMap(({ payload }) =>
+      DataService.setAgentsFilterPanelCollapseState(payload),
+    ),
+    ignoreElements(),
+  );
+
+const setToolsetFilterPanelCollapseEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setToolsetFilterPanelCollapseState.type),
+    switchMap(({ payload }) =>
+      DataService.setToolsetFilterPanelCollapseState(payload),
+    ),
+    ignoreElements(),
+  );
+
 const resizeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(UIActions.resize.type),
@@ -458,6 +498,8 @@ export const UIEpics = combineEpics(
   savePromptbarWidthEpic,
   saveMarketplaceFilterbarWidthEpic,
   saveIsChatFullWidthEpic,
+  setAgentsFilterPanelCollapseEpic,
+  setToolsetFilterPanelCollapseEpic,
   setCustomLogoEpic,
   setCollapsedSectionsEpic,
   deleteCustomLogoEpic,
