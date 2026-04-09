@@ -47,3 +47,4 @@ export * from './toolset/toolsetAuthAssertion';
 export * from './common/confirmationPopupAssertion';
 export * from './fileManager/fileManagerGridAssertion';
 export * from './common/foldersTreeAssertion';
+export * from './tooltipPortalAssertion';

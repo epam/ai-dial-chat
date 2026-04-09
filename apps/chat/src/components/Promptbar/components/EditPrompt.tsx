@@ -34,7 +34,6 @@ import { PromptBarI18nKeys } from '@/src/constants/i18n';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
@@ -264,19 +263,18 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
         </div>
       </div>
       <div className="flex justify-end px-3 md:px-6">
-        <Tooltip
-          isTriggerClickable
-          tooltip={t(PromptBarI18nKeys.PleaseFillInAllRequiredFields)}
-          hideTooltip={!saveDisabled}
-        >
-          <DialPrimaryButton
-            type="submit"
-            data-qa="save-prompt"
-            onClick={(e) => handleSubmit(e, prompt)}
-            disabled={saveDisabled}
-            label={t(PromptBarI18nKeys.Save)}
-          />
-        </Tooltip>
+        <DialPrimaryButton
+          tooltipProps={{
+            isTriggerClickable: true,
+            tooltip: t(PromptBarI18nKeys.PleaseFillInAllRequiredFields),
+            hideTooltip: !saveDisabled,
+          }}
+          type="submit"
+          data-qa="save-prompt"
+          onClick={(e) => handleSubmit(e, prompt)}
+          disabled={saveDisabled}
+          label={t(PromptBarI18nKeys.Save)}
+        />
       </div>
       {confirmClose && (
         <ConfirmDialog

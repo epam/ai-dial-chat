@@ -259,14 +259,13 @@ function ShareModalView() {
                   <IconCheck size={20} className="text-secondary" />
                 </Tooltip>
               ) : (
-                <Tooltip tooltip={t(SideBarI18nKeys.CopyURL)}>
-                  <DialGhostIconButton
-                    size={ElementSize.Small}
-                    onClick={handleCopy}
-                    aria-label="copy-link"
-                    icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
-                  />
-                </Tooltip>
+                <DialGhostIconButton
+                  tooltipProps={{ tooltip: t(SideBarI18nKeys.CopyURL) }}
+                  size={ElementSize.Small}
+                  onClick={handleCopy}
+                  aria-label="copy-link"
+                  icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
+                />
               )}
             </div>
           </div>

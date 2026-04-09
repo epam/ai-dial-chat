@@ -18,7 +18,6 @@ import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialGhostIconButton, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
@@ -92,29 +91,27 @@ const LogsFooter = () => {
 
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
-      <Tooltip tooltip={t(MarketplaceI18nKeys.ReloadLogs)}>
-        <DialGhostIconButton
-          onClick={uploadLogs}
-          data-qa="application-reload-logs"
-          disabled={isLogsLoading}
-          icon={<IconRefresh />}
-        />
-      </Tooltip>
+      <DialGhostIconButton
+        tooltipProps={{ tooltip: t(MarketplaceI18nKeys.ReloadLogs) }}
+        onClick={uploadLogs}
+        data-qa="application-reload-logs"
+        disabled={isLogsLoading}
+        icon={<IconRefresh />}
+      />
       {applicationLogs && (
-        <Tooltip tooltip={t(MarketplaceI18nKeys.DownloadLogs)}>
-          <DialNeutralButton
-            label={t(MarketplaceI18nKeys.Download)}
-            onClick={() => downloadApplicationLogs(applicationLogs)}
-            data-qa="application-download-logs"
-            disabled={isLogsLoading}
-            iconBefore={
-              <IconDownload
-                className={classNames(isLogsLoading && 'button-secondary')}
-                size={18}
-              />
-            }
-          />
-        </Tooltip>
+        <DialNeutralButton
+          tooltipProps={{ tooltip: t(MarketplaceI18nKeys.DownloadLogs) }}
+          label={t(MarketplaceI18nKeys.Download)}
+          onClick={() => downloadApplicationLogs(applicationLogs)}
+          data-qa="application-download-logs"
+          disabled={isLogsLoading}
+          iconBefore={
+            <IconDownload
+              className={classNames(isLogsLoading && 'button-secondary')}
+              size={18}
+            />
+          }
+        />
       )}
     </div>
   );

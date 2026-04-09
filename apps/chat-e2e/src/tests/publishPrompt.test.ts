@@ -463,6 +463,7 @@ dialAdminTest(
       prompts,
       promptDropdownMenu,
       publishingRequestDialog,
+      tooltipPortalAssertion,
       selectFolderModal,
       adminDialHomePage,
       adminApproveRequiredPromptsAssertion,
@@ -482,7 +483,6 @@ dialAdminTest(
       organizationFolderPrompts,
       folderDropdownMenu,
       publishingRequestDialogAssertion,
-      tooltipAssertion,
       localStorageManager,
       adminLocalStorageManager,
     },
@@ -615,13 +615,13 @@ dialAdminTest(
     await dialTest.step('Check empty publication request name', async () => {
       await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
       await publishingRequestDialog.sendRequestButton.hoverOver();
-      await tooltipAssertion.assertTooltipContent(
+      await tooltipPortalAssertion.assertTooltipContent(
         ExpectedConstants.noPublishNameTooltip,
       );
       await publishingRequestDialog.requestName.fillInInput('   ');
       await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
       await publishingRequestDialog.sendRequestButton.hoverOver();
-      await tooltipAssertion.assertTooltipContent(
+      await tooltipPortalAssertion.assertTooltipContent(
         ExpectedConstants.noPublishNameTooltip,
       );
       await publishingRequestDialog.requestName.fillInInput(''); // Clear the input field

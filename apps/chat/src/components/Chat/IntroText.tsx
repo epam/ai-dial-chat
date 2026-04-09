@@ -7,6 +7,8 @@ import {
   getSortedFormSchemaProperties,
 } from '@/src/utils/app/form-schema';
 
+import { FormSchemaPropertyType } from '@/src/types/form-schema';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { ChatSelectors, ModelsSelectors } from '@/src/store/selectors';
 
@@ -19,8 +21,9 @@ interface IntroTextViewProps {
 
 const IntroTextView = ({ schema, isWideLayout }: IntroTextViewProps) => {
   const sortedProperties = getSortedFormSchemaProperties(schema);
-  const buttonProperty = sortedProperties.find(([name]) =>
-    getFormSchemaPropertyType(schema, name),
+  const buttonProperty = sortedProperties.find(
+    ([name]) =>
+      getFormSchemaPropertyType(schema, name) === FormSchemaPropertyType.Button,
   );
 
   if (!buttonProperty || !buttonProperty[1]?.description) {

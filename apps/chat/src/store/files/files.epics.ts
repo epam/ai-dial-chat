@@ -845,15 +845,16 @@ const uploadArchiveEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.uploadArchive.type),
     switchMap(({ payload }) => {
+      const destinationUrl = `${payload.destinationUrl}/${payload.name}`;
       return FileService.uploadArchive({
         file: payload.archive,
-        destinationUrl: `${payload.destinationUrl}/${payload.name}`,
+        destinationUrl,
       }).pipe(
         switchMap(() =>
           of(
             FilesActions.uploadArchiveSuccess(),
             FilesActions.getFilesWithFolders({
-              id: payload.destinationUrl,
+              id: destinationUrl,
             }),
           ),
         ),
