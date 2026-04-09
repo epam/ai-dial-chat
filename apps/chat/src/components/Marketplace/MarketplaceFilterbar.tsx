@@ -233,7 +233,9 @@ export const MarketplaceFilterbar = memo(() => {
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
   const panelCollapseState = useAppSelector(
-    UISelectors.selectFilterPanelCollapseState,
+    isAgentsTab
+      ? UISelectors.selectAgentsFilterPanelCollapseState
+      : UISelectors.selectToolsetFilterPanelCollapseState,
   );
 
   const handleApplyFilter = useCallback(
@@ -250,14 +252,23 @@ export const MarketplaceFilterbar = memo(() => {
 
   const handleToggleFilterSection = useCallback(
     (filterType: FilterTypes) => {
-      dispatch(
-        UIActions.setFilterPanelCollapseState({
-          ...panelCollapseState,
-          [filterType]: !panelCollapseState[filterType],
-        }),
-      );
+      if (isAgentsTab) {
+        dispatch(
+          UIActions.setAgentsFilterPanelCollapseState({
+            ...panelCollapseState,
+            [filterType]: !panelCollapseState[filterType],
+          }),
+        );
+      } else {
+        dispatch(
+          UIActions.setToolsetFilterPanelCollapseState({
+            ...panelCollapseState,
+            [filterType]: !panelCollapseState[filterType],
+          }),
+        );
+      }
     },
-    [panelCollapseState, dispatch],
+    [isAgentsTab, dispatch, panelCollapseState],
   );
 
   const handleClose = useCallback(() => {

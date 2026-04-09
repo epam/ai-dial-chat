@@ -49,8 +49,13 @@ const initialState: UIState = {
     [FeatureType.Prompt]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
   },
   enterType: EnterType.Enter,
-  filterPanelCollapseState: {
+  agentsFilterPanelCollapseState: {
     [FilterTypes.ENTITY_TYPE]: true,
+    [FilterTypes.TOPICS]: true,
+    [FilterTypes.SOURCES]: true,
+  },
+  toolsetFilterPanelCollapseState: {
+    [FilterTypes.ENTITY_TYPE]: false,
     [FilterTypes.TOPICS]: true,
     [FilterTypes.SOURCES]: true,
   },
@@ -245,11 +250,17 @@ export const uiSlice = createSlice({
     setEditorLoader: (state, { payload }: PayloadAction<boolean>) => {
       state.isEditorLoader = payload;
     },
-    setFilterPanelCollapseState: (
+    setAgentsFilterPanelCollapseState: (
       state,
       { payload }: PayloadAction<MarketplacePanelState>,
     ) => {
-      state.filterPanelCollapseState = payload;
+      state.agentsFilterPanelCollapseState = payload;
+    },
+    setToolsetFilterPanelCollapseState: (
+      state,
+      { payload }: PayloadAction<MarketplacePanelState>,
+    ) => {
+      state.toolsetFilterPanelCollapseState = payload;
     },
   },
 });

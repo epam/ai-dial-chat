@@ -53,7 +53,8 @@ export enum UIStorageKeys {
   SelectedWidget = 'selectedWidget',
   DefaultModelReference = 'defaultModelReference',
   EnterType = 'enterType',
-  MarketPlaceSectionCollapseState = 'marketPlaceSectionCollapseState',
+  AgentsFilterPanelCollapseState = 'agentsFilterPanelCollapseState',
+  ToolsetFilterPanelCollapseState = 'toolsetFilterPanelCollapseState',
 }
 
 export enum MigrationStorageKeys {

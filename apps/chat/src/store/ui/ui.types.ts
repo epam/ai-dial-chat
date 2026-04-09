@@ -31,5 +31,6 @@ export interface UIState {
   };
   isEditorLoader?: boolean;
   enterType: EnterType;
-  filterPanelCollapseState: MarketplacePanelState;
+  agentsFilterPanelCollapseState: MarketplacePanelState;
+  toolsetFilterPanelCollapseState: MarketplacePanelState;
 }

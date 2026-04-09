@@ -139,20 +139,38 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static setFilterPanelCollapseState(
+  public static setAgentsFilterPanelCollapseState(
     value: MarketplacePanelState,
   ): Observable<void> {
     return BrowserStorage.setData(
-      UIStorageKeys.MarketPlaceSectionCollapseState,
+      UIStorageKeys.AgentsFilterPanelCollapseState,
       value,
     );
   }
 
-  public static getFilterPanelCollapseState(
+  public static getAgentsFilterPanelCollapseState(
     defaultValue: MarketplacePanelState,
   ): Observable<MarketplacePanelState> {
     return BrowserStorage.getData(
-      UIStorageKeys.MarketPlaceSectionCollapseState,
+      UIStorageKeys.AgentsFilterPanelCollapseState,
+      defaultValue,
+    );
+  }
+
+  public static setToolsetFilterPanelCollapseState(
+    value: MarketplacePanelState,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ToolsetFilterPanelCollapseState,
+      value,
+    );
+  }
+
+  public static getToolsetFilterPanelCollapseState(
+    defaultValue: MarketplacePanelState,
+  ): Observable<MarketplacePanelState> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ToolsetFilterPanelCollapseState,
       defaultValue,
     );
   }
