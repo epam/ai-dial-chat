@@ -101,10 +101,11 @@ interface CustomViewerType {
 }
 
 interface ChatViewProps {
+  isPreview?: boolean;
   customViewer?: CustomViewerType;
 }
 
-const ChatView = memo(({ customViewer }: ChatViewProps) => {
+const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -926,6 +927,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
 
                         {!isPlayback && (
                           <ChatInput
+                            isPreview={isPreview}
                             isWideLayout={isWideLayout}
                             showReplayControls={showReplayControls}
                             textareaRef={textareaRef}
@@ -1248,7 +1250,7 @@ export function Chat({ isPreview }: ChatProps) {
 
   return (
     <>
-      <ChatView customViewer={customViewer} />
+      <ChatView isPreview={isPreview} customViewer={customViewer} />
       {!isPreview && <ChatInputFooter />}
     </>
   );

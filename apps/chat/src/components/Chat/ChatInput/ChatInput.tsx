@@ -25,6 +25,7 @@ interface Props {
   isLastMessageError: boolean;
   showReplayControls: boolean;
   children?: ReactNode;
+  isPreview?: boolean;
   onSend: (message: Message) => void;
   onScrollDownClick: () => void;
   onStopConversation: () => void;
@@ -37,6 +38,7 @@ export const ChatInput = Inversify.register(
   ({
     isLastMessageError,
     textareaRef,
+    isPreview,
     showScrollDownButton,
     isShowInput,
     isWideLayout,
@@ -111,6 +113,7 @@ export const ChatInput = Inversify.register(
             showScrollDownButton={showScrollDownButton}
             onScrollDownClick={onScrollDownClick}
             onSend={onSend}
+            isPreview={isPreview}
             onStopConversation={onStopConversation}
             showReplayControls={showReplayControls}
           />
