@@ -45,6 +45,7 @@ import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import { extensions, lookup } from 'mime-types';
 
+const tempFileName = '.dial_folder';
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
   link.download = name;
@@ -153,7 +154,9 @@ export const getDialFilesWithInvalidFileType = (
   return allowedFileTypes.includes('*/*')
     ? []
     : files.filter(
-        (file) => !isAllowedMimeType(allowedFileTypes, file.contentType),
+        (file) =>
+          file.name !== tempFileName &&
+          !isAllowedMimeType(allowedFileTypes, file.contentType),
       );
 };
 
