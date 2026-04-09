@@ -617,6 +617,12 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
+  const shouldShowIntroText =
+    selectedConversations.length === 1 &&
+    !selectedConversations[0].messages.find(
+      (userMessage) => userMessage.role === Role.User,
+    );
+
   useEffect(() => {
     if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
       textareaRef.current?.focus();
@@ -909,7 +915,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
-                        {selectedConversations.length === 1 && (
+                        {shouldShowIntroText && (
                           <IntroText
                             isWideLayout={isWideLayout}
                             modelId={selectedConversations[0].model.id}
