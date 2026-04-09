@@ -99,6 +99,7 @@ dialTest(
     setTestIds('EPMRTC-8109');
     let imageConversationsMap: Map<string, Conversation> = new Map();
     let relativeImageUrl: string;
+    let expectedUrl: string | RegExp = '';
 
     await dialTest.step(
       'Upload an image and prepare conversations with different image references via API',
@@ -123,13 +124,15 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Open conversation with the image response and verify only external image is opened in a new tab on click',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        let expectedUrl: string | RegExp = '';
-        for (const [imgUrl, conversation] of imageConversationsMap) {
+    await dialTest.step('Open Dial', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+    });
+
+    for (const [imgUrl, conversation] of imageConversationsMap) {
+      await dialTest.step(
+        `Open conversation with ${imgUrl} image url response and verify it is opened on a ${imgUrl === externalImageUrl ? 'new' : 'same'} tab`,
+        async () => {
           await conversations.selectEntity(conversation.name);
           switch (imgUrl) {
             case relativeImageUrl:
@@ -150,6 +153,7 @@ dialTest(
             const popupPromise = page.waitForEvent('popup');
             await chatMessages.getAttachmentLink(2).click();
             const popup = await popupPromise;
+            await popup.waitForLoadState('domcontentloaded');
             baseAssertion.assertValue(popup.url(), expectedUrl as string);
           } else {
             await chatMessages.getAttachmentLink(2).click();
@@ -161,9 +165,9 @@ dialTest(
               : baseAssertion.assertValueMatchPattern(page.url(), expectedUrl);
             await dialHomePage.navigateBack();
           }
-        }
-      },
-    );
+        },
+      );
+    }
   },
 );
 
