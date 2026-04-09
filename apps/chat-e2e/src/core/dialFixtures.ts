@@ -97,6 +97,7 @@ import {
   ToastAssertion,
   ToolsetAuthAssertion,
   TooltipAssertion,
+  TooltipPortalAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
@@ -458,6 +459,7 @@ const dialTest = test.extend<{
   fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
   uploadProgressDialog: UploadProgressDialog;
   tooltipPortal: TooltipPortal;
+  tooltipPortalAssertion: TooltipPortalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1907,6 +1909,10 @@ const dialTest = test.extend<{
   tooltipPortal: async ({ page }, use) => {
     const tooltipPortal = new TooltipPortal(page);
     await use(tooltipPortal);
+  },
+  tooltipPortalAssertion: async ({ tooltipPortal }, use) => {
+    const tooltipPortalAssertion = new TooltipPortalAssertion(tooltipPortal);
+    await use(tooltipPortalAssertion);
   },
 });
 

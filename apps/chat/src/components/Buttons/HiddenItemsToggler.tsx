@@ -8,8 +8,6 @@ import { Translation } from '@/src/types/translation';
 import { FilesI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
-
 import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 
 interface HiddenItemsTogglerProps {
@@ -39,14 +37,13 @@ export const HiddenItemsToggler = ({
     <DialGhostIconButton
       onClick={onClick}
       data-qa={dataQa}
+      tooltipProps={{ tooltip: t(tooltip), isTriggerClickable: true }}
       className={className}
       icon={
-        <Tooltip tooltip={t(tooltip)} isTriggerClickable>
-          <Icon
-            height={DEFAULT_ICON_SIZES.STANDARD}
-            width={DEFAULT_ICON_SIZES.STANDARD}
-          />
-        </Tooltip>
+        <Icon
+          height={DEFAULT_ICON_SIZES.STANDARD}
+          width={DEFAULT_ICON_SIZES.STANDARD}
+        />
       }
     />
   );

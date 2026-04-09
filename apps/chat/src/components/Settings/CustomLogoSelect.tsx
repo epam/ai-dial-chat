@@ -13,7 +13,6 @@ import { SettingsI18nKeys } from '@/src/constants/i18n';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Label } from '@/src/components/Common/Forms/Label';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
 import { DialLinkButton } from '@epam/ai-dial-ui-kit';
@@ -143,24 +142,20 @@ export const CustomLogoSelect = ({
         >
           {localLogo || customPlaceholder || t(SettingsI18nKeys.NoCustomLogo)}
         </div>
-        <Tooltip tooltip={tooltip}>
-          <div className="flex gap-3">
-            <DialLinkButton
-              onClick={onClickAddHandler}
-              disabled={disabled}
-              data-qa={localLogo ? 'change-icon' : 'add-icon'}
-              label={
-                localLogo ? t(SettingsI18nKeys.Change) : t(SettingsI18nKeys.Add)
-              }
-            />
-            {localLogo && (
-              <CloseButtonSmall
-                onClick={handleDeleteLogo}
-                disabled={disabled}
-              />
-            )}
-          </div>
-        </Tooltip>
+        <div className="flex gap-3">
+          <DialLinkButton
+            tooltipProps={{ tooltip: tooltip }}
+            onClick={onClickAddHandler}
+            disabled={disabled}
+            data-qa={localLogo ? 'change-icon' : 'add-icon'}
+            label={
+              localLogo ? t(SettingsI18nKeys.Change) : t(SettingsI18nKeys.Add)
+            }
+          />
+          {localLogo && (
+            <CloseButtonSmall onClick={handleDeleteLogo} disabled={disabled} />
+          )}
+        </div>
       </div>
 
       {isSelectFilesDialogOpened && (
