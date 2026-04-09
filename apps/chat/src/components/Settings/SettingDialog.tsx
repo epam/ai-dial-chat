@@ -183,7 +183,7 @@ const SettingDialogView: FC = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[509px] md:p-6"
+      containerClassName="flex flex-col w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[515px] md:p-6"
       dataQa="settings-modal"
       state={ModalState.OPENED}
       onClose={handleClose}
@@ -193,7 +193,7 @@ const SettingDialogView: FC = () => {
       <div className="mb-4 text-base font-bold">
         {t(SettingsI18nKeys.Settings)}
       </div>
-      <div className="mb-4 flex flex-col gap-4">
+      <div className="mb-4 flex min-h-0 flex-1 flex-col gap-4">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
