@@ -1,6 +1,5 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { StyleValues, Styles } from '@/src/ui/domData';
 import { ChatHeader } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
