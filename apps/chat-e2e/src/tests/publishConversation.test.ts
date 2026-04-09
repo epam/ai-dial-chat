@@ -60,11 +60,10 @@ dialAdminTest(
       adminPublishConversationsTreeAssertion,
       conversationDropdownMenuAssertion,
       downloadAssertion,
-      adminTooltip,
       adminChatHeaderAssertion,
       adminChatMessagesAssertion,
       adminApproveRequiredConversationDropdownMenuAssertion,
-      adminTooltipAssertion,
+      adminTooltipPortalAssertion,
       baseAssertion,
       setTestIds,
       localStorageManager,
@@ -302,8 +301,7 @@ dialAdminTest(
       'Hover over "Approve" button and verify tooltip is displayed',
       async () => {
         await adminPublishingApprovalModal.approveButton.hoverOver();
-        await adminTooltipAssertion.assertElementState(adminTooltip, 'visible');
-        await adminTooltipAssertion.assertTooltipContent(
+        await adminTooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.reviewResourcesTooltip,
         );
       },

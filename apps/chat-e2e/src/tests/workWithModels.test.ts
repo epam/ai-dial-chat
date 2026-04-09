@@ -421,16 +421,14 @@ dialTest(
       'Verify no content received and model icon is visible',
       async () => {
         await dialHomePage.unRouteAllResponses();
-        const receivedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(receivedContent, ExpectedMessages.messageContentIsValid)
-          .toBe('');
-        await chatMessagesAssertion.assertMessageIcon(
-          undefined,
-          expectedModelIcon,
-        );
+        await chatMessagesAssertion.assertMessageContent(2, '');
+        await chatMessagesAssertion.assertMessageIcon(2, expectedModelIcon);
         await baseAssertion.assertElementState(
           chatMessages.regenerate,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chatMessages.messageEditIcon(2),
           'visible',
         );
         await baseAssertion.assertElementState(
