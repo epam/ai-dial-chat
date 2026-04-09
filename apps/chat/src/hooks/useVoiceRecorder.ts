@@ -1,18 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isSafari } from 'react-device-detect';
 
+import { AudioMimeType } from '@/src/constants/audio';
+
 const MIME_CANDIDATES = [
-  { mimeType: 'audio/ogg;codecs=opus', baseMime: 'audio/ogg', ext: '.ogg' },
-  { mimeType: 'audio/ogg', baseMime: 'audio/ogg', ext: '.ogg' },
-  { mimeType: 'audio/webm;codecs=opus', baseMime: 'audio/webm', ext: '.webm' },
-  { mimeType: 'audio/webm', baseMime: 'audio/webm', ext: '.webm' },
-  { mimeType: 'audio/mp4', baseMime: 'audio/mp4', ext: '.m4a' },
+  {
+    mimeType: 'audio/ogg;codecs=opus',
+    baseMime: AudioMimeType.OGG,
+    ext: '.ogg',
+  },
+  { mimeType: AudioMimeType.OGG, baseMime: AudioMimeType.OGG, ext: '.ogg' },
+  {
+    mimeType: 'audio/webm;codecs=opus',
+    baseMime: AudioMimeType.WEBM,
+    ext: '.webm',
+  },
+  { mimeType: AudioMimeType.WEBM, baseMime: AudioMimeType.WEBM, ext: '.webm' },
+  { mimeType: AudioMimeType.MP4, baseMime: AudioMimeType.MP4, ext: '.m4a' },
 ];
 
 const getOrderedCandidates = () => {
   if (isSafari) {
-    const mp4 = MIME_CANDIDATES.filter((c) => c.baseMime === 'audio/mp4');
-    const rest = MIME_CANDIDATES.filter((c) => c.baseMime !== 'audio/mp4');
+    const mp4 = MIME_CANDIDATES.filter((c) => c.baseMime === AudioMimeType.MP4);
+    const rest = MIME_CANDIDATES.filter(
+      (c) => c.baseMime !== AudioMimeType.MP4,
+    );
     return [...mp4, ...rest];
   }
   return MIME_CANDIDATES;

@@ -58,6 +58,7 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import { AudioMimeType } from '@/src/constants/audio';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import {
@@ -513,11 +514,11 @@ const selectCanAttachFile = createSelector(
   },
 );
 
-const RECORDABLE_AUDIO_MIME_TYPES = [
-  'audio/ogg',
-  'audio/mp4',
-  'audio/webm',
-  'audio/wav',
+const RECORDABLE_AUDIO_MIME_TYPES: string[] = [
+  AudioMimeType.OGG,
+  AudioMimeType.MP4,
+  AudioMimeType.WEBM,
+  AudioMimeType.WAV,
 ];
 
 const selectCanRecordAudio = createSelector(

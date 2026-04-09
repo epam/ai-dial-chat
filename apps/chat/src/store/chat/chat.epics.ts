@@ -13,6 +13,10 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import {
+  readBlobAsBase64,
+  sendMessage,
+} from '@/src/utils/app/epics-helpers/chat.epic-helpers';
 import { constructPath, getUserCustomContent } from '@/src/utils/app/file';
 import {
   getFileRootId,
@@ -22,7 +26,6 @@ import {
 } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
@@ -45,26 +48,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Message, Role } from '@epam/ai-dial-shared';
-
-const sendMessage = (
-  conversations: Conversation[],
-  message: Message,
-  ...extraActions: ReturnType<typeof ChatActions.resetFormValue>[]
-) =>
-  concat(
-    of(ConversationsActions.setIsMessageSending(true)),
-    of(FilesActions.resetSelectedFiles()),
-    ...extraActions.map((a) => of(a)),
-    of(ChatActions.setInputContent('')),
-    of(
-      ConversationsActions.sendMessages({
-        conversations,
-        message,
-        deleteCount: 0,
-        activeReplayIndex: 0,
-      }),
-    ),
-  );
 
 const setFormValueEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -268,25 +251,11 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const readBlobAsBase64 = (blob: Blob): Promise<string | null> =>
-  new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      resolve(result.split(',')[1] ?? null);
-    };
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(blob);
-  });
-
 const handleVoiceRecordingEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatActions.handleVoiceRecording.type),
     switchMap(({ payload }) => {
-      const { audioBlob, fileExtension } = payload as {
-        audioBlob: Blob;
-        fileExtension: string;
-      };
+      const { audioBlob, fileExtension } = payload;
       const isAsrMode = ConversationsSelectors.selectIsAsrMode(state$.value);
 
       if (isAsrMode) {
@@ -364,7 +333,7 @@ const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatActions.transcriptionSuccess.type),
     switchMap(({ payload }) => {
-      const transcript = (payload as { transcript: string }).transcript;
+      const { transcript } = payload;
       if (!transcript.trim()) {
         return of(
           UIActions.showErrorToast(
