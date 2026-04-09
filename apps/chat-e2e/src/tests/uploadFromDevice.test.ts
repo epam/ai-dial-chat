@@ -146,7 +146,7 @@ dialTest(
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
     let deleteUploadedFileIcon: Locator;
     const attachments = [Attachment.longImageName, Attachment.cloudImageName];
-    const expectedExtensionClassAttribute = 'absolute right-2';
+    const expectedExtensionClassAttribute = 'text-secondary dial-small-text';
     let uploadedFileInput: BaseElement;
     let uploadedFileExtension: BaseElement;
 
