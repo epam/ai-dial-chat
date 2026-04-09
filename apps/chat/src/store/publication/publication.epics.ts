@@ -82,7 +82,6 @@ import {
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
-import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -1005,26 +1004,19 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
           if (toolsetResourcesToPublish.length) {
             const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
-            const toolsetsToReplace = toolsetResourcesToPublish
-              .map((r) =>
-                toolsetsMap[r.reviewUrl]
-                  ? ({
-                      ...toolsetsMap[r.reviewUrl],
-                      id: r.targetUrl,
-                    } as ToolsetModel)
-                  : undefined,
-              )
+            const toolsetsToRemove = toolsetResourcesToPublish
+              .map((r) => toolsetsMap[r.reviewUrl])
               .filter((t) => !!t);
 
             actions.push(
-              ...toolsetsToReplace.map((t) =>
+              ...toolsetsToRemove.map((t) =>
                 of(
                   ToolsetActions.deleteToolsetSuccess({
                     reference: t.reference,
                   }),
                 ),
               ),
-              of(ToolsetActions.setToolsets(toolsetsToReplace)),
+              of(ToolsetActions.getToolsets()),
             );
           }
 
