@@ -871,6 +871,7 @@ export enum FilesI18nKeys {
   FailedToDownloadFiles = 'Failed to download files. Please try again later.',
   FailedToUploadArchive = 'Failed to upload archive. Please try again later.',
   FileNameVerbToFolder = '“{{fileName}}” {{verb}} to {{folder}}',
+  FileNameVerbFromFolder = '“{{fileName}}” {{verb}} from {{folder}}',
   ItemsVerbToFolder = '{{count}} items {{verb}} to {{folder}}',
   AndOtherItems = ' and {{count}} other items',
   SomeItemsNotSomething = '{{files}}{{rest}} were not {{verb}}. Please try again.',
