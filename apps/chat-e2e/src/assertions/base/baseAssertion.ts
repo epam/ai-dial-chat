@@ -539,6 +539,20 @@ export class BaseAssertion {
       .toHaveCSS(Styles.display, expectedDisplay);
   }
 
+  public async assertElementWidthStyle(
+    element: BaseElement | Locator,
+    option: { hasFullWidth: boolean },
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    option.hasFullWidth
+      ? await expect
+          .soft(elementLocator, ExpectedMessages.elementWidthIsValid)
+          .toHaveCSS(Styles.maxWidth, StyleValues.none)
+      : await expect
+          .soft(elementLocator, ExpectedMessages.elementWidthIsValid)
+          .not.toHaveCSS(Styles.maxWidth, StyleValues.none);
+  }
+
   public assertBooleanCondition(
     predicate: boolean,
     expectedResult: boolean,

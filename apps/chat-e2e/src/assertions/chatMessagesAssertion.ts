@@ -14,13 +14,11 @@ export class ChatMessagesAssertion extends BaseAssertion {
 
   public async assertMessagesWidth(option: { hasFullWidth: boolean }) {
     const messageMaxWidth = this.chatMessages.getChatMessageMaxWidth(1);
-    option.hasFullWidth
-      ? await expect
-          .soft(messageMaxWidth, ExpectedMessages.elementWidthIsValid)
-          .toBeVisible()
-      : await expect
-          .soft(messageMaxWidth, ExpectedMessages.elementWidthIsValid)
-          .toBeHidden();
+    await this.assertElementState(
+      messageMaxWidth,
+      option.hasFullWidth ? 'visible' : 'hidden',
+      ExpectedMessages.elementWidthIsValid,
+    );
   }
 
   public async assertShowMoreLessButtonState(

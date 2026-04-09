@@ -37,7 +37,7 @@ dialAdminTest(
       publishingRulesAssertion,
       organizationConversationAssertion,
       publishingRequestDialogAssertion,
-      tooltipAssertion,
+      tooltipPortalAssertion,
       adminDialHomePage,
       adminApproveRequiredConversations,
       adminApproveRequiredConversationDropdownMenu,
@@ -164,7 +164,7 @@ dialAdminTest(
           await publishingRequestDialog.requestName.fillInInput(name);
           await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
           await publishingRequestDialog.sendRequestButton.hoverOver();
-          await tooltipAssertion.assertTooltipContent(
+          await tooltipPortalAssertion.assertTooltipContent(
             ExpectedConstants.noPublishNameTooltip,
           );
         }

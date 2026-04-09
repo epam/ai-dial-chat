@@ -29,7 +29,6 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
 import { MessageLikes } from './MessageLikes';
@@ -96,53 +95,45 @@ export const MessageUserButtons = ({
             />
           ))}
           {isEditTemplatesAvailable && !isConversationsWithSchema && (
-            <Tooltip
-              placement="top"
-              isTriggerClickable
-              tooltip={t(ChatI18nKeys.SetMessageTemplate)}
-            >
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
-                size={ElementSize.Small}
-                onClick={onToggleTemplatesEditing}
-                icon={
-                  <IconListDetails
-                    size={DEFAULT_ICON_SIZES.SMALL}
-                    stroke={1.5}
-                  />
-                }
-              />
-            </Tooltip>
+            <DialPrimaryIconButton
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              onClick={onToggleTemplatesEditing}
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(ChatI18nKeys.SetMessageTemplate),
+              }}
+              icon={
+                <IconListDetails size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+              }
+            />
           )}
           {isEditAvailable && (
-            <Tooltip
-              placement="top"
-              isTriggerClickable
-              tooltip={t(ChatI18nKeys.Edit)}
-            >
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
-                size={ElementSize.Small}
-                onClick={onToggleEditing}
-                icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
-              />
-            </Tooltip>
+            <DialPrimaryIconButton
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              onClick={onToggleEditing}
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(ChatI18nKeys.Edit),
+              }}
+              icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+            />
           )}
           {onDelete && (
-            <Tooltip
-              placement="top"
-              isTriggerClickable
-              tooltip={t(ChatI18nKeys.Delete)}
-            >
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
-                size={ElementSize.Small}
-                onClick={onDelete}
-                icon={
-                  <IconTrashX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
-                }
-              />
-            </Tooltip>
+            <DialPrimaryIconButton
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(ChatI18nKeys.Delete),
+              }}
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              onClick={onDelete}
+              icon={<IconTrashX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+            />
           )}
         </>
       )}
@@ -171,17 +162,18 @@ const CopyButton = ({
   const { copied, onCopy } = useCopy(content, convertFromMarkdown);
 
   return (
-    <Tooltip
+    <DialPrimaryIconButton
+      appearance={ButtonAppearance.Ghost}
       key={`${copied ? 'copied' : 'copy'}${keyPostfix}`}
-      placement="top"
-      isTriggerClickable
-      tooltip={t(copied ? copiedLabel : copyLabel)}
-    >
-      <DialPrimaryIconButton
-        appearance={ButtonAppearance.Ghost}
-        size={ElementSize.Small}
-        onClick={onCopy}
-        disabled={copied}
+      size={ElementSize.Small}
+      onClick={onCopy}
+      disabled={copied}
+      tooltipProps={{
+        placement: 'top',
+        isTriggerClickable: true,
+        tooltip: t(copied ? copiedLabel : copyLabel),
+      }}
+
         icon={
           copied ? (
             <IconCheck
@@ -194,7 +186,7 @@ const CopyButton = ({
         }
         aria-label={copyLabel}
       />
-    </Tooltip>
+
   );
 };
 
@@ -243,19 +235,18 @@ export const MessageAssistantButtons = ({
         />
       ))}
       {onRegenerate && (
-        <Tooltip
-          placement="top"
-          isTriggerClickable
-          tooltip={t(ChatI18nKeys.Regenerate)}
-        >
-          <DialPrimaryIconButton
-            appearance={ButtonAppearance.Ghost}
-            size={ElementSize.Small}
-            onClick={onRegenerate}
-            icon={<IconRefresh size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
-            data-qa="regenerate"
-          />
-        </Tooltip>
+        <DialPrimaryIconButton
+          tooltipProps={{
+            placement: 'top',
+            isTriggerClickable: true,
+            tooltip: t(ChatI18nKeys.Regenerate),
+          }}
+          appearance={ButtonAppearance.Ghost}
+          size={ElementSize.Small}
+          onClick={onRegenerate}
+          icon={<IconRefresh size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+          data-qa="regenerate"
+        />
       )}
       {hasMessageContent && (
         <>
@@ -274,19 +265,18 @@ export const MessageAssistantButtons = ({
         </>
       )}
       {onToggleEditing && (
-        <Tooltip
-          placement="top"
-          isTriggerClickable
-          tooltip={t(ChatI18nKeys.Edit)}
-        >
-          <DialPrimaryIconButton
-            appearance={ButtonAppearance.Ghost}
-            size={ElementSize.Small}
-            onClick={onToggleEditing}
-            data-qa="edit"
-            icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
-          />
-        </Tooltip>
+        <DialPrimaryIconButton
+          tooltipProps={{
+            placement: 'top',
+            isTriggerClickable: true,
+            tooltip: t(ChatI18nKeys.Edit),
+          }}
+          appearance={ButtonAppearance.Ghost}
+          size={ElementSize.Small}
+          onClick={onToggleEditing}
+          data-qa="edit"
+          icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+        />
       )}
       {isLikesEnabled &&
         onLike &&

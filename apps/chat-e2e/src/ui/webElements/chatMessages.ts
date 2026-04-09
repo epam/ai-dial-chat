@@ -579,8 +579,13 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
   }
 
-  public messageEditIcon = (messageLocator: Locator) =>
-    messageLocator.locator(IconSelectors.editIcon);
+  public messageEditIcon = (message: Locator | string | number) => {
+    const messageLocator =
+      typeof message === 'string' || typeof message === 'number'
+        ? this.getChatMessage(message)
+        : message;
+    return messageLocator.locator(IconSelectors.editIcon);
+  };
   public setMessageTemplateIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.listDetailsIcon);
   public saveAndSubmit = this.getChildElementBySelector(

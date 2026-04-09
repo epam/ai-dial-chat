@@ -11,7 +11,6 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
 import {
@@ -37,23 +36,26 @@ const DesktopLikeView = ({
   label,
   dataQa,
 }: LikeItemProps) => (
-  <Tooltip placement="top" isTriggerClickable={!wasClicked} tooltip={label}>
-    <DialPrimaryIconButton
-      appearance={ButtonAppearance.Ghost}
-      size={ElementSize.Small}
-      onClick={() => {
-        if (!wasClicked) {
-          onLike(targetStatus);
-        }
-      }}
-      className={classNames(
-        wasClicked && 'text-accent-primary disabled:text-accent-primary',
-      )}
-      disabled={wasClicked}
-      data-qa={dataQa}
-      icon={<Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
-    />
-  </Tooltip>
+  <DialPrimaryIconButton
+    tooltipProps={{
+      placement: 'top',
+      isTriggerClickable: !wasClicked,
+      tooltip: label,
+    }}
+    appearance={ButtonAppearance.Ghost}
+    size={ElementSize.Small}
+    onClick={() => {
+      if (!wasClicked) {
+        onLike(targetStatus);
+      }
+    }}
+    className={classNames(
+      wasClicked && 'text-accent-primary disabled:text-accent-primary',
+    )}
+    disabled={wasClicked}
+    data-qa={dataQa}
+    icon={<Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+  />
 );
 
 const MobileLikeView = ({

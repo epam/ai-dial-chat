@@ -67,6 +67,7 @@ interface Props {
   isLastMessageError: boolean;
   onRegenerate: () => void;
   showReplayControls: boolean;
+  isPreview?: boolean;
 }
 
 const MAX_HEIGHT = 320;
@@ -81,6 +82,7 @@ export const ChatInputMessage = Inversify.register(
     onStopConversation,
     onRegenerate,
     isLastMessageError,
+    isPreview,
     showReplayControls,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
@@ -554,14 +556,15 @@ export const ChatInputMessage = Inversify.register(
         className={classNames(
           'mx-3 mb-3 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-5',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
+          isPreview && 'px-5',
         )}
+        data-qa="send-message-container"
       >
         <div
           className={classNames(
-            'relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
+            'relative m-0 flex max-h-[400px] min-h-[38px] w-full max-w-[768px] grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
             isChatInputBorderEnabled && 'border border-primary',
           )}
-          data-qa="message"
         >
           <AdjustedTextarea
             ref={textareaRef}

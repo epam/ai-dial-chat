@@ -5,7 +5,7 @@ export const layoutContainer = '#theme-main';
 export const overlayFrame = '[name="overlay"]';
 
 export const SendMessageSelectors = {
-  message: '[data-qa="message"]',
+  sendMessageContainer: '[data-qa="send-message-container"]',
   stopGenerating: '[data-qa="stop-generating"]',
   proceedGenerating: '[data-qa="proceed-reply"]',
   sendMessage: '[data-qa="send"]',

@@ -21,7 +21,6 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -59,17 +58,22 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'absolute max-h-[24px] !px-0 hover:text-accent-primary',
+            'max-h-[24px] !px-0 hover:text-accent-primary',
             isLastMessageError && 'text-error',
-            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
           aria-label={t(ChatI18nKeys.SendAMessage)}
           onClick={onSend}
           data-qa="regenerate"
+          tooltipProps={{
+            tooltip: tooltip,
+            isTriggerClickable: true,
+            triggerClassName: classNames(
+              'absolute max-h-[24px]',
+              isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+            ),
+          }}
           iconBefore={
-            <Tooltip tooltip={tooltip} isTriggerClickable>
-              <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
-            </Tooltip>
+            <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
           }
         />
       );
@@ -82,26 +86,26 @@ export const SendMessageButton = Inversify.register(
 
     return (
       <DialButton
-        className={classNames(
-          'absolute max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable',
-          isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
-        )}
+        className="max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable"
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
         aria-label={t(ChatI18nKeys.SendAMessage)}
+        tooltipProps={{
+          hideTooltip: !disabled && !messageIsStreaming,
+          tooltip,
+          isTriggerClickable: true,
+          triggerClassName: classNames(
+            'absolute max-h-[24px]',
+            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+          ),
+        }}
         iconBefore={
-          <Tooltip
-            hideTooltip={!disabled && !messageIsStreaming}
-            tooltip={tooltip}
-            isTriggerClickable
-          >
-            {isSpinner ? (
-              <Spinner size={20} />
-            ) : (
-              <Icon size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
-            )}
-          </Tooltip>
+          isSpinner ? (
+            <Spinner size={20} />
+          ) : (
+            <Icon size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
+          )
         }
       />
     );
