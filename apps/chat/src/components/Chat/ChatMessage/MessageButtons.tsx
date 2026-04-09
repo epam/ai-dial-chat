@@ -173,20 +173,18 @@ const CopyButton = ({
         isTriggerClickable: true,
         tooltip: t(copied ? copiedLabel : copyLabel),
       }}
-
-        icon={
-          copied ? (
-            <IconCheck
-              size={DEFAULT_ICON_SIZES.SMALL}
-              className="text-secondary"
-            />
-          ) : (
-            <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
-          )
-        }
-        aria-label={copyLabel}
-      />
-
+      icon={
+        copied ? (
+          <IconCheck
+            size={DEFAULT_ICON_SIZES.SMALL}
+            className="text-secondary"
+          />
+        ) : (
+          <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+        )
+      }
+      aria-label={copyLabel}
+    />
   );
 };
 

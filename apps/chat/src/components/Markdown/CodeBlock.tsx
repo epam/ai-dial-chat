@@ -130,18 +130,16 @@ export const CodeBlock: FC<Props> = memo(
                   isTriggerClickable: true,
                   tooltip: t(MarkdownI18nKeys.Download),
                 }}
-
-                  className="flex items-center rounded bg-none hover:text-accent-primary"
-                  onClick={downloadAsFile}
-                  icon={
-                    <Download
-                      width={DEFAULT_ICON_SIZES.SMALL}
-                      height={DEFAULT_ICON_SIZES.SMALL}
-                    />
-                  }
-                  aria-label="Download"
-                />
-
+                className="flex items-center rounded bg-none hover:text-accent-primary"
+                onClick={downloadAsFile}
+                icon={
+                  <Download
+                    width={DEFAULT_ICON_SIZES.SMALL}
+                    height={DEFAULT_ICON_SIZES.SMALL}
+                  />
+                }
+                aria-label="Download"
+              />
             </div>
           )}
         </div>
