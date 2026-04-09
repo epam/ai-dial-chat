@@ -119,7 +119,7 @@ function ModalView({
               {!hideClose && (
                 <CloseButtonSmall
                   onClick={handleClose}
-                  className="absolute right-2 top-2 z-50"
+                  className="absolute right-[2px] top-2 z-50"
                   aria-label="Close dialog"
                 />
               )}
