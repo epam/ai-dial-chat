@@ -36,7 +36,10 @@ import {
   getGeneratedFolderId,
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
-import { getFileRootId } from '@/src/utils/app/id';
+import {
+  getFileRootId,
+  stripTrailingSlashForSelectedPath,
+} from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -499,30 +502,102 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
 const setChosenFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.setChosenFolder.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const { folderId } = payload;
       const folders = FilesSelectors.selectFolders(state$.value);
-      const selectedEmptyFolders = FilesSelectors.selectChosenEmptyFolderIds(
-        state$.value,
-      );
       const targetFolder = folders.find(
         ({ id }) =>
           addTrailingSlashIfAbsent(id) === addTrailingSlashIfAbsent(folderId),
       );
 
-      if (
-        targetFolder &&
-        targetFolder.status !== UploadStatus.LOADED &&
-        selectedEmptyFolders.includes(folderId)
-      ) {
+      if (!targetFolder) {
+        return EMPTY;
+      }
+
+      if (targetFolder.status !== UploadStatus.LOADED) {
+        const cleanId = stripTrailingSlashForSelectedPath(folderId);
         return of(
           FilesActions.getFilesWithFolders({
-            id: folderId.endsWith('/') ? folderId.slice(0, -1) : folderId,
+            id: cleanId,
           }),
         );
       }
 
       return EMPTY;
+    }),
+  );
+
+// When a folder's children finish loading and that folder was selected,
+// auto-select any newly discovered direct sub-folders so the full nested
+// tree ends up chosen even if it was never expanded before selection.
+const autoSelectNestedFoldersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.getFoldersSuccess.type),
+    mergeMap(({ payload }) => {
+      const { folders: newFolders, folderId: parentFolderId } = payload;
+
+      if (!parentFolderId) return EMPTY;
+
+      const state = state$.value;
+      const chosenFileIds = FilesSelectors.selectChosenItems(state);
+      const chosenEmptyFolderIds =
+        FilesSelectors.selectChosenEmptyFolderIds(state);
+      const allFolders = FilesSelectors.selectFolders(state);
+
+      const normalizedParentId = addTrailingSlashIfAbsent(parentFolderId);
+
+      // The parent is considered selected when either its files are chosen
+      // (non-empty folder path) or it sits in chosenEmptyFolderIds (empty
+      // folder or one that is still loading its content).
+      const parentIsSelected =
+        chosenFileIds.some((id) => id.startsWith(normalizedParentId)) ||
+        chosenEmptyFolderIds.some(
+          (id) => addTrailingSlashIfAbsent(id) === normalizedParentId,
+        );
+
+      if (!parentIsSelected) return EMPTY;
+
+      const directSubFolders = newFolders.filter(
+        (folder) =>
+          addTrailingSlashIfAbsent(folder.folderId) === normalizedParentId,
+      );
+
+      if (!directSubFolders.length) return EMPTY;
+
+      const actions: AppAction[] = [];
+
+      for (const folder of directSubFolders) {
+        const isAlreadyChosen =
+          chosenEmptyFolderIds.some(
+            (id) =>
+              addTrailingSlashIfAbsent(id) ===
+              addTrailingSlashIfAbsent(folder.id),
+          ) ||
+          chosenFileIds.some((id) =>
+            id.startsWith(addTrailingSlashIfAbsent(folder.id)),
+          );
+        const stateFolder = allFolders.find(({ id }) => id === folder.id);
+        const isLoaded = stateFolder?.status === UploadStatus.LOADED;
+
+        if (isAlreadyChosen && !isLoaded) {
+          // The getFoldersSuccess cascade already added this folder to
+          // chosenEmptyFolderIds, but no loading was triggered for it;
+          // kick off loading directly so the cascade can continue deeper.
+          actions.push(
+            FilesActions.getFolders({ id: folder.id }),
+            FilesActions.getFiles({ id: folder.id }),
+          );
+        } else if (!isAlreadyChosen) {
+          // Dispatch setChosenFolder so the reducer marks it chosen and
+          // setChosenFolderEpic triggers loading for its children.
+          actions.push(FilesActions.setChosenFolder({ folderId: folder.id }));
+        }
+        // Already chosen AND loaded: nothing to do.
+      }
+
+      if (!actions.length) return EMPTY;
+
+      return from(actions);
     }),
   );
 
@@ -906,7 +981,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
+            message: translate(FilesI18nKeys.FileNameVerbFromFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
@@ -991,7 +1066,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
+            message: translate(FilesI18nKeys.FileNameVerbFromFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
@@ -1113,4 +1188,5 @@ export const FilesEpics = combineEpics(
   uploadArchiveEpic,
   copyMoveFilesResultToastEpic,
   deleteFilesResultToastEpic,
+  autoSelectNestedFoldersEpic,
 );

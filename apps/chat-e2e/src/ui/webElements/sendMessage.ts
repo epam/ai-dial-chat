@@ -16,7 +16,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class SendMessage extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, SendMessageSelectors.message, parentLocator);
+    super(page, SendMessageSelectors.sendMessageContainer, parentLocator);
   }
 
   private promptList!: PromptList;
