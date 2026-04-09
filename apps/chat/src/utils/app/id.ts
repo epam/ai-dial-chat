@@ -169,3 +169,6 @@ export const replaceVersionFromId = (id: string, version: string) => {
   const splittedId = id.split(pathKeySeparator);
   return [...splittedId.slice(0, -1), version].join(pathKeySeparator);
 };
+
+export const stripTrailingSlashForSelectedPath = (entityPath: string) =>
+  entityPath.endsWith('/') ? entityPath.slice(0, -1) : entityPath;
