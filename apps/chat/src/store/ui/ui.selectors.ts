@@ -24,6 +24,9 @@ const selectAvailableThemes = (state: RootState) =>
 const selectThemesImages = (state: RootState) =>
   rootSelector(state).themesImages;
 
+const selectFilterPanelCollapseState = (state: RootState) =>
+  rootSelector(state).filterPanelCollapseState;
+
 const selectCodeEditorTheme = createSelector(
   [selectThemeState, selectAvailableThemes],
   (theme, availableThemes) => {
@@ -170,4 +173,5 @@ export const UISelectors = {
   selectIsEditorLoader,
   selectAllowEnterToSend,
   selectMarketplaceFilterbarWidth,
+  selectFilterPanelCollapseState,
 };

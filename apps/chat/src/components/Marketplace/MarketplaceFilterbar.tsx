@@ -1,14 +1,15 @@
 import { IconCheck, IconChevronUp, IconClipboardX } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { MarketplaceFilters } from '@/src/types/marketplace';
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { Translation } from '@/src/types/translation';
 
-import { UIActions } from '@/src/store/actions';
+import { MarketplaceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
@@ -73,7 +74,7 @@ const FilterItem = ({
 
 interface FilterSectionProps {
   sectionName: string;
-  openedSections: Record<FilterTypes, boolean>;
+  panelCollapseState: MarketplacePanelState;
   selectedFilters: MarketplaceFilters;
   filterValues: string[];
   filterType: FilterTypes;
@@ -87,7 +88,7 @@ const FilterSection = ({
   sectionName,
   selectedFilters,
   filterValues,
-  openedSections,
+  panelCollapseState,
   onToggleFilterSection,
   onApplyFilter,
   getDisplayLabel,
@@ -101,19 +102,19 @@ const FilterSection = ({
         onClick={() => onToggleFilterSection(filterType)}
         className="flex h-fit w-full justify-between px-0"
         data-qa="filter-property"
-        aria-expanded={openedSections[filterType]}
+        aria-expanded={panelCollapseState[filterType]}
         label={sectionName}
         iconAfter={
           <IconChevronUp
             className={classNames(
               'duration-200',
-              !openedSections[filterType] && 'rotate-180',
+              !panelCollapseState[filterType] && 'rotate-180',
             )}
             size={18}
           />
         }
       />
-      {openedSections[filterType] && (
+      {panelCollapseState[filterType] && (
         <div
           className="mt-3.5 flex flex-col gap-3.5"
           data-qa="filter-property-options"
@@ -134,17 +135,10 @@ const FilterSection = ({
   );
 };
 
-interface OpenedSections {
-  [FilterTypes.ENTITY_TYPE]: boolean;
-  // [FilterTypes.CAPABILITIES]: boolean;
-  // [FilterTypes.ENVIRONMENT]: boolean;
-  [FilterTypes.TOPICS]: boolean;
-  [FilterTypes.SOURCES]: boolean;
-}
 interface FiltersRendererProps {
   showEntityTypesSection: boolean;
   showLoader: boolean;
-  openedSections: OpenedSections;
+  panelCollapseState: MarketplacePanelState;
   selectedFilters: MarketplaceFilters;
   topics: string[];
   sourceTypes: SourceType[];
@@ -154,7 +148,7 @@ interface FiltersRendererProps {
 function FiltersRenderer({
   showLoader,
   showEntityTypesSection,
-  openedSections,
+  panelCollapseState,
   selectedFilters,
   topics,
   sourceTypes,
@@ -173,7 +167,7 @@ function FiltersRenderer({
         <FilterSection
           sectionName={t(SideBarI18nKeys.Type)}
           filterValues={ENTITY_TYPES}
-          openedSections={openedSections}
+          panelCollapseState={panelCollapseState}
           selectedFilters={selectedFilters}
           filterType={FilterTypes.ENTITY_TYPE}
           onToggleFilterSection={handleToggleFilterSection}
@@ -184,7 +178,7 @@ function FiltersRenderer({
       <FilterSection
         sectionName={t(SideBarI18nKeys.Topics)}
         filterValues={topics}
-        openedSections={openedSections}
+        panelCollapseState={panelCollapseState}
         selectedFilters={selectedFilters}
         filterType={FilterTypes.TOPICS}
         onToggleFilterSection={handleToggleFilterSection}
@@ -194,7 +188,7 @@ function FiltersRenderer({
         <FilterSection
           sectionName={t(SideBarI18nKeys.Sources)}
           filterValues={sourceTypes}
-          openedSections={openedSections}
+          panelCollapseState={panelCollapseState}
           selectedFilters={selectedFilters}
           filterType={FilterTypes.SOURCES}
           onToggleFilterSection={handleToggleFilterSection}
@@ -238,13 +232,9 @@ export const MarketplaceFilterbar = memo(() => {
 
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
-  const [openedSections, setOpenedSections] = useState<OpenedSections>({
-    [FilterTypes.ENTITY_TYPE]: true,
-    // [FilterTypes.CAPABILITIES]: false,
-    // [FilterTypes.ENVIRONMENT]: false,
-    [FilterTypes.TOPICS]: true,
-    [FilterTypes.SOURCES]: true,
-  });
+  const panelCollapseState = useAppSelector(
+    UISelectors.selectFilterPanelCollapseState,
+  );
 
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
@@ -260,12 +250,14 @@ export const MarketplaceFilterbar = memo(() => {
 
   const handleToggleFilterSection = useCallback(
     (filterType: FilterTypes) => {
-      setOpenedSections((state) => ({
-        ...openedSections,
-        [filterType]: !state[filterType],
-      }));
+      dispatch(
+        UIActions.setFilterPanelCollapseState({
+          ...panelCollapseState,
+          [filterType]: !panelCollapseState[filterType],
+        }),
+      );
     },
-    [openedSections],
+    [panelCollapseState, dispatch],
   );
 
   const handleClose = useCallback(() => {
@@ -320,7 +312,7 @@ export const MarketplaceFilterbar = memo(() => {
           <FiltersRenderer
             showEntityTypesSection={isAgentsTab}
             showLoader={showLoader}
-            openedSections={openedSections}
+            panelCollapseState={panelCollapseState}
             selectedFilters={selectedFilters}
             topics={topicsFilters}
             sourceTypes={sourcesFilters}

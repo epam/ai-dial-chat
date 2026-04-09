@@ -53,6 +53,7 @@ export enum UIStorageKeys {
   SelectedWidget = 'selectedWidget',
   DefaultModelReference = 'defaultModelReference',
   EnterType = 'enterType',
+  MarketPlaceSectionCollapseState = 'marketPlaceSectionCollapseState',
 }
 
 export enum MigrationStorageKeys {

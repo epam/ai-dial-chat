@@ -138,6 +138,25 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
+  public static getMarketPlaceSectionCollapseState(
+    section: string,
+  ): Observable<boolean> {
+    return BrowserStorage.getData(
+      `${UIStorageKeys.MarketPlaceSectionCollapseState}_${section}`,
+      true,
+    );
+  }
+
+  public static setMarketPlaceSectionCollapseState(
+    section: string,
+    collapseState: boolean,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      `${UIStorageKeys.MarketPlaceSectionCollapseState}_${section}`,
+      collapseState,
+    );
+  }
+
   public static getShowMarketplaceFilterbar(
     defaultValue: boolean,
   ): Observable<boolean> {

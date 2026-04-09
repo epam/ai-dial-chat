@@ -29,6 +29,7 @@ import { UIActions } from '@/src/store/actions';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { FilterTypes } from '@/src/constants/marketplace';
 import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -66,6 +67,15 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
         fileCollapsedSections: DataService.getFileCollapsedSections(),
         enterType: DataService.getEnterType(),
+        entityPanel: DataService.getMarketPlaceSectionCollapseState(
+          FilterTypes.ENTITY_TYPE,
+        ),
+        topicsPanel: DataService.getMarketPlaceSectionCollapseState(
+          FilterTypes.TOPICS,
+        ),
+        sourcesPanel: DataService.getMarketPlaceSectionCollapseState(
+          FilterTypes.SOURCES,
+        ),
       });
     }),
     switchMap(
@@ -83,6 +93,9 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections,
         fileCollapsedSections,
         enterType,
+        entityPanel,
+        topicsPanel,
+        sourcesPanel,
       }) => {
         const actions: AppAction[] = [UIActions.initTheme()];
 
@@ -93,6 +106,13 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setEnterType(enterType));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
+        actions.push(
+          UIActions.setFilterPanelCollapseState({
+            [FilterTypes.ENTITY_TYPE]: entityPanel,
+            [FilterTypes.TOPICS]: topicsPanel,
+            [FilterTypes.SOURCES]: sourcesPanel,
+          }),
+        );
         actions.push(
           UIActions.setShowMarketplaceFilterbar(showMarketplaceFilterbar),
         );
