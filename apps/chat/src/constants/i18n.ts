@@ -665,6 +665,7 @@ export enum ChatI18nKeys {
   SeeChanges = 'See changes',
   NoChanges = 'No changes',
   PleaseFixRulesToProceed = 'Please fix the rules to proceed',
+  AcceptOrRejectRulesChanges = 'Accept or reject rules changes',
   Publish = 'Publish',
   Unpublish = 'Unpublish',
   ConversationNoFiles = "This conversation doesn't contain any files",

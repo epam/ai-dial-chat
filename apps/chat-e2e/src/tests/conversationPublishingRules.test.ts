@@ -133,7 +133,7 @@ dialAdminTest(
           filterTargetState: 'visible',
           filterTargetValue: ExpectedConstants.publishingFilterDefaultValue,
           filterFunctionState: 'visible',
-          filterFunctionValue: ExpectedConstants.publishingFilterDefaultValue,
+          filterFunctionValue: PublicationFunctions.Contain,
           filterValues: [],
           saveButtonState: 'visible',
           cancelButtonState: 'visible',

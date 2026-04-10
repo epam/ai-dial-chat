@@ -127,6 +127,24 @@ describe('MultipleComboBox', () => {
     expect(onChangeSelectedItems).toHaveBeenCalledWith([selectedItems[1]]);
   });
 
+  it('shows or connector between selected pills when enabled', () => {
+    const label = (s: string) => s;
+    render(
+      <MultipleComboBox
+        getItemLabel={label}
+        getItemValue={label}
+        onChangeSelectedItems={onChangeSelectedItems}
+        initialSelectedItems={['alpha', 'beta']}
+        showConnectorBetweenSelectedItems
+        connectorLabel="or"
+      />,
+    );
+
+    expect(screen.getByTestId('combobox-items-connector')).toHaveTextContent(
+      'or',
+    );
+  });
+
   it('displays not found placeholder when no available items', async () => {
     render(
       <MultipleComboBox

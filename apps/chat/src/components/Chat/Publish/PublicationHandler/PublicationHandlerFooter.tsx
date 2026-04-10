@@ -94,6 +94,7 @@ interface Props {
   publication: Publication;
   isFormChanged: boolean;
   areRulesChanged: boolean;
+  isDraftRuleFilterOpen: boolean;
 }
 
 export const PublicationHandlerFooter = ({
@@ -101,6 +102,7 @@ export const PublicationHandlerFooter = ({
   publication,
   isFormChanged,
   areRulesChanged,
+  isDraftRuleFilterOpen,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -451,6 +453,9 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
+      if (isDraftRuleFilterOpen) {
+        return ChatI18nKeys.AcceptOrRejectRulesChanges;
+      }
       return !isValid
         ? formError
         : !selectedPublicationItems.length
@@ -478,12 +483,16 @@ export const PublicationHandlerFooter = ({
     isValid,
     formError,
     selectedPublicationItems.length,
+    isDraftRuleFilterOpen,
   ]);
 
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
     (publishModel &&
-      (isEditInvalid || !isValid || !selectedPublicationItems.length));
+      (isEditInvalid ||
+        !isValid ||
+        !selectedPublicationItems.length ||
+        isDraftRuleFilterOpen));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {

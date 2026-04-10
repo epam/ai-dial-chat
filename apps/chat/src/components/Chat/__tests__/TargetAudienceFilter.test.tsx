@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getFilterLabel } from '@/src/utils/app/rules';
@@ -12,6 +12,10 @@ import { AppAction } from '@/src/types/store';
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
+
+vi.mock('@/src/utils/app/mobile', () => ({
+  isSmallScreen: () => false,
+}));
 
 vi.mock('@/src/store/hooks', async () => {
   return {
@@ -62,7 +66,9 @@ describe('TargetAudienceFilterComponent', () => {
       />,
     );
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    if (!screen.queryByText(targetValues[0])) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
 
     for (const option of targetValues) {
       expect(screen.getByText(option)).toBeInTheDocument();
@@ -71,13 +77,18 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedTargetOption = screen.getByText(targetValues[0]);
     await userEvent.click(selectedTargetOption);
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    await userEvent.click(
+      screen.getByTestId('open-filter-dropdown-filterFns'),
+    );
 
+    const operatorMenu = screen.getAllByRole('menu').pop() as HTMLElement;
     for (const option of filterValues) {
-      expect(screen.getByText(getFilterLabel(option))).toBeInTheDocument();
+      expect(
+        within(operatorMenu).getByText(getFilterLabel(option)),
+      ).toBeInTheDocument();
     }
 
-    const selectedFilterOption = screen.getByText(
+    const selectedFilterOption = within(operatorMenu).getByText(
       getFilterLabel(filterValues[1]),
     );
     await userEvent.click(selectedFilterOption);
@@ -97,20 +108,21 @@ describe('TargetAudienceFilterComponent', () => {
       />,
     );
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedTargetOption = screen.getByText(selectedTarget);
-    await userEvent.click(selectedTargetOption);
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
-    await userEvent.click(selectedFilterOption);
+    await userEvent.click(
+      screen.getByTestId('open-filter-dropdown-filterFns'),
+    );
+    await userEvent.click(screen.getByText(selectedFilter));
 
     expect(screen.getByText(selectedFilter)).toBeInTheDocument();
     expect(screen.getByText(selectedTarget)).toBeInTheDocument();
   });
 
-  it('save button is disabled if no targets chosen', async () => {
-    const selectedFilter = getFilterLabel(filterValues[0]);
+  it('save button is disabled when target is chosen but value params are empty', async () => {
     const selectedTarget = targetValues[0];
 
     render(
@@ -120,13 +132,10 @@ describe('TargetAudienceFilterComponent', () => {
       />,
     );
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedTargetOption = screen.getByText(selectedTarget);
-    await userEvent.click(selectedTargetOption);
-
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
-    await userEvent.click(selectedFilterOption);
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
 
     const iconCheck = screen.getByTestId('save-filter');
 
@@ -144,13 +153,15 @@ describe('TargetAudienceFilterComponent', () => {
       />,
     );
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedTargetOption = screen.getByText(selectedTarget);
-    await userEvent.click(selectedTargetOption);
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
-    await userEvent.click(selectedFilterOption);
+    await userEvent.click(
+      screen.getByTestId('open-filter-dropdown-filterFns'),
+    );
+    await userEvent.click(screen.getByText(selectedFilter));
 
     const combobox = screen.getByRole('combobox');
     await userEvent.type(combobox, 'QA{enter}');
@@ -162,7 +173,7 @@ describe('TargetAudienceFilterComponent', () => {
 
     expect(onSaveFilter).toHaveBeenCalledWith({
       source: selectedTarget,
-      filterFunction: filterValues[1].toUpperCase(),
+      filterFunction: PublicationFunctions.Equal,
       filterParams: ['QA', 'Developer', 'Manager'],
     });
   });
@@ -208,13 +219,15 @@ describe('TargetAudienceFilterComponent', () => {
       />,
     );
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedTargetOption = screen.getByText(selectedTarget);
-    await userEvent.click(selectedTargetOption);
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
-    await userEvent.click(selectedFilterOption);
+    await userEvent.click(
+      screen.getByTestId('open-filter-dropdown-filterFns'),
+    );
+    await userEvent.click(screen.getByText(selectedFilter));
 
     const input = screen.getByPlaceholderText('Enter regular expression...');
     await userEvent.type(input, 'Developer.*');
@@ -224,8 +237,21 @@ describe('TargetAudienceFilterComponent', () => {
 
     expect(onSaveFilter).toHaveBeenCalledWith({
       source: selectedTarget,
-      filterFunction: selectedFilter.toUpperCase(),
+      filterFunction: PublicationFunctions.Regex,
       filterParams: ['Developer.*'],
     });
+  });
+
+  it('calls onCloseFilter when pointerdown happens outside the filter row and draft is incomplete', () => {
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
+    fireEvent.pointerDown(document.body, { bubbles: true });
+
+    expect(onCLoseFilter).toHaveBeenCalled();
   });
 });
