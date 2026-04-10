@@ -77,9 +77,7 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedTargetOption = screen.getByText(targetValues[0]);
     await userEvent.click(selectedTargetOption);
 
-    await userEvent.click(
-      screen.getByTestId('open-filter-dropdown-filterFns'),
-    );
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
 
     const operatorMenu = screen.getAllByRole('menu').pop() as HTMLElement;
     for (const option of filterValues) {
@@ -113,9 +111,7 @@ describe('TargetAudienceFilterComponent', () => {
     }
     await userEvent.click(screen.getByText(selectedTarget));
 
-    await userEvent.click(
-      screen.getByTestId('open-filter-dropdown-filterFns'),
-    );
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
     await userEvent.click(screen.getByText(selectedFilter));
 
     expect(screen.getByText(selectedFilter)).toBeInTheDocument();
@@ -158,9 +154,7 @@ describe('TargetAudienceFilterComponent', () => {
     }
     await userEvent.click(screen.getByText(selectedTarget));
 
-    await userEvent.click(
-      screen.getByTestId('open-filter-dropdown-filterFns'),
-    );
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
     await userEvent.click(screen.getByText(selectedFilter));
 
     const combobox = screen.getByRole('combobox');
@@ -224,9 +218,7 @@ describe('TargetAudienceFilterComponent', () => {
     }
     await userEvent.click(screen.getByText(selectedTarget));
 
-    await userEvent.click(
-      screen.getByTestId('open-filter-dropdown-filterFns'),
-    );
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
     await userEvent.click(screen.getByText(selectedFilter));
 
     const input = screen.getByPlaceholderText('Enter regular expression...');
