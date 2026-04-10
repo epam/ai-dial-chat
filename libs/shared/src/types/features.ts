@@ -88,6 +88,9 @@ export enum Feature {
 
   //Toolsets
   Toolsets = 'toolsets', //Enable toolsets
+
+  // Voice input
+  VoiceInput = 'voice-input', // Enable voice recording input button
 }
 
 export interface FeatureData {

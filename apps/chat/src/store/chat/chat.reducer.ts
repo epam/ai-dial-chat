@@ -15,6 +15,8 @@ const initialState: ChatState = {
   configurationSchemasLoadingIds: [],
   infoModalState: ModalState.CLOSED,
   configurationSchemas: [],
+  isTranscribing: false,
+  isAsrFlowActive: false,
 };
 
 const MAX_CONFIGURATION_SCHEMAS_AMOUNT = 10;
@@ -162,6 +164,30 @@ export const chatSlice = createSlice({
     resetInfoModal: (state) => {
       state.selectedEntityInfo = undefined;
       state.infoModalState = ModalState.CLOSED;
+    },
+    handleVoiceRecording: (
+      state,
+      _action: PayloadAction<{ audioBlob: Blob; fileExtension: string }>,
+    ) => state,
+    startTranscription: (
+      state,
+      _action: PayloadAction<{ audioData: string; mimeType: string }>,
+    ) => {
+      state.isTranscribing = true;
+      state.isAsrFlowActive = true;
+    },
+    transcriptionSuccess: (
+      state,
+      _action: PayloadAction<{ transcript: string }>,
+    ) => {
+      state.isTranscribing = false;
+    },
+    transcriptionFailed: (state) => {
+      state.isTranscribing = false;
+      state.isAsrFlowActive = false;
+    },
+    clearAsrFlow: (state) => {
+      state.isAsrFlowActive = false;
     },
   },
 });
