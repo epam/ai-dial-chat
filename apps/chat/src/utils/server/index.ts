@@ -133,7 +133,7 @@ export const OpenAIStream = async ({
         {
           type: result.error.type,
           param: result.error.param,
-          displayMessage: result.error.display_message,
+          displayMessage: result.error.display_message || result.error.message,
         },
       );
 
