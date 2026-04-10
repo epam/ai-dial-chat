@@ -149,7 +149,6 @@ dialAdminTest(
     await dialTest.step(
       'Set filter condition to: `Dial Roles` Contain `age`',
       async () => {
-        await publishingFilter.filterTarget.click();
         await publishingFilter
           .getFilterTargetDropdownMenu()
           .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
@@ -365,7 +364,6 @@ dialAdminTest(
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRules.addRuleButton.click();
-        await publishingFilter.filterTarget.click();
         await publishingFilter
           .getFilterTargetDropdownMenu()
           .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
@@ -543,7 +541,6 @@ dialAdminTest(
       async () => {
         for (const [target, value] of conditionsEntries) {
           await publishingRules.addRuleButton.click();
-          await publishingFilter.filterTarget.click();
           await publishingFilter
             .getFilterTargetDropdownMenu()
             .selectMenuOption(target);
@@ -799,7 +796,6 @@ dialAdminTest(
       'Set filter condition to: `Dial Roles` Equal `QA`',
       async () => {
         await publishingRules.addRuleButton.click();
-        await publishingFilter.filterTarget.click();
         await publishingFilter
           .getFilterTargetDropdownMenu()
           .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
