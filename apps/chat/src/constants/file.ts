@@ -10,6 +10,8 @@ export const MAX_VISIBLE_NOTIFICATION_ITEMS = 5;
 
 export const FALLBACK_CONTENT_TYPE = 'application/octet-stream';
 
+export const TEMP_FILE_NAME_IN_FILE_MANAGER = '.dial_folder';
+
 export enum FileItemEventIds {
   Cancel = 'cancel',
   Retry = 'retry',
