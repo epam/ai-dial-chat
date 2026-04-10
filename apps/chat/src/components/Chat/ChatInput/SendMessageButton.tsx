@@ -51,6 +51,18 @@ export const SendMessageButton = Inversify.register(
       ConversationsSelectors.selectIsLastAssistantMessageEmpty,
     );
 
+    const canRecordAudio = useAppSelector(
+      ConversationsSelectors.selectCanRecordAudio,
+    );
+
+    const rightClass = canRecordAudio
+      ? isOverlay
+        ? 'right-10'
+        : 'right-11'
+      : isOverlay
+        ? 'right-3'
+        : 'right-4';
+
     if (
       isLastMessageError ||
       (isLastAssistantMessageEmpty && !messageIsStreaming)
@@ -58,7 +70,7 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'max-h-[24px] !px-0 hover:text-accent-primary',
+            'max-h-[24px] !px-0 text-secondary hover:text-accent-primary',
             isLastMessageError && 'text-error',
           )}
           aria-label={t(ChatI18nKeys.SendAMessage)}
@@ -69,7 +81,8 @@ export const SendMessageButton = Inversify.register(
             isTriggerClickable: true,
             triggerClassName: classNames(
               'absolute max-h-[24px]',
-              isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+              isOverlay ? 'bottom-2' : 'bottom-2.5 md:bottom-3',
+              rightClass,
             ),
           }}
           iconBefore={
@@ -86,7 +99,7 @@ export const SendMessageButton = Inversify.register(
 
     return (
       <DialButton
-        className="max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable"
+        className="max-h-[24px] !px-0 text-secondary hover:text-accent-primary disabled:text-controls-disable"
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
@@ -97,7 +110,8 @@ export const SendMessageButton = Inversify.register(
           isTriggerClickable: true,
           triggerClassName: classNames(
             'absolute max-h-[24px]',
-            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+            isOverlay ? 'bottom-2' : 'bottom-2.5 md:bottom-3',
+            rightClass,
           ),
         }}
         iconBefore={
