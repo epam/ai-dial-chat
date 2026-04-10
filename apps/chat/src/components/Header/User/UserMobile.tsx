@@ -36,7 +36,9 @@ const UserInfo = () => {
       <div className="flex items-start gap-2">
         <UserIcon className="mx-2" />
 
-        <span className='break-words self-center' data-qa="username">{session?.user?.name ?? ''}</span>
+        <span className="self-center break-words" data-qa="username">
+          {session?.user?.name ?? ''}
+        </span>
       </div>
     </div>
   );
