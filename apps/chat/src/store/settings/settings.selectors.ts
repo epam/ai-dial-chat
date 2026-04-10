@@ -263,6 +263,8 @@ const selectHiddenEntityTag = (state: RootState) =>
 const selectStageContentLimit = (state: RootState) =>
   rootSelector(state).stageContentLimit;
 
+const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -301,4 +303,5 @@ export const SettingsSelectors = {
   selectAttachmentsSettings,
   selectHiddenEntityTag,
   selectStageContentLimit,
+  selectAsrModelId,
 };
