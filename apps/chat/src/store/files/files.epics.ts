@@ -981,7 +981,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate(FilesI18nKeys.FileNameVerbFromFolder, {
+            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
