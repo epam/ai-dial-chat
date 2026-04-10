@@ -428,11 +428,7 @@ export const FileManagerModal = memo(
               onClick={handleAttachFiles}
               label={customButtonLabel ?? t(ChatI18nKeys.Attach)}
               disabled={
-                (selectedFilesIds.length === 0 &&
-                  selectedFolderIds.length === 0) ||
-                isAnyOperationInProgress ||
-                areFilesLoading ||
-                areFoldersLoading
+                selectedFilesIds.length === 0 && selectedFolderIds.length === 0
               }
             />
           </div>
