@@ -13,4 +13,6 @@ export interface ChatState {
   notAvailableEntityType?: EntityType;
   infoModalState: ModalState;
   selectedEntityInfo?: EntityInfo;
+  isTranscribing: boolean;
+  isAsrFlowActive: boolean;
 }

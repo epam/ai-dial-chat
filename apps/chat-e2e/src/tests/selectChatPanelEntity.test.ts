@@ -1700,6 +1700,16 @@ dialTest(
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await chatBarFolderAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedConversationName,
+              index: twoNestedLevels - i,
+            },
+            'hidden',
+          );
+        }
         await chatBarSearch.setSearchValue('');
 
         await chatBarFolderAssertion.assertFolderEntityState(
