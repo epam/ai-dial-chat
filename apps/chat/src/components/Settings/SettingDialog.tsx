@@ -183,7 +183,7 @@ const SettingDialogView: FC = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[515px] md:p-6"
+      containerClassName="flex flex-col w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[531px] md:p-6"
       dataQa="settings-modal"
       state={ModalState.OPENED}
       onClose={handleClose}
@@ -241,7 +241,7 @@ const SettingDialogView: FC = () => {
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-4">
         <DialPrimaryButton
           label={t(SettingsI18nKeys.Save)}
           onClick={handleSave}
