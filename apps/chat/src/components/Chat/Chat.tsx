@@ -649,11 +649,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
 
   return (
     <ChatDropArea isSettingsModalOpen={isShowChatSettings}>
-      <div
-        className="relative size-full min-w-0 overflow-y-auto"
-        data-qa="chat"
-        id="chat"
-      >
+      <div className="relative size-full" data-qa="chat" id="chat">
         {modelError ? (
           <ErrorMessageDiv error={modelError} />
         ) : customViewer ? (
