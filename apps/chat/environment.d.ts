@@ -57,6 +57,8 @@ declare global {
       WIDGETS_SCHEMA_IDS?: string;
       NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
 
+      ASR_MODEL?: string;
+
       ATTACHMENT_TYPES_EXPANDED?: string;
       ATTACHMENT_TYPES_BORDERLESS?: string;
       ATTACHMENT_TYPES_WITHOUT_TITLE?: string;

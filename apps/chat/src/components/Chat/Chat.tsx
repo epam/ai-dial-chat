@@ -121,6 +121,9 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isAsrFlowActive = useAppSelector(ChatSelectors.selectIsAsrFlowActive);
+  const asrFlowRef = useRef(false);
+  asrFlowRef.current = isAsrFlowActive;
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -625,9 +628,13 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     );
 
   useEffect(() => {
-    if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      !asrFlowRef.current
+    ) {
       textareaRef.current?.focus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabledFeatures, selectedConversationsIds]);
 
   useEffect(() => {
@@ -642,11 +649,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
 
   return (
     <ChatDropArea isSettingsModalOpen={isShowChatSettings}>
-      <div
-        className="relative size-full min-w-0 overflow-y-auto"
-        data-qa="chat"
-        id="chat"
-      >
+      <div className="relative size-full" data-qa="chat" id="chat">
         {modelError ? (
           <ErrorMessageDiv error={modelError} />
         ) : customViewer ? (

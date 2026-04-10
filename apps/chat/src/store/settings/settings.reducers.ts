@@ -25,6 +25,7 @@ const initialState: SettingsState = {
   topics: [],
   codeEditorPythonVersions: [],
   providerId: null,
+  asrModelId: null,
   initialDataStatus: UploadStatus.UNINITIALIZED,
   attachmentsSettings: {
     expandedTypes: [],
