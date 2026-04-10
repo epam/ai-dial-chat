@@ -406,6 +406,7 @@ export const FileManagerModal = memo(
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
               hideSearchPathItemName
+              autoSelectUploadedItems
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
@@ -428,7 +429,11 @@ export const FileManagerModal = memo(
               onClick={handleAttachFiles}
               label={customButtonLabel ?? t(ChatI18nKeys.Attach)}
               disabled={
-                selectedFilesIds.length === 0 && selectedFolderIds.length === 0
+                (selectedFilesIds.length === 0 &&
+                  selectedFolderIds.length === 0) ||
+                isAnyOperationInProgress ||
+                areFilesLoading ||
+                areFoldersLoading
               }
             />
           </div>
