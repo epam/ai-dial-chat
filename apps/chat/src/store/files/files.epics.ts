@@ -981,7 +981,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
+            message: translate(FilesI18nKeys.FileNameVerbFromFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
@@ -1066,7 +1066,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
               ns: Translation.Common,
               verb: verbPast,
             }),
-            message: translate(FilesI18nKeys.FileNameVerbToFolder, {
+            message: translate(FilesI18nKeys.FileNameVerbFromFolder, {
               ns: Translation.Files,
               fileName: name,
               folder: folderPlaceholder,
