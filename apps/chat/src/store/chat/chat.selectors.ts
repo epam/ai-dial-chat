@@ -86,9 +86,17 @@ const selectSelectedEntityInfo = (state: RootState) =>
 const selectInputContentTemplateMapping = (state: RootState) =>
   rootSelector(state).inputContentTemplateMapping;
 
+const selectIsTranscribing = (state: RootState) =>
+  rootSelector(state).isTranscribing;
+
+const selectIsAsrFlowActive = (state: RootState) =>
+  rootSelector(state).isAsrFlowActive;
+
 export const ChatSelectors = {
   selectInputContent,
   selectInputContentTemplateMapping,
+  selectIsTranscribing,
+  selectIsAsrFlowActive,
   selectChatFormValue,
   selectUploadedConfigurationSchemas,
   selectConfigurationSchemaByModelId,

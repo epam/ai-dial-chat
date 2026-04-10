@@ -1,16 +1,32 @@
-import { EMPTY, catchError, concat, map, mergeMap, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  concat,
+  from,
+  map,
+  mergeMap,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
-import { getUserCustomContent } from '@/src/utils/app/file';
 import {
+  readBlobAsBase64,
+  sendMessage,
+} from '@/src/utils/app/epics-helpers/chat.epic-helpers';
+import { constructPath, getUserCustomContent } from '@/src/utils/app/file';
+import {
+  getFileRootId,
   isConversationId,
   isEntityIdExternal,
   isPromptId,
 } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
+import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
@@ -28,6 +44,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/selectors';
 
+import { errorsMessages } from '@/src/constants/errors';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Message, Role } from '@epam/ai-dial-shared';
@@ -72,19 +89,10 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
         },
       };
 
-      return concat(
-        of(ConversationsActions.setIsMessageSending(true)),
-        of(FilesActions.resetSelectedFiles()),
-        of(ChatActions.resetFormValue()),
-        of(ChatActions.setInputContent('')),
-        of(
-          ConversationsActions.sendMessages({
-            conversations: selectedConversations,
-            message,
-            deleteCount: 0,
-            activeReplayIndex: 0,
-          }),
-        ),
+      return sendMessage(
+        selectedConversations,
+        message,
+        ChatActions.resetFormValue(),
       );
     }),
   );
@@ -243,6 +251,130 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const handleVoiceRecordingEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ChatActions.handleVoiceRecording.type),
+    switchMap(({ payload }) => {
+      const { audioBlob, fileExtension } = payload;
+      const isAsrMode = ConversationsSelectors.selectIsAsrMode(state$.value);
+
+      if (isAsrMode) {
+        return from(readBlobAsBase64(audioBlob)).pipe(
+          switchMap((base64Data) => {
+            if (!base64Data) return EMPTY;
+            return of(
+              ChatActions.startTranscription({
+                audioData: base64Data,
+                mimeType: audioBlob.type,
+              }),
+            );
+          }),
+        );
+      }
+
+      const timestamp = Date.now();
+      const fileName = `voice-${timestamp}${fileExtension}`;
+      const file = new File([audioBlob], fileName, { type: audioBlob.type });
+
+      const folderPath = getQuickAttachmentsSavingPath();
+      const relativePath = folderPath.split('/').slice(2).join('/');
+      const fileId = constructPath(getFileRootId(), relativePath, fileName);
+
+      return concat(
+        of(
+          FilesActions.uploadFile({
+            fileContent: file,
+            id: fileId,
+            relativePath,
+            name: fileName,
+          }),
+        ),
+        of(FilesActions.selectFiles({ ids: [fileId] })),
+      );
+    }),
+  );
+
+const startTranscriptionEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ChatActions.startTranscription.type),
+    switchMap(({ payload }) => {
+      const { audioData, mimeType } = payload;
+
+      return from(
+        fetch('/api/transcribe', {
+          method: HTTPMethod.POST,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audioData, mimeType }),
+        }),
+      ).pipe(
+        switchMap((response) => {
+          if (!response.ok) {
+            return from(response.json()).pipe(
+              catchError(() => of(null)),
+              switchMap(() => of(ChatActions.transcriptionFailed())),
+            );
+          }
+          return from(response.json()).pipe(
+            switchMap((data: { transcript: string }) =>
+              of(
+                ChatActions.transcriptionSuccess({
+                  transcript: data.transcript,
+                }),
+              ),
+            ),
+          );
+        }),
+        catchError(() => of(ChatActions.transcriptionFailed())),
+      );
+    }),
+  );
+
+const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ChatActions.transcriptionSuccess.type),
+    switchMap(({ payload }) => {
+      const { transcript } = payload;
+      if (!transcript.trim()) {
+        return of(
+          UIActions.showErrorToast(
+            translate(errorsMessages.transcriptionFailed),
+          ),
+        );
+      }
+
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
+      if (!selectedConversations.length) {
+        return EMPTY;
+      }
+
+      const existingInput = ChatSelectors.selectInputContent(state$.value);
+      const combinedContent = existingInput.trim()
+        ? `${existingInput.trim()} ${transcript.trim()}`
+        : transcript.trim();
+
+      const selectedFiles = FilesSelectors.selectSelectedFiles(state$.value);
+      const selectedFolders = FilesSelectors.selectSelectedFolders(
+        state$.value,
+      );
+
+      return sendMessage(selectedConversations, {
+        role: Role.User,
+        content: combinedContent,
+        custom_content: getUserCustomContent(selectedFiles, selectedFolders),
+      });
+    }),
+  );
+
+const transcriptionFailedEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ChatActions.transcriptionFailed.type),
+    map(() =>
+      UIActions.showErrorToast(translate(errorsMessages.transcriptionFailed)),
+    ),
+  );
+
 export const ChatEpics = combineEpics(
   setFormValueEpic,
   getConfigurationSchemaEpic,
@@ -251,4 +383,8 @@ export const ChatEpics = combineEpics(
   appendInputContentEpic,
   getEntityInfoEpic,
   getEntityInfoFailEpic,
+  handleVoiceRecordingEpic,
+  startTranscriptionEpic,
+  transcriptionSuccessEpic,
+  transcriptionFailedEpic,
 );
