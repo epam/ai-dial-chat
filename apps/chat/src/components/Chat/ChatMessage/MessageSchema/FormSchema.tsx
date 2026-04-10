@@ -428,37 +428,37 @@ const PropertyRenderer = ({
   }, [name, schema]);
 
   return (
-    property.description && (
-      <div
-        className={classNames('flex flex-col gap-3 overflow-hidden', className)}
-      >
+    <div
+      className={classNames('flex flex-col gap-3 overflow-hidden', className)}
+    >
+      {property.description && (
         <p className="whitespace-pre-line text-base text-primary">
           {property.description}
         </p>
+      )}
 
-        {propertyType === FormSchemaPropertyType.Button && (
-          <ButtonsProperty
-            options={property.oneOf}
-            onClick={handleButtonClick}
-            disabled={disabled}
-            showSelected={showSelected}
-            formValue={formValue}
-            className={buttonsWrapperClassName}
-            buttonClassName={buttonClassName}
-          />
-        )}
+      {propertyType === FormSchemaPropertyType.Button && (
+        <ButtonsProperty
+          options={property.oneOf}
+          onClick={handleButtonClick}
+          disabled={disabled}
+          showSelected={showSelected}
+          formValue={formValue}
+          className={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
+        />
+      )}
 
-        {propertyType === FormSchemaPropertyType.Checkbox && (
-          <CheckboxProperty
-            options={checkboxDefinitions}
-            onClick={handleCheckboxClick}
-            disabled={disabled}
-            formValue={formValue}
-            propertyKey={name}
-          />
-        )}
-      </div>
-    )
+      {propertyType === FormSchemaPropertyType.Checkbox && (
+        <CheckboxProperty
+          options={checkboxDefinitions}
+          onClick={handleCheckboxClick}
+          disabled={disabled}
+          formValue={formValue}
+          propertyKey={name}
+        />
+      )}
+    </div>
   );
 };
 
@@ -496,25 +496,23 @@ const FormSchemaMemo = memo(function FormSchema({
   );
 
   return (
-    sortedProperties.some(([_name, property]) => !property.description) && (
-      <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
-        {sortedProperties.map(([name, property]) => (
-          <PropertyRenderer
-            property={property}
-            schema={schema}
-            name={name}
-            onChange={onChange}
-            key={name}
-            disabled={disabled}
-            showSelected={showSelected}
-            formValue={formValue}
-            buttonsWrapperClassName={buttonsWrapperClassName}
-            buttonClassName={buttonClassName}
-            className={propertyWrapperClassName}
-          />
-        ))}
-      </div>
-    )
+    <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
+      {sortedProperties.map(([name, property]) => (
+        <PropertyRenderer
+          property={property}
+          schema={schema}
+          name={name}
+          onChange={onChange}
+          key={name}
+          disabled={disabled}
+          showSelected={showSelected}
+          formValue={formValue}
+          buttonsWrapperClassName={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
+          className={propertyWrapperClassName}
+        />
+      ))}
+    </div>
   );
 });
 
