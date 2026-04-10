@@ -241,7 +241,7 @@ const SettingDialogView: FC = () => {
         )}
       </div>
 
-      <div className="flex justify-end mt-4">
+      <div className="mt-4 flex justify-end">
         <DialPrimaryButton
           label={t(SettingsI18nKeys.Save)}
           onClick={handleSave}
