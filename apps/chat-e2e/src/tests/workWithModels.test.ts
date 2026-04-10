@@ -372,8 +372,7 @@ dialTest.skip(
   },
 );
 
-//TODO: investigate tooltip absence on CI
-dialTest.skip(
+dialTest(
   'Stop generating for models like GPT (1 symbol = 1 token).\n' +
     'Model: Send action is unavailable if there is empty response.\n' +
     'Edit the message after the response was stopped',
@@ -429,7 +428,7 @@ dialTest.skip(
           'visible',
         );
         await baseAssertion.assertElementState(
-          sendMessage.regenerateIcon,
+          sendMessage.regenerate,
           'visible',
         );
       },
@@ -438,7 +437,9 @@ dialTest.skip(
     await dialTest.step(
       'Hover over Send button and verify it is disabled and tooltip is shown',
       async () => {
-        await sendMessage.regenerateIcon.hoverOver();
+        //need to change focus to verify tooltip in the request textarea
+        await chatMessages.regenerate.hoverOver();
+        await sendMessage.regenerate.hoverOver();
         await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.regenerateResponseTooltip,
         );
