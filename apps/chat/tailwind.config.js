@@ -26,6 +26,7 @@ const commonBgColors = {
 
 const commonBorderColors = {
   transparent: 'transparent',
+  current: 'currentColor',
   primary: 'var(--stroke-primary, #696E7C)',
   secondary: 'var(--stroke-secondary, #1D2439)',
   tertiary: 'var(--stroke-tertiary, #0C101D)',
