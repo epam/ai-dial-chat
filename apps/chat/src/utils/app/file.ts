@@ -24,6 +24,7 @@ import {
   BYTES_IN_MB,
   FALLBACK_CONTENT_TYPE,
   MAX_FILE_SIZE_IN_BYTES,
+  TEMP_FILE_NAME_IN_FILE_MANAGER,
 } from '@/src/constants/file';
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
@@ -153,7 +154,9 @@ export const getDialFilesWithInvalidFileType = (
   return allowedFileTypes.includes('*/*')
     ? []
     : files.filter(
-        (file) => !isAllowedMimeType(allowedFileTypes, file.contentType),
+        (file) =>
+          file.name !== TEMP_FILE_NAME_IN_FILE_MANAGER &&
+          !isAllowedMimeType(allowedFileTypes, file.contentType),
       );
 };
 
