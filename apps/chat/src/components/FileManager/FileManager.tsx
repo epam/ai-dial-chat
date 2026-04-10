@@ -134,7 +134,6 @@ export const FileManager: React.FC = () => {
           emptyStateTitle={emptyStateTitle}
           emptyStateDescription={emptyStateDescription}
           hideSearchPathItemName
-          autoSelectUploadedItems
         />
       )}
       {isAnyOperationInProgress && (
