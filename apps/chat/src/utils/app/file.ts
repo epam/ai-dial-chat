@@ -24,6 +24,7 @@ import {
   BYTES_IN_MB,
   FALLBACK_CONTENT_TYPE,
   MAX_FILE_SIZE_IN_BYTES,
+  TEMP_FILE_NAME_IN_FILE_MANAGER,
 } from '@/src/constants/file';
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
@@ -45,7 +46,6 @@ import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import { extensions, lookup } from 'mime-types';
 
-const tempFileName = '.dial_folder';
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
   link.download = name;
@@ -155,7 +155,7 @@ export const getDialFilesWithInvalidFileType = (
     ? []
     : files.filter(
         (file) =>
-          file.name !== tempFileName &&
+          file.name !== TEMP_FILE_NAME_IN_FILE_MANAGER &&
           !isAllowedMimeType(allowedFileTypes, file.contentType),
       );
 };
