@@ -427,40 +427,43 @@ const PropertyRenderer = ({
     return getFormCheckboxDefinitionOptions(schema, name);
   }, [name, schema]);
 
+  if (
+    !property.description &&
+    propertyType !== FormSchemaPropertyType.Button &&
+    propertyType !== FormSchemaPropertyType.Checkbox
+  )
+    return null;
+
   return (
-    (property.description ||
-      propertyType === FormSchemaPropertyType.Button ||
-      propertyType === FormSchemaPropertyType.Checkbox) && (
-      <div
-        className={classNames('flex flex-col gap-3 overflow-hidden', className)}
-      >
-        <p className="whitespace-pre-line text-base text-primary">
-          {property.description}
-        </p>
+    <div
+      className={classNames('flex flex-col gap-3 overflow-hidden', className)}
+    >
+      <p className="whitespace-pre-line text-base text-primary">
+        {property.description}
+      </p>
 
-        {propertyType === FormSchemaPropertyType.Button && (
-          <ButtonsProperty
-            options={property.oneOf}
-            onClick={handleButtonClick}
-            disabled={disabled}
-            showSelected={showSelected}
-            formValue={formValue}
-            className={buttonsWrapperClassName}
-            buttonClassName={buttonClassName}
-          />
-        )}
+      {propertyType === FormSchemaPropertyType.Button && (
+        <ButtonsProperty
+          options={property.oneOf}
+          onClick={handleButtonClick}
+          disabled={disabled}
+          showSelected={showSelected}
+          formValue={formValue}
+          className={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
+        />
+      )}
 
-        {propertyType === FormSchemaPropertyType.Checkbox && (
-          <CheckboxProperty
-            options={checkboxDefinitions}
-            onClick={handleCheckboxClick}
-            disabled={disabled}
-            formValue={formValue}
-            propertyKey={name}
-          />
-        )}
-      </div>
-    )
+      {propertyType === FormSchemaPropertyType.Checkbox && (
+        <CheckboxProperty
+          options={checkboxDefinitions}
+          onClick={handleCheckboxClick}
+          disabled={disabled}
+          formValue={formValue}
+          propertyKey={name}
+        />
+      )}
+    </div>
   );
 };
 
