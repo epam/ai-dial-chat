@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -33,6 +33,8 @@ interface FilterComponentProps {
   publication: Publication;
   isRulesLoading: boolean;
   editedPublishToUrl: string;
+  isRulesSetterVisible: boolean;
+  onRulesSetterOpenChange: (visible: boolean) => void;
 }
 
 const showNoRulesLabel = (
@@ -57,6 +59,8 @@ function PublicationFiltersView({
   publication,
   isRulesLoading,
   editedPublishToUrl,
+  isRulesSetterVisible,
+  onRulesSetterOpenChange,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -64,8 +68,6 @@ function PublicationFiltersView({
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-
-  const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
   const { setValue } = useFormContext<PublicationRequestFormData>();
 
@@ -142,7 +144,7 @@ function PublicationFiltersView({
             isOpen={isRulesSetterVisible}
             filters={filters}
             setFilters={handleFilterUpdate}
-            onSwitchRulesSetter={setIsRulesSetterVisible}
+            onSwitchRulesSetter={onRulesSetterOpenChange}
           />
         </>
       )}
