@@ -162,6 +162,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
+  const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t(ChatI18nKeys.Unknown);
@@ -584,6 +585,8 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       newRules={newRules}
                       publication={publication}
                       editedPublishToUrl={editedPublishToUrl}
+                      isRulesSetterVisible={isRulesSetterVisible}
+                      onRulesSetterOpenChange={setIsRulesSetterVisible}
                       error={
                         formMethods.formState.errors.rules
                           ? t(ChatI18nKeys.PleaseFixRulesToProceed)
@@ -716,6 +719,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             isFormChanged={isFormChanged}
             areRulesChanged={hasUserChangedRules}
             initialState={initialState}
+            isDraftRuleFilterOpen={isRulesSetterVisible}
           />
         </div>
         {isCompareModalOpened && publication.targetFolder && (
