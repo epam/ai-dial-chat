@@ -406,6 +406,7 @@ export const FileManagerModal = memo(
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
               hideSearchPathItemName
+              autoSelectUploadedItems
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">

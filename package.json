@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "^0.9.0-rc.25",
+    "@epam/ai-dial-ui-kit": "^0.9.0-rc.28",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
@@ -78,7 +78,7 @@
     "mime-types": "^2.1.35",
     "monaco-editor": "0.54.0",
     "nanoid": "^5.1.5",
-    "next": "16.1.7",
+    "next": "16.2.3",
     "next-auth": "4.24.12",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
