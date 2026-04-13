@@ -371,6 +371,7 @@ export const ExpectedConstants = {
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
   failedToMoveFileMessage: 'Failed to move files. Please try again later.',
+  failedToDeleteFilesMessage: 'Failed to delete files. Please try again later.',
   uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
   uploadFailedMessage:
     'Upload failedPlease check your internet connection and try again.',

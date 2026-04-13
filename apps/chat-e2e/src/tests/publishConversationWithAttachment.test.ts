@@ -20,10 +20,10 @@ import {
   ItemUtil,
   ModelsUtil,
 } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let modelWithInputAttachments: DialAIEntityModel;
-const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
   modelWithInputAttachments = GeneratorUtil.randomArrayElement(
@@ -174,7 +174,6 @@ dialAdminTest(
           publishingRequestDialog,
           'hidden',
         );
-        publicationsToUnpublish.push(publishApiModels.response);
       },
     );
 
@@ -441,10 +440,6 @@ dialAdminTest(
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    let publishApiModels: {
-      request: PublicationRequestModel;
-      response: Publication;
-    };
     const chatResponseIndex = 2;
 
     await dialTest.step(
@@ -486,13 +481,11 @@ dialAdminTest(
       'Set publication request name and submit the request',
       async () => {
         await publishingRequestDialog.requestName.fillInInput(requestName);
-        publishApiModels =
-          await publishingRequestDialog.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
           publishingRequestDialog,
           'hidden',
         );
-        publicationsToUnpublish.push(publishApiModels.response);
       },
     );
 
@@ -706,12 +699,138 @@ dialAdminTest(
   },
 );
 
-dialTest.afterAll(
-  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-    for (const publication of publicationsToUnpublish) {
-      const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
+dialAdminTest.only(
+  'File Manager: Organization: the files appear in Organization root if user publishes the chat with attachment.\n' +
+    "Organization: it's forbidden to delete single or multiple files.",
+  async ({
+    setTestIds,
+    conversationData,
+    dataInjector,
+    publishRequestBuilder,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    fileApiHelper,
+    adminFileManagerPage,
+    adminFileManagerToolbar,
+    adminFileManagerGrid,
+    adminFileManagerGridAssertion,
+    baseAssertion,
+    adminLocalStorageManager,
+  }) => {
+    dialAdminTest.slow();
+    setTestIds('EPMRTC-4195', 'EPMRTC-4177');
+
+    const folderPath = GeneratorUtil.randomString(5);
+    let imageInRootUrl: string;
+    let imageInFolderUrl: string;
+
+    await dialAdminTest.step(
+      'Upload files, create conversation with both attachments, publish and admin-approve via API',
+      async () => {
+        imageInRootUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+        imageInFolderUrl = await fileApiHelper.putFile(
+          Attachment.flowerImageName,
+          { parentPath: folderPath },
+        );
+
+        const conversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            modelWithInputAttachments,
+            true,
+            undefined,
+            imageInRootUrl,
+            imageInFolderUrl,
+          );
+        conversationData.resetData();
+        await dataInjector.createConversations([conversation]);
+
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .withFileResource(imageInRootUrl, PublishActions.ADD_IF_ABSENT)
+          .withFileResource(imageInFolderUrl, PublishActions.ADD_IF_ABSENT)
+          .build();
+
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+        await adminLocalStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open File Manager Organization tab and verify both files appear in root',
+      async () => {
+        await adminFileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
+        });
+        await adminFileManagerPage.waitForPageLoaded();
+        await adminFileManagerToolbar.organizationTab.click();
+        await adminFileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await adminFileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select both Organization files and verify no Delete button in header',
+      async () => {
+        const checkbox1 = await adminFileManagerGrid.gridCheckboxByNameCell(
+          Attachment.sunImageName,
+        );
+        await checkbox1.click();
+        const checkbox2 = await adminFileManagerGrid.gridCheckboxByNameCell(
+          Attachment.flowerImageName,
+        );
+        await checkbox2.click();
+
+        await baseAssertion.assertElementState(
+          adminFileManagerToolbar.getSelectedIconsButton(2),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          adminFileManagerToolbar.getDeleteButton(),
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Deselect items using the counter button in header',
+      async () => {
+        await adminFileManagerToolbar.getSelectedIconsButton(2).click();
+        await baseAssertion.assertElementState(
+          adminFileManagerToolbar.getSelectedIconsButton(2),
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open context menu for Organization file and verify Delete option is absent',
+      async () => {
+        const dotsMenu = await adminFileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await adminFileManagerGrid
+          .gridRowByNameCell(Attachment.sunImageName)
+          .hover();
+        await dotsMenu.click();
+        const rowDropdownMenu = adminFileManagerGrid.getRowDropdownMenu();
+        await baseAssertion.assertElementState(
+          rowDropdownMenu.dropdownItemByName(MenuOptions.delete),
+          'hidden',
+        );
+      },
+    );
   },
 );

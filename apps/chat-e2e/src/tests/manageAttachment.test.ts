@@ -343,7 +343,7 @@ dialTest(
 );
 
 dialTest(
-  '[Manage attachments] Delete file after there was internet connection error',
+  '[Manage attachments] Upload file after there was internet connection error',
   async ({
     dialHomePage,
     setTestIds,
@@ -401,6 +401,89 @@ dialTest(
               .getNewButtonDropdownMenu()
               .selectItem(UploadMenuOptions.uploadFiles),
         );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager][My Files] Delete file after there was internet connection error',
+  async ({
+    dialHomePage,
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerDeleteItemConfirmationPopup,
+    fileManagerGridAssertion,
+    toastAssertion,
+  }) => {
+    setTestIds('EPMRTC-8176');
+    let client: CDPSession;
+
+    await dialTest.step('Upload file to app via API', async () => {
+      await fileApiHelper.putFile(Attachment.sunImageName);
+    });
+
+    await dialTest.step(
+      'Open "File Manager" page and set offline mode',
+      async () => {
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        client = await dialHomePage.emulateSlowNetworkConditions({
+          offline: true,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Open file context menu and select Delete option',
+      async () => {
+        const fileRow = fileManagerGrid.gridRowByNameCell(
+          Attachment.sunImageName,
+        );
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await fileRow.hover();
+        await dotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
+          isHttpMethodTriggered: false,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Confirm delete and verify error toast is shown',
+      async () => {
+        await fileManagerDeleteItemConfirmationPopup.getConfirmButton().click();
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.failedToDeleteFilesMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify file is not deleted and restore network connection',
+      async () => {
+        await dialHomePage.stopNetworkConditionsEmulating(client);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Reload page and verify file is not deleted',
+      async () => {
+        await dialHomePage.reloadPage();
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',
@@ -636,6 +719,125 @@ dialTest(
         },
       );
     }
+  },
+);
+
+dialTest(
+  '[File Manager][My Files]: files from hidden folders are displayed in search results when Hidden files toggle is on',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGridAssertion,
+    fileManagerNavigationPanel,
+    fileManagerToolbar,
+  }) => {
+    setTestIds('EPMRTC-8130');
+
+    const visibleFolder = 'Folder1';
+    const hiddenFolder = '.Folder2';
+    const hiddenFileInVisibleFolder = '.Search1.txt';
+    const visibleFileInVisibleFolder = 'Search2.txt';
+    const hiddenFileInHiddenFolder = '.Search3.txt';
+    const visibleFileInHiddenFolder = 'Search4.txt';
+    const searchTerm = 'Search';
+
+    await dialTest.step('Upload test files via API', async () => {
+      await fileApiHelper.putStringAsFile(
+        visibleFileInVisibleFolder,
+        'content',
+        { parentPath: visibleFolder },
+      );
+      await fileApiHelper.putStringAsFile(
+        hiddenFileInVisibleFolder,
+        'content',
+        { parentPath: visibleFolder },
+      );
+      await fileApiHelper.putStringAsFile(
+        visibleFileInHiddenFolder,
+        'content',
+        { parentPath: hiddenFolder },
+      );
+      await fileApiHelper.putStringAsFile(hiddenFileInHiddenFolder, 'content', {
+        parentPath: hiddenFolder,
+      });
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Search "Search" and verify only visible file in visible folder is shown',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput(searchTerm);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInVisibleFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInHiddenFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInHiddenFolder,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Turn on Hidden files toggle and verify all 4 files are shown',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInHiddenFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInHiddenFolder,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Turn off Hidden files toggle and verify only visible file in visible folder is shown',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInVisibleFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInHiddenFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInHiddenFolder,
+          'hidden',
+        );
+      },
+    );
   },
 );
 
