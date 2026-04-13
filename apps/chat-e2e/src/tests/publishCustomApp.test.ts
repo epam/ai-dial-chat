@@ -37,6 +37,8 @@ dialAdminTest(
       adminNavigationPanel,
       adminFileManagerGridAssertion,
       adminFileManagerToolbar,
+      adminFileManager,
+      adminFileManagerGrid,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
       baseAssertion,
@@ -359,6 +361,12 @@ dialAdminTest(
         );
 
         await adminNavigationPanel.goToFileManager();
+        await adminFileManager
+          .getFileManagerLoader()
+          .waitForState({ state: 'hidden' });
+        await adminFileManagerGrid.loadingIndicator.waitForState({
+          state: 'hidden',
+        });
         await adminFileManagerToolbar.organizationTab.click();
         await adminFileManagerGridAssertion.assertGridRowByNameState(
           filename,
