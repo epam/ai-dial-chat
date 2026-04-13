@@ -7,6 +7,7 @@ import {
 } from '@floating-ui/react';
 import {
   FC,
+  Fragment,
   RefObject,
   createElement,
   useLayoutEffect,
@@ -80,6 +81,11 @@ interface Props<T> {
   handleError?: () => void;
   handleClearError?: () => void;
   dataQa?: string;
+  /** When set, merged with the internal input ref (e.g. to focus programmatically). */
+  inputRef?: RefObject<HTMLInputElement | null>;
+  /** When true, shows `connectorLabel` between selected pills (not before the first). */
+  showConnectorBetweenSelectedItems?: boolean;
+  connectorLabel?: string;
 }
 
 export function MultipleComboBox<T>({
@@ -103,12 +109,22 @@ export function MultipleComboBox<T>({
   handleError,
   handleClearError,
   dataQa,
+  inputRef: inputRefProp,
+  showConnectorBetweenSelectedItems,
+  connectorLabel,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
   const [floatingWidth, setFloatingWidth] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const setInputRefs = (el: HTMLInputElement | null) => {
+    inputRef.current = el;
+    if (inputRefProp) {
+      (inputRefProp as RefObject<HTMLInputElement | null>).current = el;
+    }
+  };
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -258,47 +274,64 @@ export function MultipleComboBox<T>({
           >
             {selectedItems &&
               selectedItems.map((selectedItemForRender, index) => {
+                const showItemsConnector =
+                  showConnectorBetweenSelectedItems &&
+                  connectorLabel &&
+                  index > 0;
                 return (
-                  <Tooltip
+                  <Fragment
                     key={`selected-item-${getItemLabel(
                       selectedItemForRender,
                     )}-${index}`}
-                    tooltip={getItemLabel(selectedItemForRender).trim()}
-                    contentClassName="text-xs"
                   >
-                    <span
-                      className={classNames(
-                        'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha p-1 pr-0',
-                        itemHeightClassName ? itemHeightClassName : 'h-[24px]',
-                      )}
-                      data-qa="combobox-pill"
-                      {...getSelectedItemProps({
-                        selectedItem: selectedItemForRender,
-                        index,
-                      })}
+                    {showItemsConnector && (
+                      <span
+                        className="self-center text-xs italic text-secondary"
+                        data-qa="combobox-items-connector"
+                      >
+                        {connectorLabel}
+                      </span>
+                    )}
+                    <Tooltip
+                      tooltip={getItemLabel(selectedItemForRender).trim()}
+                      contentClassName="text-xs"
                     >
-                      {selectedItemRow ? (
-                        createElement(selectedItemRow, {
-                          item: selectedItemForRender,
-                        })
-                      ) : (
-                        <span className="max-w-[150px] truncate break-all text-xs">
-                          {getItemLabel(selectedItemForRender)}
-                        </span>
-                      )}
-                      <CloseButtonSmall
-                        data-qa={`unselect-item-${getItemValue(
-                          selectedItemForRender,
-                        )}`}
-                        disabled={disabled}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          removeSelectedItem(selectedItemForRender);
-                        }}
-                      />
-                    </span>
-                  </Tooltip>
+                      <span
+                        className={classNames(
+                          'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha p-1 pr-0',
+                          itemHeightClassName
+                            ? itemHeightClassName
+                            : 'h-[24px]',
+                        )}
+                        data-qa="combobox-pill"
+                        {...getSelectedItemProps({
+                          selectedItem: selectedItemForRender,
+                          index,
+                        })}
+                      >
+                        {selectedItemRow ? (
+                          createElement(selectedItemRow, {
+                            item: selectedItemForRender,
+                          })
+                        ) : (
+                          <span className="max-w-[150px] truncate break-all text-xs">
+                            {getItemLabel(selectedItemForRender)}
+                          </span>
+                        )}
+                        <CloseButtonSmall
+                          data-qa={`unselect-item-${getItemValue(
+                            selectedItemForRender,
+                          )}`}
+                          disabled={disabled}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            removeSelectedItem(selectedItemForRender);
+                          }}
+                        />
+                      </span>
+                    </Tooltip>
+                  </Fragment>
                 );
               })}
             <input
@@ -314,7 +347,7 @@ export function MultipleComboBox<T>({
               {...getInputProps({
                 ...getDropdownProps({
                   preventKeyAction: isOpen,
-                  ref: inputRef,
+                  ref: setInputRefs,
                 }),
               })}
               data-qa="filter-value-input"
