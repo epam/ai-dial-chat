@@ -37,8 +37,6 @@ dialAdminTest(
       adminNavigationPanel,
       adminFileManagerGridAssertion,
       adminFileManagerToolbar,
-      adminFileManager,
-      adminFileManagerGrid,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
       baseAssertion,
@@ -104,7 +102,7 @@ dialAdminTest(
     let appElement: BaseElement;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
     const updatedAuthor = GeneratorUtil.randomString(7);
-    const filename = `${GeneratorUtil.randomString(7)}.svg`;
+    const filename = GeneratorUtil.randomFilename('svg');
 
     await dialTest.step(
       'Upload a svg file with custom name via API',
@@ -361,12 +359,6 @@ dialAdminTest(
         );
 
         await adminNavigationPanel.goToFileManager();
-        await adminFileManager
-          .getFileManagerLoader()
-          .waitForState({ state: 'hidden' });
-        await adminFileManagerGrid.loadingIndicator.waitForState({
-          state: 'hidden',
-        });
         await adminFileManagerToolbar.organizationTab.click();
         await adminFileManagerGridAssertion.assertGridRowByNameState(
           filename,

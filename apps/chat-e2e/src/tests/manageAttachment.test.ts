@@ -14,7 +14,7 @@ import {
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { IconSelectors } from '@/src/ui/selectors';
 import { Checkbox, Tab } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil, filenamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
@@ -422,7 +422,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2015', 'EPMRTC-3187');
-    const filename = `${ExpectedConstants.allowedSpecialChars}.jpg`;
+    const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.jpg`;
 
     await dialTest.step(
       'Upload file with special symbols in the name',
@@ -535,7 +535,7 @@ dialTest(
     setTestIds('EPMRTC-5396', 'EPMRTC-5526');
     const filesToTest = [
       {
-        name: `${GeneratorUtil.randomString(7)}.txt`,
+        name: GeneratorUtil.randomFilename('txt'),
         url: '',
         isText: true,
         folderName: '',
@@ -547,7 +547,7 @@ dialTest(
         folderName: '',
       },
       {
-        name: `${GeneratorUtil.randomString(7)}.txt`,
+        name: GeneratorUtil.randomFilename('txt'),
         url: '',
         isText: true,
         folderName: GeneratorUtil.randomString(7),
