@@ -699,7 +699,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'File Manager: Organization: the files appear in Organization root if user publishes the chat with attachment.\n' +
     "Organization: it's forbidden to delete single or multiple files.",
   async ({
