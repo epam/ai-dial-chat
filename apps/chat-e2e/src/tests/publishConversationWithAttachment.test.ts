@@ -768,7 +768,9 @@ dialAdminTest(
           getInstalledToolsets: true,
           getStyles: false,
         });
-        await adminFileManagerPage.waitForPageLoaded();
+        await adminFileManagerPage.waitForPageLoaded({
+          isGridVisible: undefined,
+        });
         await adminFileManagerToolbar.organizationTab.click();
         await adminFileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
