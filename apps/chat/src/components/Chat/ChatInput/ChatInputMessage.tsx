@@ -627,7 +627,7 @@ export const ChatInputMessage = Inversify.register(
       >
         <div
           className={classNames(
-            'relative m-0 flex max-h-[400px] min-h-[38px] w-full max-w-[768px] grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
+            'relative m-0 flex max-h-[400px] min-h-[38px] w-full max-w-screen-md grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
             isChatInputBorderEnabled && 'border border-primary',
           )}
         >
@@ -662,7 +662,7 @@ export const ChatInputMessage = Inversify.register(
               data-qa="transcribing-overlay"
             >
               <div className="flex items-center gap-2">
-                <div className="size-4 animate-spin rounded-full border-2 border-b-transparent border-l-transparent border-r-transparent border-t-current text-secondary" />
+                <div className="size-4 animate-spin rounded-full border-2 border-x-transparent border-b-transparent border-t-current text-secondary" />
                 <span className="text-sm text-secondary">
                   {t(ChatI18nKeys.TranscribingAudio).replace(/\.+$/, '')}
                   <span

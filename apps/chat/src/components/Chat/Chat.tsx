@@ -634,7 +634,6 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     ) {
       textareaRef.current?.focus();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabledFeatures, selectedConversationsIds]);
 
   useEffect(() => {
