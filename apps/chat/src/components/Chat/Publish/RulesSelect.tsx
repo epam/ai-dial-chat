@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -17,6 +17,9 @@ interface FilterTypeProps {
   onChangeFilter: (filterType: PublicationFunctions) => void;
   menuClassName?: string;
   triggerClassName?: string;
+  /** When set, menu open state is controlled by the parent. */
+  isMenuOpen?: boolean;
+  onMenuOpenChange?: (open: boolean) => void;
 }
 
 export function RulesSelect({
@@ -27,8 +30,22 @@ export function RulesSelect({
   menuClassName,
   triggerClassName,
   formattingFunction,
+  isMenuOpen,
+  onMenuOpenChange,
 }: FilterTypeProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = isMenuOpen !== undefined;
+  const menuOpen = isControlled ? isMenuOpen : internalOpen;
+
+  const handleOpenChange = useCallback(
+    (opened: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(opened);
+      }
+      onMenuOpenChange?.(opened);
+    },
+    [isControlled, onMenuOpenChange],
+  );
 
   const selectedFilterLabel = formattingFunction
     ? formattingFunction(selectedFilter)
@@ -36,13 +53,14 @@ export function RulesSelect({
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
-    setIsOpen(false);
+    handleOpenChange(false);
   };
 
   return (
     <Menu
       className={classNames('w-full grow bg-layer-3', menuClassName)}
-      onOpenChange={setIsOpen}
+      {...(isControlled ? { isMenuOpen } : {})}
+      onOpenChange={handleOpenChange}
       listClassName="rounded-none w-full"
       trigger={
         <div
@@ -57,7 +75,7 @@ export function RulesSelect({
             data-qa={`open-filter-dropdown-${id}`}
             className={classNames(
               'shrink-0 text-primary transition-all',
-              isOpen && 'rotate-180',
+              menuOpen && 'rotate-180',
             )}
             width={18}
             height={18}

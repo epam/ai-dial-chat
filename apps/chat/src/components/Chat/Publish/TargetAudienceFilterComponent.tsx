@@ -1,5 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -18,7 +18,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { SideBarI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, SideBarI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -54,10 +54,6 @@ const getPreparedFilterParams = (
   switch (filterFunction) {
     case PublicationFunctions.Regex:
       return [filterRegexParam];
-    // TODO: uncomment when it will be supported on core
-    // case PublicationFunctions.True:
-    // case PublicationFunctions.False:
-    //   return [];
     default:
       return filterParams.map((param) => param.trim());
   }
@@ -69,9 +65,6 @@ const filterFunctionValues = [
   PublicationFunctions.Contain,
   PublicationFunctions.Equal,
   PublicationFunctions.Regex,
-  // TODO: uncomment when it will be supported on core
-  // PublicationFunctions.True,
-  // PublicationFunctions.False,
 ];
 
 export function TargetAudienceFilterComponent({
@@ -79,13 +72,21 @@ export function TargetAudienceFilterComponent({
   onCloseFilter,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
+  const { t: tChat } = useTranslation(Translation.Chat);
 
-  const [filterFunction, setFilterFunction] = useState<
-    PublicationFunctions | typeof emptySelector
-  >(emptySelector);
+  const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
+    PublicationFunctions.Contain,
+  );
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
   const [selectedTarget, setSelectedTarget] = useState(emptySelector);
+  const [targetMenuOpen, setTargetMenuOpen] = useState(true);
+
+  const filterRowRef = useRef<HTMLDivElement>(null);
+  const valuesInputRef = useRef<HTMLInputElement>(null);
+  const regexInputRef = useRef<HTMLInputElement>(null);
+  const prevSelectedTargetRef = useRef(selectedTarget);
+  const isSaveBtnDisabledRef = useRef(true);
 
   const publicationFilters = useAppSelector(
     SettingsSelectors.selectPublicationFilters,
@@ -94,17 +95,14 @@ export function TargetAudienceFilterComponent({
   const handleSaveFilter = useCallback(() => {
     if (!onSaveFilter) return;
 
-    const preparedFilterParams = getPreparedFilterParams(
-      filterFunction as PublicationFunctions,
-      {
-        filterParams,
-        filterRegexParam,
-      },
-    );
+    const preparedFilterParams = getPreparedFilterParams(filterFunction, {
+      filterParams,
+      filterRegexParam,
+    });
 
     onSaveFilter({
       source: selectedTarget,
-      filterFunction: filterFunction as PublicationFunctions,
+      filterFunction,
       filterParams: preparedFilterParams,
     });
   }, [
@@ -117,17 +115,18 @@ export function TargetAudienceFilterComponent({
 
   const handleChangeTarget = useCallback((target: string) => {
     setSelectedTarget(target);
+    setTargetMenuOpen(false);
   }, []);
 
   const handleChangeFilterFunction = useCallback(
-    (filterFunction: PublicationFunctions) => {
-      setFilterFunction(filterFunction);
+    (next: PublicationFunctions) => {
+      setFilterFunction(next);
     },
     [],
   );
 
-  const handleChangeFilterParams = useCallback((filterParams: string[]) => {
-    setFilterParams(filterParams);
+  const handleChangeFilterParams = useCallback((params: string[]) => {
+    setFilterParams(params);
   }, []);
 
   const handleChangeFilterRegexParam = useCallback(
@@ -137,8 +136,7 @@ export function TargetAudienceFilterComponent({
     [],
   );
 
-  const isTargetAndFunctionSelected =
-    selectedTarget !== emptySelector && filterFunction !== emptySelector;
+  const isTargetSelected = selectedTarget !== emptySelector;
   const areSomeFilterParamSelected = filterParams.length || filterRegexParam;
   const isRegexFilledInButNotSelected = !!(
     filterRegexParam &&
@@ -151,21 +149,63 @@ export function TargetAudienceFilterComponent({
     !filterRegexParam
   );
   const isSaveBtnDisabled =
-    !isTargetAndFunctionSelected ||
+    !isTargetSelected ||
     !areSomeFilterParamSelected ||
     isRegexFilledInButNotSelected ||
     isParamsFilledInButRegexIsSelected;
 
-  // TODO: uncomment when it will be supported on core
-  // const isTrueOrFalseFilterSelected =
-  //   filterFunction === PublicationFunctions.True ||
-  //   filterFunction === PublicationFunctions.False;
-  // const isSaveBtnDisabled = isTrueOrFalseFilterSelected
-  //   ? !isTargetAndFunctionSelected
-  //   : !isTargetAndFunctionSelected ||
-  //     !areSomeFilterParamSelected ||
-  //     isRegexFilledInButNotSelected ||
-  //     isParamsFilledInButRegexIsSelected;
+  isSaveBtnDisabledRef.current = isSaveBtnDisabled;
+
+  const targetMenuControlProps =
+    selectedTarget === emptySelector
+      ? {
+          isMenuOpen: targetMenuOpen,
+          onMenuOpenChange: setTargetMenuOpen,
+        }
+      : {};
+
+  useEffect(() => {
+    const wasEmpty = prevSelectedTargetRef.current === emptySelector;
+    const nowSet = selectedTarget !== emptySelector;
+    if (wasEmpty && nowSet) {
+      queueMicrotask(() => {
+        if (filterFunction === PublicationFunctions.Regex) {
+          regexInputRef.current?.focus();
+        } else {
+          valuesInputRef.current?.focus();
+        }
+      });
+    }
+    prevSelectedTargetRef.current = selectedTarget;
+  }, [selectedTarget, filterFunction]);
+
+  useEffect(() => {
+    if (isSmallScreen()) {
+      return;
+    }
+
+    // Outside the filter row: commit if valid, otherwise discard. Clicks inside
+    // portaled dropdown lists are ignored so items stay selectable. If a menu is
+    // open but the row is incomplete, this still discards per product rules.
+    const onPointerDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement;
+      if (filterRowRef.current?.contains(el)) {
+        return;
+      }
+      if (el.closest('[data-qa="dropdown-menu"]')) {
+        return;
+      }
+      if (!isSaveBtnDisabledRef.current) {
+        handleSaveFilter();
+      } else {
+        onCloseFilter();
+      }
+    };
+
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [handleSaveFilter, onCloseFilter]);
 
   if (isSmallScreen()) {
     return (
@@ -190,6 +230,7 @@ export function TargetAudienceFilterComponent({
                 selectedFilter={selectedTarget}
                 onChangeFilter={handleChangeTarget}
                 id="targets"
+                {...targetMenuControlProps}
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -202,12 +243,10 @@ export function TargetAudienceFilterComponent({
                 filters={filterFunctionValues}
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
-                formattingFunction={(filter) => getFilterLabel(filter)}
+                formattingFunction={(fn) => getFilterLabel(fn)}
                 id="filterFns"
               />
             </div>
-            {/* TODO: uncomment when it will be supported on core */}
-            {/* {!isTrueOrFalseFilterSelected && ( */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Options)}
@@ -218,6 +257,7 @@ export function TargetAudienceFilterComponent({
                   regEx={filterRegexParam}
                   onRegExChange={handleChangeFilterRegexParam}
                   className="h-[38px] rounded border border-primary"
+                  inputRef={regexInputRef}
                 />
               ) : (
                 <MultipleComboBox
@@ -227,6 +267,9 @@ export function TargetAudienceFilterComponent({
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
                   placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
+                  inputRef={valuesInputRef}
+                  showConnectorBetweenSelectedItems
+                  connectorLabel={tChat(ChatI18nKeys.Or)}
                 />
               )}
             </div>
@@ -244,33 +287,32 @@ export function TargetAudienceFilterComponent({
   }
 
   return (
-    <div className="flex gap-px" data-qa="publish-audience-filter-selectors">
+    <div
+      ref={filterRowRef}
+      className="flex gap-px"
+      data-qa="publish-audience-filter-selectors"
+    >
       <RulesSelect
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
         onChangeFilter={handleChangeTarget}
         id="targets"
+        {...targetMenuControlProps}
       />
       <RulesSelect
         menuClassName="max-w-full italic md:max-w-[100px]"
-        // TODO: uncomment when it will be supported on core
-        // menuClassName={classNames(
-        //   'max-w-full italic',
-        //   !isTrueOrFalseFilterSelected && 'md:max-w-[100px]',
-        // )}
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
-        formattingFunction={(filter) => getFilterLabel(filter)}
+        formattingFunction={(filterType) => getFilterLabel(filterType)}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
       />
-      {/* TODO: uncomment when it will be supported on core */}
-      {/* {!isTrueOrFalseFilterSelected && */}
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
           regEx={filterRegexParam}
           onRegExChange={handleChangeFilterRegexParam}
+          inputRef={regexInputRef}
         />
       ) : (
         <MultipleComboBox
@@ -282,13 +324,24 @@ export function TargetAudienceFilterComponent({
           fontSize="text-xs"
           placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
           dataQa="filter-values-container"
+          inputRef={valuesInputRef}
+          showConnectorBetweenSelectedItems
+          connectorLabel={tChat(ChatI18nKeys.Or)}
         />
       )}
       <div className="flex min-h-[31px] gap-2 bg-layer-3 px-2 py-[3.5px]">
+        <CloseButtonSmall onClick={onCloseFilter} data-qa="cancel-filter" />
         <DialGhostIconButton
           size={ElementSize.Small}
           data-qa="save-filter"
           onClick={handleSaveFilter}
+          tooltipProps={{
+            tooltip: t(SideBarI18nKeys.AddFilter),
+            isTriggerClickable: true,
+            triggerClassName: classNames(
+              isSaveBtnDisabled && 'hover:text-controls-disable',
+            ),
+          }}
           disabled={isSaveBtnDisabled}
           icon={
             <IconCheck
@@ -299,7 +352,6 @@ export function TargetAudienceFilterComponent({
             />
           }
         />
-        <CloseButtonSmall onClick={onCloseFilter} data-qa="cancel-filter" />
       </div>
     </div>
   );
