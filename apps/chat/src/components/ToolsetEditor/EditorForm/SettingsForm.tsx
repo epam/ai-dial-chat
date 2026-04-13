@@ -10,12 +10,18 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getToolsetMcpUrl } from '@/src/utils/app/toolsets';
+
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { CommonI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
+import { CopyButton } from '@/src/components/Buttons/CopyButton';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -31,6 +37,7 @@ import { ToolsetTransportType } from '@epam/ai-dial-shared';
 
 const SelectorField = withLabel(DropdownSelector);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const CopyUrlButton = withLabel(CopyButton);
 
 const getComboBoxLabel = (item: unknown): string => item as string;
 
@@ -98,6 +105,8 @@ interface SettingsFormProps {
 export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
+  const toolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  const { dialApiHost } = useAppSelector(SettingsSelectors.selectDefaults);
   const { register, clearErrors, setValue, control } =
     useFormContext<ToolsetEditorForm>();
   const { errors } = useFormState<ToolsetEditorForm>({ control });
@@ -194,6 +203,21 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               dataQa="combobox"
             />
           )}
+        />
+      </FormSection>
+
+      <FormSection
+        title={t(CommonI18nKeys.ConnectToolset)}
+        className="px-3 pt-4 md:px-5"
+      >
+        <CopyUrlButton
+          copyContent={getToolsetMcpUrl({
+            id: toolset?.id ?? '',
+            apiHost: dialApiHost,
+          })}
+          label={t(CommonI18nKeys.CopyToolsetEndpointURL)}
+          copyLabel={t(CommonI18nKeys.CopyURL)}
+          copiedLabel={t(CommonI18nKeys.Copied)}
         />
       </FormSection>
     </div>

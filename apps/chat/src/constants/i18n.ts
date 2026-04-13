@@ -312,6 +312,10 @@ export enum CommonI18nKeys {
   AgentByThisLinkNotFound = 'Agent by this link not found',
   ToolsetByThisLinkNotFound = 'Toolset by this link not found',
   CannotFetchApplicationSchema = 'Cannot fetch application schema. Please try again later.',
+  ConnectToolset = 'Connect toolset',
+  CopyURL = 'Copy URL',
+  Copied = 'Copied ',
+  CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
 }
 
 // errors.json
