@@ -27,20 +27,18 @@ import { UserIcon } from './UserIcon';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const UserInfo = () => {
   const { data: session } = useSession();
 
   return (
-    <div className="w-full border-b border-tertiary p-2 text-primary">
-      <div className="flex h-[42px] items-center">
+    <div className="w-full border-b border-tertiary p-4 text-primary">
+      <div className="flex items-start gap-2">
         <UserIcon className="mx-2" />
 
-        <DialEllipsisTooltip
-          contentClassName="grow"
-          text={<span data-qa="username">{session?.user?.name ?? ''}</span>}
-        />
+        <span className="self-center break-words" data-qa="username">
+          {session?.user?.name ?? ''}
+        </span>
       </div>
     </div>
   );
@@ -87,7 +85,7 @@ const Logout = () => {
       >
         <IconLogout className="text-secondary" size={18} />
         <span>
-          {session ? t(HeaderI18nKeys.Login) : t(HeaderI18nKeys.Login)}
+          {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
         </span>
       </div>
       <ConfirmDialog
