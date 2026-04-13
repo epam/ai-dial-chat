@@ -10,6 +10,7 @@ import { constructPath, prepareFileName } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
+  convertToUIKitFolder,
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
@@ -64,6 +65,33 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
+
+const formatSharedPath = (path: string | undefined | null) => {
+  if (!path) return path;
+  return path.replace(/^files\/[^/]+/, 'Shared with me');
+};
+
+function extractHiddenSharedPathPart(
+  rootFolderPath: string,
+  rootItemPath: string,
+  rootItemName: string,
+): string | null {
+  if (!rootItemPath.startsWith(rootFolderPath)) {
+    return null;
+  }
+
+  const afterRoot = rootItemPath
+    .slice(rootFolderPath.length)
+    .replace(/^\/+/, '');
+
+  if (!afterRoot.endsWith(rootItemName)) {
+    return null;
+  }
+
+  const hidden = afterRoot.slice(0, afterRoot.length - rootItemName.length);
+
+  return hidden.replace(/\/$/, '') || null;
+}
 
 const newActions = {
   uploadFiles: {
@@ -123,6 +151,10 @@ export const useFileManager = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
 
+  const sharedWithMeIds = useAppSelector(
+    FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
+  );
+
   const isUploadingFiles = useAppSelector(
     FilesSelectors.selectIsUploadingFiles,
   );
@@ -179,21 +211,6 @@ export const useFileManager = ({
 
   const canWriteCurrentFolder = hasWritePermission(currentFolder?.permissions);
 
-  const searchSelector = useCallback(
-    (state: RootState) =>
-      currentPath && isSearching && !isLoadingSearchListing
-        ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
-        : [],
-    [currentPath, isSearching, isLoadingSearchListing],
-  );
-
-  const searchResults = useAppSelector(searchSelector);
-
-  const searchResultsUIKit = useMemo(
-    () => searchResults.map(convertToUIKitFile),
-    [searchResults],
-  );
-
   const [treeCollapsedState, setTreeCollapsedState] = useState<
     boolean | undefined
   >(false);
@@ -205,6 +222,44 @@ export const useFileManager = ({
     review: REVIEW_FILES_SECTION,
   });
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
+
+  const searchSelector = useCallback(
+    (state: RootState) =>
+      currentPath && isSearching && !isLoadingSearchListing
+        ? FilesSelectors.selectSearchResultsForFolder(
+            state,
+            activeTab === DialFileManagerTabs.Shared && isRootId(currentPath)
+              ? undefined
+              : currentPath,
+            activeTab === DialFileManagerTabs.Shared,
+          )
+        : { files: [], folders: [] },
+    [currentPath, isSearching, isLoadingSearchListing, activeTab],
+  );
+
+  const searchResults = useAppSelector(searchSelector);
+
+  const searchResultsUIKit = useMemo(
+    () => [
+      ...searchResults.folders.map((f) => {
+        const uiFolder = convertToUIKitFolder(f, []);
+        if (activeTab === DialFileManagerTabs.Shared) {
+          uiFolder.parentPath = formatSharedPath(uiFolder.parentPath);
+          uiFolder.folderId = formatSharedPath(uiFolder.folderId) as string;
+        }
+        return uiFolder;
+      }),
+      ...searchResults.files.map((f) => {
+        const uiFile = convertToUIKitFile(f);
+        if (activeTab === DialFileManagerTabs.Shared) {
+          uiFile.parentPath = formatSharedPath(uiFile.parentPath);
+          uiFile.folderId = formatSharedPath(uiFile.folderId) as string;
+        }
+        return uiFile;
+      }),
+    ],
+    [searchResults, activeTab],
+  );
 
   const filteredTabs = useMemo(() => {
     if (!availableTabs || !availableTabs.size) {
@@ -462,9 +517,20 @@ export const useFileManager = ({
       if (folder !== currentPath) {
         setCurrentPath(folder);
       }
-      dispatch(FilesActions.getFullListing({ folderPath: folder }));
+
+      if (activeTab === DialFileManagerTabs.Shared && isRootId(folder)) {
+        const sharedSet = new Set(sharedWithMeIds);
+        dispatch(
+          FilesActions.getFullListing({
+            folderPath: folder,
+            paths: folders.filter((f) => sharedSet.has(f.id)).map((f) => f.id),
+          }),
+        );
+      } else {
+        dispatch(FilesActions.getFullListing({ folderPath: folder }));
+      }
     },
-    [dispatch, currentPath],
+    [dispatch, currentPath, activeTab, folders, sharedWithMeIds],
   );
 
   const handleClearSearch = useCallback(() => {
@@ -552,32 +618,7 @@ export const useFileManager = ({
     };
   }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
 
-  function extractHiddenSharedPathPart(
-    rootFolderPath: string,
-    rootItemPath: string,
-    rootItemName: string,
-  ): string | null {
-    if (!rootItemPath.startsWith(rootFolderPath)) {
-      return null;
-    }
-
-    const afterRoot = rootItemPath
-      .slice(rootFolderPath.length)
-      .replace(/^\/+/, '');
-
-    if (!afterRoot.endsWith(rootItemName)) {
-      return null;
-    }
-
-    const hidden = afterRoot.slice(0, afterRoot.length - rootItemName.length);
-
-    return hidden.replace(/\/$/, '') || null;
-  }
-
-  const { navigationPanelOptions, isLocalSearch } = useMemo(() => {
-    const localSearch =
-      activeTab === DialFileManagerTabs.Shared &&
-      currentPath === rootFolder.path;
+  const navigationPanelOptions = useMemo<NavigationPanelOptions>(() => {
     const options: NavigationPanelOptions = {
       searchable: true,
     };
@@ -605,7 +646,7 @@ export const useFileManager = ({
       }
     }
 
-    return { navigationPanelOptions: options, isLocalSearch: localSearch };
+    return options;
   }, [currentPath, rootFolder, activeTab]);
 
   const gridOptions: GridOptions = useMemo(
@@ -903,10 +944,6 @@ export const useFileManager = ({
     [t],
   );
 
-  const sharedWithMeIds = useAppSelector(
-    FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
-  );
-
   const emptyStateTitle = useMemo(() => {
     switch (activeTab) {
       case DialFileManagerTabs.Shared:
@@ -954,7 +991,7 @@ export const useFileManager = ({
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
 
-    handleSearchFiles: isLocalSearch ? undefined : handleSearchFiles,
+    handleSearchFiles,
     handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
