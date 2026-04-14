@@ -266,30 +266,31 @@ const selectIsSearchListingLoaded = createSelector(
 const selectSearchResultsForFolder = createSelector(
   [
     selectFiles,
+    selectFolders,
     (_state: RootState, folderPath?: string) => folderPath,
-    (_state: RootState, _folder, searchTerm?: string) => searchTerm,
+    (_state: RootState, _folder, isSharedFilter?: boolean) => isSharedFilter,
   ],
-  (files, folderPath, searchTerm) => {
+  (files, folders, folderPath, isSharedFilter) => {
     let filteredFiles = files;
+    let filteredFolders = folders;
 
-    if (folderPath) {
+    if (isSharedFilter && !folderPath) {
+      filteredFiles = filteredFiles.filter((file) => file.sharedWithMe);
+      filteredFolders = filteredFolders.filter((folder) => folder.sharedWithMe);
+    } else if (folderPath) {
       filteredFiles = filteredFiles.filter(
         (file) =>
           file.folderId === folderPath ||
           file.folderId?.startsWith(`${folderPath}/`),
       );
-    }
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filteredFiles = filteredFiles.filter(
-        (file) =>
-          file.name.toLowerCase().includes(term) ||
-          file.relativePath?.toLowerCase().includes(term),
+      filteredFolders = filteredFolders.filter(
+        (folder) =>
+          folder.folderId === folderPath ||
+          folder.folderId?.startsWith(`${folderPath}/`),
       );
     }
 
-    return filteredFiles;
+    return { files: filteredFiles, folders: filteredFolders };
   },
 );
 
