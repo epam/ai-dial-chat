@@ -10,7 +10,7 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationsUtil, GeneratorUtil, UserUtil } from '@/src/utils';
 
@@ -258,7 +258,7 @@ dialAdminTest(
         await entityDetailsModalAssertion.assertElementAttribute(
           adminEntityDetailsModal.openInNewTabButton,
           Attributes.target,
-          Attributes.blank,
+          AttributeValues.blank,
         );
       },
     );
