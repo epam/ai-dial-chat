@@ -68,7 +68,7 @@ import groupBy from 'lodash-es/groupBy';
 
 const formatSharedPath = (path: string | undefined | null) => {
   if (!path) return path;
-  return path.replace(/^files\/[^/]+/, 'Shared with me');
+  return path.replace(/^files\/[^/]+/, SHARED_WITH_ME_FILES_SECTION);
 };
 
 function extractHiddenSharedPathPart(
