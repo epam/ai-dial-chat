@@ -17,7 +17,13 @@ import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, Cursors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement } from '@/src/ui/webElements';
-import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
+import {
+  DateUtil,
+  GeneratorUtil,
+  SortingUtil,
+  UserUtil,
+  filenamePrefix,
+} from '@/src/utils';
 import {
   Toolset,
   ToolsetAuthTypes,
@@ -88,7 +94,7 @@ dialTest(
       author: UserUtil.getE2EUsername(testInfo.parallelIndex),
     };
 
-    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.svg`;
     const iconUrl = await fileApiHelper.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,

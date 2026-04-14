@@ -3,7 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { EntityEditorAppTypes, ExpectedConstants } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationsUtil, GeneratorUtil } from '@/src/utils';
 
@@ -125,7 +125,7 @@ dialSharedWithMeTest(
       await additionalShareUserEntityDetailsModalAssertion.assertElementAttribute(
         additionalShareUserEntityDetailsModal.openInNewTabButton,
         Attributes.target,
-        Attributes.blank,
+        AttributeValues.blank,
       );
     });
 

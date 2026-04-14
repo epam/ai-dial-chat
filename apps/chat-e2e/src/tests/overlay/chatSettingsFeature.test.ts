@@ -283,7 +283,7 @@ dialOverlayTest(
           'visible',
         );
         await overlayChatMessagesAssertion.assertElementState(
-          overlayChatMessages.messageCopyIcon(2),
+          overlayChatMessages.messageCopyTextButton(2),
           'visible',
         );
         await overlayChatMessagesAssertion.assertElementState(

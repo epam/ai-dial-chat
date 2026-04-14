@@ -6,7 +6,9 @@ import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Role } from '@epam/ai-dial-shared';
 import { Locator, expect } from '@playwright/test';
+import { markdownToTxt } from 'markdown-to-txt';
 
 const expectedChatMessageIndex = 2;
 
@@ -19,19 +21,28 @@ dialTest(
   'Check md table in response.\n' +
     'Copy md table as CSV.\n' +
     'Copy md table as TXT.\n' +
-    'Copy md table as MD',
+    'Copy md table as MD.\n' +
+    `[Markdown] Copy the whole MD answer using 'Copy text' button.\n` +
+    `[Markdown] Copy the whole MD answer using 'Copy markdown' button`,
   async ({
     dialHomePage,
     setTestIds,
     chatMessages,
-    tooltip,
-    sendMessage,
+    tooltipAssertion,
     localStorageManager,
     conversationData,
     dataInjector,
     conversations,
+    chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-1153', 'EPMRTC-3124', 'EPMRTC-3125', 'EPMRTC-3126');
+    setTestIds(
+      'EPMRTC-1153',
+      'EPMRTC-3124',
+      'EPMRTC-3125',
+      'EPMRTC-3126',
+      'EPMRTC-8314',
+      'EPMRTC-8315',
+    );
     let theme: string;
     let tableConversation: Conversation;
     let copyAsCsvIcon: Locator;
@@ -45,7 +56,7 @@ dialTest(
       ExpectedConstants.copyTableTooltip(CopyTableType.TXT),
       ExpectedConstants.copyTableTooltip(CopyTableType.MD),
     ];
-    const expectedCopiedContent = [
+    const expectedCopiedTableContent = [
       '"Country","Capital"\n' +
         '"Canada","Ottawa"\n' +
         '"United States","Washington, D.C."',
@@ -57,6 +68,7 @@ dialTest(
         '| Canada | Ottawa |\n' +
         '| United States | Washington, D.C. |',
     ];
+    let expectedResponseMdContent: string;
 
     await dialTest.step('Set random application theme', async () => {
       theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
@@ -70,6 +82,9 @@ dialTest(
         tableConversation =
           conversationData.prepareConversationWithMdTableContent();
         await dataInjector.createConversations([tableConversation]);
+        expectedResponseMdContent = tableConversation.messages.find(
+          (m) => m.role === Role.Assistant,
+        )!.content;
       },
     );
 
@@ -79,86 +94,68 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(tableConversation.name);
-        await expect
-          .soft(
-            chatMessages.getChatMessageTable(expectedChatMessageIndex),
-            ExpectedMessages.tableIsVisible,
-          )
-          .toBeVisible();
-
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageTable(expectedChatMessageIndex),
+          'visible',
+          ExpectedMessages.tableIsVisible,
+        );
         copyAsCsvIcon = chatMessages.getChatMessageTableCopyAsCsvIcon(
           expectedChatMessageIndex,
         );
-        await expect
-          .soft(copyAsCsvIcon, ExpectedMessages.tableCopyAsCsvIconIsVisible)
-          .toBeVisible();
+        await chatMessagesAssertion.assertElementState(
+          copyAsCsvIcon,
+          'visible',
+          ExpectedMessages.tableCopyAsCsvIconIsVisible,
+        );
 
         copyAsTxtIcon = chatMessages.getChatMessageTableCopyAsTxtIcon(
           expectedChatMessageIndex,
         );
-        await expect
-          .soft(copyAsTxtIcon, ExpectedMessages.tableCopyAsTxtIconIsVisible)
-          .toBeVisible();
+        await chatMessagesAssertion.assertElementState(
+          copyAsTxtIcon,
+          'visible',
+          ExpectedMessages.tableCopyAsTxtIconIsVisible,
+        );
 
         copyAsMdIcon = chatMessages.getChatMessageTableCopyAsMdIcon(
           expectedChatMessageIndex,
         );
-        await expect
-          .soft(copyAsMdIcon, ExpectedMessages.tableCopyAsMdIconIsVisible)
-          .toBeVisible();
-        expect
-          .soft(
-            await chatMessages.getChatMessageTableHeaderColumnsCount(
-              expectedChatMessageIndex,
-            ),
-            ExpectedMessages.tableColumnsCountIsValid,
-          )
-          .toBe(expectedTableDimensions);
-        expect
-          .soft(
-            await chatMessages.getChatMessageTableRowsCount(
-              expectedChatMessageIndex,
-            ),
-            ExpectedMessages.tableRowsCountIsValid,
-          )
-          .toBe(expectedTableDimensions * expectedTableDimensions);
+        await chatMessagesAssertion.assertElementState(
+          copyAsMdIcon,
+          'visible',
+          ExpectedMessages.tableCopyAsMdIconIsVisible,
+        );
+
+        await chatMessagesAssertion.assertElementsCount(
+          chatMessages.getChatMessageTableHeaderColumns(
+            expectedChatMessageIndex,
+          ),
+          expectedTableDimensions,
+          ExpectedMessages.tableColumnsCountIsValid,
+        );
+        await chatMessagesAssertion.assertElementsCount(
+          chatMessages.getChatMessageTableRows(expectedChatMessageIndex),
+          expectedTableDimensions * expectedTableDimensions,
+          ExpectedMessages.tableRowsCountIsValid,
+        );
       },
     );
 
     await dialTest.step(
       'Verify table rows background color is correct',
       async () => {
-        const tableHeaderBackgroundColor =
-          await chatMessages.getChatMessageTableHeadersBackgroundColor(
-            expectedChatMessageIndex,
-          );
-        expect
-          .soft(
-            tableHeaderBackgroundColor[0],
-            ExpectedMessages.tableEntityBackgroundColorIsValid,
-          )
-          .toBe(
-            ThemesUtil.getRgbColorByKey(
-              ThemeColorAttributes.bgLayer4,
-              theme as ThemeId,
-            ),
-          );
-
-        const tableRowBackgroundColor =
-          await chatMessages.getChatMessageTableRowsBackgroundColor(
-            expectedChatMessageIndex,
-          );
-        expect
-          .soft(
-            tableRowBackgroundColor[0],
-            ExpectedMessages.tableEntityBackgroundColorIsValid,
-          )
-          .toBe(
-            ThemesUtil.getRgbColorByKey(
-              ThemeColorAttributes.bgLayer3,
-              theme as ThemeId,
-            ),
-          );
+        await chatMessagesAssertion.assertElementBackgroundColors(
+          chatMessages
+            .getChatMessageTableHeaderColumns(expectedChatMessageIndex)
+            .first(),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4, theme),
+        );
+        await chatMessagesAssertion.assertElementBackgroundColors(
+          chatMessages
+            .getChatMessageTableRows(expectedChatMessageIndex)
+            .first(),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer3, theme),
+        );
       },
     );
 
@@ -168,29 +165,43 @@ dialTest(
         copyIcons = [copyAsCsvIcon, copyAsTxtIcon, copyAsMdIcon];
         for (let i = 0; i < copyIcons.length; i++) {
           await copyIcons[i].hover();
-          await expect
-            .soft(
-              tooltip.getElementLocator(),
-              ExpectedMessages.tableControlTooltipIsVisible,
-            )
-            .toBeVisible();
-          expect
-            .soft(
-              await tooltip.getContent(),
-              ExpectedMessages.tooltipContentIsValid,
-            )
-            .toBe(expectedCopyIconTooltips[i]);
+          await tooltipAssertion.assertTooltipContent(
+            expectedCopyIconTooltips[i],
+          );
 
           await copyIcons[i].click();
-          await sendMessage.pasteDataIntoMessageInput();
-          expect
-            .soft(
-              await sendMessage.getMessage(),
-              ExpectedMessages.copiedContentIsValid,
-            )
-            .toBe(expectedCopiedContent[i]);
-          await sendMessage.clearMessageInput();
+          chatMessagesAssertion.assertCopiedMessage(
+            await dialHomePage.readTextFromClipboard(),
+            expectedCopiedTableContent[i],
+          );
         }
+      },
+    );
+
+    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6235
+    await dialTest.step.skip(
+      `Click on 'Copy text' btn and verify the response is copied without markdown`,
+      async () => {
+        await chatMessages
+          .messageCopyTextButton(expectedChatMessageIndex)
+          .click();
+        chatMessagesAssertion.assertCopiedMessage(
+          await dialHomePage.readTextFromClipboard(),
+          markdownToTxt(expectedResponseMdContent),
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Click on 'Copy markdown' btn and verify the response is copied with markdown`,
+      async () => {
+        await chatMessages
+          .messageCopyMarkdownButton(expectedChatMessageIndex)
+          .click();
+        chatMessagesAssertion.assertCopiedMessage(
+          await dialHomePage.readTextFromClipboard(),
+          expectedResponseMdContent,
+        );
       },
     );
   },
