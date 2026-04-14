@@ -1,6 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
-import { AttributeValues } from '@/src/ui/domData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
 import { Locator, expect } from '@playwright/test';
 
@@ -200,5 +200,32 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expectedState === 'visible'
       ? await this.assertEntityIcon(imgLocator)
       : await this.assertElementState(imgLocator, expectedState);
+  }
+
+  public async assertMessageImageLoaded(message: number) {
+    await this.assertEntityIcon(this.chatMessages.getChatMessageImage(message));
+  }
+
+  public async assertMessageImageLink(
+    message: number,
+    expectedLink: string | RegExp,
+  ) {
+    await this.assertElementAttribute(
+      this.chatMessages.getAttachmentLink(message),
+      Attributes.href,
+      expectedLink,
+    );
+  }
+
+  public async assertMessageImageOpenedInNewTab(message: number) {
+    await this.assertElementAttribute(
+      this.chatMessages.getAttachmentLink(message),
+      Attributes.target,
+      AttributeValues.blank,
+    );
+  }
+
+  public assertCopiedMessage(copiedMessage: string, expectedMessage: string) {
+    this.assertValue(copiedMessage.replace(/\r\n/g, '\n'), expectedMessage);
   }
 }

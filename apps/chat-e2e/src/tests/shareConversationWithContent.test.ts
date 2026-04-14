@@ -1169,7 +1169,7 @@ dialSharedWithMeTest(
         for (let i = 1; i <= chatResponseIndex; i++) {
           await expect
             .soft(
-              additionalShareUserChatMessages.getAttachmentLinkIcon(i),
+              additionalShareUserChatMessages.getAttachmentLink(i),
               ExpectedMessages.attachmentLinkIsValid,
             )
             .toHaveAttribute(Attributes.href, attachmentLink);

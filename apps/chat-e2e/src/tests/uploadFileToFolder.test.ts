@@ -6,7 +6,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { StyleValues } from '@/src/ui/domData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, filenamePrefix } from '@/src/utils';
 
 dialTest(
   '[Manage attachments] Create new folder.\n' +
@@ -111,7 +111,8 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-3022', 'EPMRTC-1615');
     const folderName = GeneratorUtil.randomString(255);
-    const imageName = GeneratorUtil.randomString(255);
+    const imageName =
+      filenamePrefix + GeneratorUtil.randomString(255 - filenamePrefix.length);
 
     await dialTest.step('Upload file to some folder', async () => {
       await fileApiHelper.putFileWithCustomName(

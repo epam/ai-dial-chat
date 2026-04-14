@@ -183,6 +183,7 @@ const CopyButton = ({
           <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
         )
       }
+      aria-label={copyLabel}
     />
   );
 };
