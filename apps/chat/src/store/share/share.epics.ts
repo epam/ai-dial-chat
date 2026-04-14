@@ -1125,7 +1125,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 const revokeAccessEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.revokeAccess.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const resourceUrls = payload.isFolder
         ? payload.resourceIds.map((id) =>
             addTrailingSlashIfAbsent(ApiUtils.encodeApiUrl(id)),
