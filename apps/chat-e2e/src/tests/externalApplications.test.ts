@@ -12,7 +12,7 @@ import {
   MarketplaceFilterTypes,
   SourcesFilterOptions,
 } from '@/src/testData';
-import { Attributes, StyleValues } from '@/src/ui/domData';
+import { AttributeValues, Attributes, StyleValues } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 
@@ -311,7 +311,7 @@ dialTest(
       await entityDetailsModalAssertion.assertElementAttribute(
         entityDetailsModal.openInNewTabButton,
         Attributes.target,
-        Attributes.blank,
+        AttributeValues.blank,
       );
       await entityDetailsModalAssertion.assertEntityIcon(
         entityDetailsModal.icon,

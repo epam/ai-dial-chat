@@ -8,6 +8,7 @@ import {
   ItemUtil,
   applicationNamePrefix,
   conversationNamePrefix,
+  filenamePrefix,
   promptNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
@@ -133,8 +134,10 @@ dialTest(
       await adminPublicationApiHelper.listPublishedResources(
         BackendResourceType.FILE,
       );
-    const publishedE2EFiles = publishedFiles.items?.filter((item) =>
-      Object.values(Attachment).includes(item.name),
+    const publishedE2EFiles = publishedFiles.items?.filter(
+      (item) =>
+        item.name.startsWith(filenamePrefix) ||
+        Object.values(Attachment).includes(item.name),
     );
     for (const file of publishedE2EFiles || []) {
       const relativePath = ItemUtil.extractRelativePath(file.url);

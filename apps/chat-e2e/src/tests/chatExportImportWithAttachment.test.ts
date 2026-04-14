@@ -40,7 +40,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1980');
     let cancelExportConversation: Conversation;
-    const filename = `${GeneratorUtil.randomString(8)}.jpg`;
+    const filename = GeneratorUtil.randomFilename('jpg');
 
     await dialTest.step(
       'Upload image to root folder and prepare conversation containing this image',

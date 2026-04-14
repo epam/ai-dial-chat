@@ -64,7 +64,7 @@ dialAdminTest(
       ModelsUtil.getLatestModels(),
     );
     let imageUrl: string;
-    const imageName = `${GeneratorUtil.randomString(7)}.jpg`;
+    const imageName = GeneratorUtil.randomFilename('jpg');
     let conversation: Conversation;
     let playbackConversation: Conversation;
 

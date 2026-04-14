@@ -2,6 +2,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { AgentInfo } from '@/src/ui/webElements';
+import { decode } from 'he';
 
 export class AgentInfoAssertion extends BaseAssertion {
   readonly agentInfo: AgentInfo;
@@ -36,10 +37,12 @@ export class AgentInfoAssertion extends BaseAssertion {
           expectedText = rawDescription
             .replaceAll(/'/g, '"')
             .replaceAll(/">/g, ';">')
-            .replaceAll(/:\S/g, ': ');
+            .replaceAll(/:(?=\S)/g, ': ');
         }
-        await this.assertElementInnerHtml(
-          this.agentInfo.agentDescription,
+        const actualHtml =
+          await this.agentInfo.agentDescription.getElementsInnerHtml();
+        this.assertValue(
+          decode(actualHtml),
           expectedText,
           ExpectedMessages.agentDescriptionIsValid,
         );
