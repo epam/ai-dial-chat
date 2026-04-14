@@ -280,6 +280,28 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
     ofType(FilesActions.getFullListing.type),
     switchMap(({ payload }) => {
       const folderPath = payload.folderPath || '';
+      const paths = payload.paths;
+
+      if (paths) {
+        if (paths.length === 0) {
+          return of(
+            FilesActions.getFullListingSuccess({
+              folderPath,
+              files: [],
+            }),
+          );
+        }
+
+        return FileService.getMultipleFoldersFiles(paths, true).pipe(
+          map((files) =>
+            FilesActions.getFullListingSuccess({
+              folderPath,
+              files,
+            }),
+          ),
+          catchError(() => of(FilesActions.getFullListingFail())),
+        );
+      }
 
       const metadata = state$.value.files.searchListingMetadata[folderPath];
       const cacheAge = metadata ? Date.now() - metadata.loadedAt : Infinity;
