@@ -722,6 +722,131 @@ dialTest(
   },
 );
 
+dialTest.only(
+  '[File Manager][MyFiles]: Search files in folders.\n' +
+    '[File Manager][My Files]: Search files when no folders in the structure.\n' +
+    '[File Manager][My files] Search files when nothing found',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerNavigationPanel,
+    fileManagerGridAssertion,
+    fileManager,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-3301', 'EPMRTC-3306', 'EPMRTC-3307');
+
+    const folder1 = GeneratorUtil.randomString(7);
+    const folder2 = GeneratorUtil.randomString(7);
+    // EPMRTC-3301: files inside folders (case variants: lowercase 'n' and capital 'N')
+    const folderFile1 = GeneratorUtil.filename(' File name', 'png');
+    const folderFile2 = GeneratorUtil.filename(' File Name', 'txt');
+    // EPMRTC-3306 / EPMRTC-3307: files in root (three case variants)
+    const rootFile1 = GeneratorUtil.filename(' File Name', 'png');
+    const rootFile2 = GeneratorUtil.filename(' file name1 ', 'pdf');
+    const rootFile3 = GeneratorUtil.filename(' file Name', 'txt');
+    const rootFiles = [rootFile1, rootFile2, rootFile3];
+
+    await dialTest.step(
+      'Upload test files via API: 2 files in separate folders + 3 files in root',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          folderFile1,
+          Attachment.sunImageName,
+          { parentPath: folder1 },
+        );
+        await fileApiHelper.putFileWithCustomName(
+          folderFile2,
+          Attachment.sunImageName,
+          { parentPath: folder2 },
+        );
+        await fileApiHelper.putFileWithCustomName(
+          rootFile1,
+          Attachment.sunImageName,
+        );
+        await fileApiHelper.putFileWithCustomName(
+          rootFile2,
+          Attachment.flowerImageName,
+        );
+        await fileApiHelper.putFileWithCustomName(
+          rootFile3,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-3301: search "name" and verify files inside folders are found',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('name');
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          folderFile1,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          folderFile2,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-3306: search "File Name" and verify all root files are found regardless of case',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('File Name');
+        for (const file of rootFiles) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-3307: search non-existent term and verify "No results found" is shown',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('ABC');
+        await baseAssertion.assertElementState(
+          fileManager.getNoDataContent(),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Clear search and verify all files and folders are visible again',
+      async () => {
+        await fileManagerNavigationPanel.getSearch().inputField.fillInInput('');
+        for (const folder of [folder1, folder2]) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            folder,
+            'visible',
+          );
+        }
+        for (const file of rootFiles) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+  },
+);
+
 dialTest(
   '[File Manager][My Files]: files from hidden folders are displayed in search results when Hidden files toggle is on',
   async ({
