@@ -66,7 +66,7 @@ dialTest(
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
     );
-    const imageName = `${GeneratorUtil.randomString(7)}.jpg`;
+    const imageName = GeneratorUtil.randomFilename('jpg');
     let imageUrl: string;
     let conversation: Conversation;
     const updatedConversationName = GeneratorUtil.randomConversationName();

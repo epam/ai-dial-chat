@@ -61,7 +61,7 @@ export class CustomApplicationPublishingUtil {
   }
 
   public async uploadApplicationIcon() {
-    const filename = `${GeneratorUtil.randomString(7)}.svg`;
+    const filename = GeneratorUtil.randomFilename('svg');
     const iconUrl = await this.fileApiHelper!.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
