@@ -9,6 +9,14 @@ import { PageFunction } from 'playwright-core/types/structs';
 
 export const loadingTimeout = config.use!.actionTimeout! * 2;
 
+interface WaitForPageLoadedOptions {
+  selectedSharedConversationName?: string;
+  selectedSharedFolderName?: string;
+  isPromptShared?: boolean;
+  skipSidebars?: boolean;
+  waitForAgentInfo?: boolean;
+}
+
 export class DialHomePage extends BasePage {
   private appContainer!: AppContainer;
 
@@ -19,13 +27,7 @@ export class DialHomePage extends BasePage {
     return this.appContainer;
   }
 
-  public async waitForPageLoaded(options?: {
-    selectedSharedConversationName?: string;
-    selectedSharedFolderName?: string;
-    isPromptShared?: boolean;
-    skipSidebars?: boolean;
-    waitForAgentInfo?: boolean;
-  }) {
+  public async waitForPageLoaded(options?: WaitForPageLoadedOptions) {
     const appContainer = this.getAppContainer();
     if (!options?.skipSidebars) {
       const chatBar = appContainer.getChatBar();
@@ -180,5 +182,10 @@ export class DialHomePage extends BasePage {
       200,
       apiTimeout * 2,
     );
+  }
+
+  public async navigateBack(options?: WaitForPageLoadedOptions) {
+    await this.page.goBack();
+    await this.waitForPageLoaded(options);
   }
 }

@@ -51,7 +51,7 @@ dialSharedWithMeTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
-    const imageName = `${GeneratorUtil.randomString(7)}.jpg`;
+    const imageName = GeneratorUtil.randomFilename('jpg');
     let imageUrl: string;
     let sharedConversation: Conversation;
     let expectedShareUserConversationId: string;

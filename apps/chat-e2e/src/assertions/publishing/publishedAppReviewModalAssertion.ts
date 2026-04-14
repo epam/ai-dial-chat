@@ -1,6 +1,6 @@
 import { BaseAssertion } from '@/src/assertions';
 import { PublishingExpectedMessages } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 
 export class PublishedAppReviewModalAssertion extends BaseAssertion {
@@ -101,7 +101,7 @@ export class PublishedAppReviewModalAssertion extends BaseAssertion {
       await this.assertElementAttribute(
         this.publishedApplicationReviewModal.externalUrl,
         Attributes.target,
-        Attributes.blank,
+        AttributeValues.blank,
       );
       await this.assertElementState(
         this.publishedApplicationReviewModal.externalUrlIcon,

@@ -12,7 +12,10 @@ export class ThemesUtil {
     return JSON.parse(process.env.THEMES!).images as ThemesImages;
   }
 
-  public static getRgbColorByKey(key: ThemeColorAttributes, themeId?: ThemeId) {
+  public static getRgbColorByKey(
+    key: ThemeColorAttributes,
+    themeId?: ThemeId | string,
+  ) {
     const allThemes = this.getThemes();
     const theme = themeId
       ? allThemes.find((t) => t.id === themeId)

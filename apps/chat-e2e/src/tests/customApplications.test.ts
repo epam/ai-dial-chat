@@ -26,6 +26,7 @@ import {
   SortingUtil,
   UserUtil,
   applicationNamePrefix,
+  filenamePrefix,
 } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -1715,7 +1716,7 @@ dialTest(
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomEntityVersion(),
     } as DialAIEntityModel;
-    const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const newIconFileName = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
     let expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       newIconFileName,
@@ -2101,7 +2102,7 @@ dialAdminTest(
     let reviewIconUrl: string;
     let targetIconUrl: string;
 
-    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.svg`;
     const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
