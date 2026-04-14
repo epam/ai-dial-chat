@@ -927,6 +927,7 @@ export enum MarketplaceI18nKeys {
   PopulatePromptInTheChatInput = 'Populate prompt in the chat input',
   StartersSettings = 'Starters settings',
   AtLeastOneStarterIsRequiredToEnableSettings = 'At least one starter is required to enable settings',
+  PayAttentionTheUserWontBeAbleToEdit = "Pay attention: the user won't be able to edit the populated input prompt",
   InputMIMEType = "Input the MIME type and press 'Enter' to add",
   EnterAttachmentTypes = 'Enter one or more attachment types',
   MaxAttachmentsNumber = 'Max. attachments number',
