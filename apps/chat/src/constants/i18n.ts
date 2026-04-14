@@ -1054,4 +1054,7 @@ export enum MarketplaceI18nKeys {
   PublicationDetails = 'Publication details',
   PublishedTo = 'Published to',
   AllowAccessIfAllMatch = 'Allow access if all match',
+  Connect = 'Connect',
+  ConnectToolset = 'Connect toolset',
+  CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
 }
