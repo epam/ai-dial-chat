@@ -67,7 +67,10 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
 
   const loginEntity = useAppSelector(MarketplaceSelectors.selectLoginEntity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  // Select all toolsets including with `hiddenEntityTag` ones to show all versions in the dropdown
+  const allToolsets = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsets(state, true),
+  );
   const isToolsetLoading = useAppSelector(
     ToolsetSelectors.selectIsToolsetDetailsLoading,
   );
