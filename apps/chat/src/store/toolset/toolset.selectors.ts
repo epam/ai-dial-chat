@@ -5,10 +5,16 @@ import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/marketplace';
+import {
+  filterHiddenEntities,
+  shouldShowHiddenEntities,
+} from '@/src/utils/app/models';
 import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
 import { RootState } from '@/src/types/store';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetModel, ToolsetsMap } from '@/src/types/toolsets';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
@@ -20,22 +26,35 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectToolsetsMap = (state: RootState) => rootSelector(state).toolsetsMap;
 
-const selectToolsets = createSelector([selectToolsetsMap], (toolsetsMap) => {
-  const toolsets = uniq(Object.values(toolsetsMap)) as ToolsetModel[];
-  const sortedToolsets = sortBy(toolsets, (toolset) =>
-    toolset.name.toLowerCase(),
-  );
+const _toolsetsFromMap = (toolsetsMap: ToolsetsMap) =>
+  uniq(Object.values(toolsetsMap).filter((t): t is ToolsetModel => t != null));
 
-  return groupMarketplaceEntityAndSaveOrder(sortedToolsets).flatMap(
-    ({ entities }) => {
-      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-        sortItemsVersions(entities);
-      }
+const selectToolsets = createSelector(
+  [
+    selectToolsetsMap,
+    SettingsSelectors.selectHiddenEntityTag,
+    (_state, showHidden?: boolean) => showHidden,
+  ],
+  (toolsetsMap, hiddenEntityTag, showHidden) => {
+    const toolsets = _toolsetsFromMap(toolsetsMap);
+    const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
+      ? toolsets
+      : filterHiddenEntities(toolsets, hiddenEntityTag);
+    const sortedToolsets = sortBy(filteredHidden, (toolset) =>
+      toolset.name.toLowerCase(),
+    );
 
-      return entities;
-    },
-  );
-});
+    return groupMarketplaceEntityAndSaveOrder(sortedToolsets).flatMap(
+      ({ entities }) => {
+        if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+          sortItemsVersions(entities);
+        }
+
+        return entities;
+      },
+    );
+  },
+);
 
 const selectToolsetVersionGroupByGroupId = createSelector(
   [
@@ -103,12 +122,23 @@ const selectAllGroupToolsetsKeySet = (
   );
 };
 
-const selectToolsetsTopics = createSelector([selectToolsets], (toolsets) => {
-  return sortBy(
-    uniq(toolsets?.flatMap((toolset) => toolset.topics ?? []) ?? []),
-    (topic) => topic.toLowerCase(),
-  );
-});
+const selectToolsetsTopics = createSelector(
+  [
+    selectToolsetsMap,
+    SettingsSelectors.selectHiddenEntityTag,
+    (_state, showHidden?: boolean) => showHidden,
+  ],
+  (toolsetsMap, hiddenEntityTag, showHidden) => {
+    const toolsets = _toolsetsFromMap(toolsetsMap);
+    const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
+      ? toolsets
+      : filterHiddenEntities(toolsets, hiddenEntityTag);
+    return sortBy(
+      uniq(filteredHidden?.flatMap((toolset) => toolset.topics ?? []) ?? []),
+      (topic) => topic.toLowerCase(),
+    );
+  },
+);
 
 const selectIsInstalledToolsetsInitialized = (state: RootState) =>
   rootSelector(state).isInstalledToolsetsInitialized;

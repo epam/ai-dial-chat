@@ -251,7 +251,7 @@ export function Tooltip({
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
     return (
-      <span className={triggerClassName} data-qa={dataQa}>
+      <span className={triggerClassName} data-qa={dataQa} data-state="closed">
         {children}
       </span>
     );
