@@ -43,6 +43,7 @@ export const ChatInputAttachments = ({
       ))}
       {files?.map((file) => (
         <ChatInputFileAttachment
+          key={file.id}
           file={file}
           onUnselectFile={onUnselectFile}
           onRetryFile={onRetryFile}
