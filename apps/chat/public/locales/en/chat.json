@@ -351,5 +351,8 @@
   "Server is taking too long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.": "Server is taking too long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.",
   "Conversation is too large to process.": "Conversation is too large to process.",
   "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.": "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.",
-  "Error happened during answering. Please check your internet connection and try again.": "Error happened during answering. Please check your internet connection and try again."
+  "Error happened during answering. Please check your internet connection and try again.": "Error happened during answering. Please check your internet connection and try again.",
+  "Response format": "Response format",
+  "Markdown": "Markdown",
+  "Plain text": "Plain text"
 }
