@@ -375,6 +375,9 @@ export const ExpectedConstants = {
   uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
   uploadFailedMessage:
     'Upload failedPlease check your internet connection and try again.',
+  itemCopiedSuccessTitle: 'Item copied successfully',
+  itemCopiedToMyFilesMessage: (name: string) =>
+    `Item copied successfully\u201C${name}\u201D copied to My Files`,
 };
 
 export enum Types {
@@ -515,6 +518,7 @@ export const API = {
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
+  copyFilesHost: '/api/files/copy',
   importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>

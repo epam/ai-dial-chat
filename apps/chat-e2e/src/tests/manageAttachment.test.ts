@@ -722,7 +722,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[File Manager][MyFiles]: Search files in folders.\n' +
     '[File Manager][My Files]: Search files when no folders in the structure.\n' +
     '[File Manager][My files] Search files when nothing found',
@@ -1114,6 +1114,101 @@ dialTest(
             }
           }
         }
+      },
+    );
+  },
+);
+
+dialTest.only(
+  '[File Manager][My Files]: Duplicate folder.\n' +
+    '[File Manager][My Files]: Duplicate file',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    toastAssertion,
+    toast,
+  }) => {
+    setTestIds('EPMRTC-8644', 'EPMRTC-8642');
+
+    const folderName = GeneratorUtil.randomString(7);
+    const duplicatedFolderName = `${folderName} (1)`;
+    const duplicatedFileName = Attachment.flowerImageName.replace('.', ' (1).');
+
+    await dialTest.step('Upload test files via API', async () => {
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderName,
+      });
+      await fileApiHelper.putFile(Attachment.flowerImageName);
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8644: open folder context menu and select Duplicate option',
+      async () => {
+        const folderRow = fileManagerGrid.gridRowByNameCell(folderName);
+        const folderDotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(folderName);
+        await folderRow.hover();
+        await folderDotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+          apiHost: API.copyFilesHost,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8644: verify success toast is shown and duplicated folder appears in grid',
+      async () => {
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.itemCopiedToMyFilesMessage(duplicatedFolderName),
+        );
+        await toast.closeToast();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFolderName,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8642: open file context menu and select Duplicate option',
+      async () => {
+        const fileRow = fileManagerGrid.gridRowByNameCell(
+          Attachment.flowerImageName,
+        );
+        const fileDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.flowerImageName,
+        );
+        await fileRow.hover();
+        await fileDotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+          apiHost: API.copyFilesHost,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8642: verify success toast is shown and duplicated file appears in grid',
+      async () => {
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.itemCopiedToMyFilesMessage(duplicatedFileName),
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFileName,
+          'visible',
+        );
       },
     );
   },
