@@ -40,8 +40,9 @@ import { ShareEntity } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.prompts;
 
-const selectPrompts = (state: RootState) =>
-  withoutFileManagerPlaceholderByName(rootSelector(state).prompts);
+const selectPrompts = createSelector([rootSelector], (state) =>
+  withoutFileManagerPlaceholderByName(state.prompts),
+);
 
 const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
