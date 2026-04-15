@@ -627,8 +627,9 @@ export const ChatInputMessage = Inversify.register(
       >
         <div
           className={classNames(
-            'relative m-0 flex max-h-[400px] min-h-[38px] w-full max-w-[768px] grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
+            'relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
             isChatInputBorderEnabled && 'border border-primary',
+            !isChatFullWidth && 'max-w-[768px]',
           )}
         >
           <AdjustedTextarea
