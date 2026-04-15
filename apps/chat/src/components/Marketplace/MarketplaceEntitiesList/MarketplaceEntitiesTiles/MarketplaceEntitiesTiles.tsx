@@ -21,7 +21,7 @@ import { Translation } from '@/src/types/translation';
 import {
   ALL_APPS_HEADER_SENTINEL,
   FEATURED_HEADER_SENTINEL,
-  SENTINEL_TEXT,
+  SENTINEL_DATA,
   SUGGESTED_HEADER_SENTINEL,
 } from '@/src/constants/marketplace';
 
@@ -227,7 +227,9 @@ export const MarketplaceEntitiesTiles: React.FC<
 
                   if (isString(entity)) {
                     return (
-                      <SentinelRow>{t(SENTINEL_TEXT[entity])}</SentinelRow>
+                      <SentinelRow dataQa={SENTINEL_DATA[entity].dataQa}>
+                        {t(SENTINEL_DATA[entity].label)}
+                      </SentinelRow>
                     );
                   }
 

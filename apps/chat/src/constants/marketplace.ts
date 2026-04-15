@@ -142,8 +142,18 @@ export const FEATURED_HEADER_SENTINEL = '__FEATURED__';
 export const ALL_APPS_HEADER_SENTINEL = '__ALL_APPS__';
 export const SUGGESTED_HEADER_SENTINEL = '__SUGGESTED__';
 
-export const SENTINEL_TEXT: Record<string, string> = {
-  [FEATURED_HEADER_SENTINEL]: MarketplaceI18nKeys.Featured,
-  [ALL_APPS_HEADER_SENTINEL]: MarketplaceI18nKeys.AllApplications,
-  [SUGGESTED_HEADER_SENTINEL]: MarketplaceI18nKeys.SuggestedResults,
-};
+export const SENTINEL_DATA: Record<string, { label: string; dataQa: string }> =
+  {
+    [FEATURED_HEADER_SENTINEL]: {
+      label: MarketplaceI18nKeys.Featured,
+      dataQa: 'marketplace-featured-label',
+    },
+    [ALL_APPS_HEADER_SENTINEL]: {
+      label: MarketplaceI18nKeys.AllApplications,
+      dataQa: 'marketplace-all-apps',
+    },
+    [SUGGESTED_HEADER_SENTINEL]: {
+      label: MarketplaceI18nKeys.SuggestedResults,
+      dataQa: 'marketplace-suggestions-label',
+    },
+  };

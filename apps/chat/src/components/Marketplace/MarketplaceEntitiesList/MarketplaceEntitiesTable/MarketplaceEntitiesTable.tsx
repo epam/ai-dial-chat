@@ -1,5 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, {
+  ReactNode,
   forwardRef,
   useCallback,
   useEffect,
@@ -80,7 +81,7 @@ const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
 };
 
 interface DataRowContainerProps {
-  children: React.ReactNode;
+  children: ReactNode;
   width: number;
   height: number;
 }

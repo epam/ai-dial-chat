@@ -8,7 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { SENTINEL_TEXT } from '@/src/constants/marketplace';
+import { SENTINEL_DATA } from '@/src/constants/marketplace';
 
 import { SentinelRow } from '../SentinelRow';
 import { MarketplaceEntitiesTableLeftSideRow } from './MarketplaceEntitiesTableLeftSideRow';
@@ -94,7 +94,11 @@ const VirtualRowView = ({
 
   if (!isLeftSide) return <span />;
 
-  return <SentinelRow isTable>{t(SENTINEL_TEXT[entity])}</SentinelRow>;
+  return (
+    <SentinelRow dataQa={SENTINEL_DATA[entity].dataQa} isTable>
+      {t(SENTINEL_DATA[entity].label)}
+    </SentinelRow>
+  );
 };
 
 interface VirtualRowRendererProps {
