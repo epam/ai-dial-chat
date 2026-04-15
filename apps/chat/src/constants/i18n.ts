@@ -859,6 +859,9 @@ export enum ChatI18nKeys {
   ConversationTooLargeToProcess = 'Conversation is too large to process.',
   GeneralServerError = 'Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.',
   GeneralClientError = 'Error happened during answering. Please check your internet connection and try again.',
+  ResponseFormat = 'Response format',
+  Markdown = 'Markdown',
+  PlainText = 'Plain text',
 }
 
 // files.json
