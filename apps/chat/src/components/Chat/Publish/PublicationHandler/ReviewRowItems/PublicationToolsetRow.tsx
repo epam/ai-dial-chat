@@ -18,7 +18,10 @@ export const PublicationToolsetRow: React.FC<PublicationItemProps> = ({
   level,
   publicationUrl,
 }) => {
-  const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  // Select all toolsets including with `hiddenEntityTag` ones to show all versions in the dropdown
+  const toolsets = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsets(state, true),
+  );
   const publishRequestToolsets = useAppSelector(
     ToolsetSelectors.selectPublishRequestToolsets,
   );
