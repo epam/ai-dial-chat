@@ -53,7 +53,7 @@ const CardFooter = <T extends MarketplaceEntity>({
       >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
-      <div className="mt-auto flex flex-col justify-end gap-2 pt-3 xl:pt-4">
+      <div className="flex flex-col gap-2 pt-3 xl:pt-4">
         <div className="w-full">
           {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
