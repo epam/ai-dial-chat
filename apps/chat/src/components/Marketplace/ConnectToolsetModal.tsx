@@ -2,14 +2,15 @@ import { FC, useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/selectors';
+import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -23,7 +24,7 @@ import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButto
 import { DialPopup, PopupSize } from '@epam/ai-dial-ui-kit';
 
 interface ConnectToolsetModalProps {
-  entity: ToolsetModel;
+  entity: MarketplaceEntity;
 }
 
 const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
@@ -31,15 +32,18 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
   const dispatch = useAppDispatch();
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const allModels = useAppSelector(ModelsSelectors.selectModels);
+
+  const isApplication = isDialAiEntityModel(entity);
 
   const allVersions = useMemo(
     () =>
-      allToolsets.filter(
+      (isApplication ? allModels : allToolsets).filter(
         (t) =>
           getGroupMarketplaceEntityKey(t) ===
           getGroupMarketplaceEntityKey(entity),
       ),
-    [allToolsets, entity],
+    [allModels, allToolsets, entity, isApplication],
   );
 
   const handleClose = useCallback(() => {
@@ -47,7 +51,7 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
   }, [dispatch]);
 
   const handleSelectVersion = useCallback(
-    (entity: ToolsetModel) => {
+    (entity: MarketplaceEntity) => {
       dispatch(MarketplaceActions.setConnectLinkEntity(entity));
     },
     [dispatch],
@@ -57,7 +61,11 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
     <DialPopup
       portalId="chat"
       open
-      header={MarketplaceI18nKeys.ConnectToolset}
+      header={
+        isApplication
+          ? MarketplaceI18nKeys.ConnectApplication
+          : MarketplaceI18nKeys.ConnectToolset
+      }
       size={PopupSize.Sm}
       onClose={handleClose}
     >
@@ -92,7 +100,11 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
 
         <div className="p-6">
           <p className="mb-3 text-sm text-secondary">
-            {t(MarketplaceI18nKeys.CopyToolsetEndpointURL)}
+            {t(
+              isApplication
+                ? MarketplaceI18nKeys.CopyApplicationEndpointURL
+                : MarketplaceI18nKeys.CopyToolsetEndpointURL,
+            )}
           </p>
           <ToolsetLinkButton id={entity.id} />
         </div>

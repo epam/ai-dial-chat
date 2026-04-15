@@ -182,7 +182,7 @@ export const marketplaceSlice = createSlice({
     },
     setConnectLinkEntity: (
       state,
-      { payload }: PayloadAction<ToolsetModel | undefined>,
+      { payload }: PayloadAction<MarketplaceEntity | undefined>,
     ) => {
       state.connectLinkEntity = payload;
     },
