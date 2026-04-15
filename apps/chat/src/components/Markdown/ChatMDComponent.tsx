@@ -182,11 +182,7 @@ const getMDComponents = (
     a({ href, children, ...props }) {
       if (href?.startsWith('data:image')) {
         const blobUrl = dataToBlobUrl(href);
-        return (
-          <a href={blobUrl ?? href} target="_blank" rel="noopener noreferrer">
-            {children}
-          </a>
-        );
+        return <a href={blobUrl ?? href}>{children}</a>;
       }
 
       return (

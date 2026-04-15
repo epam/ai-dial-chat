@@ -70,7 +70,7 @@ dialAdminTest(
     let expectedPublishedIconUrl: string;
     let appElement: BaseElement;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
-    const filename = `${GeneratorUtil.randomString(7)}.svg`;
+    const filename = GeneratorUtil.randomFilename('svg');
     let searchInput: BaseElement;
 
     let conversation: Conversation;

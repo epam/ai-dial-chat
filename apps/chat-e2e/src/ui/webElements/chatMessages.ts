@@ -10,7 +10,7 @@ import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Rate, Side } from '@/src/testData';
-import { Attributes, Styles, Tags } from '@/src/ui/domData';
+import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
@@ -135,8 +135,36 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.codeBlock);
   }
 
+  public getChatMessageCodeTitleContainer(message: string | number) {
+    return this.getChatMessageCodeBlock(message).locator(
+      ChatSelectors.codeBlockTitleContainer,
+    );
+  }
+
+  public getChatMessageCodeTitleCopyButton(message: string | number) {
+    return new Button(
+      this.page,
+      ChatSelectors.copyCodeButton,
+      this.getChatMessageCodeTitleContainer(message),
+    );
+  }
+
+  public getChatMessageCodeTitleDownloadButton(message: string | number) {
+    return new Button(
+      this.page,
+      ChatSelectors.downloadButton,
+      this.getChatMessageCodeTitleContainer(message),
+    );
+  }
+
+  public getChatMessageCode(message: string | number) {
+    return this.getChatMessageCodeBlock(message).locator(Tags.code);
+  }
+
   public getChatMessageTable(message: string | number) {
-    return this.getChatMessage(message).locator(TableSelectors.tableContainer);
+    return this.getChatMessageContent(message).locator(
+      TableSelectors.tableContainer,
+    );
   }
 
   public getChatMessageTableControls(message: string | number) {
@@ -187,7 +215,7 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.plotlyContainer);
   }
 
-  public getAttachmentLinkIcon(message: string | number) {
+  public getAttachmentLink(message: string | number) {
     return this.getChatMessage(message).locator(
       `${Tags.a}[${Attributes.href}]`,
     );
@@ -265,6 +293,10 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageContent(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.messageContent);
+  }
+
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
@@ -311,6 +343,10 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessageAttachmentsGroup(message: string | number) {
     return this.getChatMessage(message).locator(ChatSelectors.attachmentsGroup);
+  }
+
+  public getChatMessageImage(message: number) {
+    return this.getChatMessageContent(message).locator(Tags.img);
   }
 
   public getMessageJumpingIconLocator(messageLocator: Locator) {
@@ -543,30 +579,6 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
   }
 
-  public async getChatMessageTableHeaderColumnsCount(message: string | number) {
-    return this.getChatMessageTableHeaderColumns(message).count();
-  }
-
-  public async getChatMessageTableHeadersBackgroundColor(
-    message: string | number,
-  ) {
-    return this.createElementFromLocator(
-      this.getChatMessageTableHeaderColumns(message).nth(1),
-    ).getComputedStyleProperty(Styles.backgroundColor);
-  }
-
-  public async getChatMessageTableRowsCount(message: string | number) {
-    return this.getChatMessageTableRows(message).count();
-  }
-
-  public async getChatMessageTableRowsBackgroundColor(
-    message: string | number,
-  ) {
-    return this.createElementFromLocator(
-      this.getChatMessageTableRows(message).nth(1),
-    ).getComputedStyleProperty(Styles.backgroundColor);
-  }
-
   public messageEditIcon = (message: Locator | string | number) => {
     const messageLocator =
       typeof message === 'string' || typeof message === 'number'
@@ -574,7 +586,6 @@ export class ChatMessages extends BaseElement {
         : message;
     return messageLocator.locator(IconSelectors.editIcon);
   };
-
   public setMessageTemplateIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.listDetailsIcon);
   public saveAndSubmit = this.getChildElementBySelector(
@@ -587,8 +598,22 @@ export class ChatMessages extends BaseElement {
   public messageDeleteIcon = (message: string | number) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
-  public messageCopyIcon = (message: string | number) =>
-    this.getChatMessage(message).locator(IconSelectors.copyIcon);
+  public messageCopyTextButton = (message: string | number) => {
+    return new Button(
+      this.page,
+      ChatSelectors.copyTextButton,
+      this.getChatMessageContent(message),
+    );
+  };
+
+  public messageCopyMarkdownButton = (message: string | number) => {
+    return new Button(
+      this.page,
+      ChatSelectors.copyMarkdownButton,
+      this.getChatMessageContent(message),
+    );
+  };
+
   public messageRegenerateIcon = (message: string | number) =>
     this.getChatMessage(message).locator(ChatSelectors.regenerate);
 
