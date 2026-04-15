@@ -1119,7 +1119,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[File Manager][My Files]: Duplicate folder.\n' +
     '[File Manager][My Files]: Duplicate file',
   async ({
