@@ -34,7 +34,7 @@ import {
 } from '../view-props';
 import { MarketplaceEntityCard } from './MarketplaceEntityCard';
 
-import { isString } from 'lodash-es';
+import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
 const MIN_CARD_WIDTH = 326;
