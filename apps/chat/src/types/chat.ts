@@ -1,6 +1,10 @@
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { Conversation, Message } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  ConversationResponseFormat,
+  Message,
+} from '@epam/ai-dial-shared';
 
 // Reexporting Conversation to not change entire codebase
 export type { Conversation } from '@epam/ai-dial-shared';
@@ -36,6 +40,7 @@ export interface ConversationsTemporarySettings {
   prompt: string;
   temperature: number;
   isShared: boolean;
+  responseFormat: ConversationResponseFormat;
 }
 
 export interface PrepareNameOptions {

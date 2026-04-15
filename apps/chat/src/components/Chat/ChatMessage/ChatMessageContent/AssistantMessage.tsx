@@ -45,6 +45,7 @@ import { AdjustedTextarea } from '../AdjustedTextarea';
 import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 
 import {
+  ConversationResponseFormat,
   Feature,
   Message,
   MessageFormValue,
@@ -356,6 +357,10 @@ export const AssistantMessage = memo(function AssistantMessage({
           <ChatMDComponent
             isShowResponseLoader={isShowResponseLoader}
             content={isSafari ? throttledContent : message.content}
+            plainTextMode={
+              conversation.responseFormat ===
+              ConversationResponseFormat.PlainText
+            }
           />
         )}
         {codeWarning &&
