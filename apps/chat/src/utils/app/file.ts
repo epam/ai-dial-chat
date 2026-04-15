@@ -160,6 +160,43 @@ export const getDialFilesWithInvalidFileType = (
       );
 };
 
+const isFileManagerPlaceholderLastSegment = (
+  segment: string | undefined,
+): boolean => {
+  if (!segment) {
+    return false;
+  }
+  return (
+    segment === TEMP_FILE_NAME_IN_FILE_MANAGER ||
+    segment.startsWith(TEMP_FILE_NAME_IN_FILE_MANAGER)
+  );
+};
+
+const lastSegmentOrWhole = (value: string | undefined): string => {
+  if (value === undefined || value === '') {
+    return '';
+  }
+  return getFileName(value) ?? value;
+};
+
+/**
+ * Drops UI Kit FileManager folder markers from lists.
+ * Matches exact `.dial_folder` or suffix variants (e.g. `.dial_folder__`) on the
+ * last path segment of `name` and/or `id`.
+ */
+export function withoutFileManagerPlaceholderByName<
+  T extends { name?: string; id?: string },
+>(items: T[]): T[] {
+  return items.filter((item) => {
+    const nameTail = lastSegmentOrWhole(item.name);
+    const idTail = lastSegmentOrWhole(item.id);
+    return (
+      !isFileManagerPlaceholderLastSegment(nameTail) &&
+      !isFileManagerPlaceholderLastSegment(idTail)
+    );
+  });
+}
+
 export const getFilesWithInvalidFileType = (
   files: File[],
   allowedFileTypes: string[],
