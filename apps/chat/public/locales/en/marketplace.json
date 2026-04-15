@@ -144,5 +144,8 @@
   "Application is {{status}}": "Application is {{status}}",
   "My credentials": "My credentials",
   "Entire organization credentials": "Entire organization credentials",
-  "LOGGED IN": "LOGGED IN"
+  "LOGGED IN": "LOGGED IN",
+  "Connect": "Connect",
+  "Connect toolset": "Connect toolset",
+  "Copy endpoint URL to easily integrate toolset into your workflows": "Copy endpoint URL to easily integrate toolset into your workflows"
 }
