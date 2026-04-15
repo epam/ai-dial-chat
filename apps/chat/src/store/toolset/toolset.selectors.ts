@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
+import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
@@ -40,7 +41,9 @@ const selectToolsets = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? toolsets
       : filterHiddenEntities(toolsets, hiddenEntityTag);
-    const sortedToolsets = sortBy(filteredHidden, (toolset) =>
+    const withoutPlaceholder =
+      withoutFileManagerPlaceholderByName(filteredHidden);
+    const sortedToolsets = sortBy(withoutPlaceholder, (toolset) =>
       toolset.name.toLowerCase(),
     );
 
@@ -133,8 +136,12 @@ const selectToolsetsTopics = createSelector(
     const filteredHidden = shouldShowHiddenEntities(hiddenEntityTag, showHidden)
       ? toolsets
       : filterHiddenEntities(toolsets, hiddenEntityTag);
+    const withoutPlaceholder =
+      withoutFileManagerPlaceholderByName(filteredHidden);
     return sortBy(
-      uniq(filteredHidden?.flatMap((toolset) => toolset.topics ?? []) ?? []),
+      uniq(
+        withoutPlaceholder?.flatMap((toolset) => toolset.topics ?? []) ?? [],
+      ),
       (topic) => topic.toLowerCase(),
     );
   },
