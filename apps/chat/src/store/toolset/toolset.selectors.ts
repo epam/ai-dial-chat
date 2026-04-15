@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
+import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
@@ -21,7 +22,9 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectToolsetsMap = (state: RootState) => rootSelector(state).toolsetsMap;
 
 const selectToolsets = createSelector([selectToolsetsMap], (toolsetsMap) => {
-  const toolsets = uniq(Object.values(toolsetsMap)) as ToolsetModel[];
+  const toolsets = withoutFileManagerPlaceholderByName(
+    uniq(Object.values(toolsetsMap)) as ToolsetModel[],
+  );
   const sortedToolsets = sortBy(toolsets, (toolset) =>
     toolset.name.toLowerCase(),
   );
