@@ -98,6 +98,11 @@ export const MarketplaceEntitiesTiles: React.FC<
 
   const handleResize = useCallback(() => {
     if (dataRef.current) {
+      if (screenState === ScreenState.SM) {
+        setColumnCount(1);
+        return;
+      }
+
       let count = 1;
 
       while (

@@ -53,7 +53,7 @@ const CardFooter = <T extends MarketplaceEntity>({
       >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
-      <div className="flex flex-col gap-2 pt-3 xl:pt-4">
+      <div className="mt-auto flex flex-col justify-end gap-2 pt-3 xl:pt-4">
         <div className="w-full">
           {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
@@ -101,7 +101,7 @@ export const MarketplaceEntityCard = memo(
       <div
         onClick={() => onClick(entity)}
         className={classNames(
-          'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
+          'group relative flex h-[98px] flex-col rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
           !isPreview && 'cursor-pointer',
         )}
         data-qa="entity"
