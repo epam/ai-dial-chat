@@ -53,7 +53,7 @@ const CardFooter = <T extends MarketplaceEntity>({
       >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
-      <div className="flex flex-col gap-2 pt-3 md:pt-4">
+      <div className="flex flex-col gap-2 pt-3 xl:pt-4">
         <div className="w-full">
           {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
@@ -131,6 +131,7 @@ export const MarketplaceEntityCard = memo(
                 size={shareIconSize}
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
+                containerClassName="flex"
                 isMyEntity={isMyEntity}
                 isExternal={
                   isAgentsTab && isDialAiEntityModel(entity)
@@ -149,7 +150,7 @@ export const MarketplaceEntityCard = memo(
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               <div
                 className={classNames(
-                  'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
+                  'mr-10 flex items-center gap-1 text-xs leading-[14px] text-secondary',
                 )}
               >
                 {(isCreatedMarketplaceEntity(entity) || entity.version) && (

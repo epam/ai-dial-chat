@@ -1050,4 +1050,6 @@ export enum MarketplaceI18nKeys {
   PublicationDetails = 'Publication details',
   PublishedTo = 'Published to',
   AllowAccessIfAllMatch = 'Allow access if all match',
+  Featured = 'Featured',
+  AllApplications = 'All applications',
 }

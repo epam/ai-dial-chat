@@ -7,14 +7,26 @@ import React, {
   useState,
 } from 'react';
 
+import classNames from 'classnames';
+
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
+
+import {
+  ALL_APPS_HEADER_SENTINEL,
+  FEATURED_HEADER_SENTINEL,
+  SENTINEL_TEXT,
+  SUGGESTED_HEADER_SENTINEL,
+} from '@/src/constants/marketplace';
 
 import { MarketplaceEntitiesListWrapper } from '../MarketplaceEntitiesListWrapper';
+import { SentinelRow } from '../SentinelRow';
 import { SuggestedMessage } from '../SuggestedMessage';
 import {
   MarketplaceEntitiesListProps,
@@ -22,13 +34,14 @@ import {
 } from '../view-props';
 import { MarketplaceEntityCard } from './MarketplaceEntityCard';
 
-import isString from 'lodash-es/isString';
+import { isString } from 'lodash-es';
 import range from 'lodash-es/range';
 
-const MIN_CARD_WIDTH = 341;
+const MIN_CARD_WIDTH = 326;
+const MIN_CARD_WIDTH_XL = 353;
 const MIN_CARD_WIDTH_XL5 = 450;
 const DEFAULT_GAP = 20;
-const DEFAULT_WIDTH = 184;
+const DEFAULT_HEIGHT = 184;
 
 interface RowInfo {
   height: number;
@@ -39,26 +52,38 @@ interface RowInfo {
 const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.SM]: { height: 110, gap: 12 },
   [ScreenState.MD]: { height: 178, gap: 16 },
-  [ScreenState.XL]: { height: DEFAULT_WIDTH },
-  [ScreenState.XL3]: { height: DEFAULT_WIDTH },
-  [ScreenState.XL4]: { height: DEFAULT_WIDTH },
-  [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL5 },
+  [ScreenState.XL]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL3]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL4]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL5]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL5 },
 };
+
+const SECTION_HEADER_HEIGHT: Record<ScreenState, number> = {
+  [ScreenState.SM]: 40,
+  [ScreenState.MD]: 44,
+  [ScreenState.XL]: 52,
+  [ScreenState.XL3]: 52,
+  [ScreenState.XL4]: 52,
+  [ScreenState.XL5]: 52,
+};
+
+const FEATURED_HEADER_HEIGHT = 40;
 
 export const MarketplaceEntitiesTiles: React.FC<
   MarketplaceEntitiesListProps<MarketplaceEntity>
 > = ({
   entities,
   suggestedResults,
-  separator,
+  featuredEntities,
   onCardClick,
   onBookmarkClick,
 }) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
   const wrapperRefs = useRef<MarketplaceEntitiesListWrapperRef>(null);
   const dataRef = useRef<HTMLDivElement>(null);
 
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
-  const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
   const [colsCount, setColumnCount] = useState(1);
 
   const screenState = useScreenState();
@@ -69,40 +94,88 @@ export const MarketplaceEntitiesTiles: React.FC<
     minWidth = MIN_CARD_WIDTH,
   } = ROWS_INFO[screenState];
 
+  const sectionHeaderHeight = SECTION_HEADER_HEIGHT[screenState];
+
   const handleResize = useCallback(() => {
     if (dataRef.current) {
       let count = 1;
+
       while (
         minWidth * (count + 1) + gap * count <=
         dataRef.current.offsetWidth
       ) {
         count++;
       }
+
       setColumnCount(count);
     }
   }, [gap, minWidth]);
 
   useResizeObserver(dataRef.current, handleResize);
 
-  const allEntities: (MarketplaceEntity | string)[] = useMemo(() => {
-    if (!suggestedResults.length) return entities;
-    if (!entities.length && suggestedResults.length) return suggestedResults;
+  const allEntities: (MarketplaceEntity | string | null)[] = useMemo(() => {
+    const result = [];
 
-    return [
-      ...entities,
-      ...Array((colsCount - (entities.length % colsCount)) % colsCount).fill(
-        null,
-      ),
-      separator,
-      ...Array(colsCount - 1).fill(null),
-      ...suggestedResults,
-    ];
-  }, [suggestedResults, entities, colsCount, separator]);
+    if (featuredEntities.length) {
+      result.push(FEATURED_HEADER_SENTINEL, ...Array(colsCount - 1).fill(null));
+      result.push(...featuredEntities);
+      result.push(
+        ...Array(
+          (colsCount - (featuredEntities.length % colsCount)) % colsCount,
+        ).fill(null),
+      );
+    }
+
+    if (
+      featuredEntities.length &&
+      (entities.length || suggestedResults.length)
+    ) {
+      result.push(ALL_APPS_HEADER_SENTINEL, ...Array(colsCount - 1).fill(null));
+    }
+
+    if (!suggestedResults.length) {
+      result.push(...entities);
+    } else if (!entities.length) {
+      result.push(...suggestedResults);
+    } else {
+      result.push(...entities);
+      result.push(
+        ...Array((colsCount - (entities.length % colsCount)) % colsCount).fill(
+          null,
+        ),
+      );
+      result.push(
+        SUGGESTED_HEADER_SENTINEL,
+        ...Array(colsCount - 1).fill(null),
+      );
+      result.push(...suggestedResults);
+    }
+
+    return result;
+  }, [featuredEntities, entities, suggestedResults, colsCount]);
+
+  const allEntitiesRef = useRef(allEntities);
+  allEntitiesRef.current = allEntities;
 
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(allEntities.length / colsCount),
     getScrollElement: () => currentParentRef,
-    estimateSize: () => rowsHeight,
+    estimateSize: (index) => {
+      const first = allEntitiesRef.current[index * colsCount];
+
+      if (first === FEATURED_HEADER_SENTINEL) {
+        return FEATURED_HEADER_HEIGHT;
+      }
+
+      if (
+        first === ALL_APPS_HEADER_SENTINEL ||
+        first === SUGGESTED_HEADER_SENTINEL
+      ) {
+        return sectionHeaderHeight;
+      }
+
+      return rowsHeight;
+    },
     overscan: 3,
   });
 
@@ -110,22 +183,15 @@ export const MarketplaceEntitiesTiles: React.FC<
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [screenState, rowVirtualizer]);
+  }, [screenState, allEntities, rowVirtualizer]);
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const listHeight = rowVirtualizer.getTotalSize();
-  const separatorRowId = Math.floor(
-    allEntities.findIndex((e) => isString(e)) / colsCount,
-  );
 
   return (
     <>
       <SuggestedMessage shouldRender={!entities.length} />
-      <MarketplaceEntitiesListWrapper
-        separatorRowId={separatorRowId}
-        rowsHeight={rowsHeight}
-        ref={wrapperRefs}
-      >
+      <MarketplaceEntitiesListWrapper ref={wrapperRefs}>
         <div
           style={{
             height: `${listHeight}px`,
@@ -141,7 +207,10 @@ export const MarketplaceEntitiesTiles: React.FC<
             return (
               <div
                 key={virtualRow.key}
-                className="absolute left-0 top-0 grid min-w-full"
+                className={classNames(
+                  'absolute left-0 top-0 grid min-w-full',
+                  isString(rowEntities[0]) && 'flex items-end',
+                )}
                 style={{
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
@@ -158,13 +227,7 @@ export const MarketplaceEntitiesTiles: React.FC<
 
                   if (isString(entity)) {
                     return (
-                      <span
-                        key={entity}
-                        style={{
-                          height: `${rowsHeight}px`,
-                        }}
-                        ref={suggestedRowRef}
-                      ></span>
+                      <SentinelRow>{t(SENTINEL_TEXT[entity])}</SentinelRow>
                     );
                   }
 

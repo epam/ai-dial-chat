@@ -10,6 +10,8 @@ import {
 } from '@/src/types/applications';
 import { EntityType, ScreenState } from '@/src/types/common';
 
+import { MarketplaceI18nKeys } from './i18n';
+
 import LoaderIcon from '@/public/images/icons/loader.svg';
 
 export enum MarketplaceQueryParams {
@@ -135,3 +137,13 @@ export enum TableColumnSortKeys {
   // VERSION = 'VERSION',
   // TOPICS = 'TOPICS',
 }
+
+export const FEATURED_HEADER_SENTINEL = '__FEATURED__';
+export const ALL_APPS_HEADER_SENTINEL = '__ALL_APPS__';
+export const SUGGESTED_HEADER_SENTINEL = '__SUGGESTED__';
+
+export const SENTINEL_TEXT: Record<string, string> = {
+  [FEATURED_HEADER_SENTINEL]: MarketplaceI18nKeys.Featured,
+  [ALL_APPS_HEADER_SENTINEL]: MarketplaceI18nKeys.AllApplications,
+  [SUGGESTED_HEADER_SENTINEL]: MarketplaceI18nKeys.SuggestedResults,
+};
