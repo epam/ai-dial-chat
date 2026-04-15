@@ -427,15 +427,20 @@ const PropertyRenderer = ({
     return getFormCheckboxDefinitionOptions(schema, name);
   }, [name, schema]);
 
+  if (
+    !property.description &&
+    propertyType !== FormSchemaPropertyType.Button &&
+    propertyType !== FormSchemaPropertyType.Checkbox
+  )
+    return null;
+
   return (
     <div
       className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
-      {property.description && (
-        <p className="whitespace-pre-line text-base text-primary">
-          {property.description}
-        </p>
-      )}
+      <p className="whitespace-pre-line text-base text-primary">
+        {property.description}
+      </p>
 
       {propertyType === FormSchemaPropertyType.Button && (
         <ButtonsProperty
@@ -496,23 +501,25 @@ const FormSchemaMemo = memo(function FormSchema({
   );
 
   return (
-    <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
-      {sortedProperties.map(([name, property]) => (
-        <PropertyRenderer
-          property={property}
-          schema={schema}
-          name={name}
-          onChange={onChange}
-          key={name}
-          disabled={disabled}
-          showSelected={showSelected}
-          formValue={formValue}
-          buttonsWrapperClassName={buttonsWrapperClassName}
-          buttonClassName={buttonClassName}
-          className={propertyWrapperClassName}
-        />
-      ))}
-    </div>
+    sortedProperties.some(([_name, property]) => !property.description) && (
+      <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
+        {sortedProperties.map(([name, property]) => (
+          <PropertyRenderer
+            property={property}
+            schema={schema}
+            name={name}
+            onChange={onChange}
+            key={name}
+            disabled={disabled}
+            showSelected={showSelected}
+            formValue={formValue}
+            buttonsWrapperClassName={buttonsWrapperClassName}
+            buttonClassName={buttonClassName}
+            className={propertyWrapperClassName}
+          />
+        ))}
+      </div>
+    )
   );
 });
 
