@@ -7,3 +7,6 @@ helm
 .env.local
 .git
 docs
+dist
+.nx
+.rollup.cache
