@@ -22,6 +22,7 @@ import {
 
 import {
   Conversation,
+  ConversationResponseFormat,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
@@ -119,6 +120,7 @@ describe('cleanData Functions', () => {
     selectedAddons: [],
     folderId: getConversationRootId(bucket),
     updatedAt: expect.any(Number),
+    responseFormat: ConversationResponseFormat.Markdown,
   };
 
   describe('cleaning v1 data', () => {
