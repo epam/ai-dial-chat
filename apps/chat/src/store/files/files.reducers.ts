@@ -327,6 +327,7 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         folderPath?: string;
+        paths?: string[];
       }>,
     ) => {
       state.isLoadingSearchListing = true;
