@@ -3,6 +3,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
 import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
+import { ServerUtils } from '@/src/utils/server/server';
 
 import { EntityType, PartialBy, ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -283,3 +284,11 @@ export const getToolsetAuthActionLabel = (
     return 'Log in';
   return action as string;
 };
+
+export const getToolsetMcpUrl = ({
+  id,
+  apiHost,
+}: {
+  id: string;
+  apiHost: string;
+}) => `${apiHost}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
