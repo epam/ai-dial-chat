@@ -312,6 +312,12 @@ export enum CommonI18nKeys {
   AgentByThisLinkNotFound = 'Agent by this link not found',
   ToolsetByThisLinkNotFound = 'Toolset by this link not found',
   CannotFetchApplicationSchema = 'Cannot fetch application schema. Please try again later.',
+  ConnectToolset = 'Connect toolset',
+  ConnectApplication = 'Connect application',
+  CopyURL = 'Copy URL',
+  Copied = 'Copied ',
+  CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
+  CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
 }
 
 // errors.json
@@ -930,6 +936,7 @@ export enum MarketplaceI18nKeys {
   PopulatePromptInTheChatInput = 'Populate prompt in the chat input',
   StartersSettings = 'Starters settings',
   AtLeastOneStarterIsRequiredToEnableSettings = 'At least one starter is required to enable settings',
+  PayAttentionTheUserWontBeAbleToEdit = "Pay attention: the user won't be able to edit the populated input prompt",
   InputMIMEType = "Input the MIME type and press 'Enter' to add",
   EnterAttachmentTypes = 'Enter one or more attachment types',
   MaxAttachmentsNumber = 'Max. attachments number',
@@ -1053,4 +1060,11 @@ export enum MarketplaceI18nKeys {
   PublicationDetails = 'Publication details',
   PublishedTo = 'Published to',
   AllowAccessIfAllMatch = 'Allow access if all match',
+  Featured = 'Featured',
+  AllApplications = 'All applications',
+  Connect = 'Connect',
+  ConnectToolset = 'Connect toolset',
+  ConnectApplication = 'Connect application',
+  CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
+  CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
 }

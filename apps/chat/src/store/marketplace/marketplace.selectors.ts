@@ -199,6 +199,9 @@ const selectFiltersContent = createSelector(
   },
 );
 
+const selectConnectLinkEntity = (state: RootState) =>
+  rootSelector(state).connectLinkEntity;
+
 export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
@@ -220,4 +223,5 @@ export const MarketplaceSelectors = {
   selectLoginEntity,
   selectShowLoader,
   selectFiltersContent,
+  selectConnectLinkEntity,
 };

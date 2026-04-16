@@ -3,6 +3,7 @@ import {
   IconFileDescription,
   IconLink,
   IconPencilMinus,
+  IconPlugConnected,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -62,6 +63,7 @@ interface Props {
     unpublish?: boolean;
     logs?: boolean;
     delete?: boolean;
+    connect?: boolean;
   };
   isPreview?: boolean;
   triggerIconSize?: number;
@@ -93,6 +95,7 @@ export const useAgentMenuItems = ({
     handleUnpublish,
     handleUpdateFunctionStatus,
     handleRedeploy,
+    handleConnect,
   } = useAgentMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -118,6 +121,13 @@ export const useAgentMenuItems = ({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t(MarketplaceI18nKeys.Connect),
+        dataQa: 'toolset-connect',
+        display: disabledActions?.connect !== true,
+        Icon: IconPlugConnected,
+        onClick: handleConnect,
+      },
       {
         name: t(MarketplaceI18nKeys.CopyLink),
         dataQa: 'application-copy-link',
@@ -213,7 +223,7 @@ export const useAgentMenuItems = ({
     ],
     [
       t,
-      isPublicApp,
+      disabledActions?.connect,
       disabledActions.copyLink,
       disabledActions.deploy,
       disabledActions.edit,
@@ -223,13 +233,15 @@ export const useAgentMenuItems = ({
       disabledActions.unpublish,
       disabledActions.logs,
       disabledActions.delete,
+      handleConnect,
+      isPublicApp,
       handleCopy,
-      showRedeploy,
-      handleRedeploy,
       entity,
       playerStatus,
       isExecutable,
       handleUpdateFunctionStatus,
+      showRedeploy,
+      handleRedeploy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,

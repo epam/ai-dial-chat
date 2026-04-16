@@ -67,6 +67,7 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
 const agentDisabledActions = {
   copyLink: true,
   unpublish: true,
+  connect: true,
 };
 
 const toolsetDisabledActions = {
@@ -77,6 +78,7 @@ const toolsetDisabledActions = {
   publish: true,
   unpublish: true,
   delete: true,
+  connect: true,
 };
 
 export const ItemCardView = <T extends MarketplaceEntity>({

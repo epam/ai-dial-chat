@@ -12,10 +12,12 @@ import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
   MarketplaceSelectors,
+  SettingsSelectors,
 } from '@/src/store/selectors';
 
 import {
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
@@ -34,12 +36,17 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
-
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
+  );
+  const defaultRecentModelsIds = useAppSelector(
+    SettingsSelectors.selectDefaultRecentModelsIds,
+  );
+  const selectedEntitiesTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
   );
 
   const [suggestedResults, setSuggestedResults] = useState<T[]>([]);
@@ -55,6 +62,26 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     !!selectedFilters[FilterTypes.ENTITY_TYPE].length ||
     !!selectedFilters[FilterTypes.TOPICS].length ||
     !!selectedFilters[FilterTypes.SOURCES].length;
+
+  const featuredEntities = useMemo<T[]>(() => {
+    if (
+      selectedTab === MarketplaceTabs.MY_WORKSPACE ||
+      selectedEntitiesTab !== MarketplaceEntitiesTabs.AGENTS ||
+      isSomeFilterNotEmpty
+    ) {
+      return [];
+    }
+
+    return allEntities.filter((e) =>
+      defaultRecentModelsIds.includes(e.reference),
+    );
+  }, [
+    selectedTab,
+    selectedEntitiesTab,
+    isSomeFilterNotEmpty,
+    allEntities,
+    defaultRecentModelsIds,
+  ]);
 
   const displayedEntities = useMemo(() => {
     const filters = selectedFilters;
@@ -126,5 +153,6 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   return {
     displayedEntities,
     suggestedResults,
+    featuredEntities,
   };
 };
