@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Controller,
   useController,
@@ -22,7 +22,7 @@ import {
   CONFIRM_DOCUMENT_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { QuickAppForm as QuickAppFormType } from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
@@ -32,6 +32,7 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 import uniq from 'lodash-es/uniq';
 
@@ -39,6 +40,7 @@ const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
@@ -200,6 +202,11 @@ export const QuickAppForm = () => {
             onChangeTemperature={field.onChange}
           />
         )}
+      />
+
+      <CopyUrlButton
+        id={appDetails?.id ?? ''}
+        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
       />
     </div>
   );

@@ -312,6 +312,12 @@ export enum CommonI18nKeys {
   AgentByThisLinkNotFound = 'Agent by this link not found',
   ToolsetByThisLinkNotFound = 'Toolset by this link not found',
   CannotFetchApplicationSchema = 'Cannot fetch application schema. Please try again later.',
+  ConnectToolset = 'Connect toolset',
+  ConnectApplication = 'Connect application',
+  CopyURL = 'Copy URL',
+  Copied = 'Copied ',
+  CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
+  CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
 }
 
 // errors.json
@@ -1054,4 +1060,9 @@ export enum MarketplaceI18nKeys {
   PublicationDetails = 'Publication details',
   PublishedTo = 'Published to',
   AllowAccessIfAllMatch = 'Allow access if all match',
+  Connect = 'Connect',
+  ConnectToolset = 'Connect toolset',
+  ConnectApplication = 'Connect application',
+  CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
+  CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
 }
