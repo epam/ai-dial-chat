@@ -80,7 +80,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
-  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const allToolsets = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsets(state, true),
+  );
   const editorError = useAppSelector(ApplicationSelectors.selectEditorError);
   const isLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,

@@ -44,6 +44,7 @@ interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
   content: string;
   isInner?: boolean;
+  plainTextMode?: boolean;
 }
 
 const transformUri = (src: string): string => {
@@ -227,6 +228,7 @@ export const ChatMDComponent = memo(
     isShowResponseLoader,
     content,
     isInner = false,
+    plainTextMode = false,
   }: ChatMDComponentProps) => {
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -246,6 +248,14 @@ export const ChatMDComponent = memo(
     );
 
     const processedContent = preprocessLaTeX(content);
+
+    if (plainTextMode) {
+      return (
+        <div className={mdClassNames}>
+          {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+        </div>
+      );
+    }
 
     return (
       <MemoizedReactMarkdown

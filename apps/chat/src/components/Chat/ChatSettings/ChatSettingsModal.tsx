@@ -5,9 +5,8 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
-import { doesModelHaveSettings } from '@/src/utils/app/models';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationsTemporarySettings } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -24,18 +23,14 @@ import { Modal } from '@/src/components/Common/Modal';
 
 import { ConversationSettings } from './ConversationSettings';
 
+import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface ChatSettingsViewProps {
   conversation: Conversation;
   onChangeSettings: (
     conv: Conversation,
-    args: {
-      modelId: string;
-      prompt: string;
-      temperature: number;
-      isShared: boolean;
-    },
+    args: ConversationsTemporarySettings,
   ) => void;
 }
 
@@ -47,6 +42,9 @@ const ChatSettingsView = ({
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
+  const [responseFormat, setResponseFormat] = useState(
+    conversation.responseFormat ?? ConversationResponseFormat.Markdown,
+  );
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
@@ -56,8 +54,15 @@ const ChatSettingsView = ({
       prompt: currentPrompt,
       temperature: currentTemperature,
       isShared: !!conversation.isShared,
+      responseFormat,
     });
-  }, [conversation, currentPrompt, currentTemperature, onChangeSettings]);
+  }, [
+    conversation,
+    currentPrompt,
+    currentTemperature,
+    onChangeSettings,
+    responseFormat,
+  ]);
 
   useEffect(() => {
     handleChangeSettings();
@@ -71,6 +76,8 @@ const ChatSettingsView = ({
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
+      responseFormat={responseFormat}
+      onChangeResponseFormat={setResponseFormat}
     />
   );
 };
@@ -82,12 +89,7 @@ interface Props {
   onClose: () => void;
   onChangeSettings: (
     conv: Conversation,
-    args: {
-      modelId: string;
-      prompt: string;
-      temperature: number;
-      isShared: boolean;
-    },
+    args: ConversationsTemporarySettings,
   ) => void;
   onApplySettings: () => void;
 }
@@ -114,7 +116,7 @@ export const ChatSettings = ({
       .map((conv) => modelsMap[conv.model.id])
       .filter(Boolean) as DialAIEntityModel[];
 
-    return allowedModels.some((model) => doesModelHaveSettings(model));
+    return !!allowedModels.length;
   }, [conversations, modelsMap]);
 
   return (
