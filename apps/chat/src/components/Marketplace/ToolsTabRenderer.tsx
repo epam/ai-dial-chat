@@ -54,12 +54,15 @@ export function ToolsTabRenderer() {
     ? toolsetsMap[detailsToolset.reference]
     : undefined;
 
-  const { displayedEntities: displayedToolsets, suggestedResults } =
-    useMarketplaceDisplayedEntities(
-      allToolsets,
-      installedToolsetsSet,
-      selectedFilters,
-    );
+  const {
+    displayedEntities: displayedToolsets,
+    suggestedResults,
+    featuredEntities,
+  } = useMarketplaceDisplayedEntities(
+    allToolsets,
+    installedToolsetsSet,
+    selectedFilters,
+  );
 
   const handleSetDetailsToolset = useCallback(
     (toolset: ToolsetModel) => {
@@ -121,6 +124,7 @@ export function ToolsTabRenderer() {
       <ToolsetResultsView
         entities={displayedToolsets}
         suggestedResults={suggestedResults}
+        featuredEntities={featuredEntities}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}

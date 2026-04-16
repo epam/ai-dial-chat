@@ -5,48 +5,30 @@ import React, {
   useRef,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
 import { stripQueryParamsFromUrl } from '@/src/utils/app/url/query-params';
 
-import { Translation } from '@/src/types/translation';
-
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { MarketplaceEntitiesListWrapperRef } from './view-props';
 
 interface Props {
   children: React.ReactNode;
-  separatorRowId: number;
-  rowsHeight: number;
   className?: string;
 }
 
 export const MarketplaceEntitiesListWrapper = forwardRef<
   MarketplaceEntitiesListWrapperRef,
   Props
->(({ children, separatorRowId, rowsHeight, className }, ref) => {
-  const { t } = useTranslation(Translation.Marketplace);
-
+>(({ children, className }, ref) => {
   const router = useRouter();
 
   const parentRef = useRef<HTMLDivElement>(null);
-  const suggestedRowRef = useRef<HTMLSpanElement>(null);
 
-  // Using useImperativeHandle to expose internal refs (parentRef and suggestedRowRef)
-  // to the parent component. This allows the parent to control scrolling and positioning
-  // of elements within this component.
-  //
-  // parentRef: Provides a reference to the virtual list container that manages scrolling.
-  // suggestedRowRef: Provides a reference to the element representing the row text (separator).
-  useImperativeHandle(ref, () => ({
-    parentRef,
-    suggestedRowRef,
-  }));
+  useImperativeHandle(ref, () => ({ parentRef }));
 
   useEffect(() => {
     let previousUrl = router.asPath;
@@ -86,20 +68,6 @@ export const MarketplaceEntitiesListWrapper = forwardRef<
         className,
       )}
     >
-      {separatorRowId >= 0 && (
-        <span
-          ref={suggestedRowRef}
-          className="absolute flex max-w-full items-center px-3 text-xl"
-          style={{
-            height: `${rowsHeight}px`,
-            top: `${separatorRowId * rowsHeight}px`,
-          }}
-          data-qa="marketplace-suggestions-label"
-        >
-          {t(MarketplaceI18nKeys.SuggestedResults)}
-        </span>
-      )}
-
       {children}
     </section>
   );

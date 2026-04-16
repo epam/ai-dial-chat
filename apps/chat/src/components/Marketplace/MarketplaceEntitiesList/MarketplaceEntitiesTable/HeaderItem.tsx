@@ -39,7 +39,7 @@ export const HeaderItem: React.FC<Props> = ({
     <DialButton
       onClick={() => (!sortKey ? fakeCallback() : onApplySorting(sortKey))}
       className={classNames(
-        'group flex items-center',
+        'group flex items-center px-2.5',
         !size && 'w-full min-w-full',
         !sortKey && 'cursor-default',
       )}
