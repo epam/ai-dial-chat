@@ -7,7 +7,8 @@ import { PublicationFunctions } from '@/src/types/publication';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { startCase, toLower } from 'lodash-es';
+import startCase from 'lodash-es/startCase';
+import toLower from 'lodash-es/toLower';
 
 interface FilterTypeProps {
   id: string;

@@ -87,14 +87,14 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
           isHovered && 'bg-layer-2',
         )}
       >
-        <div className="flex w-[100px] min-w-[100px] flex-col justify-center gap-1">
+        <div className="flex w-[114px] min-w-[114px] flex-col justify-center gap-1 px-2.5">
           <MarketplaceEntityIndicator entity={entity} />
-          <span className="truncate pl-[6px]">
+          <span className="truncate">
             {entity.version ||
               (isCreatedMarketplaceEntity(entity) ? t(NA_VERSION) : '')}
           </span>
         </div>
-        <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
+        <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden px-2.5">
           {screenState === ScreenState.SM ? (
             <TopicsList topics={entity.topics ?? []} />
           ) : (
@@ -130,10 +130,10 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
             </>
           )}
         </div>
-        <div className="flex w-[130px] min-w-[130px] items-center">
+        <div className="flex w-[130px] min-w-[130px] items-center px-2.5">
           <p className="truncate">{displayedAuthor}</p>
         </div>
-        <div className="flex w-[86px] min-w-[86px] items-center">
+        <div className="flex w-[114px] min-w-[114px] items-center px-2.5">
           <p className="truncate">
             {entity?.createdAt ? (
               <DateRenderer dateValue={entity.createdAt} />

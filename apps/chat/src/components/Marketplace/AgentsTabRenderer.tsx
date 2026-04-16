@@ -50,7 +50,7 @@ export function AgentsTabRenderer() {
     !selectedFilters[FilterTypes.TOPICS].length &&
     !selectedFilters[FilterTypes.SOURCES].length;
 
-  const { displayedEntities, suggestedResults } =
+  const { displayedEntities, suggestedResults, featuredEntities } =
     useMarketplaceDisplayedEntities(
       allModels,
       installedModelIds,
@@ -121,6 +121,7 @@ export function AgentsTabRenderer() {
       <AgentsResultsView
         entities={displayedEntities}
         suggestedResults={suggestedResults}
+        featuredEntities={featuredEntities}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}
