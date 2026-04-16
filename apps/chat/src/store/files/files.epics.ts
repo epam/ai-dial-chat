@@ -312,6 +312,7 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
           FilesActions.getFullListingSuccess({
             folderPath,
             files: [],
+            fromCache: true,
           }),
         );
       }
@@ -653,11 +654,10 @@ const copyFilesEpic: AppEpic = (action$) =>
                   request: payload,
                 }),
               ),
-              of(
-                FilesActions.getFilesWithFolders({
-                  id: payload.destinationFolder,
-                }),
-              ),
+              from([
+                FilesActions.getFolders({ id: payload.destinationFolder }),
+                FilesActions.getFiles({ id: payload.destinationFolder }),
+              ]),
             ),
           ),
           catchError((error) => {
@@ -704,16 +704,14 @@ const moveFilesEpic: AppEpic = (action$) =>
 
             if (payload.destinationFolder !== payload.sourceFolder) {
               actions.push(
-                FilesActions.getFilesWithFolders({
-                  id: payload.sourceFolder,
-                }),
+                FilesActions.getFolders({ id: payload.sourceFolder }),
+                FilesActions.getFiles({ id: payload.sourceFolder }),
               );
             }
 
             actions.push(
-              FilesActions.getFilesWithFolders({
-                id: payload.destinationFolder,
-              }),
+              FilesActions.getFolders({ id: payload.destinationFolder }),
+              FilesActions.getFiles({ id: payload.destinationFolder }),
             );
 
             return from(actions);
@@ -754,11 +752,10 @@ const deleteFilesEpic: AppEpic = (action$) =>
                 request: payload,
               }),
             ),
-            of(
-              FilesActions.getFilesWithFolders({
-                id: payload.folderUrl,
-              }),
-            ),
+            from([
+              FilesActions.getFolders({ id: payload.folderUrl }),
+              FilesActions.getFiles({ id: payload.folderUrl }),
+            ]),
           );
         }),
         catchError(() => {
