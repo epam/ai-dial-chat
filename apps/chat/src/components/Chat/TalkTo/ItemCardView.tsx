@@ -78,6 +78,7 @@ const toolsetDisabledActions = {
   publish: true,
   unpublish: true,
   delete: true,
+  connect: true,
 };
 
 export const ItemCardView = <T extends MarketplaceEntity>({
