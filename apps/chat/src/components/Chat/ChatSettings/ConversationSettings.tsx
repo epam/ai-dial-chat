@@ -19,10 +19,13 @@ import { ModelsSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import { ResponseFormat } from '@/src/components/Chat/ChatSettings/ResponseFormat';
+
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
+import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 
 interface SettingContainerProps {
   children: ReactNode;
@@ -31,10 +34,12 @@ interface SettingContainerProps {
 interface Props {
   prompt: string | undefined;
   temperature: number | undefined;
+  responseFormat: ConversationResponseFormat;
   prompts: Prompt[];
   conversation: Conversation;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
+  onChangeResponseFormat: (responseFormat: ConversationResponseFormat) => void;
 }
 
 function FieldContainer({ children }: SettingContainerProps) {
@@ -72,10 +77,12 @@ export const ConversationSettings = Inversify.register(
   ({
     prompts,
     prompt,
+    responseFormat,
     temperature,
     conversation,
     onChangePrompt,
     onChangeTemperature,
+    onChangeResponseFormat,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -93,11 +100,28 @@ export const ConversationSettings = Inversify.register(
     }
 
     if (!doesModelHaveSettings(model)) {
-      return <EmptySettings />;
+      return (
+        <SettingContainer>
+          <FieldContainer>
+            <ResponseFormat
+              value={responseFormat}
+              onChange={onChangeResponseFormat}
+              disabled={isPlayback}
+            />
+          </FieldContainer>
+        </SettingContainer>
+      );
     }
 
     return (
       <SettingContainer>
+        <FieldContainer>
+          <ResponseFormat
+            value={responseFormat}
+            onChange={onChangeResponseFormat}
+            disabled={isPlayback}
+          />
+        </FieldContainer>
         {model.type === EntityType.Model &&
           doesModelAllowSystemPrompt(model) && (
             <FieldContainer>
