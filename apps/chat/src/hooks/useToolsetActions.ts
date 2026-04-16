@@ -130,6 +130,15 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
+  const handleConnect = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(MarketplaceActions.setConnectLinkEntity(toolset));
+    },
+    [dispatch, toolset],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -139,5 +148,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleOpenSharing,
     handleOpenUnshare,
     handleLogin,
+    handleConnect,
   };
 };

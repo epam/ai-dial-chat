@@ -1,4 +1,4 @@
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrashX } from '@tabler/icons-react';
 import { FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -10,12 +10,10 @@ import { Translation } from '@/src/types/translation';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, DialInput } from '@epam/ai-dial-ui-kit';
 import { nanoid } from 'nanoid';
 
 const createEmptyStarter = () => ({ id: nanoid(), title: '', text: '' });
-const INPUT_CLASS =
-  'input-form input-invalid peer mx-0 min-w-0 text-sm disabled:cursor-not-allowed disabled:border-primary';
 
 interface StarterWithId extends ConversationStarter {
   id: string;
@@ -59,34 +57,33 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
 
         return (
           <div key={item.id} className="flex items-center gap-2">
-            <input
+            <DialInput
               value={item.title}
-              onChange={(e) => handleChange(index, 'title', e.target.value)}
-              className={classNames(INPUT_CLASS, 'flex-1')}
+              onChange={(value) => handleChange(index, 'title', value ?? '')}
+              containerClassName="flex-1"
               placeholder={t(MarketplaceI18nKeys.ButtonTitleTravelTips) ?? ''}
               disabled={disabled}
             />
-            <input
+            <DialInput
               value={item.text}
-              onChange={(e) => handleChange(index, 'text', e.target.value)}
-              className={classNames(INPUT_CLASS, 'flex-[2]')}
+              onChange={(value) => handleChange(index, 'text', value ?? '')}
+              containerClassName="flex-[2]"
               placeholder={t(MarketplaceI18nKeys.PromptToSendInChat) ?? ''}
               disabled={disabled}
             />
-            <DialButton
-              iconBefore={
-                <IconTrash
-                  size={16}
-                  className={classNames(
-                    isLastRow ? 'opacity-0' : 'text-secondary',
-                  )}
+            <DialGhostIconButton
+              icon={
+                <IconTrashX
+                  strokeWidth={1.5}
+                  size={24}
+                  className={classNames(isLastRow && 'opacity-0')}
                 />
               }
               onClick={() =>
                 !isLastRow && onChange(value.filter((_, i) => i !== index))
               }
               className={classNames(
-                'shrink-0',
+                'shrink-0 px-2',
                 isLastRow ? 'pointer-events-none' : 'hover:text-error',
               )}
               disabled={disabled || isLastRow}

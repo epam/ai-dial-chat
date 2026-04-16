@@ -162,6 +162,15 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
     [dispatch, entity],
   );
 
+  const handleConnect = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(MarketplaceActions.setConnectLinkEntity(entity));
+    },
+    [dispatch, entity],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -173,5 +182,6 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
     handleUpdateFunctionStatus,
     handleOpenApplicationLogs,
     handleRedeploy: handleRedeployWrapper,
+    handleConnect,
   };
 };

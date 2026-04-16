@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   Controller,
   useFormContext,
@@ -29,6 +29,7 @@ import {
 } from '@/src/constants/applications';
 import {
   ChatI18nKeys,
+  CommonI18nKeys,
   MarketplaceI18nKeys,
   SettingsI18nKeys,
 } from '@/src/constants/i18n';
@@ -53,6 +54,7 @@ import { DialMarkdownEditorContainer } from '@/src/components/Common/MarkdownEdi
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 import uniq from 'lodash-es/uniq';
 
@@ -63,6 +65,7 @@ const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 const StartersBehaviourField = withLabel(StartersBehaviourRadioGroup);
 const ToggleSwitchField = withLabel(ToggleSwitch);
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const getItemLabel = (item: unknown): string => item as string;
 
@@ -88,6 +91,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
   const modelId = useWatch({ control, name: 'model' });
   const starters = useWatch({ control, name: 'starters' });
+  const autoSubmit = useWatch({ control, name: 'autoSubmit' });
+  const chatMessageInputDisabled = useWatch({
+    control,
+    name: 'chatMessageInputDisabled',
+  });
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
@@ -329,6 +337,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 additionalText={t(
                   MarketplaceI18nKeys.DisableChatInputSoUsersCanOnlyUseStarters,
                 )}
+                warning={
+                  !autoSubmit && chatMessageInputDisabled
+                    ? t(MarketplaceI18nKeys.PayAttentionTheUserWontBeAbleToEdit)
+                    : undefined
+                }
                 disabled={isAppPublic || !hasStarters}
                 tooltip={startersSettingsTooltip}
               />
@@ -336,6 +349,16 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           />
         </div>
       </FormCollapsibleSection>
+
+      <div className="flex flex-col gap-4 px-5 py-4">
+        <h5 className="text-base font-semibold text-primary">
+          {t(CommonI18nKeys.ConnectApplication)}
+        </h5>
+        <CopyUrlButton
+          id={appDetails?.id ?? ''}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      </div>
     </div>
   );
 };

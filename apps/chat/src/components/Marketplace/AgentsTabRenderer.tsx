@@ -15,6 +15,8 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
+import { ConnectToolsetModal } from '@/src/components/Marketplace/ConnectToolsetModal';
+
 import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
 import { ResultsView, ResultsViewProps } from './TabResults';
 
@@ -140,6 +142,8 @@ export function AgentsTabRenderer() {
           isSuggested={detailsModel?.isSuggested}
         />
       )}
+
+      <ConnectToolsetModal />
     </>
   );
 }
