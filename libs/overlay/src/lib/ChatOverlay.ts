@@ -112,16 +112,26 @@ export class ChatOverlay {
   protected getIframePermissions(): string {
     const permissions = ['clipboard-write'];
 
-    const features = this.options.enabledFeatures;
-    const hasVoiceInput = Array.isArray(features)
-      ? features.includes(Feature.VoiceInput)
-      : typeof features === 'string' && features.includes(Feature.VoiceInput);
-
-    if (hasVoiceInput) {
+    if (this.hasFeature(Feature.VoiceInput)) {
       permissions.push('microphone');
     }
 
     return permissions.join('; ');
+  }
+
+  /**
+   * Checks if a specific feature is included in the enabled features list
+   * @param feature {Feature} feature to check
+   * @returns {boolean} true if the feature is enabled
+   */
+  protected hasFeature(feature: Feature): boolean {
+    const features = this.options.enabledFeatures;
+
+    if (Array.isArray(features)) {
+      return features.includes(feature);
+    }
+
+    return typeof features === 'string' && features.includes(feature);
   }
 
   /**
