@@ -107,7 +107,7 @@ export const FilesSelector: React.FC<Props> = ({
     <Tooltip tooltip={tooltip}>
       <div className="relative grow space-y-4 divide-tertiary">
         <div className="flex flex-col">
-          <div className="absolute right-0 top-[-22px]">
+          <div className="absolute right-0 top-[-26px]">
             <DialLinkButton
               tooltipProps={{ tooltip: addBtnTooltip }}
               disabled={readonly}

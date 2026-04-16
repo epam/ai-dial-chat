@@ -91,6 +91,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
   const modelId = useWatch({ control, name: 'model' });
   const starters = useWatch({ control, name: 'starters' });
+  const autoSubmit = useWatch({ control, name: 'autoSubmit' });
+  const chatMessageInputDisabled = useWatch({
+    control,
+    name: 'chatMessageInputDisabled',
+  });
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
@@ -332,6 +337,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 additionalText={t(
                   MarketplaceI18nKeys.DisableChatInputSoUsersCanOnlyUseStarters,
                 )}
+                warning={
+                  !autoSubmit && chatMessageInputDisabled
+                    ? t(MarketplaceI18nKeys.PayAttentionTheUserWontBeAbleToEdit)
+                    : undefined
+                }
                 disabled={isAppPublic || !hasStarters}
                 tooltip={startersSettingsTooltip}
               />
