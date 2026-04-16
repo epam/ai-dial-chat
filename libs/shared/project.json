@@ -35,7 +35,7 @@
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag}"
     },
     "lint": {},
     "lint:fix": {},
