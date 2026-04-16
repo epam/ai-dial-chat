@@ -5,6 +5,7 @@ import {
   isSectionFilterMatched,
   isVersionFilterMatched,
 } from '@/src/utils/app/common';
+import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
   getFilteredFolders,
   getNextDefaultName,
@@ -39,7 +40,9 @@ import { ShareEntity } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.prompts;
 
-const selectPrompts = (state: RootState) => rootSelector(state).prompts;
+const selectPrompts = createSelector([rootSelector], (state) =>
+  withoutFileManagerPlaceholderByName(state.prompts),
+);
 
 const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
