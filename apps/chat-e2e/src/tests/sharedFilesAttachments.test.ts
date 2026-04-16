@@ -1,6 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Publication } from '@/chat/types/publication';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -21,6 +23,7 @@ import { loadingTimeout } from '@/src/ui/pages';
 import { BaseElement } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator } from '@playwright/test';
 
 dialSharedWithMeTest(
@@ -523,6 +526,8 @@ dialSharedWithMeTest(
     additionalShareUserFileManagerNavigationPanel,
     additionalShareUserDownloadAssertion,
     localStorageManager,
+    additionalShareUserToastAssertion,
+    additionalShareUserToast,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -538,6 +543,7 @@ dialSharedWithMeTest(
       'EPMRTC-4159',
       'EPMRTC-4162',
       'EPMRTC-4165',
+      'EPMRTC-8177',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -925,6 +931,10 @@ dialSharedWithMeTest(
             apiHost: API.discardShareWithMeItem,
           },
         );
+        await additionalShareUserToastAssertion.assertToastMessage(
+          ExpectedConstants.unsharedSuccessfullyToast(user1ImageInRequest1),
+        );
+        await additionalShareUserToast.closeToast();
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
         // await additionalShareUserFileManagerDeleteItemConfirmationPopup
         //   .getCloseButton()
@@ -1122,6 +1132,208 @@ dialSharedWithMeTest(
           additionalShareUserFileManager.getNoDataContent(),
           'visible',
         );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  '[Attach files] Check the checkbox near several folders (from My files and Organization), files (from the root and Shared with me), verify attached files',
+  async ({
+    setTestIds,
+    dialHomePage,
+    fileApiHelper,
+    adminFileApiHelper,
+    localStorageManager,
+    adminShareApiHelper,
+    mainUserShareApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    sendMessage,
+    attachmentDropdownMenu,
+    fileManagerModal,
+    fileManagerModalGrid,
+    fileManagerModalToolbar,
+    sendMessageInputAttachmentsAssertions,
+    adminDataInjector,
+    conversationData,
+  }) => {
+    setTestIds('EPMRTC-6743');
+
+    const modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+    const attachmentModel = GeneratorUtil.randomArrayElement(
+      modelsWithAttachments,
+    );
+
+    const folder1 = GeneratorUtil.randomString(7);
+    const folder2 = GeneratorUtil.randomString(7);
+    const file1 = GeneratorUtil.randomFilename('jpg');
+    const file2 = GeneratorUtil.randomFilename('jpg');
+    const file3 = GeneratorUtil.randomFilename('txt');
+    const sharedFile = Attachment.heartImageName;
+    const publishedFile = Attachment.cloudImageName;
+    const publishedFolder = GeneratorUtil.randomString(7);
+    const publicationName = GeneratorUtil.randomPublicationRequestName();
+
+    let sharedFileUrl: string;
+    let publishedFileUrl: string;
+    let publication: Publication;
+
+    await dialAdminTest.step(
+      'Upload files for main user: file1 in folder1, file2 in folder2, file3 at root',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          file1,
+          Attachment.sunImageName,
+          {
+            parentPath: folder1,
+          },
+        );
+        await fileApiHelper.putFileWithCustomName(
+          file2,
+          Attachment.sunImageName,
+          {
+            parentPath: folder2,
+          },
+        );
+        await fileApiHelper.putFileWithCustomName(
+          file3,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin uploads file, creates publication request with target folder and approves it',
+      async () => {
+        publishedFileUrl = await adminFileApiHelper.putFile(publishedFile);
+        const publishRequest = publishRequestBuilder
+          .withName(publicationName)
+          .withFileResource(
+            publishedFileUrl,
+            PublishActions.ADD,
+            publishedFolder,
+          )
+          .build();
+        publication =
+          await adminPublicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin uploads shared file, creates conversation with it, shares with main user; main user accepts invite',
+      async () => {
+        sharedFileUrl = await adminFileApiHelper.putFile(sharedFile);
+        const sharedConversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            attachmentModel,
+            true,
+            undefined,
+            sharedFileUrl,
+          );
+        await adminDataInjector.createConversations([sharedConversation]);
+        const shareByLinkResponse = await adminShareApiHelper.shareEntityByLink(
+          [sharedConversation],
+        );
+        await mainUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open home page and set model with attachments',
+      async () => {
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          attachmentModel,
+        );
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open FileManager Modal, select folder1, folder2 and file3 from My Files, click Attach',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        for (const item of [folder1, folder2, file3]) {
+          const checkbox =
+            await fileManagerModalGrid.gridCheckboxByNameCell(item);
+          await checkbox.click();
+        }
+        await fileManagerModal.getAttachButton().click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify file1, file2, file3 are attached in input',
+      async () => {
+        for (const file of [file1, file2, file3]) {
+          await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open FileManager Modal, switch to Shared with me tab, select sharedFile, click Attach',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        await fileManagerModalToolbar.sharedWithMeTab.click();
+        const sharedFileCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(sharedFile);
+        await sharedFileCheckbox.click();
+        await fileManagerModal.getAttachButton().click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify file1, file2, file3, sharedFile are attached in input',
+      async () => {
+        for (const file of [file1, file2, file3, sharedFile]) {
+          await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open FileManager Modal, switch to Organization tab, select publishedFolder checkbox, click Attach',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        await fileManagerModalToolbar.organizationTab.click();
+        const publishedFolderCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(publishedFolder);
+        await publishedFolderCheckbox.click();
+        await fileManagerModal.getAttachButton().click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify all files are attached: file1, file2, file3, sharedFile, publishedFile',
+      async () => {
+        for (const file of [file1, file2, file3, sharedFile, publishedFile]) {
+          await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+            file,
+            'visible',
+          );
+        }
       },
     );
   },

@@ -128,6 +128,8 @@ export const ExpectedConstants = {
   removeAccessTitle: 'Confirm unsharing',
   unshareFileTitle: 'Confirm unsharing file',
   unshareFileMessage: 'Are you sure that you want to unshare this file?',
+  unsharedSuccessfullyToast: (name: string) =>
+    `"${name}" has been unshared successfully`,
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
