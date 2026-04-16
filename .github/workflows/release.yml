@@ -4,6 +4,11 @@ on:
   push:
     branches: [development, release-*]
 
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
