@@ -10,6 +10,7 @@ import {
   DeleteMessageResponse,
   ExportConversationRequest,
   ExportConversationResponse,
+  Feature,
   GetConversationsResponse,
   GetMessagesResponse,
   GetSelectedConversationsResponse,
@@ -105,6 +106,25 @@ export class ChatOverlay {
   }
 
   /**
+   * Builds the iframe permissions policy string based on enabled features
+   * @returns {string} permissions policy string for the iframe `allow` attribute
+   */
+  protected getIframePermissions(): string {
+    const permissions = ['clipboard-write'];
+
+    const features = this.options.enabledFeatures;
+    const hasVoiceInput = Array.isArray(features)
+      ? features.includes(Feature.VoiceInput)
+      : typeof features === 'string' && features.includes(Feature.VoiceInput);
+
+    if (hasVoiceInput) {
+      permissions.push('microphone');
+    }
+
+    return permissions.join('; ');
+  }
+
+  /**
    * Creates iframe add set initial options to it
    * @returns {HTMLIFrameElement} reference to iframe element
    */
@@ -112,7 +132,7 @@ export class ChatOverlay {
     const iframe = document.createElement('iframe');
 
     iframe.src = this.options.domain;
-    iframe.allow = 'clipboard-write';
+    iframe.allow = this.getIframePermissions();
     iframe.name = 'overlay';
     iframe.ariaLabel = 'Chat overlay';
 
