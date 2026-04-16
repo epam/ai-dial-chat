@@ -38,5 +38,6 @@ export interface MarketplaceState {
   loginEntity:
     | { toolset: ToolsetModel; disableAdminView?: boolean }
     | undefined;
+  connectLinkEntity: MarketplaceEntity | undefined;
   showLoader?: boolean;
 }

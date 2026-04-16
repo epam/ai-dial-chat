@@ -104,7 +104,7 @@ export const VoiceRecordingOverlay: FC<Props> = ({
       <div className="mx-3 flex-1 overflow-hidden">
         <canvas
           ref={canvasRef}
-          className="h-full w-full"
+          className="size-full"
           style={{ height: '32px' }}
         />
       </div>
