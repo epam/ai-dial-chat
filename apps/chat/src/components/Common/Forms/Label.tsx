@@ -37,10 +37,10 @@ export const Label: FC<LabelProps> = ({
     {info && (
       <Tooltip
         tooltip={info}
-        triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+        triggerClassName="flex shrink-0 p-1 text-secondary hover:text-accent-primary"
         contentClassName="z-[2000]"
       >
-        <IconHelp size={18} />
+        <IconHelp size={16} />
       </Tooltip>
     )}
   </label>

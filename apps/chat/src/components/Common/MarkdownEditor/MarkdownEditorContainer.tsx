@@ -33,6 +33,12 @@ export interface DialMarkdownEditorContainerProps {
   preview?: PreviewType;
 }
 
+const monacoEditorOptions = {
+  minimap: { enabled: false },
+  scrollBeyondLastLine: false,
+  automaticLayout: true,
+};
+
 export const DialMarkdownEditorContainer: FC<
   DialMarkdownEditorContainerProps
 > = ({
@@ -101,11 +107,7 @@ export const DialMarkdownEditorContainer: FC<
               language="json"
               theme={theme === EditorThemes.dark ? 'vs-dark' : 'light'}
               height={height}
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-              }}
+              options={monacoEditorOptions}
             />
           )}
         </div>
