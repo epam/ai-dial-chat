@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+permissions:
+  contents: read
+  security-events: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
