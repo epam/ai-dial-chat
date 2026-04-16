@@ -5,6 +5,7 @@ import {
   IconLogin,
   IconLogout,
   IconPencilMinus,
+  IconPlugConnected,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
@@ -69,6 +70,7 @@ export const useToolsetMenuItems = ({
     // handleOpenUnshare,
     handlePublish,
     handleUnpublish,
+    handleConnect,
   } = useToolsetMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -83,6 +85,13 @@ export const useToolsetMenuItems = ({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t(MarketplaceI18nKeys.Connect),
+        dataQa: 'toolset-connect',
+        display: disabledActions?.connect !== true,
+        Icon: IconPlugConnected,
+        onClick: handleConnect,
+      },
       {
         name: t(MarketplaceI18nKeys.CopyLink),
         dataQa: 'toolset-copy-link',
@@ -170,13 +179,15 @@ export const useToolsetMenuItems = ({
     ],
     [
       t,
-      isPublicApp,
+      handleConnect,
+      disabledActions?.connect,
       disabledActions.copyLink,
       disabledActions.edit,
       disabledActions.login,
       disabledActions.publish,
       disabledActions.unpublish,
       disabledActions.delete,
+      isPublicApp,
       handleCopy,
       isAppIdPublic,
       canEditOrView,

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
@@ -12,13 +12,17 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   ExternalAppForm as ExternalAppFormType,
   MANDATORY_FIELD_PLACEHOLDER,
 } from '@/src/components/AppsEditor/form';
 import { Field } from '@/src/components/Common/Forms/Field';
+import { withLabel } from '@/src/components/Common/Forms/Label';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
+
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 export const ExternalAppForm = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -67,6 +71,11 @@ export const ExternalAppForm = () => {
         onPaste={onKeyDownOrPaste}
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+      />
+
+      <CopyUrlButton
+        id={appDetails?.id ?? ''}
+        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
       />
     </div>
   );
