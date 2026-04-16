@@ -456,13 +456,14 @@ export const PublicationHandlerFooter = ({
       if (isDraftRuleFilterOpen) {
         return ChatI18nKeys.AcceptOrRejectRulesChanges;
       }
-      return !isValid
-        ? formError
-        : !selectedPublicationItems.length
-          ? 'Nothing is selected and rules have not changed'
-          : areNoChanges
-            ? 'Nothing is selected and rules have not changed'
-            : "Request can't be published as some items are invalid";
+      if (!isValid) {
+        return formError;
+      }
+      if (areNoChanges) {
+        return 'Nothing is selected and rules have not changed';
+      }
+
+      return "Request can't be published as some items are invalid";
     }
 
     return selectedInvalidEntities.length
@@ -482,17 +483,13 @@ export const PublicationHandlerFooter = ({
     areNoChanges,
     isValid,
     formError,
-    selectedPublicationItems.length,
     isDraftRuleFilterOpen,
   ]);
 
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
     (publishModel &&
-      (isEditInvalid ||
-        !isValid ||
-        !selectedPublicationItems.length ||
-        isDraftRuleFilterOpen));
+      (isEditInvalid || !isValid || areNoChanges || isDraftRuleFilterOpen));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {

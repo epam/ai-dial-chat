@@ -13,6 +13,7 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutFeatureType,
+  getIdWithoutTemporaryBucket,
   isApplicationId,
   isConversationId,
   isFileId,
@@ -36,6 +37,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
+import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AuthSelectors,
@@ -158,6 +160,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   );
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
+  );
+  const temporaryFolders = useAppSelector(
+    FoldersSelectors.selectTemporaryFolders,
   );
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
@@ -351,17 +356,27 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    return !isEqual(
-      rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
-      (isReview ? newRules : rulesOnEdit) ?? [],
+    const isTemporaryFolder = temporaryFolders.some(
+      (folder) =>
+        getIdWithoutTemporaryBucket(folder.id) ===
+        getIdWithoutFeatureType(editedPublishToUrl),
+    );
+    return (
+      (initialState.publishToUrl !== editedPublishToUrl && isTemporaryFolder) ||
+      !isEqual(
+        rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
+        (isReview ? newRules : rulesOnEdit) ?? [],
+      )
     );
   }, [
     editedPublishToUrl,
+    initialState.publishToUrl,
     isReview,
     newRules,
     publication.targetFolder,
     rules,
     rulesOnEdit,
+    temporaryFolders,
   ]);
 
   const maxPublishToDepth = useMemo(() => {
