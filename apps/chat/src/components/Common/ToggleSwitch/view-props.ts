@@ -7,4 +7,5 @@ export interface ToggleSwitchProps {
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  warning?: string;
 }
