@@ -31,7 +31,8 @@ dialTest.beforeAll(async () => {
 dialSharedWithMeTest(
   'Share with me. Chats with different context.\n' +
     'Shared chat history is updated in Shared with me if to generate new picture.\n' +
-    'Publish chat with file, file is from "Shared with me" section',
+    'Publish chat with file, file is from "Shared with me" section.\n' +
+    'Error message appears if to Publish the conversation with an attachment from Shared with me',
   async ({
     conversationData,
     fileApiHelper,
@@ -51,7 +52,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1933', 'EPMRTC-2896', 'EPMRTC-4705');
+    setTestIds('EPMRTC-1933', 'EPMRTC-2896', 'EPMRTC-4705', 'EPMRTC-4122');
     let responseImageConversation: Conversation;
     let requestImageConversation: Conversation;
     let stageConversation: Conversation;

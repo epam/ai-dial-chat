@@ -40,7 +40,9 @@ dialAdminTest(
     'Publish request for chat with already published file.\n' +
     'Publish chat with file, file is from Organization section.\n' +
     'Publish request toooltips.\n' +
-    `Author's public name displayed in metadata for chats from Organization`,
+    `Author's public name displayed in metadata for chats from Organization\n` +
+    'Error message appears if to Publish the conversation with an attachment from Organization\n' +
+    'Organization: Search: No results found',
   async ({
     dialHomePage,
     conversationData,
@@ -59,6 +61,7 @@ dialAdminTest(
     adminApproveRequiredConversations,
     navigationPanel,
     fileManagerToolbar,
+    fileManager,
     fileManagerGridAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
@@ -77,6 +80,7 @@ dialAdminTest(
     localStorageManager,
     adminLocalStorageManager,
     informationModalAssertion,
+    fileManagerNavigationPanel,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -89,6 +93,8 @@ dialAdminTest(
       'EPMRTC-4704',
       'EPMRTC-3457',
       'EPMRTC-5652',
+      'EPMRTC-4124',
+      'EPMRTC-4169',
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -334,6 +340,20 @@ dialAdminTest(
           Attachment.cloudImageName,
           'visible',
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMRTC-4169: search non-existent term in Organization tab and verify "No results found" is shown',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput(GeneratorUtil.randomString(10));
+        await baseAssertion.assertElementState(
+          fileManager.getNoDataContent(),
+          'visible',
+        );
+        await fileManagerNavigationPanel.getSearch().inputField.fillInInput('');
         await navigationPanel.backToChat();
       },
     );

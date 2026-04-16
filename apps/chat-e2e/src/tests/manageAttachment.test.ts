@@ -1213,3 +1213,50 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  '[File Manager]: restricted symbols are replaced with symbol _ while upload',
+  async ({
+    setTestIds,
+    dialHomePage,
+    fileManagerPage,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+  }) => {
+    setTestIds('EPMRTC-8300');
+
+    const expectedFilename = ExpectedConstants.replacedRestrictedCharsName(
+      Attachment.restrictedCharsFilename.toLowerCase(),
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded({ isGridVisible: false });
+    });
+
+    await dialTest.step(
+      'Upload file with restricted symbols via New > Upload Files',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify file appears in grid with restricted symbols replaced by "_"',
+      async () => {
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          expectedFilename,
+          'visible',
+        );
+      },
+    );
+  },
+);
