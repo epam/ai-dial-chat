@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Controller,
   useFormContext,
@@ -30,7 +30,7 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   CodeAppForm as CodeAppFormType,
@@ -46,6 +46,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -56,6 +57,7 @@ const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormType, 'endpoints' | 'env'>,
 );
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const checkIsTargetFolderLoaded = (
   folders: FileFolderInterface[],
@@ -216,6 +218,11 @@ export const CodeAppForm = () => {
         errors={errors.env}
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+      />
+
+      <CopyUrlButton
+        id={appDetails?.id ?? ''}
+        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
       />
     </div>
   );

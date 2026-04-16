@@ -1,5 +1,5 @@
 import MDEditor, { type PreviewType } from '@uiw/react-md-editor';
-import type { FC } from 'react';
+import type { CSSProperties, FC } from 'react';
 
 export enum EditorThemes {
   dark = 'dark',
@@ -31,6 +31,13 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
         onChange={(val) => onChange?.(val || '')}
         height={height}
         preview={preview}
+        style={
+          {
+            backgroundColor: 'transparent',
+            '--color-canvas-default': 'transparent',
+            '--md-editor-background-color': 'var(--bg-layer-1)',
+          } as CSSProperties
+        }
       />
     </div>
   );

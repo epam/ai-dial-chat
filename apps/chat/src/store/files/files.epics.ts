@@ -34,6 +34,7 @@ import {
 import {
   getFolderFromId,
   getGeneratedFolderId,
+  getPartialAndFullyChosenFolders,
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
 import {
@@ -279,6 +280,28 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
     ofType(FilesActions.getFullListing.type),
     switchMap(({ payload }) => {
       const folderPath = payload.folderPath || '';
+      const paths = payload.paths;
+
+      if (paths) {
+        if (paths.length === 0) {
+          return of(
+            FilesActions.getFullListingSuccess({
+              folderPath,
+              files: [],
+            }),
+          );
+        }
+
+        return FileService.getMultipleFoldersFiles(paths, true).pipe(
+          map((files) =>
+            FilesActions.getFullListingSuccess({
+              folderPath,
+              files,
+            }),
+          ),
+          catchError(() => of(FilesActions.getFullListingFail())),
+        );
+      }
 
       const metadata = state$.value.files.searchListingMetadata[folderPath];
       const cacheAge = metadata ? Date.now() - metadata.loadedAt : Infinity;
@@ -543,17 +566,27 @@ const autoSelectNestedFoldersEpic: AppEpic = (action$, state$) =>
       const chosenEmptyFolderIds =
         FilesSelectors.selectChosenEmptyFolderIds(state);
       const allFolders = FilesSelectors.selectFolders(state);
+      const allFiles = FilesSelectors.selectFiles(state);
+      const emptyFolderIds = FilesSelectors.selectEmptyFolderIds(state);
 
       const normalizedParentId = addTrailingSlashIfAbsent(parentFolderId);
 
-      // The parent is considered selected when either its files are chosen
-      // (non-empty folder path) or it sits in chosenEmptyFolderIds (empty
-      // folder or one that is still loading its content).
+      // Cascade only when the parent folder itself is fully chosen: either it
+      // is an explicitly-selected empty folder, or ALL of its files are selected.
+      // Partial selection (e.g. a single file inside the folder) must not trigger
+      // cascade into sub-folders.
+      const { fullyChosenFolderIds } = getPartialAndFullyChosenFolders(
+        allFolders,
+        allFiles,
+        chosenFileIds,
+        emptyFolderIds,
+        chosenEmptyFolderIds,
+      );
+
       const parentIsSelected =
-        chosenFileIds.some((id) => id.startsWith(normalizedParentId)) ||
         chosenEmptyFolderIds.some(
           (id) => addTrailingSlashIfAbsent(id) === normalizedParentId,
-        );
+        ) || fullyChosenFolderIds.includes(parentFolderId);
 
       if (!parentIsSelected) return EMPTY;
 

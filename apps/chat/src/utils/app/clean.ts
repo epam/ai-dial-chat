@@ -16,6 +16,7 @@ import { getConversationRootId } from './id';
 import {
   Attachment,
   ConversationEntityModel,
+  ConversationResponseFormat,
   Message,
   Stage,
 } from '@epam/ai-dial-shared';
@@ -111,6 +112,8 @@ export const cleanConversation = (
       },
     }),
     customViewState: conversation.customViewState,
+    responseFormat:
+      conversation.responseFormat ?? ConversationResponseFormat.Markdown,
   };
 
   return cleanConversation;
