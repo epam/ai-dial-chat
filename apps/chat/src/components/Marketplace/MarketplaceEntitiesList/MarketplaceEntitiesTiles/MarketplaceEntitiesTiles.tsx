@@ -114,7 +114,7 @@ export const MarketplaceEntitiesTiles: React.FC<
 
       setColumnCount(count);
     }
-  }, [gap, minWidth]);
+  }, [gap, minWidth, screenState]);
 
   useResizeObserver(dataRef.current, handleResize);
 
