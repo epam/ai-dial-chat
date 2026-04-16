@@ -1,4 +1,4 @@
-import { VirtualItem, useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import React, {
   ReactNode,
   forwardRef,
@@ -8,8 +8,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-
-import classNames from 'classnames';
 
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
@@ -25,20 +23,62 @@ import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import {
+  ALL_APPS_HEADER_SENTINEL,
+  FEATURED_HEADER_SENTINEL,
   MarketplaceEntitiesTabs,
+  SUGGESTED_HEADER_SENTINEL,
   TableColumnSortKeys,
 } from '@/src/constants/marketplace';
 
 import { MarketplaceEntitiesListWrapper } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesListWrapper';
 import { MarketplaceEntitiesTableHeader } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTable/MarketplaceEntitiesTableHeader';
 import { SuggestedMessage } from '@/src/components/Marketplace/MarketplaceEntitiesList/SuggestedMessage';
-import { MarketplaceEntitiesListProps } from '@/src/components/Marketplace/MarketplaceEntitiesList/view-props';
+import {
+  MarketplaceEntitiesListProps,
+  MarketplaceEntitiesListWrapperRef,
+} from '@/src/components/Marketplace/MarketplaceEntitiesList/view-props';
 
-import { MarketplaceEntitiesTableLeftSideRow } from './MarketplaceEntitiesTableLeftSideRow';
-import { MarketplaceEntitiesTableRightSideRow } from './MarketplaceEntitiesTableRightSideRow';
+import { VirtualRowsRenderer } from './VirtualRowsRenderer';
 
 import isString from 'lodash-es/isString';
 import orderBy from 'lodash-es/orderBy';
+
+const ROW_SIZES = {
+  [ScreenState.SM]: 55,
+  [ScreenState.MD]: 114,
+  [ScreenState.XL]: 114,
+  [ScreenState.XL3]: 114,
+  [ScreenState.XL4]: 114,
+  [ScreenState.XL5]: 114,
+};
+
+const SECTION_HEADER_ROW_SIZE: Record<ScreenState, number> = {
+  [ScreenState.SM]: 52,
+  [ScreenState.MD]: 56,
+  [ScreenState.XL]: 64,
+  [ScreenState.XL3]: 64,
+  [ScreenState.XL4]: 64,
+  [ScreenState.XL5]: 64,
+};
+
+const FEATURED_HEADER_ROW_SIZE = 48;
+
+const SORT_KEY_MAP = {
+  [TableColumnSortKeys.RELEASED]: 'createdAt',
+  [TableColumnSortKeys.NAME]: 'name',
+};
+
+type AgentsSortKeyMap = Record<TableColumnSortKeys, keyof DialAIEntityModel>;
+const AGENTS_SORT_KEY_MAP: AgentsSortKeyMap = {
+  ...(SORT_KEY_MAP as AgentsSortKeyMap),
+  [TableColumnSortKeys.OWNER]: 'owner',
+};
+
+type ToolsetsSortKeyMap = Record<TableColumnSortKeys, keyof ToolsetModel>;
+const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
+  ...(SORT_KEY_MAP as ToolsetsSortKeyMap),
+  [TableColumnSortKeys.OWNER]: 'author',
+};
 
 interface DataRowContainerProps {
   children: ReactNode;
@@ -64,78 +104,16 @@ const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
 );
 DataRowContainer.displayName = 'DataRowContainer';
 
-interface DataRowItemProps {
-  suggestedResults: MarketplaceEntity[];
-  entity: MarketplaceEntity | string;
-  virtualRow: VirtualItem;
-  children: ReactNode;
-}
-
-const DataRowItem: React.FC<DataRowItemProps> = ({
-  entity,
-  suggestedResults,
-  virtualRow,
-  children,
-}) => {
-  return (
-    <div
-      className={classNames(
-        suggestedResults.length &&
-          !isString(entity) &&
-          entity.id === suggestedResults[0].id &&
-          '!border-t-0',
-        isString(entity) && 'flex items-center !border-t-0',
-        'absolute left-0 top-0 min-w-full',
-      )}
-      style={{
-        height: `${virtualRow.size}px`,
-        transform: `translateY(${virtualRow.start}px)`,
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
-const ROW_SIZES = {
-  [ScreenState.SM]: 55,
-  [ScreenState.MD]: 115,
-  [ScreenState.XL]: 115,
-  [ScreenState.XL3]: 115,
-  [ScreenState.XL4]: 115,
-  [ScreenState.XL5]: 115,
-};
-
-const SORT_KEY_MAP = {
-  [TableColumnSortKeys.RELEASED]: 'createdAt',
-  [TableColumnSortKeys.NAME]: 'name',
-};
-
-type AgentsSortKeyMap = Record<TableColumnSortKeys, keyof DialAIEntityModel>;
-const AGENTS_SORT_KEY_MAP: AgentsSortKeyMap = {
-  ...(SORT_KEY_MAP as AgentsSortKeyMap),
-  [TableColumnSortKeys.OWNER]: 'owner',
-};
-
-type ToolsetsSortKeyMap = Record<TableColumnSortKeys, keyof ToolsetModel>;
-const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
-  ...(SORT_KEY_MAP as ToolsetsSortKeyMap),
-  [TableColumnSortKeys.OWNER]: 'author',
-};
-
 export const MarketplaceEntitiesTable: React.FC<
   MarketplaceEntitiesListProps<MarketplaceEntity>
 > = ({
   entities,
   suggestedResults,
-  separator,
+  featuredEntities,
   onCardClick,
   onBookmarkClick,
 }) => {
-  const wrapperRefs = useRef<{
-    parentRef: React.RefObject<HTMLDivElement>;
-    suggestedRowRef: React.RefObject<HTMLSpanElement>;
-  }>(null);
+  const wrapperRefs = useRef<MarketplaceEntitiesListWrapperRef>(null);
   const headerRefs = useRef<{
     leftColumnHeaderRef: React.RefObject<HTMLDivElement>;
     rightColumnHeaderRef: React.RefObject<HTMLDivElement>;
@@ -144,7 +122,6 @@ export const MarketplaceEntitiesTable: React.FC<
   const rightColumnDataRef = useRef<HTMLDivElement>(null);
 
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
-  const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
 
   const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
@@ -188,43 +165,71 @@ export const MarketplaceEntitiesTable: React.FC<
         [tableSort.order],
       );
     };
-    const sortedEntities = isAgentsTab
-      ? sortEntities<DialAIEntityModel>(
-          entities as DialAIEntityModel[],
-          agentsSortField,
-        )
-      : sortEntities<ToolsetModel>(
-          entities as ToolsetModel[],
-          toolsetsSortField,
-        );
-    const sortedSuggestedEntities = isAgentsTab
-      ? sortEntities<DialAIEntityModel>(
-          suggestedResults as DialAIEntityModel[],
-          agentsSortField,
-        )
-      : sortEntities<ToolsetModel>(
-          suggestedResults as ToolsetModel[],
-          toolsetsSortField,
-        );
 
-    if (!suggestedResults.length) return sortedEntities;
-    if (!entities.length && suggestedResults.length)
-      return sortedSuggestedEntities;
+    const sortField = (
+      isAgentsTab ? agentsSortField : toolsetsSortField
+    ) as keyof MarketplaceEntity;
+    const sortedEntities = sortEntities(entities, sortField);
+    const sortedSuggestedEntities = sortEntities(suggestedResults, sortField);
 
-    return [...sortedEntities, separator, ...sortedSuggestedEntities];
+    const result: (MarketplaceEntity | string)[] = [];
+
+    if (featuredEntities.length) {
+      const sortedFeaturedEntities = sortEntities(featuredEntities, sortField);
+      result.push(FEATURED_HEADER_SENTINEL, ...sortedFeaturedEntities);
+    }
+
+    if (
+      featuredEntities.length &&
+      (entities.length || suggestedResults.length)
+    ) {
+      result.push(ALL_APPS_HEADER_SENTINEL);
+    }
+
+    if (!suggestedResults.length) {
+      result.push(...sortedEntities);
+    } else if (!entities.length) {
+      result.push(...sortedSuggestedEntities);
+    } else {
+      result.push(
+        ...sortedEntities,
+        SUGGESTED_HEADER_SENTINEL,
+        ...sortedSuggestedEntities,
+      );
+    }
+
+    return result;
   }, [
     entities,
+    featuredEntities,
     isAgentsTab,
-    separator,
     suggestedResults,
     tableSort.column,
     tableSort.order,
   ]);
 
+  const allEntitiesRef = useRef(allEntities);
+  allEntitiesRef.current = allEntities;
+
   const rowVirtualizer = useVirtualizer({
     count: allEntities.length,
     getScrollElement: () => currentParentRef,
-    estimateSize: () => ROW_SIZES[screenState],
+    estimateSize: (index) => {
+      const entity = allEntitiesRef.current[index];
+
+      if (entity === FEATURED_HEADER_SENTINEL) {
+        return FEATURED_HEADER_ROW_SIZE;
+      }
+
+      if (
+        entity === ALL_APPS_HEADER_SENTINEL ||
+        entity === SUGGESTED_HEADER_SENTINEL
+      ) {
+        return SECTION_HEADER_ROW_SIZE[screenState];
+      }
+
+      return ROW_SIZES[screenState];
+    },
     overscan: screenState === ScreenState.SM ? 9 : 3,
   });
 
@@ -244,7 +249,7 @@ export const MarketplaceEntitiesTable: React.FC<
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [screenState, rowVirtualizer]);
+  }, [screenState, allEntities, rowVirtualizer]);
 
   const handleRowHover = useCallback((hoveredRowId: string) => {
     setHoveredRowId(hoveredRowId);
@@ -256,15 +261,37 @@ export const MarketplaceEntitiesTable: React.FC<
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const listHeight = rowVirtualizer.getTotalSize();
-  const separatorRowId = allEntities.findIndex(isString);
+
+  const virtualRowsProps = useMemo(
+    () => ({
+      virtualRows,
+      allEntities,
+      suggestedResults,
+      rowProps: {
+        hoveredRowId,
+        onClick: onCardClick,
+        onBookmarkClick,
+        onRowHover: handleRowHover,
+        onRowHoverOver: handleRowHoverOver,
+      },
+    }),
+    [
+      virtualRows,
+      allEntities,
+      suggestedResults,
+      hoveredRowId,
+      onCardClick,
+      onBookmarkClick,
+      handleRowHover,
+      handleRowHoverOver,
+    ],
+  );
 
   return (
     <>
       <SuggestedMessage shouldRender={!entities.length} className="md:ml-3" />
       <MarketplaceEntitiesTableHeader ref={headerRefs} />
       <MarketplaceEntitiesListWrapper
-        separatorRowId={separatorRowId}
-        rowsHeight={ROW_SIZES[screenState]}
         ref={wrapperRefs}
         className={screenState === ScreenState.SM ? '!px-0' : ''}
       >
@@ -273,62 +300,14 @@ export const MarketplaceEntitiesTable: React.FC<
           width={leftColumnWidth}
           height={listHeight}
         >
-          {virtualRows.map((virtualRow) => {
-            const entity = allEntities[virtualRow.index];
-
-            return (
-              <DataRowItem
-                key={virtualRow.key}
-                suggestedResults={suggestedResults}
-                entity={entity}
-                virtualRow={virtualRow}
-              >
-                {isString(entity) ? (
-                  <span ref={suggestedRowRef}></span>
-                ) : (
-                  <MarketplaceEntitiesTableLeftSideRow
-                    entity={entity}
-                    isHovered={entity.id === hoveredRowId}
-                    onClick={onCardClick}
-                    onBookmarkClick={onBookmarkClick}
-                    onRowHover={handleRowHover}
-                    onRowHoverOver={handleRowHoverOver}
-                  />
-                )}
-              </DataRowItem>
-            );
-          })}
+          <VirtualRowsRenderer {...virtualRowsProps} isLeftSide />
         </DataRowContainer>
         <DataRowContainer
           ref={rightColumnDataRef}
           width={rightColumnWidth}
           height={listHeight}
         >
-          {virtualRows.map((virtualRow) => {
-            const entity = allEntities[virtualRow.index];
-
-            return (
-              <DataRowItem
-                key={virtualRow.key}
-                suggestedResults={suggestedResults}
-                entity={entity}
-                virtualRow={virtualRow}
-              >
-                {isString(entity) ? (
-                  <span></span>
-                ) : (
-                  <MarketplaceEntitiesTableRightSideRow
-                    entity={entity}
-                    isHovered={entity.id === hoveredRowId}
-                    onClick={onCardClick}
-                    onBookmarkClick={onBookmarkClick}
-                    onRowHover={handleRowHover}
-                    onRowHoverOver={handleRowHoverOver}
-                  />
-                )}
-              </DataRowItem>
-            );
-          })}
+          <VirtualRowsRenderer {...virtualRowsProps} />
         </DataRowContainer>
       </MarketplaceEntitiesListWrapper>
     </>
