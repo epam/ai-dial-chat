@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Controller,
   useFormContext,
@@ -19,7 +19,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   CustomAppForm as CustomAppFormType,
@@ -32,9 +32,11 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const getItemLabel = (item: unknown): string => item as string;
 
@@ -138,6 +140,11 @@ export const CustomAppForm = () => {
         onPaste={onKeyDownOrPaste}
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+      />
+
+      <CopyUrlButton
+        id={appDetails?.id ?? ''}
+        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
       />
     </div>
   );
