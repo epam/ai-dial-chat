@@ -1,5 +1,5 @@
 import { VirtualItem } from '@tanstack/react-virtual';
-import React, { ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 
 import classNames from 'classnames';
 
@@ -25,7 +25,7 @@ interface DataRowItemProps {
   isPrevSentinel: boolean;
 }
 
-const DataRowItem: React.FC<DataRowItemProps> = ({
+const DataRowItem: FC<DataRowItemProps> = ({
   entity,
   suggestedResults,
   virtualRow,
@@ -109,7 +109,7 @@ interface VirtualRowRendererProps {
   isLeftSide?: boolean;
 }
 
-export const VirtualRowsRenderer: React.FC<VirtualRowRendererProps> = ({
+export const VirtualRowsRenderer: FC<VirtualRowRendererProps> = ({
   virtualRows,
   allEntities,
   suggestedResults,
