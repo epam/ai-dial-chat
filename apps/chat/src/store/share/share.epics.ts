@@ -552,7 +552,7 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
 
       let message = CommonI18nKeys.AcceptShareFailed;
       let name = '';
-      if (payload.message === 'not found') {
+      if (payload.message?.startsWith('no invitation found')) {
         message = CommonI18nKeys.AcceptShareNotExists;
       }
       if (
