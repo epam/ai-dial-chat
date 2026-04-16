@@ -146,6 +146,8 @@ export const useFileManager = ({
   const isCopyingFiles = useAppSelector(FilesSelectors.selectIsCopyingFiles);
   const isMovingFiles = useAppSelector(FilesSelectors.selectIsMovingFiles);
   const movingFilesCountRef = useRef<number>(0);
+  const prevIsCopyingRef = useRef(false);
+  const prevIsMovingRef = useRef(false);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -267,6 +269,17 @@ export const useFileManager = ({
     }
     return tabs?.filter((tab) => availableTabs.has(tab.id));
   }, [availableTabs, tabs]);
+
+  useEffect(() => {
+    const copyJustFinished = prevIsCopyingRef.current && !isCopyingFiles;
+    const moveJustFinished = prevIsMovingRef.current && !isMovingFiles;
+    prevIsCopyingRef.current = isCopyingFiles;
+    prevIsMovingRef.current = isMovingFiles;
+
+    if ((copyJustFinished || moveJustFinished) && isSearching && currentPath) {
+      dispatch(FilesActions.getFullListing({ folderPath: currentPath }));
+    }
+  }, [isCopyingFiles, isMovingFiles, isSearching, currentPath, dispatch]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
