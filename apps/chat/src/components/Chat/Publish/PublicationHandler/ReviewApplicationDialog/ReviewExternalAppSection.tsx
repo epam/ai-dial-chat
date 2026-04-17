@@ -43,7 +43,7 @@ export const ReviewExternalAppSection = ({
           className="flex flex-nowrap items-center gap-1 break-all text-accent-primary"
           data-qa="app-external-url"
         >
-          <p className="min-w-0 flex-1"> {externalUrl}</p>
+          <p className="min-w-0 flex-1 truncate"> {externalUrl}</p>
           <IconExternalLink size={DEFAULT_ICON_SIZES.SMALL} />
         </Link>
       }
