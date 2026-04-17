@@ -145,6 +145,7 @@
   "Please check your internet connection and try again.": "Please check your internet connection and try again.",
   "Folder \"{{itemName}}\" has been unshared successfully": "Folder \"{{itemName}}\" has been unshared successfully",
   "\"{{itemName}}\" has been unshared successfully": "\"{{itemName}}\" has been unshared successfully",
+  "\"{{itemName}}\" have been unshared successfully": "\"{{itemName}}\" have been unshared successfully",
   "Failed to unshare folder \"{{itemName}}\". Please try again later": "Failed to unshare folder \"{{itemName}}\". Please try again later",
   "Failed to unshare \"{{itemName}}\". Please try again later": "Failed to unshare \"{{itemName}}\". Please try again later",
   "My Workspace": "My Workspace",

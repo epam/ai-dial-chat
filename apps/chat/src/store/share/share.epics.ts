@@ -1269,8 +1269,6 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           const actions: Observable<AppAction>[] = [];
 
           payload.resourceIds.forEach((resourceId) => {
-            const { name } = splitEntityId(resourceId);
-
             actions.push(
               of(
                 ShareActions.discardSharedWithMeSuccess({
@@ -1279,21 +1277,30 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                   isFolder: payload.isFolder,
                 }),
               ),
-              of(
-                UIActions.showSuccessToast(
-                  translate(
-                    payload.isFolder
-                      ? CommonI18nKeys.FolderUnsharedSuccessfully
-                      : CommonI18nKeys.ItemUnsharedSuccessfully,
-                    {
-                      ns: Translation.Common,
-                      itemName: name,
-                    },
-                  ),
-                ),
-              ),
             );
           });
+
+          const namesStr = payload.resourceIds
+            .map((id) => splitEntityId(id).name)
+            .join(', ');
+
+          actions.push(
+            of(
+              UIActions.showSuccessToast(
+                translate(
+                  payload.isFolder
+                    ? CommonI18nKeys.FolderUnsharedSuccessfully
+                    : payload.resourceIds.length === 1
+                      ? CommonI18nKeys.ItemUnsharedSuccessfully
+                      : CommonI18nKeys.ItemsUnsharedSuccessfully,
+                  {
+                    ns: Translation.Common,
+                    itemName: namesStr,
+                  },
+                ),
+              ),
+            ),
+          );
 
           return concat(...actions);
         }),
