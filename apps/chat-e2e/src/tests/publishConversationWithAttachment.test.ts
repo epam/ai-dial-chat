@@ -857,7 +857,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'File Manager: Organization: the files do not appear if Administrator Rejects the publication request.\n' +
     'File Manager: Organization: the files stay if Administrator Rejects the un-publication request',
   async ({
@@ -865,9 +865,7 @@ dialAdminTest.only(
     fileApiHelper,
     dataInjector,
     conversationData,
-    dialHomePage,
     localStorageManager,
-    navigationPanel,
     fileManagerPage,
     fileManagerToolbar,
     fileManager,
@@ -928,9 +926,7 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'EPMRTC-4199: open File Manager Organization tab and verify specific files are not present',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await navigationPanel.goToFileManager();
+        await fileManagerPage.openFileManagerPage();
         await fileManagerPage.waitForPageLoaded({ isGridVisible: undefined });
         await fileManagerToolbar.organizationTab.click();
         const isNoData = await fileManager.getNoDataContent().isVisible();
@@ -966,7 +962,7 @@ dialAdminTest.only(
       'EPMRTC-4200: reload File Manager Organization tab and verify files are still present',
       async () => {
         await fileManagerPage.reloadPage();
-        await fileManagerPage.waitForPageLoaded({ isGridVisible: undefined });
+        await fileManagerPage.waitForPageLoaded();
         await fileManagerToolbar.organizationTab.click();
         for (const file of [imageInRoot, imageInFolder]) {
           await fileManagerGridAssertion.assertGridRowByNameState(
