@@ -234,6 +234,7 @@ export enum CommonI18nKeys {
   CheckInternetConnection = 'Please check your internet connection and try again.',
   FolderUnsharedSuccessfully = 'Folder "{{itemName}}" has been unshared successfully',
   ItemUnsharedSuccessfully = '"{{itemName}}" has been unshared successfully',
+  ItemsUnsharedSuccessfully = '"{{itemName}}" have been unshared successfully',
   FailedToUnshareFolder = 'Failed to unshare folder "{{itemName}}". Please try again later',
   FailedToUnshareItem = 'Failed to unshare "{{itemName}}". Please try again later',
   PageMyWorkspace = 'My Workspace',
