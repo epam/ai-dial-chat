@@ -21,6 +21,8 @@ export const formErrors = {
     translate(`${name} should be at most ${maxLength} characters long`),
   noDotInTheEnd: (name = 'Name') =>
     translate(`Using a dot at the end of a ${name} is not permitted.`),
+  noDotInTheStart: (name = 'Name') =>
+    translate(`Using a dot at the start of a ${name} is not permitted.`),
   notUniqName: (name = 'Name', newName: string) =>
     translate(`${name} "{{newName}}" already exists in this folder.`, {
       ns: Translation.Errors,
