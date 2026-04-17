@@ -336,6 +336,8 @@ const ChatSection = ({
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
+  const dispatch = useAppDispatch();
+
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -350,6 +352,22 @@ const ChatSection = ({
     [filters, searchTerm, showEmptyFolders],
   );
   const rootFolders = useAppSelector(selectFilteredFoldersSelector);
+
+  const searchMatchedFolderIdsKey = useMemo(
+    () => rootFolders.map((f) => f.id).sort().join('|'),
+    [rootFolders],
+  );
+
+  useEffect(() => {
+    if (!searchTerm.trim() || !rootFolders.length) return;
+    dispatch(
+      UIActions.setOpenedFoldersIds({
+        openedFolderIds: rootFolders.map((f) => f.id),
+        featureType: FeatureType.Chat,
+      }),
+    );
+  }, [dispatch, searchTerm, searchMatchedFolderIdsKey, rootFolders.length]);
+
   const selectFilteredConversationsSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredConversations(filters, searchTerm),

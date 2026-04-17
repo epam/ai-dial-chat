@@ -320,6 +320,8 @@ const PromptSectionView = ({
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
+  const dispatch = useAppDispatch();
+
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -340,6 +342,22 @@ const PromptSectionView = ({
   );
 
   const rootFolders = useAppSelector(filteredFoldersSelector);
+
+  const searchMatchedFolderIdsKey = useMemo(
+    () => rootFolders.map((f) => f.id).sort().join('|'),
+    [rootFolders],
+  );
+
+  useEffect(() => {
+    if (!searchTerm.trim() || !rootFolders.length) return;
+    dispatch(
+      UIActions.setOpenedFoldersIds({
+        openedFolderIds: rootFolders.map((f) => f.id),
+        featureType: FeatureType.Prompt,
+      }),
+    );
+  }, [dispatch, searchTerm, searchMatchedFolderIdsKey, rootFolders.length]);
+
   const prompts = useAppSelector(filteredPromptsSelector);
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
