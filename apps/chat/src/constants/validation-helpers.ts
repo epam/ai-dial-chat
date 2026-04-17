@@ -1,5 +1,6 @@
 import {
   doesHaveDotsInTheEnd,
+  doesHaveDotsInTheStart,
   isVersionPartSizeValid,
   isVersionValid,
 } from '@/src/utils/app/common';
@@ -27,6 +28,7 @@ export const getEntityNameSchema = (options: {
   name: string;
   checkDotsInTheEnd?: boolean;
   skipCheckRestrictedSymbols?: boolean;
+  checkDotsInTheStart?: boolean;
 }) =>
   zodValidation
     .string()
@@ -45,6 +47,10 @@ export const getEntityNameSchema = (options: {
     .refine(
       (str) => !options.checkDotsInTheEnd || !doesHaveDotsInTheEnd(str),
       formErrors.noDotInTheEnd(options.name),
+    )
+    .refine(
+      (str) => !options.checkDotsInTheStart || !doesHaveDotsInTheStart(str),
+      formErrors.noDotInTheStart(options.name),
     );
 
 export const MarketplaceEntityBaseSchema = zodValidation.object({
