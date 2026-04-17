@@ -108,19 +108,30 @@ export type ToolsetEditorForm = zodValidation.infer<
   typeof ToolsetEditorFormSchema
 >;
 
-export const getDefaultLoginFormData = (
-  authenticationType: ToolsetAuthTypes,
-  toolset?: ToolsetModel,
-  prevData?: Partial<ToolsetLoginFormType>,
-  authLevel?: ToolsetCredentialsLevel,
-): ToolsetLoginFormType => {
+export const getDefaultLoginFormData = ({
+  authenticationType,
+  toolset,
+  prevData,
+  authLevel,
+  isAdminReview,
+}: {
+  authenticationType: ToolsetAuthTypes;
+  toolset?: ToolsetModel;
+  prevData?: Partial<ToolsetLoginFormType>;
+  authLevel?: ToolsetCredentialsLevel;
+  isAdminReview?: boolean;
+}): ToolsetLoginFormType => {
   const isLoggedIn = toolset ? isToolsetSignedIn(toolset, authLevel) : false;
+
   switch (authenticationType) {
     case ToolsetAuthTypes.API_KEY:
       return {
         authenticationType,
         isLoggedIn,
-        withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
+        withLogin:
+          isAdminReview && !isLoggedIn
+            ? WithLogin.WithoutLogin
+            : (prevData?.withLogin ?? WithLogin.WithLogin),
         keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
         apiKey: prevData?.apiKey ?? '',
       };
@@ -151,11 +162,17 @@ export const getDefaultLoginFormData = (
   }
 };
 
-export const getDefaultFormData = (
-  toolset?: ToolsetModel,
-  toolsets?: ToolsetModel[],
-  prevData?: ToolsetEditorForm,
-): ToolsetEditorForm => {
+export const getDefaultFormData = ({
+  toolset,
+  toolsets,
+  prevData,
+  isAdminReview,
+}: {
+  toolset?: ToolsetModel;
+  toolsets?: ToolsetModel[];
+  prevData?: ToolsetEditorForm;
+  isAdminReview?: boolean;
+}): ToolsetEditorForm => {
   return {
     name:
       toolset?.name ??
@@ -168,10 +185,12 @@ export const getDefaultFormData = (
     version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
 
-    ...getDefaultLoginFormData(
-      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
+    ...getDefaultLoginFormData({
+      authenticationType:
+        toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
       toolset,
       prevData,
-    ),
+      isAdminReview,
+    }),
   };
 };
