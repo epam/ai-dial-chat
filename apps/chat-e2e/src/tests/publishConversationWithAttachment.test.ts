@@ -962,7 +962,7 @@ dialAdminTest(
       'EPMRTC-4200: reload File Manager Organization tab and verify files are still present',
       async () => {
         await fileManagerPage.reloadPage();
-        await fileManagerPage.waitForPageLoaded();
+        await fileManagerPage.waitForPageLoaded({ isGridVisible: true });
         await fileManagerToolbar.organizationTab.click();
         for (const file of [imageInRoot, imageInFolder]) {
           await fileManagerGridAssertion.assertGridRowByNameState(
