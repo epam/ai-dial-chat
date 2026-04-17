@@ -479,11 +479,11 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error(err);
-          let message = CommonI18nKeys.AcceptShareFailed;
-          if (err.message.trim().toLowerCase() === 'not found') {
-            message = CommonI18nKeys.AcceptShareNotExists;
-          }
-          return of(ShareActions.acceptShareInvitationFail({ message }));
+          return of(
+            ShareActions.acceptShareInvitationFail({
+              message: err.message.trim().toLowerCase(),
+            }),
+          );
         }),
       );
     }),
@@ -550,13 +550,28 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       history.replaceState({}, '', window.location.origin);
 
+      let message = CommonI18nKeys.AcceptShareFailed;
+      let name = '';
+      if (payload.message?.startsWith('no invitation found')) {
+        message = CommonI18nKeys.AcceptShareNotExists;
+      }
+      if (
+        payload.message?.startsWith(
+          'limit is exceeded on the number of accepted users',
+        )
+      ) {
+        message = CommonI18nKeys.ShareLimitExceeded;
+        name = payload.message.split('/').pop() ?? 'N/A';
+      }
+
       return concat(
         of(ShareActions.resetAcceptedEntityInfo()),
         of(ConversationsActions.initSelectedConversations()),
         of(
           UIActions.showErrorToast(
-            translate(payload.message || CommonI18nKeys.AcceptShareFailed, {
+            translate(message, {
               ns: Translation.Common,
+              name: name.trim(),
             }),
           ),
         ),

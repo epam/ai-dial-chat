@@ -6,7 +6,7 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -39,7 +39,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     if (!proxyRes.ok) {
-      throw new DialAIError(proxyRes.statusText, proxyRes.status, req);
+      const message = await ServerUtils.getErrorMessageFromResponse(proxyRes);
+      throw new DialAIError(
+        message ?? proxyRes.statusText,
+        proxyRes.status,
+        req,
+      );
     }
 
     return res.status(200).send(JSON.stringify({}));
