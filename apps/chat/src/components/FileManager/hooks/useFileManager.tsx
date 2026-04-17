@@ -944,6 +944,7 @@ export const useFileManager = ({
             ? t(SideBarI18nKeys.FolderNameLabel)
             : t(SideBarI18nKeys.FileNameLabel),
         checkDotsInTheEnd: true,
+        checkDotsInTheStart: true,
       });
 
       const validationResult = schema.safeParse(value);

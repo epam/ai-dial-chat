@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -79,9 +79,30 @@ export const PromptList: FC<Props> = ({
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
+  const isMouseInteraction = useRef(false);
+
   useEffect(() => {
-    if (refs.floating.current) {
-      refs.floating.current.scrollTop = activePromptIndex * 30;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowDown', 'ArrowUp', 'Tab'].includes(e.key)) {
+        isMouseInteraction.current = false;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (
+      activePromptIndex !== -1 &&
+      refs.floating.current &&
+      !isMouseInteraction.current
+    ) {
+      const activeItem = refs.floating.current.children[
+        activePromptIndex
+      ] as HTMLElement;
+      if (activeItem) {
+        activeItem.scrollIntoView({ block: 'nearest' });
+      }
     }
   }, [activePromptIndex, refs.floating]);
 
@@ -99,7 +120,10 @@ export const PromptList: FC<Props> = ({
           key={prompt.id}
           activePromptIndex={activePromptIndex}
           onSelect={onSelect}
-          onMouseEnter={onMouseEnter}
+          onMouseEnter={(idx) => {
+            isMouseInteraction.current = true;
+            onMouseEnter(idx);
+          }}
         />
       ))}
     </ul>
