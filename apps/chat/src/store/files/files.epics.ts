@@ -1111,7 +1111,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
             ns: Translation.Common,
             verb: verbPast,
           }),
-          message: translate(FilesI18nKeys.ItemsVerbToFolder, {
+          message: translate(FilesI18nKeys.ItemsVerbFromFolder, {
             ns: Translation.Files,
             count: items.length,
             folder: folderPlaceholder,
