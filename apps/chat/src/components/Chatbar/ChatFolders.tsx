@@ -354,7 +354,11 @@ const ChatSection = ({
   const rootFolders = useAppSelector(selectFilteredFoldersSelector);
 
   const searchMatchedFolderIdsKey = useMemo(
-    () => rootFolders.map((f) => f.id).sort().join('|'),
+    () =>
+      rootFolders
+        .map((f) => f.id)
+        .sort()
+        .join('|'),
     [rootFolders],
   );
 
