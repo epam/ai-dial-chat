@@ -370,7 +370,7 @@ const ChatSection = ({
         featureType: FeatureType.Chat,
       }),
     );
-  }, [dispatch, searchTerm, searchMatchedFolderIdsKey, rootFolders.length]);
+  }, [dispatch, searchTerm, searchMatchedFolderIdsKey, rootFolders]);
 
   const selectFilteredConversationsSelector = useMemo(
     () =>
