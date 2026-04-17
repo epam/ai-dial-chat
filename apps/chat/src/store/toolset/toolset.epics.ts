@@ -453,7 +453,7 @@ const getInstalledToolsetsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.getInstalledToolsets.type),
     switchMap(() => {
-      const allToolsets = ToolsetSelectors.selectToolsets(state$.value);
+      const allToolsets = ToolsetSelectors.selectToolsets(state$.value, true);
 
       const myToolsetsReferences = allToolsets
         .filter((toolset) => isMyEntity(toolset) || toolset.sharedWithMe)
@@ -525,7 +525,7 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       const stateValue = state$.value;
       const installedToolsets =
         ToolsetSelectors.selectInstalledToolsets(stateValue);
-      const toolsets = ToolsetSelectors.selectToolsets(stateValue);
+      const toolsets = ToolsetSelectors.selectToolsets(stateValue, true);
       const toolsetsGroupKeys = ToolsetSelectors.selectAllGroupToolsetsKeySet(
         stateValue,
         payload.references,
@@ -586,7 +586,7 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       const installedToolsets =
         ToolsetSelectors.selectInstalledToolsets(stateValue);
 
-      const toolsets = ToolsetSelectors.selectToolsets(stateValue);
+      const toolsets = ToolsetSelectors.selectToolsets(stateValue, true);
       const toolsetsGroupKeys = ToolsetSelectors.selectAllGroupToolsetsKeySet(
         stateValue,
         payload.references,
