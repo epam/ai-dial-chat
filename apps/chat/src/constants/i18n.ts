@@ -891,6 +891,7 @@ export enum FilesI18nKeys {
   FileNameVerbToFolder = '“{{fileName}}” {{verb}} to {{folder}}',
   FileNameVerbFromFolder = '“{{fileName}}” {{verb}} from {{folder}}',
   ItemsVerbToFolder = '{{count}} items {{verb}} to {{folder}}',
+  ItemsVerbFromFolder = '{{count}} items {{verb}} from {{folder}}',
   AndOtherItems = ' and {{count}} other items',
   SomeItemsNotSomething = '{{files}}{{rest}} were not {{verb}}. Please try again.',
 }
