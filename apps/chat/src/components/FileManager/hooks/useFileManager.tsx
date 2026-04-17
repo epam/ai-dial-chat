@@ -120,6 +120,7 @@ interface UseFileManagerOptions {
   toolbarOptions?: ToolbarOptions;
   availableTabs?: Set<string>;
   reviewBucket?: string;
+  initialTab?: DialFileManagerTabs;
 }
 
 export const useFileManager = ({
@@ -127,6 +128,7 @@ export const useFileManager = ({
   toolbarOptions: externalToolbarOptions,
   availableTabs,
   reviewBucket,
+  initialTab,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
 
@@ -217,12 +219,21 @@ export const useFileManager = ({
     boolean | undefined
   >(false);
 
-  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
-    my_files: MY_FILES_SECTION,
-    shared: SHARED_WITH_ME_FILES_SECTION,
-    organization: ORGANIZATION_FILES_SECTION,
-    review: REVIEW_FILES_SECTION,
-  });
+  const safeInitialTab =
+    initialTab && availableTabs?.size && !availableTabs.has(initialTab)
+      ? undefined
+      : initialTab;
+
+  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
+    {
+      my_files: MY_FILES_SECTION,
+      shared: SHARED_WITH_ME_FILES_SECTION,
+      organization: ORGANIZATION_FILES_SECTION,
+      review: REVIEW_FILES_SECTION,
+    },
+    safeInitialTab,
+  );
+
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
   const searchSelector = useCallback(

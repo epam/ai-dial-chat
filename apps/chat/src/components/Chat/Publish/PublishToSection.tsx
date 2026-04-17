@@ -46,13 +46,21 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
   );
 
   const handleSelect = useCallback(
-    (folderId?: string) => {
+    (folderId: string | false) => {
+      setIsChangeFolderModalOpened(false);
+
+      if (folderId === false) {
+        return;
+      }
+
+      const targetId = folderId || undefined;
+
       setValue(
         PublishRequestFieldsNames.PUBLISH_TO_URL,
-        constructPath(PUBLIC_URL_PREFIX, folderId),
+        constructPath(PUBLIC_URL_PREFIX, targetId),
       );
-      setIsChangeFolderModalOpened(false);
-      if (!folderId) {
+
+      if (!targetId) {
         setValue(PublishRequestFieldsNames.RULES, []);
       }
     },
