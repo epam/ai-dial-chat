@@ -975,6 +975,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
 
           actions.push(
+            FilesActions.setSharedFolderIds({
+              ids: payload.resources.folders.map((folder) => folder.id),
+            }),
+          );
+
+          actions.push(
             ...(payload.resources.folders
               .map((item) => {
                 const isShared = folders.find((res) => res.id === item.id);

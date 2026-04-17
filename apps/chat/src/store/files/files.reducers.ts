@@ -69,6 +69,7 @@ const initialState: FilesState = {
   folders: [],
   selectedFilesIds: [],
   sharedFileIds: [],
+  sharedFolderIds: [],
 
   chosenFileIds: [],
   chosenEmptyFoldersIds: [],
@@ -463,8 +464,15 @@ export const filesSlice = createSlice({
           f.temporary,
       );
 
+      const sharedFolderIdSet = new Set(state.sharedFolderIds);
+      const foldersWithSharedFlag = payload.folders.map((folder) =>
+        sharedFolderIdSet.has(folder.id)
+          ? { ...folder, isShared: true }
+          : folder,
+      );
+
       state.folders = combineEntities(
-        payload.folders,
+        foldersWithSharedFlag,
         filteredState.map((f) =>
           f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
@@ -711,6 +719,27 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.sharedFileIds = payload.ids;
+    },
+    setSharedFolderIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => {
+      const prevSet = new Set(state.sharedFolderIds);
+      const nextSet = new Set(payload.ids);
+      state.sharedFolderIds = payload.ids;
+      state.folders = state.folders.map((folder) => {
+        if (nextSet.has(folder.id)) {
+          return { ...folder, isShared: true };
+        }
+        if (prevSet.has(folder.id) && !nextSet.has(folder.id)) {
+          return { ...folder, isShared: false };
+        }
+        return folder;
+      });
     },
     addSharedFiles: (
       state,
