@@ -89,6 +89,7 @@ export const isImportEntityNameOnSameLevelUnique = ({
 };
 
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
+export const doesHaveDotsInTheStart = (name: string) => name.trim().startsWith('.');
 
 export const isEntityNameInvalid = (name: string, checkDotsInTheEnd = true) =>
   notAllowedSymbolsRegex.test(name) ||
