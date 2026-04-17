@@ -857,6 +857,71 @@ dialAdminTest(
   },
 );
 
+dialTest(
+  'Publication request: the file appears in the Files section only once if the same file is used twice in the chat',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    dataInjector,
+    conversationData,
+    localStorageManager,
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    publishingRequestDialog,
+    filesToPublishTree,
+    publishFileTreeAssertion,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-4183');
+    let imageUrl: string;
+    let conversation: Conversation;
+    const filePath = API.modelFilePath(modelWithInputAttachments.id);
+
+    await dialTest.step(
+      'Upload an image and create conversation with same attachment used twice',
+      async () => {
+        imageUrl = await fileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: filePath,
+        });
+        conversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            modelWithInputAttachments,
+            true,
+            undefined,
+            imageUrl,
+            imageUrl,
+          );
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open Publish dialog and verify the file appears only once in Files section',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await baseAssertion.assertElementState(
+          publishingRequestDialog,
+          'visible',
+        );
+        await publishFileTreeAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          'visible',
+        );
+        await baseAssertion.assertElementsCount(
+          filesToPublishTree.getEntityByName(Attachment.sunImageName),
+          1,
+        );
+      },
+    );
+  },
+);
+
 dialAdminTest(
   'File Manager: Organization: the files do not appear if Administrator Rejects the publication request.\n' +
     'File Manager: Organization: the files stay if Administrator Rejects the un-publication request',
