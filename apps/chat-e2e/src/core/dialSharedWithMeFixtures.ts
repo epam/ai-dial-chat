@@ -7,7 +7,6 @@ import {
   ChatMessages,
   Compare,
   ConfirmationDialog,
-  ConfirmationPopup,
   ConversationSettingsModal,
   ConversationToCompare,
   Dropdown,
@@ -197,7 +196,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileManagerModalToolbar: FileManagerToolbar;
   additionalShareUserFileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
   additionalShareUserFileManagerModalFoldersTree: FoldersTree;
-  additionalShareUserFileManagerDeleteItemConfirmationPopup: ConfirmationPopup;
+  additionalShareUserFileManagerUnshareItemConfirmationPopup: ConfirmationDialog;
   additionalShareUserFileManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
@@ -1055,13 +1054,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserFileManagerModalCollapsibleSidebar.getFoldersTree();
     await use(additionalShareUserFileManagerModalFoldersTree);
   },
-  additionalShareUserFileManagerDeleteItemConfirmationPopup: async (
+  additionalShareUserFileManagerUnshareItemConfirmationPopup: async (
     { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserFileManagerDeleteItemConfirmationPopup =
-      new ConfirmationPopup(additionalShareUserPage, 'Delete');
-    await use(additionalShareUserFileManagerDeleteItemConfirmationPopup);
+    const additionalShareUserFileManagerUnshareItemConfirmationPopup =
+      new ConfirmationDialog(additionalShareUserPage);
+    await use(additionalShareUserFileManagerUnshareItemConfirmationPopup);
   },
   additionalShareUserFileManagerModalFoldersTreeAssertion: async (
     { additionalShareUserFileManagerModalFoldersTree },
