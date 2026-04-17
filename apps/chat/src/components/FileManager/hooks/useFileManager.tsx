@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStore } from 'react-redux';
 
 import {
   UseFileManagerActionLabelsOptions,
@@ -14,6 +15,7 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
+import { dispatchOpenFileManagerUnshareDialog } from '@/src/utils/app/file-manager-unshare-dispatch';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
@@ -28,7 +30,6 @@ import { translate } from '@/src/utils/app/translation';
 import { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import { ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -64,7 +65,6 @@ import {
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
-import groupBy from 'lodash-es/groupBy';
 
 const formatSharedPath = (path: string | undefined | null) => {
   if (!path) return path;
@@ -129,6 +129,7 @@ export const useFileManager = ({
   reviewBucket,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
+  const store = useStore<RootState>();
 
   const { t } = useTranslation(Translation.SideBar);
 
@@ -878,62 +879,28 @@ export const useFileManager = ({
     [dispatch],
   );
 
-  const handleUnshareFiles = useCallback(
+  const handleOpenUnshareFilesDialog = useCallback(
     (items: { path: string; nodeType?: string }[]) => {
-      const grouped = groupBy(items, (item) =>
-        item.nodeType === DialFileNodeType.FOLDER ? 'folders' : 'files',
+      dispatchOpenFileManagerUnshareDialog(
+        dispatch,
+        () => store.getState(),
+        items,
+        'unshare-files',
       );
-
-      if (grouped.folders?.length) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: grouped.folders.map((f) => f.path),
-            featureType: FeatureType.File,
-            isFolder: true,
-          }),
-        );
-      }
-
-      if (grouped.files?.length) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: grouped.files.map((f) => f.path),
-            featureType: FeatureType.File,
-            isFolder: false,
-          }),
-        );
-      }
     },
-    [dispatch],
+    [dispatch, store],
   );
 
-  const handleRemoveAccess = useCallback(
+  const handleOpenRemoveFilesAccessDialog = useCallback(
     (items: { path: string; nodeType?: string }[]) => {
-      const grouped = groupBy(items, (item) =>
-        item.nodeType === DialFileNodeType.FOLDER ? 'folders' : 'files',
+      dispatchOpenFileManagerUnshareDialog(
+        dispatch,
+        () => store.getState(),
+        items,
+        'remove-access',
       );
-
-      if (grouped.folders?.length) {
-        dispatch(
-          ShareActions.revokeAccess({
-            resourceIds: grouped.folders.map(({ path }) => path),
-            featureType: FeatureType.File,
-            isFolder: true,
-          }),
-        );
-      }
-
-      if (grouped.files?.length) {
-        dispatch(
-          ShareActions.revokeAccess({
-            resourceIds: grouped.files.map(({ path }) => path),
-            featureType: FeatureType.File,
-            isFolder: false,
-          }),
-        );
-      }
     },
-    [dispatch],
+    [dispatch, store],
   );
 
   const handleRenameValidation = useCallback(
@@ -1011,12 +978,12 @@ export const useFileManager = ({
     handleMoveFiles,
     handleDeleteFiles,
     handleDownloadFiles,
-    handleRemoveAccess,
     handleTableFileClick,
     handleUploadFiles,
     handleCreateFolder,
     handleUploadArchive,
-    handleUnshareFiles,
+    handleOpenUnshareFilesDialog,
+    handleOpenRemoveFilesAccessDialog,
     handleRenameValidation,
     sharedWithMeIds,
 
