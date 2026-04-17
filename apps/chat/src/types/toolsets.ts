@@ -101,4 +101,5 @@ export type ToolsetContextMenuDisabledActions = Partial<{
   unpublish: boolean;
   delete: boolean;
   login: boolean;
+  connect: boolean;
 }>;

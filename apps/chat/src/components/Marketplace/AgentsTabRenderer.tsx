@@ -15,6 +15,8 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
+import { ConnectToolsetModal } from '@/src/components/Marketplace/ConnectToolsetModal';
+
 import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
 import { ResultsView, ResultsViewProps } from './TabResults';
 
@@ -48,7 +50,7 @@ export function AgentsTabRenderer() {
     !selectedFilters[FilterTypes.TOPICS].length &&
     !selectedFilters[FilterTypes.SOURCES].length;
 
-  const { displayedEntities, suggestedResults } =
+  const { displayedEntities, suggestedResults, featuredEntities } =
     useMarketplaceDisplayedEntities(
       allModels,
       installedModelIds,
@@ -119,6 +121,7 @@ export function AgentsTabRenderer() {
       <AgentsResultsView
         entities={displayedEntities}
         suggestedResults={suggestedResults}
+        featuredEntities={featuredEntities}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}
@@ -139,6 +142,8 @@ export function AgentsTabRenderer() {
           isSuggested={detailsModel?.isSuggested}
         />
       )}
+
+      <ConnectToolsetModal />
     </>
   );
 }

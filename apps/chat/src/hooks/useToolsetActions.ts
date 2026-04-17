@@ -12,6 +12,7 @@ import { Translation } from '@/src/types/translation';
 import {
   MarketplaceActions,
   PublicationActions,
+  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -65,6 +66,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      dispatch(ToolsetActions.setToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
         query: {
@@ -75,7 +77,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         },
       });
     },
-    [router, toolset.reference],
+    [router, toolset.reference, dispatch],
   );
 
   const handlePublish = useCallback(
@@ -130,6 +132,15 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
+  const handleConnect = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(MarketplaceActions.setConnectLinkEntity(toolset));
+    },
+    [dispatch, toolset],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -139,5 +150,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleOpenSharing,
     handleOpenUnshare,
     handleLogin,
+    handleConnect,
   };
 };
