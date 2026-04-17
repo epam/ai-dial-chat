@@ -24,6 +24,7 @@ export interface FilesState {
   newAddedFolderId?: string;
   lastRenamedParentFolder?: { oldId: string; newId: string };
   sharedFileIds: string[];
+  sharedFolderIds: string[];
 
   loadingFileMetadata: boolean;
   fileMetadata: UIKitDialFile | null;
