@@ -318,6 +318,7 @@ export enum CommonI18nKeys {
   Copied = 'Copied ',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
+  ShareLimitExceeded = 'Limit is exceeded on the number of accepted users for the resource: {{name}}',
 }
 
 // errors.json
@@ -890,6 +891,7 @@ export enum FilesI18nKeys {
   FileNameVerbToFolder = '“{{fileName}}” {{verb}} to {{folder}}',
   FileNameVerbFromFolder = '“{{fileName}}” {{verb}} from {{folder}}',
   ItemsVerbToFolder = '{{count}} items {{verb}} to {{folder}}',
+  ItemsVerbFromFolder = '{{count}} items {{verb}} from {{folder}}',
   AndOtherItems = ' and {{count}} other items',
   SomeItemsNotSomething = '{{files}}{{rest}} were not {{verb}}. Please try again.',
 }

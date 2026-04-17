@@ -48,16 +48,22 @@ export const ToolsetEditor = () => {
   const redirectToChatRef = useRef(false);
   const firstValidationPerformedRef = useRef(false);
 
+  const isAdminReview = toolsetDetails && isEntityIdPublic(toolsetDetails);
+
   const [isExiting, setIsExiting] = useState(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
-    defaultValues: getDefaultFormData(toolsetDetails, toolsets),
+    defaultValues: getDefaultFormData({
+      toolset: toolsetDetails,
+      toolsets,
+      isAdminReview,
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetEditorFormSchema),
   });
   const lastSubmittedValuesRef = useRef<ToolsetEditorForm>(
-    getDefaultFormData(toolsetDetails, toolsets),
+    getDefaultFormData({ toolset: toolsetDetails, toolsets }),
   );
 
   const isDirty = formMethods.formState.isDirty;
@@ -115,7 +121,9 @@ export const ToolsetEditor = () => {
         keepIsValid: true,
         keepErrors: true,
       });
-      lastSubmittedValuesRef.current = getDefaultFormData(payloadToolset);
+      lastSubmittedValuesRef.current = getDefaultFormData({
+        toolset: payloadToolset,
+      });
     },
     [dispatch, formMethods, isCreatingToolset, toolsetDetails],
   );
