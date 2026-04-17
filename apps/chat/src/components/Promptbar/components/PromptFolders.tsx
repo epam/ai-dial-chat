@@ -344,7 +344,11 @@ const PromptSectionView = ({
   const rootFolders = useAppSelector(filteredFoldersSelector);
 
   const searchMatchedFolderIdsKey = useMemo(
-    () => rootFolders.map((f) => f.id).sort().join('|'),
+    () =>
+      rootFolders
+        .map((f) => f.id)
+        .sort()
+        .join('|'),
     [rootFolders],
   );
 
@@ -356,7 +360,7 @@ const PromptSectionView = ({
         featureType: FeatureType.Prompt,
       }),
     );
-  }, [dispatch, searchTerm, searchMatchedFolderIdsKey, rootFolders.length]);
+  }, [dispatch, searchTerm, searchMatchedFolderIdsKey, rootFolders]);
 
   const prompts = useAppSelector(filteredPromptsSelector);
   const selectedFoldersIds = useAppSelector(
