@@ -84,14 +84,12 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
   const isAppsEditor = route === Routes.AppsEditor;
 
   const formMethods = useForm<ToolsetLoginFormType>({
-    defaultValues: getDefaultLoginFormData(
-      authType,
+    defaultValues: getDefaultLoginFormData({
+      authenticationType: authType,
       toolset,
-      {
-        withLogin: WithLogin.WithLogin,
-      },
+      prevData: { withLogin: WithLogin.WithLogin },
       authLevel,
-    ),
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetLoginFormSchema),
@@ -203,14 +201,12 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
     (value: ToolsetCredentialsLevel) => {
       setAuthLevel(value);
       formMethods.reset(
-        getDefaultLoginFormData(
-          authType,
+        getDefaultLoginFormData({
+          authenticationType: authType,
           toolset,
-          {
-            withLogin: WithLogin.WithLogin,
-          },
-          value,
-        ),
+          prevData: { withLogin: WithLogin.WithLogin },
+          authLevel: value,
+        }),
       );
     },
     [authType, toolset, formMethods],
