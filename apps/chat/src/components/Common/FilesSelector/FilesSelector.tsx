@@ -4,7 +4,7 @@ import React, { MouseEvent, useCallback, useState } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ConfirmDialogValueTypes } from '@/src/types/common';
-import { FileSourceType } from '@/src/types/files';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { FilesI18nKeys } from '@/src/constants/i18n';
@@ -16,6 +16,7 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import { NoFiles } from './NoFiles';
 import { SelectedFile } from './SelectedFile';
 
+import { FolderInterface } from '@epam/ai-dial-shared';
 import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -29,6 +30,10 @@ interface Props {
   tooltip?: string;
   onRemoveFile?: (document: string) => void;
   onAddFiles?: (documents: string[]) => void;
+  additionalFilesAndFolders?: {
+    files: DialFile[];
+    folders?: FolderInterface[];
+  };
 }
 
 export const FilesSelector: React.FC<Props> = ({
@@ -42,6 +47,7 @@ export const FilesSelector: React.FC<Props> = ({
   tooltip,
   onAddFiles,
   onRemoveFile,
+  additionalFilesAndFolders,
 }) => {
   const { t } = useTranslation(Translation.Files);
 
@@ -142,6 +148,7 @@ export const FilesSelector: React.FC<Props> = ({
             forceShowSelectCheckBox
             sourceFilters={filesFilter}
             warningMessage={confirmDialogValues?.description}
+            additionalFilesAndFolders={additionalFilesAndFolders}
           />
         )}
         {confirmDialogValues && confirmDialogOpen && (

@@ -44,6 +44,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 import { extensions, lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -240,7 +241,7 @@ export const getFilesWithInvalidFileSize = (
   return files.filter((file) => file.size > sizeLimit);
 };
 
-const parseAttachmentUrl = (url: string) => {
+export const parseAttachmentUrl = (url: string) => {
   const decodedUrl = ApiUtils.decodeApiUrl(url);
   const lastIndexSlash = decodedUrl.lastIndexOf('/');
 
@@ -633,4 +634,45 @@ export const getRootFolderPlaceholderName = (bucket: string): string => {
   }
 
   return translate(ChatI18nKeys.SharedWithMeFiles, { ns: Translation.Chat });
+};
+
+export const getFilesAndFoldersFromUrls = (
+  urls: string[],
+  featureType: FeatureType,
+  uploadStatus?: UploadStatus,
+) => {
+  const files: DialFile[] = [];
+  const folders: FolderInterface[] = [];
+
+  urls.forEach((url) => {
+    const { absolutePath, name } = parseAttachmentUrl(url);
+
+    files.push({
+      id: url,
+      name,
+      contentType: getMimeTypeByFileName(name),
+      folderId: absolutePath,
+      absolutePath,
+    } as DialFile);
+
+    const {
+      apiKey,
+      bucket,
+      name: folderName,
+      parentPath,
+    } = splitEntityId(absolutePath);
+
+    folders.push({
+      id: absolutePath,
+      name: folderName,
+      type: featureType,
+      folderId: constructPath(apiKey, bucket, parentPath),
+      status: uploadStatus,
+    });
+  });
+
+  return {
+    files: uniqBy(files, 'id'),
+    folders: uniqBy(folders, 'id'),
+  };
 };
