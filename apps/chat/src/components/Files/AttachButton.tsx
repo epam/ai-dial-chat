@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { JSX, useCallback, useMemo, useState } from 'react';
 
+import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
@@ -18,12 +19,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  AuthSelectors,
-  ConversationsSelectors,
-  ModelsSelectors,
-  PublicationSelectors,
-} from '@/src/store/selectors';
+import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
@@ -65,14 +61,6 @@ export const AttachButton = ({
   onAddLinkToMessage,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-
-  const selectedConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const resourcesToReview = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
-  );
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -92,6 +80,8 @@ export const AttachButton = ({
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
+
+  const isPublicationReview = useIsPublicationReview();
 
   const [isPreUploadDialogOpened, setIsPreUploadDialogOpened] = useState(false);
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
@@ -122,16 +112,9 @@ export const AttachButton = ({
     [onSelectAlreadyUploaded],
   );
 
-  const isApproveRequiredEntity = useMemo(
-    () =>
-      resourcesToReview.some((r) =>
-        selectedConversationIds.includes(r.reviewUrl),
-      ),
-    [resourcesToReview, selectedConversationIds],
-  );
-
-  const sourceFilters =
-    isApproveRequiredEntity && isAdmin ? reviewFilesFilter : defaultFilesFilter;
+  const sourceFilters = isPublicationReview
+    ? reviewFilesFilter
+    : defaultFilesFilter;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () =>
