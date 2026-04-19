@@ -115,6 +115,12 @@ const dateOptions = {
   day: '2-digit' as const,
 };
 
+const defaultAvailableTabs = new Set([
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Shared,
+  DialFileManagerTabs.Organization,
+]);
+
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
   toolbarOptions?: ToolbarOptions;
@@ -125,7 +131,7 @@ interface UseFileManagerOptions {
 export const useFileManager = ({
   actionLabelsOptions,
   toolbarOptions: externalToolbarOptions,
-  availableTabs,
+  availableTabs = defaultAvailableTabs,
   reviewBucket,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
