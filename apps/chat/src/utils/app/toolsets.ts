@@ -285,10 +285,5 @@ export const getToolsetAuthActionLabel = (
   return action as string;
 };
 
-export const getToolsetMcpUrl = ({
-  id,
-  apiHost,
-}: {
-  id: string;
-  apiHost: string;
-}) => `${apiHost}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
+export const getToolsetMcpUrl = (id: string) =>
+  `${window.location.origin}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
