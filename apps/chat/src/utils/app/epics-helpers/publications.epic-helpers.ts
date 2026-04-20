@@ -159,6 +159,7 @@ export const addMessageAttachmentsToPublication$ = (
 export const getUpdateApplicationGeneralInfoAction$ = (
   oldApplication: CustomApplicationModel,
   newApplication: CustomApplicationModel,
+  isSaveAndExit?: boolean,
 ) => {
   return ApplicationService.get(newApplication.id).pipe(
     switchMap((application) => {
@@ -172,6 +173,12 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           application.applicationProperties;
       }
 
+      const shaderUpdatePayload = {
+        oldApplication,
+        applicationData,
+        isSaveAndExit,
+      };
+
       if (newApplication.applicationTypeSchemaId) {
         return ApplicationTypesSchemasService.getApplicationTypeSchema(
           newApplication.applicationTypeSchemaId,
@@ -179,8 +186,7 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           switchMap((schema) => {
             return of(
               ApplicationActions.update({
-                oldApplication,
-                applicationData,
+                ...shaderUpdatePayload,
                 schema,
               }),
             );
@@ -198,12 +204,7 @@ export const getUpdateApplicationGeneralInfoAction$ = (
         );
       }
 
-      return of(
-        ApplicationActions.update({
-          oldApplication,
-          applicationData,
-        }),
-      );
+      return of(ApplicationActions.update(shaderUpdatePayload));
     }),
   );
 };

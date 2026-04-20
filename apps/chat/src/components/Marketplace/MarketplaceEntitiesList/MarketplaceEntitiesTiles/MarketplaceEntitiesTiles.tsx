@@ -37,8 +37,7 @@ import { MarketplaceEntityCard } from './MarketplaceEntityCard';
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
 
-const MIN_CARD_WIDTH = 326;
-const MIN_CARD_WIDTH_XL = 353;
+const MIN_CARD_WIDTH = 341;
 const MIN_CARD_WIDTH_XL5 = 450;
 const DEFAULT_GAP = 20;
 const DEFAULT_HEIGHT = 184;
@@ -52,9 +51,9 @@ interface RowInfo {
 const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.SM]: { height: 110, gap: 12 },
   [ScreenState.MD]: { height: 178, gap: 16 },
-  [ScreenState.XL]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL },
-  [ScreenState.XL3]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL },
-  [ScreenState.XL4]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL },
+  [ScreenState.XL]: { height: DEFAULT_HEIGHT },
+  [ScreenState.XL3]: { height: DEFAULT_HEIGHT },
+  [ScreenState.XL4]: { height: DEFAULT_HEIGHT },
   [ScreenState.XL5]: { height: DEFAULT_HEIGHT, minWidth: MIN_CARD_WIDTH_XL5 },
 };
 

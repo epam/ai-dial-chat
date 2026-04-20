@@ -261,6 +261,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
 
       if (payload.publicationUrl) {
         const payloadToUpdatePublication = {
+          isSaveAndExit: !!payload.isSaveAndExit,
           publicationUrl: payload.publicationUrl,
           oldApplication: payload.oldApplication,
           newApplication: updatedCustomApplication,
