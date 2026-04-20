@@ -115,3 +115,7 @@ export const shouldShowHiddenEntities = (
   hiddenEntityTag?: string,
   showHidden?: boolean,
 ) => !hiddenEntityTag || !hiddenEntityTag.length || showHidden;
+
+export const doesAgentSupportMcp = (
+  entity?: DialAIEntityModel,
+): entity is DialAIEntityModel => !!entity?.mcp;
