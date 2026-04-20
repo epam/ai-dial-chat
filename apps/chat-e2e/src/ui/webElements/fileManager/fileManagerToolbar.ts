@@ -137,15 +137,4 @@ export class FileManagerToolbar extends BaseElement {
   public organizationTab = this.getToolbarTabs().tabByName(
     FileManagerToolbarTabs.Organization,
   );
-
-  public async unshareEntities() {
-    const respPromise = this.page.waitForResponse(
-      (resp) =>
-        resp.ok() &&
-        resp.request().method() === 'POST' &&
-        resp.url().includes(API.discardShareWithMeItem),
-    );
-    await this.getUnshareButton().click();
-    await respPromise;
-  }
 }
