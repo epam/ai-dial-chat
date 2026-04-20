@@ -9,6 +9,7 @@ import {
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Toolsets } from '@/src/types/applications';
@@ -204,10 +205,12 @@ export const QuickAppForm = () => {
         )}
       />
 
-      <CopyUrlButton
-        id={appDetails?.id ?? ''}
-        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
-      />
+      {doesAgentSupportMcp(appDetails) && (
+        <CopyUrlButton
+          id={appDetails.id}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      )}
     </div>
   );
 };
