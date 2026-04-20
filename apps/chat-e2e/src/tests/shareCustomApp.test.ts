@@ -736,31 +736,29 @@ dialSharedWithMeTest(
         await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.unshare,
           {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'POST',
-            apiHost: API.discardShareWithMeItem,
+            isHttpMethodTriggered: false,
           },
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        // await additionalShareUserConfirmationDialogAssertion.assertElementState(
-        //   additionalShareUserConfirmationDialog,
-        //   'visible',
-        // );
-        // await additionalShareUserConfirmationDialogAssertion.assertConfirmationDialogTitle(
-        //   ExpectedConstants.unshareFileTitle,
-        // );
-        // await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-        //   ExpectedConstants.unshareFileMessage,
-        // );
+        await additionalShareUserConfirmationDialogAssertion.assertElementState(
+          additionalShareUserConfirmationDialog,
+          'visible',
+        );
+        await additionalShareUserConfirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.removeAccessTitle,
+        );
+        await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.removeYourAccessMessage(iconName),
+        );
       },
     );
 
     await dialSharedWithMeTest.step(
       'Confirm unsharing and verify the icon is removed from "Shared with me" tab',
       async () => {
-        // await additionalShareUserConfirmationDialog.confirm({
-        //   triggeredHttpMethod: 'POST',
-        // });
+        await additionalShareUserConfirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.discardShareWithMeItem,
+        });
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
           'hidden',

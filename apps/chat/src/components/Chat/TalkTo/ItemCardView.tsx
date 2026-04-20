@@ -206,6 +206,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
                 }
               >
                 <ModelIcon
+                  isTooltipDisabled
                   entityId={entity.id}
                   entity={entity}
                   size={iconSize}
