@@ -13,7 +13,7 @@ import {
 import { isParentFolderSelected } from '@/src/utils/app/folders';
 import { isHiddenEntity } from '@/src/utils/app/search';
 
-import { FileSourceType } from '@/src/types/files';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
@@ -31,6 +31,7 @@ import { Modal } from '@/src/components/Common/Modal';
 import { FilesUploadingModal } from '@/src/components/FileManager/FilesUploadingModal';
 import { OperationLoaderModal } from '@/src/components/FileManager/OperationLoaderModal';
 
+import { FolderInterface } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialFileAcceptType,
@@ -55,6 +56,10 @@ interface Props {
   sourceFilters?: Set<FileSourceType>;
   warningMessage?: string;
   maxSelectableFileSize?: number;
+  additionalFilesAndFolders?: {
+    files: DialFile[];
+    folders?: FolderInterface[];
+  };
 }
 
 export const FileManagerModal = memo(
@@ -72,6 +77,7 @@ export const FileManagerModal = memo(
     sourceFilters,
     warningMessage,
     maxSelectableFileSize,
+    additionalFilesAndFolders,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -325,6 +331,7 @@ export const FileManagerModal = memo(
       },
       availableTabs,
       reviewBucket,
+      additionalFilesAndFolders,
     });
 
     return (
