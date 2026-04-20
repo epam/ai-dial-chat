@@ -523,6 +523,7 @@ dialSharedWithMeTest(
     additionalShareUserFileManagerNavigationPanel,
     additionalShareUserDownloadAssertion,
     localStorageManager,
+    additionalShareUserFileManagerUnshareItemConfirmationPopup,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -920,32 +921,28 @@ dialSharedWithMeTest(
         await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.unshare,
           {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'POST',
-            apiHost: API.discardShareWithMeItem,
+            isHttpMethodTriggered: false,
           },
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        // await additionalShareUserFileManagerDeleteItemConfirmationPopup
-        //   .getCloseButton()
-        //   .click();
-        // await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
-        //   user1ImageInRequest1,
-        //   'visible',
-        // );
-        // await fileRow.hover();
-        // await dotsMenu.click();
-        // await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
-        //   MenuOptions.delete,
-        //   {
-        //     isHttpMethodTriggered: false,
-        //   },
-        // );
-        // await additionalShareUserFileManagerDeleteItemConfirmationPopup.confirm(
-        //   {
-        //     triggeredHttpMethod: 'POST',
-        //   },
-        // );
+        await additionalShareUserFileManagerUnshareItemConfirmationPopup.cancelButton.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          user1ImageInRequest1,
+          'visible',
+        );
+        await fileRow.hover();
+        await dotsMenu.click();
+        await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+          MenuOptions.unshare,
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await additionalShareUserFileManagerUnshareItemConfirmationPopup.confirm(
+          {
+            triggeredHttpMethod: 'POST',
+            triggeredHttpHost: API.discardShareWithMeItem,
+          },
+        );
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           user1ImageInRequest1,
           'hidden',
@@ -989,13 +986,13 @@ dialSharedWithMeTest(
             CheckboxState.checked,
           );
         }
-        await additionalShareUserFileManagerToolbar.unshareEntities();
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        // await additionalShareUserFileManagerDeleteItemConfirmationPopup.confirm(
-        //   {
-        //     triggeredHttpMethod: 'POST',
-        //   },
-        // );
+        await additionalShareUserFileManagerToolbar.getUnshareButton().click();
+        await additionalShareUserFileManagerUnshareItemConfirmationPopup.confirm(
+          {
+            triggeredHttpMethod: 'POST',
+            triggeredHttpHost: API.discardShareWithMeItem,
+          },
+        );
         for (const file of imagesToDelete) {
           await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
             file,

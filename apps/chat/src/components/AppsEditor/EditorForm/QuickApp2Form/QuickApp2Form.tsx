@@ -16,7 +16,10 @@ import {
   getSharedTooltip,
 } from '@/src/utils/app/application';
 import { getFilesAndFoldersFromUrls } from '@/src/utils/app/file';
-import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import {
+  doesAgentSupportMcp,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FileSourceType } from '@/src/types/files';
@@ -378,15 +381,17 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         </div>
       </FormCollapsibleSection>
 
-      <div className="flex flex-col gap-4 px-5 py-4">
-        <h5 className="text-base font-semibold text-primary">
-          {t(CommonI18nKeys.ConnectApplication)}
-        </h5>
-        <CopyUrlButton
-          id={appDetails?.id ?? ''}
-          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
-        />
-      </div>
+      {doesAgentSupportMcp(appDetails) && (
+        <div className="flex flex-col gap-4 px-5 py-4">
+          <h5 className="text-base font-semibold text-primary">
+            {t(CommonI18nKeys.ConnectApplication)}
+          </h5>
+          <CopyUrlButton
+            id={appDetails.id}
+            label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+          />
+        </div>
+      )}
     </div>
   );
 };
