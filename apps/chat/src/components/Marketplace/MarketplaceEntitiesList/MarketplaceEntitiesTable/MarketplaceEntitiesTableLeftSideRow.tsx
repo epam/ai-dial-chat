@@ -69,7 +69,12 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
               iconClassName={isHovered ? 'bg-layer-2 ' : 'bg-layer-1'}
               isMyEntity={isMyApplication(entity)}
             >
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              <ModelIcon
+                entityId={entity.id}
+                entity={entity}
+                size={iconSize}
+                isTooltipDisabled
+              />
             </ShareIcon>
           </div>
           <div>
