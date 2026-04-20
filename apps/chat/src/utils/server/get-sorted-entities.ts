@@ -176,6 +176,7 @@ export const getSortedEntities = async (
       }),
       ...(entity.viewer_url && { viewerUrl: entity.viewer_url }),
       ...(entity.editor_url && { editorUrl: entity.editor_url }),
+      ...(entity.mcp && { mcp: entity.mcp }),
     });
   }
 
