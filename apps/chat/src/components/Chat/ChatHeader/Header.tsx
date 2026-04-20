@@ -199,7 +199,7 @@ export const ChatHeader = Inversify.register(
               <Tooltip
                 tooltip={conversation.name}
                 triggerClassName={classNames(
-                  'truncate text-center flex-1 sm:flex-none',
+                  'flex-1 truncate text-center sm:flex-none',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
                   isUnpublishing && 'text-error',
