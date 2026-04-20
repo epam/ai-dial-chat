@@ -27,6 +27,7 @@ import { hasWritePermission } from '@/src/utils/app/share';
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
+import { DialFile as LocalDialFileType } from '@/src/types/files';
 import { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
@@ -51,7 +52,11 @@ import {
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
-import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  FeatureType,
+  FolderInterface,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialCopiedItem,
@@ -65,6 +70,7 @@ import {
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
+import uniqBy from 'lodash-es/uniqBy';
 
 const formatSharedPath = (path: string | undefined | null) => {
   if (!path) return path;
@@ -115,18 +121,29 @@ const dateOptions = {
   day: '2-digit' as const,
 };
 
+const defaultAvailableTabs = new Set([
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Shared,
+  DialFileManagerTabs.Organization,
+]);
+
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
   toolbarOptions?: ToolbarOptions;
   availableTabs?: Set<string>;
   reviewBucket?: string;
+  additionalFilesAndFolders?: {
+    files: LocalDialFileType[];
+    folders?: FolderInterface[];
+  };
 }
 
 export const useFileManager = ({
   actionLabelsOptions,
   toolbarOptions: externalToolbarOptions,
-  availableTabs,
+  availableTabs = defaultAvailableTabs,
   reviewBucket,
+  additionalFilesAndFolders,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
@@ -151,8 +168,22 @@ export const useFileManager = ({
   const prevIsMovingRef = useRef(false);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const folders = useAppSelector(FilesSelectors.selectFolders);
+  const _files = useAppSelector(FilesSelectors.selectFiles);
+  const _folders = useAppSelector(FilesSelectors.selectFolders);
+
+  const files = useMemo(
+    () =>
+      uniqBy([..._files, ...(additionalFilesAndFolders?.files ?? [])], 'id'),
+    [_files, additionalFilesAndFolders?.files],
+  );
+  const folders = useMemo(
+    () =>
+      uniqBy(
+        [..._folders, ...(additionalFilesAndFolders?.folders ?? [])],
+        'id',
+      ),
+    [_folders, additionalFilesAndFolders?.folders],
+  );
 
   const sharedWithMeIds = useAppSelector(
     FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
