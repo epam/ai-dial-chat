@@ -8,27 +8,10 @@ import {
   enrichUnshareFileManagerItems,
 } from '@/src/utils/app/file-manager-unshare-dispatch';
 
-import type { DialFile, FileFolderInterface } from '@/src/types/files';
-import type { RootState } from '@/src/types/store';
-
 import { ShareActions } from '@/src/store/actions';
-import { filesSlice } from '@/src/store/files/files.reducers';
 
 import { FeatureType } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
-
-function rootStateWithEntities(
-  files: DialFile[],
-  folders: FileFolderInterface[],
-): RootState {
-  return {
-    files: {
-      ...filesSlice.getInitialState(),
-      files,
-      folders,
-    },
-  } as unknown as RootState;
-}
 
 describe('file-manager-unshare-dispatch', () => {
   it('dispatchDiscardSharedWithMeForDialItems and dispatchRevokeAccessForDialItems no-op when empty and group folders vs files', () => {
@@ -114,98 +97,95 @@ describe('file-manager-unshare-dispatch', () => {
     );
   });
 
-  it('enrichUnshareFileManagerItems applies source defaults and store entity flags', () => {
-    const empty = rootStateWithEntities([], []);
+  it('enrichUnshareFileManagerItems maps paths and applies source flags only', () => {
+    expect(enrichUnshareFileManagerItems([], 'unshare-files')).toEqual([]);
 
     expect(
-      enrichUnshareFileManagerItems(empty, [{ path: 'x' }], 'unshare-files'),
-    ).toEqual([{ path: 'x', sharedWithMe: true, isShared: false }]);
-    expect(
-      enrichUnshareFileManagerItems(empty, [{ path: 'y' }], 'remove-access'),
-    ).toEqual([{ path: 'y', sharedWithMe: false, isShared: true }]);
-
-    const file = {
-      id: 'files/bucket/f.txt',
-      name: 'f.txt',
-      folderId: 'files/bucket',
-      sharedWithMe: true,
-      isShared: true,
-    } as DialFile;
-    const folder = {
-      id: 'files/bucket/sub/',
-      name: 'sub',
-      folderId: 'files/bucket',
-      sharedWithMe: false,
-      isShared: false,
-    } as FileFolderInterface;
-
-    const state = rootStateWithEntities([file], [folder]);
-
-    expect(
-      enrichUnshareFileManagerItems(
-        state,
-        [{ path: file.id, nodeType: DialFileNodeType.ITEM }],
-        'unshare-files',
-      ),
+      enrichUnshareFileManagerItems([{ path: 'x' }], 'unshare-files'),
     ).toEqual([
       {
-        path: file.id,
-        nodeType: DialFileNodeType.ITEM,
+        path: 'x',
+        nodeType: undefined,
         sharedWithMe: true,
+        isShared: false,
+      },
+    ]);
+    expect(
+      enrichUnshareFileManagerItems([{ path: 'y' }], 'remove-access'),
+    ).toEqual([
+      {
+        path: 'y',
+        nodeType: undefined,
+        sharedWithMe: false,
         isShared: true,
       },
     ]);
 
     expect(
       enrichUnshareFileManagerItems(
-        state,
-        [{ path: folder.id, nodeType: DialFileNodeType.FOLDER }],
+        [{ path: 'files/bucket/f.txt', nodeType: DialFileNodeType.ITEM }],
+        'unshare-files',
+      ),
+    ).toEqual([
+      {
+        path: 'files/bucket/f.txt',
+        nodeType: DialFileNodeType.ITEM,
+        sharedWithMe: true,
+        isShared: false,
+      },
+    ]);
+
+    expect(
+      enrichUnshareFileManagerItems(
+        [{ path: 'files/bucket/sub/', nodeType: DialFileNodeType.FOLDER }],
         'remove-access',
       ),
     ).toEqual([
       {
-        path: folder.id,
+        path: 'files/bucket/sub/',
         nodeType: DialFileNodeType.FOLDER,
         sharedWithMe: false,
-        isShared: false,
+        isShared: true,
       },
     ]);
   });
 
   it('dispatchOpenFileManagerUnshareDialog no-ops when empty and dispatches setUnshareFileManagerItems (unshare-files vs remove-access)', () => {
     const dispatch = vi.fn();
-    const getState = () => rootStateWithEntities([], []);
 
-    dispatchOpenFileManagerUnshareDialog(
-      dispatch,
-      getState,
-      [],
-      'unshare-files',
-    );
+    dispatchOpenFileManagerUnshareDialog(dispatch, [], 'unshare-files');
     expect(dispatch).not.toHaveBeenCalled();
 
     dispatchOpenFileManagerUnshareDialog(
       dispatch,
-      getState,
       [{ path: 'only-path' }],
       'unshare-files',
     );
     expect(dispatch).toHaveBeenCalledWith(
       ShareActions.setUnshareFileManagerItems([
-        { path: 'only-path', sharedWithMe: true, isShared: false },
+        {
+          path: 'only-path',
+          nodeType: undefined,
+          sharedWithMe: true,
+          isShared: false,
+        },
       ]),
     );
 
     dispatch.mockClear();
     dispatchOpenFileManagerUnshareDialog(
       dispatch,
-      getState,
       [{ path: 'revoke-path' }],
       'remove-access',
     );
     expect(dispatch).toHaveBeenCalledWith(
       ShareActions.setUnshareFileManagerItems([
-        { path: 'revoke-path', sharedWithMe: false, isShared: true },
+        {
+          path: 'revoke-path',
+          nodeType: undefined,
+          sharedWithMe: false,
+          isShared: true,
+        },
       ]),
     );
   });

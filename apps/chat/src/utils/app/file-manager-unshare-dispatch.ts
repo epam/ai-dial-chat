@@ -1,7 +1,4 @@
-import type { RootState } from '@/src/types/store';
-
 import { ShareActions } from '@/src/store/actions';
-import { FilesSelectors } from '@/src/store/files/files.selectors';
 import type { UnshareFileManagerItem } from '@/src/store/share/share.types';
 
 import type { AppDispatch } from '@/src/store';
@@ -12,29 +9,22 @@ import groupBy from 'lodash-es/groupBy';
 export type FileManagerUnshareDialogSource = 'unshare-files' | 'remove-access';
 
 export function enrichUnshareFileManagerItems(
-  state: RootState,
   items: { path: string; nodeType?: string }[],
   source: FileManagerUnshareDialogSource,
 ): UnshareFileManagerItem[] {
   return items.map((item) => {
-    const isFolder = item.nodeType === DialFileNodeType.FOLDER;
-    const entity = isFolder
-      ? FilesSelectors.selectFolderById(state, item.path)
-      : FilesSelectors.selectFileById(state, item.path);
-
     return {
       path: item.path,
       nodeType: item.nodeType,
-      sharedWithMe:
-        entity?.sharedWithMe ?? (source === 'unshare-files' ? true : false),
-      isShared: entity?.isShared ?? (source === 'remove-access' ? true : false),
+      sharedWithMe: source === 'unshare-files' ? true : false,
+      isShared: source === 'remove-access' ? true : false,
     };
   });
 }
 
 export function dispatchOpenFileManagerUnshareDialog(
   dispatch: AppDispatch,
-  getState: () => RootState,
+
   items: { path: string; nodeType?: string }[],
   source: FileManagerUnshareDialogSource,
 ) {
@@ -44,7 +34,7 @@ export function dispatchOpenFileManagerUnshareDialog(
 
   dispatch(
     ShareActions.setUnshareFileManagerItems(
-      enrichUnshareFileManagerItems(getState(), items, source),
+      enrichUnshareFileManagerItems(items, source),
     ),
   );
 }

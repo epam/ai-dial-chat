@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useStore } from 'react-redux';
 
 import {
   UseFileManagerActionLabelsOptions,
@@ -28,7 +27,7 @@ import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { DialFile as LocalDialFileType } from '@/src/types/files';
-import { RootState } from '@/src/types/store';
+import type { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/files/files.reducers';
@@ -146,7 +145,6 @@ export const useFileManager = ({
   additionalFilesAndFolders,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
-  const store = useStore<RootState>();
 
   const { t } = useTranslation(Translation.SideBar);
 
@@ -914,24 +912,24 @@ export const useFileManager = ({
     (items: { path: string; nodeType?: string }[]) => {
       dispatchOpenFileManagerUnshareDialog(
         dispatch,
-        () => store.getState(),
+
         items,
         'unshare-files',
       );
     },
-    [dispatch, store],
+    [dispatch],
   );
 
   const handleOpenRemoveFilesAccessDialog = useCallback(
     (items: { path: string; nodeType?: string }[]) => {
       dispatchOpenFileManagerUnshareDialog(
         dispatch,
-        () => store.getState(),
+
         items,
         'remove-access',
       );
     },
-    [dispatch, store],
+    [dispatch],
   );
 
   const handleRenameValidation = useCallback(
