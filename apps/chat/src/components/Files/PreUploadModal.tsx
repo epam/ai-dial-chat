@@ -34,6 +34,7 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
+import { REVIEW_FILES_SECTION } from '@/src/constants/fileManager';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
@@ -65,6 +66,7 @@ interface Props {
   uploadFolderId?: string;
   customUploadButtonLabel?: string;
   rootFolderId?: string;
+  reviewBucket?: string;
 }
 
 export const PreUploadDialog = ({
@@ -78,6 +80,7 @@ export const PreUploadDialog = ({
   uploadFolderId,
   customUploadButtonLabel,
   rootFolderId,
+  reviewBucket,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -293,6 +296,19 @@ export const PreUploadDialog = ({
     );
   }, [folderPath]);
 
+  const visiblePath = useMemo(() => {
+    const isReview = bucket === reviewBucket;
+    let root = SHARED_WITH_ME_SECTION_NAME;
+
+    if (bucket === reviewBucket) root = REVIEW_FILES_SECTION;
+    else if (!bucket || isMyBucket(bucket)) root = t(ChatI18nKeys.MyFiles);
+
+    return constructPath(
+      root,
+      (folderPath ?? isReview) ? undefined : rootFolderName,
+    );
+  }, [bucket, reviewBucket, t, folderPath, rootFolderName]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -337,15 +353,7 @@ export const PreUploadDialog = ({
               data-qa="change-path-container"
             >
               <span className="truncate" data-qa="path">
-                {!bucket || isMyBucket(bucket)
-                  ? constructPath(
-                      t(ChatI18nKeys.MyFiles),
-                      folderPath ?? rootFolderName,
-                    )
-                  : constructPath(
-                      t(SHARED_WITH_ME_SECTION_NAME),
-                      folderPath ?? rootFolderName,
-                    )}
+                {visiblePath}
               </span>
               <DialLinkButton
                 className="px-0"
@@ -425,6 +433,7 @@ export const PreUploadDialog = ({
       </div>
 
       <SelectFolderModal
+        reviewBucket={reviewBucket}
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
         rootFolderId={rootFolderId ?? getFileRootId(bucket)}
