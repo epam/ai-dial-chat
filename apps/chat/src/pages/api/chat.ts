@@ -30,6 +30,8 @@ import { HeadersNames } from '@/src/constants/server';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
+const KEEPALIVE_INTERVAL_MS = 15_000;
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
@@ -122,6 +124,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('Content-Type', 'application/octet-stream');
+    res.flushHeaders();
 
     const reader = stream.getReader();
 
@@ -131,8 +134,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       reader.cancel();
     });
 
+    const keepalivePayload = new TextEncoder().encode('{}\0');
+
     const processStream = async () => {
+      let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
       try {
+        keepaliveTimer = setInterval(() => {
+          if (!clientAborted && !res.writableEnded) {
+            res.write(keepalivePayload);
+          }
+        }, KEEPALIVE_INTERVAL_MS);
+
         while (true) {
           if (clientAborted) {
             break;
@@ -154,6 +166,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           isStreamingError: true,
         });
       } finally {
+        if (keepaliveTimer) clearInterval(keepaliveTimer);
         res.end();
       }
     };
