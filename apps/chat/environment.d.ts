@@ -5,6 +5,7 @@ declare global {
     interface ProcessEnv {
       DIAL_API_KEY: string;
       DIAL_API_HOST: string;
+      DIAL_CORE_URL: string;
 
       QUICK_APPS_HOST?: string;
       QUICK_APPS_MODEL?: string;
