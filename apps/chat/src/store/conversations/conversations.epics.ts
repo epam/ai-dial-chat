@@ -122,7 +122,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ChatI18nKeys } from '@/src/constants/i18n';
