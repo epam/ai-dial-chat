@@ -23,10 +23,7 @@ import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
-import {
-  DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -65,9 +62,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let temperatureToUse = temperature;
-    if (!doesModelAllowTemperature(model)) {
-      temperatureToUse = FALLBACK_TEMPERATURE;
-    } else if (
+    if (
+      doesModelAllowTemperature(model) &&
       !temperatureToUse &&
       temperatureToUse !== 0 &&
       model.type !== EntityType.Application
@@ -111,7 +107,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const stream = await OpenAIStream({
       model,
-      temperature: temperatureToUse,
       messages: messagesToSend,
       userJWT: token?.access_token as string,
       chatReference: reference ?? id,
@@ -120,6 +115,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ? limits?.maxRequestTokens
         : undefined,
       configurationSchemaValue: configurationValue,
+      ...(temperatureToUse !== undefined && { temperature: temperatureToUse }),
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 
