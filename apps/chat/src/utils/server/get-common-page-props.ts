@@ -173,6 +173,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
     externalAppsSchemaId:
       process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
+    dialCoreExternalUrl: process.env.DIAL_CORE_EXTERNAL_URL || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     asrModelId: process.env.ASR_MODEL || null,
     providerId: session?.providerId ?? null,
