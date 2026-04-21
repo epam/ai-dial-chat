@@ -1536,17 +1536,18 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const conversationModelType = lastModel?.type ?? EntityType.Model;
-      let modelAdditionalSettings = {};
+      const modelAdditionalSettings: Partial<
+        Pick<ChatBody, 'prompt' | 'temperature'>
+      > = {};
 
       if (conversationModelType === EntityType.Model) {
-        modelAdditionalSettings = {
-          prompt: doesModelAllowSystemPrompt(lastModel)
-            ? payload.conversation.prompt
-            : undefined,
-          temperature: doesModelAllowTemperature(lastModel)
-            ? payload.conversation.temperature
-            : FALLBACK_TEMPERATURE,
-        };
+        if (doesModelAllowSystemPrompt(lastModel)) {
+          modelAdditionalSettings.prompt = payload.conversation.prompt;
+        }
+        if (doesModelAllowTemperature(lastModel)) {
+          modelAdditionalSettings.temperature =
+            payload.conversation.temperature;
+        }
       }
 
       const chatBody: ChatBody = {
