@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -17,6 +17,7 @@ import { Translation } from '@/src/types/translation';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { stopBubbling } from '@/src/constants/chat';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
 
@@ -27,6 +28,8 @@ import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/Marketpl
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
+
+import { DialLinkButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props<T> {
   entity: T;
@@ -53,6 +56,16 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
     const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();
+
+    const [open, setOpen] = useState(false);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleDelayShow = useCallback((show: boolean) => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => setOpen(show), 100);
+    }, []);
 
     const author = isDialAiEntityModel(entity) ? entity.owner : entity.author;
     const displayedAuthor =
@@ -123,10 +136,19 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
                     </div>
                   }
                   placement="top"
+                  open={open}
+                  onOpenChange={setOpen}
                 >
-                  <span className="flex items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3">
-                    +{hiddenTopics.length}
-                  </span>
+                  <DialLinkButton
+                    className="min-w-0 border-accent-primary px-1.5 py-1"
+                    textClassName="leading-3"
+                    size={ElementSize.Small}
+                    onClick={(event) => {
+                      stopBubbling(event);
+                      handleDelayShow(!open);
+                    }}
+                    label={`+${hiddenTopics.length}`}
+                  />
                 </Tooltip>
               )}
             </>
