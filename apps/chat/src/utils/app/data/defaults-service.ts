@@ -6,6 +6,7 @@ export interface Defaults {
   externalAppsSchemaId: string;
   dialApiHost: string;
   defaultSystemPrompt: string;
+  dialCoreExternalUrl: string;
 }
 
 export class DefaultsService {
