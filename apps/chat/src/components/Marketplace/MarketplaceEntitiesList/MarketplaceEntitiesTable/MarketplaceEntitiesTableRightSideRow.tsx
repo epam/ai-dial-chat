@@ -109,6 +109,8 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
               {!!hiddenTopics.length && (
                 <Tooltip
                   triggerClassName="flex"
+                  isTriggerClickable
+                  isHoverDisabled
                   tooltip={
                     <div className="my-1 flex max-w-48 flex-wrap gap-2">
                       {hiddenTopics.map((topic) => (
