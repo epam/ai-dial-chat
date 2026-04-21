@@ -2172,7 +2172,7 @@ dialAdminTest(
 
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
-          .click();
+          .backToPublicationRequest();
         await adminPublishingApprovalModal.approveButton.click();
         await itemApiHelper.deleteBackendItem(createdAppBackendEntity); //delete the original app
       },
