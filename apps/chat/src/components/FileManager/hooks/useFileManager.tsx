@@ -314,7 +314,10 @@ export const useFileManager = ({
   useEffect(() => {
     if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
       const folder = folders.find((folder) => folder.id === currentPath);
-      if (
+      if (!folder) {
+        const parentId = getFolderIdFromEntityId(currentPath);
+        setCurrentPath(parentId);
+      } else if (
         folder?.status !== UploadStatus.LOADED &&
         folder?.status !== UploadStatus.LOADING
       ) {
