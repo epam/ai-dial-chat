@@ -80,7 +80,7 @@ function Home() {
       ) : (
         <div className="flex size-full flex-col sm:pt-0">
           {enabledFeatures.has(Feature.Header) && <Header />}
-          <div className="flex min-h-0 w-full flex-1">
+          <div className="flex min-h-0 w-full flex-1 overflow-auto">
             <div className="flex size-full flex-col">
               <AnnouncementsBanner />
               <Chat />
