@@ -1455,12 +1455,14 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updateApplicationPublicationUrls.type),
     switchMap(({ payload }) => {
+      const { isSaveAndExit, publicationUrl, oldApplication, newApplication } =
+        payload;
       const publication = PublicationSelectors.selectPublicationByUrl(
         state$.value,
-        payload.publicationUrl,
+        publicationUrl,
       );
 
-      if (!publication || !publication?.resources || !payload.publicationUrl) {
+      if (!publication || !publication?.resources || !publicationUrl) {
         return of(
           UIActions.showErrorToast(
             translate(
@@ -1472,8 +1474,6 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           ),
         );
       }
-
-      const { oldApplication, newApplication } = payload;
 
       const resources = publication.resources.map((resource) => ({
         action: resource.action,
@@ -1492,7 +1492,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           ...publication,
           resources,
         },
-        url: payload.publicationUrl,
+        url: publicationUrl,
       }).pipe(
         switchMap((response) => {
           const state = state$.value;
@@ -1500,7 +1500,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           const selectedPublicationItems =
             PublicationSelectors.selectSelectedPublicationItems(
               state,
-              payload.publicationUrl,
+              publicationUrl,
             );
 
           return concat(
@@ -1508,6 +1508,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
               // oldApplication is not exist after update, so we need to replace it with newApplication.id
               { ...oldApplication, id: newApplication.id },
               newApplication,
+              isSaveAndExit,
             ),
             of(
               PublicationActions.setPublicationItems({
@@ -1538,15 +1539,17 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
     switchMap(({ payload }) => {
-      if (!payload.newApplication.iconUrl) {
+      const { isSaveAndExit, publicationUrl, newApplication, oldApplication } =
+        payload;
+
+      if (!newApplication.iconUrl) {
         return EMPTY;
       }
 
       const state = state$.value;
-
       const publication = PublicationSelectors.selectPublicationByUrl(
         state,
-        payload.publicationUrl,
+        publicationUrl,
       );
 
       if (!publication) {
@@ -1568,16 +1571,16 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           sourceUrl: resource.sourceUrl ?? '',
         })) ?? [];
 
-      const newIconUrl = payload.newApplication.iconUrl.split('/');
+      const newIconUrl = newApplication.iconUrl.split('/');
       resources.push({
         action: PublishActions.ADD_IF_ABSENT,
-        sourceUrl: payload.newApplication.iconUrl,
+        sourceUrl: newApplication.iconUrl,
         targetUrl: ApiUtils.decodeApiUrl(
           constructPath(
             newIconUrl[0],
             publication.targetFolder,
             getFolderIdFromEntityId(
-              getIdWithoutRootPathSegments(payload.newApplication.id),
+              getIdWithoutRootPathSegments(newApplication.id),
             ),
             newIconUrl.at(-1),
           ),
@@ -1589,38 +1592,39 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           ...publication,
           resources,
         },
-        url: payload.publicationUrl,
+        url: publicationUrl,
       }).pipe(
         switchMap((response) => {
           const newIconUrl =
             response.resources.find(
-              ({ sourceUrl }) => sourceUrl === payload.newApplication.iconUrl,
+              ({ sourceUrl }) => sourceUrl === newApplication.iconUrl,
             )?.reviewUrl ?? '';
           const newApplicationWithMappedIconUrl = {
-            ...payload.newApplication,
+            ...newApplication,
             iconUrl: newIconUrl,
           };
 
           const selectedPublicationItems =
             PublicationSelectors.selectSelectedPublicationItems(
               state,
-              payload.publicationUrl,
+              publicationUrl,
             );
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
-              payload.oldApplication,
+              oldApplication,
               newApplicationWithMappedIconUrl,
+              isSaveAndExit,
             ),
             of(
               PublicationActions.setPublicationItems({
-                publicationUrl: payload.publicationUrl,
+                publicationUrl,
                 ids: [...selectedPublicationItems, newIconUrl],
               }),
             ),
             of(
               PublicationActions.uploadPublication({
-                url: payload.publicationUrl,
+                url: publicationUrl,
               }),
             ),
           );

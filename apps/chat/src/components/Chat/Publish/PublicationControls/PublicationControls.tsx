@@ -176,7 +176,7 @@ function PublicationControlsView({
         onClick={handleClearReviewSelection}
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
-        label={t(ChatI18nKeys.BackToPublicationRequest)}
+        label={t(ChatI18nKeys.Back)}
       />
       {children}
     </div>

@@ -164,8 +164,6 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     ],
   );
 
-  const editBtn = promptItems.find((item) => item.name === editBtnName);
-
   return (
     <div className="flex h-[34px] gap-2">
       {screenState !== ScreenState.SM ? (
@@ -176,15 +174,12 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         <>
           <button className="icon-button size-[34px]">
             <ContextMenu
-              menuItems={promptItems.filter(
-                (item) => item.name !== editBtnName,
-              )}
+              menuItems={promptItems}
               featureType={FeatureType.Prompt}
               triggerIconHighlight
               className="m-0 xl:invisible group-hover:xl:visible"
             />
           </button>
-          {editBtn && <IconButton {...editBtn} />}
         </>
       )}
     </div>
