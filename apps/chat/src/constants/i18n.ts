@@ -707,7 +707,6 @@ export enum ChatI18nKeys {
   UpdateRequest = 'Update request',
   RequestCannotBeUpdated = 'Request can not be updated as some resources are invalid',
   MakeChangesToUpdate = 'Make any changes to update the request',
-  BackToPublicationRequest = 'Back to publication request',
   Application = 'Application',
   Name = 'Name',
   Icon = 'Icon',
