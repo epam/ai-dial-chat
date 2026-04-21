@@ -218,7 +218,7 @@ const selectDefaultSystemPrompt = (state: RootState) =>
   rootSelector(state).defaultSystemPrompt ?? FALLBACK_STRING_VALUE;
 
 const selectDialCoreUrl = (state: RootState) =>
-  rootSelector(state).dialCoreUrl ?? FALLBACK_STRING_VALUE;
+  rootSelector(state).dialCoreExternalUrl ?? FALLBACK_STRING_VALUE;
 
 const selectDefaults = createSelector(
   [
@@ -237,7 +237,7 @@ const selectDefaults = createSelector(
     externalAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
-    dialCoreUrl,
+    dialCoreExternalUrl,
   ) =>
     ({
       quickAppsHost,
@@ -246,7 +246,7 @@ const selectDefaults = createSelector(
       externalAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,
-      dialCoreUrl,
+      dialCoreExternalUrl,
     }) as Defaults,
 );
 const selectInitialDataStatus = (state: RootState) =>

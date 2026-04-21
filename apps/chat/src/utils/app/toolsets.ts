@@ -287,4 +287,4 @@ export const getToolsetAuthActionLabel = (
 };
 
 export const getToolsetMcpUrl = (id: string) =>
-  `${DefaultsService.get('dialCoreUrl')}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
+  `${DefaultsService.get('dialCoreExternalUrl')}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
