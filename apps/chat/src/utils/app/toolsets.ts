@@ -1,4 +1,5 @@
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
@@ -286,4 +287,4 @@ export const getToolsetAuthActionLabel = (
 };
 
 export const getToolsetMcpUrl = (id: string) =>
-  `${window.location.origin}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
+  `${DefaultsService.get('dialCoreUrl')}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
