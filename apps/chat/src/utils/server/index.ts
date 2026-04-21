@@ -63,13 +63,13 @@ export const OpenAIStream = async ({
   configurationSchemaValue,
 }: {
   model: DialAIEntityModel;
-  temperature: number | undefined;
   messages: Message[];
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
   maxRequestTokens: number | undefined;
   configurationSchemaValue?: MessageFormValue;
+  temperature?: number;
 }) => {
   let messagesToSend = messages;
   const url = getUrl(model);
