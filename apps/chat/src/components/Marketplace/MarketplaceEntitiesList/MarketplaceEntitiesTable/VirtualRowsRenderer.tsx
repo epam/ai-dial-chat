@@ -45,7 +45,7 @@ const DataRowItem: FC<DataRowItemProps> = ({
         (isSentinel || isPrevSentinel) && '!border-t-0',
         isSentinel && 'flex items-end',
         isNextSentinel && '!border-b !border-b-secondary',
-        'absolute left-0 top-0 min-w-full',
+        'absolute left-0 top-0 w-full',
       )}
       style={{
         height: `${virtualRow.size}px`,
