@@ -101,7 +101,7 @@ const FilterSection = ({
     <div className="flex items-center gap-1">
       {sectionName}
       {selectedFilters[filterType].length > 0 && (
-        <div className="dial-caption-text flex size-[14px] items-center justify-center rounded bg-accent-primary font-semibold text-layer-3">
+        <div className="dial-captions-text flex size-[14px] items-center justify-center rounded bg-accent-primary font-semibold text-layer-3">
           {selectedFilters[filterType].length}
         </div>
       )}
