@@ -1261,3 +1261,47 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  '[File Manager]: File icon is displayed for all types of files, also for files without extension',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGridAssertion,
+  }) => {
+    setTestIds('EPMRTC-8158');
+
+    const iconFiles = [
+      { name: Attachment.sunImageName, extension: 'jpg' },
+      { name: Attachment.fileToCopyName, extension: 'png' },
+      { name: Attachment.pdfName, extension: 'pdf' },
+      { name: Attachment.fileWithoutExtension, extension: null },
+    ];
+
+    await dialTest.step(
+      'Upload files with different extensions and file without extension via API',
+      async () => {
+        for (const file of iconFiles) {
+          await fileApiHelper.putFile(file.name);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open File Manager and verify each file has an icon with correct extension class',
+      async () => {
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        for (const file of iconFiles) {
+          await fileManagerGridAssertion.assertGridFileIconClass(
+            file.name,
+            file.extension
+              ? IconSelectors.fileTypeIcon(file.extension)
+              : IconSelectors.defaultFileIconClass,
+          );
+        }
+      },
+    );
+  },
+);

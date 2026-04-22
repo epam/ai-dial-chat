@@ -5,6 +5,7 @@ import {
   ElementState,
   ExpectedMessages,
 } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { FileManagerGrid } from '@/src/ui/webElements';
 
 export class FileManagerGridAssertion extends BaseAssertion {
@@ -169,5 +170,18 @@ export class FileManagerGridAssertion extends BaseAssertion {
       expectedColor,
       ExpectedMessages.sharedIconColorIsValid,
     );
+  }
+
+  public async assertGridFileIconClass(
+    name: string,
+    expectedClass: string | RegExp,
+  ) {
+    const iconLocator = await this.fileManagerGrid.gridFileIconByNameCell(name);
+    const svgLocator = iconLocator.locator(Tags.svg).first();
+    const pattern =
+      typeof expectedClass === 'string'
+        ? new RegExp(expectedClass)
+        : expectedClass;
+    await this.assertElementClass(svgLocator, pattern);
   }
 }
