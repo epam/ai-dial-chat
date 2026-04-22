@@ -42,6 +42,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
   AuthSelectors,
+  ChatEventsSelectors,
   ChatSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -1114,6 +1115,12 @@ export function Chat({ isPreview }: ChatProps) {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const isChatEventsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
+  );
+  const isSubscribing = useAppSelector(ChatEventsSelectors.selectIsSubscribing);
+
+  const showIsSubscribingLoader = isChatEventsEnabled && isSubscribing;
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1199,7 +1206,8 @@ export function Chat({ isPreview }: ChatProps) {
     !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
     loadingConfigurationSchemas.length ||
-    isPublicationUpdating
+    isPublicationUpdating ||
+    showIsSubscribingLoader
   ) {
     return <Loader />;
   }
