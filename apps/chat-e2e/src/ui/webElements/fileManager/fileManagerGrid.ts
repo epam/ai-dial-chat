@@ -144,6 +144,27 @@ export class FileManagerGrid extends Grid {
     }
   }
 
+  public async saveRename() {
+    const hostsMap = new Map([
+      [API.moveHost, 'POST'],
+      [API.folderFilesListingHost(), 'GET'],
+    ]);
+    const responses = [];
+    for (const [host, method] of hostsMap) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.url().includes(host) &&
+          response.request().method() === method &&
+          response.status() === 200,
+      );
+      responses.push(resp);
+    }
+    await this.page.keyboard.press(keys.enter);
+    for (const resp of responses) {
+      await resp;
+    }
+  }
+
   public getRowInputError(name?: string) {
     if (name) {
       return this.gridNameCellInput.alertIconByValue(name);

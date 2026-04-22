@@ -1330,7 +1330,8 @@ dialTest.only(
       'EPMRTC-8362',
     );
     const folderName = GeneratorUtil.randomString(7);
-    const renamedFileName = `${Attachment.textName}.md`;
+    const renamedBaseName = GeneratorUtil.randomFilename('jpg');
+    const renamedFileName = `${renamedBaseName}.txt`;
     const hiddenFileName = '.' + renamedFileName;
     const hiddenFolderName = '.' + folderName;
 
@@ -1392,48 +1393,22 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'EPMRTC-8389: Verify file has txt icon before renaming',
+      'EPMRTC-8389: Verify txt icon before rename; open rename, verify icon unchanged while editing; save and verify icon unchanged after',
       async () => {
         await fileManagerGridAssertion.assertGridFileIconClass(
           Attachment.textName,
           IconSelectors.fileTypeIcon('txt'),
         );
-      },
-    );
-
-    await dialTest.step(
-      'EPMRTC-8389: Open rename mode, type new name and verify icon does not change while renaming',
-      async () => {
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.textName,
         );
         await dotsMenu.click({ force: true });
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
-        await fileManagerGrid.getRenameInput().fillInInput(renamedFileName);
+        await fileManagerGrid.getRenameInput().fillInInput(renamedBaseName);
         await fileManagerGridAssertion.assertGridFileIconClassDuringRename(
           IconSelectors.fileTypeIcon('txt'),
         );
-      },
-    );
-
-    await dialTest.step(
-      'EPMRTC-8389: Save rename and verify icon remains txt after saving',
-      async () => {
-        const moveResp = page.waitForResponse(
-          (r) =>
-            r.url().includes(API.moveHost) &&
-            r.request().method() === 'POST' &&
-            r.status() === 200,
-        );
-        const listResp = page.waitForResponse(
-          (r) =>
-            r.url().includes(API.folderFilesListingHost()) &&
-            r.request().method() === 'GET' &&
-            r.status() === 200,
-        );
-        await page.keyboard.press('Enter');
-        await moveResp;
-        await listResp;
+        await fileManagerGrid.saveRename();
         await fileManagerGridAssertion.assertGridFileIconClass(
           renamedFileName,
           IconSelectors.fileTypeIcon('txt'),
