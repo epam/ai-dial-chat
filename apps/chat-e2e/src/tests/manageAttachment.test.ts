@@ -1305,3 +1305,192 @@ dialTest(
     );
   },
 );
+
+dialTest.only(
+  '[File Manager]: Informational hint appears when adding a dot at the beginning of file name; disappears when removing.\n' +
+    '[File Manager]: Informational hint appears when adding a dot at the beginning of folder name; disappears when removing.\n' +
+    '[File Manager]: Rename: File icon is not changed while renaming.\n' +
+    '[File Manager]: Dot at the beginning of file name makes file hidden.\n' +
+    '[File Manager]: Dot at the beginning of folder name makes folder hidden',
+  async ({
+    page,
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    fileManagerToolbar,
+  }) => {
+    setTestIds(
+      'EPMRTC-8360',
+      'EPMRTC-8596',
+      'EPMRTC-8389',
+      'EPMRTC-8363',
+      'EPMRTC-8362',
+    );
+    const folderName = GeneratorUtil.randomString(7);
+    const renamedFileName = `${Attachment.textName}.md`;
+    const hiddenFileName = '.' + renamedFileName;
+    const hiddenFolderName = '.' + folderName;
+
+    await dialTest.step('Upload file and create folder via API', async () => {
+      await fileApiHelper.putStringAsFile(Attachment.textName, 'content');
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderName,
+      });
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8360: Open rename for file, type dot at beginning and verify warning icon appears',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.textName,
+        );
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid
+          .getRenameInput()
+          .fillInInput('.' + Attachment.textName);
+        await fileManagerGridAssertion.assertInputWarning();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8360: Remove dot from file name and verify warning icon disappears',
+      async () => {
+        await fileManagerGrid.getRenameInput().fillInInput(Attachment.textName);
+        await fileManagerGridAssertion.assertInputWarning('hidden');
+        await page.keyboard.press('Escape');
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8596: Open rename for folder, type dot at beginning and verify warning icon appears',
+      async () => {
+        const dotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(folderName);
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput('.' + folderName);
+        await fileManagerGridAssertion.assertInputWarning();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8596: Remove dot from folder name and verify warning icon disappears',
+      async () => {
+        await fileManagerGrid.getRenameInput().fillInInput(folderName);
+        await fileManagerGridAssertion.assertInputWarning('hidden');
+        await page.keyboard.press('Escape');
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8389: Verify file has txt icon before renaming',
+      async () => {
+        await fileManagerGridAssertion.assertGridFileIconClass(
+          Attachment.textName,
+          IconSelectors.fileTypeIcon('txt'),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8389: Open rename mode, type new name and verify icon does not change while renaming',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.textName,
+        );
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(renamedFileName);
+        await fileManagerGridAssertion.assertGridFileIconClassDuringRename(
+          IconSelectors.fileTypeIcon('txt'),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8389: Save rename and verify icon remains txt after saving',
+      async () => {
+        const moveResp = page.waitForResponse(
+          (r) =>
+            r.url().includes(API.moveHost) &&
+            r.request().method() === 'POST' &&
+            r.status() === 200,
+        );
+        const listResp = page.waitForResponse(
+          (r) =>
+            r.url().includes(API.folderFilesListingHost()) &&
+            r.request().method() === 'GET' &&
+            r.status() === 200,
+        );
+        await page.keyboard.press('Enter');
+        await moveResp;
+        await listResp;
+        await fileManagerGridAssertion.assertGridFileIconClass(
+          renamedFileName,
+          IconSelectors.fileTypeIcon('txt'),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8363: Rename file with dot prefix and verify it disappears from grid',
+      async () => {
+        await fileManagerGrid.renameFile(renamedFileName, hiddenFileName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileName,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8362: Rename folder with dot prefix and verify it disappears from grid',
+      async () => {
+        await fileManagerGrid.renameFile(folderName, hiddenFolderName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFolderName,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8362, EPMRTC-8363: Turn on Hidden toggle and verify both hidden items become visible',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFolderName,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8362, EPMRTC-8363: Turn off Hidden toggle and verify both items are hidden again',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileName,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFolderName,
+          'hidden',
+        );
+      },
+    );
+  },
+);
