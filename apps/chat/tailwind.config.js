@@ -22,6 +22,7 @@ const commonBgColors = {
   overlay: 'var(--bg-overlay, #0C101DB3)',
   'auth-layer-0': 'var(--bg-auth-layer-0, var(--bg-layer-1, #0C101D))',
   'auth-layer-1': 'var(--bg-auth-layer-1, var(--bg-layer-3, #1D2439))',
+  'controls-disable-accent': 'var(--controls-bg-disable-accent, #696E7C)',
 };
 
 const commonBorderColors = {
@@ -81,6 +82,9 @@ module.exports = {
       'controls-disable': 'var(--controls-text-disable, #575F73)',
       'layer-0': 'var(--bg-layer-0, #000000)',
       'layer-3': 'var(--bg-layer-3, #1D2439)',
+      'controls-primary-disable':
+        'var(--controls-text-primary-disable, #7C8293)',
+      'controls-accent-disable': 'var(--controls-text-accent-disable, #242C42)',
     },
     gradientColorStops: commonBgColors,
     /////////
