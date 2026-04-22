@@ -80,7 +80,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
-        of(ChatEventsActions.subscribe()),
+        of(ChatEventsActions.init()),
       ];
     case PageType.AppsEditor:
       return [
@@ -91,7 +91,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
-        of(ChatEventsActions.subscribe()),
+        of(ChatEventsActions.init()),
       ];
     default:
       return [
