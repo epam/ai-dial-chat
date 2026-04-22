@@ -483,7 +483,8 @@ dialTest(
     await dialTest.step(
       'Reload page and verify file is not deleted',
       async () => {
-        await dialHomePage.reloadPage();
+        await fileManagerPage.reloadPage();
+        await fileManagerPage.waitForPageLoaded();
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'visible',

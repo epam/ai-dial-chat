@@ -11,6 +11,7 @@ import {
   ThemeId,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 const fourNestedLevels = 4;
@@ -1615,8 +1616,8 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;
-    const duplicatedConversationName =
-      ExpectedConstants.newConversationWithIndexTitle(1);
+    const duplicatedConversationName = GeneratorUtil.randomString(7);
+    const nonDuplicatedConversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(
       'Prepare nested folders with conversations inside each one and one more conversation on the lowest folder level',
@@ -1625,7 +1626,7 @@ dialTest(
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders, {
             1: duplicatedConversationName,
-            2: ExpectedConstants.newConversationWithIndexTitle(2),
+            2: nonDuplicatedConversationName,
           });
         conversationData.resetData();
 
@@ -1671,7 +1672,7 @@ dialTest(
         }
         await chatBarFolderAssertion.assertFolderEntityState(
           { name: nestedFolders[twoNestedLevels - 1].name },
-          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          { name: nonDuplicatedConversationName },
           'hidden',
         );
 
@@ -1714,7 +1715,7 @@ dialTest(
 
         await chatBarFolderAssertion.assertFolderEntityState(
           { name: nestedFolders[twoNestedLevels - 1].name },
-          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          { name: nonDuplicatedConversationName },
           'visible',
         );
 

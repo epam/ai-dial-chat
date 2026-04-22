@@ -1159,8 +1159,10 @@ dialAdminTest(
     conversationData,
   }) => {
     setTestIds('EPMRTC-6743');
-
-    const modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+    const modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment(
+      true,
+      ['*/*'],
+    );
     const attachmentModel = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
