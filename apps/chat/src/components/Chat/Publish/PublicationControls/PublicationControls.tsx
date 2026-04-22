@@ -3,6 +3,7 @@ import React, { useCallback, useEffect } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -10,7 +11,6 @@ import {
   isConversationId,
   isPromptId,
 } from '@/src/utils/app/id';
-import { getScreenState } from '@/src/utils/app/mobile';
 
 import { ScreenState } from '@/src/types/common';
 import { ResourceToReview } from '@/src/types/publication';
@@ -56,6 +56,7 @@ function PublicationControlsView({
 
   const dispatch = useAppDispatch();
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const screenState = useScreenState();
 
   const isMessageStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -181,7 +182,7 @@ function PublicationControlsView({
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
         label={
-          isOverlay || getScreenState() === ScreenState.SM
+          isOverlay || screenState === ScreenState.SM
             ? t(ChatI18nKeys.Back)
             : t(ChatI18nKeys.BackToPublicationRequest)
         }
