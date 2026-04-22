@@ -15,7 +15,7 @@ const defaultSystemPrompt =
 const request = '1+2=';
 
 for (const entity of arithmeticRequestModels) {
-  dialTest.only(
+  dialTest(
     `Generate arithmetic response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
