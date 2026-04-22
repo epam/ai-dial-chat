@@ -327,18 +327,27 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               )}
             </p>
           </div>
-
-          <DialInput
-            labelProps={{
-              label: t(MarketplaceI18nKeys.IntroText),
-              caption: t(MarketplaceI18nKeys.OptionalTextShownAboveTheStarters),
-            }}
-            placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
-            id="introText"
+          <Controller
             name="introText"
-            disabled={isAppPublic || !hasStarters}
-            error={errors.introText?.message}
-            tooltipText={startersSettingsTooltip}
+            control={control}
+            render={({ field }) => (
+              <DialInput
+                labelProps={{
+                  label: t(MarketplaceI18nKeys.IntroText),
+                  caption: t(
+                    MarketplaceI18nKeys.OptionalTextShownAboveTheStarters,
+                  ),
+                }}
+                placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
+                id="introText"
+                name="introText"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isAppPublic || !hasStarters}
+                error={errors.introText?.message}
+                tooltipText={startersSettingsTooltip}
+              />
+            )}
           />
 
           <Controller
