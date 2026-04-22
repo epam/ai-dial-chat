@@ -34,7 +34,7 @@ const IntroTextView = ({ schema, isWideLayout }: IntroTextViewProps) => {
     <div
       className={classNames(
         'text-center text-lg font-semibold md:last:mb-5 lg:mx-auto',
-        isWideLayout ? 'mx-4 mt-4' : 'm-4',
+        isWideLayout ? 'mx-4 mt-4' : 'sm:m-4',
       )}
     >
       {buttonProperty[1].description}
