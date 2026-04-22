@@ -34,7 +34,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { AuthSelectors } from '@/src/store/selectors';
+import { AuthSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
@@ -60,6 +60,9 @@ export const useToolsetMenuItems = ({
   //   SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   // );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
+  );
 
   const {
     handleCopy,
@@ -88,7 +91,7 @@ export const useToolsetMenuItems = ({
       {
         name: t(MarketplaceI18nKeys.Connect),
         dataQa: 'toolset-connect',
-        display: disabledActions?.connect !== true,
+        display: disabledActions?.connect !== true && !!dialCoreExternalUrl,
         Icon: IconPlugConnected,
         onClick: handleConnect,
       },
@@ -201,6 +204,7 @@ export const useToolsetMenuItems = ({
       handlePublish,
       handleUnpublish,
       handleDelete,
+      dialCoreExternalUrl,
     ],
   );
 

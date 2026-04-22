@@ -29,6 +29,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ModelsSelectors,
+  SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
@@ -101,6 +102,9 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolSupportingModels = useAppSelector(
     ModelsSelectors.selectToolSupportingModels,
+  );
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
   );
 
   const { control, setError, clearErrors } =
@@ -381,7 +385,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         </div>
       </FormCollapsibleSection>
 
-      {doesAgentSupportMcp(appDetails) && (
+      {doesAgentSupportMcp(appDetails) && !!dialCoreExternalUrl && (
         <div className="flex flex-col gap-4 px-5 py-4">
           <h5 className="text-base font-semibold text-primary">
             {t(CommonI18nKeys.ConnectApplication)}
