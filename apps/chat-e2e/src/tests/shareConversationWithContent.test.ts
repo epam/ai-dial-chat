@@ -586,6 +586,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeConversations,
     additionalShareUserChatMessages,
     localStorageManager,
+    confirmationDialog,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101', 'EPMRTC-5524');
@@ -689,17 +690,17 @@ dialSharedWithMeTest(
           Attachment.cloudImageName,
         );
         await rowLocator.hover();
-        await rowDotsMenu.click();
+        +(await rowDotsMenu.click());
         await fileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.removeAccess,
           {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'POST',
-            apiHost: API.revokeAccessHost,
+            isHttpMethodTriggered: false,
           },
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        //await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.revokeAccessHost,
+        });
         await fileManagerGridAssertion.assertGridFileSharedState(
           Attachment.cloudImageName,
           'hidden',
@@ -795,13 +796,13 @@ dialSharedWithMeTest(
         await fileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.removeAccess,
           {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'POST',
-            apiHost: API.revokeAccessHost,
+            isHttpMethodTriggered: false,
           },
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        //await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.revokeAccessHost,
+        });
         await fileManagerGridAssertion.assertGridFileSharedState(
           Attachment.sunImageName,
           'hidden',

@@ -122,7 +122,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -133,6 +132,7 @@ import { HeadersNames } from '@/src/constants/server';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import {
+  ConversationEntityModel,
   ConversationInfo,
   CustomVisualizerData,
   Feature,
@@ -1397,24 +1397,28 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         }
 
         const actions: Observable<AppAction>[] = [];
-        const messageModel: Message[EntityType.Model] = {
+        const conversationMessageModel: ConversationEntityModel = {
           id: payload.conversation.model.id,
         };
-        const messageSettings: Message['settings'] = {
-          prompt: payload.conversation.prompt,
-          temperature: payload.conversation.temperature,
-        };
+        const messageModel = modelsMap[conversationMessageModel.id];
+        const messageSettings: Partial<MessageSettings> = {};
+        if (doesModelAllowTemperature(messageModel)) {
+          messageSettings.temperature = payload.conversation.temperature;
+        }
+        if (doesModelAllowSystemPrompt(messageModel)) {
+          messageSettings.prompt = payload.conversation.prompt;
+        }
 
         const assistantMessage: Message = {
           content: '',
-          model: messageModel,
+          model: conversationMessageModel,
           settings: messageSettings,
           role: Role.Assistant,
         };
 
         const userMessage: Message = {
           ...payload.message,
-          model: messageModel,
+          model: conversationMessageModel,
           settings: messageSettings,
         };
 
@@ -1536,21 +1540,22 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const conversationModelType = lastModel?.type ?? EntityType.Model;
-      let modelAdditionalSettings = {};
+      const modelAdditionalSettings: Partial<
+        Pick<ChatBody, 'prompt' | 'temperature'>
+      > = {};
 
       if (conversationModelType === EntityType.Model) {
-        modelAdditionalSettings = {
-          prompt: doesModelAllowSystemPrompt(lastModel)
-            ? payload.conversation.prompt
-            : undefined,
-          temperature: doesModelAllowTemperature(lastModel)
-            ? payload.conversation.temperature
-            : FALLBACK_TEMPERATURE,
-        };
+        if (doesModelAllowSystemPrompt(lastModel)) {
+          modelAdditionalSettings.prompt = payload.conversation.prompt;
+        }
+        if (doesModelAllowTemperature(lastModel)) {
+          modelAdditionalSettings.temperature =
+            payload.conversation.temperature;
+        }
       }
 
       const chatBody: ChatBody = {
-        model: modelsMap[payload.conversation.model.id],
+        model: lastModel,
         messages: payload.conversation.messages
           .filter(
             (message, index) =>

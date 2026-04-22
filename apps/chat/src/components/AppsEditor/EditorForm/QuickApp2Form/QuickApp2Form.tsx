@@ -8,18 +8,28 @@ import {
 
 import classNames from 'classnames';
 
+import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getSharedTooltip } from '@/src/utils/app/application';
-import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import {
+  getQuickApp2Config,
+  getSharedTooltip,
+} from '@/src/utils/app/application';
+import { getFilesAndFoldersFromUrls } from '@/src/utils/app/file';
+import {
+  doesAgentSupportMcp,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ModelsSelectors,
+  SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
@@ -56,6 +66,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
+import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -67,6 +78,13 @@ const StartersBehaviourField = withLabel(StartersBehaviourRadioGroup);
 const ToggleSwitchField = withLabel(ToggleSwitch);
 const CopyUrlButton = withLabel(ToolsetLinkButton);
 
+const adminFilesFilter = new Set([
+  FileSourceType.MY_FILES,
+  FileSourceType.SHARED_WITH_ME,
+  FileSourceType.PUBLIC,
+  FileSourceType.REVIEW_FILES,
+]);
+
 const getItemLabel = (item: unknown): string => item as string;
 
 interface AppsEditorProps {
@@ -76,6 +94,7 @@ interface AppsEditorProps {
 export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const isPublicationReview = useIsPublicationReview();
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
@@ -83,6 +102,9 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolSupportingModels = useAppSelector(
     ModelsSelectors.selectToolSupportingModels,
+  );
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
   );
 
   const { control, setError, clearErrors } =
@@ -115,6 +137,17 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     : !hasStarters
       ? t(MarketplaceI18nKeys.AtLeastOneStarterIsRequiredToEnableSettings)
       : '';
+  const filesFilter = isPublicationReview ? adminFilesFilter : undefined;
+
+  const reviewFilesAndFolders = useMemo(() => {
+    if (!isPublicationReview || !appDetails) return undefined;
+
+    return getFilesAndFoldersFromUrls(
+      getQuickApp2Config(appDetails).contexts.map(({ url }) => url),
+      FeatureType.File,
+      UploadStatus.LOADED,
+    );
+  }, [appDetails, isPublicationReview]);
 
   return (
     <div
@@ -210,6 +243,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
               }
               tooltip={isAppPublicTooltip}
+              filesFilter={filesFilter}
+              additionalFilesAndFolders={reviewFilesAndFolders}
             />
           )}
         />
@@ -350,15 +385,17 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         </div>
       </FormCollapsibleSection>
 
-      <div className="flex flex-col gap-4 px-5 py-4">
-        <h5 className="text-base font-semibold text-primary">
-          {t(CommonI18nKeys.ConnectApplication)}
-        </h5>
-        <CopyUrlButton
-          id={appDetails?.id ?? ''}
-          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
-        />
-      </div>
+      {doesAgentSupportMcp(appDetails) && !!dialCoreExternalUrl && (
+        <div className="flex flex-col gap-4 px-5 py-4">
+          <h5 className="text-base font-semibold text-primary">
+            {t(CommonI18nKeys.ConnectApplication)}
+          </h5>
+          <CopyUrlButton
+            id={appDetails.id}
+            label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+          />
+        </div>
+      )}
     </div>
   );
 };

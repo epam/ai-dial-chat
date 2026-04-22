@@ -528,6 +528,7 @@ dialSharedWithMeTest(
     localStorageManager,
     additionalShareUserToastAssertion,
     additionalShareUserToast,
+    additionalShareUserFileManagerUnshareItemConfirmationPopup,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -926,9 +927,26 @@ dialSharedWithMeTest(
         await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
           MenuOptions.unshare,
           {
-            isHttpMethodTriggered: true,
+            isHttpMethodTriggered: false,
+          },
+        );
+        await additionalShareUserFileManagerUnshareItemConfirmationPopup.cancelButton.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          user1ImageInRequest1,
+          'visible',
+        );
+        await fileRow.hover();
+        await dotsMenu.click();
+        await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+          MenuOptions.unshare,
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await additionalShareUserFileManagerUnshareItemConfirmationPopup.confirm(
+          {
             triggeredHttpMethod: 'POST',
-            apiHost: API.discardShareWithMeItem,
+            triggeredHttpHost: API.discardShareWithMeItem,
           },
         );
         await additionalShareUserToastAssertion.assertToastMessage(
@@ -962,6 +980,7 @@ dialSharedWithMeTest(
         );
       },
     );
+
 
     await dialSharedWithMeTest.step('User 1 deletes a file', async () => {
       await fileApiHelper.deleteFromAllFiles(user1ImageUrlInRequest2);
@@ -999,13 +1018,13 @@ dialSharedWithMeTest(
             CheckboxState.checked,
           );
         }
-        await additionalShareUserFileManagerToolbar.unshareEntities();
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5971
-        // await additionalShareUserFileManagerDeleteItemConfirmationPopup.confirm(
-        //   {
-        //     triggeredHttpMethod: 'POST',
-        //   },
-        // );
+        await additionalShareUserFileManagerToolbar.getUnshareButton().click();
+        await additionalShareUserFileManagerUnshareItemConfirmationPopup.confirm(
+          {
+            triggeredHttpMethod: 'POST',
+            triggeredHttpHost: API.discardShareWithMeItem,
+          },
+        );
         for (const file of imagesToDelete) {
           await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
             file,

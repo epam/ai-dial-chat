@@ -19,15 +19,15 @@ interface ToolsetLinkButtonProps {
 
 export const ToolsetLinkButton: FC<ToolsetLinkButtonProps> = ({ id }) => {
   const { t } = useTranslation(Translation.Common);
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
+  );
 
-  const { dialApiHost } = useAppSelector(SettingsSelectors.selectDefaults);
+  if (!dialCoreExternalUrl) return null;
 
   return (
     <CopyButton
-      copyContent={getToolsetMcpUrl({
-        id,
-        apiHost: dialApiHost,
-      })}
+      copyContent={getToolsetMcpUrl(id)}
       copyLabel={t(CommonI18nKeys.CopyURL)}
       copiedLabel={t(CommonI18nKeys.Copied)}
     />
