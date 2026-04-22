@@ -338,7 +338,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             name="introText"
             disabled={isAppPublic || !hasStarters}
             error={errors.introText?.message}
-            // tooltipText={startersSettingsTooltip}
+            tooltipText={startersSettingsTooltip}
           />
 
           <Controller
