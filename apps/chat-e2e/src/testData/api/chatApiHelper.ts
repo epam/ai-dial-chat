@@ -6,7 +6,6 @@ import { BucketUtil, ModelsUtil } from '@/src/utils';
 
 export class ChatApiHelper extends BaseApiHelper {
   public buildRequestData(conversation: Conversation) {
-    const model = ModelsUtil.getOpenAIEntity(conversation.model.id)!;
     let message;
     //check if replay conversation
     if (conversation?.replay?.replayUserMessagesStack) {
@@ -27,9 +26,11 @@ export class ChatApiHelper extends BaseApiHelper {
     return {
       id: `conversations/${BucketUtil.getBucket()}/` + conversation.id,
       messages: [userMessage],
-      model: model ?? ({ id: conversation.model.id } as DialAIEntityModel),
-      prompt: model.features?.systemPrompt ? conversation.prompt : '',
-      ...(model.features?.temperature && {
+      model:
+        ModelsUtil.getOpenAIEntity(conversation.model.id) ??
+        ({ id: conversation.model.id } as DialAIEntityModel),
+      prompt: conversation.prompt,
+      ...(conversation.temperature && {
         temperature: conversation.temperature,
       }),
     };
