@@ -1175,11 +1175,14 @@ dialAdminTest(
     sendMessageInputAttachmentsAssertions,
     adminDataInjector,
     conversationData,
+    setIssueIds,
   }) => {
+    setIssueIds('6483');
     setTestIds('EPMRTC-6743');
     const modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment(
       true,
       ['*/*'],
+      null,
     );
     const attachmentModel = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,

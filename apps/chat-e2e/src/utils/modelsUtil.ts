@@ -119,17 +119,22 @@ export class ModelsUtil {
   public static getLatestModelsWithAttachment(
     excludeSlowModels = true,
     attachmentTypes?: string[],
+    maxInputAttachments?: number | null,
   ): DialAIEntityModel[] {
     return ModelsUtil.getLatestModels(excludeSlowModels).filter((model) => {
-      // Early return if model doesn't support attachments
       if (!model.inputAttachmentTypes?.length) {
         return false;
       }
-      // If no specific types requested, any attachment support is sufficient
+      if (maxInputAttachments !== undefined) {
+        if (maxInputAttachments === null) {
+          if (model.maxInputAttachments !== undefined) return false;
+        } else {
+          if (model.maxInputAttachments !== maxInputAttachments) return false;
+        }
+      }
       if (!attachmentTypes?.length) {
         return true;
       }
-      // Check if model supports any of the requested attachment types
       return model.inputAttachmentTypes.some((supportedType) =>
         attachmentTypes.includes(supportedType),
       );
