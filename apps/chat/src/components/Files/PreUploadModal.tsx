@@ -297,15 +297,15 @@ export const PreUploadDialog = ({
   }, [folderPath]);
 
   const visiblePath = useMemo(() => {
-    const isReview = bucket === reviewBucket;
+    const isReview = !!reviewBucket && bucket === reviewBucket;
     let root = SHARED_WITH_ME_SECTION_NAME;
 
-    if (bucket === reviewBucket) root = REVIEW_FILES_SECTION;
-    else if (!bucket || isMyBucket(bucket)) root = t(ChatI18nKeys.MyFiles);
+    if (!bucket || isMyBucket(bucket)) root = t(ChatI18nKeys.MyFiles);
+    else if (isReview) root = REVIEW_FILES_SECTION;
 
     return constructPath(
       root,
-      (folderPath ?? isReview) ? undefined : rootFolderName,
+      folderPath ?? (isReview ? undefined : rootFolderName),
     );
   }, [bucket, reviewBucket, t, folderPath, rootFolderName]);
 
