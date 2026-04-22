@@ -981,7 +981,6 @@ dialSharedWithMeTest(
       },
     );
 
-
     await dialSharedWithMeTest.step('User 1 deletes a file', async () => {
       await fileApiHelper.deleteFromAllFiles(user1ImageUrlInRequest2);
     });
