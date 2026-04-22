@@ -1306,7 +1306,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[File Manager]: Informational hint appears when adding a dot at the beginning of file name; disappears when removing.\n' +
     '[File Manager]: Informational hint appears when adding a dot at the beginning of folder name; disappears when removing.\n' +
     '[File Manager]: Rename: File icon is not changed while renaming.\n' +

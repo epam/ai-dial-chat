@@ -520,6 +520,7 @@ export const API = {
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
+  moveFilesHost: '/api/files/move',
   copyFilesHost: '/api/files/copy',
   importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
