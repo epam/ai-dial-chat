@@ -96,6 +96,18 @@ const FilterSection = ({
   if (!filterValues.length) {
     return null;
   }
+
+  const sectionNameWithCount = (
+    <div className="flex items-center gap-1">
+      {sectionName}
+      {selectedFilters[filterType].length > 0 && (
+        <div className="dial-caption-text flex size-[14px] items-center justify-center rounded bg-accent-primary font-semibold text-layer-3">
+          {selectedFilters[filterType].length}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="px-5 py-2.5" data-qa="marketplace-filter">
       <DialButton
@@ -103,7 +115,7 @@ const FilterSection = ({
         className="flex h-fit w-full justify-between px-0"
         data-qa="filter-property"
         aria-expanded={panelCollapseState[filterType]}
-        label={sectionName}
+        label={sectionNameWithCount}
         iconAfter={
           <IconChevronUp
             className={classNames(
