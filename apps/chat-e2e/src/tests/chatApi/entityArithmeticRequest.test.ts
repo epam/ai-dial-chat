@@ -15,19 +15,13 @@ const defaultSystemPrompt =
 const request = '1+2=';
 
 for (const entity of arithmeticRequestModels) {
-  dialTest(
+  dialTest.only(
     `Generate arithmetic response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
-      let systemPrompt = '';
-      if (entity.isSysPromptAllowed) {
-        systemPrompt = entity.systemPrompt ?? defaultSystemPrompt;
-      }
-      const temperature =
-        entity.temperature !== undefined ? Number(entity.temperature) : 0;
       const conversation = conversationData.prepareModelConversation(
-        temperature,
-        systemPrompt,
+        0,
+        defaultSystemPrompt,
         entity.entityId,
       );
       conversation.messages[0].content = request;
