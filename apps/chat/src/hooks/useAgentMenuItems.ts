@@ -84,6 +84,9 @@ export const useAgentMenuItems = ({
   const schemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
+  );
 
   const {
     handleCopy,
@@ -126,7 +129,9 @@ export const useAgentMenuItems = ({
         name: t(MarketplaceI18nKeys.Connect),
         dataQa: 'toolset-connect',
         display:
-          disabledActions?.connect !== true && doesAgentSupportMcp(entity),
+          disabledActions?.connect !== true &&
+          doesAgentSupportMcp(entity) &&
+          !!dialCoreExternalUrl,
         Icon: IconPlugConnected,
         onClick: handleConnect,
       },
@@ -224,6 +229,7 @@ export const useAgentMenuItems = ({
       },
     ],
     [
+      dialCoreExternalUrl,
       t,
       disabledActions?.connect,
       disabledActions.copyLink,

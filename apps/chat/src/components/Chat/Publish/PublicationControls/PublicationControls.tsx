@@ -3,6 +3,7 @@ import React, { useCallback, useEffect } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -11,6 +12,7 @@ import {
   isPromptId,
 } from '@/src/utils/app/id';
 
+import { ScreenState } from '@/src/types/common';
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -25,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   PublicationSelectors,
+  SettingsSelectors,
 } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -52,6 +55,8 @@ function PublicationControlsView({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const screenState = useScreenState();
 
   const isMessageStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -176,7 +181,11 @@ function PublicationControlsView({
         onClick={handleClearReviewSelection}
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
-        label={t(ChatI18nKeys.Back)}
+        label={
+          isOverlay || screenState === ScreenState.SM
+            ? t(ChatI18nKeys.Back)
+            : t(ChatI18nKeys.BackToPublicationRequest)
+        }
       />
       {children}
     </div>

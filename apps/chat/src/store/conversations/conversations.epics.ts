@@ -132,6 +132,7 @@ import { HeadersNames } from '@/src/constants/server';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import {
+  ConversationEntityModel,
   ConversationInfo,
   CustomVisualizerData,
   Feature,
@@ -1396,24 +1397,28 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         }
 
         const actions: Observable<AppAction>[] = [];
-        const messageModel: Message[EntityType.Model] = {
+        const conversationMessageModel: ConversationEntityModel = {
           id: payload.conversation.model.id,
         };
-        const messageSettings: Message['settings'] = {
-          prompt: payload.conversation.prompt,
-          temperature: payload.conversation.temperature,
-        };
+        const messageModel = modelsMap[conversationMessageModel.id];
+        const messageSettings: Partial<MessageSettings> = {};
+        if (doesModelAllowTemperature(messageModel)) {
+          messageSettings.temperature = payload.conversation.temperature;
+        }
+        if (doesModelAllowSystemPrompt(messageModel)) {
+          messageSettings.prompt = payload.conversation.prompt;
+        }
 
         const assistantMessage: Message = {
           content: '',
-          model: messageModel,
+          model: conversationMessageModel,
           settings: messageSettings,
           role: Role.Assistant,
         };
 
         const userMessage: Message = {
           ...payload.message,
-          model: messageModel,
+          model: conversationMessageModel,
           settings: messageSettings,
         };
 
@@ -1550,7 +1555,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       }
 
       const chatBody: ChatBody = {
-        model: modelsMap[payload.conversation.model.id],
+        model: lastModel,
         messages: payload.conversation.messages
           .filter(
             (message, index) =>

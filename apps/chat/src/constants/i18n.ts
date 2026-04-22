@@ -515,6 +515,7 @@ export enum ChatI18nKeys {
   ON = 'ON',
   OFF = 'OFF',
   Detailed = 'Detailed',
+  BackToPublicationRequest = 'Back to publication request',
   Redeploying = 'Redeploying...',
   Undeploying = 'Undeploying...',
   Reference = 'Reference...',
