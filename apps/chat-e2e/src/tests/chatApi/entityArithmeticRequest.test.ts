@@ -1,6 +1,7 @@
 import { skipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ArithmeticRequestEntity } from '@/src/testData';
+import { ModelsUtil } from '@/src/utils';
 
 //TODO: add to env var when model is available for all configured endpoints
 // { entityId: ModelIds.ANTHROPIC_CLAUDE_V3_OPUS, isSysPromptAllowed: true },
@@ -19,18 +20,21 @@ for (const entity of arithmeticRequestModels) {
     `Generate arithmetic response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
-      let systemPrompt = '';
-      if (entity.isSysPromptAllowed) {
-        systemPrompt = entity.systemPrompt ?? defaultSystemPrompt;
-      }
+      const model = ModelsUtil.getOpenAIEntity(entity.entityId)!;
+
       const temperature =
-        entity.temperature !== undefined ? Number(entity.temperature) : 0;
-      const conversation = conversationData.prepareModelConversation(
-        temperature,
-        systemPrompt,
+        entity.temperature !== undefined
+          ? Number(entity.temperature)
+          : model.features?.temperature
+            ? 0
+            : undefined;
+      const prompt = model.features?.systemPrompt ? defaultSystemPrompt : '';
+      const conversation = conversationData.prepareDefaultConversation(
         entity.entityId,
       );
       conversation.messages[0].content = request;
+      conversation.temperature = temperature;
+      conversation.prompt = prompt;
       const response = await chatApiHelper.postRequest(conversation);
       await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(

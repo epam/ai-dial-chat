@@ -2,6 +2,7 @@ import {
   EMPTY,
   catchError,
   concat,
+  exhaustMap,
   filter,
   forkJoin,
   map,
@@ -51,6 +52,18 @@ const mapChatEventFromApi = (event: ChatEvent): ChatEvent => ({
   },
 });
 
+const initEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ChatEventsActions.init.type),
+    filter(() => !ChatEventsSelectors.selectIsInitialized(state$.value)),
+    switchMap(() =>
+      concat(
+        of(ChatEventsActions.subscribe()),
+        of(ChatEventsActions.initFinish()),
+      ),
+    ),
+  );
+
 const subscribeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatEventsActions.subscribe.type),
@@ -62,7 +75,7 @@ const subscribeEpic: AppEpic = (action$, state$) =>
           Feature.LiveChatInteraction,
         ),
     ),
-    switchMap(({ payload }) => {
+    exhaustMap(({ payload }) => {
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const decoder = new TextDecoder();
       let retryAttempt = payload?.retryAttempt ?? 0;
@@ -288,6 +301,7 @@ const declineAllEventsFailureEpic: AppEpic = (action$) =>
   );
 
 export const ChatEventsEpics = combineEpics(
+  initEpic,
   subscribeEpic,
   reconnectEpic,
   unsubscribeEpic,

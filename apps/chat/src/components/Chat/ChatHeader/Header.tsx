@@ -281,6 +281,7 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      responseFormat={conversation.responseFormat}
                       hasSettings={!!doesModelHaveSettings(model)}
                       systemPrompt={
                         model?.type === EntityType.Model &&

@@ -30,7 +30,9 @@ export class ChatApiHelper extends BaseApiHelper {
         ModelsUtil.getOpenAIEntity(conversation.model.id) ??
         ({ id: conversation.model.id } as DialAIEntityModel),
       prompt: conversation.prompt,
-      temperature: conversation.temperature,
+      ...(conversation.temperature && {
+        temperature: conversation.temperature,
+      }),
     };
   }
 
