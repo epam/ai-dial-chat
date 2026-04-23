@@ -9,4 +9,5 @@ export interface CodeEditorState {
   }[];
   fileContentLoadingStatus: UploadStatus;
   selectedFileId: string | undefined;
+  sourcesFolderId: string | undefined;
 }

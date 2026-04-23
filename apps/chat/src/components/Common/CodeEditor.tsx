@@ -399,10 +399,10 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   }, [sourcesFolderId]);
 
   useEffect(() => {
-    if (sourcesFolderId && rootFiles.length) {
+    if (sourcesFolderId) {
       dispatch(CodeEditorActions.initCodeEditor({ sourcesFolderId }));
     }
-  }, [dispatch, rootFiles.length, sourcesFolderId]);
+  }, [dispatch, sourcesFolderId]);
 
   const handleUploadFile = useCallback(
     (relativePath: string) => {
@@ -582,7 +582,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
               icon={<MoveLeftIcon size={DEFAULT_ICON_SIZES.SMALL} />}
             />
           </div>
-          <div className="grow overflow-y-auto p-3">
+          <div className="flex grow flex-col gap-0.5 overflow-y-auto p-3">
             {rootFolders.map((folder) => {
               return (
                 <Folder
