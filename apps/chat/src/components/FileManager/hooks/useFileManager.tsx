@@ -120,6 +120,22 @@ const dateOptions = {
   day: '2-digit' as const,
 };
 
+const getInitialTab = (availableTabs?: Set<string>) => {
+  if (!availableTabs?.size) return DialFileManagerTabs.MyFiles;
+
+  const tabPriority = [
+    DialFileManagerTabs.MyFiles,
+    DialFileManagerTabs.Organization,
+    DialFileManagerTabs.Shared,
+    DialFileManagerTabs.Review,
+  ] as const;
+
+  return (
+    tabPriority.find((tab) => availableTabs.has(tab)) ??
+    DialFileManagerTabs.MyFiles
+  );
+};
+
 const defaultAvailableTabs = new Set([
   DialFileManagerTabs.MyFiles,
   DialFileManagerTabs.Shared,
@@ -247,12 +263,16 @@ export const useFileManager = ({
     boolean | undefined
   >(false);
 
-  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
-    my_files: MY_FILES_SECTION,
-    shared: SHARED_WITH_ME_FILES_SECTION,
-    organization: ORGANIZATION_FILES_SECTION,
-    review: REVIEW_FILES_SECTION,
-  });
+  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
+    {
+      my_files: MY_FILES_SECTION,
+      shared: SHARED_WITH_ME_FILES_SECTION,
+      organization: ORGANIZATION_FILES_SECTION,
+      review: REVIEW_FILES_SECTION,
+    },
+    getInitialTab(availableTabs),
+  );
+
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
   const searchSelector = useCallback(
