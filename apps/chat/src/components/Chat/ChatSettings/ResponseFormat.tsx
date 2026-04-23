@@ -53,10 +53,8 @@ export const ResponseFormat: FC<ResponseFormatProps> = ({
 
   return (
     <div className="flex flex-col" data-qa="response-format-container">
-      <div className="flex items-center gap-2 mb-4">
-        <label className="text-left">
-          {t(ChatI18nKeys.ResponseFormat)}
-        </label>
+      <div className="mb-4 flex items-center gap-2">
+        <label className="text-left">{t(ChatI18nKeys.ResponseFormat)}</label>
         <Tooltip
           triggerClassName="text-secondary"
           tooltip={t(ChatI18nKeys.AppliesToNewAndExistingMessages)}
