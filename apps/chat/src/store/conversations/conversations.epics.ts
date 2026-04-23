@@ -1595,6 +1595,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
+      const locale = UISelectors.selectLocale(state$.value);
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
@@ -1605,6 +1606,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
+            'x-language': locale,
             ...(channelId &&
               isApplication && {
                 [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
