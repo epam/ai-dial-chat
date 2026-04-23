@@ -14,6 +14,8 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.ui;
 
+const selectLocale = (state: RootState) => rootSelector(state).locale;
+
 const selectThemeState = (state: RootState) => rootSelector(state).theme;
 
 const selectEnterType = (state: RootState) => rootSelector(state).enterType;
@@ -147,6 +149,7 @@ const selectAllowEnterToSend = createSelector([selectEnterType], (enterType) =>
 );
 
 export const UISelectors = {
+  selectLocale,
   selectThemeState,
   selectEnterType,
   selectShowChatbar,
