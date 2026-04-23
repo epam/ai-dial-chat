@@ -50,7 +50,6 @@ import {
 import {
   DEFAULT_APPLICATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 import { CommonI18nKeys } from '@/src/constants/i18n';
@@ -820,7 +819,7 @@ export const getApplicationPayload = ({
       const temperatureToUse =
         model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
           ? data.temperature
-          : FALLBACK_TEMPERATURE;
+          : undefined;
       const starters = data.starters
         .filter((starter) => starter.text.trim() && starter.title.trim())
         .map(({ title, text }) => ({ title, text }));
@@ -838,9 +837,9 @@ export const getApplicationPayload = ({
           orchestrator: {
             deployment: {
               name: model?.id ?? data.model,
-              parameters: {
-                temperature: temperatureToUse,
-              },
+              ...(temperatureToUse && {
+                parameters: { temperature: temperatureToUse },
+              }),
             },
             system_prompt: {
               type: 'custom',
