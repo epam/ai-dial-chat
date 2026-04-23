@@ -1880,7 +1880,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[File Manager]: Rename folder from grid\n' +
     '[File Manager]: Rename folder from folder tree when selected the same folder\n' +
     '[File Manager]: Rename folder from folder tree when selected another folder',
