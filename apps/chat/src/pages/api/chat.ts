@@ -107,12 +107,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             ...messagesToSend,
           ];
 
+    const rawLanguageHeader = req.headers['x-language'];
+    const languageHeaderValue = Array.isArray(rawLanguageHeader)
+      ? rawLanguageHeader[0]
+      : rawLanguageHeader;
+    const language = languageHeaderValue?.trim() || undefined;
+
     const stream = await OpenAIStream({
       model,
       messages: messagesToSend,
       userJWT: token?.token ?? '',
       chatReference: reference ?? id,
       jobTitle: token?.jobTitle,
+      language: language,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
