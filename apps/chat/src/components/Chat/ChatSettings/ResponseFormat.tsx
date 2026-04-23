@@ -10,8 +10,7 @@ import { Translation } from '@/src/types/translation';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
-
-import { Tooltip } from '../../Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 import {
