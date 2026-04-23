@@ -650,6 +650,7 @@ export enum ChatI18nKeys {
   AgentIsNotAvailable = 'Agent is not available',
   ApplyChanges = 'Apply changes',
   TypeTextOrPrompt = 'Type a text or «/» to use a prompt...',
+  AppliesToNewAndExistingMessages = 'Applies to new and existing messages',
   HigherValuesTemperature = 'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
   Precise = 'Precise',
   Neutral = 'Neutral',
