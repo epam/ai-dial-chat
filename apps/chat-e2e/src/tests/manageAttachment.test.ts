@@ -1469,3 +1469,500 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  '[File Manager]: each opening of Replace/Duplicate form default value is selected for one file\n' +
+    '[File Manager]: upload one file with the same name as exist. Select Replace\n' +
+    '[File Manager]: upload one file with the same name as exist. Select Duplicate',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+    fileConflictConfirmationPopup,
+    fileConflictConfirmationPopupAssertion,
+    downloadAssertion,
+    dialHomePage,
+  }) => {
+    setTestIds('EPMRTC-8532', 'EPMRTC-8291', 'EPMRTC-8295');
+
+    const duplicatedFilename = ExpectedConstants.duplicatedFileName(
+      Attachment.sunImageName,
+    );
+
+    const radioDefaults: Array<['replace' | 'duplicate', CheckboxState]> = [
+      ['replace', CheckboxState.checked],
+      ['duplicate', CheckboxState.unchecked],
+    ];
+
+    await dialTest.step(
+      'Upload cloud.jpg content as sun.jpg name via API (different file to verify replace later)',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          Attachment.sunImageName,
+          Attachment.cloudImageName,
+        );
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8532: Upload conflict — verify header and Replace is default, Cancel',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.getCancelButton().click();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8532 + EPMRTC-8291: Upload conflict — verify Replace is still default, confirm Replace and verify content',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: API.fileHost(),
+        });
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFilename,
+          'hidden',
+        );
+        await fileManagerGrid
+          .gridRowByNameCell(Attachment.sunImageName)
+          .hover();
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await dotsMenu.click();
+        const downloadedData = await fileManagerPage.downloadData(() =>
+          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+            isHttpMethodTriggered: false,
+          }),
+        );
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8532 + EPMRTC-8295: Upload conflict — verify Replace is still default, select Duplicate and verify duplicate content',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.selectSingleFileAction('duplicate');
+        await fileConflictConfirmationPopup.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: API.fileHost(),
+        });
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFilename,
+          'visible',
+        );
+        await fileManagerGrid.gridRowByNameCell(duplicatedFilename).hover();
+        const dotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(duplicatedFilename);
+        await dotsMenu.click();
+        const downloadedData = await fileManagerPage.downloadData(() =>
+          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+            isHttpMethodTriggered: false,
+          }),
+        );
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.sunImageName,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: upload group of files where one has with same name as exist. Select Cancel\n' +
+    '[File Manager]: each opening of Replace/Duplicate form default value is selected for group of files\n' +
+    '[File Manager]: upload group of files where one has with same name as exist. Select Replace',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+    fileConflictConfirmationPopup,
+    fileConflictConfirmationPopupAssertion,
+    downloadAssertion,
+    dialHomePage,
+  }) => {
+    setTestIds('EPMRTC-8465', 'EPMRTC-8531', 'EPMRTC-8292');
+
+    const radioDefaults: Array<['replace' | 'duplicate', CheckboxState]> = [
+      ['replace', CheckboxState.checked],
+      ['duplicate', CheckboxState.unchecked],
+    ];
+
+    await dialTest.step(
+      'Upload cloud.jpg content as sun.jpg name via API (different file to verify replace later)',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          Attachment.sunImageName,
+          Attachment.cloudImageName,
+        );
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8465: Upload group with one conflict, click Cancel — conflicting file stays, others are uploaded',
+      async () => {
+        await dialHomePage.uploadData(
+          {
+            path: [
+              Attachment.sunImageName,
+              Attachment.cloudImageName,
+              Attachment.flowerImageName,
+            ],
+            dataType: 'upload',
+          },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.getCancelButton().click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
+          'visible',
+        ); //TODO deselect rows in grid
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8531, EPMRTC-8292: Upload group with multiple conflicts — verify Replace all is default, confirm and verify files are replaced',
+      async () => {
+        await dialHomePage.uploadData(
+          {
+            path: [Attachment.sunImageName, Attachment.cloudImageName],
+            dataType: 'upload',
+          },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceGroupAttachmentConfirmationTitle,
+        ); //TODO extract constants to expectedConstants
+        await fileConflictConfirmationPopupAssertion.assertMultipleFilesRadioChecked(
+          'replaceAll',
+          CheckboxState.checked,
+        );
+        await fileConflictConfirmationPopupAssertion.assertMultipleFilesRadioChecked(
+          'duplicateAll',
+          CheckboxState.unchecked,
+        );
+        await fileConflictConfirmationPopup.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: API.fileHost(),
+        });
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
+          'visible',
+        ); //TODO deselect rows in grid
+        await fileManagerGrid
+          .gridRowByNameCell(Attachment.sunImageName)
+          .hover();
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        ); //Two files were selected, so we need to verify both are replaced - we need to upload 2 files with replaced names
+        await dotsMenu.click();
+        const downloadedData = await fileManagerPage.downloadData(() =>
+          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+            isHttpMethodTriggered: false,
+          }),
+        );
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.sunImageName,
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  '[File Manager][My Files]: Validation happen when add dot to the end of folder name\n' +
+    '[File Manager][My Files]: Validation happen when add dot to the end of file name for file without extension',
+  async ({
+    page,
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    tooltipPortalAssertion,
+  }) => {
+    setTestIds('EPMRTC-8184', 'EPMRTC-8183');
+
+    const folderName = GeneratorUtil.randomString(7);
+
+    await dialTest.step(
+      'Upload file without extension and create folder via API',
+      async () => {
+        await fileApiHelper.putStringAsFile(
+          Attachment.fileWithoutExtension,
+          'content',
+        );
+        await fileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: folderName,
+        });
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8184: Rename folder, add dot at the end, verify error icon appears and tooltip shows correct message',
+      async () => {
+        const dotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(folderName);
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(folderName + '.');
+        await fileManagerGridAssertion.assertInputError();
+        await fileManagerGrid.gridNameCellInput.alertIcon.hoverOver();
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.folderNameWithDotErrorMessage, //TODO check on error hover
+        );
+        await page.keyboard.press('Escape');
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8183: Rename file without extension, add dot at the end, verify error icon appears and tooltip shows correct message',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.fileWithoutExtension,
+        );
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid
+          .getRenameInput()
+          .fillInInput(Attachment.fileWithoutExtension + '.');
+        await fileManagerGridAssertion.assertInputError();
+        await fileManagerGrid.gridNameCellInput.alertIcon.hoverOver();
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.fileNameWithDotErrorMessage,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: Rename folder from grid\n' +
+    '[File Manager]: Rename folder from folder tree when selected the same folder\n' +
+    '[File Manager]: Rename folder from folder tree when selected another folder',
+  async ({
+    page,
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    fileManagerFoldersTree,
+    fileManagerFoldersTreeAssertion,
+  }) => {
+    setTestIds('EPMRTC-8175', 'EPMRTC-8173', 'EPMRTC-8174');
+
+    const folderA = GeneratorUtil.randomString(7);
+    const folderARenamedName = GeneratorUtil.randomString(7);
+    const folderB = GeneratorUtil.randomString(7);
+    const folderBRenamedName = GeneratorUtil.randomString(7);
+    const folderC = GeneratorUtil.randomString(7);
+
+    await dialTest.step('Create three folders via API', async () => {
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderA,
+      });
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderB,
+      });
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderC,
+      });
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8175: Rename folder from grid context menu and verify updated name in grid and folder tree',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(folderA);
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(folderARenamedName);
+        await fileManagerGrid.saveRename();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          folderARenamedName,
+          'visible',
+        );
+        await fileManagerFoldersTreeAssertion.assertFolderState(
+          'visible',
+          folderARenamedName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8173: Select folderB in tree, rename it from tree context menu, verify updated name in grid and tree, folder stays selected',
+      async () => {
+        const navigateResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().endsWith(API.folderFilesListingHost(folderB)) &&
+            resp.ok(),
+        );
+        await fileManagerFoldersTree.folderNameByPath(folderB).click();
+        await navigateResponse;
+        const folderBItem = fileManagerFoldersTree.folderByPath(folderB);
+        await folderBItem.hover();
+        await folderBItem.locator(IconSelectors.dotsMenuIcon).click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(folderBRenamedName);
+        await fileManagerGrid.saveRename();
+        await fileManagerFoldersTreeAssertion.assertFolderState(
+          'visible',
+          folderBRenamedName,
+        );
+        await fileManagerFoldersTreeAssertion.assertFolderSelectedState(
+          true,
+          folderBRenamedName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8174: Select folderC in tree, rename folderARenamedName from tree context menu, verify folderA renamed and folderC stays selected',
+      async () => {
+        const navigateResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().endsWith(API.folderFilesListingHost(folderC)) &&
+            resp.ok(),
+        );
+        await fileManagerFoldersTree.folderNameByPath(folderC).click();
+        await navigateResponse;
+        const folderAFinalName = GeneratorUtil.randomString(7);
+        const folderAItem =
+          fileManagerFoldersTree.folderByPath(folderARenamedName);
+        await folderAItem.hover();
+        await folderAItem.locator(IconSelectors.dotsMenuIcon).click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(folderAFinalName);
+        await fileManagerGrid.saveRename();
+        await fileManagerFoldersTreeAssertion.assertFolderState(
+          'visible',
+          folderAFinalName,
+        );
+        await fileManagerFoldersTreeAssertion.assertFolderSelectedState(
+          true,
+          folderC,
+        );
+      },
+    );
+  },
+);

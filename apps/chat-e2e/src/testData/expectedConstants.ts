@@ -161,6 +161,8 @@ export const ExpectedConstants = {
   modelNotFountErrorMessage:
     'Agent is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
+  fileNameWithDotErrorMessage: 'Using a dot at the end of a File name is not permitted.',
+  folderNameWithDotErrorMessage: 'Using a dot at the end of a Folder name is not permitted.',
   notAllowedDuplicatedFolderNameErrorMessage:
     'Not allowed to have folders with same names',
   duplicatedFolderNameErrorMessage: (name: string) =>
@@ -370,8 +372,14 @@ export const ExpectedConstants = {
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
+  replaceGroupAttachmentConfirmationTitle: 'Replace Or Duplicate Items',
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
+  duplicatedFileName: (name: string, index = 1) => {
+    const dotIdx = name.lastIndexOf('.');
+    if (dotIdx <= 0) return `${name} (${index})`;
+    return `${name.substring(0, dotIdx)} (${index})${name.substring(dotIdx)}`;
+  },
   failedToMoveFileMessage: 'Failed to move files. Please try again later.',
   failedToDeleteFilesMessage: 'Failed to delete files. Please try again later.',
   uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
