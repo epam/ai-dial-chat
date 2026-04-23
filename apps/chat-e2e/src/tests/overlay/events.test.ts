@@ -189,11 +189,11 @@ dialOverlayTest(
           ModelsUtil.getDefaultAgent()!.name,
         );
         const settings = await localStorageManager.getSettings(
-          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          process.env.SANDBOX_OVERLAY_HOST,
         );
         overlayBaseAssertion.assertValue(settings.theme, ThemeId.light);
         const recentModels = await localStorageManager.getRecentModelsIds(
-          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          process.env.SANDBOX_OVERLAY_HOST,
         );
         overlayBaseAssertion.assertValue(recentModels[0], configuredModelId);
       },
@@ -211,7 +211,7 @@ dialOverlayTest(
         });
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         overlayBaseAssertion.assertValue(
           selectedConversationIds[0],
@@ -472,7 +472,7 @@ dialOverlayTest(
         //check newly created 'New conversation 1' is displayed
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         actualConversationsModels.conversations.find(
           (c) => c.id === selectedConversationIds[0],
@@ -512,7 +512,7 @@ dialOverlayTest(
         );
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         overlayBaseAssertion.assertValue(
           selectedConversationIds[0],
@@ -859,7 +859,7 @@ dialOverlayTest(
 
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         overlayBaseAssertion.assertValue(
           selectedConversationIds[0],
@@ -1543,7 +1543,7 @@ dialOverlayTest(
         await overlayHomePage.waitForPageLoaded();
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         await overlayActions.conversationIdField.fillInInput(
           selectedConversationIds[0],

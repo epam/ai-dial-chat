@@ -105,7 +105,7 @@ dialOverlayTest(
         );
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         overlayBaseAssertion.assertValue(
           selectedConversationIds[0],
@@ -160,7 +160,7 @@ dialOverlayTest(
         );
         const selectedConversationIds =
           await localStorageManager.getSelectedConversationIds(
-            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+            process.env.SANDBOX_OVERLAY_HOST,
           );
         overlayBaseAssertion.assertValue(
           selectedConversationIds[0],

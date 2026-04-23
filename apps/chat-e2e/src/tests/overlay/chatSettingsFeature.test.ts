@@ -322,7 +322,7 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         const actualAgents = await localStorageManager.getRecentModelsIds(
-          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          process.env.SANDBOX_OVERLAY_HOST,
         );
         overlayBaseAssertion.assertArrayIncludesAll(
           actualAgents,

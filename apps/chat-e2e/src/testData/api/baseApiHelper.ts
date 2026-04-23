@@ -17,7 +17,7 @@ export class BaseApiHelper {
   public getHost(endpoint: string) {
     const baseUrl = config.use!.baseURL;
     if (baseUrl === overlayHost) {
-      endpoint = process.env.NEXT_PUBLIC_OVERLAY_HOST + endpoint;
+      endpoint = process.env.SANDBOX_OVERLAY_HOST + endpoint;
     }
     return endpoint;
   }

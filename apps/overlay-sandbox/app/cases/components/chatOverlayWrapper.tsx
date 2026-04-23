@@ -13,7 +13,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export const commonOverlayProps = {
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST ?? '',
+  domain: process.env.SANDBOX_OVERLAY_HOST ?? '',
   requestTimeout: 20000,
   loaderStyles: {
     background: 'white',

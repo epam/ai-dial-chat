@@ -79,7 +79,7 @@ runs:
       shell: bash
     - name: Run tests
       run: |
-        echo "URL to run overlay e2e tests against:         ${NEXT_PUBLIC_OVERLAY_HOST}"
+        echo "URL to run overlay e2e tests against:         ${SANDBOX_OVERLAY_HOST}"
         echo "Config for arithmetic e2e api tests:          ${ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS}"
         echo "Config for attachment request e2e api tests:  ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
         echo "Config for attachment response e2e api tests: ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
@@ -91,8 +91,8 @@ runs:
         E2E_ADMIN: ${{ env.E2E_ADMIN }}
         E2E_OVERLAY_USERNAME: ${{ env.E2E_OVERLAY_USERNAME }}
         E2E_PASSWORD: ${{ env.E2E_PASSWORD }}
-        NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.environment-url }}
-        NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ env.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
+        SANDBOX_OVERLAY_HOST: ${{ inputs.environment-url }}
+        SANDBOX_OVERLAY_USER_BUCKET: ${{ env.SANDBOX_OVERLAY_USER_BUCKET }}
     - name: Generate Allure Report
       if: ${{ !cancelled() }}
       run: |

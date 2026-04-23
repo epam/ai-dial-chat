@@ -127,7 +127,7 @@ export class BasePage {
       }
       const host = response.url();
       const baseURL = config.use?.baseURL;
-      const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
+      const overlayDomain = process.env.SANDBOX_OVERLAY_HOST;
       const apiHost = host
         .replaceAll(baseURL!, '')
         .replaceAll(overlayDomain!, '');
@@ -559,7 +559,7 @@ export class BasePage {
       API.importFilePath(BucketUtil.getBucket(), modelId);
     await this.page.route(
       options?.isOverlay
-        ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
+        ? `${process.env.SANDBOX_OVERLAY_HOST}${API.chatHost}`
         : API.chatHost,
       async (route) => {
         const responseId = `chatcmpl-${crypto.randomUUID()}`;
@@ -606,7 +606,7 @@ export class BasePage {
     },
   ) {
     const urlToIntercept = options?.isOverlay
-      ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
+      ? `${process.env.SANDBOX_OVERLAY_HOST}${API.chatHost}`
       : API.chatHost;
 
     await this.page.route(urlToIntercept, async (route) => {

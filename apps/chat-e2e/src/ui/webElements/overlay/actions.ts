@@ -67,7 +67,7 @@ export class Actions extends BaseElement {
 
   public async clickSendMessage() {
     const requestPromise = this.page.waitForRequest(
-      process.env.NEXT_PUBLIC_OVERLAY_HOST + API.chatHost,
+      process.env.SANDBOX_OVERLAY_HOST + API.chatHost,
     );
     await this.sendMessageButton.click();
     const request = await requestPromise;

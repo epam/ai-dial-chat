@@ -42,7 +42,7 @@ config.webServer = [
     timeout: 180000,
     reuseExistingServer: true,
     env: {
-      NEXT_PUBLIC_OVERLAY_HOST: 'http://localhost:3000',
+      SANDBOX_OVERLAY_HOST: 'http://localhost:3000',
     },
   },
 ];
