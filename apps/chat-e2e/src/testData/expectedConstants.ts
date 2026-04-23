@@ -161,8 +161,10 @@ export const ExpectedConstants = {
   modelNotFountErrorMessage:
     'Agent is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
-  fileNameWithDotErrorMessage: 'Using a dot at the end of a File name is not permitted.',
-  folderNameWithDotErrorMessage: 'Using a dot at the end of a Folder name is not permitted.',
+  fileNameWithDotErrorMessage:
+    'Using a dot at the end of a File name is not permitted.',
+  folderNameWithDotErrorMessage:
+    'Using a dot at the end of a Folder name is not permitted.',
   notAllowedDuplicatedFolderNameErrorMessage:
     'Not allowed to have folders with same names',
   duplicatedFolderNameErrorMessage: (name: string) =>

@@ -1777,7 +1777,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[File Manager][My Files]: Validation happen when add dot to the end of folder name\n' +
     '[File Manager][My Files]: Validation happen when add dot to the end of file name for file without extension',
   async ({
@@ -1850,7 +1850,7 @@ dialTest.only(
   },
 );
 
-dialTest(
+dialTest.only(
   '[File Manager]: Rename folder from grid\n' +
     '[File Manager]: Rename folder from folder tree when selected the same folder\n' +
     '[File Manager]: Rename folder from folder tree when selected another folder',
@@ -1874,13 +1874,13 @@ dialTest(
     const folderC = GeneratorUtil.randomString(7);
 
     await dialTest.step('Create three folders via API', async () => {
-      await fileApiHelper.putFile(Attachment.sunImageName, {
+      await fileApiHelper.putStringAsFile('.dial_folder', '', {
         parentPath: folderA,
       });
-      await fileApiHelper.putFile(Attachment.sunImageName, {
+      await fileApiHelper.putStringAsFile('.dial_folder', '', {
         parentPath: folderB,
       });
-      await fileApiHelper.putFile(Attachment.sunImageName, {
+      await fileApiHelper.putStringAsFile('.dial_folder', '', {
         parentPath: folderC,
       });
     });
@@ -1912,18 +1912,18 @@ dialTest(
     await dialTest.step(
       'EPMRTC-8173: Select folderB in tree, rename it from tree context menu, verify updated name in grid and tree, folder stays selected',
       async () => {
-        const navigateResponse = page.waitForResponse(
-          (resp) =>
-            resp.url().endsWith(API.folderFilesListingHost(folderB)) &&
-            resp.ok(),
-        );
+        // const navigateResponse = page.waitForResponse(
+        //   (resp) =>
+        //     resp.url().endsWith(API.folderFilesListingHost(folderB)) &&
+        //     resp.ok(),
+        // );
         await fileManagerFoldersTree.folderNameByPath(folderB).click();
-        await navigateResponse;
+        // await navigateResponse;
         const folderBItem = fileManagerFoldersTree.folderByPath(folderB);
-        await folderBItem.hover();
+        // await folderBItem.hover();
         await folderBItem.locator(IconSelectors.dotsMenuIcon).click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
-        await fileManagerGrid.getRenameInput().fillInInput(folderBRenamedName);
+        await fileManagerGrid.getRenameInput().fillInInput(folderBRenamedName); //TODO this is inside the fileManagerFoldersTree not the fileManagerGrid
         await fileManagerGrid.saveRename();
         await fileManagerFoldersTreeAssertion.assertFolderState(
           'visible',
