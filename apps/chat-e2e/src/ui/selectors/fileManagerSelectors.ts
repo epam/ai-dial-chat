@@ -1,3 +1,5 @@
+import { Attributes, Tags } from '@/src/ui/domData';
+
 export const FileManagerSelectors = {
   container: '[data-qa="file-manager"]',
   toolbarContainer: '[role="toolbar"]',
@@ -12,6 +14,11 @@ export const FileConflictResolutionSelectors = {
   replaceAll: 'replaceAll',
   duplicateAll: 'duplicateAll',
   decideForEach: 'decideForEach',
+  singleFileRadio: (value: string) =>
+    `${Tags.input}[type="radio"][${Attributes.name}="${FileConflictResolutionSelectors.singleFileRadioName}"][${Attributes.value}="${value}"]`,
+  multipleFilesRadio: (value: string) =>
+    `${Tags.input}[type="radio"][${Attributes.name}="${FileConflictResolutionSelectors.multipleFilesRadioName}"][${Attributes.value}="${value}"]`,
+  radioLabel: (value: string) => `${Tags.label}[for="${value}"]`,
 } as const;
 
 export const FileManagerSidebarSelectors = {

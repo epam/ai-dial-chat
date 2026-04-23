@@ -1,6 +1,5 @@
 import { ConfirmationPopup } from './confirmationPopup';
 
-import { Tags } from '@/src/ui/domData';
 import { FileConflictResolutionSelectors } from '@/src/ui/selectors';
 import { Locator, Page } from '@playwright/test';
 
@@ -15,7 +14,7 @@ export class FileConflictResolutionPopup extends ConfirmationPopup {
       | typeof FileConflictResolutionSelectors.duplicate,
   ): Locator {
     return this.rootLocator.locator(
-      `${Tags.input}[type="radio"][name="${FileConflictResolutionSelectors.singleFileRadioName}"][value="${value}"]`,
+      FileConflictResolutionSelectors.singleFileRadio(value),
     );
   }
 
@@ -26,7 +25,7 @@ export class FileConflictResolutionPopup extends ConfirmationPopup {
       | typeof FileConflictResolutionSelectors.decideForEach,
   ): Locator {
     return this.rootLocator.locator(
-      `${Tags.input}[type="radio"][name="${FileConflictResolutionSelectors.multipleFilesRadioName}"][value="${value}"]`,
+      FileConflictResolutionSelectors.multipleFilesRadio(value),
     );
   }
 
@@ -35,7 +34,9 @@ export class FileConflictResolutionPopup extends ConfirmationPopup {
       | typeof FileConflictResolutionSelectors.replace
       | typeof FileConflictResolutionSelectors.duplicate,
   ) {
-    await this.rootLocator.locator(`${Tags.label}[for="${value}"]`).click();
+    await this.rootLocator
+      .locator(FileConflictResolutionSelectors.radioLabel(value))
+      .click();
   }
 
   async selectMultipleFilesStrategy(
@@ -44,6 +45,8 @@ export class FileConflictResolutionPopup extends ConfirmationPopup {
       | typeof FileConflictResolutionSelectors.duplicateAll
       | typeof FileConflictResolutionSelectors.decideForEach,
   ) {
-    await this.rootLocator.locator(`${Tags.label}[for="${value}"]`).click();
+    await this.rootLocator
+      .locator(FileConflictResolutionSelectors.radioLabel(value))
+      .click();
   }
 }
