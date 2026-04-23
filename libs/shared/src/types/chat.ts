@@ -47,8 +47,8 @@ export type onLikeMessageHandler = (
 ) => void;
 
 export interface MessageSettings {
-  prompt?: string;
-  temperature?: number;
+  prompt: string;
+  temperature: number;
   /**
    * @deprecated but required by core validation
    */
