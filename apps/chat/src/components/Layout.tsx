@@ -88,6 +88,12 @@ export function Layout({
       dispatch(UIActions.setPreviousRoute(previousRoute));
     }
   }, [dispatch, previousRoute]);
+
+  useEffect(() => {
+    dispatch(
+      UIActions.setLocale(router.locale ?? router.defaultLocale ?? 'en'),
+    );
+  }, [dispatch, router.defaultLocale, router.locale]);
   useEffect(() => {
     setLoading(isApplyingModel);
   }, [isApplyingModel]);

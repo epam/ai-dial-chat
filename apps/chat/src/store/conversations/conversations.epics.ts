@@ -132,7 +132,6 @@ import { HeadersNames } from '@/src/constants/server';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import {
-  ConversationEntityModel,
   ConversationInfo,
   CustomVisualizerData,
   Feature,
@@ -1397,28 +1396,24 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         }
 
         const actions: Observable<AppAction>[] = [];
-        const conversationMessageModel: ConversationEntityModel = {
+        const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
         };
-        const messageModel = modelsMap[conversationMessageModel.id];
-        const messageSettings: Partial<MessageSettings> = {};
-        if (doesModelAllowTemperature(messageModel)) {
-          messageSettings.temperature = payload.conversation.temperature;
-        }
-        if (doesModelAllowSystemPrompt(messageModel)) {
-          messageSettings.prompt = payload.conversation.prompt;
-        }
+        const messageSettings: Message['settings'] = {
+          prompt: payload.conversation.prompt,
+          temperature: payload.conversation.temperature,
+        };
 
         const assistantMessage: Message = {
           content: '',
-          model: conversationMessageModel,
+          model: messageModel,
           settings: messageSettings,
           role: Role.Assistant,
         };
 
         const userMessage: Message = {
           ...payload.message,
-          model: conversationMessageModel,
+          model: messageModel,
           settings: messageSettings,
         };
 
@@ -1555,7 +1550,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       }
 
       const chatBody: ChatBody = {
-        model: lastModel,
+        model: modelsMap[payload.conversation.model.id],
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
@@ -1595,6 +1590,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
+      const locale = UISelectors.selectLocale(state$.value);
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
@@ -1605,6 +1601,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
+            'x-language': locale,
             ...(channelId &&
               isApplication && {
                 [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,
