@@ -97,6 +97,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     res.flushHeaders?.();
 
+    res.write(': init\n\n');
+
     reader = upstreamResponse.body.getReader();
 
     while (!clientClosed) {
