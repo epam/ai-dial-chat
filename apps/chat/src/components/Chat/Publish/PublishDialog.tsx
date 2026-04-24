@@ -306,7 +306,7 @@ const PublishDialogView = ({ publicationModel }: PublishDialogViewProps) => {
       state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="publish-dialog"
-      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1000px]"
+      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1200px] xl:w-[1200px]"
     >
       <PublishDialogContainer
         publicationModel={publicationModel}
