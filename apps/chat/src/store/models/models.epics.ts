@@ -393,6 +393,13 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         payload.references,
       );
 
+      const modelsToInstall = models
+        .filter((model: DialAIEntityModel) =>
+          modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
+        )
+        .map((model: DialAIEntityModel) => ({
+          id: model.reference,
+        }));
       const newInstalledModels = uniqBy<InstalledModel>(
         [
           ...installedModels,
@@ -406,6 +413,11 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         ],
         'id',
       );
+      console.log('payload.references >>>', payload.references);
+      console.log('installedModels >>>', installedModels);
+      console.log('newInstalledModels >>>', newInstalledModels);
+      console.log('modelsToInstall >>>', modelsToInstall);
+      console.log('modelGroupKeys >>>', modelGroupKeys);
 
       return ClientDataService.saveInstalledDeployments(
         newInstalledModels,
