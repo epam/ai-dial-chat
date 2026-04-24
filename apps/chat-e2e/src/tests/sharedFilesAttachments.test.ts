@@ -1069,7 +1069,7 @@ dialSharedWithMeTest(
     fileManagerPage,
     fileManagerGrid,
     fileManagerGridRowDropdownMenu,
-    fileManagerModalGridAssertion,
+    fileManagerGridAssertion,
     fileManagerDeleteItemConfirmationPopup,
     localStorageManager,
     additionalShareUserFileManagerPage,
@@ -1134,7 +1134,7 @@ dialSharedWithMeTest(
             [API.filesListingHost(), 'GET'],
           ]),
         });
-        await fileManagerModalGridAssertion.assertGridRowByNameState(
+        await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
           'hidden',
         );
