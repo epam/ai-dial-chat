@@ -413,11 +413,11 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         ],
         'id',
       );
-      console.log('payload.references >>>', payload.references);
-      console.log('installedModels >>>', installedModels);
-      console.log('newInstalledModels >>>', newInstalledModels);
-      console.log('modelsToInstall >>>', modelsToInstall);
-      console.log('modelGroupKeys >>>', modelGroupKeys);
+      console.info('payload.references >>>', payload.references);
+      console.info('installedModels >>>', installedModels);
+      console.info('newInstalledModels >>>', newInstalledModels);
+      console.info('modelsToInstall >>>', modelsToInstall);
+      console.info('modelGroupKeys >>>', modelGroupKeys);
 
       return ClientDataService.saveInstalledDeployments(
         newInstalledModels,
