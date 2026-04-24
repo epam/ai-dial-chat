@@ -79,6 +79,7 @@ export interface DialAIEntityFeatures {
   configuration: boolean;
   tools: boolean;
   assistantAttachmentsInRequest: boolean;
+  mcp: boolean;
 }
 
 export interface DialAIEntity {
