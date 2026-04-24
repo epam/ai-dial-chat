@@ -119,6 +119,7 @@ export class ModelsUtil {
   public static getLatestModelsWithAttachment(
     excludeSlowModels = true,
     attachmentTypes?: string[],
+    // null = require model.maxInputAttachments to be undefined (no attachment limit)
     maxInputAttachments?: number | null,
   ): DialAIEntityModel[] {
     return ModelsUtil.getLatestModels(excludeSlowModels).filter((model) => {

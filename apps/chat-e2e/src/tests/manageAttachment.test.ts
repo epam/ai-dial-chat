@@ -862,10 +862,12 @@ dialTest(
 
     const visibleFolder = 'Folder1';
     const hiddenFolder = '.Folder2';
-    const hiddenFileInVisibleFolder = '.Search1.txt';
-    const visibleFileInVisibleFolder = 'Search2.txt';
-    const hiddenFileInHiddenFolder = '.Search3.txt';
-    const visibleFileInHiddenFolder = 'Search4.txt';
+    const hiddenFileInVisibleFolder =
+      '.' + GeneratorUtil.filename('Search1', 'txt');
+    const visibleFileInVisibleFolder = GeneratorUtil.filename('Search2', 'txt');
+    const hiddenFileInHiddenFolder =
+      '.' + GeneratorUtil.filename('Search3', 'txt');
+    const visibleFileInHiddenFolder = GeneratorUtil.filename('Search4', 'txt');
     const searchTerm = 'Search';
 
     await dialTest.step('Upload test files via API', async () => {
@@ -1137,7 +1139,9 @@ dialTest(
 
     const folderName = GeneratorUtil.randomString(7);
     const duplicatedFolderName = `${folderName} (1)`;
-    const duplicatedFileName = Attachment.flowerImageName.replace('.', ' (1).');
+    const duplicatedFileName = ExpectedConstants.duplicatedFileName(
+      Attachment.flowerImageName,
+    );
 
     await dialTest.step('Upload test files via API', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName, {
@@ -1956,7 +1960,7 @@ dialTest(
       },
     );
 
-    //TODO step fails, need a ticket
+    // TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6483
     await dialTest.step.skip(
       'EPMRTC-8173: After rename it from tree context menu folder stays selected',
       async () => {

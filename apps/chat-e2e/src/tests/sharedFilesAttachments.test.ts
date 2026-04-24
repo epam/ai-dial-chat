@@ -816,6 +816,9 @@ dialSharedWithMeTest(
           getInstalledToolsets: true,
           getStyles: false,
         });
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: undefined,
+        });
         await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
       },
     );
