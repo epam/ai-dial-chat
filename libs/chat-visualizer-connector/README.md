@@ -63,8 +63,10 @@ interface ApplicationVisualizerConfig {
   title: string;
   description?: string;
   icon?: string;
-  contentType: string;
   url: string;
+  expanded?: boolean;
+  borderless?: boolean;
+  withoutTitle?: boolean;
   passAuthInfo?: boolean;
   passExplicitToken?: boolean;
 }
@@ -75,8 +77,10 @@ APPLICATION_VISUALIZERS={
   "applicationId": {
     "title": "GROUPED_VISUALIZER",
     "description": "Visualizer for grouped attachments",
-    "contentType": "application/vnd.custom+json",
-    "url": "http://localhost:8000"
+    "url": "http://localhost:8000",
+    "expanded": true,
+    "borderless": true,
+    "withoutTitle": false
   }
 }
 ```
@@ -112,7 +116,6 @@ Both flags are independent and can be combined:
 {
   "applicationId": {
     "title": "MY_VISUALIZER",
-    "contentType": "application/vnd.custom+json",
     "url": "https://my-visualizer.example.com",
     "passAuthInfo": true,
     "passExplicitToken": true

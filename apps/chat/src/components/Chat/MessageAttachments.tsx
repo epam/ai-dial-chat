@@ -42,17 +42,27 @@ export const MessageAttachments = ({
     SettingsSelectors.selectApplicationVisualizerConfig(state, applicationId),
   );
 
-  const { hasBorderlessAttachments, hasExpandedAttachments } = useMemo(
-    () => ({
+  const { hasBorderlessAttachments, hasExpandedAttachments } = useMemo(() => {
+    if (applicationVisualizerConfig) {
+      return {
+        hasBorderlessAttachments: !!applicationVisualizerConfig.borderless,
+        hasExpandedAttachments: !!applicationVisualizerConfig.expanded,
+      };
+    }
+    return {
       hasBorderlessAttachments: !!attachments?.some((a) =>
         borderlessTypes.includes(a.type),
       ),
       hasExpandedAttachments: !!attachments?.some((a) =>
         expandedTypes.includes(a.type),
       ),
-    }),
-    [attachments, borderlessTypes, expandedTypes],
-  );
+    };
+  }, [
+    applicationVisualizerConfig,
+    attachments,
+    borderlessTypes,
+    expandedTypes,
+  ]);
 
   const { groupedAttachments, regularAttachments } = useMemo(() => {
     if (!attachments?.length) {
