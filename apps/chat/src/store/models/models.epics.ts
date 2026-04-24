@@ -401,23 +401,23 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
           id: model.reference,
         }));
       const newInstalledModels = uniqBy<InstalledModel>(
-        [
-          ...installedModels,
-          ...models
-            .filter((model: DialAIEntityModel) =>
-              modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
-            )
-            .map((model: DialAIEntityModel) => ({
-              id: model.reference,
-            })),
-        ],
+        [...installedModels, ...modelsToInstall],
         'id',
       );
-      console.info('payload.references >>>', payload.references);
-      console.info('installedModels >>>', installedModels);
-      console.info('newInstalledModels >>>', newInstalledModels);
-      console.info('modelsToInstall >>>', modelsToInstall);
-      console.info('modelGroupKeys >>>', modelGroupKeys);
+
+      if (
+        !payload.references.some((payloadReference) =>
+          newInstalledModels.some(
+            (installedModel) => installedModel.id === payloadReference,
+          ),
+        )
+      ) {
+        return of(
+          ModelsActions.addInstalledModelsFail({
+            references: payload.references,
+          }),
+        );
+      }
 
       return ClientDataService.saveInstalledDeployments(
         newInstalledModels,
@@ -467,6 +467,23 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
             }),
           );
         }),
+      );
+    }),
+  );
+
+const addInstalledModelsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.addInstalledModelsFail.type),
+    switchMap(({ payload }) => {
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            payload.references.length > 1
+              ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
+              : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
+            { ns: Translation.Common },
+          ),
+        ),
       );
     }),
   );
@@ -546,6 +563,7 @@ export const ModelsEpics = combineEpics(
   getInstalledModelIdsEpic,
   getInstalledModelIdsFailEpic,
   addInstalledModelsEpic,
+  addInstalledModelsFailEpic,
   removeInstalledModelsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,

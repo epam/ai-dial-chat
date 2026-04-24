@@ -172,6 +172,8 @@
   "Some prompts were not imported": "Some prompts were not imported",
   "The agent added to my workspace": "The agent added to my workspace",
   "The agents added to my workspace": "The agents added to my workspace",
+  "The agent was not added to my workspace": "The agent was not added to my workspace",
+  "The agents were not added to my workspace": "The agents were not added to my workspace",
   "Issue reported successfully": "Issue reported successfully",
   "API Key requested successfully": "API Key requested successfully",
   "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.": "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.",
