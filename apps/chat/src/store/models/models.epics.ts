@@ -406,7 +406,7 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
       );
 
       if (
-        !payload.references.some((payloadReference) =>
+        !payload.references.every((payloadReference) =>
           newInstalledModels.some(
             (installedModel) => installedModel.id === payloadReference,
           ),
@@ -431,19 +431,35 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
             switchMap(() => {
               const actions: Observable<AppAction>[] = [];
 
-              if (payload.showSuccessToast) {
+              const failedReferences = payload.references.filter(
+                (payloadReference) =>
+                  !newInstalledModels.some(
+                    (installedModel) => installedModel.id === payloadReference,
+                  ),
+              );
+              if (failedReferences.length > 0) {
                 actions.push(
                   of(
-                    UIActions.showSuccessToast(
-                      translate(
-                        payload.references.length > 1
-                          ? CommonI18nKeys.AgentsAddedToMyWorkspace
-                          : CommonI18nKeys.AgentAddedToMyWorkspace,
-                        { ns: Translation.Common },
-                      ),
-                    ),
+                    ModelsActions.addInstalledModelsFail({
+                      references: failedReferences,
+                    }),
                   ),
                 );
+              } else {
+                if (payload.showSuccessToast) {
+                  actions.push(
+                    of(
+                      UIActions.showSuccessToast(
+                        translate(
+                          payload.references.length > 1
+                            ? CommonI18nKeys.AgentsAddedToMyWorkspace
+                            : CommonI18nKeys.AgentAddedToMyWorkspace,
+                          { ns: Translation.Common },
+                        ),
+                      ),
+                    ),
+                  );
+                }
               }
               if (payload.updateRecentModels) {
                 actions.push(
@@ -471,17 +487,24 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const addInstalledModelsFailEpic: AppEpic = (action$) =>
+const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ModelsActions.addInstalledModelsFail.type),
     switchMap(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const failedNames = payload.references
+        .map((reference) => modelsMap[reference]?.name)
+        .join(', ');
       return of(
         UIActions.showErrorToast(
           translate(
             payload.references.length > 1
               ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
               : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
-            { ns: Translation.Common },
+            {
+              ns: Translation.Common,
+              failedNames,
+            },
           ),
         ),
       );
