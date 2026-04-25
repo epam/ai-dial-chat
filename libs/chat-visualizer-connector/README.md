@@ -63,6 +63,7 @@ interface ApplicationVisualizerConfig {
   title: string;
   description?: string;
   icon?: string;
+  contentType?: string;
   url: string;
   expanded?: boolean;
   borderless?: boolean;
@@ -72,11 +73,14 @@ interface ApplicationVisualizerConfig {
 }
 ```
 
+Optional `contentType` uses the same comma-separated MIME list style as `CUSTOM_VISUALIZERS`. When set, only attachments whose `type` is in that list (and with a URL) are passed to the grouped iframe; other attachments (for example `image/png`) are rendered with the default chat attachment UI. When omitted, every attachment with a URL is sent to the grouped visualizer.
+
 ```json
 APPLICATION_VISUALIZERS={
   "applicationId": {
     "title": "GROUPED_VISUALIZER",
     "description": "Visualizer for grouped attachments",
+    "contentType": "application/custom+json,application/content+json",
     "url": "http://localhost:8000",
     "expanded": true,
     "borderless": true,
