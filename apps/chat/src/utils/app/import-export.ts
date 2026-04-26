@@ -170,7 +170,7 @@ type ExportType =
 export const getDownloadFileName = (fileName?: string): string =>
   !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
 
-function downloadChatPromptData(
+function downloadChatEntityData(
   data: LatestExportConversationsFormat | Prompt[] | ExportPromptsFormat,
   exportType: ExportType,
   fileName?: string,
@@ -202,24 +202,24 @@ const triggerDownloadConversation = (
   data: LatestExportConversationsFormat,
   appName?: string,
 ) => {
-  downloadChatPromptData(data, 'conversation', appName);
+  downloadChatEntityData(data, 'conversation', appName);
 };
 const triggerDownloadConversationsHistory = (
   data: LatestExportConversationsFormat,
   appName?: string,
 ) => {
-  downloadChatPromptData(data, 'conversations_history', appName);
+  downloadChatEntityData(data, 'conversations_history', appName);
 };
 
 const triggerDownloadPromptsHistory = (
   data: ExportPromptsFormat,
   appName?: string,
 ) => {
-  downloadChatPromptData(data, 'prompts_history', appName);
+  downloadChatEntityData(data, 'prompts_history', appName);
 };
 
 const triggerDownloadPrompt = (data: ExportPromptsFormat, appName?: string) => {
-  downloadChatPromptData(data, 'prompt', appName);
+  downloadChatEntityData(data, 'prompt', appName);
 };
 
 export const getExportConversationInfo = (
