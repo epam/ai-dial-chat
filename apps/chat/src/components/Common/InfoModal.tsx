@@ -31,7 +31,7 @@ function InfoRow({ dataQa, infoLabel, children }: infoRowProps) {
         className="col-span-1 whitespace-pre-wrap break-words text-secondary"
         data-qa={dataQa.concat('-label')}
       >
-        {infoLabel}
+        {infoLabel}:
       </span>
       <span
         className="col-span-2 whitespace-pre-wrap break-words"
