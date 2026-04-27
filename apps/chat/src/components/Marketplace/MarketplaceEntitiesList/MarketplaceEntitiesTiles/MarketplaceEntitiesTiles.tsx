@@ -185,7 +185,7 @@ export const MarketplaceEntitiesTiles: React.FC<
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [screenState, allEntities, rowVirtualizer]);
+  }, [screenState, rowVirtualizer]);
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const listHeight = rowVirtualizer.getTotalSize();
