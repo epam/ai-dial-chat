@@ -36,6 +36,10 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
             backgroundColor: 'transparent',
             '--color-canvas-default': 'transparent',
             '--md-editor-background-color': 'var(--bg-layer-1)',
+            '--color-fg-default': 'var(--text-secondary)',
+            '--color-fg-muted': 'var(--text-secondary)',
+            '--color-accent-fg': 'var(--text-accent-primary)',
+            '--color-neutral-muted': 'var(--bg-layer-2)',
           } as CSSProperties
         }
       />
