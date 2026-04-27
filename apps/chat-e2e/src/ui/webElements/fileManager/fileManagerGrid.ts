@@ -1,6 +1,7 @@
 import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { ExpectedApiResponse } from '@/src/ui/pages';
 import {
   EntityIconSelectors,
   GridSelectors,
@@ -139,7 +140,7 @@ export class FileManagerGrid extends Grid {
     await this.getRenameInput().fillInInput(newName);
     if (isHttpMethodTriggered) {
       const hostsMap = new Map([
-        [API.moveHost, 'POST'],
+        [API.moveFilesHost, 'POST'],
         [API.folderFilesListingHost(), 'GET'],
       ]);
       const responses = [];
@@ -238,5 +239,30 @@ export class FileManagerGrid extends Grid {
         });
       });
     }
+  }
+
+  public async saveRename() {
+    const expectedApiResponses: ExpectedApiResponse[] = [
+      { apiMethod: 'POST', urlPattern: API.moveFilesHost },
+      { apiMethod: 'GET', urlPattern: API.folderFilesListingHost() },
+    ];
+    const responsePromises = expectedApiResponses.map((expected) =>
+      this.page.waitForResponse((response) => {
+        const methodMatch = expected.apiMethod
+          ? response.request().method() === expected.apiMethod
+          : true;
+        const statusMatch = response.status() === (expected.status ?? 200);
+        const urlPattern = expected.urlPattern;
+        const responseUrl = response.url();
+        const urlMatch = urlPattern
+          ? urlPattern instanceof RegExp
+            ? urlPattern.test(responseUrl)
+            : responseUrl.includes(urlPattern)
+          : true;
+        return methodMatch && statusMatch && urlMatch;
+      }),
+    );
+    await this.page.keyboard.press(keys.enter);
+    await Promise.all(responsePromises);
   }
 }
