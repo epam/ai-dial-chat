@@ -35,11 +35,7 @@ import {
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import {
-  PromptsActions,
-  PublicationActions,
-  ShareActions,
-} from '@/src/store/actions';
+import { PromptsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -49,10 +45,8 @@ import {
 } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
-import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -115,7 +109,6 @@ export const PromptComponent = memo(
     const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
     const [isContextMenu, setIsContextMenu] = useState(false);
-    const [isUnshared, setIsUnshared] = useState(false);
 
     const promptRef = useRef<HTMLButtonElement>(null);
 
@@ -147,6 +140,7 @@ export const PromptComponent = memo(
       handleDelete,
       handlePublish,
       handleUnpublish,
+      handleOpenUnshare,
     } = usePromptActions(prompt);
 
     const isChosen = useMemo(
@@ -213,24 +207,6 @@ export const PromptComponent = memo(
       },
       [handleOpenViewModal],
     );
-
-    const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
-      useCallback((e) => {
-        e.stopPropagation();
-        setIsUnshared(true);
-      }, []);
-
-    const handleUnsharing = useCallback(() => {
-      if (prompt.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [prompt.id],
-            featureType: FeatureType.Prompt,
-          }),
-        );
-      }
-      setIsUnshared(false);
-    }, [dispatch, prompt.id, prompt.sharedWithMe]);
 
     const isHighlighted = !isSelectMode
       ? prompt.id === deletingPromptId || isSelected || isContextMenu
@@ -385,7 +361,7 @@ export const PromptComponent = memo(
                 onExport={handleExport}
                 onOpenMoveToModal={handleMoveToFolder}
                 onShare={handleShare}
-                onUnshare={handleOpenUnshareModal}
+                onUnshare={handleOpenUnshare}
                 onPublish={handlePublish}
                 onUnpublish={
                   additionalItemData?.publicationUrl
@@ -406,20 +382,6 @@ export const PromptComponent = memo(
             </div>
           )}
         </button>
-
-        {isUnshared && (
-          <ConfirmDialog
-            isOpen
-            heading={t(ChatI18nKeys.ConfirmUnsharePrompt)}
-            description={t(ChatI18nKeys.ConfirmUnsharePromptCaption)}
-            confirmLabel={t(ChatI18nKeys.Unshare)}
-            cancelLabel={t(ChatI18nKeys.Cancel)}
-            onClose={(result) => {
-              setIsUnshared(false);
-              if (result) handleUnsharing();
-            }}
-          />
-        )}
       </>
     );
   },
