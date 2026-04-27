@@ -174,7 +174,7 @@
     "minimist": "^1.2.8",
     "nx": "22.5.1",
     "patch-package": "^8.0.0",
-    "postcss": "^8.4.21",
+    "postcss": "^8.5.10",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.7",

@@ -2,10 +2,9 @@ import { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { PromptsActions, ShareActions } from '@/src/store/actions';
+import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
 
@@ -36,14 +35,6 @@ const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
       return null;
     }
 
-    if (deletingPrompt.sharedWithMe) {
-      return {
-        heading: t(PromptBarI18nKeys.ConfirmUnsharePrompt),
-        description: t(PromptBarI18nKeys.ConfirmUnsharePromptCaption),
-        confirmLabel: t(PromptBarI18nKeys.Unshare),
-      };
-    }
-
     return {
       heading: t(PromptBarI18nKeys.ConfirmDeletingPrompt),
       description: `${t(PromptBarI18nKeys.ConfirmDeletingPromptCaption)}${
@@ -56,17 +47,7 @@ const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
   const handleConfirmDelete = useCallback(
     (isConfirmed: boolean) => {
       if (isConfirmed && deletingPrompt) {
-        if (deletingPrompt.sharedWithMe) {
-          dispatch(
-            ShareActions.discardSharedWithMe({
-              resourceIds: [deletingPrompt.id],
-              featureType: FeatureType.Prompt,
-            }),
-          );
-        } else {
-          dispatch(PromptsActions.deletePrompt({ prompt: deletingPrompt }));
-        }
-
+        dispatch(PromptsActions.deletePrompt({ prompt: deletingPrompt }));
         dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
       }
 
