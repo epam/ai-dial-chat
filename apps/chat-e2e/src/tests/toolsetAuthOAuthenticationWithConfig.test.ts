@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
-import { GeneratorUtil, toolsetNamePrefix } from '@/src/utils';
+import { GeneratorUtil, ItemUtil, toolsetNamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
@@ -322,7 +322,9 @@ dialTest(
 
     await dialTest.step('Update toolset version and click Next', async () => {
       //get real toolset object from BE
-      realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
+      realToolset = await itemApiHelper.getItem<Toolset>(
+        ItemUtil.getEncodedItemId(updatedId),
+      );
 
       //intercept toolset routes with a new version
       updatedId = updatedId.replace(toolsetEntity.version, updatedVersion);
