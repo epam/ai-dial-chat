@@ -9,6 +9,8 @@ import React, {
   useState,
 } from 'react';
 
+import classNames from 'classnames';
+
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -84,10 +86,11 @@ interface DataRowContainerProps {
   children: ReactNode;
   width: number;
   height: number;
+  className?: string;
 }
 
 const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
-  ({ children, width, height }, ref) => {
+  ({ children, width, height, className }, ref) => {
     return (
       <div
         ref={ref}
@@ -95,7 +98,10 @@ const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
           height: `${height}px`,
           width: `${width}px`,
         }}
-        className="no-scrollbar relative flex w-full shrink divide-y divide-secondary overflow-x-auto overflow-y-hidden"
+        className={classNames(
+          'no-scrollbar relative flex w-full shrink divide-y divide-secondary overflow-x-auto overflow-y-hidden',
+          className,
+        )}
       >
         {children}
       </div>
@@ -261,12 +267,14 @@ export const MarketplaceEntitiesTable: React.FC<
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const listHeight = rowVirtualizer.getTotalSize();
-
+  const sentinelWidth = leftColumnWidth + rightColumnWidth;
   const virtualRowsProps = useMemo(
     () => ({
       virtualRows,
       allEntities,
       suggestedResults,
+      measureElement: rowVirtualizer.measureElement,
+      sentinelWidth,
       rowProps: {
         hoveredRowId,
         onClick: onCardClick,
@@ -279,6 +287,8 @@ export const MarketplaceEntitiesTable: React.FC<
       virtualRows,
       allEntities,
       suggestedResults,
+      rowVirtualizer.measureElement,
+      sentinelWidth,
       hoveredRowId,
       onCardClick,
       onBookmarkClick,
@@ -299,6 +309,7 @@ export const MarketplaceEntitiesTable: React.FC<
           ref={leftColumnDataRef}
           width={leftColumnWidth}
           height={listHeight}
+          className="!overflow-visible"
         >
           <VirtualRowsRenderer {...virtualRowsProps} isLeftSide />
         </DataRowContainer>

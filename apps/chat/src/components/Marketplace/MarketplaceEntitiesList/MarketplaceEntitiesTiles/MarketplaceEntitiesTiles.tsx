@@ -7,8 +7,6 @@ import React, {
   useState,
 } from 'react';
 
-import classNames from 'classnames';
-
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -207,16 +205,16 @@ export const MarketplaceEntitiesTiles: React.FC<
             const rowEntities = range(colsCount).map(
               (i) => allEntities[virtualRow.index * colsCount + i],
             );
+            const isHeaderRow = isString(rowEntities[0]);
 
             return (
               <div
                 key={virtualRow.key}
-                className={classNames(
-                  'absolute left-0 top-0 grid min-w-full',
-                  isString(rowEntities[0]) && 'flex items-end',
-                )}
+                ref={isHeaderRow ? rowVirtualizer.measureElement : undefined}
+                data-index={virtualRow.index}
+                className="absolute left-0 top-0 grid min-w-full"
                 style={{
-                  height: `${virtualRow.size}px`,
+                  ...(isHeaderRow ? null : { height: `${virtualRow.size}px` }),
                   transform: `translateY(${virtualRow.start}px)`,
                   gridTemplateColumns: `repeat(${colsCount}, minmax(0, 1fr))`,
                   gap: `${gap}px`,
