@@ -48,6 +48,14 @@ const ApplicationPublishInfoView: FC<ApplicationPublishInfoProps> = ({
     [rules],
   );
 
+  const visibleRules = useMemo(
+    () =>
+      Object.entries(rules)
+        .filter(([_path, pathRules]) => !!pathRules.length)
+        .map(([path, pathRules]) => ({ path, pathRules })),
+    [rules],
+  );
+
   if (rulesLoading) {
     return (
       <div className="flex justify-center px-3 py-4 md:px-6">
@@ -78,8 +86,8 @@ const ApplicationPublishInfoView: FC<ApplicationPublishInfoProps> = ({
           </h4>
 
           <div className="flex flex-col">
-            {Object.entries(rules).map(([path, rules]) => (
-              <RuleListItem key={path} path={path} rules={rules} />
+            {visibleRules.map(({ path, pathRules }) => (
+              <RuleListItem key={path} path={path} rules={pathRules} />
             ))}
           </div>
         </div>
