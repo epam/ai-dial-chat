@@ -48,3 +48,4 @@ export * from './common/confirmationPopupAssertion';
 export * from './fileManager/fileManagerGridAssertion';
 export * from './common/foldersTreeAssertion';
 export * from './tooltipPortalAssertion';
+export * from './api/toolsetApiAuthenticationAssertion';

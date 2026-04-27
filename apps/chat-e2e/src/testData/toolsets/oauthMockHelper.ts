@@ -10,6 +10,7 @@ import {
   OAuthMockOptions,
   ToolsetSignInRequest,
 } from '@/src/testData/toolsets/oauthMockConfig';
+import { ItemUtil } from '@/src/utils';
 import {
   Toolset,
   ToolsetAuthStatus,
@@ -81,6 +82,9 @@ export class OAuthMockHelper {
       }),
       ...(customConfig.token_endpoint !== undefined && {
         token_endpoint: customConfig.token_endpoint,
+      }),
+      ...(customConfig.client_secret !== undefined && {
+        client_secret: customConfig.client_secret,
       }),
     };
     this.authorizationCode =
@@ -206,51 +210,54 @@ export class OAuthMockHelper {
     // context-level so the popup can also fetch the toolset (e.g. after login)
     await this.page
       .context()
-      .route(`**${API.api}/${this.toolset.id}`, async (route, request) => {
-        const method = request.method();
-        // Allow initial GET to go through unmocked
-        if (!this.state.enableMocking) {
-          await route.continue();
-          return;
-        }
-        // Intercepted PUT request
-        if (method === 'PUT') {
-          const expectedCode = this.expectedStatusCodes.updateToolsetCode;
-          await route.fulfill({
-            status: expectedCode,
-            contentType: 'application/json',
-            body:
-              expectedCode === 200
-                ? JSON.stringify({ success: true })
-                : undefined,
-          });
-          // Intercepted GET request
-        } else if (method === 'GET') {
-          const enrichedToolset: Toolset = {
-            ...this.toolset,
-            auth_settings: {
-              authentication_type: ToolsetAuthTypes.OAUTH,
-              redirect_uri: `${config.use!.baseURL}${Routes.ToolsetSignIn}`,
-              client_id: this.mockConfig.client_id,
-              authorization_endpoint: this.mockConfig.authorization_endpoint,
-              token_endpoint: this.mockConfig.token_endpoint,
-              scopes_supported: this.mockConfig.scopes_supported,
-              code_challenge_method: this.mockConfig.code_challenge_method,
-              global_auth_status: this.state.isSignedIn
-                ? ToolsetAuthStatus.SIGNED_IN
-                : ToolsetAuthStatus.SIGNED_OUT,
-              user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-            },
-          };
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(enrichedToolset),
-          });
-        } else {
-          await route.continue();
-        }
-      });
+      .route(
+        `**${API.api}/${ItemUtil.getEncodedItemId(this.toolset.id!)}`,
+        async (route, request) => {
+          const method = request.method();
+          // Allow initial GET to go through unmocked
+          if (!this.state.enableMocking) {
+            await route.continue();
+            return;
+          }
+          // Intercepted PUT request
+          if (method === 'PUT') {
+            const expectedCode = this.expectedStatusCodes.updateToolsetCode;
+            await route.fulfill({
+              status: expectedCode,
+              contentType: 'application/json',
+              body:
+                expectedCode === 200
+                  ? JSON.stringify({ success: true })
+                  : undefined,
+            });
+            // Intercepted GET request
+          } else if (method === 'GET') {
+            const enrichedToolset: Toolset = {
+              ...this.toolset,
+              auth_settings: {
+                authentication_type: ToolsetAuthTypes.OAUTH,
+                redirect_uri: `${config.use!.baseURL}${Routes.ToolsetSignIn}`,
+                client_id: this.mockConfig.client_id,
+                authorization_endpoint: this.mockConfig.authorization_endpoint,
+                token_endpoint: this.mockConfig.token_endpoint,
+                scopes_supported: this.mockConfig.scopes_supported,
+                code_challenge_method: this.mockConfig.code_challenge_method,
+                global_auth_status: this.state.isSignedIn
+                  ? ToolsetAuthStatus.SIGNED_IN
+                  : ToolsetAuthStatus.SIGNED_OUT,
+                user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
+              },
+            };
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify(enrichedToolset),
+            });
+          } else {
+            await route.continue();
+          }
+        },
+      );
   }
 
   public async setupSignInRoute(): Promise<void> {

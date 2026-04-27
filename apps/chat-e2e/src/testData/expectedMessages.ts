@@ -489,4 +489,5 @@ export const MarketplaceExpectedMessages = {
   filteredAgentsAreValid: 'Filtered agents are valid',
   filterOptionsAreValid: 'Filter options are valid',
   agentMenuOptionsAreValid: 'Agent menu options are valid',
+  toolsetSupportedScopesAreValid: 'Toolset supported scopes are valid',
 };

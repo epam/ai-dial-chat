@@ -13,6 +13,7 @@ export const IconSelectors = {
   checkIcon: '.tabler-icon-check',
   filledDotCircleIcon: '.tabler-icon-circle-dot-filled',
   dotCircleIcon: '.tabler-icon-circle-dot',
+  circleIcon: '.tabler-icon-circle',
   filledPointIcon: '.tabler-icon-point-filled',
   exclamationCircleIcon: '.tabler-icon-exclamation-circle',
   externalAppIcon: '.tabler-icon-external-link',

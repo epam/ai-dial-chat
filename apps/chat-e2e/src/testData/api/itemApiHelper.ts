@@ -57,7 +57,9 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   public async getItem<T>(id: string) {
-    const response = await this.request.get(this.getHost(`${API.api}/${id}`));
+    const response = await this.request.get(
+      ItemUtil.getEncodedItemId(this.getHost(`${API.api}/${id}`)),
+    );
     const statusCode = response.status();
     expect
       .soft(
