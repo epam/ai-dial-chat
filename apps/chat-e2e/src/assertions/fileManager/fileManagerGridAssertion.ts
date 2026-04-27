@@ -5,7 +5,6 @@ import {
   ElementState,
   ExpectedMessages,
 } from '@/src/testData';
-import { Tags } from '@/src/ui/domData';
 import { FileManagerGrid } from '@/src/ui/webElements';
 
 export class FileManagerGridAssertion extends BaseAssertion {
@@ -176,8 +175,8 @@ export class FileManagerGridAssertion extends BaseAssertion {
     name: string,
     expectedClass: string | RegExp,
   ) {
-    const iconLocator = await this.fileManagerGrid.gridFileIconByNameCell(name);
-    const svgLocator = iconLocator.locator(Tags.svg).first();
+    const svgLocator =
+      await this.fileManagerGrid.gridFileIconSvgByNameCell(name);
     const pattern =
       typeof expectedClass === 'string'
         ? new RegExp(expectedClass)
@@ -188,10 +187,7 @@ export class FileManagerGridAssertion extends BaseAssertion {
   public async assertGridFileIconClassDuringRename(
     expectedClass: string | RegExp,
   ) {
-    const svgLocator = this.fileManagerGrid
-      .getRenameRowFileIcon()
-      .locator(Tags.svg)
-      .first();
+    const svgLocator = this.fileManagerGrid.getRenameRowFileIconSvg();
     const pattern =
       typeof expectedClass === 'string'
         ? new RegExp(expectedClass)

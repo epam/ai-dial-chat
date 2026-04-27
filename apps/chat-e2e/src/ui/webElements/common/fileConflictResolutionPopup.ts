@@ -5,7 +5,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class FileConflictResolutionPopup extends ConfirmationPopup {
   constructor(page: Page) {
-    super(page, 'Confirm');
+    super(page, FileConflictResolutionSelectors.confirm);
   }
 
   getSingleFileRadio(

@@ -12,6 +12,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors';
 import { Checkbox, Tab } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, filenamePrefix } from '@/src/utils';
@@ -1132,6 +1133,7 @@ dialTest(
     fileManagerGrid,
     fileManagerGridAssertion,
     fileManagerGridRowDropdownMenu,
+    fileManager,
     toastAssertion,
     toast,
   }) => {
@@ -1182,6 +1184,22 @@ dialTest(
           duplicatedFolderName,
           'visible',
         );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8644: navigate into duplicated folder and verify content is copied',
+      async () => {
+        await fileManagerGrid.openFolder(duplicatedFolderName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManager
+          .getFileManagerNavigationPanel()
+          .getBreadcrumb()
+          .itemByName(FileManagerToolbarTabs.MyFiles)
+          .click();
       },
     );
 
@@ -1371,7 +1389,7 @@ dialTest(
       async () => {
         await fileManagerGrid.getRenameInput().fillInInput(Attachment.textName);
         await fileManagerGridAssertion.assertInputWarning('hidden');
-        await page.keyboard.press('Escape');
+        await page.keyboard.press(keys.escape);
       },
     );
 
@@ -1392,7 +1410,7 @@ dialTest(
       async () => {
         await fileManagerGrid.getRenameInput().fillInInput(folderName);
         await fileManagerGridAssertion.assertInputWarning('hidden');
-        await page.keyboard.press('Escape');
+        await page.keyboard.press(keys.escape);
       },
     );
 
@@ -1774,38 +1792,20 @@ dialTest(
           'visible',
         );
         await fileManagerToolbar.clearSelection();
-        await fileManagerGrid
-          .gridRowByNameCell(Attachment.sunImageName)
-          .hover();
-        const sunDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+        for (const file of [
           Attachment.sunImageName,
-        );
-        await sunDotsMenu.click();
-        const downloadedSun = await fileManagerPage.downloadData(() =>
-          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
-            isHttpMethodTriggered: false,
-          }),
-        );
-        await downloadAssertion.assertJpgFileIsDownloaded(
-          downloadedSun,
-          Attachment.sunImageName,
-        );
-        await fileManagerGrid
-          .gridRowByNameCell(Attachment.cloudImageName)
-          .hover();
-        const cloudDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.cloudImageName,
-        );
-        await cloudDotsMenu.click();
-        const downloadedCloud = await fileManagerPage.downloadData(() =>
-          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
-            isHttpMethodTriggered: false,
-          }),
-        );
-        await downloadAssertion.assertJpgFileIsDownloaded(
-          downloadedCloud,
-          Attachment.cloudImageName,
-        );
+        ]) {
+          await fileManagerGrid.gridRowByNameCell(file).hover();
+          const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(file);
+          await dotsMenu.click();
+          const downloaded = await fileManagerPage.downloadData(() =>
+            fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+              isHttpMethodTriggered: false,
+            }),
+          );
+          await downloadAssertion.assertJpgFileIsDownloaded(downloaded, file);
+        }
       },
     );
   },
@@ -1859,7 +1859,7 @@ dialTest(
         await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.folderNameWithDotErrorMessage,
         );
-        await page.keyboard.press('Escape');
+        await page.keyboard.press(keys.escape);
       },
     );
 
@@ -1946,8 +1946,7 @@ dialTest(
       'EPMRTC-8173: Select folderB in tree, rename it from tree context menu, verify updated name in grid and tree',
       async () => {
         await fileManagerFoldersTree.folderNameByPath(folderB).click();
-        const folderBItem = fileManagerFoldersTree.folderByPath(folderB);
-        await folderBItem.locator(IconSelectors.dotsMenuIcon).click();
+        await fileManagerFoldersTree.openFolderDotsMenu(folderB);
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerFoldersTree
           .getRenameInput()
@@ -1976,10 +1975,7 @@ dialTest(
       async () => {
         await fileManagerFoldersTree.folderNameByPath(folderC).click();
         const folderAFinalName = GeneratorUtil.randomString(7);
-        const folderAItem =
-          fileManagerFoldersTree.folderByPath(folderARenamedName);
-        await folderAItem.hover();
-        await folderAItem.locator(IconSelectors.dotsMenuIcon).click();
+        await fileManagerFoldersTree.openFolderDotsMenu(folderARenamedName);
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerFoldersTree
           .getRenameInput()

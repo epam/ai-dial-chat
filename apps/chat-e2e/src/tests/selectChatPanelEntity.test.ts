@@ -1616,7 +1616,7 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;
-    const duplicatedConversationName = GeneratorUtil.randomString(7);
+    const duplicatedConversationName = GeneratorUtil.randomConversationName();
     const nonDuplicatedConversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(

@@ -14,12 +14,13 @@ export const FileConflictResolutionSelectors = {
   replaceAll: 'replaceAll',
   duplicateAll: 'duplicateAll',
   decideForEach: 'decideForEach',
+  confirm: 'Confirm',
   singleFileRadio: (value: string) =>
     `${Tags.input}[type="radio"][${Attributes.name}="${FileConflictResolutionSelectors.singleFileRadioName}"][${Attributes.value}="${value}"]`,
   multipleFilesRadio: (value: string) =>
     `${Tags.input}[type="radio"][${Attributes.name}="${FileConflictResolutionSelectors.multipleFilesRadioName}"][${Attributes.value}="${value}"]`,
   radioLabel: (value: string) => `${Tags.label}[for="${value}"]`,
-} as const;
+};
 
 export const FileManagerSidebarSelectors = {
   container: '[aria-label="collapsible-sidebar"]',

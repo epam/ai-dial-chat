@@ -77,6 +77,12 @@ export class FoldersTree extends BaseElement {
     return new Input(this.page, this.rootLocator).inputField;
   }
 
+  public async openFolderDotsMenu(...path: string[]) {
+    const folderItem = this.folderByPath(...path);
+    await folderItem.hover();
+    await folderItem.locator(IconSelectors.dotsMenuIcon).click();
+  }
+
   public async expandFolders(
     options: { isFilesListingTriggered: boolean },
     ...path: string[]

@@ -501,7 +501,8 @@ dialSharedWithMeTest(
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
     'Deleted by the owner file disappears from "Shared with me". Other files exist and stay in "Shared with me".\n' +
-    'Shared with me: the file stays if the chat was unshared, renamed, model was changed, the chat was deleted by the owner',
+    'Shared with me: the file stays if the chat was unshared, renamed, model was changed, the chat was deleted by the owner\n' +
+    '[File Manager][Shared with me]: Toast message when Unshare item',
   async ({
     setTestIds,
     conversationData,
@@ -1178,9 +1179,7 @@ dialAdminTest(
     sendMessageInputAttachmentsAssertions,
     adminDataInjector,
     conversationData,
-    setIssueIds,
   }) => {
-    setIssueIds('6483');
     setTestIds('EPMRTC-6743');
     const modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment(
       true,

@@ -933,7 +933,6 @@ dialAdminTest(
     localStorageManager,
     fileManagerPage,
     fileManagerToolbar,
-    fileManager,
     fileManagerGridAssertion,
     publicationApiHelper,
     adminPublicationApiHelper,
@@ -994,14 +993,11 @@ dialAdminTest(
         await fileManagerPage.openFileManagerPage();
         await fileManagerPage.waitForPageLoaded({ isGridVisible: undefined });
         await fileManagerToolbar.organizationTab.click();
-        const isNoData = await fileManager.getNoDataContent().isVisible();
-        if (!isNoData) {
-          for (const file of [imageInRoot, imageInFolder]) {
-            await fileManagerGridAssertion.assertGridRowByNameState(
-              file,
-              'hidden',
-            );
-          }
+        for (const file of [imageInRoot, imageInFolder]) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'hidden',
+          );
         }
       },
     );
@@ -1027,7 +1023,7 @@ dialAdminTest(
       'EPMRTC-4200: reload File Manager Organization tab and verify files are still present',
       async () => {
         await fileManagerPage.reloadPage();
-        await fileManagerPage.waitForPageLoaded({ isGridVisible: true });
+        await fileManagerPage.waitForPageLoaded();
         await fileManagerToolbar.organizationTab.click();
         for (const file of [imageInRoot, imageInFolder]) {
           await fileManagerGridAssertion.assertGridRowByNameState(
