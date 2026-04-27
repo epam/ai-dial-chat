@@ -20,6 +20,7 @@ import { RuleListItem } from '@/src/components/Chat/Publish/RuleListItem';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { FeatureType } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface ApplicationPublishInfoProps {
   entity: DialAIEntityModel;
@@ -64,7 +65,10 @@ const ApplicationPublishInfoView: FC<ApplicationPublishInfoProps> = ({
         <h4 className="text-sm font-semibold text-primary">
           {t(MarketplaceI18nKeys.PublishedTo)}
         </h4>
-        <p className="truncate text-sm text-primary">{publishedTo}</p>
+        <DialEllipsisTooltip
+          text={publishedTo}
+          className="truncate text-sm text-primary"
+        />
       </div>
 
       {isThereRules && (
