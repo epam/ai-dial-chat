@@ -255,7 +255,7 @@ export const MarketplaceEntitiesTable: React.FC<
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [screenState, allEntities, rowVirtualizer]);
+  }, [screenState, rowVirtualizer]);
 
   const handleRowHover = useCallback((hoveredRowId: string) => {
     setHoveredRowId(hoveredRowId);
