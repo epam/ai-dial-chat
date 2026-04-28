@@ -1290,6 +1290,9 @@ dialAdminTest(
             await fileManagerModalGrid.gridCheckboxByNameCell(item);
           await checkbox.click();
         }
+        await fileManagerModalToolbar
+          .getSelectedIconsButton(3)
+          .waitForState({ state: 'visible' });
         await fileManagerModal.getAttachButton().click();
       },
     );
@@ -1318,6 +1321,9 @@ dialAdminTest(
         const sharedFileCheckbox =
           await fileManagerModalGrid.gridCheckboxByNameCell(sharedFile);
         await sharedFileCheckbox.click();
+        await fileManagerModalToolbar
+          .getSelectedIconsButton(1)
+          .waitForState({ state: 'visible' });
         await fileManagerModal.getAttachButton().click();
       },
     );
@@ -1345,6 +1351,9 @@ dialAdminTest(
         await fileManagerModalToolbar.organizationTab.click();
         const publishedFolderCheckbox =
           await fileManagerModalGrid.gridCheckboxByNameCell(publishedFolder);
+        await fileManagerModalToolbar
+          .getSelectedIconsButton(1)
+          .waitForState({ state: 'visible' });
         await publishedFolderCheckbox.click();
         await fileManagerModal.getAttachButton().click();
       },
