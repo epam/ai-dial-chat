@@ -10,7 +10,7 @@ export class Tooltip extends BaseElement {
       page
         .locator(TooltipSelector.tooltip)
         .or(page.locator('[role="tooltip"]')),
-    )
+    );
   }
 
   public tooltipIcon = this.getElementIcon(this.getElementLocator());
