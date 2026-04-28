@@ -236,6 +236,12 @@ export const MarketplaceEntitiesTable: React.FC<
 
       return ROW_SIZES[screenState];
     },
+    getItemKey: (index) => {
+      const entity = allEntitiesRef.current[index];
+      if (!entity) return `_${index}`;
+      if (isString(entity)) return entity;
+      return entity.id;
+    },
     overscan: screenState === ScreenState.SM ? 9 : 3,
   });
 
@@ -255,7 +261,7 @@ export const MarketplaceEntitiesTable: React.FC<
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [screenState, allEntities, rowVirtualizer]);
+  }, [screenState, rowVirtualizer]);
 
   const handleRowHover = useCallback((hoveredRowId: string) => {
     setHoveredRowId(hoveredRowId);
