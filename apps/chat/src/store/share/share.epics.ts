@@ -49,7 +49,7 @@ import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { ApiKeys, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -60,6 +60,7 @@ import {
   ShareResource,
 } from '@/src/types/share';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -91,8 +92,13 @@ import {
   DeleteType,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
+
+const getResourceSoringWeight = (resource: ShareResource) =>
+  splitEntityId(resource.url).apiKey === ApiKeys.Files ? 1 : 0;
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -445,15 +451,15 @@ const shareFailEpic: AppEpic = (action$) =>
 const acceptInvitationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitation.type),
-    switchMap(({ payload }) => {
-      return ShareService.shareAccept({
+    switchMap(({ payload }) =>
+      ShareService.getShareDetails({
         invitationId: payload.invitationId,
       }).pipe(
-        switchMap(() =>
-          ShareService.getShareDetails({
+        switchMap((data) => {
+          return ShareService.shareAccept({
             invitationId: payload.invitationId,
           }).pipe(
-            switchMap((data) => {
+            switchMap(() => {
               const acceptedIds = data.resources.filter(
                 (resource) =>
                   isPromptId(resource.url) ||
@@ -475,18 +481,27 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                 }),
               );
             }),
-          ),
-        ),
+            catchError((err) => {
+              console.error(err);
+              return of(
+                ShareActions.acceptShareInvitationFail({
+                  message: err.message.trim().toLowerCase(),
+                  details: data,
+                }),
+              );
+            }),
+          );
+        }),
         catchError((err) => {
           console.error(err);
           return of(
             ShareActions.acceptShareInvitationFail({
-              message: err.message.trim().toLowerCase(),
+              message: err.message?.trim()?.toLowerCase(),
             }),
           );
         }),
-      );
-    }),
+      ),
+    ),
   );
 
 const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
@@ -550,32 +565,81 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       history.replaceState({}, '', window.location.origin);
 
-      let message = CommonI18nKeys.AcceptShareFailed;
-      let name = '';
-      if (payload.message?.startsWith('no invitation found')) {
-        message = CommonI18nKeys.AcceptShareNotExists;
-      }
-      if (
-        payload.message?.startsWith(
-          'limit is exceeded on the number of accepted users',
-        )
-      ) {
-        message = CommonI18nKeys.ShareLimitExceeded;
-        name = payload.message.split('/').pop() ?? 'N/A';
-      }
+      const { message: errorMessage, details } = payload;
+      const resourceUrl = sortBy(
+        details?.resources ?? [],
+        getResourceSoringWeight,
+      )?.[0]?.url;
 
-      return concat(
+      const resultActions$: Observable<AppAction>[] = [
         of(ShareActions.resetAcceptedEntityInfo()),
         of(ConversationsActions.initSelectedConversations()),
-        of(
-          UIActions.showErrorToast(
-            translate(message, {
-              ns: Translation.Common,
-              name: name.trim(),
+      ];
+      if (
+        errorMessage?.startsWith('no invitation found') ||
+        errorMessage?.includes('error -  not found')
+      ) {
+        resultActions$.push(
+          of(
+            UIActions.showErrorToast(
+              translate(CommonI18nKeys.AcceptShareNotExists, {
+                ns: Translation.Common,
+              }),
+            ),
+          ),
+        );
+      } else if (
+        errorMessage?.startsWith(
+          'limit is exceeded on the number of accepted users',
+        ) &&
+        resourceUrl
+      ) {
+        const isFolderResource = isFolderId(resourceUrl);
+        const { name, version } = parseEntityApiKey(
+          splitEntityId(resourceUrl).name,
+          {
+            parseVersion: true,
+            parseModel: isConversationId(resourceUrl),
+          },
+        );
+
+        resultActions$.push(
+          of(
+            UIActions.showToast({
+              message: translate(
+                isFolderResource || version === NA_VERSION
+                  ? CommonI18nKeys.ShareLimitExceeded
+                  : CommonI18nKeys.ShareLimitExceededWithVersion,
+                {
+                  ns: Translation.Common,
+                  name: decodeURIComponent(
+                    isFolderResource
+                      ? (resourceUrl.split('/').at(-2) ?? resourceUrl)
+                      : name,
+                  ),
+                  version,
+                },
+              ),
+              type: ToastType.Error,
+              title: translate(CommonI18nKeys.LimitExceeded, {
+                ns: Translation.Common,
+              }),
             }),
           ),
-        ),
-      );
+        );
+      } else {
+        resultActions$.push(
+          of(
+            UIActions.showErrorToast(
+              translate(CommonI18nKeys.AcceptShareFailed, {
+                ns: Translation.Common,
+              }),
+            ),
+          ),
+        );
+      }
+
+      return concat(...resultActions$);
     }),
   );
 
