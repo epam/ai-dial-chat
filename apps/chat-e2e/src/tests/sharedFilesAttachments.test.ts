@@ -1351,10 +1351,10 @@ dialAdminTest(
         await fileManagerModalToolbar.organizationTab.click();
         const publishedFolderCheckbox =
           await fileManagerModalGrid.gridCheckboxByNameCell(publishedFolder);
+        await publishedFolderCheckbox.click();
         await fileManagerModalToolbar
           .getSelectedIconsButton(1)
           .waitForState({ state: 'visible' });
-        await publishedFolderCheckbox.click();
         await fileManagerModal.getAttachButton().click();
       },
     );
