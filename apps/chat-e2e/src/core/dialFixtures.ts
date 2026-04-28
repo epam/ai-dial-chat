@@ -32,6 +32,7 @@ import {
   EntityEditorPreviewCard,
   ExternalAppEditorContainer,
   ExternalAppEditorViewForm,
+  FileConflictResolutionPopup,
   FileDropArea,
   FileManager,
   FileManagerCollapsibleSidebar,
@@ -104,6 +105,7 @@ import {
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { ConfirmationPopupAssertion } from '@/src/assertions/common/confirmationPopupAssertion';
+import { FileConflictResolutionPopupAssertion } from '@/src/assertions/common/fileConflictResolutionPopupAssertion';
 import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { EntityEditorHeaderAssertion } from '@/src/assertions/entityEditorHeaderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
@@ -456,8 +458,8 @@ const dialTest = test.extend<{
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
   fileManagerModalGridAssertion: FileManagerGridAssertion;
-  fileConflictConfirmationPopup: ConfirmationPopup;
-  fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  fileConflictConfirmationPopup: FileConflictResolutionPopup;
+  fileConflictConfirmationPopupAssertion: FileConflictResolutionPopupAssertion;
   uploadProgressDialog: UploadProgressDialog;
   tooltipPortal: TooltipPortal;
   tooltipPortalAssertion: TooltipPortalAssertion;
@@ -1890,10 +1892,7 @@ const dialTest = test.extend<{
     await use(fileManagerModalGridAssertion);
   },
   fileConflictConfirmationPopup: async ({ page }, use) => {
-    const fileConflictConfirmationPopup = new ConfirmationPopup(
-      page,
-      'Confirm',
-    );
+    const fileConflictConfirmationPopup = new FileConflictResolutionPopup(page);
     await use(fileConflictConfirmationPopup);
   },
   fileConflictConfirmationPopupAssertion: async (
@@ -1901,7 +1900,7 @@ const dialTest = test.extend<{
     use,
   ) => {
     const fileConflictConfirmationPopupAssertion =
-      new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
+      new FileConflictResolutionPopupAssertion(fileConflictConfirmationPopup);
     await use(fileConflictConfirmationPopupAssertion);
   },
   uploadProgressDialog: async ({ page }, use) => {

@@ -400,7 +400,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             {t(CommonI18nKeys.ConnectApplication)}
           </h5>
           <CopyUrlButton
-            id={appDetails.id}
+            entity={appDetails}
             label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
           />
         </div>
