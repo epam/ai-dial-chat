@@ -4,7 +4,13 @@ import { Page } from '@playwright/test';
 
 export class Tooltip extends BaseElement {
   constructor(page: Page) {
-    super(page, TooltipSelector.tooltip);
+    super(
+      page,
+      '',
+      page
+        .locator(TooltipSelector.tooltip)
+        .or(page.locator('[role="tooltip"]')),
+    )
   }
 
   public tooltipIcon = this.getElementIcon(this.getElementLocator());
