@@ -1,6 +1,7 @@
 import { Observable, map } from 'rxjs';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { getDownloadName } from '@/src/utils/app/import-export';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -338,7 +339,11 @@ export class FileService {
     files: UIKitDialFile[],
   ): Promise<void> {
     try {
-      const archiveName = files.length === 1 ? files[0].name : 'files';
+      const archiveName = getDownloadName({
+        name: files.length === 1 ? files[0].name : undefined,
+        exportType: 'files',
+        extension: 'zip',
+      });
 
       const response = await fetch('/api/files/download', {
         method: HTTPMethod.POST,
@@ -381,7 +386,7 @@ export class FileService {
       const blob = new Blob([merged.buffer as ArrayBuffer], {
         type: contentType,
       });
-      saveAs(blob, `${archiveName}.zip`);
+      saveAs(blob, archiveName);
     } catch (error) {
       throw new Error(`Error downloading files: ${error}`);
     }
