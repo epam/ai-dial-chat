@@ -1,3 +1,4 @@
+import { IconHelp } from '@tabler/icons-react';
 import { FC, useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -9,6 +10,7 @@ import { Translation } from '@/src/types/translation';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 import {
@@ -50,7 +52,15 @@ export const ResponseFormat: FC<ResponseFormatProps> = ({
 
   return (
     <div className="flex flex-col" data-qa="response-format-container">
-      <label className="mb-4 text-left">{t(ChatI18nKeys.ResponseFormat)}</label>
+      <div className="mb-4 flex items-center gap-2">
+        <label className="text-left">{t(ChatI18nKeys.ResponseFormat)}</label>
+        <Tooltip
+          triggerClassName="text-secondary"
+          tooltip={t(ChatI18nKeys.AppliesToNewAndExistingMessages)}
+        >
+          <IconHelp size={18} />
+        </Tooltip>
+      </div>
       {disabled && <DisableOverlay />}
 
       <DialRadioGroup

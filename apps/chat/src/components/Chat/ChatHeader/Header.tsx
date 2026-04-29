@@ -49,7 +49,11 @@ import { HeaderModelTooltip } from './HeaderModelTooltip';
 import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import {
+  ConversationResponseFormat,
+  Feature,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import {
   DialButton,
   DialGhostIconButton,
@@ -281,6 +285,10 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      responseFormat={
+                        conversation.responseFormat ??
+                        ConversationResponseFormat.Markdown
+                      }
                       hasSettings={!!doesModelHaveSettings(model)}
                       systemPrompt={
                         model?.type === EntityType.Model &&

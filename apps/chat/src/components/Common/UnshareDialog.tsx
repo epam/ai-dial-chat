@@ -3,14 +3,14 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { dispatchFileManagerUnshareFromEnrichedItems } from '@/src/utils/app/file-manager-unshare-dispatch';
-import { isConversationId } from '@/src/utils/app/id';
+import { isConversationId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isMyBucket, splitEntityId } from '@/src/utils/app/shared-utils';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
-import { ShareActions } from '@/src/store/actions';
+import { PromptsActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareSelectors } from '@/src/store/selectors';
 
@@ -192,6 +192,10 @@ function UnshareDialogView() {
           }),
         );
         dispatch(ShareActions.setUnshareEntity(undefined));
+
+        if (isPromptId(unshareEntity.id)) {
+          dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
+        }
       }
     },
     [
