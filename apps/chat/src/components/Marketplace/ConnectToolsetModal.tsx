@@ -106,7 +106,7 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
                 : MarketplaceI18nKeys.CopyToolsetEndpointURL,
             )}
           </p>
-          <ToolsetLinkButton id={entity.id} />
+          <ToolsetLinkButton entity={entity} />
         </div>
       </div>
     </DialPopup>

@@ -269,8 +269,6 @@
   "See results from": "See results from",
   "{{baseText}} {{tabName}}": "{{baseText}} {{tabName}}",
   "Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}": "Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}",
-  "Confirm unshare prompt": "Confirm unshare prompt",
-  "Are you sure that you want to unshare a prompt?": "Are you sure that you want to unshare a prompt?",
   "Unshare": "Unshare",
   "Info": "Info",
   "Save and exit": "Save and exit",

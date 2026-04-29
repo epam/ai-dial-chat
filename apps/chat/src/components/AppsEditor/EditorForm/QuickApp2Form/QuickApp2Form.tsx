@@ -201,6 +201,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           render={({ field }) => (
             <DialMarkdownEditorContainer
               label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+              placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
               value={field.value}
               onChangeValue={field.onChange}
               height={200}
@@ -399,7 +400,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             {t(CommonI18nKeys.ConnectApplication)}
           </h5>
           <CopyUrlButton
-            id={appDetails.id}
+            entity={appDetails}
             label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
           />
         </div>
