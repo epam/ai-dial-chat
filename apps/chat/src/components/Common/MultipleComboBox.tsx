@@ -397,17 +397,17 @@ export function MultipleComboBox<T>({
           </ul>
         </div>
         {hasDeleteAll && selectedItems.length > 0 ? (
-        <div className={closeButtonClassName}>
+          <div className={closeButtonClassName}>
             <CloseButtonSmall
-            className="text-primary"
-            disabled={disabled}
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedItems([]);
-              onChangeSelectedItems([]);
-            }}
-          />
-        </div>
+              className="text-primary"
+              disabled={disabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedItems([]);
+                onChangeSelectedItems([]);
+              }}
+            />
+          </div>
         ) : null}
       </div>
     </Tooltip>

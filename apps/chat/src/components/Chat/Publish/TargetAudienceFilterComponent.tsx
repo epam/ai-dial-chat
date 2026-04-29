@@ -261,7 +261,7 @@ export function TargetAudienceFilterComponent({
                 />
               ) : (
                 <MultipleComboBox
-                  className="flex min-h-[38px] items-start sm:items-center  rounded border border-primary"
+                  className="flex min-h-[38px] items-start rounded  border border-primary sm:items-center"
                   initialSelectedItems={filterParams}
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
