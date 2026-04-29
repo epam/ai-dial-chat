@@ -756,7 +756,6 @@ export enum OAuthQueryParams {
   responseType = 'response_type',
   codeChallengeMethod = 'code_challenge_method',
   clientId = 'client_id',
-  clientSecret = 'client_secret',
   redirectUri = 'redirect_uri',
   scope = 'scope',
   state = 'state',

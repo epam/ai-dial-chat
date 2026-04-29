@@ -43,14 +43,12 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-7056', 'EPMRTC-7925', 'EPMRTC-7149', 'EPMRTC-7057');
     const toolsetEntity = {
-      name: GeneratorUtil.randomToolsetName(),
+      name: toolsetNamePrefix + ExpectedConstants.allowedSpecialSymbolsInName(),
       version: GeneratorUtil.randomEntityVersion(),
       endpoint: GeneratorUtil.randomUrl(),
     };
     const clientId = GeneratorUtil.randomString(7);
     const clientSecret = GeneratorUtil.randomString(7);
-    const updatedName =
-      toolsetNamePrefix + ExpectedConstants.allowedSpecialSymbolsInName();
     const updatedVersion = GeneratorUtil.randomEntityVersion();
     let updatedId: string;
     let realToolset: Toolset;
@@ -197,50 +195,13 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Click on "Edit" icon and navigate to "General info" step',
-      async () => {
-        await entityDetailsModal.clickEditButton({
-          triggeredHttpMethod: 'GET',
-        });
-        await entityEditorPage.waitForPageLoadedForEdit(
-          EntityEditorToolsetTypes.Toolset,
-        );
-        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
-          isHttpMethodTriggered: false,
-        });
-        await entityEditorPage.waitForPageLoaded(
-          EntityEditorToolsetTypes.Toolset,
-        );
-      },
-    );
-
-    await dialTest.step('Update toolset name and click Next', async () => {
-      //get real toolset object from BE
-      const toolsetId = oauthMockHelper.getToolset().id!;
-      realToolset = await itemApiHelper.getItem<Toolset>(toolsetId);
-
-      //intercept toolset routes with a new name
-      updatedId = toolsetId.replace(toolsetEntity.name, updatedName);
-      await oauthMockHelper.setupUpdatedToolsetRoutes({
-        display_name: updatedName,
-        id: updatedId,
-        toolset: updatedId,
-      });
-
-      await entityEditorGeneralForm.fillInEntityFields({
-        name: updatedName,
-      });
-      await entityEditorGeneralForm.goNext({
-        hostsArray: [API.moveHost],
+    await dialTest.step('Click on "Edit" icon', async () => {
+      await entityDetailsModal.clickEditButton({
+        triggeredHttpMethod: 'GET',
       });
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-
-      //update real toolset name
-      realToolset.display_name = updatedName;
-      await toolsetApiHelper.createToolset(realToolset);
     });
 
     await dialTest.step(
@@ -249,7 +210,10 @@ dialTest(
         await toolsetEditorViewForm.clickLogoutButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-          { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
+          {
+            expectedName: toolsetEntity.name,
+            expectedCredsLabel: Creds.loggedOut,
+          },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
           toolsetEditorViewForm.loginButton,
@@ -309,7 +273,10 @@ dialTest(
         await toolsetEditorViewForm.clickLogoutButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-          { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
+          {
+            expectedName: toolsetEntity.name,
+            expectedCredsLabel: Creds.loggedOut,
+          },
         );
         await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
@@ -343,7 +310,7 @@ dialTest(
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-      //update real toolset version & scope
+      //update real toolset version
       realToolset.display_version = updatedVersion;
       await toolsetApiHelper.createToolset(realToolset);
     });
@@ -461,7 +428,7 @@ dialTest(
           },
         },
       );
-      await oauthMockHelper.setupToolsetRoutes();
+      await oauthMockHelper.setupMocks();
       oauthMockHelper.enableMocking();
     });
 
@@ -496,8 +463,6 @@ dialTest(
         await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
           clientSecret,
         );
-        await oauthMockHelper.setupMocks();
-
         loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         ))!;
@@ -514,5 +479,15 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step('Verify toolset is successfully saved', async () => {
+      await entityEditorHeader.saveAndExitButton.click();
+      await baseAssertion.assertElementState(toolsetEditorViewForm, 'hidden');
+      await marketplacePage.waitForPageLoaded();
+      await entityDetailsModalAssertion.assertElementState(
+        entityDetailsModal,
+        'visible',
+      );
+    });
   },
 );
