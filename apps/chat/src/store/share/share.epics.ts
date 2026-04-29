@@ -577,7 +577,7 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
       ];
       if (
         errorMessage?.startsWith('no invitation found') ||
-        errorMessage?.includes('error -  not found')
+        errorMessage?.includes('not found')
       ) {
         resultActions$.push(
           of(
