@@ -95,7 +95,7 @@ export class FileManagerPage extends BasePage {
 
   async waitForPageLoaded({
     isGridVisible = true,
-  }: { isGridVisible?: boolean } = {}) {
+  }: { isGridVisible?: boolean | undefined } = {}) {
     const fileManagerContainer = this.getFileManagerContainer();
     const fileManager = fileManagerContainer.getFileManager();
     await fileManager.waitForState();
@@ -103,12 +103,19 @@ export class FileManagerPage extends BasePage {
     await fileManager.getFileManagerToolbar().waitForState();
     await fileManager.getFileManagerNavigationPanel().waitForState();
     await fileManager.getFileManagerCollapsibleSidebar().waitForState();
-    if (isGridVisible) {
+    if (isGridVisible === true) {
       const fileManagerGrid = fileManager.getFileManagerGrid();
       await fileManagerGrid.waitForState();
       await fileManagerGrid.loadingIndicator.waitForState({ state: 'hidden' });
-    } else {
+    } else if (isGridVisible === false) {
       await fileManager.getNoDataContent().waitForState();
+    } else {
+      // unknown state: wait for either grid or no-data content
+      const fileManagerGrid = fileManager.getFileManagerGrid();
+      await Promise.race([
+        fileManagerGrid.waitForState(),
+        fileManager.getNoDataContent().waitForState(),
+      ]);
     }
   }
 }
