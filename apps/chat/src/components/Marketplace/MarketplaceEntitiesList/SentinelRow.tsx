@@ -12,8 +12,8 @@ export function SentinelRow({ children, dataQa, isTable }: Props) {
   return (
     <h2
       className={classNames(
-        'col-span-full flex items-center pb-2 text-xl font-semibold',
-        isTable && 'pl-4',
+        'col-span-full pb-2 text-xl font-semibold',
+        isTable && 'pl-4 pt-4',
       )}
       data-qa={dataQa}
     >

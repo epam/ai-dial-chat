@@ -99,6 +99,7 @@ export * from './common/popup';
 export * from './common/switcher';
 export * from './common/tab';
 export * from './common/confirmationPopup';
+export * from './common/fileConflictResolutionPopup';
 export * from './common/loader';
 export * from './common/input';
 export * from './common/tooltipPortal';
