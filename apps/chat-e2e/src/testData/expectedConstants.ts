@@ -74,9 +74,7 @@ export const ExpectedConstants = {
     'Deleting will stop sharing and other users will no longer see this prompt.',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
-  unsharePromptConfirmationModalTitle: 'Confirm unshare prompt',
-  unsharePromptConfirmationModalMessage:
-    'Are you sure that you want to unshare a prompt?',
+  unsharePromptConfirmationModalTitle: 'Confirm unsharing',
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
@@ -126,6 +124,10 @@ export const ExpectedConstants = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
   removeAccessTitle: 'Confirm unsharing',
+  unshareFileTitle: 'Confirm unsharing file',
+  unshareFileMessage: 'Are you sure that you want to unshare this file?',
+  unsharedSuccessfullyToast: (name: string) =>
+    `"${name}" has been unshared successfully`,
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
@@ -157,6 +159,10 @@ export const ExpectedConstants = {
   modelNotFountErrorMessage:
     'Agent is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
+  fileNameWithDotErrorMessage:
+    'Using a dot at the end of a File name is not permitted.',
+  folderNameWithDotErrorMessage:
+    'Using a dot at the end of a Folder name is not permitted.',
   notAllowedDuplicatedFolderNameErrorMessage:
     'Not allowed to have folders with same names',
   duplicatedFolderNameErrorMessage: (name: string) =>
@@ -366,12 +372,22 @@ export const ExpectedConstants = {
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
+  replaceGroupAttachmentConfirmationTitle: 'Replace Or Duplicate Items',
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
+  duplicatedFileName: (name: string, index = 1) => {
+    const dotIdx = name.lastIndexOf('.');
+    if (dotIdx <= 0) return `${name} (${index})`;
+    return `${name.substring(0, dotIdx)} (${index})${name.substring(dotIdx)}`;
+  },
   failedToMoveFileMessage: 'Failed to move files. Please try again later.',
+  failedToDeleteFilesMessage: 'Failed to delete files. Please try again later.',
   uploadingItemsMessage: (count: number) => `0 of ${count} items uploaded...`,
   uploadFailedMessage:
     'Upload failedPlease check your internet connection and try again.',
+  itemCopiedSuccessTitle: 'Item copied successfully',
+  itemCopiedToMyFilesMessage: (name: string) =>
+    `Item copied successfully\u201C${name}\u201D copied to My Files`,
 };
 
 export enum Types {
@@ -512,6 +528,8 @@ export const API = {
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
+  moveFilesHost: '/api/files/move',
+  copyFilesHost: '/api/files/copy',
   importFileRootPath: (bucket: string) => `${API.filesHostSegment}/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string, modelId: string) =>
