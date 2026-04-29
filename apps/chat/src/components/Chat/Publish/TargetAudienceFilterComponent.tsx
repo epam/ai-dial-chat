@@ -29,8 +29,8 @@ import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
 import {
-  DialGhostIconButton,
   DialPrimaryButton,
+  DialPrimaryIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
@@ -331,7 +331,7 @@ export function TargetAudienceFilterComponent({
       )}
       <div className="flex min-h-[31px] gap-2 bg-layer-3 px-2 py-[3.5px]">
         <CloseButtonSmall onClick={onCloseFilter} data-qa="cancel-filter" />
-        <DialGhostIconButton
+        <DialPrimaryIconButton
           size={ElementSize.Small}
           data-qa="save-filter"
           onClick={handleSaveFilter}
