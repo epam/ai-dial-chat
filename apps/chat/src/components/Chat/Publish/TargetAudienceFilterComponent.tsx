@@ -261,13 +261,15 @@ export function TargetAudienceFilterComponent({
                 />
               ) : (
                 <MultipleComboBox
-                  className="flex min-h-[38px] items-center rounded border border-primary"
+                  className="flex min-h-[38px] items-start sm:items-center  rounded border border-primary"
                   initialSelectedItems={filterParams}
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
                   placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
                   inputRef={valuesInputRef}
+                  hasDeleteAll
+                  closeButtonClassName="pt-1 pr-1"
                   showConnectorBetweenSelectedItems
                   connectorLabel={tChat(ChatI18nKeys.Or)}
                 />

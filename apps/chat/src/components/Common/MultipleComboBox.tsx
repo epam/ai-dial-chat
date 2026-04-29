@@ -68,6 +68,7 @@ interface Props<T> {
   itemRow?: FC<{ item: T }>;
   selectedItemRow?: FC<{ item: T }>;
   disabled?: boolean;
+  closeButtonClassName?: string;
   hasDeleteAll?: boolean;
   itemHeightClassName?: string;
   fontSize?: string;
@@ -102,6 +103,7 @@ export function MultipleComboBox<T>({
   className,
   validationRegExp,
   hideSuggestions,
+  closeButtonClassName,
   tooltip,
   getItemLabel,
   getItemValue,
@@ -395,7 +397,8 @@ export function MultipleComboBox<T>({
           </ul>
         </div>
         {hasDeleteAll && selectedItems.length > 0 ? (
-          <CloseButtonSmall
+        <div className={closeButtonClassName}>
+            <CloseButtonSmall
             className="text-primary"
             disabled={disabled}
             onClick={(e) => {
@@ -404,6 +407,7 @@ export function MultipleComboBox<T>({
               onChangeSelectedItems([]);
             }}
           />
+        </div>
         ) : null}
       </div>
     </Tooltip>
