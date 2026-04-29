@@ -124,7 +124,7 @@ export function ApplicationDetails({
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <div className="flex flex-col min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col">
         <ApplicationDetailsHeader entity={entity} isPreview={isPreview} />
         <div className="min-h-0 flex-1 overflow-auto">
           <ApplicationDetailsContent entity={entity} />
