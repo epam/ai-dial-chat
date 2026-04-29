@@ -124,16 +124,20 @@ export function ApplicationDetails({
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader entity={entity} isPreview={isPreview} />
-      <ApplicationDetailsContent entity={entity} />
-      <FooterComponent
-        onUseEntity={handleUseEntity}
-        onChangeVersion={onChangeVersion}
-        entity={entity}
-        allVersions={filteredEntities}
-        onBookmarkClick={onBookmarkClick}
-        onRemove={onRemove}
-      />
+      <div className="flex flex-col min-h-0 flex-1">
+        <ApplicationDetailsHeader entity={entity} isPreview={isPreview} />
+        <div className="min-h-0 flex-1 overflow-auto">
+          <ApplicationDetailsContent entity={entity} />
+        </div>
+        <FooterComponent
+          onUseEntity={handleUseEntity}
+          onChangeVersion={onChangeVersion}
+          entity={entity}
+          allVersions={filteredEntities}
+          onBookmarkClick={onBookmarkClick}
+          onRemove={onRemove}
+        />
+      </div>
     </Modal>
   );
 }
