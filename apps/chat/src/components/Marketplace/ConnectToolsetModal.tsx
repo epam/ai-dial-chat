@@ -14,7 +14,6 @@ import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
