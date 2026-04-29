@@ -90,7 +90,9 @@ export const PromptPublicationSidebarResources = ({
     },
     [dispatch, publicationUrl],
   );
-
+  if (rootPublicationFolders.length === 0 && itemsToDisplay.length === 0) {
+    return null;
+  }
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootPublicationFolders.map((folder) => (
@@ -191,6 +193,9 @@ export const ConversationPublicationSidebarResources = ({
     [dispatch, publicationUrl],
   );
 
+  if (rootPublicationFolders.length === 0 && itemsToDisplay.length === 0) {
+    return null;
+  }
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootPublicationFolders.map((folder) => (
