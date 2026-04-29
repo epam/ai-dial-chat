@@ -326,11 +326,16 @@ const CodeEditorView = ({ selectedFileId, readOnly }: CodeEditorViewProps) => {
 interface Props {
   sourcesFolderId: string | undefined;
   readOnly?: boolean;
+  reviewBucket?: string;
 }
 
 const ALLOWED_PRE_UPLOAD_DIALOG_TYPES = ['*/*'];
 
-export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
+export const CodeEditor = ({
+  sourcesFolderId,
+  readOnly,
+  reviewBucket,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -779,6 +784,7 @@ export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
             onClose={handleUploadFilesClose}
             maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
             rootFolderId={sourcesFolderId}
+            reviewBucket={reviewBucket}
           />
         )}
         <ConfirmDialog

@@ -60,6 +60,7 @@ export const OpenAIStream = async ({
   chatReference,
   userJWT,
   jobTitle,
+  language,
   maxRequestTokens,
   configurationSchemaValue,
   channelId,
@@ -69,6 +70,7 @@ export const OpenAIStream = async ({
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
+  language?: string;
   maxRequestTokens: number | undefined;
   configurationSchemaValue?: MessageFormValue;
   temperature?: number;
@@ -81,6 +83,7 @@ export const OpenAIStream = async ({
     chatReference,
     jwt: userJWT,
     jobTitle,
+    language,
   });
 
   if (channelId) {

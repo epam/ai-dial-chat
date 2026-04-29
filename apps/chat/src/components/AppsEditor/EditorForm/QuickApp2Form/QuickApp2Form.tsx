@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 import {
   Controller,
   useFormContext,
@@ -67,6 +67,7 @@ import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch'
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
+import { DialInput } from '@epam/ai-dial-ui-kit';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -200,6 +201,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           render={({ field }) => (
             <DialMarkdownEditorContainer
               label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+              placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
               value={field.value}
               onChangeValue={field.onChange}
               height={200}
@@ -300,9 +302,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
       <FormCollapsibleSection
         name={t(MarketplaceI18nKeys.ConversationStarters)}
-        description={t(
-          'Starters are buttons close the chat input that offer prompts to help users initiate a conversation',
-        )}
+        description={t(MarketplaceI18nKeys.StartersDescription)}
         dataQa="conversation-starters-section"
       >
         <Controller
@@ -328,18 +328,27 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               )}
             </p>
           </div>
-
-          <ControlledField
-            label={t(MarketplaceI18nKeys.IntroText)}
-            placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
-            id="introText"
-            isSubgroup
-            error={errors.introText?.message}
-            control={control}
+          <Controller
             name="introText"
-            info={t(MarketplaceI18nKeys.OptionalTextShownAboveTheStarters)}
-            disabled={isAppPublic || !hasStarters}
-            tooltip={startersSettingsTooltip}
+            control={control}
+            render={({ field }) => (
+              <DialInput
+                labelProps={{
+                  label: t(MarketplaceI18nKeys.IntroText),
+                  caption: t(
+                    MarketplaceI18nKeys.OptionalTextShownAboveTheStarters,
+                  ),
+                }}
+                placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
+                id="introText"
+                name="introText"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isAppPublic || !hasStarters}
+                error={errors.introText?.message}
+                tooltipText={startersSettingsTooltip}
+              />
+            )}
           />
 
           <Controller
@@ -347,7 +356,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             control={control}
             render={({ field }) => (
               <StartersBehaviourField
-                label={t(MarketplaceI18nKeys.StartersBehaviour)}
+                label={t(MarketplaceI18nKeys.StartersBehavior)}
                 value={field.value}
                 isSubgroup
                 onChange={field.onChange}
@@ -391,7 +400,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             {t(CommonI18nKeys.ConnectApplication)}
           </h5>
           <CopyUrlButton
-            id={appDetails.id}
+            entity={appDetails}
             label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
           />
         </div>
