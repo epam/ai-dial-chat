@@ -178,6 +178,16 @@ export const MarketplaceEntitiesTiles: React.FC<
 
       return rowsHeight;
     },
+    getItemKey: (index) =>
+      range(colsCount)
+        // create one unique key for all items in the row
+        .map((i) => {
+          const item = allEntitiesRef.current[index * colsCount + i];
+          if (!item) return '_';
+          if (isString(item)) return item;
+          return item.id;
+        })
+        .join('|'),
     overscan: 3,
   });
 
@@ -185,7 +195,7 @@ export const MarketplaceEntitiesTiles: React.FC<
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [screenState, allEntities, rowVirtualizer]);
+  }, [screenState, rowVirtualizer]);
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const listHeight = rowVirtualizer.getTotalSize();

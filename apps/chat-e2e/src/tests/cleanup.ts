@@ -137,6 +137,7 @@ dialTest(
     const publishedE2EFiles = publishedFiles.items?.filter(
       (item) =>
         item.name.startsWith(filenamePrefix) ||
+        item.name.startsWith('.' + filenamePrefix) ||
         Object.values(Attachment).includes(item.name),
     );
     for (const file of publishedE2EFiles || []) {
