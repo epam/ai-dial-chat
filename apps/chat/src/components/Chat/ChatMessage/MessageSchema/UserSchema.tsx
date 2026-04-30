@@ -28,7 +28,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const emptyHandler = () => undefined;
 
@@ -116,11 +116,11 @@ const UserSchemaView = memo(function UserSchemaView({
                 <DialButton
                   key={String(option.value)}
                   className={classNames(
-                    'chat-button',
+                    'chat-button truncate',
                     option.selected && 'button-accent-primary',
                   )}
                   disabled
-                  label={option.label}
+                  label={<DialEllipsisTooltip text={option.label} />}
                 />
               ))}
             </div>

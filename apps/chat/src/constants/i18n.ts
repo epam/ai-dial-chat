@@ -321,7 +321,9 @@ export enum CommonI18nKeys {
   Copied = 'Copied ',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
-  ShareLimitExceeded = 'Limit is exceeded on the number of accepted users for the resource: {{name}}',
+  LimitExceeded = 'Limit exceeded',
+  ShareLimitExceeded = '"{{name}}" has already been shared with the maximum specified number of users.',
+  ShareLimitExceededWithVersion = '"{{name}}" version {{version}} has already been shared with the maximum specified number of users.',
 }
 
 // errors.json
@@ -479,8 +481,6 @@ export enum PromptBarI18nKeys {
   UnsavedChanges = 'Unsaved changes',
   UnsavedChangesCaption = 'There are unsaved changes. Do you want to save them before closing?',
   NotSave = 'Don`t save',
-  ConfirmUnsharePrompt = 'Confirm unshare prompt',
-  ConfirmUnsharePromptCaption = 'Are you sure that you want to unshare a prompt?',
   Unshare = 'Unshare',
   ConfirmDeletingPrompt = 'Confirm deleting prompt',
   ConfirmDeletingPromptCaption = 'Are you sure that you want to delete a prompt?',
@@ -783,8 +783,6 @@ export enum ChatI18nKeys {
   SeeResultsFrom = 'See results from',
   BaseTextTabName = '{{baseText}} {{tabName}}',
   MaxAllowedAttachmentsNumber = 'Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}',
-  ConfirmUnsharePrompt = 'Confirm unshare prompt',
-  ConfirmUnsharePromptCaption = 'Are you sure that you want to unshare a prompt?',
   Unshare = 'Unshare',
   InfoChat = 'Info',
   SaveAndExit = 'Save and exit',

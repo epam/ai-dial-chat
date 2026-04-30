@@ -166,8 +166,14 @@ export const getVersionValidationErrors = (
 };
 
 export const preventEnterDown = (e: KeyboardEvent<HTMLFormElement>) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    e.stopPropagation();
+  if (
+    e.key !== 'Enter' ||
+    !e.target ||
+    (e.target as HTMLElement).tagName !== 'INPUT'
+  ) {
+    return;
   }
+
+  e.preventDefault();
+  e.stopPropagation();
 };

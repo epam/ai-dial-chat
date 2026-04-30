@@ -31,6 +31,7 @@ export interface DialMarkdownEditorContainerProps {
   theme?: EditorThemes;
   onValidateJSON?: OnValidate;
   preview?: PreviewType;
+  placeholder?: string;
 }
 
 const monacoEditorOptions = {
@@ -51,6 +52,7 @@ export const DialMarkdownEditorContainer: FC<
   theme = EditorThemes.dark,
   onValidateJSON,
   preview = 'edit',
+  placeholder,
 }) => {
   const [isJSONContentMode, setIsJSONContentMode] = useState(false);
   const [isEditorMounted, setIsEditorMounted] = useState(false);
@@ -118,6 +120,7 @@ export const DialMarkdownEditorContainer: FC<
           height={height}
           preview={preview}
           theme={theme}
+          placeholder={placeholder}
         />
       )}
     </div>

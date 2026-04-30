@@ -42,7 +42,7 @@ export const SuggestedMessage: React.FC<SuggestedMessageProps> = ({
         </span>
       </div>
       <span
-        className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8"
+        className="mb-4 mt-5 text-xl font-semibold md:mt-6 lg:mt-8"
         data-qa="marketplace-suggestions-label"
       >
         {t(MarketplaceI18nKeys.SuggestedResults)}

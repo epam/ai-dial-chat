@@ -20,6 +20,7 @@ interface Props {
   dataQa: string;
   rightSide?: boolean;
   isOverlay?: boolean;
+  filterIndicator?: boolean;
 }
 
 export const ToggleSidebarButton: React.FC<Props> = ({
@@ -30,6 +31,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   dataQa,
   rightSide = false,
   isOverlay = false,
+  filterIndicator = false,
 }) => {
   const { t } = useTranslation(Translation.Header);
 
@@ -43,6 +45,21 @@ export const ToggleSidebarButton: React.FC<Props> = ({
 
   const Icon = isOpened ? MoveLeftIcon : MoveRightIcon;
 
+  const IconContent = (
+    <div className="relative">
+      <Icon
+        className={classNames(
+          'text-secondary hover:text-accent-primary',
+          rightSide && 'rotate-180',
+        )}
+        width={iconSize}
+        height={iconSize}
+      />
+      {!isOpened && filterIndicator && (
+        <div className="absolute right-0 top-0 size-[12px] rounded-full bg-accent-primary"></div>
+      )}
+    </div>
+  );
   return (
     <DialButton
       className={classNames(
@@ -52,16 +69,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
       tooltipProps={{ isTriggerClickable: true, tooltip: t(tooltip) }}
       data-qa={dataQa}
       onClick={handleToggle}
-      iconBefore={
-        <Icon
-          className={classNames(
-            'text-secondary hover:text-accent-primary',
-            rightSide && 'rotate-180',
-          )}
-          width={iconSize}
-          height={iconSize}
-        />
-      }
+      iconBefore={IconContent}
     />
   );
 };
