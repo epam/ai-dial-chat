@@ -29,8 +29,8 @@ import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
 import {
-  DialGhostIconButton,
   DialPrimaryButton,
+  DialPrimaryIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
@@ -79,7 +79,7 @@ export function TargetAudienceFilterComponent({
   );
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
-  const [selectedTarget, setSelectedTarget] = useState(emptySelector);
+  const [selectedTarget, setSelectedTarget] = useState(t(emptySelector));
   const [targetMenuOpen, setTargetMenuOpen] = useState(true);
 
   const filterRowRef = useRef<HTMLDivElement>(null);
@@ -261,13 +261,15 @@ export function TargetAudienceFilterComponent({
                 />
               ) : (
                 <MultipleComboBox
-                  className="flex min-h-[38px] items-center rounded border border-primary"
+                  className="flex min-h-[38px] items-start rounded  border border-primary sm:items-center"
                   initialSelectedItems={filterParams}
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
                   placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
                   inputRef={valuesInputRef}
+                  hasDeleteAll
+                  closeButtonClassName="pt-1 pr-1"
                   showConnectorBetweenSelectedItems
                   connectorLabel={tChat(ChatI18nKeys.Or)}
                 />
@@ -331,7 +333,7 @@ export function TargetAudienceFilterComponent({
       )}
       <div className="flex min-h-[31px] gap-2 bg-layer-3 px-2 py-[3.5px]">
         <CloseButtonSmall onClick={onCloseFilter} data-qa="cancel-filter" />
-        <DialGhostIconButton
+        <DialPrimaryIconButton
           size={ElementSize.Small}
           data-qa="save-filter"
           onClick={handleSaveFilter}
