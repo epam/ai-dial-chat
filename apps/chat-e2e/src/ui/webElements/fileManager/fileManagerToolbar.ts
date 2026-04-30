@@ -126,6 +126,12 @@ export class FileManagerToolbar extends BaseElement {
     }
   }
 
+  public async clearSelection(): Promise<void> {
+    await this.getChildElementBySelector(
+      FileManagerSelectors.selectedItemsButton,
+    ).click();
+  }
+
   public myFilesTab = this.getToolbarTabs().tabByName(
     FileManagerToolbarTabs.MyFiles,
   );

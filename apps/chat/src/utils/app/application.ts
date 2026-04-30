@@ -8,6 +8,7 @@ import {
   getMarketplaceEntityApiKey,
   parseEntityApiKey,
 } from '@/src/utils/server/api';
+import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -533,3 +534,6 @@ export const getQuickAppItemNameFromConfig = (
 
   return item.deployment_id;
 };
+
+export const getApplicationMcpUrl = (id: string) =>
+  `${DefaultsService.get('dialCoreExternalUrl')}/v1/deployments/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;

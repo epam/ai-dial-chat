@@ -207,7 +207,7 @@ export const QuickAppForm = () => {
 
       {doesAgentSupportMcp(appDetails) && (
         <CopyUrlButton
-          id={appDetails.id}
+          entity={appDetails}
           label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
         />
       )}

@@ -332,8 +332,7 @@ const dialAdminTest = dialTest.extend<{
     await use(adminFileDropArea);
   },
   adminChat: async ({ adminFileDropArea }, use) => {
-    const additionalShareUserChat = adminFileDropArea.getChat();
-    await use(additionalShareUserChat);
+    await use(adminFileDropArea.getChat());
   },
   adminChatHeaderDropdownMenu: async ({ adminPage }, use) => {
     const adminChatHeaderDropdownMenu = new DropdownMenu(adminPage);
@@ -370,18 +369,13 @@ const dialAdminTest = dialTest.extend<{
     await use(adminMarketplaceEntities);
   },
   adminConversations: async ({ adminChatBar }, use) => {
-    const additionalShareUserConversations =
-      adminChatBar.getConversationsTree();
-    await use(additionalShareUserConversations);
+    await use(adminChatBar.getConversationsTree());
   },
   adminPrompts: async ({ adminPromptBar }, use) => {
-    const additionalShareUserPrompts = adminPromptBar.getPromptsTree();
-    await use(additionalShareUserPrompts);
+    await use(adminPromptBar.getPromptsTree());
   },
   adminFolderPrompts: async ({ adminPromptBar }, use) => {
-    const additionalShareUserFolderPrompts =
-      adminPromptBar.getPinnedFolderPrompts();
-    await use(additionalShareUserFolderPrompts);
+    await use(adminPromptBar.getPinnedFolderPrompts());
   },
   adminApproveRequiredConversations: async ({ adminChatBar }, use) => {
     const adminApproveRequiredConversations =

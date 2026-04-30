@@ -1,6 +1,6 @@
 import { API } from '@/src/testData';
 import { FolderTreeSelectors, IconSelectors } from '@/src/ui/selectors';
-import { BaseElement, Dropdown } from '@/src/ui/webElements';
+import { BaseElement, Dropdown, Input } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -71,6 +71,16 @@ export class FoldersTree extends BaseElement {
     } else {
       await this.folderByPathCaret(...path).click();
     }
+  }
+
+  public getRenameInput(): BaseElement {
+    return new Input(this.page, this.rootLocator).inputField;
+  }
+
+  public async openFolderDotsMenu(...path: string[]) {
+    const folderItem = this.folderByPath(...path);
+    await folderItem.hover();
+    await folderItem.locator(IconSelectors.dotsMenuIcon).click();
   }
 
   public async expandFolders(
