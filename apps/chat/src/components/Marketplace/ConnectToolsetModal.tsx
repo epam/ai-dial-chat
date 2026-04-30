@@ -66,6 +66,7 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
           : MarketplaceI18nKeys.ConnectToolset
       }
       size={PopupSize.Sm}
+      className="!h-auto"
       onClose={handleClose}
     >
       <div className="flex flex-col divide-y divide-tertiary">
