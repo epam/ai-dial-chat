@@ -39,6 +39,7 @@ export const CodeEditor = ({
   reviewBucket,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -95,7 +96,7 @@ export const CodeEditor = ({
           sourcesFolderId={sourcesFolderId}
           readOnly={readOnly}
           reviewBucket={reviewBucket}
-          onToggle={() => setIsSidebarOpen((prev) => !prev)}
+          onToggle={handleSidebarToggle}
         />
         <div className="flex max-h-full min-w-0 flex-col divide-y divide-tertiary rounded-r border border-tertiary bg-layer-3">
           <div
