@@ -20,6 +20,7 @@ import { RuleListItem } from '@/src/components/Chat/Publish/RuleListItem';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { FeatureType } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface ApplicationPublishInfoProps {
   entity: DialAIEntityModel;
@@ -47,6 +48,14 @@ const ApplicationPublishInfoView: FC<ApplicationPublishInfoProps> = ({
     [rules],
   );
 
+  const visibleRules = useMemo(
+    () =>
+      Object.entries(rules)
+        .filter(([_path, pathRules]) => !!pathRules.length)
+        .map(([path, pathRules]) => ({ path, pathRules })),
+    [rules],
+  );
+
   if (rulesLoading) {
     return (
       <div className="flex justify-center px-3 py-4 md:px-6">
@@ -64,7 +73,10 @@ const ApplicationPublishInfoView: FC<ApplicationPublishInfoProps> = ({
         <h4 className="text-sm font-semibold text-primary">
           {t(MarketplaceI18nKeys.PublishedTo)}
         </h4>
-        <p className="truncate text-sm text-primary">{publishedTo}</p>
+        <DialEllipsisTooltip
+          text={publishedTo}
+          className="truncate text-sm text-primary"
+        />
       </div>
 
       {isThereRules && (
@@ -74,8 +86,8 @@ const ApplicationPublishInfoView: FC<ApplicationPublishInfoProps> = ({
           </h4>
 
           <div className="flex flex-col">
-            {Object.entries(rules).map(([path, rules]) => (
-              <RuleListItem key={path} path={path} rules={rules} />
+            {visibleRules.map(({ path, pathRules }) => (
+              <RuleListItem key={path} path={path} rules={pathRules} />
             ))}
           </div>
         </div>
