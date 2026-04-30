@@ -14,7 +14,6 @@ import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
-import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -67,6 +66,7 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
           : MarketplaceI18nKeys.ConnectToolset
       }
       size={PopupSize.Sm}
+      className="!h-auto"
       onClose={handleClose}
     >
       <div className="flex flex-col divide-y divide-tertiary">
@@ -77,13 +77,12 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
             <span className="text-sm font-semibold text-primary">
               {entity.name}
             </span>
+            {entity.version ? (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-primary">
+                  {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
+                </span>
 
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-primary">
-                {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
-              </span>
-
-              {entity.version ? (
                 <ModelVersionSelect
                   entities={allVersions}
                   currentEntity={entity}
@@ -91,10 +90,8 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
                   className="truncate"
                   triggerClassName="!text-xs bg-layer-4 rounded p-1"
                 />
-              ) : (
-                <span className="text-xs text-secondary">{t(NA_VERSION)}</span>
-              )}
-            </div>
+              </div>
+            ) : null}
           </div>
         </div>
 

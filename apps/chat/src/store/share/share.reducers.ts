@@ -8,7 +8,7 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { ShareRelations } from '@/src/types/share';
+import { InvitationDetails, ShareRelations } from '@/src/types/share';
 
 import { ShareState, UnshareFileManagerItem } from './share.types';
 
@@ -232,6 +232,7 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string;
+        details?: InvitationDetails;
       }>,
     ) => state,
     resetAcceptedEntityInfo: (state) => {
