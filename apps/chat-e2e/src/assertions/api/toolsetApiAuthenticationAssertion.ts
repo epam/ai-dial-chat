@@ -4,7 +4,7 @@ import {
   ToolsetCredentialsLevel,
 } from '@/chat/types/toolsets';
 import { BaseAssertion } from '@/src/assertions';
-import { OAuthQueryParams } from '@/src/testData';
+import { MarketplaceExpectedMessages, OAuthQueryParams } from '@/src/testData';
 import {
   OAuthMockConfig,
   ToolsetSignInRequest,
@@ -19,23 +19,34 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
   ) {
     const redirectUrl = new URL(state.capturedOAuthUrl!);
     const params = redirectUrl.searchParams;
-    this.assertValueIsNotUndefined(state.capturedState);
-    this.assertValue(params.get(OAuthQueryParams.responseType), 'code');
+    this.assertValueIsNotUndefined(
+      state.capturedState,
+      MarketplaceExpectedMessages.toolsetOAuthRedirectStateIsDefined,
+    );
+    this.assertValue(
+      params.get(OAuthQueryParams.responseType),
+      'code',
+      MarketplaceExpectedMessages.toolsetOAuthRedirectResponseTypeIsValid,
+    );
     this.assertValue(
       params.get(OAuthQueryParams.codeChallengeMethod),
       mockConfig.code_challenge_method,
+      MarketplaceExpectedMessages.toolsetOAuthRedirectCodeChallengeMethodIsValid,
     );
     this.assertValue(
       params.get(OAuthQueryParams.clientId),
       mockConfig.client_id,
+      MarketplaceExpectedMessages.toolsetOAuthRedirectClientIdIsValid,
     );
     this.assertStringIncludes(
       params.get(OAuthQueryParams.redirectUri)!,
       Routes.ToolsetSignIn,
+      MarketplaceExpectedMessages.toolsetOAuthRedirectUriIsValid,
     );
     this.assertValue(
       params.get(OAuthQueryParams.scope),
       mockConfig.scopes_supported.join(' '),
+      MarketplaceExpectedMessages.toolsetSupportedScopesAreValid,
     );
   }
 
@@ -48,10 +59,26 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
       authorizationCode: string;
     },
   ) {
-    this.assertValue(request.url, decodeURIComponent(expectedValues.url));
-    this.assertValue(request.authenticationType, expectedValues.authType);
-    this.assertValue(request.credentialsLevel, expectedValues.credentialsLevel);
-    this.assertValue(request.code, expectedValues.authorizationCode);
+    this.assertValue(
+      request.url,
+      decodeURIComponent(expectedValues.url),
+      MarketplaceExpectedMessages.toolsetSignInUrlValid,
+    );
+    this.assertValue(
+      request.authenticationType,
+      expectedValues.authType,
+      MarketplaceExpectedMessages.toolsetSignInAuthTypeIsValid,
+    );
+    this.assertValue(
+      request.credentialsLevel,
+      expectedValues.credentialsLevel,
+      MarketplaceExpectedMessages.toolsetSignInCredentialsLevelIsValid,
+    );
+    this.assertValue(
+      request.code,
+      expectedValues.authorizationCode,
+      MarketplaceExpectedMessages.toolsetSignInCodeIsValid,
+    );
   }
 
   public assertSignOutRequest(
@@ -62,8 +89,20 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
       credentialsLevel: ToolsetCredentialsLevel;
     },
   ) {
-    this.assertValue(request.url, decodeURIComponent(expectedValues.url));
-    this.assertValue(request.authenticationType, expectedValues.authType);
-    this.assertValue(request.credentialsLevel, expectedValues.credentialsLevel);
+    this.assertValue(
+      request.url,
+      decodeURIComponent(expectedValues.url),
+      MarketplaceExpectedMessages.toolsetSignOutUrlValid,
+    );
+    this.assertValue(
+      request.authenticationType,
+      expectedValues.authType,
+      MarketplaceExpectedMessages.toolsetSignOutAuthTypeIsValid,
+    );
+    this.assertValue(
+      request.credentialsLevel,
+      expectedValues.credentialsLevel,
+      MarketplaceExpectedMessages.toolsetSignOutCredentialsLevelIsValid,
+    );
   }
 }
