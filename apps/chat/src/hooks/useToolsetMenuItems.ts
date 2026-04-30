@@ -103,6 +103,17 @@ export const useToolsetMenuItems = ({
         onClick: handleLogin,
       },
       {
+        name: t(MarketplaceI18nKeys.ManageCreds),
+        dataQa: 'toolset-login',
+        display:
+          disabledActions.login !== true &&
+          isWithAuth &&
+          isPublicApp &&
+          isAdmin,
+        Icon: IconKey,
+        onClick: handleLogin,
+      },
+      {
         name: t(MarketplaceI18nKeys.Connect),
         dataQa: 'toolset-connect',
         display: disabledActions?.connect !== true && !!dialCoreExternalUrl,
@@ -126,17 +137,6 @@ export const useToolsetMenuItems = ({
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
-      },
-      {
-        name: t(MarketplaceI18nKeys.ManageCreds),
-        dataQa: 'toolset-login',
-        display:
-          disabledActions.login !== true &&
-          isWithAuth &&
-          isPublicApp &&
-          isAdmin,
-        Icon: IconKey,
-        onClick: handleLogin,
       },
 
       // {
