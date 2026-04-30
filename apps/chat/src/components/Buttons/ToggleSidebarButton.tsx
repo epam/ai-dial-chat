@@ -55,7 +55,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
         width={iconSize}
         height={iconSize}
       />
-      {filterIndicator && (
+      {!isOpened && filterIndicator && (
         <div className="absolute right-0 top-0 size-[12px] rounded-full bg-accent-primary"></div>
       )}
     </div>
