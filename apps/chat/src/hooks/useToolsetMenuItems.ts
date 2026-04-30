@@ -89,6 +89,20 @@ export const useToolsetMenuItems = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t(getToolsetAuthActionLabel(authAction, screenState)),
+        dataQa: 'toolset-login',
+        display:
+          disabledActions.login !== true &&
+          isWithAuth &&
+          !(isPublicApp && isAdmin),
+        Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
+        iconClassName:
+          authAction === ToolsetAuthAction.LogOut
+            ? 'stroke-error'
+            : 'stroke-accent-secondary',
+        onClick: handleLogin,
+      },
+      {
         name: t(MarketplaceI18nKeys.Connect),
         dataQa: 'toolset-connect',
         display: disabledActions?.connect !== true && !!dialCoreExternalUrl,
@@ -124,20 +138,7 @@ export const useToolsetMenuItems = ({
         Icon: IconKey,
         onClick: handleLogin,
       },
-      {
-        name: t(getToolsetAuthActionLabel(authAction, screenState)),
-        dataQa: 'toolset-login',
-        display:
-          disabledActions.login !== true &&
-          isWithAuth &&
-          !(isPublicApp && isAdmin),
-        Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
-        iconClassName:
-          authAction === ToolsetAuthAction.LogOut
-            ? 'stroke-error'
-            : 'stroke-accent-secondary',
-        onClick: handleLogin,
-      },
+
       // {
       //   name: t('Share'),
       //   dataQa: 'share',
