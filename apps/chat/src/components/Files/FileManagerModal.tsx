@@ -127,7 +127,11 @@ export const FileManagerModal = memo(
 
         for (const id of added) {
           if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
+            dispatch(
+              FilesActions.setChosenFolder({
+                folderId: id,
+              }),
+            );
           } else {
             dispatch(FilesActions.setChosenFiles({ ids: [id] }));
           }
