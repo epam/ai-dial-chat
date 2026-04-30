@@ -4,7 +4,11 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  MarketplaceSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_HEADER_ICON_SIZE,
@@ -34,6 +38,10 @@ export const MarketplaceHeader = () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
+  const { selectedFilters } = useAppSelector(
+    MarketplaceSelectors.selectFiltersContent,
+  );
+
   return (
     <BaseHeader
       LeftItems={
@@ -44,6 +52,9 @@ export const MarketplaceHeader = () => {
           onToggle={handleToggleFilterbar}
           dataQa="left-panel-toggle"
           isOverlay={isOverlay}
+          filterIndicator={Object.values(selectedFilters).some(
+            (filters) => filters.length > 0,
+          )}
         />
       }
     />
