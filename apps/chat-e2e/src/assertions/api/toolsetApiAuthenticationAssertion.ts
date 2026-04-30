@@ -48,7 +48,7 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
       authorizationCode: string;
     },
   ) {
-    this.assertValue(request.url, expectedValues.url);
+    this.assertValue(request.url, decodeURIComponent(expectedValues.url));
     this.assertValue(request.authenticationType, expectedValues.authType);
     this.assertValue(request.credentialsLevel, expectedValues.credentialsLevel);
     this.assertValue(request.code, expectedValues.authorizationCode);
@@ -62,7 +62,7 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
       credentialsLevel: ToolsetCredentialsLevel;
     },
   ) {
-    this.assertValue(request.url, expectedValues.url);
+    this.assertValue(request.url, decodeURIComponent(expectedValues.url));
     this.assertValue(request.authenticationType, expectedValues.authType);
     this.assertValue(request.credentialsLevel, expectedValues.credentialsLevel);
   }

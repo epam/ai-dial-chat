@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
-import { GeneratorUtil, ItemUtil, toolsetNamePrefix } from '@/src/utils';
+import { GeneratorUtil, toolsetNamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
@@ -238,7 +238,7 @@ dialTest(
     await dialTest.step('Verify log-out request body', async () => {
       const signOutRequest = oauthMockHelper.getSignOutRequest()!;
       toolsetApiAuthenticationAssertion.assertSignOutRequest(signOutRequest, {
-        url: updatedId,
+        url: initialToolset.id!,
         authType: ToolsetAuthTypes.OAUTH,
         credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
       });
@@ -260,7 +260,7 @@ dialTest(
         );
         await toolsetAuthAssertion.assertAuthState(
           oauthMockHelper.getSignInRequest()!,
-          updatedId,
+          initialToolset.id!,
           Creds.myCreds,
           SignInButtonTitles.logOut,
         );
@@ -289,12 +289,13 @@ dialTest(
 
     await dialTest.step('Update toolset version and click Next', async () => {
       //get real toolset object from BE
-      realToolset = await itemApiHelper.getItem<Toolset>(
-        ItemUtil.getEncodedItemId(updatedId),
-      );
+      realToolset = await itemApiHelper.getItem<Toolset>(initialToolset.id!);
 
       //intercept toolset routes with a new version
-      updatedId = updatedId.replace(toolsetEntity.version, updatedVersion);
+      updatedId = initialToolset.id!.replace(
+        toolsetEntity.version,
+        updatedVersion,
+      );
       await oauthMockHelper.setupUpdatedToolsetRoutes({
         display_version: updatedVersion,
         id: updatedId,

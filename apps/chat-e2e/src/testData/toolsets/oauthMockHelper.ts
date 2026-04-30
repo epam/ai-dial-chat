@@ -207,11 +207,12 @@ export class OAuthMockHelper {
 
   public async setupToolsetRoutes(updatedToolset?: Toolset): Promise<void> {
     this.toolset = updatedToolset ?? this.toolset;
+    const decodedToolsetId = decodeURIComponent(this.toolset.id!);
     // context-level so the popup can also fetch the toolset (e.g. after login)
     await this.page
       .context()
       .route(
-        `**${API.api}/${ItemUtil.getEncodedItemId(this.toolset.id!)}`,
+        `**${API.api}/${ItemUtil.getEncodedItemId(decodedToolsetId)}`,
         async (route, request) => {
           const method = request.method();
           // Allow initial GET to go through unmocked
