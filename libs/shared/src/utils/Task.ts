@@ -23,6 +23,7 @@ export class Task {
   fail(reason = 'Task failed') {
     if (this.isResolved) return;
 
+    this.isResolved = true;
     this.reject(reason);
   }
 

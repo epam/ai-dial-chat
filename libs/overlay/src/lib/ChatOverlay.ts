@@ -675,6 +675,7 @@ export class ChatOverlay {
    */
   destroy() {
     window.removeEventListener('message', this.process);
+    void this.iframeInteraction.ready().catch(() => {});
     this.iframeInteraction.fail('Chat Overlay destroyed');
     this.root.removeChild(this.iframe);
 
