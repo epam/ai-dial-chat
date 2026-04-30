@@ -11,8 +11,7 @@ import {
   triggerDownload,
 } from './file';
 import {
-  getCurrentDate,
-  getDownloadFileName,
+  getDownloadName,
   prepareConversationsForExport,
 } from './import-export';
 
@@ -63,10 +62,13 @@ async function getZippedFile({ files, conversations, folders }: GetZippedFile) {
 }
 
 export const downloadExportZip = (content: string, fileName?: string) => {
-  const downloadName = getDownloadFileName(fileName);
   triggerDownload(
     `data:application/zip;base64,${content}`,
-    `${downloadName}_chat_with_attachments_${getCurrentDate()}.dial`,
+    getDownloadName({
+      name: fileName,
+      extension: 'dial',
+      exportType: 'chat_with_attachments',
+    }),
   );
 };
 
