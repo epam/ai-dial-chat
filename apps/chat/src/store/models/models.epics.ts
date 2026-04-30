@@ -405,20 +405,6 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         'id',
       );
 
-      if (
-        !payload.references.every((payloadReference) =>
-          newInstalledModels.some(
-            (installedModel) => installedModel.id === payloadReference,
-          ),
-        )
-      ) {
-        return of(
-          ModelsActions.addInstalledModelsFail({
-            references: payload.references,
-          }),
-        );
-      }
-
       return ClientDataService.saveInstalledDeployments(
         newInstalledModels,
       ).pipe(
@@ -430,11 +416,15 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
               const actions: Observable<AppAction>[] = [];
+              const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
 
               const failedReferences = payload.references.filter(
                 (payloadReference) =>
                   !newInstalledModels.some(
-                    (installedModel) => installedModel.id === payloadReference,
+                    (installedModel) =>
+                      installedModel.id === payloadReference ||
+                      installedModel.id ===
+                        modelsMap[payloadReference]?.reference,
                   ),
               );
               if (failedReferences.length > 0) {
