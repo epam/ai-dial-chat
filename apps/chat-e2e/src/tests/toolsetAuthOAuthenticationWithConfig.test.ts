@@ -5,20 +5,22 @@ import {
   Creds,
   EntityEditorToolsetTypes,
   ExpectedConstants,
+  MarketplaceExpectedMessages,
   OAuthOptions,
   SignInButtonTitles,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, toolsetNamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
 dialTest(
-  'Create toolset with OAuth (without configuration).\n' +
-    '[Toolset]:Successful OAuth login after updating name and version for toolset (with login).\n' +
-    'Change endpoint with OAuth to another endpoint with OAuth',
+  '[Toolsets] Create toolset with OAuth (with configuration).\n' +
+    '[Toolset]: toolset request all available scopes on login when scopes field is empty.\n' +
+    '[Toolset]:Successful OAuth login after updating name and version for toolset (with login& config).\n' +
+    'Toolset with special symbols in name able to login vie OAuth',
   async ({
     marketplacePage,
     entityEditorPage,
@@ -34,21 +36,20 @@ dialTest(
     entityDetailsModalAssertion,
     entityEditorGeneralForm,
     confirmationDialog,
-    confirmationDialogAssertion,
     toolsetApiHelper,
     itemApiHelper,
     toolsetApiAuthenticationAssertion,
     page,
   }) => {
-    setTestIds('EPMRTC-6969', 'EPMRTC-7107', 'EPMRTC-7027');
+    setTestIds('EPMRTC-7056', 'EPMRTC-7925', 'EPMRTC-7149', 'EPMRTC-7057');
     const toolsetEntity = {
-      name: GeneratorUtil.randomToolsetName(),
+      name: toolsetNamePrefix + ExpectedConstants.allowedSpecialSymbolsInName(),
       version: GeneratorUtil.randomEntityVersion(),
       endpoint: GeneratorUtil.randomUrl(),
     };
-    const updatedName = GeneratorUtil.randomToolsetName();
+    const clientId = GeneratorUtil.randomString(7);
+    const clientSecret = GeneratorUtil.randomString(7);
     const updatedVersion = GeneratorUtil.randomEntityVersion();
-    const updatedEndpoint = GeneratorUtil.randomUrl();
     let updatedId: string;
     let realToolset: Toolset;
     let oauthMockHelper: OAuthMockHelper;
@@ -79,12 +80,19 @@ dialTest(
     );
 
     await dialTest.step(
-      'Fill in Endpoint field and select OAuth Authentication option',
+      'Fill in Endpoint field, choose OAuth Authentication, select `With login & config` option and fill in required fields',
       async () => {
         await toolsetEditorViewForm.endpoint.fillInInput(
           toolsetEntity.endpoint,
         );
         await toolsetEditorViewForm.oauthContainer.click();
+        await toolsetEditorViewForm
+          .oAuthOptionRadioButton(OAuthOptions.WithLoginAndConfig)
+          .click();
+        await toolsetEditorViewForm.clientIdFieldInput.fillInInput(clientId);
+        await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
+          clientSecret,
+        );
         //get saved toolset object
         initialToolset = (await toolsetApiHelper.getToolset(
           toolsetEntity.name,
@@ -98,12 +106,18 @@ dialTest(
         page,
         initialToolset,
         toolsetEntity.endpoint,
+        {
+          mockOAuthConfig: {
+            client_id: clientId,
+            client_secret: clientSecret,
+          },
+        },
       );
       await oauthMockHelper.setupMocks();
     });
 
     await dialTest.step(
-      "Click 'Login in' button for 'With login' option",
+      "Click 'Login in' button for 'With login & config' option",
       async () => {
         // need to enable mocking before clicking 'Log In'
         oauthMockHelper.enableMocking();
@@ -157,6 +171,11 @@ dialTest(
           toolsetEditorViewForm.logoutButton,
           SignInButtonTitles.logOut,
         );
+        await toolsetEditorViewFormAssertion.assertElementAttribute(
+          toolsetEditorViewForm.oAuthOption(OAuthOptions.WithLoginAndConfig),
+          Attributes.checked,
+          '',
+        );
       },
     );
 
@@ -176,73 +195,42 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Click on "Edit" icon and navigate to "General info" step',
-      async () => {
-        await entityDetailsModal.clickEditButton({
-          triggeredHttpMethod: 'GET',
-        });
-        await entityEditorPage.waitForPageLoadedForEdit(
-          EntityEditorToolsetTypes.Toolset,
-        );
-        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
-          isHttpMethodTriggered: false,
-        });
-        await entityEditorPage.waitForPageLoaded(
-          EntityEditorToolsetTypes.Toolset,
-        );
-      },
-    );
-
-    await dialTest.step('Update toolset name and click Next', async () => {
-      //get real toolset object from BE
-      const toolsetId = oauthMockHelper.getToolset().id!;
-      realToolset = await itemApiHelper.getItem<Toolset>(toolsetId);
-
-      //intercept toolset routes with a new name
-      updatedId = toolsetId.replace(toolsetEntity.name, updatedName);
-      await oauthMockHelper.setupUpdatedToolsetRoutes({
-        display_name: updatedName,
-        id: updatedId,
-        toolset: updatedId,
-      });
-
-      await entityEditorGeneralForm.fillInEntityFields({
-        name: updatedName,
-      });
-      await entityEditorGeneralForm.goNext({
-        hostsArray: [API.moveHost],
+    await dialTest.step('Click on "Edit" icon', async () => {
+      await entityDetailsModal.clickEditButton({
+        triggeredHttpMethod: 'GET',
       });
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-
-      //update real toolset name
-      realToolset.display_name = updatedName;
-      await toolsetApiHelper.createToolset(realToolset);
     });
 
     await dialTest.step(
-      'Click on "Log out" btn and verify preview card label is changed',
+      'Click on "Log out" btn and verify preview card label is changed, all supported scopes are listed',
       async () => {
         await toolsetEditorViewForm.clickLogoutButton();
-        await confirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.logOutDialogTitle,
-        );
-        await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.logOutDialogMessage,
-        );
-        await confirmationDialogAssertion.assertElementText(
-          confirmationDialog.confirmButton,
-          ExpectedConstants.logOutDialogButtonLabel,
-        );
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-          { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
+          {
+            expectedName: toolsetEntity.name,
+            expectedCredsLabel: Creds.loggedOut,
+          },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
           toolsetEditorViewForm.loginButton,
           SignInButtonTitles.logIn,
+        );
+
+        await toolsetEditorViewForm
+          .oAuthOptionRadioButton(OAuthOptions.WithLoginAndConfig)
+          .click();
+        const actualSupportedScopes =
+          await toolsetEditorViewForm.supportedScopes.getSelectedPillValues(
+            true,
+          );
+        toolsetEditorViewFormAssertion.assertArrayIncludesAll(
+          actualSupportedScopes,
+          oauthMockHelper.getMockConfig().scopes_supported,
+          MarketplaceExpectedMessages.toolsetSupportedScopesAreValid,
         );
       },
     );
@@ -250,7 +238,7 @@ dialTest(
     await dialTest.step('Verify log-out request body', async () => {
       const signOutRequest = oauthMockHelper.getSignOutRequest()!;
       toolsetApiAuthenticationAssertion.assertSignOutRequest(signOutRequest, {
-        url: updatedId,
+        url: initialToolset.id!,
         authType: ToolsetAuthTypes.OAUTH,
         credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
       });
@@ -259,6 +247,10 @@ dialTest(
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
+        await toolsetEditorViewForm.clientIdFieldInput.fillInInput(clientId);
+        await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
+          clientSecret,
+        );
         loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         ))!;
@@ -268,7 +260,7 @@ dialTest(
         );
         await toolsetAuthAssertion.assertAuthState(
           oauthMockHelper.getSignInRequest()!,
-          updatedId,
+          initialToolset.id!,
           Creds.myCreds,
           SignInButtonTitles.logOut,
         );
@@ -281,7 +273,10 @@ dialTest(
         await toolsetEditorViewForm.clickLogoutButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-          { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
+          {
+            expectedName: toolsetEntity.name,
+            expectedCredsLabel: Creds.loggedOut,
+          },
         );
         await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
@@ -294,10 +289,13 @@ dialTest(
 
     await dialTest.step('Update toolset version and click Next', async () => {
       //get real toolset object from BE
-      realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
+      realToolset = await itemApiHelper.getItem<Toolset>(initialToolset.id!);
 
       //intercept toolset routes with a new version
-      updatedId = updatedId.replace(toolsetEntity.version, updatedVersion);
+      updatedId = initialToolset.id!.replace(
+        toolsetEntity.version,
+        updatedVersion,
+      );
       await oauthMockHelper.setupUpdatedToolsetRoutes({
         display_version: updatedVersion,
         id: updatedId,
@@ -313,7 +311,6 @@ dialTest(
       await entityEditorPage.waitForPageLoadedForEdit(
         EntityEditorToolsetTypes.Toolset,
       );
-
       //update real toolset version
       realToolset.display_version = updatedVersion;
       await toolsetApiHelper.createToolset(realToolset);
@@ -337,60 +334,12 @@ dialTest(
         );
       },
     );
-
-    await dialTest.step(
-      'Click on "Log out" btn and set a new endpoint value',
-      async () => {
-        await toolsetEditorViewForm.clickLogoutButton();
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-          { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
-        );
-        await toolsetEditorViewForm.endpoint.fillInInput(updatedEndpoint);
-      },
-    );
-
-    await dialTest.step(
-      "Click on 'Login in' button again and verify toolset is successfully logged-in",
-      async () => {
-        //get real toolset object from BE
-        realToolset = await itemApiHelper.getItem<Toolset>(updatedId);
-
-        //intercept toolset routes with a new endpoint
-        await oauthMockHelper.setupUpdatedToolsetRoutes({
-          endpoint: updatedEndpoint,
-        });
-
-        //update real toolset endpoint
-        realToolset.endpoint = updatedEndpoint;
-        await toolsetApiHelper.createToolset(realToolset);
-        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
-          oauthMockHelper.getMockConfig().authorization_endpoint,
-        ))!;
-        await oauthMockHelper.navigateToCallback(loginPopup);
-        await entityEditorPage.waitForPageLoadedForEdit(
-          EntityEditorToolsetTypes.Toolset,
-        );
-        await toolsetAuthAssertion.assertAuthState(
-          oauthMockHelper.getSignInRequest()!,
-          updatedId,
-          Creds.myCreds,
-          SignInButtonTitles.logOut,
-        );
-      },
-    );
-
-    await dialTest.step('Cleanup mocking', async () => {
-      await oauthMockHelper.cleanup();
-    });
   },
 );
 
 dialTest(
-  'Toolset with OAuth with Login can be saved without actual login.\n' +
-    '[Toolset]: Available login options for OAuth.\n' +
-    'Without login option is not displayed for OAuth authentication type.\n' +
-    '[Toolset]: successful second and further OAuth login when login via Toolset Editor',
+  'Toolset with OAuth with Login&config can be saved without actual login.\n' +
+    '[Toolset]: Scopes for OAuth login& config can be added manually',
   async ({
     marketplacePage,
     entityEditorPage,
@@ -404,15 +353,17 @@ dialTest(
     entityDetailsModalAssertion,
     entityEditorGeneralForm,
     toolsetApiHelper,
-    confirmationDialog,
     page,
   }) => {
-    setTestIds('EPMRTC-7183', 'EPMRTC-7108', 'EPMRTC-7408', 'EPMRTC-7080');
+    setTestIds('EPMRTC-7182', 'EPMRTC-7924');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
       endpoint: GeneratorUtil.randomUrl(),
     };
+    const clientId = GeneratorUtil.randomString(7);
+    const clientSecret = GeneratorUtil.randomString(7);
+    const scope = 'mcp.write';
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
     let loginPopup: Page;
@@ -441,12 +392,22 @@ dialTest(
     );
 
     await dialTest.step(
-      'Fill in Endpoint field and select OAuth Authentication option',
+      'Fill in Endpoint field, select "With login & config" option, fill in the required fields and set supported scope value',
       async () => {
         await toolsetEditorViewForm.endpoint.fillInInput(
           toolsetEntity.endpoint,
         );
         await toolsetEditorViewForm.oauthContainer.click();
+        await toolsetEditorViewForm
+          .oAuthOptionRadioButton(OAuthOptions.WithLoginAndConfig)
+          .click();
+        await toolsetEditorViewForm.clientIdFieldInput.fillInInput(clientId);
+        await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
+          clientSecret,
+        );
+        await toolsetEditorViewForm.supportedScopes.comboboxInput.fillInInput(
+          scope,
+        );
         //get saved toolset object
         initialToolset = (await toolsetApiHelper.getToolset(
           toolsetEntity.name,
@@ -455,28 +416,20 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Verify only 2 options are available for OAuth authentication type, "With login" option is checked by default',
-      async () => {
-        await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.oAuthOptions,
-          [OAuthOptions.WithLogin, OAuthOptions.WithLoginAndConfig],
-        );
-        await toolsetEditorViewFormAssertion.assertElementAttribute(
-          toolsetEditorViewForm.oAuthOption(OAuthOptions.WithLogin),
-          Attributes.checked,
-          '',
-        );
-      },
-    );
-
     await dialTest.step('Setup OAuth mocks', async () => {
       oauthMockHelper = new OAuthMockHelper(
         page,
         initialToolset,
         toolsetEntity.endpoint,
+        {
+          mockOAuthConfig: {
+            client_id: clientId,
+            client_secret: clientSecret,
+            scopes_supported: [scope],
+          },
+        },
       );
-      await oauthMockHelper.setupToolsetRoutes();
+      await oauthMockHelper.setupMocks();
       oauthMockHelper.enableMocking();
     });
 
@@ -497,7 +450,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click on "Edit" icon and login the toolset',
+      'Click on "Edit" icon and verify toolset with specified scope can do login',
       async () => {
         await entityDetailsModal.clickEditButton({
           triggeredHttpMethod: 'GET',
@@ -505,9 +458,12 @@ dialTest(
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
-
-        await oauthMockHelper.setupMocks();
-
+        await toolsetEditorViewForm
+          .oAuthOptionRadioButton(OAuthOptions.WithLoginAndConfig)
+          .click();
+        await toolsetEditorViewForm.clientSecretFieldInput.fillInInput(
+          clientSecret,
+        );
         loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         ))!;
@@ -525,35 +481,14 @@ dialTest(
       },
     );
 
-    await dialTest.step('Log-out the toolset', async () => {
-      await toolsetEditorViewForm.clickLogoutButton();
-      await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-      await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-        {
-          expectedName: toolsetEntity.name,
-          expectedCredsLabel: Creds.loggedOut,
-        },
+    await dialTest.step('Verify toolset is successfully saved', async () => {
+      await entityEditorHeader.saveAndExitButton.click();
+      await baseAssertion.assertElementState(toolsetEditorViewForm, 'hidden');
+      await marketplacePage.waitForPageLoaded();
+      await entityDetailsModalAssertion.assertElementState(
+        entityDetailsModal,
+        'visible',
       );
     });
-
-    await dialTest.step(
-      'Login the toolset again and verify it is successful',
-      async () => {
-        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
-          oauthMockHelper.getMockConfig().authorization_endpoint,
-        ))!;
-        await oauthMockHelper.navigateToCallback(loginPopup);
-        await entityEditorPage.waitForPageLoadedForEdit(
-          EntityEditorToolsetTypes.Toolset,
-        );
-        await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-          { expectedCredsLabel: Creds.myCreds },
-        );
-        await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.logoutButton,
-          SignInButtonTitles.logOut,
-        );
-      },
-    );
   },
 );
