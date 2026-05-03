@@ -15,12 +15,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
-import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Loader } from '@/src/components/Common/Loader';
 import { Folder } from '@/src/components/Folder/Folder';
 
-import { CloseButtonSmall } from '../CloseButtons';
 import { CodeEditorFile } from './CodeEditorFile';
 import { CodeEditorFileTreeEmptyState } from './CodeEditorFileTreeEmptyState';
 
@@ -129,7 +128,12 @@ export const CodeEditorFileTree = ({
     [dispatch, onFileUpload, openedFoldersIds],
   );
 
-  if (!rootFiles.length && !rootFolders.length && !isFilesLoading && !newFileName) {
+  if (
+    !rootFiles.length &&
+    !rootFolders.length &&
+    !isFilesLoading &&
+    !newFileName
+  ) {
     return <CodeEditorFileTreeEmptyState onCreateFile={onCreateFile} />;
   }
 
@@ -200,10 +204,7 @@ export const CodeEditorFileTree = ({
             }}
             autoFocus
           />
-          <div
-            className="absolute right-1 z-10 flex gap-x-1"
-            data-qa="actions"
-          >
+          <div className="absolute right-1 z-10 flex gap-x-1" data-qa="actions">
             <DialGhostIconButton
               data-qa="confirm-edit"
               onClick={() => onConfirmNewFile(newFileName)}

@@ -1,9 +1,4 @@
-import {
-  IconDeviceFloppy,
-  IconFilePlus,
-  IconUpload,
-} from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -22,16 +17,13 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
-import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 
 import { CodeEditorFileTree } from './CodeEditorFileTree';
-
-import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import MoveLeftIcon from '@/public/images/icons/move-left.svg';
-import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import { CodeEditorSidebarFooter } from './CodeEditorSidebarFooter';
+import { CodeEditorSidebarHeader } from './CodeEditorSidebarHeader';
 
 const ALLOWED_PRE_UPLOAD_DIALOG_TYPES = ['*/*'];
 
@@ -51,9 +43,6 @@ export const CodeEditorSidebar = ({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const modifiedFileIds = useAppSelector(
-    CodeEditorSelectors.selectModifiedFileIds,
-  );
   const filesContent = useAppSelector(CodeEditorSelectors.selectFilesContent);
   const allFiles = useAppSelector(FilesSelectors.selectFiles);
 
@@ -69,19 +58,10 @@ export const CodeEditorSidebar = ({
 
   const rootFiles = useMemo(
     () =>
-      allFiles
-        .filter((file) => !isHiddenEntity(file))
-        .filter((file) => file.folderId === sourcesFolderId),
+      allFiles.filter(
+        (file) => !isHiddenEntity(file) && file.folderId === sourcesFolderId,
+      ),
     [allFiles, sourcesFolderId],
-  );
-
-  const handleToggleClick = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onToggle();
-    },
-    [onToggle],
   );
 
   const handleSaveFiles = useCallback(
@@ -137,7 +117,7 @@ export const CodeEditorSidebar = ({
     [deletingFileId, dispatch, sourcesFolderId],
   );
 
-  const openUploadDialog = useCallback(() => {
+  const handleOpenUploadDialog = useCallback(() => {
     setUploadFolderId(sourcesFolderId);
     dispatch(FilesActions.getFolders({ id: parentPath }));
   }, [dispatch, parentPath, sourcesFolderId]);
@@ -168,17 +148,7 @@ export const CodeEditorSidebar = ({
 
   return (
     <div className="flex max-h-full flex-col divide-y divide-tertiary overflow-hidden rounded-l border border-tertiary bg-layer-3">
-      <div className="flex w-fit shrink-0 border-r border-tertiary px-3 py-2">
-        <DialGhostIconButton
-          tooltipProps={{
-            tooltip: t(ChatI18nKeys.HideFileList),
-            isTriggerClickable: true,
-          }}
-          size={ElementSize.Small}
-          onClick={handleToggleClick}
-          icon={<MoveLeftIcon size={DEFAULT_ICON_SIZES.SMALL} />}
-        />
-      </div>
+      <CodeEditorSidebarHeader onToggle={onToggle} />
       <div className="flex grow flex-col gap-0.5 overflow-y-auto p-3">
         <CodeEditorFileTree
           sourcesFolderId={sourcesFolderId}
@@ -194,42 +164,13 @@ export const CodeEditorSidebar = ({
         />
       </div>
       {!readOnly && (
-        <div className="flex items-center gap-3 px-3 py-2.5">
-          <DialGhostIconButton
-            tooltipProps={{ tooltip: t(ChatI18nKeys.AddNewFolderChat) }}
-            size={ElementSize.Small}
-            onClick={() =>
-              dispatch(FilesActions.addNewFolder({ parentId: sourcesFolderId }))
-            }
-            icon={
-              <FolderPlus
-                width={DEFAULT_ICON_SIZES.SMALL}
-                height={DEFAULT_ICON_SIZES.SMALL}
-              />
-            }
-          />
-          <DialGhostIconButton
-            tooltipProps={{ tooltip: t(ChatI18nKeys.CreateFile) }}
-            size={ElementSize.Small}
-            onClick={handleCreateFile}
-            disabled={!!newFileName}
-            icon={<IconFilePlus size={DEFAULT_ICON_SIZES.SMALL} />}
-          />
-          <DialGhostIconButton
-            tooltipProps={{ tooltip: t(ChatI18nKeys.UploadFile) }}
-            size={ElementSize.Small}
-            onClick={openUploadDialog}
-            icon={<IconUpload size={DEFAULT_ICON_SIZES.SMALL} />}
-          />
-          {!!modifiedFileIds.length && (
-            <DialGhostIconButton
-              tooltipProps={{ tooltip: t(ChatI18nKeys.SaveAll) }}
-              size={ElementSize.Small}
-              onClick={() => handleSaveFiles(modifiedFileIds)}
-              icon={<IconDeviceFloppy size={DEFAULT_ICON_SIZES.SMALL} />}
-            />
-          )}
-        </div>
+        <CodeEditorSidebarFooter
+          sourcesFolderId={sourcesFolderId}
+          newFileName={newFileName}
+          onCreateFile={handleCreateFile}
+          onOpenUploadDialog={handleOpenUploadDialog}
+          onSaveFiles={handleSaveFiles}
+        />
       )}
       {uploadFolderId && (
         <PreUploadDialog
