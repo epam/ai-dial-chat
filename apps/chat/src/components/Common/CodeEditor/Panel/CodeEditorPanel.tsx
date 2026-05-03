@@ -1,5 +1,5 @@
-import { CodeEditorPanelHeader } from './CodeEditorPanelHeader';
 import { CodeEditorContent } from './CodeEditorContent';
+import { CodeEditorPanelHeader } from './CodeEditorPanelHeader';
 
 interface CodeEditorPanelProps {
   isSidebarOpen: boolean;

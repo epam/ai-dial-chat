@@ -1087,8 +1087,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           const selectedCodeEditorFileId =
             CodeEditorSelectors.selectSelectedFile(state$.value);
-          const sourcesFolderId =
-            CodeEditorSelectors.selectSourcesFolderId(state$.value);
+          const sourcesFolderId = CodeEditorSelectors.selectSourcesFolderId(
+            state$.value,
+          );
           const codeEditorFolderOnReview =
             getSharedParentFolder(
               selectedCodeEditorFileId?.split('/')?.slice(0, -1)?.join('/'),
