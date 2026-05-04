@@ -96,6 +96,7 @@ import {
   SideBarAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  ToolsetApiAuthenticationAssertion,
   ToolsetAuthAssertion,
   TooltipAssertion,
   TooltipPortalAssertion,
@@ -462,6 +463,7 @@ const dialTest = test.extend<{
   uploadProgressDialog: UploadProgressDialog;
   tooltipPortal: TooltipPortal;
   tooltipPortalAssertion: TooltipPortalAssertion;
+  toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1912,6 +1914,12 @@ const dialTest = test.extend<{
   tooltipPortalAssertion: async ({ tooltipPortal }, use) => {
     const tooltipPortalAssertion = new TooltipPortalAssertion(tooltipPortal);
     await use(tooltipPortalAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  toolsetApiAuthenticationAssertion: async ({}, use) => {
+    const toolsetApiAuthenticationAssertion =
+      new ToolsetApiAuthenticationAssertion();
+    await use(toolsetApiAuthenticationAssertion);
   },
 });
 

@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
 import { Translation } from '@/src/types/translation';
 
@@ -42,17 +43,27 @@ export const MessageAttachments = ({
     SettingsSelectors.selectApplicationVisualizerConfig(state, applicationId),
   );
 
-  const { hasBorderlessAttachments, hasExpandedAttachments } = useMemo(
-    () => ({
+  const { hasBorderlessAttachments, hasExpandedAttachments } = useMemo(() => {
+    if (applicationVisualizerConfig) {
+      return {
+        hasBorderlessAttachments: !!applicationVisualizerConfig.borderless,
+        hasExpandedAttachments: !!applicationVisualizerConfig.expanded,
+      };
+    }
+    return {
       hasBorderlessAttachments: !!attachments?.some((a) =>
         borderlessTypes.includes(a.type),
       ),
       hasExpandedAttachments: !!attachments?.some((a) =>
         expandedTypes.includes(a.type),
       ),
-    }),
-    [attachments, borderlessTypes, expandedTypes],
-  );
+    };
+  }, [
+    applicationVisualizerConfig,
+    attachments,
+    borderlessTypes,
+    expandedTypes,
+  ]);
 
   const { groupedAttachments, regularAttachments } = useMemo(() => {
     if (!attachments?.length) {
@@ -60,8 +71,29 @@ export const MessageAttachments = ({
     }
 
     if (applicationVisualizerConfig) {
-      const visualizerAttachments = attachments.filter((a) => a.url);
-      const groupedVisualizerItems = visualizerAttachments.map((a) => ({
+      const allowedMimeTypes = parseCommaSeparatedList(
+        applicationVisualizerConfig.contentType,
+      );
+      const useMimeFilter = allowedMimeTypes.length > 0;
+
+      const isAttachmentForGroupedVisualizer = (a: Attachment) => {
+        if (!a.url) {
+          return false;
+        }
+        if (!useMimeFilter) {
+          return true;
+        }
+        return allowedMimeTypes.includes(a.type);
+      };
+
+      const atachmentsForGrouped = attachments.filter(
+        isAttachmentForGroupedVisualizer,
+      );
+      const atachmentsForRegular = attachments.filter(
+        (a) => !isAttachmentForGroupedVisualizer(a),
+      );
+
+      const groupedVisualizerItems = atachmentsForGrouped.map((a) => ({
         url: getMappedAttachmentUrl(a.url)!,
         mimeType: a.type,
       }));
@@ -72,7 +104,7 @@ export const MessageAttachments = ({
             config: applicationVisualizerConfig,
             attachments: groupedVisualizerItems,
           },
-          regularAttachments: [],
+          regularAttachments: atachmentsForRegular,
         };
       }
     }
