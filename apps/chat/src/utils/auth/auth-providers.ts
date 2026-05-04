@@ -130,6 +130,11 @@ const getAzureB2CProvider = (config: ProviderConfig) =>
           },
         },
         token: tokenConfig,
+        profile: (profile) => ({
+          id: profile.sub,
+          name: profile.name,
+          email: (profile as { email?: string }).email ?? profile.emails?.[0],
+        }),
       })
     : undefined;
 
