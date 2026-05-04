@@ -1,5 +1,5 @@
 import { OAuthOptions } from '@/src/testData';
-import { AttributeValues, Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
 import {
   AddToolsetSettingsFormSelector,
   IconSelectors,
@@ -50,6 +50,28 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     .filter({ has: this.page.getByRole('radio') });
   public oAuthOption = (loginOption: OAuthOptions) =>
     this.oAuthOptions.locator(`[${Attributes.id}="${loginOption}"]`);
+  public oAuthOptionRadioButton = (loginOption: OAuthOptions) =>
+    this.oAuthOption(loginOption)
+      .locator('~*')
+      .locator(IconSelectors.circleIcon);
+  public oAuthLoginForm = this.authDetailsContainer.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.authLoginForm,
+  );
+  public clientIdFieldContainer = this.oAuthLoginForm.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.clientIdFieldContainer,
+  );
+  public clientIdFieldInput =
+    this.clientIdFieldContainer.getChildElementBySelector(Tags.input);
+  public clientSecretFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.clientSecretFieldContainer,
+    );
+  public clientSecretFieldInput =
+    this.clientSecretFieldContainer.getChildElementBySelector(Tags.input);
+  public supportedScopes = new Combobox(
+    this.page,
+    this.oAuthLoginForm.getElementLocator(),
+  );
   public loginButton = new Button(
     this.page,
     AttributeValues.login,

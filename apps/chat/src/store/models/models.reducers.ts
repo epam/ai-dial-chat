@@ -71,6 +71,10 @@ export const modelsSlice = createSlice({
         updateRecentModels?: boolean;
       }>,
     ) => state,
+    addInstalledModelsFail: (
+      state,
+      _action: PayloadAction<{ references: string[] }>,
+    ) => state,
     removeInstalledModels: (
       state,
       _action: PayloadAction<{ references: string[]; action: DeleteType }>,

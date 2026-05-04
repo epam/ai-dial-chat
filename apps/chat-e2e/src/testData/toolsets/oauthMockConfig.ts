@@ -7,6 +7,7 @@ export interface OAuthMockConfig {
   token_endpoint: string;
   scopes_supported: string[];
   code_challenge_method: string;
+  client_secret: string;
 }
 
 export interface OAuthMockOptions {
@@ -32,6 +33,7 @@ export const DEFAULT_OAUTH_CONFIG: OAuthMockConfig = {
   token_endpoint: '',
   scopes_supported: ['mcp.read', 'mcp.execute', 'mcp.tools'],
   code_challenge_method: 'S256',
+  client_secret: '',
 };
 
 export const DEFAULT_AUTHORIZATION_CODE = 'MOCK_AUTH_CODE_12345';
