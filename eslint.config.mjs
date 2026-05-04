@@ -25,7 +25,7 @@ export default [
       '**/.next/**',
       'next.config.js',
       'next-i18next.config.js',
-      'public',
+      '**/public/**',
       'dist',
       '.github',
       'helm',
@@ -76,7 +76,7 @@ export default [
       'jsx-a11y': jsxA11yPlugin,
       '@next/next': nextPlugin,
       import: importPlugin,
-      tailwindcss: tailwindPlugin,
+      // tailwindcss: tailwindPlugin, // Temporarily disabled due to module resolution issues
       'testing-library': testingLibraryPlugin,
       'react-refresh': reactRefreshPlugin,
     },
@@ -85,7 +85,7 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       ...nextPlugin.configs.recommended.rules,
       ...importPlugin.configs.recommended.rules,
-      ...tailwindPlugin.configs.recommended.rules,
+      // ...tailwindPlugin.configs.recommended.rules, // Temporarily disabled due to module resolution issues
       ...testingLibraryPlugin.configs.react.rules,
       'no-multi-spaces': 'error',
       'import/no-unresolved': 'off',
@@ -96,7 +96,7 @@ export default [
       'tailwindcss/no-custom-classname': 'off',
       'testing-library/no-node-access': 'warn',
       'testing-library/prefer-presence-queries': 'warn',
-      'tailwindcss/classnames-order': 'off',
+      // 'tailwindcss/classnames-order': 'off', // Temporarily disabled due to module resolution issues
       'testing-library/render-result-naming-convention': 'warn',
       'react-refresh/only-export-components': [
         'warn',

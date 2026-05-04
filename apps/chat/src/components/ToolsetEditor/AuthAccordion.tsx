@@ -1,4 +1,4 @@
-import { Icon, IconProps } from '@tabler/icons-react';
+import { IconProps } from '@tabler/icons-react';
 import { FC, ForwardRefExoticComponent, ReactNode, RefAttributes } from 'react';
 
 import classNames from 'classnames';

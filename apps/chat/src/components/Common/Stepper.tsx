@@ -1,5 +1,4 @@
 import {
-  Icon,
   IconAlertSmall,
   IconCheck,
   IconPointFilled,

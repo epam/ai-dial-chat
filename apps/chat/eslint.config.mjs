@@ -4,17 +4,20 @@ export default [
   ...baseConfig,
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
-    settings: {
-      tailwindcss: {
-        config: './apps/chat/tailwind.config.js',
-        callees: ['classnames', 'classNames'],
-      },
-    },
+    // Tailwind settings temporarily disabled due to eslint-plugin-tailwindcss module resolution issues
+    // settings: {
+    //   tailwindcss: {
+    //     config: './tailwind.config.js',
+    //     callees: ['classnames', 'classNames'],
+    //   },
+    // },
     rules: {
       '@next/next/no-html-link-for-pages': ['error', './apps/chat/src/pages'],
       'react/jsx-boolean-value': ['error', 'never'],
-      'tailwindcss/no-custom-classname': 'error',
-      'tailwindcss/no-contradicting-classname': 'error',
+      // Tailwind rules temporarily disabled due to eslint-plugin-tailwindcss module resolution issues
+      // 'tailwindcss/no-custom-classname': 'error',
+      // 'tailwindcss/no-contradicting-classname': 'error',
+      // 'tailwindcss/enforces-negative-arbitrary-values': 'off',
       'no-restricted-imports': [
         'error',
         {
