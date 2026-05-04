@@ -107,10 +107,7 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
 
   const logoImgSrc = useMemo(() => {
     if (themesHostDefined) {
-      return constructPath(
-        process.env.APP_BASE_PATH || '',
-        faviconUrl,
-      );
+      return constructPath(process.env.APP_BASE_PATH || '', faviconUrl);
     }
   }, [themesHostDefined]);
 

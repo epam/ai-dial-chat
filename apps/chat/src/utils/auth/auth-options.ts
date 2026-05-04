@@ -73,10 +73,7 @@ export const authOptions: AuthOptions = {
   },
   theme: {
     logo: process.env.THEMES_CONFIG_HOST
-      ? constructPath(
-          process.env.APP_BASE_PATH || '',
-          faviconUrl,
-        )
+      ? constructPath(process.env.APP_BASE_PATH || '', faviconUrl)
       : undefined,
   },
   pages,

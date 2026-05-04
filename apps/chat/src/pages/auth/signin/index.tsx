@@ -86,10 +86,7 @@ export default function Signin({
   const router = useRouter();
   const logoImgSrc = useMemo(() => {
     if (themesHostDefined) {
-      return constructPath(
-        process.env.APP_BASE_PATH || '',
-        faviconUrl,
-      );
+      return constructPath(process.env.APP_BASE_PATH || '', faviconUrl);
     }
   }, [themesHostDefined]);
 

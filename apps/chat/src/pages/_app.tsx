@@ -61,17 +61,8 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
         />
         {process.env.NODE_ENV !== 'development' && (
           <>
-            <link
-              rel="icon"
-              href={faviconUrl}
-              sizes="any"
-              type="image/png"
-            />
-            <link
-              rel="apple-touch-icon"
-              href={faviconUrl}
-              type="image/png"
-            />
+            <link rel="icon" href={faviconUrl} sizes="any" type="image/png" />
+            <link rel="apple-touch-icon" href={faviconUrl} type="image/png" />
           </>
         )}
       </Head>
