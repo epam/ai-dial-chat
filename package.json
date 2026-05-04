@@ -198,6 +198,9 @@
     "protobufjs": "8.0.1",
     "follow-redirects": "1.16.0",
     "yaml": "2.8.3",
+    "prismjs": "1.30.0",
+    "picomatch": "4.0.4",
+    "minimatch": "10.2.4",
     "dompurify": "3.4.0",
     "postcss": "^8.5.12"
   },
