@@ -143,7 +143,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           generateColorsCssVariables(theme.colors),
           generateColorsCssVariables(theme.topicColors),
           generateColorsCssVariables(theme.authColors),
-          generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateUrlsCssVariables({ 'app-logo': (theme.displayName == 'dark' ? theme['chat-logo-dark'] : theme['chat-logo-light']) || theme['app-logo'] }),
           generateUrlsCssVariables(theme.banners),
           generateFontCssVariables({
             'theme-font': theme['font-family'],
