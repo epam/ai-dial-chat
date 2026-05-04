@@ -393,17 +393,15 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         payload.references,
       );
 
+      const modelsToInstall = models
+        .filter((model: DialAIEntityModel) =>
+          modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
+        )
+        .map((model: DialAIEntityModel) => ({
+          id: model.reference,
+        }));
       const newInstalledModels = uniqBy<InstalledModel>(
-        [
-          ...installedModels,
-          ...models
-            .filter((model: DialAIEntityModel) =>
-              modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
-            )
-            .map((model: DialAIEntityModel) => ({
-              id: model.reference,
-            })),
-        ],
+        [...installedModels, ...modelsToInstall],
         'id',
       );
 
@@ -418,20 +416,40 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
               const actions: Observable<AppAction>[] = [];
+              const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
 
-              if (payload.showSuccessToast) {
+              const failedReferences = payload.references.filter(
+                (payloadReference) =>
+                  !newInstalledModels.some(
+                    (installedModel) =>
+                      installedModel.id === payloadReference ||
+                      installedModel.id ===
+                        modelsMap[payloadReference]?.reference,
+                  ),
+              );
+              if (failedReferences.length > 0) {
                 actions.push(
                   of(
-                    UIActions.showSuccessToast(
-                      translate(
-                        payload.references.length > 1
-                          ? CommonI18nKeys.AgentsAddedToMyWorkspace
-                          : CommonI18nKeys.AgentAddedToMyWorkspace,
-                        { ns: Translation.Common },
-                      ),
-                    ),
+                    ModelsActions.addInstalledModelsFail({
+                      references: failedReferences,
+                    }),
                   ),
                 );
+              } else {
+                if (payload.showSuccessToast) {
+                  actions.push(
+                    of(
+                      UIActions.showSuccessToast(
+                        translate(
+                          payload.references.length > 1
+                            ? CommonI18nKeys.AgentsAddedToMyWorkspace
+                            : CommonI18nKeys.AgentAddedToMyWorkspace,
+                          { ns: Translation.Common },
+                        ),
+                      ),
+                    ),
+                  );
+                }
               }
               if (payload.updateRecentModels) {
                 actions.push(
@@ -455,6 +473,30 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
             }),
           );
         }),
+      );
+    }),
+  );
+
+const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ModelsActions.addInstalledModelsFail.type),
+    switchMap(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const failedNames = payload.references
+        .map((reference) => modelsMap[reference]?.name)
+        .join(', ');
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            payload.references.length > 1
+              ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
+              : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
+            {
+              ns: Translation.Common,
+              failedNames,
+            },
+          ),
+        ),
       );
     }),
   );
@@ -534,6 +576,7 @@ export const ModelsEpics = combineEpics(
   getInstalledModelIdsEpic,
   getInstalledModelIdsFailEpic,
   addInstalledModelsEpic,
+  addInstalledModelsFailEpic,
   removeInstalledModelsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
