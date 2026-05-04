@@ -6,7 +6,7 @@ COPY package*.json ./
 
 # ---- Dependencies ----
 FROM base AS build_dependencies
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 # ---- Build ----
 FROM build_dependencies AS build
