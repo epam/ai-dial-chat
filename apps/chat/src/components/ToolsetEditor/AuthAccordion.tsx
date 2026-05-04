@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { Badge } from '@/src/components/Badge';
 
 interface AuthAccordionProps {
-  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
+  Icon: ForwardRefExoticComponent<IconProps & RefAttributes<SVGSVGElement>>;
   title: string;
   isOpen: boolean;
   onClick: () => void;

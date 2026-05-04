@@ -76,7 +76,7 @@
     "marked": "^17.0.1",
     "micromark-extension-llm-math": "^3.1.0",
     "mime-types": "^2.1.35",
-    "monaco-editor": "0.54.0",
+    "monaco-editor": "0.55.1",
     "nanoid": "^5.1.5",
     "next": "16.2.3",
     "next-auth": "4.24.12",
