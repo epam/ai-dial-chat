@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { faviconUrl } from '@/src/utils/app/themes';
 
 interface ManifestIcon {
   src: string;
@@ -69,16 +69,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   };
 
   if (process.env.THEMES_CONFIG_HOST) {
-    const iconUrl = getThemeIconUrl('favicon');
     response.icons.push({
-      src: iconUrl,
+      src: faviconUrl,
       sizes: '192x192',
       type: 'image/png',
       purpose: 'any',
     });
 
     response.screenshots.push({
-      src: iconUrl,
+      src: faviconUrl,
       sizes: '2880x1800',
       type: 'image/png',
       description: 'Logo',

@@ -1,7 +1,7 @@
 import type { AuthOptions, CookieOption, CookiesOptions } from 'next-auth';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { faviconUrl } from '@/src/utils/app/themes';
 import { callbacks } from '@/src/utils/auth/auth-callbacks';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { authProviders } from '@/src/utils/auth/auth-providers';
@@ -75,7 +75,7 @@ export const authOptions: AuthOptions = {
     logo: process.env.THEMES_CONFIG_HOST
       ? constructPath(
           process.env.APP_BASE_PATH || '',
-          getThemeIconUrl('favicon'),
+          faviconUrl,
         )
       : undefined,
   },

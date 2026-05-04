@@ -8,7 +8,7 @@ import type { AppProps } from 'next/app';
 import { Inconsolata, Inter } from 'next/font/google';
 import Head from 'next/head';
 
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { faviconUrl } from '@/src/utils/app/themes';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
@@ -63,13 +63,13 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
           <>
             <link
               rel="icon"
-              href={getThemeIconUrl('favicon')}
+              href={faviconUrl}
               sizes="any"
               type="image/png"
             />
             <link
               rel="apple-touch-icon"
-              href={getThemeIconUrl('favicon')}
+              href={faviconUrl}
               type="image/png"
             />
           </>

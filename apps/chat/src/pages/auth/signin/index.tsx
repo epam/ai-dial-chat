@@ -11,7 +11,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { faviconUrl } from '@/src/utils/app/themes';
 import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
 import { authOptions } from '@/src/utils/auth/auth-options';
 import {
@@ -88,7 +88,7 @@ export default function Signin({
     if (themesHostDefined) {
       return constructPath(
         process.env.APP_BASE_PATH || '',
-        getThemeIconUrl('favicon'),
+        faviconUrl,
       );
     }
   }, [themesHostDefined]);

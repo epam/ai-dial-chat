@@ -1,4 +1,3 @@
-import { ThemesConfig } from '@src/utils/app/themes';
 import { isAbsoluteUrl } from './file';
 
 export const getThemeIconUrl = (iconUrl: string) =>
@@ -6,4 +5,4 @@ export const getThemeIconUrl = (iconUrl: string) =>
     ? iconUrl
     : `/api/themes/image/${encodeURIComponent(iconUrl)}`;
 
-    export const getFavIconUrl = (config: ThemesConfig) => getThemeIconUrl('favicon');
+export const faviconUrl = getThemeIconUrl('chat-favicon');

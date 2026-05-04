@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { faviconUrl } from '@/src/utils/app/themes';
 import { getQueryParameterCaseInsensitive } from '@/src/utils/app/url/query-params';
 
 import { Translation } from '@/src/types/translation';
@@ -109,7 +109,7 @@ export default function ErrorPage({ themesHostDefined }: PageProps) {
     if (themesHostDefined) {
       return constructPath(
         process.env.APP_BASE_PATH || '',
-        getThemeIconUrl('favicon'),
+        faviconUrl,
       );
     }
   }, [themesHostDefined]);
