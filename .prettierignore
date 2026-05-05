@@ -16,5 +16,3 @@ helm
 /coverage
 
 /.nx/cache
-
-.nx/self-healing
