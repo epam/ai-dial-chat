@@ -3,12 +3,11 @@ import { FC, useMemo } from 'react';
 
 import { useCopy } from '@/src/hooks/useCopy';
 
-import { DialButtonProps } from '@epam/ai-dial-ui-kit/dist/src/components/Button/Button';
-
 import {
   ButtonAppearance,
   ButtonVariant,
   DialButton,
+  DialButtonProps,
 } from '@epam/ai-dial-ui-kit';
 
 interface CopyButtonProps extends Omit<DialButtonProps, 'onClick'> {
