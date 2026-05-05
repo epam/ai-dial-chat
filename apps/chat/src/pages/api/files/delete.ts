@@ -15,7 +15,7 @@ import { FileOperationsResult } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import { DialDeletedItem, DialFileNodeType } from '@epam/ai-dial-ui-kit';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'POST') {
@@ -43,7 +43,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let allFilesToDelete: string[] = [];
     for (const item of files) {
-      if (item.nodeType === 'folder') {
+      if (item.nodeType === DialFileNodeType.FOLDER) {
         const folderFiles = await fetchAllFilesRecursive(
           item.sourceUrl,
           authToken ?? '',
@@ -57,11 +57,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (allFilesToDelete.length === 0) {
-      throw new DialAIError(
-        'No files to delete after folder listing',
-        400,
-        req,
-      );
+      const emptyResult: FileOperationsResult<string> = {
+        success: true,
+        total: 0,
+        succeeded: 0,
+        failed: 0,
+        results: [],
+      };
+      return res.status(200).json(emptyResult);
     }
 
     const { succeeded, errors } = await deleteFilesInBatches(
