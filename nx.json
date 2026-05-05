@@ -38,18 +38,12 @@
       "options": {
         "maxWarnings": 100
       },
-      "inputs": [
-        "default",
-        "{workspaceRoot}/eslint.config.mjs"
-      ]
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"]
     },
     "lint:fix": {
       "cache": false,
       "executor": "@nx/eslint:lint",
-      "inputs": [
-        "default",
-        "{workspaceRoot}/eslint.config.mjs"
-      ],
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "options": {
         "fix": true,
         "maxWarnings": 100
@@ -101,5 +95,6 @@
         "linter": "eslint"
       }
     }
-  }
+  },
+  "analytics": false
 }
