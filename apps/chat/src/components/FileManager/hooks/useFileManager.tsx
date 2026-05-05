@@ -270,6 +270,8 @@ export const useFileManager = ({
       ? undefined
       : initialTab;
 
+  const resolvedInitialTab = safeInitialTab ?? getInitialTab(availableTabs);
+
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
     {
       my_files: MY_FILES_SECTION,
@@ -277,7 +279,7 @@ export const useFileManager = ({
       organization: ORGANIZATION_FILES_SECTION,
       review: REVIEW_FILES_SECTION,
     },
-    safeInitialTab,
+    resolvedInitialTab,
   );
 
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
