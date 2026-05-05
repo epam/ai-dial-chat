@@ -271,6 +271,9 @@ const selectStageContentLimit = (state: RootState) =>
 
 const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
 
+const selectAudioTypesDefaultOrder = (state: RootState) =>
+  rootSelector(state).audioTypesDefaultOrder;
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -310,4 +313,5 @@ export const SettingsSelectors = {
   selectHiddenEntityTag,
   selectStageContentLimit,
   selectAsrModelId,
+  selectAudioTypesDefaultOrder,
 };
