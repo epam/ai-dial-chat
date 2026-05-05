@@ -270,7 +270,11 @@ export const useFileManager = ({
       ? undefined
       : initialTab;
 
-  const resolvedInitialTab = safeInitialTab ?? getInitialTab(availableTabs);
+  const fallbackInitialTab =
+    availableTabs?.size && !availableTabs.has(DialFileManagerTabs.MyFiles)
+      ? getInitialTab(availableTabs)
+      : undefined;
+  const resolvedInitialTab = safeInitialTab ?? fallbackInitialTab;
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
     {
