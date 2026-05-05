@@ -36,7 +36,10 @@ export const UserIcon = ({ iconSize = 28, className, userName }: Props) => {
   const textColor = readableColor(bg);
 
   const shortName = useMemo(() => {
-    const [part1, part2] = session?.user?.name?.split(' ') ?? [];
+    const name = session?.user?.name || '';
+    const [part1, part2] = name.includes(' ')
+      ? name.split(' ')
+      : name.split('@')[0].split('_');
     if (part1 && part2) {
       return `${part1[0]}${part2[0]}`;
     }

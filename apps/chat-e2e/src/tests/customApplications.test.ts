@@ -2172,7 +2172,7 @@ dialAdminTest(
 
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
-          .click();
+          .backToPublicationRequest();
         await adminPublishingApprovalModal.approveButton.click();
         await itemApiHelper.deleteBackendItem(createdAppBackendEntity); //delete the original app
       },
@@ -2226,7 +2226,8 @@ dialAdminTest(
 
 dialTest(
   'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
-    'Create two custom apps consecutively', // EPMRTC-6263
+    'Create two custom apps consecutively.\n' + // EPMRTC-6263
+    '[Select an agent for conversation] Tooltip appears on long name only',
   async ({
     marketplacePage,
     entityEditorPage,
@@ -2249,8 +2250,13 @@ dialTest(
     agentInfoAssertion,
     addAppDropdownMenu,
     toastAssertion,
+    chat,
+    talkToAgentDialog,
+    talkToAgents,
+    tooltip,
+    tooltipAssertion,
   }) => {
-    setTestIds('EPMRTC-5945', 'EPMRTC-6263');
+    setTestIds('EPMRTC-5945', 'EPMRTC-6263', 'EPMRTC-8693');
     const appEntity = {
       name: `${applicationNamePrefix}${GeneratorUtil.randomString(
         ExpectedConstants.maxEntityNameLength - 7,
@@ -2388,6 +2394,21 @@ dialTest(
           agentInfo.agentName,
           StyleValues.breakWord,
         );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Change agent" and verify tooltip appears only on hover over the agent name',
+      async () => {
+        await chat.changeAgentButton.click();
+        await baseAssertion.assertElementState(talkToAgentDialog, 'visible');
+        const agentElement = talkToAgents.getEntity(appEntity);
+        const agentIcon = await talkToAgents.getEntityIcon(agentElement);
+        const agentNameElement = talkToAgents.getEntityName(agentElement);
+        await agentIcon.hover();
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
+        await agentNameElement.hoverOver();
+        await tooltipAssertion.assertTooltipContent(appEntity.name);
       },
     );
   },

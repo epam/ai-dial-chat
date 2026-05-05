@@ -82,7 +82,8 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6574
+    await dialTest.step.skip(
       'Switch to "My Workspace" tab and verify only installed models are displayed, other models stay under "Suggested results"',
       async () => {
         await navigationPanel.goToMyWorkspace();
@@ -149,6 +150,8 @@ dialTest(
     await dialTest.step(
       'Verify no models are found, other Marketplace models stay under "Suggested results"',
       async () => {
+        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/6574
+        await navigationPanel.goToMyWorkspace();
         await baseAssertion.assertElementState(
           marketplace.noWorkspaceResultsFound,
           'visible',

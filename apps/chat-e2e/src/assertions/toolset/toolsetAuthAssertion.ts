@@ -26,7 +26,7 @@ export class ToolsetAuthAssertion extends BaseAssertion {
     expectedCredsLabel: Creds,
     expectedSignInButtonTitle: SignInButtonTitles,
   ) {
-    this.assertValue(request.url, expectedId);
+    this.assertValue(request.url, decodeURIComponent(expectedId));
     await this.assertElementText(
       this.entityEditorPreviewCard.credsLabel,
       expectedCredsLabel,

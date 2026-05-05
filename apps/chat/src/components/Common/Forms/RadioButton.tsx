@@ -36,6 +36,7 @@ export const RadioButton = ({
           {
             'cursor-pointer': !checked && !rest.disabled,
           },
+          rest.disabled && 'cursor-not-allowed text-controls-primary-disable',
           className,
         )}
       >
@@ -51,13 +52,19 @@ export const RadioButton = ({
           <IconCircleChecked
             width={iconSize}
             height={iconSize}
-            className="text-accent-primary"
+            className={classNames(
+              'text-accent-primary',
+              rest.disabled && 'text-controls-primary-disable',
+            )}
           />
         </span>
         <span className="block peer-checked:hidden">
           <IconCircle
             size={iconSize}
-            className="text-secondary"
+            className={classNames(
+              'text-secondary',
+              rest.disabled && 'text-controls-primary-disable',
+            )}
             strokeWidth={1}
           />
         </span>

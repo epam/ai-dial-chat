@@ -20,10 +20,10 @@ import {
   ItemUtil,
   ModelsUtil,
 } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let modelWithInputAttachments: DialAIEntityModel;
-const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
   modelWithInputAttachments = GeneratorUtil.randomArrayElement(
@@ -40,7 +40,9 @@ dialAdminTest(
     'Publish request for chat with already published file.\n' +
     'Publish chat with file, file is from Organization section.\n' +
     'Publish request toooltips.\n' +
-    `Author's public name displayed in metadata for chats from Organization`,
+    `Author's public name displayed in metadata for chats from Organization\n` +
+    'Error message appears if to Publish the conversation with an attachment from Organization\n' +
+    'Organization: Search: No results found',
   async ({
     dialHomePage,
     conversationData,
@@ -59,6 +61,7 @@ dialAdminTest(
     adminApproveRequiredConversations,
     navigationPanel,
     fileManagerToolbar,
+    fileManager,
     fileManagerGridAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
@@ -77,6 +80,7 @@ dialAdminTest(
     localStorageManager,
     adminLocalStorageManager,
     informationModalAssertion,
+    fileManagerNavigationPanel,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -89,6 +93,8 @@ dialAdminTest(
       'EPMRTC-4704',
       'EPMRTC-3457',
       'EPMRTC-5652',
+      'EPMRTC-4124',
+      'EPMRTC-4169',
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -174,7 +180,6 @@ dialAdminTest(
           publishingRequestDialog,
           'hidden',
         );
-        publicationsToUnpublish.push(publishApiModels.response);
       },
     );
 
@@ -335,6 +340,20 @@ dialAdminTest(
           Attachment.cloudImageName,
           'visible',
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMRTC-4169: search non-existent term in Organization tab and verify "No results found" is shown',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput(GeneratorUtil.randomString(10));
+        await baseAssertion.assertElementState(
+          fileManager.getNoDataContent(),
+          'visible',
+        );
+        await fileManagerNavigationPanel.getSearch().inputField.fillInInput('');
         await navigationPanel.backToChat();
       },
     );
@@ -441,10 +460,6 @@ dialAdminTest(
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    let publishApiModels: {
-      request: PublicationRequestModel;
-      response: Publication;
-    };
     const chatResponseIndex = 2;
 
     await dialTest.step(
@@ -486,13 +501,11 @@ dialAdminTest(
       'Set publication request name and submit the request',
       async () => {
         await publishingRequestDialog.requestName.fillInInput(requestName);
-        publishApiModels =
-          await publishingRequestDialog.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
           publishingRequestDialog,
           'hidden',
         );
-        publicationsToUnpublish.push(publishApiModels.response);
       },
     );
 
@@ -706,12 +719,319 @@ dialAdminTest(
   },
 );
 
-dialTest.afterAll(
-  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-    for (const publication of publicationsToUnpublish) {
-      const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
+dialAdminTest(
+  'File Manager: Organization: the files appear in Organization root if user publishes the chat with attachment.\n' +
+    "Organization: it's forbidden to delete single or multiple files.",
+  async ({
+    setTestIds,
+    conversationData,
+    dataInjector,
+    publishRequestBuilder,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    fileApiHelper,
+    adminFileManagerPage,
+    adminFileManagerToolbar,
+    adminFileManagerGrid,
+    adminFileManagerGridAssertion,
+    baseAssertion,
+    adminLocalStorageManager,
+  }) => {
+    dialAdminTest.slow();
+    setTestIds('EPMRTC-4195', 'EPMRTC-4177');
+
+    const folderPath = GeneratorUtil.randomString(5);
+    let imageInRootUrl: string;
+    let imageInFolderUrl: string;
+
+    await dialAdminTest.step(
+      'Upload files, create conversation with both attachments, publish and admin-approve via API',
+      async () => {
+        imageInRootUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+        imageInFolderUrl = await fileApiHelper.putFile(
+          Attachment.flowerImageName,
+          { parentPath: folderPath },
+        );
+
+        const conversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            modelWithInputAttachments,
+            true,
+            undefined,
+            imageInRootUrl,
+            imageInFolderUrl,
+          );
+        conversationData.resetData();
+        await dataInjector.createConversations([conversation]);
+
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .withFileResource(imageInRootUrl, PublishActions.ADD_IF_ABSENT)
+          .withFileResource(imageInFolderUrl, PublishActions.ADD_IF_ABSENT)
+          .build();
+
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+        await adminLocalStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open File Manager Organization tab and verify both files appear in root',
+      async () => {
+        await adminFileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
+        });
+        await adminFileManagerPage.waitForPageLoaded({
+          isGridVisible: undefined,
+        });
+        await adminFileManagerToolbar.organizationTab.click();
+        await adminFileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await adminFileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select both Organization files and verify no Delete button in header',
+      async () => {
+        const checkbox1 = await adminFileManagerGrid.gridCheckboxByNameCell(
+          Attachment.sunImageName,
+        );
+        await checkbox1.click();
+        const checkbox2 = await adminFileManagerGrid.gridCheckboxByNameCell(
+          Attachment.flowerImageName,
+        );
+        await checkbox2.click();
+
+        await baseAssertion.assertElementState(
+          adminFileManagerToolbar.getSelectedIconsButton(2),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          adminFileManagerToolbar.getDeleteButton(),
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Deselect items using the counter button in header',
+      async () => {
+        await adminFileManagerToolbar.getSelectedIconsButton(2).click();
+        await baseAssertion.assertElementState(
+          adminFileManagerToolbar.getSelectedIconsButton(2),
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open context menu for Organization file and verify Delete option is absent',
+      async () => {
+        const dotsMenu = await adminFileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await adminFileManagerGrid
+          .gridRowByNameCell(Attachment.sunImageName)
+          .hover();
+        await dotsMenu.click();
+        const rowDropdownMenu = adminFileManagerGrid.getRowDropdownMenu();
+        await baseAssertion.assertElementState(
+          rowDropdownMenu.dropdownItemByName(MenuOptions.delete),
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Publication request: the file appears in the Files section only once if the same file is used twice in the chat',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    dataInjector,
+    conversationData,
+    localStorageManager,
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    publishingRequestDialog,
+    filesToPublishTree,
+    publishFileTreeAssertion,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-4183');
+    let imageUrl: string;
+    let conversation: Conversation;
+    const filePath = API.modelFilePath(modelWithInputAttachments.id);
+
+    await dialTest.step(
+      'Upload an image and create conversation with same attachment used twice',
+      async () => {
+        imageUrl = await fileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: filePath,
+        });
+        conversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            modelWithInputAttachments,
+            true,
+            undefined,
+            imageUrl,
+            imageUrl,
+          );
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open Publish dialog and verify the file appears only once in Files section',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await baseAssertion.assertElementState(
+          publishingRequestDialog,
+          'visible',
+        );
+        await publishFileTreeAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          'visible',
+        );
+        await baseAssertion.assertElementsCount(
+          filesToPublishTree.getEntityByName(Attachment.sunImageName),
+          1,
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'File Manager: Organization: the files do not appear if Administrator Rejects the publication request.\n' +
+    'File Manager: Organization: the files stay if Administrator Rejects the un-publication request',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    dataInjector,
+    conversationData,
+    localStorageManager,
+    fileManagerPage,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+  }) => {
+    setTestIds('EPMRTC-4199', 'EPMRTC-4200');
+
+    const imageInRoot = GeneratorUtil.randomFilename('jpg');
+    const imageInFolder = GeneratorUtil.randomFilename('jpg');
+    const folderName = GeneratorUtil.randomString(7);
+
+    let imageInRootUrl: string;
+    let imageInFolderUrl: string;
+    let publication: Publication;
+
+    await dialAdminTest.step(
+      'Upload images and create conversation with both attachments',
+      async () => {
+        imageInRootUrl = await fileApiHelper.putFileWithCustomName(
+          imageInRoot,
+          Attachment.sunImageName,
+        );
+        imageInFolderUrl = await fileApiHelper.putFileWithCustomName(
+          imageInFolder,
+          Attachment.flowerImageName,
+          { parentPath: folderName },
+        );
+        const conversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            modelWithInputAttachments,
+            true,
+            undefined,
+            imageInRootUrl,
+            imageInFolderUrl,
+          );
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMRTC-4199: create publication request and admin rejects it',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withFileResource(imageInRootUrl, PublishActions.ADD)
+          .withFileResource(imageInFolderUrl, PublishActions.ADD)
+          .build();
+        const pendingPublication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.rejectRequest(pendingPublication);
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMRTC-4199: open File Manager Organization tab and verify specific files are not present',
+      async () => {
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded({ isGridVisible: undefined });
+        await fileManagerToolbar.organizationTab.click();
+        for (const file of [imageInRoot, imageInFolder]) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'hidden',
+          );
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMRTC-4200: publish images and approve, then create unpublish request and admin rejects it',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withFileResource(imageInRootUrl, PublishActions.ADD)
+          .withFileResource(imageInFolderUrl, PublishActions.ADD)
+          .build();
+        publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+        const unpublishRequest =
+          await publicationApiHelper.createUnpublishRequest(publication);
+        await adminPublicationApiHelper.rejectRequest(unpublishRequest);
+      },
+    );
+
+    await dialAdminTest.step(
+      'EPMRTC-4200: reload File Manager Organization tab and verify files are still present',
+      async () => {
+        await fileManagerPage.reloadPage();
+        await fileManagerPage.waitForPageLoaded();
+        await fileManagerToolbar.organizationTab.click();
+        for (const file of [imageInRoot, imageInFolder]) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
   },
 );

@@ -8,9 +8,9 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { ShareRelations } from '@/src/types/share';
+import { InvitationDetails, ShareRelations } from '@/src/types/share';
 
-import { ShareState } from './share.types';
+import { ShareState, UnshareFileManagerItem } from './share.types';
 
 import {
   ConversationInfo,
@@ -32,6 +32,7 @@ const initialState: ShareState = {
   isPrompt: undefined,
   unshareResourceId: undefined,
   unshareEntity: undefined,
+  unshareFileManagerItems: undefined,
 
   shareResourceName: undefined,
   shareResourceId: undefined,
@@ -176,12 +177,28 @@ export const shareSlice = createSlice({
       { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
     ) => {
       state.unshareEntity = payload;
+      if (payload) {
+        state.unshareFileManagerItems = undefined;
+      }
     },
     setUnshareResourceId: (
       state,
       { payload }: PayloadAction<string | undefined>,
     ) => {
       state.unshareResourceId = payload;
+      if (payload) {
+        state.unshareFileManagerItems = undefined;
+      }
+    },
+    setUnshareFileManagerItems: (
+      state,
+      { payload }: PayloadAction<UnshareFileManagerItem[] | undefined>,
+    ) => {
+      state.unshareFileManagerItems = payload;
+      if (payload?.length) {
+        state.unshareEntity = undefined;
+        state.unshareResourceId = undefined;
+      }
     },
     acceptShareInvitation: (
       state,
@@ -215,6 +232,7 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string;
+        details?: InvitationDetails;
       }>,
     ) => state,
     resetAcceptedEntityInfo: (state) => {

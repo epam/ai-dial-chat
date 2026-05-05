@@ -26,6 +26,7 @@ const openFoldersInitialState = {
 
 const initialState: UIState = {
   initialized: false,
+  locale: 'en',
   theme: '',
   availableThemes: [],
   themesImages: {},
@@ -72,6 +73,9 @@ export const uiSlice = createSlice({
     initTheme: (state) => state,
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
+    },
+    setLocale: (state, { payload }: PayloadAction<string>) => {
+      state.locale = payload;
     },
     setEnterType: (state, { payload }: PayloadAction<EnterType>) => {
       state.enterType = payload;

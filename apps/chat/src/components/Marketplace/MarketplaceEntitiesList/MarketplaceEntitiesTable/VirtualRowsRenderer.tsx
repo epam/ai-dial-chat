@@ -1,4 +1,4 @@
-import { VirtualItem } from '@tanstack/react-virtual';
+import { VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { FC, ReactNode } from 'react';
 
 import classNames from 'classnames';
@@ -23,6 +23,8 @@ interface DataRowItemProps {
   children: ReactNode;
   isNextSentinel: boolean;
   isPrevSentinel: boolean;
+  measureElement?: Virtualizer<HTMLDivElement, Element>['measureElement'];
+  sentinelWidth?: number;
 }
 
 const DataRowItem: FC<DataRowItemProps> = ({
@@ -32,23 +34,29 @@ const DataRowItem: FC<DataRowItemProps> = ({
   children,
   isNextSentinel,
   isPrevSentinel,
+  measureElement,
+  sentinelWidth,
 }) => {
   const isSentinel = isString(entity);
+  const shouldStretchSentinel = isSentinel && !!sentinelWidth;
 
   return (
     <div
+      ref={isSentinel ? measureElement : undefined}
+      data-index={virtualRow.index}
       className={classNames(
         suggestedResults.length &&
           !isSentinel &&
           entity.id === suggestedResults[0].id &&
           '!border-t-0',
         (isSentinel || isPrevSentinel) && '!border-t-0',
-        isSentinel && 'flex items-end',
         isNextSentinel && '!border-b !border-b-secondary',
-        'absolute left-0 top-0 min-w-full',
+        'absolute left-0 top-0',
+        shouldStretchSentinel ? '' : 'w-full',
       )}
       style={{
-        height: `${virtualRow.size}px`,
+        ...(isSentinel ? null : { height: `${virtualRow.size}px` }),
+        ...(shouldStretchSentinel ? { width: `${sentinelWidth}px` } : null),
         transform: `translateY(${virtualRow.start}px)`,
       }}
     >
@@ -107,6 +115,8 @@ interface VirtualRowRendererProps {
   suggestedResults: MarketplaceEntity[];
   rowProps: RowProps;
   isLeftSide?: boolean;
+  measureElement?: Virtualizer<HTMLDivElement, Element>['measureElement'];
+  sentinelWidth?: number;
 }
 
 export const VirtualRowsRenderer: FC<VirtualRowRendererProps> = ({
@@ -115,6 +125,8 @@ export const VirtualRowsRenderer: FC<VirtualRowRendererProps> = ({
   suggestedResults,
   rowProps,
   isLeftSide,
+  measureElement,
+  sentinelWidth,
 }) => {
   return (
     <>
@@ -131,6 +143,8 @@ export const VirtualRowsRenderer: FC<VirtualRowRendererProps> = ({
             isNextSentinel={isNextSentinel}
             isPrevSentinel={isPrevSentinel}
             virtualRow={virtualRow}
+            measureElement={isLeftSide ? measureElement : undefined}
+            sentinelWidth={isLeftSide ? sentinelWidth : undefined}
           >
             <VirtualRowView
               entity={entity}

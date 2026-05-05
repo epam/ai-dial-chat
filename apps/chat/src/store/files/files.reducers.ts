@@ -16,7 +16,12 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
+import {
+  getFileRootId,
+  isFolderId,
+  isMyEntity,
+  isRootId,
+} from '@/src/utils/app/id';
 
 import { FeatureType, MoveModel } from '@/src/types/common';
 import {
@@ -31,7 +36,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { FilesState } from './files.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialCopiedItem,
   DialDeletedItem,
@@ -262,14 +267,21 @@ export const filesSlice = createSlice({
       state.filesStatus = UploadStatus.LOADED;
 
       if (!isRootId(parentFolderId)) {
+        const parentFolder = getFolderFromId(
+          parentFolderId,
+          FeatureType.File,
+          UploadStatus.LOADED,
+        );
+
+        const parentFolderWithPermissions: FileFolderInterface = {
+          ...parentFolder,
+          ...(isMyEntity({ id: parentFolder.id }) && {
+            permissions: [SharePermission.WRITE, SharePermission.READ],
+          }),
+        };
+
         state.folders = combineEntities(
-          [
-            getFolderFromId(
-              parentFolderId,
-              FeatureType.File,
-              UploadStatus.LOADED,
-            ),
-          ],
+          [parentFolderWithPermissions],
           state.folders,
         );
       }
@@ -338,6 +350,7 @@ export const filesSlice = createSlice({
       _action: PayloadAction<{
         folderPath?: string;
         paths?: string[];
+        autoChoseFiles?: boolean;
       }>,
     ) => {
       state.isLoadingSearchListing = true;

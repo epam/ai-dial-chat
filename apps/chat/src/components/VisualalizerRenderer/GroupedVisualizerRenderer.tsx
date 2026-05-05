@@ -107,13 +107,11 @@ export const GroupedVisualizerRenderer = ({
     title: visualizerTitle = 'Visualizer',
     passAuthInfo,
     passExplicitToken,
+    withoutTitle: configWithoutTitle,
+    borderless: configBorderless,
   } = visualizerConfig;
 
   const dispatch = useAppDispatch();
-
-  const attachmentDataLoading = useAppSelector(
-    ConversationsSelectors.selectCustomAttachmentLoading,
-  );
 
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
@@ -148,16 +146,8 @@ export const GroupedVisualizerRenderer = ({
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
-  const { withoutTitleTypes, borderlessTypes } = useAppSelector(
-    SettingsSelectors.selectAttachmentsSettings,
-  );
-
-  const hideTitle =
-    attachments.some((a) => withoutTitleTypes.includes(a.mimeType)) &&
-    !forceDefaultView;
-  const isBorderless =
-    attachments.some((a) => borderlessTypes.includes(a.mimeType)) &&
-    !forceDefaultView;
+  const hideTitle = !!configWithoutTitle && !forceDefaultView;
+  const isBorderless = !!configBorderless && !forceDefaultView;
 
   const scrollWidth = iframeContainerRef.current?.scrollWidth ?? null;
   const containerHeight = iframeContainerRef.current?.clientHeight ?? null;
@@ -256,10 +246,8 @@ export const GroupedVisualizerRenderer = ({
 
   const sendMessage = useCallback(
     async (visualizerInstance: VisualizerConnector) => {
-      await visualizerInstance.ready();
-
       if (groupedAttachmentsData) {
-        visualizerInstance.send(
+        await visualizerInstance.send(
           VisualizerConnectorRequests.sendGroupedVisualizeData,
           groupedAttachmentsData,
         );
@@ -422,7 +410,7 @@ export const GroupedVisualizerRenderer = ({
             height: iframeContainerHeight,
           }}
         >
-          {(!ready || attachmentDataLoading || !allAttachmentsLoaded) && (
+          {(!ready || !allAttachmentsLoaded) && (
             <div className="absolute z-10 flex size-full items-center bg-layer-1">
               <Spinner className="mx-auto" size={30} />
             </div>

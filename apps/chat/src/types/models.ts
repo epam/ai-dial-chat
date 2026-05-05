@@ -2,7 +2,11 @@ import { ApplicationStatus } from '@/src/types/applications';
 
 import { EntityType } from './common';
 
-import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
+import {
+  EntityPublicationInfo,
+  ShareEntity,
+  ToolsetTransportType,
+} from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
@@ -55,6 +59,14 @@ export interface CoreAIEntity<T = EntityType.Model> {
   };
   viewer_url?: string;
   editor_url?: string;
+
+  mcp?: {
+    endpoint: string;
+    transport: ToolsetTransportType;
+    allowedTools?: string[];
+    configDelivery?: string;
+    forwardPerRequestKey?: boolean;
+  };
 }
 
 export interface DialAIEntityFeatures {
@@ -67,6 +79,7 @@ export interface DialAIEntityFeatures {
   configuration: boolean;
   tools: boolean;
   assistantAttachmentsInRequest: boolean;
+  mcp: boolean;
 }
 
 export interface DialAIEntity {
@@ -112,6 +125,14 @@ export interface DialAIEntityModel
 
   viewerUrl?: string;
   editorUrl?: string;
+
+  mcp?: {
+    endpoint: string;
+    transport: ToolsetTransportType;
+    allowedTools?: string[];
+    configDelivery?: string;
+    forwardPerRequestKey?: boolean;
+  };
 }
 
 export interface InstalledModel {

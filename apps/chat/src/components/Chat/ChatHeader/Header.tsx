@@ -49,7 +49,11 @@ import { HeaderModelTooltip } from './HeaderModelTooltip';
 import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import {
+  ConversationResponseFormat,
+  Feature,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import {
   DialButton,
   DialGhostIconButton,
@@ -199,7 +203,7 @@ export const ChatHeader = Inversify.register(
               <Tooltip
                 tooltip={conversation.name}
                 triggerClassName={classNames(
-                  'truncate text-center',
+                  'flex-1 truncate text-center sm:flex-none',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
                   isUnpublishing && 'text-error',
@@ -281,6 +285,10 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      responseFormat={
+                        conversation.responseFormat ??
+                        ConversationResponseFormat.Markdown
+                      }
                       hasSettings={!!doesModelHaveSettings(model)}
                       systemPrompt={
                         model?.type === EntityType.Model &&
