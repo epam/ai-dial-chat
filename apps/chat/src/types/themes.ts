@@ -6,6 +6,9 @@ export interface Theme {
   banners?: Record<string, string>;
   'code-editor-theme'?: string;
   'app-logo': string;
+  'chat-logo-light'?: string;
+  'chat-logo-dark'?: string;
+  'chat-favicon'?: string;
   'font-family'?: string;
   'font-codeblock'?: string;
   'border-radius'?: string;
