@@ -43,6 +43,9 @@ export function PromptbarSettings() {
   const isMyItemsExist = useAppSelector(
     PromptsSelectors.selectDoesAnyMyItemExist,
   );
+  const doesAnyPromptExist = useAppSelector(
+    PromptsSelectors.selectDoesAnyMyPromptExist,
+  );
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
 
   const collapsedSectionsSelector = useMemo(
@@ -124,7 +127,7 @@ export function PromptbarSettings() {
             ? PromptBarI18nKeys.DeleteSelectedPrompts
             : PromptBarI18nKeys.DeleteAllPrompts,
         ),
-        display: isMyItemsExist,
+        display: isSelectMode ? isMyItemsExist : doesAnyPromptExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -132,7 +135,14 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [collapsedSections, dispatch, isMyItemsExist, isSelectMode, t],
+    [
+      collapsedSections,
+      dispatch,
+      doesAnyPromptExist,
+      isMyItemsExist,
+      isSelectMode,
+      t,
+    ],
   );
 
   return (

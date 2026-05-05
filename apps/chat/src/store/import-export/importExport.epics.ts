@@ -22,6 +22,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import {
+  combineEntities,
   filterOnlyMyEntities,
   isImportEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
@@ -43,6 +44,7 @@ import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
   generateNextName,
   getConversationAttachmentWithPath,
+  getEntitiesFoldersFromEntities,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
@@ -493,9 +495,15 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 conversationsListing.map((info) => info.folderId),
               );
               //calculate all folders;
-              const conversationsFolders = getFoldersFromIds(
-                uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
-                FeatureType.Chat,
+              const conversationsFolders = combineEntities(
+                getFoldersFromIds(
+                  uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
+                  FeatureType.Chat,
+                ),
+                getEntitiesFoldersFromEntities(
+                  uploadedConversations,
+                  FeatureType.Chat,
+                ),
               );
 
               const firstImportedConversation = uploadedConversations[0];
@@ -607,9 +615,15 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 promptsListing.map((info) => info.folderId),
               );
               //calculate all folders;
-              const promptsFolders = getFoldersFromIds(
-                uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
-                FeatureType.Prompt,
+              const promptsFolders = combineEntities(
+                getFoldersFromIds(
+                  uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
+                  FeatureType.Prompt,
+                ),
+                getEntitiesFoldersFromEntities(
+                  itemsToUpload,
+                  FeatureType.Prompt,
+                ),
               );
               const uploadedPromptsFolderIds = uniq(
                 itemsToUpload.flatMap((prompt) =>

@@ -67,6 +67,10 @@ export const Promptbar = () => {
   const handleDrop = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
+        if ([...e.dataTransfer.types].includes(MoveType.PromptFolder)) {
+          return;
+        }
+
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
         const folderId = getPromptRootId();
 

@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { hasDragEventEntityData } from '@/src/utils/app/move';
+import { hasDragEventAnyData } from '@/src/utils/app/move';
 
 import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -80,7 +80,7 @@ export const Sidebar = <T,>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (hasDragEventEntityData(e, featureType)) {
+      if (hasDragEventAnyData(e, featureType)) {
         e.preventDefault();
       }
     },

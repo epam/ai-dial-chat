@@ -82,6 +82,10 @@ export const Chatbar = () => {
   const handleDrop = useCallback(
     (e: DragEvent) => {
       if (e.dataTransfer) {
+        if ([...e.dataTransfer.types].includes(MoveType.ConversationFolder)) {
+          return;
+        }
+
         const conversationData = e.dataTransfer.getData(MoveType.Conversation);
         if (conversationData) {
           const conversation = JSON.parse(conversationData);

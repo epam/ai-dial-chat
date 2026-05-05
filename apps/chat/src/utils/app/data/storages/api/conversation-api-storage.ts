@@ -167,8 +167,9 @@ export const getImportPreparedConversations = ({
     });
 
     const newName = prepareEntityName(conv.name);
-    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
-    const folderId = constructPath(rootId, path);
+    const folderId = isRootConversationsId(path)
+      ? path
+      : constructPath(getConversationRootId(), path);
 
     return {
       ...conv,
