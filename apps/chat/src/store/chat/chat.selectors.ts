@@ -86,8 +86,17 @@ const selectSelectedEntityInfo = (state: RootState) =>
 const selectInputContentTemplateMapping = (state: RootState) =>
   rootSelector(state).inputContentTemplateMapping;
 
+const selectUserMessageTranscript = (state: RootState) =>
+  rootSelector(state).userMessageTranscript;
+
+const selectUserMessageVoiceAttachmentId = (state: RootState) =>
+  rootSelector(state).userMessageVoiceAttachmentId;
+
 const selectIsTranscribing = (state: RootState) =>
   rootSelector(state).isTranscribing;
+
+const selectIsUserMessageTranscribing = (state: RootState) =>
+  rootSelector(state).isUserMessageTranscribing;
 
 const selectIsAsrFlowActive = (state: RootState) =>
   rootSelector(state).isAsrFlowActive;
@@ -95,7 +104,10 @@ const selectIsAsrFlowActive = (state: RootState) =>
 export const ChatSelectors = {
   selectInputContent,
   selectInputContentTemplateMapping,
+  selectUserMessageTranscript,
+  selectUserMessageVoiceAttachmentId,
   selectIsTranscribing,
+  selectIsUserMessageTranscribing,
   selectIsAsrFlowActive,
   selectChatFormValue,
   selectUploadedConfigurationSchemas,

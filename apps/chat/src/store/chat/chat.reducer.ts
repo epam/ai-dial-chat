@@ -12,10 +12,13 @@ import { MessageFormSchema, MessageFormValueType } from '@epam/ai-dial-shared';
 
 const initialState: ChatState = {
   inputContent: '',
+  userMessageTranscript: undefined,
+  userMessageVoiceAttachmentId: undefined,
   configurationSchemasLoadingIds: [],
   infoModalState: ModalState.CLOSED,
   configurationSchemas: [],
   isTranscribing: false,
+  isUserMessageTranscribing: false,
   isAsrFlowActive: false,
 };
 
@@ -169,6 +172,32 @@ export const chatSlice = createSlice({
       state,
       _action: PayloadAction<{ audioBlob: Blob; fileExtension: string }>,
     ) => state,
+    handleUserMessageVoiceRecording: (
+      state,
+      _action: PayloadAction<{ audioBlob: Blob; fileExtension: string }>,
+    ) => state,
+    startUserMessageTranscription: (state) => {
+      state.isUserMessageTranscribing = true;
+    },
+    setUserMessageTranscript: (state, { payload }: PayloadAction<string>) => {
+      state.userMessageTranscript = payload;
+      state.isUserMessageTranscribing = false;
+    },
+    clearUserMessageTranscript: (state) => {
+      state.userMessageTranscript = undefined;
+    },
+    setUserMessageVoiceAttachmentId: (
+      state,
+      { payload }: PayloadAction<string>,
+    ) => {
+      state.userMessageVoiceAttachmentId = payload;
+    },
+    clearUserMessageVoiceAttachmentId: (state) => {
+      state.userMessageVoiceAttachmentId = undefined;
+    },
+    userMessageTranscriptionFailed: (state) => {
+      state.isUserMessageTranscribing = false;
+    },
     startTranscription: (
       state,
       _action: PayloadAction<{ audioData: string; mimeType: string }>,

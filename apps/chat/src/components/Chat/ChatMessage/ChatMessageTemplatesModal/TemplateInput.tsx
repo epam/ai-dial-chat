@@ -1,8 +1,8 @@
-import React, { LegacyRef, forwardRef } from 'react';
+import { LegacyRef, TextareaHTMLAttributes, forwardRef } from 'react';
 
 import classNames from 'classnames';
 
-type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 interface TemplateInputProps extends TextareaProps {
   validationError?: string;
