@@ -122,7 +122,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -1536,17 +1535,18 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const conversationModelType = lastModel?.type ?? EntityType.Model;
-      let modelAdditionalSettings = {};
+      const modelAdditionalSettings: Partial<
+        Pick<ChatBody, 'prompt' | 'temperature'>
+      > = {};
 
       if (conversationModelType === EntityType.Model) {
-        modelAdditionalSettings = {
-          prompt: doesModelAllowSystemPrompt(lastModel)
-            ? payload.conversation.prompt
-            : undefined,
-          temperature: doesModelAllowTemperature(lastModel)
-            ? payload.conversation.temperature
-            : FALLBACK_TEMPERATURE,
-        };
+        if (doesModelAllowSystemPrompt(lastModel)) {
+          modelAdditionalSettings.prompt = payload.conversation.prompt;
+        }
+        if (doesModelAllowTemperature(lastModel)) {
+          modelAdditionalSettings.temperature =
+            payload.conversation.temperature;
+        }
       }
 
       const chatBody: ChatBody = {
@@ -1590,6 +1590,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
+      const locale = UISelectors.selectLocale(state$.value);
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
@@ -1600,6 +1601,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
+            'x-language': locale,
             ...(channelId &&
               isApplication && {
                 [HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]: channelId,

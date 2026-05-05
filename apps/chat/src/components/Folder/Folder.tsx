@@ -957,7 +957,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {!isSelected && (
                   <ShareIcon
                     {...currentFolder}
-                    isHighlighted
+                    isHighlighted={!!isHighlighted}
                     isDraggingOver={isDraggingOver}
                     featureType={featureType}
                     containerClassName={classNames(
@@ -1103,7 +1103,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   (!isSelected && !isPartialSelected)) && (
                   <ShareIcon
                     {...currentFolder}
-                    isHighlighted={isContextMenu}
+                    isHighlighted={isContextMenu || !!isHighlighted}
                     isDraggingOver={isDraggingOver}
                     featureType={featureType}
                     containerClassName={classNames(

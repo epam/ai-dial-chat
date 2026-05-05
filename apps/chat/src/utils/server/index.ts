@@ -60,18 +60,20 @@ export const OpenAIStream = async ({
   chatReference,
   userJWT,
   jobTitle,
+  language,
   maxRequestTokens,
   configurationSchemaValue,
   channelId,
 }: {
   model: DialAIEntityModel;
-  temperature: number | undefined;
   messages: Message[];
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
+  language?: string;
   maxRequestTokens: number | undefined;
   configurationSchemaValue?: MessageFormValue;
+  temperature?: number;
   channelId?: string;
 }) => {
   let messagesToSend = messages;
@@ -81,6 +83,7 @@ export const OpenAIStream = async ({
     chatReference,
     jwt: userJWT,
     jobTitle,
+    language,
   });
 
   if (channelId) {

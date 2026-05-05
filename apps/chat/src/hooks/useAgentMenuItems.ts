@@ -25,6 +25,7 @@ import {
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -83,6 +84,9 @@ export const useAgentMenuItems = ({
   const schemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
+  );
 
   const {
     handleCopy,
@@ -124,7 +128,10 @@ export const useAgentMenuItems = ({
       {
         name: t(MarketplaceI18nKeys.Connect),
         dataQa: 'toolset-connect',
-        display: disabledActions?.connect !== true,
+        display:
+          disabledActions?.connect !== true &&
+          doesAgentSupportMcp(entity) &&
+          !!dialCoreExternalUrl,
         Icon: IconPlugConnected,
         onClick: handleConnect,
       },
@@ -222,6 +229,7 @@ export const useAgentMenuItems = ({
       },
     ],
     [
+      dialCoreExternalUrl,
       t,
       disabledActions?.connect,
       disabledActions.copyLink,

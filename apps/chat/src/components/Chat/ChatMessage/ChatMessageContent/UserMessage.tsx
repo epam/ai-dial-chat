@@ -442,12 +442,12 @@ export const UserMessage = memo(function UserMessage({
       (m) => m.role === Role.User,
     ).length;
 
-    if (userMessagesCount <= 1) {
+    if (userMessagesCount <= 1 && !isApproveRequiredEntitySelected) {
       return undefined;
     }
 
     return onDelete;
-  }, [allMessages, isExternalChat, onDelete]);
+  }, [allMessages, isExternalChat, isApproveRequiredEntitySelected, onDelete]);
 
   useEffect(() => {
     setMessageContent(message.content);

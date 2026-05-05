@@ -1,4 +1,3 @@
-import { Routes } from '@/chat/constants/routes';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -7,7 +6,6 @@ import {
   EntityEditorToolsetTypes,
   ExpectedConstants,
   OAuthOptions,
-  OAuthQueryParams,
   SignInButtonTitles,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
@@ -39,6 +37,7 @@ dialTest(
     confirmationDialogAssertion,
     toolsetApiHelper,
     itemApiHelper,
+    toolsetApiAuthenticationAssertion,
     page,
   }) => {
     setTestIds('EPMRTC-6969', 'EPMRTC-7107', 'EPMRTC-7027');
@@ -117,30 +116,10 @@ dialTest(
 
     await dialTest.step('Verify OAuth redirect query', async () => {
       const state = oauthMockHelper.getState();
-      const redirectUrl = new URL(state.capturedOAuthUrl!);
-      const params = redirectUrl.searchParams;
       const mockConfig = oauthMockHelper.getMockConfig();
-
-      baseAssertion.assertValueIsNotUndefined(state.capturedState);
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.responseType),
-        'code',
-      );
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.codeChallengeMethod),
-        mockConfig.code_challenge_method,
-      );
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.clientId),
-        mockConfig.client_id,
-      );
-      baseAssertion.assertStringIncludes(
-        params.get(OAuthQueryParams.redirectUri)!,
-        Routes.ToolsetSignIn,
-      );
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.scope),
-        mockConfig.scopes_supported.join(' '),
+      toolsetApiAuthenticationAssertion.assertOAuthRedirectRequest(
+        state,
+        mockConfig,
       );
     });
 
@@ -156,19 +135,12 @@ dialTest(
 
     await dialTest.step('Validate sign-in request payload', async () => {
       const signInRequest = oauthMockHelper.getSignInRequest()!;
-      baseAssertion.assertValue(signInRequest.url, initialToolset.id);
-      baseAssertion.assertValue(
-        signInRequest.authenticationType,
-        ToolsetAuthTypes.OAUTH,
-      );
-      baseAssertion.assertValue(
-        signInRequest.credentialsLevel,
-        ToolsetCredentialsLevel.GLOBAL,
-      );
-      baseAssertion.assertValue(
-        signInRequest.code,
-        oauthMockHelper.getAuthorizationCode(),
-      );
+      toolsetApiAuthenticationAssertion.assertSignInRequest(signInRequest, {
+        url: initialToolset.id!,
+        authType: ToolsetAuthTypes.OAUTH,
+        credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
+        authorizationCode: oauthMockHelper.getAuthorizationCode(),
+      });
     });
 
     await dialTest.step(
@@ -277,15 +249,11 @@ dialTest(
 
     await dialTest.step('Verify log-out request body', async () => {
       const signOutRequest = oauthMockHelper.getSignOutRequest()!;
-      baseAssertion.assertValue(signOutRequest.url, updatedId);
-      baseAssertion.assertValue(
-        signOutRequest.authenticationType,
-        ToolsetAuthTypes.OAUTH,
-      );
-      baseAssertion.assertValue(
-        signOutRequest.credentialsLevel,
-        ToolsetCredentialsLevel.GLOBAL,
-      );
+      toolsetApiAuthenticationAssertion.assertSignOutRequest(signOutRequest, {
+        url: updatedId,
+        authType: ToolsetAuthTypes.OAUTH,
+        credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
+      });
     });
 
     await dialTest.step(

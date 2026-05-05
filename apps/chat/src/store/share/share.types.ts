@@ -8,6 +8,13 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
+export interface UnshareFileManagerItem {
+  path: string;
+  nodeType?: string;
+  sharedWithMe?: boolean;
+  isShared?: boolean;
+}
+
 export interface ShareState {
   status: UploadStatus;
   error: ErrorMessage | undefined;
@@ -26,4 +33,5 @@ export interface ShareState {
   sharePermissions?: SharePermission[];
   unshareResourceId?: string;
   isShared?: boolean;
+  unshareFileManagerItems?: UnshareFileManagerItem[];
 }

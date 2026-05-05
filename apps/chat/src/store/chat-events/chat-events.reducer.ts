@@ -11,7 +11,9 @@ import { ChatEventsState } from '@/src/store/chat-events/chat-events.types';
 import omit from 'lodash-es/omit';
 
 const initialState: ChatEventsState = {
+  initialized: false,
   isSubscribed: false,
+  isSubscribing: false,
   isReporting: false,
   events: {},
 };
@@ -20,22 +22,31 @@ export const chatEventsSlice = createSlice({
   name: 'chat-events',
   initialState,
   reducers: {
+    init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     subscribe: (
       state,
       _action: PayloadAction<{ retryAttempt?: number } | undefined>,
-    ) => state,
+    ) => {
+      state.isSubscribing = true;
+    },
     subscribeFailure: (
       state,
       _action: PayloadAction<{ retryAttempt?: number } | undefined>,
     ) => {
       state.isSubscribed = false;
+      state.isSubscribing = false;
     },
     unsubscribe: (state) => state,
     setChannelId: (state, { payload }: PayloadAction<string>) => {
       state.channelId = payload;
+      state.isSubscribing = false;
     },
     setIsSubscribed: (state, { payload }: PayloadAction<boolean>) => {
       state.isSubscribed = payload;
+      state.isSubscribing = false;
     },
     addEvents: (state, { payload }: PayloadAction<ChatEvent[]>) => {
       const newEvents = { ...state.events };

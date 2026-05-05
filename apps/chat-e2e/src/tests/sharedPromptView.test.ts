@@ -130,7 +130,7 @@ dialSharedWithMeTest(
           ExpectedConstants.unsharePromptConfirmationModalTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.unsharePromptConfirmationModalMessage,
+          ExpectedConstants.removeYourAccessMessage(prompt.name),
         );
       },
     );

@@ -50,7 +50,6 @@ import {
 import {
   DEFAULT_APPLICATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 import { CommonI18nKeys } from '@/src/constants/i18n';
@@ -69,6 +68,7 @@ import {
 } from '@/src/constants/validation-helpers';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 import { nanoid } from 'nanoid';
@@ -668,14 +668,17 @@ export const getQuickApp2Toolsets = ({
     }>(
       (acc, agentAndToolset) => {
         const entity = allEntitiesMap[agentAndToolset.id];
+        const toolData = agentAndToolset.tool ?? {};
         if (!entity) {
           if (isApplicationId(agentAndToolset.id)) {
             acc.dialDeploymentsToolsets.push({
+              ...omit(toolData, ['isDeploymentTool', 'name']),
               type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
               deployment_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
             });
           } else if (isToolsetId(agentAndToolset.id)) {
             acc.dialMCPToolsets.push({
+              ...omit(toolData, ['isDeploymentTool', 'name']),
               dial_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
               type: ToolsetTypes.DialMcp,
             });
@@ -694,11 +697,13 @@ export const getQuickApp2Toolsets = ({
 
         if (isDialAiEntityModel(entity)) {
           acc.dialDeploymentsToolsets.push({
+            ...omit(toolData, ['isDeploymentTool', 'name']),
             type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
             deployment_id: ApiUtils.encodeApiUrl(entity.id),
           });
         } else {
           acc.dialMCPToolsets.push({
+            ...omit(toolData, ['isDeploymentTool', 'name']),
             dial_id: ApiUtils.encodeApiUrl(entity.id),
             type: ToolsetTypes.DialMcp,
           });
@@ -814,7 +819,7 @@ export const getApplicationPayload = ({
       const temperatureToUse =
         model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
           ? data.temperature
-          : FALLBACK_TEMPERATURE;
+          : undefined;
       const starters = data.starters
         .filter((starter) => starter.text.trim() && starter.title.trim())
         .map(({ title, text }) => ({ title, text }));
@@ -832,9 +837,9 @@ export const getApplicationPayload = ({
           orchestrator: {
             deployment: {
               name: model?.id ?? data.model,
-              parameters: {
-                temperature: temperatureToUse,
-              },
+              ...(temperatureToUse && {
+                parameters: { temperature: temperatureToUse },
+              }),
             },
             system_prompt: {
               type: 'custom',
