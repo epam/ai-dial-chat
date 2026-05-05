@@ -277,7 +277,7 @@ export const useFileManager = ({
       organization: ORGANIZATION_FILES_SECTION,
       review: REVIEW_FILES_SECTION,
     },
-    getInitialTab(availableTabs),
+    safeInitialTab,
   );
 
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
