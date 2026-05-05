@@ -21,7 +21,10 @@ import { EntityFilters } from '@/src/types/search';
 
 import {
   MAX_ENTITY_LENGTH,
+  MAX_ENTITY_NAME_NUMERATION,
   MIN_ENTITY_LENGTH,
+  RESOURCE_MAX_ID_BYTES,
+  RESOURCE_MAX_SEGMENT_BYTES,
 } from '@/src/constants/default-ui-settings';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
@@ -430,5 +433,137 @@ export const getSafeRedirectUrl = (url: string) => {
   } catch {
     console.error('Invalid url');
   }
+  return undefined;
+};
+
+// ---------------------------------------------------------------------------
+// Storage byte-limit utilities
+// Applies to all resource types (conversations, prompts, files, folders).
+// ---------------------------------------------------------------------------
+
+/**
+ * Limits for resource ids/path-segments in the storage backend.
+ * maxIdBytes    – maximum UTF-8 byte length of the full object key.
+ * maxSegmentBytes – maximum UTF-8 byte length of a single path segment.
+ */
+export type EntityStorageLimits = {
+  maxIdBytes?: number;
+  maxSegmentBytes?: number;
+};
+
+/** Returns the globally-configured storage limits (from env vars). */
+export const getResourceStorageLimits = (): EntityStorageLimits => ({
+  maxIdBytes: RESOURCE_MAX_ID_BYTES,
+  maxSegmentBytes: RESOURCE_MAX_SEGMENT_BYTES,
+});
+
+const _textEncoder = new TextEncoder();
+
+/** Returns the number of UTF-8 bytes required to encode `value`. */
+export const getUtf8BytesLength = (value: string): number =>
+  _textEncoder.encode(value).length;
+
+/**
+ * Truncates `value` so that its UTF-8 encoded form does not exceed `maxBytes`.
+ * Iteration is character-by-character to correctly handle multi-byte sequences.
+ */
+export const truncateToUtf8Bytes = (
+  value: string,
+  maxBytes: number,
+): string => {
+  if (maxBytes <= 0) return '';
+
+  let currentBytes = 0;
+  let result = '';
+
+  for (const char of value) {
+    const charBytes = getUtf8BytesLength(char);
+    if (currentBytes + charBytes > maxBytes) break;
+    result += char;
+    currentBytes += charBytes;
+  }
+
+  return result;
+};
+
+/**
+ * Calculates how many UTF-8 bytes are available for the entity name given the
+ * configured storage limits.
+ *
+ * @param buildFullId      - builds the full storage key for a placeholder name
+ * @param buildLastSegment - builds the last path segment for a placeholder name
+ * @param limits           - storage limits to apply
+ * @returns available bytes, or `undefined` when no limits are configured
+ */
+export const getAvailableEntityNameBytes = (
+  buildFullId: (placeholderName: string) => string,
+  buildLastSegment: (placeholderName: string) => string,
+  limits: EntityStorageLimits,
+): number | undefined => {
+  const placeholder = 'a';
+  const placeholderBytes = getUtf8BytesLength(placeholder);
+
+  const byIdLimit = limits.maxIdBytes
+    ? Math.max(
+        limits.maxIdBytes -
+          getUtf8BytesLength(buildFullId(placeholder)) +
+          placeholderBytes,
+        0,
+      )
+    : undefined;
+
+  const bySegmentLimit = limits.maxSegmentBytes
+    ? Math.max(
+        limits.maxSegmentBytes -
+          getUtf8BytesLength(buildLastSegment(placeholder)) +
+          placeholderBytes,
+        0,
+      )
+    : undefined;
+
+  if (byIdLimit === undefined && bySegmentLimit === undefined) return undefined;
+  if (byIdLimit === undefined) return bySegmentLimit;
+  if (bySegmentLimit === undefined) return byIdLimit;
+  return Math.min(byIdLimit, bySegmentLimit);
+};
+
+/**
+ * Shared naming routine for all resource types.
+ *
+ * Algorithm:
+ * 1. Use desired name when provided, otherwise fallback to default name.
+ * 2. Fit base name to current byte budget (suffix-aware).
+ * 3. Check uniqueness within provided siblings list.
+ * 4. If occupied, append numeric suffix (` 1`, ` 2`, ...) and retry.
+ */
+export const getStorageSafeUniqueName = (params: {
+  desiredName?: string;
+  defaultName: string;
+  existingNames: string[];
+  fitBaseName: (baseName: string, suffix: string) => string;
+  maxNumeration?: number;
+}): string | undefined => {
+  const {
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName,
+    maxNumeration = MAX_ENTITY_NAME_NUMERATION,
+  } = params;
+
+  const existingNamesSet = new Set(existingNames);
+  const resolvedBaseName =
+    prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
+
+  for (let index = 0; index <= maxNumeration; index++) {
+    const suffix = index === 0 ? '' : ` ${index}`;
+    const fittedBaseName = fitBaseName(resolvedBaseName, suffix);
+    const candidate = `${fittedBaseName}${suffix}`.trim();
+
+    if (candidate && !existingNamesSet.has(candidate)) {
+      return candidate;
+    }
+  }
+
   return undefined;
 };

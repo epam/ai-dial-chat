@@ -4,8 +4,18 @@ import { getPromptApiKey, parseEntityApiKey } from '@/src/utils/server/api';
 import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
+import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
+import {
+  EntityStorageLimits,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
+  getUtf8BytesLength,
+  prepareEntityName,
+  truncateToUtf8Bytes,
+} from './common';
 import { constructPath } from './file';
 
 import { TemplateMapping } from '@epam/ai-dial-shared';
@@ -23,6 +33,73 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
     };
   }
   return prompt as Prompt;
+};
+
+/**
+ * Returns available UTF-8 bytes for the prompt name given the configured limits.
+ * For prompts the last path segment is simply `name` (or `name__version`), with
+ * no model-id prefix unlike conversations.
+ */
+export const getAvailablePromptNameBytes = (
+  prompt: PartialBy<PromptInfo, 'id'>,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => getGeneratedPromptId({ ...(prompt as Prompt), name }),
+    (name) => getPromptApiKey({ ...prompt, name }),
+    limits,
+  );
+
+/**
+ * Returns a storage-safe, unique prompt name by:
+ * 1. Sanitising the desired name via `prepareEntityName`.
+ * 2. Truncating the base so that `name + suffix` fits within byte limits.
+ * 3. Appending numeric suffixes (` 1`, ` 2`, …) until no collision with
+ *    `existingNames` at the same folder level.
+ */
+export const getStorageSafeUniquePromptName = (params: {
+  prompt: PartialBy<PromptInfo, 'id'>;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { prompt, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_PROMPT_NAME;
+
+  const availableNameBytes = getAvailablePromptNameBytes(prompt, limits);
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: (baseName, suffix) => {
+      if (availableNameBytes === undefined) {
+        return prepareEntityName(baseName);
+      }
+
+      const allowedNameBytes = Math.max(
+        availableNameBytes - getUtf8BytesLength(suffix),
+        0,
+      );
+
+      return prepareEntityName(
+        truncateToUtf8Bytes(prepareEntityName(baseName), allowedNameBytes),
+      );
+    },
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  // Fallback: return byte-fitted name without suffix guarantee
+  const baseName =
+    prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
+
+  if (availableNameBytes === undefined) return baseName;
+  return prepareEntityName(truncateToUtf8Bytes(baseName, availableNameBytes));
 };
 
 export const getPromptInfoFromId = (

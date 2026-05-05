@@ -20,12 +20,21 @@ import { AppAction } from '@/src/types/store';
 
 import { ConversationsActions, UIActions } from '@/src/store/actions';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_FOLDER_NAME,
+  MAX_ENTITY_NAME_NUMERATION,
+} from '@/src/constants/default-ui-settings';
 
 import {
+  EntityStorageLimits,
   addTrailingSlashIfAbsent,
   doesHaveDotsInTheEnd,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
+  getUtf8BytesLength,
   prepareEntityName,
+  truncateToUtf8Bytes,
 } from './common';
 import { isRootEntity } from './id';
 import { hasWritePermission } from './share';
@@ -157,7 +166,7 @@ export const getNextDefaultName = (
       startWithEmptyPostfix ? -1 : 0,
     ) + index; // max number
 
-  if (maxNumber >= 9999999) {
+  if (maxNumber >= MAX_ENTITY_NAME_NUMERATION) {
     return getNextDefaultName(
       `${prefix}${maxNumber}`,
       entities,
@@ -388,6 +397,107 @@ export const addGeneratedFolderId = (
     };
   }
   return folder as FolderInterface;
+};
+
+// ---------------------------------------------------------------------------
+// Folder storage byte-limit utilities
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the number of UTF-8 bytes available for a folder name given the
+ * configured storage limits.
+ *
+ * For a folder the full storage key is `constructPath(folderId, name)` and the
+ * last path segment is simply `name` (no API-key wrapper).
+ */
+export const getAvailableFolderNameBytes = (
+  folderId: string,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => constructPath(folderId, name),
+    (name) => name,
+    limits,
+  );
+
+/**
+ * Truncates `folder.name` so that the resulting folder ID fits within the
+ * configured storage byte limits.  Returns the original folder object when no
+ * truncation is required.
+ */
+export const fitFolderNameToStorageLimits = <
+  T extends PartialBy<FolderInterface, 'id'>,
+>(
+  folder: T,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): T => {
+  const availableNameBytes = getAvailableFolderNameBytes(
+    folder.folderId ?? '',
+    limits,
+  );
+
+  if (availableNameBytes === undefined || availableNameBytes <= 0) {
+    return folder;
+  }
+
+  const fittedName = prepareEntityName(
+    truncateToUtf8Bytes(prepareEntityName(folder.name), availableNameBytes),
+  );
+
+  return fittedName === folder.name ? folder : { ...folder, name: fittedName };
+};
+
+/**
+ * Returns a storage-safe, unique folder name by:
+ * 1. Sanitising the desired name via `prepareEntityName`.
+ * 2. Truncating the base so that `name + suffix` fits within byte limits.
+ * 3. Appending numeric suffixes (` 1`, ` 2`, …) until no collision with
+ *    siblings at the same level.
+ */
+export const getStorageSafeUniqueFolderName = (params: {
+  folderId: string;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { folderId, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_FOLDER_NAME;
+
+  const availableNameBytes = getAvailableFolderNameBytes(folderId, limits);
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: (baseName, suffix) => {
+      if (availableNameBytes === undefined) {
+        return prepareEntityName(baseName);
+      }
+
+      const allowedNameBytes = Math.max(
+        availableNameBytes - getUtf8BytesLength(suffix),
+        0,
+      );
+
+      return prepareEntityName(
+        truncateToUtf8Bytes(prepareEntityName(baseName), allowedNameBytes),
+      );
+    },
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  // Fallback: return byte-fitted name without suffix guarantee
+  return fitFolderNameToStorageLimits({
+    folderId,
+    name:
+      prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
+    type: 'chat' as FolderInterface['type'],
+  }).name;
 };
 
 export const getParentFolderIdsFromFolderId = (path?: string): string[] => {

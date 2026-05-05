@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addPausedError,
   excludeSystemMessages,
+  fitConversationNameToStorageLimits,
+  getAvailableConversationNameBytes,
   getConversationInfoFromId,
   getConversationModelParams,
   getDefaultModelReference,
@@ -11,6 +13,7 @@ import {
   getNewConversationName,
   getOpenAIEntityFullName,
   getQuickAttachmentsSavingPath,
+  getStorageSafeUniqueConversationName,
   getSystemMessageContent,
   isChosenConversationValidForCompare,
   isConversationInfoEntity,
@@ -67,11 +70,16 @@ const mockFns = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/src/utils/app/common', () => ({
-  prepareEntityName: mockFns.prepareEntityName,
-  isEntityNameOrPathInvalid: mockFns.isEntityNameOrPathInvalid,
-  getLastPathSegment: mockFns.getLastPathSegment,
-}));
+vi.mock('@/src/utils/app/common', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/src/utils/app/common')>();
+  return {
+    ...actual,
+    prepareEntityName: mockFns.prepareEntityName,
+    isEntityNameOrPathInvalid: mockFns.isEntityNameOrPathInvalid,
+    getLastPathSegment: mockFns.getLastPathSegment,
+  };
+});
 vi.mock('@/src/utils/app/form-schema', () => ({
   getConfigurationValue: mockFns.getConfigurationValue,
   getConfigurationSchema: mockFns.getConfigurationSchema,
@@ -86,6 +94,7 @@ vi.mock('@/src/utils/app/id', () => ({
 }));
 vi.mock('@/src/utils/app/file', () => ({
   constructPath: mockFns.constructPath,
+  notAllowedSymbolsRegex: /[<>]/g,
 }));
 vi.mock('@/src/utils/server/api', () => ({
   getConversationApiKey: mockFns.getConversationApiKey,
@@ -242,6 +251,162 @@ describe('utils/app/conversation.ts', () => {
       expect(
         getNewConversationName(testConv1, { content: '', role: Role.User }),
       ).toBe(testConv1.name);
+    });
+  });
+
+  describe('conversation storage name limits', () => {
+    beforeEach(() => {
+      mockFns.prepareEntityName.mockImplementation((n: string) => n);
+      mockFns.constructPath.mockImplementation((...args: string[]) =>
+        args.filter(Boolean).join('/'),
+      );
+      mockFns.getConversationApiKey.mockImplementation(
+        (c: ConversationInfo) => c.name,
+      );
+    });
+
+    it('Should calculate available name bytes including the path separator before the name', () => {
+      const folderRoot = `${ApiKeys.Conversations}/${bucket}/`;
+      const targetAvailableBytes = 5;
+      const folderTailLength =
+        1024 - folderRoot.length - 1 - targetAvailableBytes;
+      const folderId = `${folderRoot}${'a'.repeat(folderTailLength)}`;
+
+      expect(
+        getAvailableConversationNameBytes(
+          {
+            ...testConv1,
+            folderId,
+            name: 'abcdefghij',
+          },
+          { maxIdBytes: 1024 },
+        ),
+      ).toBe(targetAvailableBytes);
+    });
+
+    it('Should trim ASCII conversation names to the available storage budget', () => {
+      const folderRoot = `${ApiKeys.Conversations}/${bucket}/`;
+      const targetAvailableBytes = 5;
+      const folderTailLength =
+        1024 - folderRoot.length - 1 - targetAvailableBytes;
+      const folderId = `${folderRoot}${'a'.repeat(folderTailLength)}`;
+
+      expect(
+        fitConversationNameToStorageLimits(
+          {
+            ...testConv1,
+            folderId,
+            name: 'abcdefghij',
+          },
+          { maxIdBytes: 1024 },
+        ).name,
+      ).toBe('abcde');
+    });
+
+    it('Should trim UTF-8 conversation names by bytes, not by character count', () => {
+      const folderRoot = `${ApiKeys.Conversations}/${bucket}/`;
+      const targetAvailableBytes = 4;
+      const folderTailLength =
+        1024 - folderRoot.length - 1 - targetAvailableBytes;
+      const folderId = `${folderRoot}${'a'.repeat(folderTailLength)}`;
+
+      expect(
+        fitConversationNameToStorageLimits(
+          {
+            ...testConv1,
+            folderId,
+            name: 'яяя',
+          },
+          { maxIdBytes: 1024 },
+        ).name,
+      ).toBe('яя');
+    });
+
+    it('Should trim conversation name by api key segment byte limit when configured', () => {
+      mockFns.getConversationApiKey.mockImplementation(
+        (c: ConversationInfo) => `${c.model.id}__${c.name}`,
+      );
+
+      expect(
+        fitConversationNameToStorageLimits(
+          {
+            ...testConv1,
+            model: { id: 'model' },
+            name: 'abcdef',
+          },
+          { maxSegmentBytes: 10 },
+        ).name,
+      ).toBe('abc');
+    });
+
+    it('Should keep conversation name unchanged when storage byte limits are not configured', () => {
+      expect(
+        fitConversationNameToStorageLimits(
+          {
+            ...testConv1,
+            name: 'a'.repeat(160),
+          },
+          {},
+        ).name,
+      ).toBe('a'.repeat(160));
+      expect(getAvailableConversationNameBytes(testConv1, {})).toBeUndefined();
+    });
+
+    it('Should preserve numbering uniqueness under segment byte limits', () => {
+      mockFns.getConversationApiKey.mockImplementation(
+        (c: ConversationInfo) => `${c.model.id}__${c.name}`,
+      );
+
+      expect(
+        getStorageSafeUniqueConversationName({
+          conversation: {
+            ...testConv1,
+            model: { id: 'model' },
+          },
+          desiredName: 'abc',
+          existingNames: ['abc'],
+          limits: { maxSegmentBytes: 10 },
+        }),
+      ).toBe('a 1');
+    });
+
+    it('Should apply classic numbering when limits are not configured', () => {
+      expect(
+        getStorageSafeUniqueConversationName({
+          conversation: testConv1,
+          desiredName: 'conversation',
+          existingNames: ['conversation', 'conversation 1'],
+        }),
+      ).toBe('conversation 2');
+    });
+
+    it('Should fallback to default name when desired name is empty', () => {
+      expect(
+        getStorageSafeUniqueConversationName({
+          conversation: testConv1,
+          desiredName: '',
+          defaultName: 'New conversation',
+          existingNames: [],
+        }),
+      ).toBe('New conversation');
+    });
+
+    it('Should reserve bytes for numeric suffix when base is already occupied', () => {
+      mockFns.getConversationApiKey.mockImplementation(
+        (c: ConversationInfo) => `${c.model.id}__${c.name}`,
+      );
+
+      expect(
+        getStorageSafeUniqueConversationName({
+          conversation: {
+            ...testConv1,
+            model: { id: 'model' },
+          },
+          desiredName: 'abcde',
+          existingNames: ['abc'],
+          limits: { maxSegmentBytes: 10 },
+        }),
+      ).toBe('a 1');
     });
   });
 

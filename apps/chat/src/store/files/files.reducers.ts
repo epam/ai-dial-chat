@@ -15,9 +15,10 @@ import {
   addGeneratedFolderId,
   getEmptyLeafFolderIds,
   getFolderFromId,
-  getNextDefaultName,
   getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
+  getStorageSafeUniqueFolderName,
+  isFolderEmpty,
   getSelectedEntitiesByFolderId,
   renameFolderAndMoveEntity,
   updateMovedEntityId,
@@ -40,7 +41,6 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { FilesState } from './files.types';
 
@@ -543,16 +543,13 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       const rootFileId = getFileRootId();
-      const folderName = getNextDefaultName(
-        DEFAULT_FOLDER_NAME,
-        state.folders.filter(
-          (folder) => folder.folderId === (payload.parentId ?? rootFileId), // only folders on the same level
-        ),
-        0,
-        false,
-        false,
-        payload.parentId,
-      );
+      const parentId = payload.parentId ?? rootFileId;
+      const folderName = getStorageSafeUniqueFolderName({
+        folderId: parentId,
+        existingNames: state.folders
+          .filter((folder) => folder.folderId === parentId) // only folders on the same level
+          .map((folder) => folder.name),
+      });
 
       const newAddedFolderId = constructPath(payload.parentId, folderName);
       state.folders.push(

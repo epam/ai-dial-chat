@@ -11,9 +11,12 @@ import {
   migrateMCPToolsetIdName,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
+import {
+  getStorageSafeUniqueName,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
-import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
@@ -348,7 +351,12 @@ const getBaseFormData = ({
 }): BaseAppForm => ({
   name:
     app?.name ??
-    getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
+    getStorageSafeUniqueName({
+      defaultName: DEFAULT_APPLICATION_NAME,
+      existingNames: (models ?? []).map((m) => m.name),
+      fitBaseName: (baseName) => prepareEntityName(baseName),
+    }) ??
+    DEFAULT_APPLICATION_NAME,
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: app?.description ?? '',

@@ -14,6 +14,33 @@ export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
 export const MAX_ENTITY_LENGTH = 160;
 export const MIN_ENTITY_LENGTH = 1;
+export const MAX_ENTITY_NAME_NUMERATION = 9999999;
+
+const parsePositiveInteger = (
+  value: string | undefined,
+): number | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsedValue = parseInt(value, 10);
+  return Number.isFinite(parsedValue) && parsedValue > 0
+    ? parsedValue
+    : undefined;
+};
+
+// Byte limits for resource ids/segments in the configured storage backend.
+// Defaults match common storage backends (S3/GCS/Azure: 1024-byte key; MinIO: 255-byte segment).
+// Override via env vars when a different backend is used.
+const DEFAULT_RESOURCE_MAX_ID_BYTES = 1024;
+const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
+
+export const RESOURCE_MAX_ID_BYTES =
+  parsePositiveInteger(process.env.NEXT_PUBLIC_RESOURCE_MAX_ID_BYTES) ??
+  DEFAULT_RESOURCE_MAX_ID_BYTES;
+export const RESOURCE_MAX_SEGMENT_BYTES =
+  parsePositiveInteger(process.env.NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES) ??
+  DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
 
 export const FALLBACK_TEMPERATURE = 1;
 
