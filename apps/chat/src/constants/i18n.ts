@@ -261,6 +261,8 @@ export enum CommonI18nKeys {
   SomePromptsWereNotImported = 'Some prompts were not imported',
   AgentAddedToMyWorkspace = 'The agent added to my workspace',
   AgentsAddedToMyWorkspace = 'The agents added to my workspace',
+  AgentWasNotAddedToMyWorkspace = 'The agent "{{failedNames}}" was not added to my workspace',
+  AgentsWasNotAddedToMyWorkspace = 'The agents "{{failedNames}}" were not added to my workspace',
   IssueReportedSuccessfully = 'Issue reported successfully',
   ApiKeyRequestedSuccessfully = 'API Key requested successfully',
   GeneralServerError = 'Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.',
@@ -319,7 +321,9 @@ export enum CommonI18nKeys {
   Copied = 'Copied ',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
-  ShareLimitExceeded = 'Limit is exceeded on the number of accepted users for the resource: {{name}}',
+  LimitExceeded = 'Limit exceeded',
+  ShareLimitExceeded = '"{{name}}" has already been shared with the maximum specified number of users.',
+  ShareLimitExceededWithVersion = '"{{name}}" version {{version}} has already been shared with the maximum specified number of users.',
 }
 
 // errors.json

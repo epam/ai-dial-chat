@@ -15,8 +15,11 @@ export interface ApplicationVisualizerConfig {
   title: string;
   description?: string;
   icon?: string;
-  contentType: string;
+  contentType?: string;
   url: string;
+  expanded?: boolean;
+  borderless?: boolean;
+  withoutTitle?: boolean;
   passAuthInfo?: boolean;
   passExplicitToken?: boolean;
 }

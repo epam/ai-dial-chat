@@ -172,6 +172,8 @@
   "Some prompts were not imported": "Some prompts were not imported",
   "The agent added to my workspace": "The agent added to my workspace",
   "The agents added to my workspace": "The agents added to my workspace",
+  "The agent \"{{reference}}\" was not added to my workspace": "The agent \"{{failedNames}}\" was not added to my workspace",
+  "The agents \"{{failedNames}}\" were not added to my workspace": "The agents \"{{failedNames}}\" were not added to my workspace",
   "Issue reported successfully": "Issue reported successfully",
   "API Key requested successfully": "API Key requested successfully",
   "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.": "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.",
@@ -230,5 +232,7 @@
   "Copied": "Copied",
   "Copy endpoint URL to easily integrate toolset into your workflows": "Copy endpoint URL to easily integrate toolset into your workflows",
   "Copy endpoint URL to easily integrate application into your workflows": "Copy endpoint URL to easily integrate application into your workflows",
-  "Limit is exceeded on the number of accepted users for the resource: {{name}}": "Limit is exceeded on the number of accepted users for the resource: {{name}}"
+  "Limit exceeded": "Limit exceeded",
+  "\"{{name}}\" has already been shared with the maximum specified number of users.": "\"{{name}}\" has already been shared with the maximum specified number of users.",
+  "\"{{name}}\" version {{version}} has already been shared with the maximum specified number of users.": "\"{{name}}\" version {{version}} has already been shared with the maximum specified number of users."
 }
