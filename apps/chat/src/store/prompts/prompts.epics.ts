@@ -16,7 +16,10 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { getDefaultEntityProps } from '@/src/utils/app/common';
+import {
+  getDefaultEntityProps,
+  isEntityNameOnSameLevelUnique,
+} from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
@@ -56,7 +59,7 @@ import {
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
-import { CommonI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -404,6 +407,45 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       if (!folder) {
         return EMPTY;
+      }
+
+      if (
+        !payload.publicationUrl &&
+        (payload.values.folderId !== undefined ||
+          payload.values.name !== undefined)
+      ) {
+        const targetFolderId =
+          payload.values.folderId !== undefined
+            ? payload.values.folderId
+            : folder.folderId;
+        const targetName =
+          payload.values.name !== undefined ? payload.values.name : folder.name;
+
+        if (
+          !isEntityNameOnSameLevelUnique(
+            targetName,
+            { ...folder, folderId: targetFolderId },
+            PromptsSelectors.selectFolders(state),
+          )
+        ) {
+          const isRootDestination = targetFolderId === getPromptRootId();
+
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                isRootDestination
+                  ? ChatI18nKeys.FolderNameExistsAtRoot
+                  : ChatI18nKeys.FolderNameExistsInFolder,
+                {
+                  ns: Translation.Chat,
+                  ...(isRootDestination
+                    ? { name: targetName }
+                    : { folderName: targetName }),
+                },
+              ),
+            ),
+          );
+        }
       }
 
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });

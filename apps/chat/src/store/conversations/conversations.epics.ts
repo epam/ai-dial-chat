@@ -31,7 +31,10 @@ import { fromFetch } from 'rxjs/fetch';
 import { combineEpics, ofType } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { getDefaultConversationProps } from '@/src/utils/app/common';
+import {
+  getDefaultConversationProps,
+  isEntityNameOnSameLevelUnique,
+} from '@/src/utils/app/common';
 import {
   addPausedError,
   excludeSystemMessages,
@@ -876,6 +879,45 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       if (!folder) {
         return EMPTY;
+      }
+
+      if (
+        !payload.publicationUrl &&
+        (payload.values.folderId !== undefined ||
+          payload.values.name !== undefined)
+      ) {
+        const targetFolderId =
+          payload.values.folderId !== undefined
+            ? payload.values.folderId
+            : folder.folderId;
+        const targetName =
+          payload.values.name !== undefined ? payload.values.name : folder.name;
+
+        if (
+          !isEntityNameOnSameLevelUnique(
+            targetName,
+            { ...folder, folderId: targetFolderId },
+            ConversationsSelectors.selectFolders(state),
+          )
+        ) {
+          const isRootDestination = targetFolderId === getConversationRootId();
+
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                isRootDestination
+                  ? ChatI18nKeys.FolderNameExistsAtRoot
+                  : ChatI18nKeys.FolderNameExistsInFolder,
+                {
+                  ns: Translation.Chat,
+                  ...(isRootDestination
+                    ? { name: targetName }
+                    : { folderName: targetName }),
+                },
+              ),
+            ),
+          );
+        }
       }
 
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
