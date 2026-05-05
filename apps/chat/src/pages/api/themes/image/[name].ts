@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { getImageUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
 import { HTTPMethod } from '@/src/types/http';
@@ -12,10 +13,6 @@ import fetch from 'node-fetch';
 
 let cachedTheme: ThemesConfig | undefined = undefined;
 let cachedThemeExpiration: number | undefined;
-
-const getImageUrl = (theme: ThemesConfig, name: string): string | undefined => {
-  return theme.images[name as keyof ThemesConfig['images']];
-};
 
 const getImage = async (
   _req: NextApiRequest,
