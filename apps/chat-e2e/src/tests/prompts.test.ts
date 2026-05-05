@@ -690,7 +690,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-972');
-    let reloadIteration = 2;
+    let i = 2;
     const singlePrompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -754,8 +754,8 @@ dialTest(
     await promptBar.deleteAllEntities();
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-    while (reloadIteration > 0) {
-      if (reloadIteration === 1) {
+    while (i > 0) {
+      if (i === 1) {
         await folderConversations
           .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
           .waitFor({ state: 'hidden' });
@@ -812,11 +812,11 @@ dialTest(
           .toBeHidden();
       }
 
-      if (reloadIteration > 1) {
+      if (i > 1) {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
       }
-      reloadIteration--;
+      i--;
     }
   },
 );
