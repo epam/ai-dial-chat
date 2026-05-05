@@ -176,6 +176,10 @@ export const getCommonPageProps: GetServerSideProps = async ({
     dialCoreExternalUrl: process.env.DIAL_CORE_EXTERNAL_URL || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     asrModelId: process.env.ASR_MODEL || null,
+    audioTypesDefaultOrder: parseCommaSeparatedList(
+      process.env.AUDIO_TYPES_DEFAULT_ORDER,
+      [],
+    ),
     providerId: session?.providerId ?? null,
     attachmentsSettings: {
       expandedTypes: parseCommaSeparatedList(
