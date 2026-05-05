@@ -32,6 +32,7 @@ import {
   EntityEditorPreviewCard,
   ExternalAppEditorContainer,
   ExternalAppEditorViewForm,
+  FileConflictResolutionPopup,
   FileDropArea,
   FileManager,
   FileManagerCollapsibleSidebar,
@@ -95,6 +96,7 @@ import {
   SideBarAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  ToolsetApiAuthenticationAssertion,
   ToolsetAuthAssertion,
   TooltipAssertion,
   TooltipPortalAssertion,
@@ -103,6 +105,7 @@ import {
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { ConfirmationPopupAssertion } from '@/src/assertions/common/confirmationPopupAssertion';
+import { FileConflictResolutionPopupAssertion } from '@/src/assertions/common/fileConflictResolutionPopupAssertion';
 import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { EntityEditorHeaderAssertion } from '@/src/assertions/entityEditorHeaderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
@@ -455,11 +458,12 @@ const dialTest = test.extend<{
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
   fileManagerModalGridAssertion: FileManagerGridAssertion;
-  fileConflictConfirmationPopup: ConfirmationPopup;
-  fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  fileConflictConfirmationPopup: FileConflictResolutionPopup;
+  fileConflictConfirmationPopupAssertion: FileConflictResolutionPopupAssertion;
   uploadProgressDialog: UploadProgressDialog;
   tooltipPortal: TooltipPortal;
   tooltipPortalAssertion: TooltipPortalAssertion;
+  toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1888,10 +1892,7 @@ const dialTest = test.extend<{
     await use(fileManagerModalGridAssertion);
   },
   fileConflictConfirmationPopup: async ({ page }, use) => {
-    const fileConflictConfirmationPopup = new ConfirmationPopup(
-      page,
-      'Confirm',
-    );
+    const fileConflictConfirmationPopup = new FileConflictResolutionPopup(page);
     await use(fileConflictConfirmationPopup);
   },
   fileConflictConfirmationPopupAssertion: async (
@@ -1899,7 +1900,7 @@ const dialTest = test.extend<{
     use,
   ) => {
     const fileConflictConfirmationPopupAssertion =
-      new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
+      new FileConflictResolutionPopupAssertion(fileConflictConfirmationPopup);
     await use(fileConflictConfirmationPopupAssertion);
   },
   uploadProgressDialog: async ({ page }, use) => {
@@ -1913,6 +1914,12 @@ const dialTest = test.extend<{
   tooltipPortalAssertion: async ({ tooltipPortal }, use) => {
     const tooltipPortalAssertion = new TooltipPortalAssertion(tooltipPortal);
     await use(tooltipPortalAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  toolsetApiAuthenticationAssertion: async ({}, use) => {
+    const toolsetApiAuthenticationAssertion =
+      new ToolsetApiAuthenticationAssertion();
+    await use(toolsetApiAuthenticationAssertion);
   },
 });
 

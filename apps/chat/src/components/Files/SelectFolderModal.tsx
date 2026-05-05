@@ -4,6 +4,7 @@ import { useFileManager } from '@/src/components/FileManager/hooks/useFileManage
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { updateMovedFolderId } from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
 
@@ -17,7 +18,11 @@ import {
   AlertVariant,
   DialDestinationFolderPopup,
   type DialFileManagerActionsRef,
+  DialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
+
+const defaultTabs = new Set([DialFileManagerTabs.MyFiles]);
+const reviewTabs = new Set([DialFileManagerTabs.Review]);
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +31,7 @@ interface Props {
   onClose: (path: string | undefined) => void;
   disallowSelectRootFolder?: boolean;
   warningMessage?: string;
+  reviewBucket?: string;
 }
 
 export const SelectFolderModal = ({
@@ -35,6 +41,7 @@ export const SelectFolderModal = ({
   onClose,
   disallowSelectRootFolder,
   warningMessage,
+  reviewBucket,
 }: Props) => {
   const dispatch = useAppDispatch();
   const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
@@ -55,6 +62,8 @@ export const SelectFolderModal = ({
   const lastRenamedParentFolder = useAppSelector(
     FilesSelectors.selectLastRenamedParentFolder,
   );
+
+  const isReview = splitEntityId(rootFolderId).bucket === reviewBucket;
 
   const {
     currentPath,
@@ -82,7 +91,8 @@ export const SelectFolderModal = ({
       showHiddenFilesToggle: false,
       isNewButtonDisabled: true,
     },
-    availableTabs: new Set(['my_files']),
+    availableTabs: isReview ? reviewTabs : defaultTabs,
+    reviewBucket,
   });
 
   useEffect(() => {

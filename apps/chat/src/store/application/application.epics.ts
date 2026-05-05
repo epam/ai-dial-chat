@@ -85,6 +85,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { DEFAULT_QUICK_APPS_SCHEMA_2_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
 import { parse } from 'querystring';
@@ -261,6 +262,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
 
       if (payload.publicationUrl) {
         const payloadToUpdatePublication = {
+          isSaveAndExit: !!payload.isSaveAndExit,
           publicationUrl: payload.publicationUrl,
           oldApplication: payload.oldApplication,
           newApplication: updatedCustomApplication,
@@ -394,7 +396,9 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   }
                 }
 
-                if (updatedCustomApplication.applicationTypeSchemaId) {
+                const schemaId =
+                  updatedCustomApplication.applicationTypeSchemaId;
+                if (schemaId && schemaId === DEFAULT_QUICK_APPS_SCHEMA_2_ID) {
                   actions.push(
                     of(
                       ChatActions.getConfigurationSchema({

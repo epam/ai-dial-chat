@@ -26,7 +26,9 @@ dialTest.beforeAll(async () => {
   );
   defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id),
+    allModels.filter(
+      (m) => m.id !== defaultModel.id && m.features?.temperature === true,
+    ),
   );
   bModel = GeneratorUtil.randomArrayElement(
     allModels.filter(

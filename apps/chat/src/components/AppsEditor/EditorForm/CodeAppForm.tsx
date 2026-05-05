@@ -12,6 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FileFolderInterface } from '@/src/types/files';
@@ -220,10 +221,12 @@ export const CodeAppForm = () => {
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
 
-      <CopyUrlButton
-        id={appDetails?.id ?? ''}
-        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
-      />
+      {doesAgentSupportMcp(appDetails) && (
+        <CopyUrlButton
+          entity={appDetails}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      )}
     </div>
   );
 };

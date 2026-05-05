@@ -11,6 +11,7 @@ import classNames from 'classnames';
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
@@ -142,10 +143,12 @@ export const CustomAppForm = () => {
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
 
-      <CopyUrlButton
-        id={appDetails?.id ?? ''}
-        label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
-      />
+      {doesAgentSupportMcp(appDetails) && (
+        <CopyUrlButton
+          entity={appDetails}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      )}
     </div>
   );
 };

@@ -422,6 +422,7 @@ export const publicationSlice = createSlice({
     updateApplicationPublicationUrls: (
       state,
       _action: PayloadAction<{
+        isSaveAndExit: boolean;
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
@@ -430,6 +431,7 @@ export const publicationSlice = createSlice({
     updatePublicationRequestAndApplicationIcon: (
       state,
       _action: PayloadAction<{
+        isSaveAndExit: boolean;
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;

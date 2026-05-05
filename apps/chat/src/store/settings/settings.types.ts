@@ -39,6 +39,7 @@ export interface SettingsState {
   quickAppsSchemaId?: string;
   externalAppsSchemaId?: string;
   dialApiHost?: string;
+  dialCoreExternalUrl?: string;
   defaultSystemPrompt?: string;
   asrModelId: string | null;
   providerId: string | null;

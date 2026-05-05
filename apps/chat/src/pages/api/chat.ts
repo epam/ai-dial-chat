@@ -24,14 +24,13 @@ import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
-import {
-  DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { HeadersNames } from '@/src/constants/server';
 
 import { Message, Role } from '@epam/ai-dial-shared';
+
+const KEEPALIVE_INTERVAL_MS = 15_000;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -65,9 +64,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let temperatureToUse = temperature;
-    if (!doesModelAllowTemperature(model)) {
-      temperatureToUse = FALLBACK_TEMPERATURE;
-    } else if (
+    if (
+      doesModelAllowTemperature(model) &&
       !temperatureToUse &&
       temperatureToUse !== 0 &&
       model.type !== EntityType.Application
@@ -109,23 +107,31 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             ...messagesToSend,
           ];
 
+    const rawLanguageHeader = req.headers['x-language'];
+    const languageHeaderValue = Array.isArray(rawLanguageHeader)
+      ? rawLanguageHeader[0]
+      : rawLanguageHeader;
+    const language = languageHeaderValue?.trim() || undefined;
+
     const stream = await OpenAIStream({
       model,
-      temperature: temperatureToUse,
       messages: messagesToSend,
       userJWT: token?.token ?? '',
       chatReference: reference ?? id,
       jobTitle: token?.jobTitle,
+      language: language,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
       configurationSchemaValue: configurationValue,
+      ...(temperatureToUse !== undefined && { temperature: temperatureToUse }),
       channelId:
         req.headers[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]?.toString?.() ??
         undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('Content-Type', 'application/octet-stream');
+    res.flushHeaders();
 
     const reader = stream.getReader();
 
@@ -135,8 +141,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       reader.cancel();
     });
 
+    const keepalivePayload = new TextEncoder().encode('{}\0');
+
     const processStream = async () => {
+      let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
       try {
+        keepaliveTimer = setInterval(() => {
+          if (!clientAborted && !res.writableEnded) {
+            res.write(keepalivePayload);
+          }
+        }, KEEPALIVE_INTERVAL_MS);
+
         while (true) {
           if (clientAborted) {
             break;
@@ -158,6 +173,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           isStreamingError: true,
         });
       } finally {
+        if (keepaliveTimer) clearInterval(keepaliveTimer);
         res.end();
       }
     };
