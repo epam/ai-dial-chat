@@ -26,6 +26,7 @@ const initialState: SettingsState = {
   codeEditorPythonVersions: [],
   providerId: null,
   asrModelId: null,
+  audioTypesDefaultOrder: [],
   initialDataStatus: UploadStatus.UNINITIALIZED,
   attachmentsSettings: {
     expandedTypes: [],
