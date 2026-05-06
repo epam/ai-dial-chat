@@ -8,7 +8,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
-import { CodeEditor } from '@/src/components/Common/CodeEditor';
+import { CodeEditor } from '@/src/components/Common/CodeEditor/CodeEditor';
 
 import { CodeData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
