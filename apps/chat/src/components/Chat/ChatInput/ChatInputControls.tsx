@@ -45,8 +45,6 @@ export const ChatInputControls = ({
     return <SchemaCompareWarning />;
   }
 
-  console.log(isPublic, isReadOnly);
-
   if (showReplayControls && !isNotEmptyConversations) {
     return !isReadOnly ? (
       <div className={classNames({ 'mt-10': isWideLayout })}>
