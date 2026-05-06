@@ -337,10 +337,11 @@ export class FileService {
 
   public static async downloadFilesAsArchive(
     files: UIKitDialFile[],
+    name?: string,
   ): Promise<void> {
     try {
       const archiveName = getDownloadName({
-        name: files.length === 1 ? files[0].name : undefined,
+        name,
         exportType: 'files',
         extension: 'zip',
       });
