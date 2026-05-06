@@ -715,7 +715,7 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
     ),
     filter((action) => {
       if (FilesActions.getFilesWithFolders.match(action)) {
-        return !action.payload.id;
+        return !action.payload.id && !action.payload.skipShareListingsRefresh;
       }
 
       return true;
