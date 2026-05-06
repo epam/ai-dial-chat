@@ -14,16 +14,45 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public conversationStartersSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.conversationStartersSection,
   );
-  public agentsAndToolsetsField = this.contextToolsSection.getChildElementBySelector(
-    'div:has(> label:has-text("Agents & Toolsets"))',
-  );
-  public noAgentsAndToolsetsPlaceholder =
-    this.agentsAndToolsetsField.getChildElementBySelector(
-      ':text("No Agents & Toolsets added")',
+
+  // Context & Tools subsections
+  public agentsAndToolsetsField =
+    this.contextToolsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.agentsAndToolsetsField,
     );
-  public addAgentsButton = this.agentsAndToolsetsField.getChildElementBySelector(
-    'button:has-text("Add")',
+  public documentUrlsField = this.contextToolsSection.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.documentUrlsField,
   );
-  public jsonToggle =
-    this.agentsAndToolsetsField.getChildElementBySelector(':text("JSON")');
+  public codeInterpreterField =
+    this.contextToolsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.codeInterpreterField,
+    );
+
+  // Agents & Toolsets — view modes
+  public agentsAndToolsetsMarketplaceView =
+    this.agentsAndToolsetsField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.agentsAndToolsetsMarketplaceView,
+    );
+  public agentsAndToolsetsJsonView =
+    this.agentsAndToolsetsField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonView,
+    );
+
+  // Agents & Toolsets — controls inside marketplace view
+  public noAgentsAndToolsetsPlaceholder =
+    this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.noAgentsAndToolsetsPlaceholder,
+    );
+  public agentsAndToolsetsList =
+    this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.agentsAndToolsetsList,
+    );
+  public addAgentsButton =
+    this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.addAgentsButton,
+    );
+  public agentsAndToolsetsJsonToggle =
+    this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
+    );
 }

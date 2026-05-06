@@ -332,6 +332,22 @@ export const AddQuickApp2SettingsFormSelector = {
   contextToolsSection: '[data-qa="context-tools-section"]',
   attachmentsSection: '[data-qa="attachments-section"]',
   conversationStartersSection: '[data-qa="conversation-starters-section"]',
+
+  // Context & Tools subsections
+  agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
+  documentUrlsField: '[data-qa="document-urls-field"]',
+  codeInterpreterField: '[data-qa="code-interpreter-field"]',
+
+  // Agents & Toolsets — view modes
+  agentsAndToolsetsMarketplaceView:
+    '[data-qa="agents-and-toolsets-marketplace-view"]',
+  agentsAndToolsetsJsonView: '[data-qa="agents-and-toolsets-json-view"]',
+
+  // Agents & Toolsets — controls inside marketplace view
+  noAgentsAndToolsetsPlaceholder: '[data-qa="no-agents-and-toolsets"]',
+  agentsAndToolsetsList: '[data-qa="agents-and-toolsets-list"]',
+  addAgentsButton: '[data-qa="add-agents-button"]',
+  agentsAndToolsetsJsonToggle: '[data-qa="agents-and-toolsets-json-toggle"]',
 };
 
 export const AddToolsetSettingsFormSelector = {
