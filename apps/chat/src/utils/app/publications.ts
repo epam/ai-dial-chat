@@ -44,6 +44,7 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import {
   getEntityBucket,
+  getFileRootId,
   getIdWithoutRootPathSegments,
   getRootId,
   isApplicationId,
@@ -54,7 +55,11 @@ import {
   isToolsetId,
 } from './id';
 
-import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  FolderInterface,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import { nanoid } from 'nanoid';
 
@@ -107,6 +112,23 @@ export const getOrganizationPublishPathDepth = (
   const relative = folderId ? getIdWithoutRootPathSegments(folderId) : '';
   const segments = relative.split('/').filter(Boolean);
   return segments.length === 0 ? 0 : segments.length - 1;
+};
+
+export const remapPublicFolderToFilesNamespace = (
+  folder: FolderInterface,
+): FolderInterface => {
+  const bucket = getEntityBucket(folder);
+  const filesRoot = getFileRootId(bucket);
+  const relative = getIdWithoutRootPathSegments(folder.id);
+  const id = relative ? constructPath(filesRoot, relative) : filesRoot;
+  const folderId = getFolderIdFromEntityId(id);
+
+  return {
+    ...folder,
+    id,
+    folderId,
+    publishedWithMe: true,
+  };
 };
 
 export const createFoldersFilesTargetUrl = (id: string) => {

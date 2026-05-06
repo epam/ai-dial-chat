@@ -1,32 +1,42 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { updateMovedFolderId } from '@/src/utils/app/folders';
-import { getFileRootId } from '@/src/utils/app/id';
 import {
   getOrganizationPublishPathDepth,
   organizationFolderIdToPublishPathSuffix,
   publishToUrlToOrganizationFolderId,
+  remapPublicFolderToFilesNamespace,
 } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions, UIActions } from '@/src/store/actions';
+import { FilesActions, FoldersActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { FilesSelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  ConversationsSelectors,
+  FilesSelectors,
+  PromptsSelectors,
+} from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
+  FeatureType,
+  SharePermission,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
+import {
   DialDestinationFolderPopup,
   DialFileManagerTabs,
+  DialUploadFileItem,
 } from '@epam/ai-dial-ui-kit';
-
-const ORGANIZATION_PUBLISH_ROOT_FOLDER_ID = getFileRootId(PUBLIC_URL_PREFIX);
+import uniqBy from 'lodash-es/uniqBy';
 
 interface Props {
   isOpen: boolean;
@@ -44,6 +54,10 @@ export const ChangePathDialog = ({
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
   const [collapsedTree, setCollapsedTree] = useState(false);
+  const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
+  const filesFolders = useAppSelector(FilesSelectors.selectFolders);
+  const filesFoldersRef = useRef(filesFolders);
+  filesFoldersRef.current = filesFolders;
 
   const resolvedInitialFolderId = useMemo(
     () =>
@@ -57,6 +71,29 @@ export const ChangePathDialog = ({
     FilesSelectors.selectLastRenamedParentFolder,
   );
 
+  const conversationPublicFolders = useAppSelector(
+    ConversationsSelectors.selectPublicFolders,
+  );
+  const promptPublicFolders = useAppSelector(
+    PromptsSelectors.selectPublicFolders,
+  );
+  const applicationPublicFolders = useAppSelector(
+    ApplicationSelectors.selectPublicFolders,
+  );
+
+  const additionalOrganizationFolders = useMemo(
+    () =>
+      uniqBy(
+        [
+          ...conversationPublicFolders,
+          ...promptPublicFolders,
+          ...applicationPublicFolders,
+        ].map(remapPublicFolderToFilesNamespace),
+        'id',
+      ),
+    [conversationPublicFolders, promptPublicFolders, applicationPublicFolders],
+  );
+
   const {
     currentPath,
     setCurrentPath,
@@ -66,7 +103,6 @@ export const ChangePathDialog = ({
     treeOptions,
     gridOptions,
     navigationPanelOptions,
-    handleCreateFolder,
     handleMoveFiles,
     handleRenameValidation,
   } = useFileManager({
@@ -85,6 +121,10 @@ export const ChangePathDialog = ({
       isNewButtonDisabled: true,
     },
     availableTabs: new Set([DialFileManagerTabs.Organization]),
+    additionalFilesAndFolders: {
+      files: [],
+      folders: additionalOrganizationFolders,
+    },
   });
 
   useEffect(() => {
@@ -124,8 +164,48 @@ export const ChangePathDialog = ({
   useEffect(() => {
     if (!isOpen) {
       dispatch(FilesActions.resetNewFolderId());
+      dispatch(FoldersActions.clearTemporaryFolders());
+
+      const idsToRemove = addedTempFolderIdsRef.current;
+      if (idsToRemove.size) {
+        const cleaned = filesFoldersRef.current.filter(
+          (f) => !idsToRemove.has(f.id),
+        );
+        dispatch(FilesActions.setFolders({ folders: cleaned }));
+        addedTempFolderIdsRef.current = new Set();
+      }
     }
   }, [dispatch, isOpen]);
+
+  const handleCreateOrganizationFolder = useCallback(
+    (_file: DialUploadFileItem, folderPath: string) => {
+      const segments = folderPath.split('/');
+      const name = segments[segments.length - 1];
+      if (!name) return;
+
+      const parentFolderId = segments.slice(0, -1).join('/');
+
+      addedTempFolderIdsRef.current.add(folderPath);
+
+      dispatch(
+        FilesActions.addFolders({
+          folders: [
+            {
+              id: folderPath,
+              folderId: parentFolderId,
+              name,
+              type: FeatureType.File,
+              status: UploadStatus.LOADED,
+              temporary: true,
+              publishedWithMe: true,
+              permissions: [SharePermission.READ, SharePermission.WRITE],
+            },
+          ],
+        }),
+      );
+    },
+    [dispatch],
+  );
 
   const handleClose = useCallback(() => {
     onClose(false);
@@ -167,8 +247,6 @@ export const ChangePathDialog = ({
       header={t(ChatI18nKeys.ChangePath)}
       path={currentPath}
       onFolderPopupPathChange={setCurrentPath}
-      sourceFolder={ORGANIZATION_PUBLISH_ROOT_FOLDER_ID}
-      disabledPathTooltip={t(CommonI18nKeys.RootFolderCannotBeSelected)}
       items={fileTreeItems}
       rootItem={rootFolder}
       filesLoading={areFoldersLoading}
@@ -177,7 +255,7 @@ export const ChangePathDialog = ({
       navigationPanelOptions={navigationPanelOptions}
       collapsedFileTree={collapsedTree}
       allowedFileTypes={[]}
-      onCreateFolder={handleCreateFolder}
+      onCreateFolder={handleCreateOrganizationFolder}
       onMoveToFiles={handleMoveFiles}
       onCreateFolderValidate={handleRenameValidation}
       uploadEnabled={false}
