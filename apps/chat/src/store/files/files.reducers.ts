@@ -521,6 +521,7 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         id?: string;
+        skipShareListingsRefresh?: boolean;
       }>,
     ) => state,
     addNewFolder: (

@@ -261,6 +261,8 @@ export enum CommonI18nKeys {
   SomePromptsWereNotImported = 'Some prompts were not imported',
   AgentAddedToMyWorkspace = 'The agent added to my workspace',
   AgentsAddedToMyWorkspace = 'The agents added to my workspace',
+  AgentWasNotAddedToMyWorkspace = 'The agent "{{failedNames}}" was not added to my workspace',
+  AgentsWasNotAddedToMyWorkspace = 'The agents "{{failedNames}}" were not added to my workspace',
   IssueReportedSuccessfully = 'Issue reported successfully',
   ApiKeyRequestedSuccessfully = 'API Key requested successfully',
   GeneralServerError = 'Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.',
@@ -863,6 +865,8 @@ export enum ChatI18nKeys {
   ResponseFormat = 'Response format',
   Markdown = 'Markdown',
   PlainText = 'Plain text',
+  YouDontHaveAnyFiles = "You don't have any files",
+  SelectFileFromTree = 'Select a file from the tree',
 }
 
 // files.json
