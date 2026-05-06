@@ -89,6 +89,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       try {
         await viewer.init(container, {
           enableTextSelection: true,
+          // TODO: Enable when will be fixed
           enableVirtualScrolling: false,
           bufferPages: 2,
           maxCachedPages: 10,
@@ -187,7 +188,6 @@ export const PdfHighlightViewer = ({ url }: Props) => {
 
   return (
     <div className="flex size-full flex-col">
-      {/* Toolbar */}
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <span className="text-center text-sm font-semibold text-secondary">
@@ -222,9 +222,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         </div>
       </div>
 
-      {/* Body */}
       <div className="mt-4 flex min-h-0 grow">
-        {/* Sidebar */}
         <div className="flex flex-col gap-2 overflow-y-auto">
           {range(1, totalPages + 1).map((n) => {
             const thumbUrl = thumbnails.get(n);
@@ -264,7 +262,6 @@ export const PdfHighlightViewer = ({ url }: Props) => {
           })}
         </div>
 
-        {/* Main viewer */}
         <div className="relative min-w-0 grow">
           <div
             ref={containerRef}
