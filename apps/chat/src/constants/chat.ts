@@ -8,6 +8,8 @@ import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import { AudioMimeType } from './audio';
+
 import { ImageMIMEType } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
@@ -64,9 +66,15 @@ export const VIDEO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
 );
 
 export const AUDIO_TYPES: ImageMIMEType[] = [
-  'audio/mpeg',
-  'audio/ogg',
-  'audio/wav',
+  AudioMimeType.MPEG,
+  AudioMimeType.OGG,
+  AudioMimeType.WEBM,
+  AudioMimeType.MP4,
+  AudioMimeType.WAV,
+  AudioMimeType.OPUS,
+  AudioMimeType.FLAC,
+  AudioMimeType.AAC,
+  AudioMimeType.WMA,
 ];
 
 export const AUDIO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
