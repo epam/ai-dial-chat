@@ -373,15 +373,25 @@ export const getShortExtensionsListFromMimeType = (
   );
 };
 
-export const getFileNameWithoutExtension = (filename: string) =>
+export const getFileNameWithoutExtension = (
+  filename: string,
+  isExtensionIncluded = true,
+) =>
   filename.lastIndexOf('.') > 0
     ? filename.slice(0, filename.lastIndexOf('.'))
-    : filename;
+    : isExtensionIncluded
+      ? filename
+      : '';
 
-export const getFileNameExtension = (filename: string) =>
+export const getFileNameExtension = (
+  filename: string,
+  isExtensionIncluded = false,
+) =>
   filename.lastIndexOf('.') > 0
     ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
-    : '';
+    : isExtensionIncluded
+      ? filename
+      : '';
 
 export const getNextFileName = (
   defaultName: string,
