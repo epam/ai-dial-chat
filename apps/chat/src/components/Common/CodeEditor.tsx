@@ -60,7 +60,7 @@ import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
-import * as monaco from 'monaco-editor';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 interface CodeEditorFileProps {
   file: DialFile;
