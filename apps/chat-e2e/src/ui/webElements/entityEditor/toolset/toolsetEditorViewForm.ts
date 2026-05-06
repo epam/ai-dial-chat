@@ -100,6 +100,18 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   public withoutAuthIcon = this.authContainer.getChildElementBySelector(
     IconSelectors.lockOffIcon,
   );
+  public apiKeyParameterNameFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer,
+    );
+  public apiKeyParameterNameFieldInput =
+    this.apiKeyParameterNameFieldContainer.getChildElementBySelector(
+      Tags.input,
+    );
+  public apiKeyParameterNameFieldError =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterNameFieldErrorMessage(),
+    );
   public allowedToolsLabel = this.getChildElementBySelector(
     AddToolsetSettingsFormSelector.allowedToolsLabel,
   );

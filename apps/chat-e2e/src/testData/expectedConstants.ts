@@ -368,6 +368,9 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
+  apiKeyParameterNameLabel: 'API Key parameter name',
+  apiKeyFieldLabel: 'API Key',
+  apiKeyFieldRequiredError: 'Key name is required',
   fileManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,

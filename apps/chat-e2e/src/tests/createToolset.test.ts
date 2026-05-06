@@ -190,7 +190,7 @@ dialTest(
           await baseAssertion.assertElementState(
             fieldRequiredIndicator,
             'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+            ExpectedMessages.entityFormFieldShouldHaveAsterisk,
           );
         }
       },
@@ -304,7 +304,7 @@ dialTest(
         await baseAssertion.assertElementState(
           fieldRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
       },
     );
