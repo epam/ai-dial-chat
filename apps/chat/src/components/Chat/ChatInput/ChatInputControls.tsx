@@ -45,12 +45,14 @@ export const ChatInputControls = ({
     return <SchemaCompareWarning />;
   }
 
+  console.log(isPublic, isReadOnly);
+
   if (showReplayControls && !isNotEmptyConversations) {
-    return (
+    return !isReadOnly ? (
       <div className={classNames({ 'mt-10': isWideLayout })}>
         <StartReplayButton />
       </div>
-    );
+    ) : null;
   }
 
   const shouldShowExternalControls = isPublic || isReadOnly;
