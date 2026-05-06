@@ -1,7 +1,7 @@
 import { IconTrashX } from '@tabler/icons-react';
 import {
-  ChangeEvent,
   FocusEvent,
+  InputEvent,
   useCallback,
   useEffect,
   useRef,
@@ -118,13 +118,13 @@ export const TemplateRow = ({
   }, [lastRow]);
 
   const handleChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
+    (event: InputEvent<HTMLTextAreaElement>) => {
       onChange(
         index,
         contentRef.current?.value ?? '',
         templateRef.current?.value ?? '',
       );
-      validate(event.target);
+      validate(event.target as HTMLTextAreaElement);
     },
     [index, onChange, validate],
   );

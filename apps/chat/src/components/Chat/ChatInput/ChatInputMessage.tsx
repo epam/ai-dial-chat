@@ -56,6 +56,7 @@ import { MicrophoneButton } from './MicrophoneButton';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
+import { TranscribingOverlay } from './TranscribingOverlay';
 import { VoiceRecordingOverlay } from './VoiceRecordingOverlay';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
@@ -658,29 +659,10 @@ export const ChatInputMessage = Inversify.register(
             />
           )}
           {isTranscribing && (
-            <div
-              className="absolute inset-0 z-10 flex items-center justify-center rounded bg-layer-3"
-              data-qa="transcribing-overlay"
-            >
-              <div className="flex items-center gap-2">
-                <div className="size-4 animate-spin rounded-full border-2 border-x-transparent border-b-transparent border-t-current text-secondary" />
-                <span className="text-sm text-secondary">
-                  {t(ChatI18nKeys.TranscribingAudio).replace(/\.+$/, '')}
-                  <span
-                    className="inline-flex w-[1.2em] text-left"
-                    aria-hidden="true"
-                  >
-                    <span className="animate-pulse">.</span>
-                    <span className="animate-pulse [animation-delay:200ms]">
-                      .
-                    </span>
-                    <span className="animate-pulse [animation-delay:400ms]">
-                      .
-                    </span>
-                  </span>
-                </span>
-              </div>
-            </div>
+            <TranscribingOverlay
+              text={t(ChatI18nKeys.TranscribingAudio)}
+              dataQa="transcribing-overlay"
+            />
           )}
           {canRecordAudio && (
             <MicrophoneButton
