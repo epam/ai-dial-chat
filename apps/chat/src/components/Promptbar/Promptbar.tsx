@@ -16,7 +16,7 @@ import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
-import { PromptBarI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, PromptBarI18nKeys } from '@/src/constants/i18n';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
@@ -31,6 +31,7 @@ export const Promptbar = () => {
 
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
   const areEntitiesUploaded = useAppSelector(
@@ -68,6 +69,42 @@ export const Promptbar = () => {
     (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
         if ([...e.dataTransfer.types].includes(MoveType.PromptFolder)) {
+          const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
+
+          if (folderData) {
+            const folder = JSON.parse(folderData);
+            const folderId = getPromptRootId();
+
+            if (folder.folderId === folderId) {
+              return;
+            }
+
+            if (
+              !isEntityNameOnSameLevelUnique(
+                folder.name,
+                { ...folder, folderId },
+                allFolders,
+              )
+            ) {
+              dispatch(
+                UIActions.showErrorToast(
+                  t(ChatI18nKeys.FolderNameExistsAtRoot, {
+                    ns: Translation.Chat,
+                    name: folder.name,
+                  }),
+                ),
+              );
+
+              return;
+            }
+
+            dispatch(
+              PromptsActions.updateFolder({
+                folderId: folder.id,
+                values: { folderId },
+              }),
+            );
+          }
           return;
         }
 
@@ -113,7 +150,7 @@ export const Promptbar = () => {
         }
       }
     },
-    [allPrompts, collapsedSections, dispatch, t],
+    [allFolders, allPrompts, collapsedSections, dispatch, t],
   );
 
   const handleSearchTerm = useCallback(

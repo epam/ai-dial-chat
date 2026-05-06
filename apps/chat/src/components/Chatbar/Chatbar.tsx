@@ -36,6 +36,7 @@ export const Chatbar = () => {
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
+  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
   const areEntitiesUploaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
   );
@@ -83,6 +84,44 @@ export const Chatbar = () => {
     (e: DragEvent) => {
       if (e.dataTransfer) {
         if ([...e.dataTransfer.types].includes(MoveType.ConversationFolder)) {
+          const folderData = e.dataTransfer.getData(
+            MoveType.ConversationFolder,
+          );
+
+          if (folderData) {
+            const folder = JSON.parse(folderData);
+            const folderId = getConversationRootId();
+
+            if (folder.folderId === folderId) {
+              return;
+            }
+
+            if (
+              !isEntityNameOnSameLevelUnique(
+                folder.name,
+                { ...folder, folderId },
+                allFolders,
+              )
+            ) {
+              dispatch(
+                UIActions.showErrorToast(
+                  t(ChatI18nKeys.FolderNameExistsAtRoot, {
+                    ns: Translation.Chat,
+                    name: folder.name,
+                  }),
+                ),
+              );
+
+              return;
+            }
+
+            dispatch(
+              ConversationsActions.updateFolder({
+                folderId: folder.id,
+                values: { folderId },
+              }),
+            );
+          }
           return;
         }
 
@@ -128,7 +167,7 @@ export const Chatbar = () => {
         }
       }
     },
-    [allConversations, collapsedSections, dispatch, t],
+    [allConversations, allFolders, collapsedSections, dispatch, t],
   );
 
   const handleSearchTerm = useCallback(
