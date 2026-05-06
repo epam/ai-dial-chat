@@ -20,8 +20,9 @@ const SwitchStateText = ({
   <span
     className={classNames(
       'h-4 text-xs',
-      isOn && 'px-1 text-controls-permanent',
-      disabled ? '!text-controls-accent-disable' : '!text-controls-permanent',
+      isOn && 'px-1',
+      isOn && !disabled ? 'text-controls-permanent' : 'text-primary',
+      disabled ? 'text-secondary' : 'text-primary',
     )}
   >
     {switchText}
@@ -70,7 +71,9 @@ export function ToggleSwitch({
           <span
             className={classNames(
               'size-3 rounded-full',
-              disabled ? 'bg-layer-4' : 'bg-controls-permanent',
+              disabled
+                ? 'bg-controls-disable-accent'
+                : 'bg-controls-enable-primary',
             )}
           ></span>
         </label>

@@ -1,9 +1,12 @@
+import { NextRouter } from 'next/router';
+
 import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import {
+  getEntityBucket,
   getIdWithoutRootPathSegments,
   isConversationId,
   isFileId,
@@ -26,13 +29,17 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import { getFolderIdFromEntityId } from '../folders';
 
 import { Message, PublishActions } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
 
 export const getDeletedEntities = <
   T extends { id: string; publicationInfo?: unknown },
@@ -257,3 +264,35 @@ export function getPublicationResourceEntityData<T>(
     } as T;
   });
 }
+
+export const getCurrentReviewBucket = (
+  state: RootState,
+  router: NextRouter,
+) => {
+  const queryPublicationUrl = router.query.publicationUrl?.toString();
+  const storePublicationUrl =
+    PublicationSelectors.selectSelectedPublicationUrl(state);
+  const publicationUrl = queryPublicationUrl || storePublicationUrl;
+  const publication = publicationUrl
+    ? PublicationSelectors.selectPublicationByUrl(state, publicationUrl)
+    : undefined;
+  const selectedConversations =
+    ConversationsSelectors.selectSelectedConversations(state);
+
+  if (!publication) return undefined;
+
+  const areAllReviewConversations =
+    selectedConversations.length &&
+    selectedConversations.every((c) => !!c.publicationInfo?.publicationUrl);
+  const buckets = selectedConversations.map(getEntityBucket);
+  const areBucketsSame = uniq(buckets).length === 1;
+  const areAllSamePublicationConversations =
+    areAllReviewConversations && areBucketsSame;
+  const publicationResources = publication?.resources ?? [];
+  const firstReviewUrl = publicationResources[0]?.reviewUrl;
+
+  if (!publicationResources.length && !areAllSamePublicationConversations) {
+    return undefined;
+  }
+  return firstReviewUrl ? getEntityBucket({ id: firstReviewUrl }) : buckets[0];
+};
