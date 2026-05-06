@@ -107,6 +107,14 @@ export const FileManagerModal = memo(
 
     const prevSelectionRef = useRef<Set<string>>(new Set());
 
+    const handleOnCloseFilesModal = useCallback(
+      (result: boolean | string[]) => {
+        dispatch(FilesActions.resetAllFoldersStatus());
+        onClose(result);
+      },
+      [dispatch, onClose],
+    );
+
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
         const prev = prevSelectionRef.current;
@@ -119,7 +127,11 @@ export const FileManagerModal = memo(
 
         for (const id of added) {
           if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
+            dispatch(
+              FilesActions.setChosenFolder({
+                folderId: id,
+              }),
+            );
           } else {
             dispatch(FilesActions.setChosenFiles({ ids: [id] }));
           }
@@ -244,7 +256,7 @@ export const FileManagerModal = memo(
         return;
       }
 
-      onClose(Array.from(accumulatedIds));
+      handleOnCloseFilesModal(Array.from(accumulatedIds));
     }, [
       allowedTypesArray,
       canAttachFolders,
@@ -252,7 +264,7 @@ export const FileManagerModal = memo(
       files,
       previousSelectedFilesIds,
       maximumAttachmentsAmount,
-      onClose,
+      handleOnCloseFilesModal,
       selectedFilesIds,
       selectedFolderIds,
       t,
@@ -338,7 +350,7 @@ export const FileManagerModal = memo(
       <Modal
         portalId="theme-main"
         state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-        onClose={() => onClose(false)}
+        onClose={() => handleOnCloseFilesModal(false)}
         dataQa="file-manager-modal"
         containerClassName="flex flex-col gap-4 w-full sm:w-[1200px] h-[min(800px,100vh)] !bg-layer-2"
         dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}

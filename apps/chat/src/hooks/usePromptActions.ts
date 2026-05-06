@@ -73,6 +73,10 @@ export const usePromptActions = (prompt: Prompt) => {
     );
   }, [dispatch, prompt]);
 
+  const handleOpenUnshare = useCallback(() => {
+    dispatch(ShareActions.setUnshareEntity(prompt));
+  }, [dispatch, prompt]);
+
   return {
     handleExport,
     handleDuplicate,
@@ -83,5 +87,6 @@ export const usePromptActions = (prompt: Prompt) => {
     handleUse,
     handlePublish,
     handleUnpublish,
+    handleOpenUnshare,
   };
 };

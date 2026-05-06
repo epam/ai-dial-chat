@@ -208,7 +208,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         className="px-3 pt-4 md:px-5"
       >
         <CopyUrlButton
-          id={toolset?.id ?? ''}
+          entity={toolset}
           label={t(CommonI18nKeys.CopyToolsetEndpointURL)}
         />
       </FormSection>

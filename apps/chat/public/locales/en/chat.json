@@ -192,6 +192,7 @@
   "Go to a review": "Go to a review",
   "Continue review": "Continue review",
   "Update request": "Update request",
+  "Applies to new and existing messages": "Applies to new and existing messages",
   "Request can not be updated as some resources are invalid": "Request can not be updated as some resources are invalid",
   "Make any changes to update the request": "Make any changes to update the request",
   "Application": "Application",
@@ -268,8 +269,6 @@
   "See results from": "See results from",
   "{{baseText}} {{tabName}}": "{{baseText}} {{tabName}}",
   "Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}": "Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}",
-  "Confirm unshare prompt": "Confirm unshare prompt",
-  "Are you sure that you want to unshare a prompt?": "Are you sure that you want to unshare a prompt?",
   "Unshare": "Unshare",
   "Info": "Info",
   "Save and exit": "Save and exit",
@@ -354,5 +353,7 @@
   "Error happened during answering. Please check your internet connection and try again.": "Error happened during answering. Please check your internet connection and try again.",
   "Response format": "Response format",
   "Markdown": "Markdown",
-  "Plain text": "Plain text"
+  "Plain text": "Plain text",
+  "You don't have any files": "You don't have any files",
+  "Select a file from the tree": "Select a file from the tree"
 }

@@ -53,7 +53,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         <div className="flex flex-row items-center gap-3 border-b border-secondary p-3">
           <UserIcon userName={session?.user?.name || t(HeaderI18nKeys.User)} />
 
-          <p className="text-[14px]/[20px] font-semibold">
+          <p className="break-words text-[14px]/[20px] font-semibold">
             {session?.user?.name}
           </p>
         </div>

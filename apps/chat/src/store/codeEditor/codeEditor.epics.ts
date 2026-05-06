@@ -14,7 +14,6 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
-import { resolveFirstCodeEditorFileId } from '@/src/utils/app/epics-helpers/code-editor.epic-helpers';
 import { selectFirstFileAction$ } from '@/src/utils/app/epics-helpers/code-editor.epic-helpers';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -34,7 +33,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import intersectionWith from 'lodash-es/intersectionWith';
@@ -130,7 +129,8 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
             const childFiles = FilesSelectors.selectFiles(state$.value).filter(
               (file) =>
                 file.id.startsWith(`${payload.sourcesFolderId}/`) &&
-                file.id !== payload.id,
+                file.id !== payload.id &&
+                file.name !== TEMP_FILE_NAME_IN_FILE_MANAGER,
             );
 
             actions.push(

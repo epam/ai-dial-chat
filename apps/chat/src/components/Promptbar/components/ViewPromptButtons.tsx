@@ -47,6 +47,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
     handlePublish,
     handleUnpublish,
     handleMoveToFolder,
+    handleOpenUnshare,
   } = usePromptActions(prompt);
 
   const isPublishingEnabled = useAppSelector((state) =>
@@ -141,7 +142,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
         display: !!prompt.sharedWithMe,
         dataQa: 'unshare-prompt',
         Icon: IconUserUnshare,
-        onClick: handleDelete,
+        onClick: handleOpenUnshare,
       },
     ],
     [
@@ -161,6 +162,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       handleUnpublish,
       handleInfo,
       handleDelete,
+      handleOpenUnshare,
     ],
   );
 

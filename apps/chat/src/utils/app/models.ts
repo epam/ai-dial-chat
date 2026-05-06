@@ -84,6 +84,7 @@ export const mergeFeatures = (
     configuration = false,
     tools = true,
     assistant_attachments_in_request: assistantAttachmentsInRequest = false,
+    mcp = false,
     ...otherFeatures
   } = features || {};
   return {
@@ -96,6 +97,7 @@ export const mergeFeatures = (
     configuration,
     tools,
     assistantAttachmentsInRequest,
+    mcp,
     ...otherFeatures,
   };
 };
@@ -118,4 +120,4 @@ export const shouldShowHiddenEntities = (
 
 export const doesAgentSupportMcp = (
   entity?: DialAIEntityModel,
-): entity is DialAIEntityModel => !!entity?.mcp;
+): entity is DialAIEntityModel => !!entity?.mcp || !!entity?.features?.mcp;

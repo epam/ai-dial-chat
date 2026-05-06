@@ -30,6 +30,7 @@ import { DialFile as LocalDialFileType } from '@/src/types/files';
 import type { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
+import { PublicationActions, ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -118,6 +119,22 @@ const dateOptions = {
   year: 'numeric' as const,
   month: 'short' as const,
   day: '2-digit' as const,
+};
+
+const getInitialTab = (availableTabs?: Set<string>) => {
+  if (!availableTabs?.size) return DialFileManagerTabs.MyFiles;
+
+  const tabPriority = [
+    DialFileManagerTabs.MyFiles,
+    DialFileManagerTabs.Organization,
+    DialFileManagerTabs.Shared,
+    DialFileManagerTabs.Review,
+  ] as const;
+
+  return (
+    tabPriority.find((tab) => availableTabs.has(tab)) ??
+    DialFileManagerTabs.MyFiles
+  );
 };
 
 const defaultAvailableTabs = new Set([
@@ -247,12 +264,39 @@ export const useFileManager = ({
     boolean | undefined
   >(false);
 
-  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
-    my_files: MY_FILES_SECTION,
-    shared: SHARED_WITH_ME_FILES_SECTION,
-    organization: ORGANIZATION_FILES_SECTION,
-    review: REVIEW_FILES_SECTION,
-  });
+  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
+    {
+      my_files: MY_FILES_SECTION,
+      shared: SHARED_WITH_ME_FILES_SECTION,
+      organization: ORGANIZATION_FILES_SECTION,
+      review: REVIEW_FILES_SECTION,
+    },
+    getInitialTab(availableTabs),
+  );
+  const handleTabChangeWithRefresh = useCallback(
+    (tab: DialFileManagerTabs) => {
+      handleTabChange(tab);
+      if (tab === DialFileManagerTabs.MyFiles) {
+        dispatch(
+          FilesActions.getFilesWithFolders({ skipShareListingsRefresh: true }),
+        );
+      }
+
+      if (tab === DialFileManagerTabs.Shared) {
+        dispatch(ShareActions.triggerGettingSharedFilesListings());
+      }
+
+      if (tab === DialFileManagerTabs.Organization) {
+        dispatch(
+          PublicationActions.uploadPublishedWithMeItems({
+            featureType: FeatureType.File,
+          }),
+        );
+      }
+    },
+    [handleTabChange, dispatch],
+  );
+
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
   const searchSelector = useCallback(
@@ -711,7 +755,7 @@ export const useFileManager = ({
     () => ({
       tabs: filteredTabs,
       activeTab: activeTab,
-      onTabChange: handleTabChange,
+      onTabChange: handleTabChangeWithRefresh,
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
@@ -724,7 +768,7 @@ export const useFileManager = ({
     [
       filteredTabs,
       activeTab,
-      handleTabChange,
+      handleTabChangeWithRefresh,
       canWriteCurrentFolder,
       t,
       externalToolbarOptions,

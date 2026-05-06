@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { isAbsoluteUrl } from '@/src/utils/app/file';
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { getImageUrl, getThemeIconUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
 import { HTTPMethod } from '@/src/types/http';
@@ -143,7 +143,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           generateColorsCssVariables(theme.colors),
           generateColorsCssVariables(theme.topicColors),
           generateColorsCssVariables(theme.authColors),
-          generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateUrlsCssVariables({
+            'app-logo':
+              (theme.id == 'dark'
+                ? getImageUrl(json, 'chat-logo-dark')
+                : getImageUrl(json, 'chat-logo-light')) || theme['app-logo'],
+          }),
           generateUrlsCssVariables(theme.banners),
           generateFontCssVariables({
             'theme-font': theme['font-family'],

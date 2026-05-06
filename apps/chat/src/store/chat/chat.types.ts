@@ -6,6 +6,8 @@ import { MessageFormSchema, MessageFormValue } from '@epam/ai-dial-shared';
 export interface ChatState {
   inputContent: string;
   inputContentTemplateMapping?: { substituted: string; original: string };
+  userMessageTranscript?: string;
+  userMessageVoiceAttachmentId?: string;
   formValue?: MessageFormValue;
   configurationSchemas: { modelId: string; schema: MessageFormSchema }[];
   configurationSchemasLoadingIds: string[];
@@ -14,5 +16,6 @@ export interface ChatState {
   infoModalState: ModalState;
   selectedEntityInfo?: EntityInfo;
   isTranscribing: boolean;
+  isUserMessageTranscribing: boolean;
   isAsrFlowActive: boolean;
 }

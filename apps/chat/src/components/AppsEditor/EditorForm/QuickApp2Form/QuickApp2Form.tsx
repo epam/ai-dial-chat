@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 import {
   Controller,
   useFormContext,
@@ -9,25 +9,27 @@ import {
 import classNames from 'classnames';
 
 import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
+import { useReviewBucket } from '@/src/hooks/useReviewBucket';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getQuickApp2Config,
-  getSharedTooltip,
-} from '@/src/utils/app/application';
-import { getFilesAndFoldersFromUrls } from '@/src/utils/app/file';
+import { getSharedTooltip } from '@/src/utils/app/application';
+import { constructPath, getNextFileName } from '@/src/utils/app/file';
+import { getFileRootId, isMyEntity } from '@/src/utils/app/id';
 import {
   doesAgentSupportMcp,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { FilesActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
+  FilesSelectors,
   ModelsSelectors,
   SettingsSelectors,
   UISelectors,
@@ -66,7 +68,8 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
-import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
+import { DialFileNodeType, DialInput } from '@epam/ai-dial-ui-kit';
+import { difference } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -93,6 +96,7 @@ interface AppsEditorProps {
 
 export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
 
   const isPublicationReview = useIsPublicationReview();
   const appDetails = useAppSelector(
@@ -106,8 +110,9 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const { dialCoreExternalUrl } = useAppSelector(
     SettingsSelectors.selectDefaults,
   );
+  const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const { control, setError, clearErrors } =
+  const { control, setError, clearErrors, setValue } =
     useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
 
@@ -117,6 +122,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const chatMessageInputDisabled = useWatch({
     control,
     name: 'chatMessageInputDisabled',
+  });
+  const documentRelativeUrls = useWatch({
+    control,
+    name: 'documentRelativeUrl',
   });
 
   const showTemperatureSlider = useMemo(() => {
@@ -139,15 +148,72 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       : '';
   const filesFilter = isPublicationReview ? adminFilesFilter : undefined;
 
-  const reviewFilesAndFolders = useMemo(() => {
-    if (!isPublicationReview || !appDetails) return undefined;
+  const reviewBucket = useReviewBucket();
 
-    return getFilesAndFoldersFromUrls(
-      getQuickApp2Config(appDetails).contexts.map(({ url }) => url),
-      FeatureType.File,
-      UploadStatus.LOADED,
-    );
-  }, [appDetails, isPublicationReview]);
+  const handleSelectFiles = useCallback(
+    (fileIds: string[]) => {
+      const currentValue = documentRelativeUrls ?? [];
+
+      if (!isPublicationReview || !reviewBucket) {
+        setValue('documentRelativeUrl', uniq([...currentValue, ...fileIds]), {
+          shouldDirty: true,
+        });
+        return;
+      }
+      // Copy files selected from user's bucket to the review bucket
+      const myFilesIds = fileIds.filter((id) => isMyEntity({ id }));
+      const destinationFolder = getFileRootId(reviewBucket);
+      const filesToCopy = myFilesIds.map((sourceUrl) => {
+        const { name } = splitEntityId(sourceUrl);
+        const newName = getNextFileName(
+          name,
+          files,
+          0,
+          true,
+          destinationFolder,
+        );
+        const destinationUrl = constructPath(destinationFolder, newName);
+
+        return {
+          sourceUrl,
+          destinationUrl,
+          nodeType: DialFileNodeType.ITEM,
+        };
+      });
+
+      if (filesToCopy.length) {
+        dispatch(
+          FilesActions.copyFiles({
+            files: filesToCopy,
+            destinationFolder,
+          }),
+        );
+      }
+
+      const selectedFilesIds = uniq([
+        ...currentValue,
+        ...difference(fileIds, myFilesIds),
+        ...filesToCopy.map(({ destinationUrl }) => destinationUrl),
+      ]);
+      setValue('documentRelativeUrl', selectedFilesIds, { shouldDirty: true });
+    },
+    [
+      dispatch,
+      documentRelativeUrls,
+      files,
+      isPublicationReview,
+      reviewBucket,
+      setValue,
+    ],
+  );
+
+  useEffect(() => {
+    if (isPublicationReview && reviewBucket) {
+      dispatch(
+        FilesActions.getFilesWithFolders({ id: getFileRootId(reviewBucket) }),
+      );
+    }
+  }, [dispatch, isPublicationReview, reviewBucket]);
 
   return (
     <div
@@ -200,6 +266,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           render={({ field }) => (
             <DialMarkdownEditorContainer
               label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+              placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
               value={field.value}
               onChangeValue={field.onChange}
               height={200}
@@ -222,9 +289,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           render={({ field }) => (
             <FilesSelectorField
               label={t(MarketplaceI18nKeys.DocumentRelativeURLs)}
-              onAddFiles={(documents) =>
-                field.onChange(uniq([...(field.value ?? []), ...documents]))
-              }
+              onAddFiles={handleSelectFiles}
               onRemoveFile={(document) =>
                 field.onChange(
                   field.value?.filter((field) => field !== document),
@@ -244,7 +309,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               }
               tooltip={isAppPublicTooltip}
               filesFilter={filesFilter}
-              additionalFilesAndFolders={reviewFilesAndFolders}
             />
           )}
         />
@@ -300,9 +364,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
       <FormCollapsibleSection
         name={t(MarketplaceI18nKeys.ConversationStarters)}
-        description={t(
-          'Starters are buttons close the chat input that offer prompts to help users initiate a conversation',
-        )}
+        description={t(MarketplaceI18nKeys.StartersDescription)}
         dataQa="conversation-starters-section"
       >
         <Controller
@@ -328,18 +390,27 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               )}
             </p>
           </div>
-
-          <ControlledField
-            label={t(MarketplaceI18nKeys.IntroText)}
-            placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
-            id="introText"
-            isSubgroup
-            error={errors.introText?.message}
-            control={control}
+          <Controller
             name="introText"
-            info={t(MarketplaceI18nKeys.OptionalTextShownAboveTheStarters)}
-            disabled={isAppPublic || !hasStarters}
-            tooltip={startersSettingsTooltip}
+            control={control}
+            render={({ field }) => (
+              <DialInput
+                labelProps={{
+                  label: t(MarketplaceI18nKeys.IntroText),
+                  caption: t(
+                    MarketplaceI18nKeys.OptionalTextShownAboveTheStarters,
+                  ),
+                }}
+                placeholder={t(MarketplaceI18nKeys.EnterIntroText)}
+                id="introText"
+                name="introText"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isAppPublic || !hasStarters}
+                error={errors.introText?.message}
+                tooltipText={startersSettingsTooltip}
+              />
+            )}
           />
 
           <Controller
@@ -347,7 +418,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             control={control}
             render={({ field }) => (
               <StartersBehaviourField
-                label={t(MarketplaceI18nKeys.StartersBehaviour)}
+                label={t(MarketplaceI18nKeys.StartersBehavior)}
                 value={field.value}
                 isSubgroup
                 onChange={field.onChange}
@@ -391,7 +462,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             {t(CommonI18nKeys.ConnectApplication)}
           </h5>
           <CopyUrlButton
-            id={appDetails.id}
+            entity={appDetails}
             label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
           />
         </div>

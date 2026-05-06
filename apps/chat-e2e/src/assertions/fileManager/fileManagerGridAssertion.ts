@@ -170,4 +170,28 @@ export class FileManagerGridAssertion extends BaseAssertion {
       ExpectedMessages.sharedIconColorIsValid,
     );
   }
+
+  public async assertGridFileIconClass(
+    name: string,
+    expectedClass: string | RegExp,
+  ) {
+    const svgLocator =
+      await this.fileManagerGrid.gridFileIconSvgByNameCell(name);
+    const pattern =
+      typeof expectedClass === 'string'
+        ? new RegExp(expectedClass)
+        : expectedClass;
+    await this.assertElementClass(svgLocator, pattern);
+  }
+
+  public async assertGridFileIconClassDuringRename(
+    expectedClass: string | RegExp,
+  ) {
+    const svgLocator = this.fileManagerGrid.getRenameRowFileIconSvg();
+    const pattern =
+      typeof expectedClass === 'string'
+        ? new RegExp(expectedClass)
+        : expectedClass;
+    await this.assertElementClass(svgLocator, pattern);
+  }
 }

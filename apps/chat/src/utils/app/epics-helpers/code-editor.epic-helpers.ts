@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 
-import { RootState } from '@/src/types/store';
+import { DialFile } from '@/src/types/files';
 
 import { CodeEditorActions } from '@/src/store/actions';
-import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 
 import { addTrailingSlashIfAbsent } from '../common';
 
@@ -13,12 +13,17 @@ export const selectFirstFileAction$ = (
   sourcesFolderId: string,
   files: DialFile[],
 ) => {
+  const filteredFiles = files.filter(
+    (file) => file.name !== TEMP_FILE_NAME_IN_FILE_MANAGER,
+  );
   const sourcesFolderIdWithTrailingSlash =
     addTrailingSlashIfAbsent(sourcesFolderId);
-  const folderFiles = files.filter((file) =>
+  const folderFiles = filteredFiles.filter((file) =>
     file.id.startsWith(sourcesFolderIdWithTrailingSlash),
   );
-  const rootFiles = files.filter((file) => file.folderId === sourcesFolderId);
+  const rootFiles = filteredFiles.filter(
+    (file) => file.folderId === sourcesFolderId,
+  );
 
   if (folderFiles.length) {
     const appFile = rootFiles.find(

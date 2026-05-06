@@ -4,11 +4,13 @@ export const getApiHeaders = ({
   chatReference,
   jwt,
   jobTitle,
+  language,
   ifNoneMatch,
 }: {
   jwt?: string;
   chatReference?: string;
   jobTitle?: string;
+  language?: string;
   ifNoneMatch?: string;
 }): Record<string, string> => {
   const headers: Record<string, string> = {
@@ -22,6 +24,11 @@ export const getApiHeaders = ({
     headers['authorization'] = 'Bearer ' + jwt;
   } else if (isAuthDisabled) {
     headers['Api-Key'] = process.env.DIAL_API_KEY;
+  }
+
+  const proxyLanguageHeader = process.env.PROXY_LANGUAGE_HEADER;
+  if (proxyLanguageHeader && language) {
+    headers[proxyLanguageHeader] = language;
   }
 
   if (jobTitle) {
