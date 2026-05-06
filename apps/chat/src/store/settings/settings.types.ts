@@ -42,6 +42,7 @@ export interface SettingsState {
   dialCoreExternalUrl?: string;
   defaultSystemPrompt?: string;
   asrModelId: string | null;
+  audioTypesDefaultOrder: string[];
   providerId: string | null;
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;
