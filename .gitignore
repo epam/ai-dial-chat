@@ -42,6 +42,9 @@ pnpm-lock.yaml
 # overlay
 /public/overlay
 
+# generated at build time by next.config.js
+apps/chat/public/pdf.worker.min.mjs
+
 # editors
 .vscode
 .cursor
