@@ -145,7 +145,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           generateColorsCssVariables(theme.authColors),
           generateUrlsCssVariables({
             'app-logo':
-              (theme.displayName == 'Dark'
+              (theme.id == 'dark'
                 ? getImageUrl(json, 'chat-logo-dark')
                 : getImageUrl(json, 'chat-logo-light')) || theme['app-logo'],
           }),
