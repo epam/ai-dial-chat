@@ -375,21 +375,21 @@ export const getShortExtensionsListFromMimeType = (
 
 export const getFileNameWithoutExtension = (
   filename: string,
-  isExtensionIncluded = true,
+  options: { isExtensionIncluded?: boolean } = { isExtensionIncluded: true },
 ) =>
   filename.lastIndexOf('.') > 0
     ? filename.slice(0, filename.lastIndexOf('.'))
-    : isExtensionIncluded
+    : options?.isExtensionIncluded
       ? filename
       : '';
 
 export const getFileNameExtension = (
   filename: string,
-  isExtensionIncluded = false,
+  options: { isExtensionIncluded?: boolean } = { isExtensionIncluded: false },
 ) =>
   filename.lastIndexOf('.') > 0
     ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
-    : isExtensionIncluded
+    : options?.isExtensionIncluded
       ? filename
       : '';
 

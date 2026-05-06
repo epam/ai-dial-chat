@@ -381,9 +381,13 @@ export const PreUploadDialog = ({
                   >
                     <div className="flex-1">
                       <DialInput
-                        value={getFileNameWithoutExtension(file.name, false)}
+                        value={getFileNameWithoutExtension(file.name, {
+                          isExtensionIncluded: false,
+                        })}
                         onChange={handleRenameFile(index)}
-                        postfix={getFileNameExtension(file.name, true)}
+                        postfix={getFileNameExtension(file.name, {
+                          isExtensionIncluded: true,
+                        })}
                         iconBefore={
                           <IconFile className="text-secondary" size={18} />
                         }
