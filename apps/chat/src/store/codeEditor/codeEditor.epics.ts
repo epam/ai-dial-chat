@@ -14,6 +14,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
+import { selectFirstFileAction$ } from '@/src/utils/app/epics-helpers/code-editor.epic-helpers';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
@@ -32,7 +33,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import intersectionWith from 'lodash-es/intersectionWith';
@@ -41,28 +42,8 @@ const initCodeEditorEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(CodeEditorActions.initCodeEditor.type),
     switchMap(({ payload }) => {
-      const sourceFolderId = `${payload.sourcesFolderId}${payload.sourcesFolderId.endsWith('/') ? '' : '/'}`;
-
-      const folderFiles = FilesSelectors.selectFiles(state$.value).filter(
-        (file) => file.id.startsWith(sourceFolderId),
-      );
-      const rootFiles = FilesSelectors.selectFiles(state$.value).filter(
-        (file) => file.folderId === payload.sourcesFolderId,
-      );
-
-      if (folderFiles.length) {
-        const appFile = rootFiles.find(
-          (file) => file.name === CODEAPPS_REQUIRED_FILES.APP && !file.status,
-        );
-
-        if (appFile) {
-          return of(CodeEditorActions.setSelectedFileId(appFile.id));
-        } else {
-          return of(CodeEditorActions.setSelectedFileId(folderFiles[0].id));
-        }
-      }
-
-      return of(CodeEditorActions.setSelectedFileId(undefined));
+      const files = FilesSelectors.selectFiles(state$.value);
+      return selectFirstFileAction$(payload.sourcesFolderId, files);
     }),
   );
 
@@ -148,7 +129,8 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
             const childFiles = FilesSelectors.selectFiles(state$.value).filter(
               (file) =>
                 file.id.startsWith(`${payload.sourcesFolderId}/`) &&
-                file.id !== payload.id,
+                file.id !== payload.id &&
+                file.name !== TEMP_FILE_NAME_IN_FILE_MANAGER,
             );
 
             actions.push(
@@ -261,6 +243,26 @@ const saveAllModifiedFilesEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const selectFirstFileAfterSharedLoadEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.addSharedFiles.type),
+    switchMap(() => {
+      const sourcesFolderId = CodeEditorSelectors.selectSourcesFolderId(
+        state$.value,
+      );
+      const selectedFileId = CodeEditorSelectors.selectSelectedFile(
+        state$.value,
+      );
+
+      if (!sourcesFolderId || selectedFileId !== undefined) {
+        return EMPTY;
+      }
+
+      const files = FilesSelectors.selectFiles(state$.value);
+      return selectFirstFileAction$(sourcesFolderId, files);
+    }),
+  );
+
 export const CodeEditorEpics = combineEpics(
   initCodeEditorEpic,
   getFileTextContentEpic,
@@ -268,4 +270,5 @@ export const CodeEditorEpics = combineEpics(
   deleteFileEpic,
   updateFileContentEpic,
   saveAllModifiedFilesEpic,
+  selectFirstFileAfterSharedLoadEpic,
 );

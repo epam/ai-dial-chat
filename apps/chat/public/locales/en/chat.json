@@ -353,5 +353,7 @@
   "Error happened during answering. Please check your internet connection and try again.": "Error happened during answering. Please check your internet connection and try again.",
   "Response format": "Response format",
   "Markdown": "Markdown",
-  "Plain text": "Plain text"
+  "Plain text": "Plain text",
+  "You don't have any files": "You don't have any files",
+  "Select a file from the tree": "Select a file from the tree"
 }
