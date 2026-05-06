@@ -56,7 +56,11 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
-import { FilesSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  FilesSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
 import {
@@ -715,11 +719,12 @@ const deleteFilesEpic: AppEpic = (action$) =>
     }),
   );
 
-const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
+const downloadFilesAsArchiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.downloadFilesAsArchive.type),
     switchMap(
       (action: ReturnType<typeof FilesActions.downloadFilesAsArchive>) => {
+        const appName = SettingsSelectors.selectAppName(state$.value);
         const { files } = action.payload;
 
         if (files.length === 1 && files[0].nodeType === DialFileNodeType.ITEM) {
@@ -739,7 +744,7 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
           return of(FilesActions.downloadFilesAsArchiveSuccess());
         }
 
-        return from(FileService.downloadFilesAsArchive(files)).pipe(
+        return from(FileService.downloadFilesAsArchive(files, appName)).pipe(
           map(() => FilesActions.downloadFilesAsArchiveSuccess()),
           catchError(() => {
             return of(
