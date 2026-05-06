@@ -17,6 +17,7 @@ import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   AlertVariant,
   DialDestinationFolderPopup,
+  DialFileManagerActions,
   type DialFileManagerActionsRef,
   DialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
@@ -77,10 +78,14 @@ export const SelectFolderModal = ({
     handleCreateFolder,
     handleMoveFiles,
     handleRenameValidation,
+    handleDeleteFiles,
   } = useFileManager({
     actionLabelsOptions: {
       actionsByTab: {
-        my_files: [],
+        my_files: [
+          DialFileManagerActions.Rename,
+          DialFileManagerActions.Delete,
+        ],
         shared: [],
         organization: [],
         review: [],
@@ -154,6 +159,7 @@ export const SelectFolderModal = ({
       collapsed: collapsedTree,
       onCollapseChange: setCollapsedTree,
       header: treeOptions.header,
+      showFiles: false,
     }),
     [collapsedTree, treeOptions.header],
   );
@@ -175,7 +181,7 @@ export const SelectFolderModal = ({
       rootItem={rootFolder}
       filesLoading={areFoldersLoading}
       treeOptions={modalTreeOptions}
-      gridOptions={{ ...gridOptions }}
+      gridOptions={{ ...gridOptions, showFiles: false }}
       navigationPanelOptions={navigationPanelOptions}
       collapsedFileTree={collapsedTree}
       allowedFileTypes={[]}
@@ -183,6 +189,8 @@ export const SelectFolderModal = ({
       onCreateFolder={handleCreateFolder}
       onMoveToFiles={handleMoveFiles}
       onCreateFolderValidate={handleRenameValidation}
+      onRenameValidate={handleRenameValidation}
+      onDeleteFiles={handleDeleteFiles}
       uploadEnabled={false}
       alertProps={
         warningMessage
