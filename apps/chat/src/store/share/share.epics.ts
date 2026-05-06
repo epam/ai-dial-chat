@@ -26,12 +26,12 @@ import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
+import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import {
   constructPath,
   isAttachmentLink,
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
-import { getParentFolderIdsFromEntityId } from '@/src/utils/app/folders';
 import {
   getEntityBucket,
   isApplicationId,
@@ -112,14 +112,6 @@ const getInternalResourcesUrls = (
     )
     .filter(Boolean)
     .flat() || []) as string[];
-};
-
-const getSharedParentFolder = (id?: string) => {
-  if (!id || getEntityBucket({ id }) === BucketService.getBucket())
-    return undefined;
-  if (id.split('/').length < 3) return id;
-
-  return getParentFolderIdsFromEntityId(id)[0];
 };
 
 const shareEpic: AppEpic = (action$) =>
@@ -820,7 +812,7 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
   );
 
 // TODO: refactor it to something better
-const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
+const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.getSharedListingSuccess.type),
     switchMap(({ payload }) => {
@@ -1085,15 +1077,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const files = payload.resources.entities as DialFile[];
           const folders = payload.resources.folders;
 
+          const reviewBucket = getCurrentReviewBucket(state$.value, router);
           const selectedCodeEditorFileId =
             CodeEditorSelectors.selectSelectedFile(state$.value);
-          const sourcesFolderId = CodeEditorSelectors.selectSourcesFolderId(
-            state$.value,
-          );
-          const codeEditorFolderOnReview =
-            getSharedParentFolder(
-              selectedCodeEditorFileId?.split('/')?.slice(0, -1)?.join('/'),
-            ) ?? getSharedParentFolder(sourcesFolderId);
+          const codeEditorBucket = selectedCodeEditorFileId
+            ? getEntityBucket({ id: selectedCodeEditorFileId })
+            : undefined;
 
           const sharedWithMeFileIds = files.map((f) => f.id);
           const sharedWithMeFolderIds = folders.map((f) => f.id);
@@ -1113,7 +1102,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   sharedWithMe: true,
                   isRootSharedItem: true,
                 })),
-              reviewFolder: codeEditorFolderOnReview,
+              reviewBuckets: [
+                reviewBucket,
+                codeEditorBucket !== BucketService.getBucket()
+                  ? codeEditorBucket
+                  : undefined,
+              ].filter(Boolean) as string[],
             }),
           );
           actions.push(
