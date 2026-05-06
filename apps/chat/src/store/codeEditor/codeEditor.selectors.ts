@@ -32,6 +32,9 @@ const selectIsFileContentLoading = (state: RootState) =>
 const selectSelectedFile = (state: RootState) =>
   rootSelector(state).selectedFileId;
 
+const selectSourcesFolderId = (state: RootState) =>
+  rootSelector(state).sourcesFolderId;
+
 export const CodeEditorSelectors = {
   selectFilesContent,
   selectModifiedFileIds,
@@ -39,4 +42,5 @@ export const CodeEditorSelectors = {
   selectFileContent,
   selectIsFileContentLoading,
   selectSelectedFile,
+  selectSourcesFolderId,
 };

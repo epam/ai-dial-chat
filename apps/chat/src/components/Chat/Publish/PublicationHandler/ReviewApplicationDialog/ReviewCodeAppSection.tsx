@@ -15,7 +15,7 @@ import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewApplicationPropsSection';
-import { CodeEditor } from '@/src/components/Common/CodeEditor';
+import { CodeEditor } from '@/src/components/Common/CodeEditor/CodeEditor';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
