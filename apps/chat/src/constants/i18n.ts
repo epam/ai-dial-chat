@@ -865,6 +865,8 @@ export enum ChatI18nKeys {
   ResponseFormat = 'Response format',
   Markdown = 'Markdown',
   PlainText = 'Plain text',
+  YouDontHaveAnyFiles = "You don't have any files",
+  SelectFileFromTree = 'Select a file from the tree',
 }
 
 // files.json
