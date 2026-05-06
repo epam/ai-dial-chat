@@ -530,20 +530,17 @@ export const MessageAttachment = ({
                 )}
               </div>
             ) : (
-              !isFolder && (
-                <div className="flex gap-2">
-                  {!mappedAttachmentReferenceUrl && (
-                    <a
-                      download={attachment.title}
-                      href={mappedAttachmentUrl}
-                      onClick={stopBubbling}
-                      target="_blank"
-                      className="link-icon-button-small"
-                    >
-                      <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
-                    </a>
-                  )}
-                </div>
+              !isFolder &&
+              !mappedAttachmentReferenceUrl && (
+                <a
+                  download={attachment.title}
+                  href={mappedAttachmentUrl}
+                  onClick={stopBubbling}
+                  target="_blank"
+                  className="link-icon-button-small"
+                >
+                  <IconDownload size={DEFAULT_ICON_SIZES.SMALL} />
+                </a>
               )
             )}
           </div>
