@@ -17,6 +17,7 @@ export interface FileMetadata {
 export async function fetchAllFilesRecursive(
   folderUrl: string,
   authToken: string,
+  options?: { treatMissingMetadataAsEmpty?: boolean },
 ): Promise<FileMetadata[]> {
   const allFiles: FileMetadata[] = [];
   let nextToken: string | undefined = undefined;
@@ -40,6 +41,12 @@ export async function fetchAllFilesRecursive(
     });
 
     if (!response.ok) {
+      if (options?.treatMissingMetadataAsEmpty && response.status === 404) {
+        logger.warn(
+          `No metadata for folder ${folderUrl} (HTTP 404); treating as empty`,
+        );
+        return [];
+      }
       const errorText = await response.text();
       logger.error(
         `Failed to fetch metadata for folder ${folderUrl}: ${errorText}`,

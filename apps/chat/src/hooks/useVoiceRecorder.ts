@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isSafari } from 'react-device-detect';
 
+import { AudioMimeCandidate, NegotiatedFormat } from '@/src/types/audio';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
+
 import { AudioMimeType } from '@/src/constants/audio';
 
 const MIME_CANDIDATES = [
@@ -19,30 +24,38 @@ const MIME_CANDIDATES = [
   { mimeType: AudioMimeType.MP4, baseMime: AudioMimeType.MP4, ext: '.m4a' },
 ];
 
-const getOrderedCandidates = () => {
-  if (isSafari) {
-    const mp4 = MIME_CANDIDATES.filter((c) => c.baseMime === AudioMimeType.MP4);
-    const rest = MIME_CANDIDATES.filter(
-      (c) => c.baseMime !== AudioMimeType.MP4,
-    );
-    return [...mp4, ...rest];
-  }
-  return MIME_CANDIDATES;
+const getSafariOrderedCandidates = (mimeCandidates: AudioMimeCandidate[]) => {
+  const mp4 = mimeCandidates.filter((c) => c.baseMime === AudioMimeType.MP4);
+  const rest = mimeCandidates.filter((c) => c.baseMime !== AudioMimeType.MP4);
+  return [...mp4, ...rest];
 };
 
-interface NegotiatedFormat {
-  mimeType: string;
-  ext: string;
-}
+const getOrderedCandidates = (audioTypesDefaultOrder: string[]) => {
+  if (audioTypesDefaultOrder.length > 0) {
+    const defaultOrder = audioTypesDefaultOrder
+      .map((mimeType) => MIME_CANDIDATES.find((c) => c.mimeType === mimeType))
+      .filter(Boolean) as AudioMimeCandidate[];
+
+    if (defaultOrder.length !== MIME_CANDIDATES.length) {
+      const rest = MIME_CANDIDATES.filter((c) => !defaultOrder.includes(c));
+      const orderedRest = isSafari ? getSafariOrderedCandidates(rest) : rest;
+      return [...defaultOrder, ...orderedRest];
+    }
+    return defaultOrder;
+  }
+  return isSafari
+    ? getSafariOrderedCandidates(MIME_CANDIDATES)
+    : MIME_CANDIDATES;
+};
 
 const negotiateFormat = (
   modelAudioTypes: string[],
+  audioTypesDefaultOrder: string[],
 ): NegotiatedFormat | null => {
   const hasWildcard =
     modelAudioTypes.includes('*/*') || modelAudioTypes.includes('audio/*');
 
-  const candidates = getOrderedCandidates();
-
+  const candidates = getOrderedCandidates(audioTypesDefaultOrder);
   for (const candidate of candidates) {
     if (!MediaRecorder.isTypeSupported(candidate.mimeType)) {
       continue;
@@ -78,6 +91,9 @@ export interface UseVoiceRecorderResult {
 export const useVoiceRecorder = (
   modelAudioTypes: string[],
 ): UseVoiceRecorderResult => {
+  const audioTypesDefaultOrder = useAppSelector(
+    SettingsSelectors.selectAudioTypesDefaultOrder,
+  );
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
@@ -97,8 +113,11 @@ export const useVoiceRecorder = (
   const isStoppingRef = useRef(false);
 
   useEffect(() => {
-    formatRef.current = negotiateFormat(modelAudioTypes);
-  }, [modelAudioTypes]);
+    formatRef.current = negotiateFormat(
+      modelAudioTypes,
+      audioTypesDefaultOrder,
+    );
+  }, [modelAudioTypes, audioTypesDefaultOrder]);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) {

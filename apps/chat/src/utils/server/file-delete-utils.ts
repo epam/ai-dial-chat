@@ -13,7 +13,9 @@ export async function fetchAllFilesRecursive(
   folderUrl: string,
   authToken: string,
 ): Promise<MoveModel[]> {
-  const files = await fetchFiles(folderUrl, authToken);
+  const files = await fetchFiles(folderUrl, authToken, {
+    treatMissingMetadataAsEmpty: true,
+  });
 
   return files.map((file) => ({
     sourceUrl: file.url,
