@@ -454,6 +454,7 @@ export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
   externalApp = 'External app',
+  quickApp2 = 'Quick app 2.0',
 }
 
 export enum EntityEditorGeneralFormFields {

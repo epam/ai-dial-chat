@@ -327,6 +327,13 @@ export const AddExternalAppSettingsFormSelector = {
   externalUrl: '#externalUrl',
 };
 
+export const AddQuickApp2SettingsFormSelector = {
+  orchestratorSection: '[data-qa="orchestrator-section"]',
+  contextToolsSection: '[data-qa="context-tools-section"]',
+  attachmentsSection: '[data-qa="attachments-section"]',
+  conversationStartersSection: '[data-qa="conversation-starters-section"]',
+};
+
 export const AddToolsetSettingsFormSelector = {
   definitionLabel: '[data-qa="definition-label"]',
   endpointLabel: '[for="endpoint"]',
