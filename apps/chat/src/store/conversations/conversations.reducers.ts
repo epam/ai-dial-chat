@@ -633,6 +633,7 @@ export const conversationsSlice = createSlice({
         paths: string[];
         recursive?: boolean;
         pathToSelectFrom?: string;
+        suspendHideSidebar?: boolean;
       }>,
     ) => state,
     uploadConversationsWithFoldersRecursive: (

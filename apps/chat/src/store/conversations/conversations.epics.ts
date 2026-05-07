@@ -158,6 +158,7 @@ const initEpic: AppEpic = (action$, state$) =>
           of(
             ShareActions.acceptShareInvitation({
               invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+              suspendHideSidebar: true,
             }),
           ),
           of(ConversationsActions.initSelectedConversations()),
@@ -179,6 +180,7 @@ const initShareEpic: AppEpic = (action$) =>
         of(
           ShareActions.acceptShareInvitation({
             invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+            suspendHideSidebar: true,
           }),
         ),
         EMPTY,
@@ -213,6 +215,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.selectConversations({
             conversationIds: [preselectedConversationId as string],
+            suspendHideSidebar: true,
           }),
           ConversationsActions.selectAction(preselectedAction || null),
         );
@@ -224,6 +227,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.createNewConversations({
             names: [`isolated_${isolatedModelId}`],
+            suspendHideSidebar: true,
           }),
         );
       }
@@ -304,6 +308,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                     ns: Translation.Chat,
                   }),
                 ],
+                suspendHideSidebar: true,
               }),
             );
           }
@@ -319,6 +324,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.selectConversations({
                   conversationIds: selectedConversationsIds,
+                  suspendHideSidebar: true,
                 }),
               ),
             );
@@ -327,6 +333,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
           return concat(
             of(
               ConversationsActions.addConversations({
+                suspendHideSidebar: true,
                 conversations: selectedConversations.map((conv) => {
                   if (!isEntityIdPublic(conv)) {
                     return conv;
@@ -374,11 +381,11 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               getParentFolderIdsFromFolderId(c.folderId),
             ),
           );
-
           return concat(
             of(
               ConversationsActions.addConversations({
                 conversations,
+                suspendHideSidebar: true,
               }),
             ),
             of(
@@ -404,7 +411,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.createNewConversations.type),
     switchMap(
-      ({ payload: { names, modelReference, folderId, headerCreateNew } }) => {
+      ({
+        payload: {
+          names,
+          modelReference,
+          folderId,
+          headerCreateNew,
+          suspendHideSidebar,
+        },
+      }) => {
         return state$.pipe(
           startWith(state$.value),
           filter(ModelsSelectors.selectIsRecentModelsLoaded),
@@ -541,11 +556,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: newConversations,
+                  suspendHideSidebar,
                 }),
               ),
               of(
                 ConversationsActions.selectConversations({
                   conversationIds: newConversations.map((c) => c.id),
+                  suspendHideSidebar,
                 }),
               ),
               headerCreateNew &&
@@ -3074,11 +3091,11 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
               ),
             );
           }
-
           return concat(
             of(
               ConversationsActions.addConversations({
                 conversations,
+                suspendHideSidebar: payload.suspendHideSidebar,
               }),
             ),
             of(

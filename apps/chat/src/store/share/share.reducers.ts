@@ -204,6 +204,7 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         invitationId: string;
+        suspendHideSidebar?: boolean;
       }>,
     ) => state,
     acceptShareInvitationSuccess: (
@@ -217,6 +218,7 @@ export const shareSlice = createSlice({
         isConversation?: boolean;
         isPrompt?: boolean;
         isApplication?: boolean;
+        suspendHideSidebar?: boolean;
       }>,
     ) => {
       state.acceptedId = payload.acceptedId;
@@ -247,6 +249,7 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         sharedWith: ShareRelations;
         includeUserInfo?: boolean;
+        suspendHideSidebar?: boolean;
       }>,
     ) => state,
     getSharedListingSuccess: (
@@ -254,6 +257,7 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         featureType: FeatureType;
         sharedWith: ShareRelations;
+        suspendHideSidebar?: boolean;
         resources: {
           entities: (
             | ConversationInfo

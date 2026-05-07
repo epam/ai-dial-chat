@@ -470,6 +470,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                   isConversation: isConversationId(acceptedIds[0].url),
                   isPrompt: isPromptId(acceptedIds[0].url),
                   isApplication: isApplicationId(acceptedId),
+                  suspendHideSidebar: payload.suspendHideSidebar,
                 }),
               );
             }),
@@ -648,18 +649,28 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
     ),
-    switchMap(() => {
+    switchMap((action) => {
       return concat(
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Chat,
             sharedWith: ShareRelations.me,
+            suspendHideSidebar:
+              action.type === ShareActions.acceptShareInvitationSuccess.type
+                ? (action.payload as { suspendHideSidebar: true })
+                    ?.suspendHideSidebar
+                : undefined,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Chat,
             sharedWith: ShareRelations.others,
+            suspendHideSidebar:
+              action.type === ShareActions.acceptShareInvitationSuccess.type
+                ? (action.payload as { suspendHideSidebar: true })
+                    ?.suspendHideSidebar
+                : undefined,
           }),
         ),
       );
@@ -676,18 +687,28 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
     ),
-    switchMap(() => {
+    switchMap((action) => {
       return concat(
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.me,
+            suspendHideSidebar:
+              action.type === ShareActions.acceptShareInvitationSuccess.type
+                ? (action.payload as { suspendHideSidebar: true })
+                    ?.suspendHideSidebar
+                : undefined,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.others,
+            suspendHideSidebar:
+              action.type === ShareActions.acceptShareInvitationSuccess.type
+                ? (action.payload as { suspendHideSidebar: true })
+                    ?.suspendHideSidebar
+                : undefined,
           }),
         ),
       );
@@ -786,6 +807,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
               featureType: payload.featureType,
               sharedWith: payload.sharedWith,
               resources: entities,
+              suspendHideSidebar: payload.suspendHideSidebar,
             }),
           );
         }),
@@ -872,6 +894,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
         } else {
           actions.push(
             ConversationsActions.uploadConversationsFromMultipleFolders({
+              suspendHideSidebar: payload.suspendHideSidebar,
               paths: payload.resources.folders.map((folder) => folder.id),
               recursive: true,
               pathToSelectFrom:
