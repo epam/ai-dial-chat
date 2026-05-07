@@ -38,7 +38,6 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 import {
-  ChatI18nKeys,
   CommonI18nKeys,
   MarketplaceI18nKeys,
   SettingsI18nKeys,
@@ -157,6 +156,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     >
       <FormCollapsibleSection
         name={t(MarketplaceI18nKeys.Orchestrator)}
+        description={t(MarketplaceI18nKeys.OrchestratorDescription)}
         openByDefault
         dataQa="orchestrator-section"
       >
@@ -212,7 +212,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
-        name={t('Context & Tools')}
+        name={t(MarketplaceI18nKeys.ContextAndTools)}
+        description={t(MarketplaceI18nKeys.ContextAndToolsDescription)}
         openByDefault
         dataQa="context-tools-section"
       >
@@ -223,7 +224,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           control={control}
           render={({ field }) => (
             <FilesSelectorField
-              label={t(MarketplaceI18nKeys.DocumentRelativeURLs)}
+              label={t(MarketplaceI18nKeys.ContextFiles)}
+              info={t(MarketplaceI18nKeys.ContextFilesInfo)}
               onAddFiles={(documents) =>
                 field.onChange(uniq([...(field.value ?? []), ...documents]))
               }
@@ -255,7 +257,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
-        name={t(ChatI18nKeys.Attachments)}
+        name={t(MarketplaceI18nKeys.UserAttachments)}
+        description={t(MarketplaceI18nKeys.UserAttachmentsDescription)}
         dataQa="attachments-section"
       >
         <Controller
