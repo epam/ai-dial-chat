@@ -141,8 +141,9 @@ export const getPreparedConversations = ({
       trimEndDotsRequired: true,
     });
 
-    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
-    const folderId = constructPath(rootId, path);
+    const folderId = isRootConversationsId(path)
+      ? path
+      : constructPath(getConversationRootId(), path);
 
     return regenerateConversationId({
       ...conv,
@@ -166,9 +167,8 @@ export const getImportPreparedConversations = ({
     });
 
     const newName = prepareEntityName(conv.name);
-    const folderId = isRootConversationsId(path)
-      ? path
-      : constructPath(getConversationRootId(), path);
+    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
+    const folderId = constructPath(rootId, path);
 
     return {
       ...conv,
