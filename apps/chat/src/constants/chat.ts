@@ -8,6 +8,8 @@ import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import { AudioMimeType } from './audio';
+
 import { ImageMIMEType } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
@@ -21,6 +23,7 @@ export const stopBubbling = <T>(e: MouseEvent<T>) => {
 export const CHAT_TEXT_FIELD_ID = 'chat-text-field';
 
 export const PLOTLY_CONTENT_TYPE = 'application/vnd.plotly.v1+json';
+export const PDF_CONTENT_TYPE = 'application/pdf';
 
 export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
 export const CONVERSATION_QUERY_PARAM = 'conversation-id';
@@ -64,9 +67,15 @@ export const VIDEO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
 );
 
 export const AUDIO_TYPES: ImageMIMEType[] = [
-  'audio/mpeg',
-  'audio/ogg',
-  'audio/wav',
+  AudioMimeType.MPEG,
+  AudioMimeType.OGG,
+  AudioMimeType.WEBM,
+  AudioMimeType.MP4,
+  AudioMimeType.WAV,
+  AudioMimeType.OPUS,
+  AudioMimeType.FLAC,
+  AudioMimeType.AAC,
+  AudioMimeType.WMA,
 ];
 
 export const AUDIO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(

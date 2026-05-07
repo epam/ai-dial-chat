@@ -555,6 +555,14 @@ export enum ChatI18nKeys {
   Copied = 'Copied!',
   CopyStageContent = 'Copy stage content',
   Download = 'Download',
+  ViewPdf = 'View PDF',
+  FailedToLoadPdf = 'Failed to load PDF: {{error}}',
+  Page = 'Page',
+  Pages = 'Pages',
+  PageFit = 'Page Fit',
+  Auto = 'Auto',
+  ZoomIn = 'Zoom in',
+  ZoomOut = 'Zoom out',
   ConversationNameExistsInFolder = 'Conversation with name "{{newName}}" already exists in this folder.',
   DotAtEndNotPermitted = 'Using a dot at the end of a name is not permitted.',
   RenameConversation = 'Rename conversation',
@@ -865,6 +873,8 @@ export enum ChatI18nKeys {
   ResponseFormat = 'Response format',
   Markdown = 'Markdown',
   PlainText = 'Plain text',
+  YouDontHaveAnyFiles = "You don't have any files",
+  SelectFileFromTree = 'Select a file from the tree',
 }
 
 // files.json

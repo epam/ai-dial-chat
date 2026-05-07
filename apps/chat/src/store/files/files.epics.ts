@@ -24,6 +24,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { FileService } from '@/src/utils/app/data/file-service';
+import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import {
   constructPath,
   getDownloadPath,
@@ -55,10 +56,18 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
-import { FilesSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  FilesSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
-import { CommonI18nKeys, FilesI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  CommonI18nKeys,
+  FilesI18nKeys,
+} from '@/src/constants/i18n';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
@@ -710,11 +719,12 @@ const deleteFilesEpic: AppEpic = (action$) =>
     }),
   );
 
-const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
+const downloadFilesAsArchiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.downloadFilesAsArchive.type),
     switchMap(
       (action: ReturnType<typeof FilesActions.downloadFilesAsArchive>) => {
+        const appName = SettingsSelectors.selectAppName(state$.value);
         const { files } = action.payload;
 
         if (files.length === 1 && files[0].nodeType === DialFileNodeType.ITEM) {
@@ -734,7 +744,7 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
           return of(FilesActions.downloadFilesAsArchiveSuccess());
         }
 
-        return from(FileService.downloadFilesAsArchive(files)).pipe(
+        return from(FileService.downloadFilesAsArchive(files, appName)).pipe(
           map(() => FilesActions.downloadFilesAsArchiveSuccess()),
           catchError(() => {
             return of(
@@ -913,7 +923,7 @@ const uploadArchiveEpic: AppEpic = (action$) =>
     }),
   );
 
-const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
+const copyMoveFilesResultToastEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(
       FilesActions.copyFilesSuccess.type,
@@ -931,6 +941,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       const items = request.files;
       const isCopy = FilesActions.copyFilesSuccess.match(action);
       const verbPast = isCopy ? 'copied' : 'moved';
+      const reviewBucket = getCurrentReviewBucket(state$.value, router);
 
       if (items.length > 0) {
         const destinationUrl = action.payload.request.destinationFolder;
@@ -938,7 +949,9 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
         const { name, bucket } = splitEntityId(path);
         const folderPlaceholder = destinationUrl.replace(
           `files/${bucket}`,
-          getRootFolderPlaceholderName(bucket),
+          bucket === reviewBucket
+            ? translate(ChatI18nKeys.ReviewFiles, { ns: Translation.Chat })
+            : getRootFolderPlaceholderName(bucket),
         );
         if (items.length === 1) {
           return UIActions.showToast({

@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@epam/ai-dial-ui-kit": "0.9.0",
+    "@epam/pdf-highlighter-kit": "^0.0.13",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
@@ -82,6 +83,7 @@
     "next-auth": "4.24.12",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
+    "pdfjs-dist": "^5.4.149",
     "pino": "^9.12.0",
     "pino-opentelemetry-transport": "^1.0.0",
     "pino-pretty": "^10.2.0",

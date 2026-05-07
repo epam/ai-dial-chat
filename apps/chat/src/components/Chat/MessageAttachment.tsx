@@ -34,6 +34,7 @@ import {
 import {
   AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
+  PDF_CONTENT_TYPE,
   PLOTLY_CONTENT_TYPE,
   VIDEO_TYPES_SET,
   stopBubbling,
@@ -42,6 +43,7 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
+import { PdfPreviewModal } from '@/src/components/Chat/PdfAttachment/PdfPreviewModal';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -306,6 +308,7 @@ export const MessageAttachment = ({
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   const handleResize = useCallback(() => {
     if (wasOpened && anchorRef.current) {
@@ -324,6 +327,7 @@ export const MessageAttachment = ({
   useResizeObserver(anchorRef.current, handleResize);
 
   const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
+  const isPdf = attachment.type === PDF_CONTENT_TYPE && !!attachment.url;
   const Icon = isFolder ? IconFolder : IconFile;
 
   const isOpenable =
@@ -372,6 +376,10 @@ export const MessageAttachment = ({
 
   const handleDropdownClick = () => {
     if (isBorderless || isFullScreen) return;
+    if (isPdf && mappedAttachmentUrl) {
+      setIsPdfModalOpen(true);
+      return;
+    }
     setIsExpanded((isExpanded) => !isExpanded);
     if (isOpenable) {
       setIsOpened((isOpened) => {
@@ -568,6 +576,14 @@ export const MessageAttachment = ({
             </a>
           )}
         </div>
+      )}
+      {isPdf && mappedAttachmentUrl && (
+        <PdfPreviewModal
+          url={mappedAttachmentUrl}
+          title={attachment.title}
+          isOpen={isPdfModalOpen}
+          onClose={() => setIsPdfModalOpen(false)}
+        />
       )}
     </div>
   );

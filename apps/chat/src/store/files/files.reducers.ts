@@ -17,6 +17,7 @@ import {
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
+  getEntityBucket,
   getFileRootId,
   isFolderId,
   isMyEntity,
@@ -520,6 +521,7 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         id?: string;
+        skipShareListingsRefresh?: boolean;
       }>,
     ) => state,
     addNewFolder: (
@@ -756,13 +758,17 @@ export const filesSlice = createSlice({
     },
     addSharedFiles: (
       state,
-      { payload }: PayloadAction<{ files: DialFile[]; reviewFolder?: string }>,
+      {
+        payload,
+      }: PayloadAction<{ files: DialFile[]; reviewBuckets?: string[] }>,
     ) => {
       //remove sharedWithMe files from state except those on review to have the latest state from API
       const filteredFiles = state.files.filter(
         (file) =>
           !file.sharedWithMe ||
-          (payload.reviewFolder && file.id.startsWith(payload.reviewFolder)),
+          payload.reviewBuckets?.some(
+            (reviewBucket) => getEntityBucket(file) === reviewBucket,
+          ),
       );
       state.files = combineEntities(payload.files, filteredFiles);
     },
