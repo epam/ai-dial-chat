@@ -805,7 +805,7 @@ dialTest(
           page,
           initialToolset,
           toolsetEntity.endpoint,
-          { expectedStatusCodes: { updateToolsetCode: 400 } },
+          { updateToolsetCode: 400 },
         );
         await oauthMockHelper.setupToolsetRoutes();
         oauthMockHelper.enableMocking();
