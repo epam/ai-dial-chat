@@ -199,7 +199,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: `${PublishPath.Organization}/${orgFolderName}`,
+          publishPath: `${PublishPath.Organization}/${orgFolderName}`,
           requestCreated: publishApiModels.response,
           publicAuthor: author,
         });
@@ -389,7 +389,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: `${PublishPath.Organization}/${orgFolderName}`,
+          publishPath: `${PublishPath.Organization}/${orgFolderName}`,
           requestCreated: publishApiModels.response,
         });
         await adminPublishPromptsTreeAssertion.assertEntityToPublish(
