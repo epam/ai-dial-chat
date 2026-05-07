@@ -7,10 +7,7 @@ import {
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
-import {
-  doesEntityContainSearchTerm,
-  isHiddenEntity,
-} from '@/src/utils/app/search';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
@@ -96,19 +93,6 @@ export const getParentAndCurrentFolderIdsById = (folderId: string) => {
   }
 
   return [folderId, ...parentFolders];
-};
-
-export const getFolderAndAncestorIds = (
-  folderId: string,
-  allFolders: FolderInterface[],
-): string[] => {
-  const fromLinkage = getParentAndCurrentFoldersById(allFolders, folderId).map(
-    (f) => f.id,
-  );
-  if (fromLinkage.length > 0) {
-    return fromLinkage;
-  }
-  return getParentAndCurrentFolderIdsById(folderId);
 };
 
 export const getChildAndCurrentFoldersById = (
@@ -275,29 +259,24 @@ export const getFilteredFolders = ({
     .map((c) => c.folderId)
     .filter((fid) => childAndCurrentSectionFilteredIds.has(fid));
 
-  const trimmedSearch = searchTerm?.trim() ?? '';
-  const nameMatchedFolderIds = trimmedSearch.length
-    ? childAndCurrentSectionFilteredFolders
-        .filter((folder) => doesEntityContainSearchTerm(folder, trimmedSearch))
-        .map((f) => f.id)
-    : [];
-
   // Merged final searched and filtered folders ids
   const searchedFoldersByEntitiesAndFolders = [
-    ...(trimmedSearch.length ? [] : searchedFolderIds), // Ignore filtered folders from section if search term
-    ...nameMatchedFolderIds,
+    ...(searchTerm?.trim().length ? [] : searchedFolderIds), // Ignore filtered folders from section if search term
     ...entitiesFolderIds,
   ];
 
-  if (includeEmptyFolders && !trimmedSearch.length) {
+  if (includeEmptyFolders && !searchTerm?.length) {
     searchedFoldersByEntitiesAndFolders.push(...emptyFolderIds);
   }
 
   // Get roots again for merged array
   const filteredFolderIds = new Set(
     searchedFoldersByEntitiesAndFolders
-      .flatMap((fid) => getFolderAndAncestorIds(fid, allFolders))
-      .filter((fid) => fid && childAndCurrentSectionFilteredIds.has(fid)),
+      .flatMap((fid) => getParentAndCurrentFolderIdsById(fid))
+      .filter(
+        (fid) =>
+          fid && sectionFilteredFolders.map(({ id }) => id).includes(fid),
+      ),
   );
 
   return sortByName(

@@ -214,14 +214,6 @@ const selectSelectedPromptFoldersIds = createSelector(
   },
 );
 
-const selectDoesAnyMyPromptExist = createSelector(
-  [selectPrompts],
-  (prompts) => {
-    const promptRootId = `${getPromptRootId()}/`;
-    return prompts.some((prompt) => prompt.id.startsWith(promptRootId));
-  },
-);
-
 const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectPrompts],
   (folders, prompts) => {
@@ -380,7 +372,6 @@ export const PromptsSelectors = {
   selectMyItemsFilters,
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
-  selectDoesAnyMyPromptExist,
   selectPublicFolders,
   selectPublicPrompts,
   selectNewAddedFolderId,

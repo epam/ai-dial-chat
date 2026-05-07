@@ -141,9 +141,8 @@ export const getPreparedConversations = ({
       trimEndDotsRequired: true,
     });
 
-    const folderId = isRootConversationsId(path)
-      ? path
-      : constructPath(getConversationRootId(), path);
+    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
+    const folderId = constructPath(rootId, path);
 
     return regenerateConversationId({
       ...conv,

@@ -336,8 +336,6 @@ const ChatSection = ({
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
-  const dispatch = useAppDispatch();
-
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -352,7 +350,6 @@ const ChatSection = ({
     [filters, searchTerm, showEmptyFolders],
   );
   const rootFolders = useAppSelector(selectFilteredFoldersSelector);
-
   const selectFilteredConversationsSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
