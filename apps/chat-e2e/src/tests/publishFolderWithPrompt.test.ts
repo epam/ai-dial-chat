@@ -368,7 +368,7 @@ dialAdminTest(
           expectedErrorColor,
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: publishToPath,
+          publishPath: publishToPath,
           requestCreated: unpublishApiModels.response,
           author: unpublishAuthor,
         });
