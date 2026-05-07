@@ -76,6 +76,14 @@ export const getFileName = (path: string | undefined): string | undefined => {
   return path?.split('/').slice(-1)?.[0] || undefined;
 };
 
+export const getNestedEmptyFolderIdsForChosenParent = (
+  emptyFolderIds: string[],
+  parentFolderId: string,
+): string[] =>
+  emptyFolderIds
+    .filter((id) => `${id}/`.startsWith(parentFolderId))
+    .map((id) => `${id}/`);
+
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
   folders?: FolderInterface[],
