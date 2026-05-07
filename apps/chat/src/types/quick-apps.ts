@@ -62,7 +62,7 @@ export interface QuickApp2Config {
   orchestrator: {
     deployment: {
       name: string;
-      parameters: {
+      parameters?: {
         temperature: number;
       };
     };
