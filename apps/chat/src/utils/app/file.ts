@@ -377,12 +377,16 @@ export const getFileNameWithoutExtension = (
   filename: string,
   options: { isExtensionIncluded?: boolean } = { isExtensionIncluded: true },
 ) => {
-  if (filename.lastIndexOf('.') > 0) {
-    return filename.slice(0, filename.lastIndexOf('.'));
+  const index = filename.lastIndexOf('.');
+  if (index > 0) {
+    return filename.slice(0, index);
   }
-  return options?.isExtensionIncluded && filename.lastIndexOf('.') !== 0
+
+  return options?.isExtensionIncluded && index !== 0
     ? filename
-    : '';
+    : index === -1 // -1 - in case when file without extension
+      ? filename
+      : '';
 };
 
 export const getFileNameExtension = (
