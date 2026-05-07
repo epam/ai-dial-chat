@@ -195,7 +195,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: PublishPath.Organization,
+          publishPath: PublishPath.Organization,
           requestCreated: publishApiModels.response,
           author: author,
         });
