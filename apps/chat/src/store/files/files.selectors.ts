@@ -1,10 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
-  filterFilesByFilters,
-  filterFoldersByFilters,
-} from '@/src/utils/app/file-manager-adapter';
-import {
   getFilteredFolders,
   getParentAndChildFolders,
   getPartialAndFullyChosenFolders,
@@ -13,10 +9,7 @@ import {
 } from '@/src/utils/app/folders';
 import { getEntityBucket } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
-import {
-  SharedWithMeFilters,
-  doesEntityContainSearchTerm,
-} from '@/src/utils/app/search';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -282,10 +275,27 @@ const selectSearchResultsForFolder = createSelector(
     let filteredFolders = folders;
 
     if (isSharedFilter && !folderPath) {
-      filteredFiles = filterFilesByFilters(filteredFiles, SharedWithMeFilters);
-      filteredFolders = filterFoldersByFilters(
-        filteredFolders,
-        SharedWithMeFilters,
+      const sharedRootFolderIds = folders
+        .filter((f) => f.sharedWithMe)
+        .map((f) => f.id);
+
+      filteredFiles = filteredFiles.filter(
+        (file) =>
+          file.sharedWithMe ||
+          sharedRootFolderIds.some(
+            (rootId) =>
+              file.folderId === rootId ||
+              file.folderId?.startsWith(`${rootId}/`),
+          ),
+      );
+      filteredFolders = filteredFolders.filter(
+        (folder) =>
+          folder.sharedWithMe ||
+          sharedRootFolderIds.some(
+            (rootId) =>
+              folder.folderId === rootId ||
+              folder.folderId?.startsWith(`${rootId}/`),
+          ),
       );
     } else if (folderPath) {
       filteredFiles = filteredFiles.filter(
