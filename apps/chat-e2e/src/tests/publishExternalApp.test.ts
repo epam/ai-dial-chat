@@ -150,7 +150,7 @@ dialAdminTest(
         await adminApproveRequiredPrompts.selectRequest(publishRequestName);
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: publishRequestName,
-          publishTo: PublishPath.Organization,
+          publishPath: PublishPath.Organization,
           author: defaultAuthor,
           requestCreated: publishApiModels.response,
         });
@@ -313,8 +313,8 @@ dialAdminTest(
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: unpublishRequestName,
-          publishToLabel: 'visible',
-          publishTo: PublishPath.Organization,
+          unpublishFromLabel: 'visible',
+          publishPath: PublishPath.Organization,
           authorLabel: 'visible',
           author: defaultAuthor,
           publicAuthorLabel: 'hidden',
