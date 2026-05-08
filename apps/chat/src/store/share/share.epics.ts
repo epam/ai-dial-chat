@@ -650,27 +650,24 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
     ),
     switchMap((action) => {
+      const suspendHideSidebar =
+        action.type === ShareActions.acceptShareInvitationSuccess.type
+          ? (action.payload as { suspendHideSidebar: true })?.suspendHideSidebar
+          : ConversationsActions.initFoldersAndConversationsSuccess.type ===
+            action.type;
       return concat(
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Chat,
             sharedWith: ShareRelations.me,
-            suspendHideSidebar:
-              action.type === ShareActions.acceptShareInvitationSuccess.type
-                ? (action.payload as { suspendHideSidebar: true })
-                    ?.suspendHideSidebar
-                : undefined,
+            suspendHideSidebar,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Chat,
             sharedWith: ShareRelations.others,
-            suspendHideSidebar:
-              action.type === ShareActions.acceptShareInvitationSuccess.type
-                ? (action.payload as { suspendHideSidebar: true })
-                    ?.suspendHideSidebar
-                : undefined,
+            suspendHideSidebar,
           }),
         ),
       );
@@ -688,27 +685,23 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
     ),
     switchMap((action) => {
+      const suspendHideSidebar =
+        action.type === ShareActions.acceptShareInvitationSuccess.type
+          ? (action.payload as { suspendHideSidebar: true })?.suspendHideSidebar
+          : PromptsActions.initFoldersAndPromptsSuccess.type === action.type;
       return concat(
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.me,
-            suspendHideSidebar:
-              action.type === ShareActions.acceptShareInvitationSuccess.type
-                ? (action.payload as { suspendHideSidebar: true })
-                    ?.suspendHideSidebar
-                : undefined,
+            suspendHideSidebar,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.others,
-            suspendHideSidebar:
-              action.type === ShareActions.acceptShareInvitationSuccess.type
-                ? (action.payload as { suspendHideSidebar: true })
-                    ?.suspendHideSidebar
-                : undefined,
+            suspendHideSidebar,
           }),
         ),
       );
@@ -838,6 +831,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.getSharedListingSuccess.type),
     switchMap(({ payload }) => {
+      console.log('getSharedListingSuccessEpic', payload);
       const actions = [];
 
       const { acceptedId, isFolderAccepted, isConversation, isPrompt } =
