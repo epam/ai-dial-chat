@@ -831,7 +831,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.getSharedListingSuccess.type),
     switchMap(({ payload }) => {
-      console.log('getSharedListingSuccessEpic', payload);
       const actions = [];
 
       const { acceptedId, isFolderAccepted, isConversation, isPrompt } =
