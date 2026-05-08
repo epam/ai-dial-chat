@@ -8,5 +8,6 @@
   "{{name}} \"{{newName}}\" already exists in this folder.": "{{name}} \"{{newName}}\" already exists in this folder.",
   "URL is not correct": "URL is not correct",
   "URL must start with a valid protocol": "URL must start with a valid protocol",
-  "Endpoint cannot end with . or //": "Endpoint cannot end with . or //"
+  "Endpoint cannot end with . or //": "Endpoint cannot end with . or //",
+  "Image not available.": "Image not available."
 }

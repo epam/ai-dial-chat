@@ -40,11 +40,12 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, ErrorsI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { PdfPreviewModal } from '@/src/components/Chat/PdfAttachment/PdfPreviewModal';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -70,7 +71,7 @@ const getSourceDataUrl = (attachment: Attachment): string | undefined => {
   if (attachment.url) {
     return getMappedAttachmentUrl(attachment.url);
   }
-  if (attachment.data) {
+  if (attachment.data?.trim()) {
     return `data:${attachment.type};base64,${attachment.data}`;
   }
 };
@@ -79,6 +80,40 @@ const AttachmentSourceRenderer = ({
   attachment,
 }: AttachmentDataRendererProps) => {
   return <source src={getSourceDataUrl(attachment)} type={attachment.type} />;
+};
+
+const ImageAttachmentRenderer = ({
+  attachment,
+  isFullScreen,
+}: {
+  attachment: Attachment;
+  isFullScreen?: boolean;
+}) => {
+  const { t } = useTranslation(Translation.Chat);
+  const [isImageValid, setIsImageValid] = useState(true);
+  const imageUrl = getSourceDataUrl(attachment);
+  if (!imageUrl) {
+    return <ErrorMessage error={t(ErrorsI18nKeys.ImageNotAvailable)} />;
+  }
+  const onImageError = () => {
+    setIsImageValid(false);
+  };
+  if (!isImageValid) {
+    return <ErrorMessage error={t(ErrorsI18nKeys.ImageNotAvailable)} />;
+  }
+  return (
+    <img
+      src={imageUrl}
+      className={classNames(
+        'm-0',
+        isFullScreen
+          ? 'size-auto max-h-full max-w-full object-contain'
+          : 'aspect-auto w-full',
+      )}
+      alt="Attachment image"
+      onError={onImageError}
+    />
+  );
 };
 
 const AttachmentDataRenderer = ({
@@ -103,15 +138,9 @@ const AttachmentDataRenderer = ({
 
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
-      <img
-        src={getSourceDataUrl(attachment)}
-        className={classNames(
-          'm-0',
-          isFullScreen
-            ? 'size-auto max-h-full max-w-full object-contain'
-            : 'aspect-auto w-full',
-        )}
-        alt="Attachment image"
+      <ImageAttachmentRenderer
+        attachment={attachment}
+        isFullScreen={isFullScreen}
       />
     );
   }
