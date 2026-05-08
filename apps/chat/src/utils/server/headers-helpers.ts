@@ -25,11 +25,12 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
   const frameSrcDirective =
     frameSrc && !disabled ? insertSelf(frameSrc) : "'none'";
 
+  //'wasm-unsafe-eval' is needed to allow wasm-code to be executed for the tiktoken library
   return [
     `
     object-src 'none';
     base-uri 'self';
-    script-src ${allowedScriptsSrc} https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/ 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ''};
+    script-src ${allowedScriptsSrc} https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/ 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ''} 'wasm-unsafe-eval';
     worker-src 'self' blob:;
     frame-ancestors ${ancestorsDirective};
     frame-src ${frameSrcDirective};
