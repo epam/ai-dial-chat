@@ -22,7 +22,7 @@ const SwitchStateText = ({
       'h-4 text-xs',
       isOn && 'px-1',
       isOn && !disabled ? 'text-controls-permanent' : 'text-primary',
-      disabled ? 'text-secondary' : 'text-primary',
+      disabled && 'text-secondary',
     )}
   >
     {switchText}
