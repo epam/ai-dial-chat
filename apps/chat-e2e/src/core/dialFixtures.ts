@@ -455,6 +455,8 @@ const dialTest = test.extend<{
   selectFolderManagerModalGrid: FileManagerGrid;
   selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
   selectFolderManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
+  selectFolderManagerModalNavigationPanel: FileManagerNavigationPanel;
+  selectFolderManagerModalBreadcrumb: Breadcrumb;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
@@ -1227,6 +1229,22 @@ const dialTest = test.extend<{
     const selectFolderManagerModalFoldersTreeAssertion =
       new FoldersTreeAssertion(selectFolderManagerModalFoldersTree);
     await use(selectFolderManagerModalFoldersTreeAssertion);
+  },
+  selectFolderManagerModalNavigationPanel: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalNavigationPanel =
+      selectFolderManagerModalManager.getFileManagerNavigationPanel();
+    await use(selectFolderManagerModalNavigationPanel);
+  },
+  selectFolderManagerModalBreadcrumb: async (
+    { selectFolderManagerModalNavigationPanel },
+    use,
+  ) => {
+    const selectFolderManagerModalBreadcrumb =
+      selectFolderManagerModalNavigationPanel.getBreadcrumb();
+    await use(selectFolderManagerModalBreadcrumb);
   },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();

@@ -538,8 +538,30 @@ dialAdminTest(
     await dialTest.step.skip(
       'Create max length folder hierarchy and verify error toast is shown on attempt to select low-level folder',
       async () => {
-        // TODO: new UI shows inline alert icon instead of toast when selecting a folder beyond max depth;
-        // folder creation via dropdown menu is no longer available — use getAddFolderButton() + openFolder() instead
+        // Behaviour when exceeding max nesting depth is unclear in new UI — step kept skipped until investigated
+        const hierarchyFolderNames = Array.from(
+          { length: levelsCount },
+          (_, i) => ExpectedConstants.newFolderWithIndexTitle(i + 1),
+        );
+        await selectFolderManagerModalBreadcrumb.clickBreadcrumbByName(
+          PublishPath.Organization,
+        );
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(
+          hierarchyFolderNames[0],
+          false,
+        );
+        for (let i = 1; i < levelsCount; i++) {
+          await selectFolderManagerModalGrid.openFolder(
+            hierarchyFolderNames[i - 1],
+            false,
+          );
+          await selectFolderManagerModal.getAddFolderButton().click();
+          await selectFolderManagerModalGrid.setFolderName(
+            hierarchyFolderNames[i],
+            false,
+          );
+        }
       },
     );
 

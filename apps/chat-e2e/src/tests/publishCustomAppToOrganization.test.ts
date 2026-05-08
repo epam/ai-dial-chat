@@ -144,7 +144,9 @@ dialAdminTest(
           .changeButton.click();
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(orgFolder, false);
-        await selectFolderManagerModalFoldersTree.folderByPath(orgFolder).click();
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(orgFolder)
+          .click();
         await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });

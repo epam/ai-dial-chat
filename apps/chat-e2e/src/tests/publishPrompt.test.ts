@@ -39,7 +39,7 @@ dialAdminTest(
       promptDropdownMenu,
       publishingRequestDialog,
       publishingRequestDialogAssertion,
-      selectFolderModal,
+      selectFolderManagerModal,
       adminDialHomePage,
       adminApproveRequiredPromptsAssertion,
       adminApproveRequiredPrompts,
