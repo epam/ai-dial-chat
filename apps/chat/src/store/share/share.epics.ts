@@ -652,9 +652,10 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     switchMap((action) => {
       const suspendHideSidebar =
         action.type === ShareActions.acceptShareInvitationSuccess.type
-          ? (action.payload as { suspendHideSidebar: true })?.suspendHideSidebar
+          ? (action.payload as { suspendHideSidebar: boolean })
+              ?.suspendHideSidebar
           : ConversationsActions.initFoldersAndConversationsSuccess.type ===
-            action.type;
+              action.type && !SettingsSelectors.selectIsOverlay(state$.value);
       return concat(
         of(
           ShareActions.getSharedListing({
@@ -687,8 +688,10 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     switchMap((action) => {
       const suspendHideSidebar =
         action.type === ShareActions.acceptShareInvitationSuccess.type
-          ? (action.payload as { suspendHideSidebar: true })?.suspendHideSidebar
-          : PromptsActions.initFoldersAndPromptsSuccess.type === action.type;
+          ? (action.payload as { suspendHideSidebar: boolean })
+              ?.suspendHideSidebar
+          : PromptsActions.initFoldersAndPromptsSuccess.type === action.type &&
+            !SettingsSelectors.selectIsOverlay(state$.value);
       return concat(
         of(
           ShareActions.getSharedListing({

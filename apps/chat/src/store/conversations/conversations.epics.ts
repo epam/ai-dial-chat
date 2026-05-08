@@ -149,6 +149,7 @@ const initEpic: AppEpic = (action$, state$) =>
     ofType(ConversationsActions.init.type),
     filter(() => !ConversationsSelectors.selectInitialized(state$.value)),
     switchMap(() => {
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const searchParams = new URLSearchParams(window.location.search);
 
       return concat(
@@ -158,7 +159,7 @@ const initEpic: AppEpic = (action$, state$) =>
           of(
             ShareActions.acceptShareInvitation({
               invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
-              suspendHideSidebar: true,
+              suspendHideSidebar: !isOverlay,
             }),
           ),
           of(ConversationsActions.initSelectedConversations()),
@@ -169,10 +170,11 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initShareEpic: AppEpic = (action$) =>
+const initShareEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.initShare.type),
     switchMap(() => {
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const searchParams = new URLSearchParams(window.location.search);
 
       return iif(
@@ -180,7 +182,7 @@ const initShareEpic: AppEpic = (action$) =>
         of(
           ShareActions.acceptShareInvitation({
             invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
-            suspendHideSidebar: true,
+            suspendHideSidebar: !isOverlay,
           }),
         ),
         EMPTY,
