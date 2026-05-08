@@ -217,7 +217,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.selectConversations({
             conversationIds: [preselectedConversationId as string],
-            suspendHideSidebar: true,
+            suspendHideSidebar: !isOverlay,
           }),
           ConversationsActions.selectAction(preselectedAction || null),
         );
@@ -229,7 +229,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.createNewConversations({
             names: [`isolated_${isolatedModelId}`],
-            suspendHideSidebar: true,
+            suspendHideSidebar: !isOverlay,
           }),
         );
       }
@@ -310,7 +310,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                     ns: Translation.Chat,
                   }),
                 ],
-                suspendHideSidebar: true,
+                suspendHideSidebar: !isOverlay,
               }),
             );
           }
@@ -326,7 +326,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.selectConversations({
                   conversationIds: selectedConversationsIds,
-                  suspendHideSidebar: true,
+                  suspendHideSidebar: !isOverlay,
                 }),
               ),
             );
@@ -335,7 +335,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
           return concat(
             of(
               ConversationsActions.addConversations({
-                suspendHideSidebar: true,
+                suspendHideSidebar: !isOverlay,
                 conversations: selectedConversations.map((conv) => {
                   if (!isEntityIdPublic(conv)) {
                     return conv;
@@ -372,12 +372,13 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initFoldersAndConversationsEpic: AppEpic = (action$) =>
+const initFoldersAndConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.initFoldersAndConversations.type),
     switchMap(() =>
       ConversationService.getConversations(undefined, true).pipe(
         switchMap((conversations) => {
+          const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const paths = uniq(
             conversations.flatMap((c) =>
               getParentFolderIdsFromFolderId(c.folderId),
@@ -387,7 +388,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.addConversations({
                 conversations,
-                suspendHideSidebar: true,
+                suspendHideSidebar: !isOverlay,
               }),
             ),
             of(
@@ -3240,7 +3241,9 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
                   }
                   return conv;
                 }),
-                suspendHideSidebar: true,
+                suspendHideSidebar: !SettingsSelectors.selectIsOverlay(
+                  state$.value,
+                ),
               }),
             ),
             of(
