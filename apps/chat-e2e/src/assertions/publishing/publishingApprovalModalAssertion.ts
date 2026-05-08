@@ -59,7 +59,8 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
   public async assertGeneralInfo(fieldsToVerify: {
     requestName?: string;
     publishToLabel?: ElementState;
-    publishTo?: string;
+    unpublishFromLabel?: ElementState;
+    publishPath?: string;
     authorLabel?: ElementState;
     author?: string;
     publicAuthorLabel?: ElementState;
@@ -83,10 +84,20 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
         ExpectedConstants.publishToLabel,
       );
     }
-    if (fieldsToVerify.publishTo) {
+    if (fieldsToVerify.unpublishFromLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.publishPathLabel,
+        fieldsToVerify.unpublishFromLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.publishPathLabel,
+        ExpectedConstants.unpublishFromLabel,
+      );
+    }
+    if (fieldsToVerify.publishPath) {
       await this.assertElementText(
         this.publishingApprovalModal.publishPath,
-        fieldsToVerify.publishTo,
+        fieldsToVerify.publishPath,
       );
     }
     if (fieldsToVerify.authorLabel) {
