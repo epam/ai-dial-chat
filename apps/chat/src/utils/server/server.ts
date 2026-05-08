@@ -1,12 +1,19 @@
-import { NextApiRequest } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { GetTokenParams, JWT, getToken as getJWTToken } from 'next-auth/jwt';
+
+
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 
+
+
 import { ApiUtils } from './api';
 
+
+
 import { Response as NodeFetchResponse } from 'node-fetch';
+
 
 export class ServerUtils {
   public static getEntityTypeFromPath = (
@@ -47,6 +54,15 @@ export class ServerUtils {
       return null;
     }
   };
+
+  public static sendAPIError = (res: NextApiResponse, status: number, message: string) => {
+    const traceparent = res.getHeader('traceparent');
+
+    return res.status(status).send({
+      message,
+      traceparent,
+    });
+  }
 }
 
 export const getFullToken = async (
