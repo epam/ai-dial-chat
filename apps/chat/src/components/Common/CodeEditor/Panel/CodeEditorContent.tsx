@@ -14,7 +14,7 @@ import { Loader } from '@/src/components/Common/Loader';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
-import * as monaco from 'monaco-editor';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 interface CodeEditorViewProps {
   selectedFileId: string;
