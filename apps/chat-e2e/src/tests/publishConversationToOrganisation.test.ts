@@ -257,6 +257,7 @@ dialAdminTest(
     selectFolderManagerModalGridAssertion,
     selectFolderManagerModalFoldersTree,
     selectFolderManagerModalFoldersTreeAssertion,
+    confirmationDialog,
     baseAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -389,23 +390,25 @@ dialAdminTest(
     await dialTest.step.skip(
       'Delete low-level folder and verify a new one is created in edit mode in the root',
       async () => {
-        //   await selectFolders.openFolderDropdownMenu(
-        //     defaultFolderName,
-        //     maxNestedLevel - 1,
-        //   );
-        //   await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        //   await confirmationDialog.confirm();
-        //   await selectFolderModal.newFolderButton.click();
-        //   await selectFoldersAssertion.assertFolderEditInputState('visible');
-        //   await selectFoldersAssertion.assertFolderEditInputValue(
-        //     defaultFolderName,
-        //   );
-        //   await selectFolders.getEditFolderInputActions().clickTickButton();
-        //   //verify new folder was created not under the nested structure
-        //   await baseAssertion.assertElementsCount(
-        //     selectFolders.getFolderGroupNodes(cutNewFolderName),
-        //     maxNestedLevel - 1,
-        //   );
+        // New delete flow: hover grid row → three-dot button → dropdown (rename/delete) → delete
+        // At this point the grid is inside folderNames[maxNestedLevel - 2] showing folderNames[maxNestedLevel - 1]
+        const folderToDelete = folderNames[maxNestedLevel - 1];
+        const dotsMenu =
+          await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
+            folderToDelete,
+          );
+        const folderRow =
+          selectFolderManagerModalGrid.gridRowByNameCell(folderToDelete);
+        await folderRow.hover();
+        await dotsMenu.click();
+        await selectFolderManagerModalGrid
+          .getRowDropdownMenu()
+          .selectItem(MenuOptions.delete, { isHttpMethodTriggered: false });
+        await confirmationDialog.confirm();
+        await selectFolderManagerModalGrid
+          .gridRowByNameCell(folderToDelete)
+          .waitFor({ state: 'hidden' });
+        // TODO: verify behaviour after deletion (old UI auto-opened a new folder in edit mode at root)
       },
     );
 
