@@ -134,6 +134,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
   );
+
   const isReview = !publicationModel;
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -410,9 +411,24 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
+
+  const isSomeResourceIsPublish = publication.resources.some(
+    (resource) => resource.action === PublishActions.ADD,
+  );
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
   );
+
+  const isUnpublishAction =
+    publicationModel?.action === PublishActions.DELETE ||
+    (isSomeResourceIsUnpublish && !isSomeResourceIsPublish);
+
+  const publishLabel = isUnpublishAction
+    ? ChatI18nKeys.UnpublishFrom
+    : isSomeResourceIsUnpublish && isSomeResourceIsPublish
+      ? ChatI18nKeys.Path
+      : ChatI18nKeys.PublishTo;
+
   const showPublicDisplayAuthor =
     !isPublicationHasOnlyUnpublishEntities ||
     (publicationModel && publicationModel.action !== PublishActions.DELETE);
@@ -495,12 +511,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     ) : (
                       <PublicationInfoSection
                         labelDataQa="publish-label"
-                        label={t(
-                          publicationModel &&
-                            publicationModel.action === PublishActions.DELETE
-                            ? ChatI18nKeys.UnpublishFrom
-                            : ChatI18nKeys.PublishTo,
-                        )}
+                        label={t(publishLabel)}
                         valueDataQa="publish-path"
                         valueToDisplay={displayPublishToUrl}
                         tooltip={
