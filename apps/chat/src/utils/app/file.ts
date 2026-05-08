@@ -18,7 +18,7 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import { RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
 import {
   BYTES_IN_KB,
   BYTES_IN_MB,
@@ -33,7 +33,11 @@ import {
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
-import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import {
+  doesHaveDotsInTheEnd,
+  getUtf8BytesLength,
+  prepareEntityName,
+} from './common';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import {
@@ -488,7 +492,10 @@ export const prepareFileName = (filename: string) => {
     return prepareEntityName(trimmedFilename);
   }
 
-  const maxBaseNameLength = Math.max(MAX_ENTITY_LENGTH - extension.length, 0);
+  const maxBaseNameLength = Math.max(
+    RESOURCE_MAX_SEGMENT_BYTES - getUtf8BytesLength(extension),
+    0,
+  );
   const preparedBaseName = prepareEntityName(
     getFileNameWithoutExtension(trimmedFilename),
     {

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { getUtf8BytesLength } from '@/src/utils/app/common';
+
+import { RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
 import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 
 import {
@@ -143,12 +146,14 @@ describe('File utility methods', () => {
       expect(prepareFileName('  ab,c.txt  ')).toBe('ab_c.txt');
     });
 
-    it('truncates the stem before the extension for long filenames', () => {
+    it('truncates the stem before the extension to fit the configured segment bytes', () => {
       const result = prepareFileName(
         'test.test.testtest.testtest.testtesttesttesttesttesttesttest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtesttesttest.json',
       );
 
-      expect(result).toHaveLength(160);
+      expect(getUtf8BytesLength(result)).toBeLessThanOrEqual(
+        RESOURCE_MAX_SEGMENT_BYTES,
+      );
       expect(result.endsWith('.json')).toBe(true);
     });
 

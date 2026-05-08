@@ -20,7 +20,6 @@ import {
 import { EntityFilters } from '@/src/types/search';
 
 import {
-  MAX_ENTITY_LENGTH,
   MAX_ENTITY_NAME_NUMERATION,
   MIN_ENTITY_LENGTH,
   RESOURCE_MAX_ID_BYTES,
@@ -42,7 +41,6 @@ import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
 import values from 'lodash-es/values';
 import { nanoid } from 'nanoid';
-import { substring } from 'stringz';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -105,18 +103,21 @@ export const isEntityNameValid = (
     checkDotsInTheEnd?: boolean;
     minLength?: number;
     maxLength?: number;
+    maxBytes?: number;
   },
 ) => {
   const {
     checkDotsInTheEnd = true,
     minLength = MIN_ENTITY_LENGTH,
-    maxLength = MAX_ENTITY_LENGTH,
+    maxLength,
+    maxBytes,
   } = options ?? {};
   const trimmedName = name.trim();
+  const resolvedMaxBytes = maxBytes ?? maxLength ?? RESOURCE_MAX_SEGMENT_BYTES;
 
   return (
     !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
-    trimmedName.length <= maxLength &&
+    getUtf8BytesLength(trimmedName) <= resolvedMaxBytes &&
     trimmedName.length >= minLength
   );
 };
@@ -127,6 +128,7 @@ export const isEntityNameValidWithDecode = (
     checkDotsInTheEnd?: boolean;
     minLength?: number;
     maxLength?: number;
+    maxBytes?: number;
   },
 ) => {
   const decoded = decodeURIComponent(name);
@@ -178,16 +180,12 @@ export const prepareEntityName = (
         .map((s) => s.replace(notAllowedSymbolsRegex, '_').trim())
         .filter(Boolean)[0] ?? '');
 
-  const maxEntityLength = options?.maxNameLength ?? MAX_ENTITY_LENGTH;
-  const result =
-    clearName.length > maxEntityLength
-      ? substring(clearName, 0, maxEntityLength)
-      : clearName;
-
-  const additionalCuttedResult =
-    result.length > maxEntityLength
-      ? result.substring(0, maxEntityLength)
-      : result;
+  const maxEntityNameBytes =
+    options?.maxNameLength ?? RESOURCE_MAX_SEGMENT_BYTES;
+  const additionalCuttedResult = truncateToUtf8Bytes(
+    clearName,
+    maxEntityNameBytes,
+  );
 
   return !options?.forRenaming || options?.trimEndDotsRequired
     ? trimEndDots(additionalCuttedResult)

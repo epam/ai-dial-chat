@@ -12,7 +12,6 @@ export const EMPTY_MODEL_ID = 'empty';
 
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
-export const MAX_ENTITY_LENGTH = 160;
 export const MIN_ENTITY_LENGTH = 1;
 export const MAX_ENTITY_NAME_NUMERATION = 9999999;
 

@@ -9,8 +9,8 @@ import {
 import classNames from 'classnames';
 
 import {
-  MAX_ENTITY_LENGTH,
   MIN_ENTITY_LENGTH,
+  RESOURCE_MAX_SEGMENT_BYTES,
 } from '@/src/constants/default-ui-settings';
 import {
   formErrors,
@@ -20,6 +20,7 @@ import {
 
 import {
   doesHaveDotsInTheEnd,
+  getUtf8BytesLength,
   isVersionPartSizeValid,
   isVersionValid,
 } from './common';
@@ -110,16 +111,18 @@ export const getStringValidationErrors = ({
   value,
   label,
   checkDotsInTheEnd,
-  maxLength = MAX_ENTITY_LENGTH,
+  maxBytes = RESOURCE_MAX_SEGMENT_BYTES,
   minLength = MIN_ENTITY_LENGTH,
   isNotUniqName,
+  buildNameForByteValidation,
 }: {
   value: string;
   label: string;
-  maxLength?: number;
+  maxBytes?: number;
   minLength?: number;
   checkDotsInTheEnd?: boolean;
   isNotUniqName?: boolean;
+  buildNameForByteValidation?: (preparedName: string) => string;
 }) => {
   const errors: string[] = [];
   const trimmedValue = value.trim();
@@ -127,7 +130,13 @@ export const getStringValidationErrors = ({
 
   if (trimmedValue.length > 0 && trimmedValue.length < minLength)
     errors.push(formErrors.tooShort(label));
-  if (trimmedValue.length > maxLength) errors.push(formErrors.tooLong(label));
+  if (
+    getUtf8BytesLength(
+      buildNameForByteValidation?.(trimmedValue) ?? trimmedValue,
+    ) > maxBytes
+  ) {
+    errors.push(formErrors.tooLong(label, maxBytes));
+  }
 
   if (doesHaveNotAllowedSymbols(trimmedValue)) {
     errors.push(formErrors.hasSpecialCharacters(label));

@@ -1,6 +1,7 @@
 import {
   doesHaveDotsInTheEnd,
   doesHaveDotsInTheStart,
+  getUtf8BytesLength,
   isVersionPartSizeValid,
   isVersionValid,
 } from '@/src/utils/app/common';
@@ -8,8 +9,8 @@ import { notAllowedSpaces, notAllowedSymbols } from '@/src/utils/app/file';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import {
-  MAX_ENTITY_LENGTH,
   MIN_ENTITY_LENGTH,
+  RESOURCE_MAX_SEGMENT_BYTES,
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import {
@@ -29,6 +30,8 @@ export const getEntityNameSchema = (options: {
   checkDotsInTheEnd?: boolean;
   skipCheckRestrictedSymbols?: boolean;
   checkDotsInTheStart?: boolean;
+  maxBytes?: number;
+  buildNameForByteValidation?: (preparedName: string) => string;
 }) =>
   zodValidation
     .string()
@@ -38,7 +41,15 @@ export const getEntityNameSchema = (options: {
       MIN_ENTITY_LENGTH,
       formErrors.tooShort(options.name, MIN_ENTITY_LENGTH),
     )
-    .max(MAX_ENTITY_LENGTH, formErrors.tooLong(options.name, MAX_ENTITY_LENGTH))
+    .refine(
+      (str) =>
+        getUtf8BytesLength(options.buildNameForByteValidation?.(str) ?? str) <=
+        (options.maxBytes ?? RESOURCE_MAX_SEGMENT_BYTES),
+      formErrors.tooLong(
+        options.name,
+        options.maxBytes ?? RESOURCE_MAX_SEGMENT_BYTES,
+      ),
+    )
     .refine(
       (str) =>
         options.skipCheckRestrictedSymbols || !specialCharactersRegex.test(str),
