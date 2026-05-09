@@ -257,8 +257,8 @@ dialAdminTest(
       async () => {
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: requestName,
-          publishToLabel: 'visible',
-          publishTo: PublishPath.Organization,
+          unpublishFromLabel: 'visible',
+          publishPath: PublishPath.Organization,
           authorLabel: 'visible',
           author: defaultAuthor,
           publicAuthorLabel: 'hidden',
