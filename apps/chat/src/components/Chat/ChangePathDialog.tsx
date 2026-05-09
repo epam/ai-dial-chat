@@ -32,7 +32,12 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import {
+  type DialCopiedItem,
+  type DialDeletedItem,
   DialDestinationFolderPopup,
+  type DialFile,
+  DialFileManagerActions,
+  type DialFileManagerActionsRef,
   DialFileManagerTabs,
   DialUploadFileItem,
 } from '@epam/ai-dial-ui-kit';
@@ -53,11 +58,18 @@ export const ChangePathDialog = ({
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
+
   const [collapsedTree, setCollapsedTree] = useState(false);
+  const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
   const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
+
   const filesFolders = useAppSelector(FilesSelectors.selectFolders);
   const filesFoldersRef = useRef(filesFolders);
   filesFoldersRef.current = filesFolders;
+
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
+  );
 
   const resolvedInitialFolderId = useMemo(
     () =>
@@ -65,10 +77,6 @@ export const ChangePathDialog = ({
         initiallySelectedFolderId ?? PUBLIC_URL_PREFIX,
       ),
     [initiallySelectedFolderId],
-  );
-
-  const lastRenamedParentFolder = useAppSelector(
-    FilesSelectors.selectLastRenamedParentFolder,
   );
 
   const conversationPublicFolders = useAppSelector(
@@ -103,7 +111,6 @@ export const ChangePathDialog = ({
     treeOptions,
     gridOptions,
     navigationPanelOptions,
-    handleMoveFiles,
     handleRenameValidation,
   } = useFileManager({
     initialTab: DialFileManagerTabs.Organization,
@@ -111,7 +118,10 @@ export const ChangePathDialog = ({
       actionsByTab: {
         my_files: [],
         shared: [],
-        organization: [],
+        organization: [
+          DialFileManagerActions.Rename,
+          DialFileManagerActions.Delete,
+        ],
         review: [],
       },
     },
@@ -126,6 +136,82 @@ export const ChangePathDialog = ({
       folders: additionalOrganizationFolders,
     },
   });
+
+  const isTempFolder = useCallback(
+    (id: string) =>
+      addedTempFolderIdsRef.current.has(id) ||
+      [...addedTempFolderIdsRef.current].some((rootId) =>
+        id.startsWith(`${rootId}/`),
+      ),
+    [],
+  );
+
+  const handleOrganizationRenameValidation = useCallback(
+    (value: string, item: DialFile) =>
+      item.path && !isTempFolder(item.path)
+        ? ''
+        : handleRenameValidation(value, item),
+    [isTempFolder, handleRenameValidation],
+  );
+
+  const handleOrganizationMoveFiles = useCallback(
+    (
+      movedItems: DialCopiedItem[],
+      sourceFolder: string,
+      destinationFolder: string,
+    ) => {
+      if (sourceFolder !== destinationFolder) return;
+
+      for (const { sourceUrl, destinationUrl } of movedItems) {
+        if (!isTempFolder(sourceUrl)) continue;
+        const newName = destinationUrl.split('/').pop();
+        if (!newName) continue;
+        dispatch(FilesActions.renameFolder({ folderId: sourceUrl, newName }));
+        addedTempFolderIdsRef.current.delete(sourceUrl);
+        addedTempFolderIdsRef.current.add(destinationUrl);
+      }
+    },
+    [dispatch, isTempFolder],
+  );
+
+  const handleDeleteTempFolders = useCallback(
+    (items: DialDeletedItem[], _sourceFolder: string) => {
+      const tempRootIds = items
+        .map((i) => i.sourceUrl)
+        .filter((id) => addedTempFolderIdsRef.current.has(id));
+
+      if (!tempRootIds.length) return;
+
+      [...addedTempFolderIdsRef.current]
+        .filter((id) =>
+          tempRootIds.some(
+            (rootId) => id === rootId || id.startsWith(`${rootId}/`),
+          ),
+        )
+        .forEach((id) => addedTempFolderIdsRef.current.delete(id));
+
+      dispatch(
+        FilesActions.setFolders({
+          folders: filesFoldersRef.current.filter(
+            (f) =>
+              !tempRootIds.some(
+                (rootId) => f.id === rootId || f.id.startsWith(`${rootId}/`),
+              ),
+          ),
+        }),
+      );
+
+      setCurrentPath((prev) => {
+        if (!prev) return prev;
+        return tempRootIds.some(
+          (id) => prev === id || prev.startsWith(`${id}/`),
+        )
+          ? resolvedInitialFolderId
+          : prev;
+      });
+    },
+    [dispatch, resolvedInitialFolderId, setCurrentPath],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -153,11 +239,7 @@ export const ChangePathDialog = ({
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(
-        FilesActions.getFoldersList({
-          paths: [undefined],
-        }),
-      );
+      dispatch(FilesActions.getFoldersList({ paths: [undefined] }));
     }
   }, [dispatch, isOpen]);
 
@@ -168,10 +250,13 @@ export const ChangePathDialog = ({
 
       const idsToRemove = addedTempFolderIdsRef.current;
       if (idsToRemove.size) {
-        const cleaned = filesFoldersRef.current.filter(
-          (f) => !idsToRemove.has(f.id),
+        dispatch(
+          FilesActions.setFolders({
+            folders: filesFoldersRef.current.filter(
+              (f) => !idsToRemove.has(f.id),
+            ),
+          }),
         );
-        dispatch(FilesActions.setFolders({ folders: cleaned }));
         addedTempFolderIdsRef.current = new Set();
       }
     }
@@ -183,8 +268,6 @@ export const ChangePathDialog = ({
       const name = segments[segments.length - 1];
       if (!name) return;
 
-      const parentFolderId = segments.slice(0, -1).join('/');
-
       addedTempFolderIdsRef.current.add(folderPath);
 
       dispatch(
@@ -192,7 +275,7 @@ export const ChangePathDialog = ({
           folders: [
             {
               id: folderPath,
-              folderId: parentFolderId,
+              folderId: segments.slice(0, -1).join('/'),
               name,
               type: FeatureType.File,
               status: UploadStatus.LOADED,
@@ -207,9 +290,7 @@ export const ChangePathDialog = ({
     [dispatch],
   );
 
-  const handleClose = useCallback(() => {
-    onClose(false);
-  }, [onClose]);
+  const handleClose = useCallback(() => onClose(false), [onClose]);
 
   const handleConfirm = useCallback(() => {
     const folderId = currentPath ?? resolvedInitialFolderId;
@@ -235,6 +316,14 @@ export const ChangePathDialog = ({
     [collapsedTree, treeOptions.header],
   );
 
+  const modalGridOptions = useMemo(
+    () => ({
+      ...gridOptions,
+      showFiles: false,
+    }),
+    [gridOptions],
+  );
+
   return (
     <DialDestinationFolderPopup
       className="min-h-[500px] min-w-[700px]"
@@ -251,13 +340,16 @@ export const ChangePathDialog = ({
       rootItem={rootFolder}
       filesLoading={areFoldersLoading}
       treeOptions={modalTreeOptions}
-      gridOptions={{ ...gridOptions }}
+      gridOptions={modalGridOptions}
       navigationPanelOptions={navigationPanelOptions}
       collapsedFileTree={collapsedTree}
       allowedFileTypes={[]}
+      actionsRef={fileManagerActionRef}
       onCreateFolder={handleCreateOrganizationFolder}
-      onMoveToFiles={handleMoveFiles}
+      onMoveToFiles={handleOrganizationMoveFiles}
       onCreateFolderValidate={handleRenameValidation}
+      onRenameValidate={handleOrganizationRenameValidation}
+      onDeleteFiles={handleDeleteTempFolders}
       uploadEnabled={false}
       showHiddenFileSwitcher
     />
