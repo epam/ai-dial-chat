@@ -36,7 +36,7 @@
   "dependencies": {
     "@epam/ai-dial-ui-kit": "0.10.0-dev.23",
     "@epam/pdf-highlighter-kit": "^0.0.13",
-    "@floating-ui/react": "^0.27.16",
+    "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "^4.7.0",
     "@opentelemetry/api": "^1.9.0",
