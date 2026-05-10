@@ -24,6 +24,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { FileService } from '@/src/utils/app/data/file-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import {
   constructPath,
@@ -352,8 +353,9 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
           }
           return from(actions);
         }),
-        catchError(() => {
-          return of(FilesActions.getFullListingFail());
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(FilesActions.getFullListingFail({ traceId }));
         }),
       );
     }),
