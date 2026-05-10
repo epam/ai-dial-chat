@@ -1,3 +1,5 @@
+import { getTraceIdFromTraceparent } from '@/src/utils/server/traceparent';
+
 interface ErrorWithTraceparent {
   message?: string;
   traceparent?: string;
@@ -5,15 +7,17 @@ interface ErrorWithTraceparent {
 
 export const parseApiError = (error?: { message?: string }) => {
   let message: string | undefined = undefined;
-  let traceparent: string | undefined = undefined;
+  let traceId: string | undefined = undefined;
 
   try {
-    const parsedMessage: ErrorWithTraceparent = JSON.parse(error?.message ?? '');
+    const parsedMessage: ErrorWithTraceparent = JSON.parse(
+      error?.message ?? '',
+    );
     message = parsedMessage.message ?? undefined;
-    traceparent = parsedMessage.traceparent ?? undefined;
+    traceId = getTraceIdFromTraceparent(parsedMessage.traceparent);
   } catch {
     message = error?.message;
   }
 
-  return { message, traceparent };
-}
+  return { message, traceId };
+};

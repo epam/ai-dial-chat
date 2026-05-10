@@ -486,8 +486,8 @@ const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
         .map((reference) => modelsMap[reference]?.name)
         .join(', ');
       return of(
-        UIActions.showErrorToast(
-          translate(
+        UIActions.showErrorToast({
+          message: translate(
             payload.references.length > 1
               ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
               : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
@@ -496,7 +496,7 @@ const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
               failedNames,
             },
           ),
-        ),
+        }),
       );
     }),
   );

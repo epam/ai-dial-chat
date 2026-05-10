@@ -586,11 +586,11 @@ const createNotLocalConversationsEpic: AppEpic = (action$) =>
       console.error("New conversation wasn't created: ", err);
       return concat(
         of(
-          UIActions.showErrorToast(
-            translate(ChatI18nKeys.ErrorCreatingConversation, {
+          UIActions.showErrorToast({
+            message: translate(ChatI18nKeys.ErrorCreatingConversation, {
               ns: Translation.Chat,
             }),
-          ),
+          }),
         ),
       );
     }),
@@ -603,11 +603,11 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversation }) => {
       if (!conversation) {
         return of(
-          UIActions.showErrorToast(
-            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(ChatI18nKeys.ConversationHasBeenDeleted, {
               ns: Translation.Chat,
             }),
-          ),
+          }),
         );
       }
 
@@ -661,11 +661,11 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversation }) => {
       if (!conversation) {
         return of(
-          UIActions.showErrorToast(
-            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(ChatI18nKeys.ConversationHasBeenDeleted, {
               ns: Translation.Chat,
             }),
-          ),
+          }),
         );
       }
 
@@ -721,11 +721,11 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     concatMap(({ conversation }) => {
       if (!conversation) {
         return of(
-          UIActions.showErrorToast(
-            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(ChatI18nKeys.ConversationHasBeenDeleted, {
               ns: Translation.Chat,
             }),
-          ),
+          }),
         );
       }
 
@@ -813,11 +813,11 @@ const saveNewConversationEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            UIActions.showErrorToast(
-              translate(ChatI18nKeys.ErrorSavingConversationExists, {
+            UIActions.showErrorToast({
+              message: translate(ChatI18nKeys.ErrorSavingConversationExists, {
                 ns: Translation.Chat,
               }),
-            ),
+            }),
           );
         }),
       ),
@@ -1064,12 +1064,15 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     failedNames.filter(Boolean).length > 0 &&
                     !suppressErrorMessage,
                   of(
-                    UIActions.showErrorToast(
-                      translate(ChatI18nKeys.ErrorDeletingConversations, {
-                        ns: Translation.Chat,
-                        failedNames: failedNames.filter(Boolean).join('", "'),
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        ChatI18nKeys.ErrorDeletingConversations,
+                        {
+                          ns: Translation.Chat,
+                          failedNames: failedNames.filter(Boolean).join('", "'),
+                        },
+                      ),
+                    }),
                   ),
                   EMPTY,
                 ),
@@ -1327,7 +1330,7 @@ const rateMessageFailEpic: AppEpic = (action$) =>
             },
           }),
         ),
-        of(UIActions.showErrorToast(payload.error.toString())),
+        of(UIActions.showErrorToast({ message: payload.error.toString() })),
       );
     }),
   );
@@ -1833,9 +1836,9 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           : EMPTY,
 
         of(
-          UIActions.showErrorToast(
-            translate(errorMessage, { ns: Translation.Chat }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(errorMessage, { ns: Translation.Chat }),
+          }),
         ),
         of(
           ConversationsActions.updateMessage({
@@ -2154,11 +2157,11 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
             err,
           );
           return of(
-            UIActions.showErrorToast(
-              translate(ChatI18nKeys.ErrorSavingConversationFolders, {
+            UIActions.showErrorToast({
+              message: translate(ChatI18nKeys.ErrorSavingConversationFolders, {
                 ns: Translation.Chat,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -2266,11 +2269,11 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversation }) => {
       if (!conversation) {
         return of(
-          UIActions.showErrorToast(
-            translate(ChatI18nKeys.ConversationHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(ChatI18nKeys.ConversationHasBeenDeleted, {
               ns: Translation.Chat,
             }),
-          ),
+          }),
         );
       }
 
@@ -2289,21 +2292,27 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
       if (isFormSchemaConversation) {
         actions.push(
           of(
-            UIActions.showErrorToast(
-              translate(ChatI18nKeys.IncorrectConversationChosenFormActions, {
-                ns: Translation.Chat,
-              }),
-            ),
+            UIActions.showErrorToast({
+              message: translate(
+                ChatI18nKeys.IncorrectConversationChosenFormActions,
+                {
+                  ns: Translation.Chat,
+                },
+              ),
+            }),
           ),
         );
       } else if (isInvalid) {
         actions.push(
           of(
-            UIActions.showErrorToast(
-              translate(ChatI18nKeys.IncorrectConversationChosenSameMessages, {
-                ns: Translation.Chat,
-              }),
-            ),
+            UIActions.showErrorToast({
+              message: translate(
+                ChatI18nKeys.IncorrectConversationChosenSameMessages,
+                {
+                  ns: Translation.Chat,
+                },
+              ),
+            }),
           ),
         );
       } else {
@@ -2698,11 +2707,11 @@ const saveConversationEpic: AppEpic = (action$, state$) =>
           console.error(err);
           return concat(
             of(
-              UIActions.showErrorToast(
-                translate(ChatI18nKeys.ErrorSavingConversation, {
+              UIActions.showErrorToast({
+                message: translate(ChatI18nKeys.ErrorSavingConversation, {
                   ns: Translation.Chat,
                 }),
-              ),
+              }),
             ),
             of(ConversationsActions.saveConversationFail(conversation)),
           );
@@ -2716,11 +2725,11 @@ const moveConversationFailEpic: AppEpic = (action$) =>
     ofType(ConversationsActions.moveConversationFail.type),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(
-          translate(ChatI18nKeys.ConversationAlreadyExists, {
+        UIActions.showErrorToast({
+          message: translate(ChatI18nKeys.ConversationAlreadyExists, {
             ns: Translation.Chat,
           }),
-        ),
+        }),
       );
     }),
   );
@@ -2756,11 +2765,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload, conversation }) => {
       if (!conversation) {
         return of(
-          UIActions.showErrorToast(
-            translate(
+          UIActions.showErrorToast({
+            message: translate(
               'It looks like this conversation has been deleted. Please reload the page',
             ),
-          ),
+          }),
         );
       }
 
@@ -2834,11 +2843,11 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
 
       if (!conversation) {
         return of(
-          UIActions.showErrorToast(
-            translate(
+          UIActions.showErrorToast({
+            message: translate(
               'It looks like this conversation has been deleted. Please reload the page',
             ),
-          ),
+          }),
         );
       }
 
@@ -3015,11 +3024,11 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.uploadConversationsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(
+      UIActions.showErrorToast({
+        message: translate(
           'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
         ),
-      ),
+      }),
     ),
   );
 
@@ -3096,11 +3105,11 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
     }),
     catchError(() =>
       of(
-        UIActions.showErrorToast(
-          translate(
+        UIActions.showErrorToast({
+          message: translate(
             'An error occurred while loading conversations and folders. Please try to refresh the page.',
           ),
-        ),
+        }),
       ),
     ),
   );
@@ -3295,9 +3304,9 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
         }),
         catchError(() =>
           of(
-            UIActions.showErrorToast(
-              translate('Error while uploading chart data'),
-            ),
+            UIActions.showErrorToast({
+              message: translate('Error while uploading chart data'),
+            }),
           ),
         ),
       ),
@@ -3324,9 +3333,9 @@ const getCustomAttachmentDataEpic: AppEpic = (action$) =>
             }),
             catchError(() =>
               of(
-                UIActions.showErrorToast(
-                  translate('Error while uploading chart data'),
-                ),
+                UIActions.showErrorToast({
+                  message: translate('Error while uploading chart data'),
+                }),
               ),
             ),
           ),

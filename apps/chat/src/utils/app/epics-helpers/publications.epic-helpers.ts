@@ -201,11 +201,14 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           catchError((err) => {
             console.error(err);
             return of(
-              UIActions.showErrorToast(
-                translate(CommonI18nKeys.CannotFetchApplicationSchema, {
-                  ns: Translation.Common,
-                }),
-              ),
+              UIActions.showErrorToast({
+                message: translate(
+                  CommonI18nKeys.CannotFetchApplicationSchema,
+                  {
+                    ns: Translation.Common,
+                  },
+                ),
+              }),
             );
           }),
         );

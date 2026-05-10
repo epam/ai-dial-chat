@@ -236,12 +236,12 @@ const renameFolderFailEpic: AppEpic = (action$) =>
     ofType(FilesActions.renameFolderFail.type),
     switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(FilesI18nKeys.FailedToRename, {
+        UIActions.showErrorToast({
+          message: translate(FilesI18nKeys.FailedToRename, {
             ns: Translation.Files,
             folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
           }),
-        ),
+        }),
       );
     }),
   );
@@ -615,11 +615,11 @@ const copyFilesEpic: AppEpic = (action$) =>
                 files: payload.files,
                 destinationFolder: payload.destinationFolder,
               }),
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToCopy, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToCopy, {
                   ns: Translation.Files,
                 }),
-              ),
+              }),
             );
           }),
           takeUntil(action$.pipe(ofType(FilesActions.cancelCopyingFiles.type))),
@@ -670,11 +670,11 @@ const moveFilesEpic: AppEpic = (action$) =>
               FilesActions.moveFilesFail({
                 files: payload.files,
               }),
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToMove, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToMove, {
                   ns: Translation.Files,
                 }),
-              ),
+              }),
             );
           }),
           takeUntil(action$.pipe(ofType(FilesActions.cancelMovingFiles.type))),
@@ -708,11 +708,11 @@ const deleteFilesEpic: AppEpic = (action$) =>
             FilesActions.deleteFilesFail({
               files: payload.files,
             }),
-            UIActions.showErrorToast(
-              translate(FilesI18nKeys.FailedToDeleteFiles, {
+            UIActions.showErrorToast({
+              message: translate(FilesI18nKeys.FailedToDeleteFiles, {
                 ns: Translation.Files,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -732,11 +732,11 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$, state$) =>
           const filePath = file.path || file.id;
           if (!filePath) {
             return of(
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToDownload, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
-              ),
+              }),
               FilesActions.downloadFilesAsArchiveFail(),
             );
           }
@@ -748,11 +748,11 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$, state$) =>
           map(() => FilesActions.downloadFilesAsArchiveSuccess()),
           catchError(() => {
             return of(
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToDownload, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
-              ),
+              }),
               FilesActions.downloadFilesAsArchiveFail(),
             );
           }),
@@ -911,11 +911,11 @@ const uploadArchiveEpic: AppEpic = (action$) =>
         ),
         catchError(() =>
           of(
-            UIActions.showErrorToast(
-              translate(FilesI18nKeys.FailedToUploadArchive, {
+            UIActions.showErrorToast({
+              message: translate(FilesI18nKeys.FailedToUploadArchive, {
                 ns: Translation.Files,
               }),
-            ),
+            }),
             FilesActions.uploadArchiveFail(),
           ),
         ),

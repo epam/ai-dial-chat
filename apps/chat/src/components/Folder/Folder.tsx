@@ -442,26 +442,30 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsInFolder, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsInFolder, {
               ns: Translation.Chat,
               folderName: newName,
             }),
-          ),
+          }),
         );
         return;
       }
 
       if (doesHaveDotsInTheEnd(newName)) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.DotAtEndNotPermitted)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.DotAtEndNotPermitted),
+          }),
         );
         return;
       }
 
       if (newName.startsWith('.')) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.DotAtStartNotPermitted)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.DotAtStartNotPermitted),
+          }),
         );
         return;
       }
@@ -523,7 +527,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (childIds.has(currentFolder.id)) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoveParentToChild)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.NotAllowedMoveParentToChild),
+          }),
         );
         return;
       }
@@ -532,7 +538,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (maxDepth && level + foldersDepth > maxDepth) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoreNestedFolders)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.NotAllowedMoreNestedFolders),
+          }),
         );
         return;
       }
@@ -545,12 +553,12 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsInFolder, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsInFolder, {
               ns: Translation.Chat,
               folderName: droppedFolder.name,
             }),
-          ),
+          }),
         );
         return;
       }
@@ -613,8 +621,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showErrorToast(
-                t(CommonI18nKeys.EntityNameExistsInFolder, {
+              UIActions.showErrorToast({
+                message: t(CommonI18nKeys.EntityNameExistsInFolder, {
                   ns: Translation.Common,
                   entityType:
                     featureType === FeatureType.Chat
@@ -622,7 +630,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       : 'Prompt',
                   entityName: droppedEntity.name,
                 }),
-              ),
+              }),
             );
             return;
           }
@@ -782,7 +790,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         if (onShowError) {
           onShowError(nestedErrorMessage);
         } else {
-          dispatch(UIActions.showErrorToast(nestedErrorMessage));
+          dispatch(UIActions.showErrorToast({ message: nestedErrorMessage }));
         }
         return;
       }
