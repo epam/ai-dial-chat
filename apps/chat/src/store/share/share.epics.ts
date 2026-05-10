@@ -1104,6 +1104,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
 
           const sharedWithMeFileIds = files.map((f) => f.id);
           const sharedWithMeFolderIds = folders.map((f) => f.id);
+          // Keep this action before addSharedFiles: files reducer uses the fresh
+          // sharedWithMe ids to preserve valid nested descendants and clean stale ones.
           actions.push(
             FilesActions.setSharedWithMeFilesAndFoldersIds({
               ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
