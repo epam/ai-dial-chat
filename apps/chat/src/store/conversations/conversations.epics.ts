@@ -50,6 +50,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -1619,14 +1620,30 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       ).pipe(
         switchMap((response) => {
           const body = response.body;
+          const traceparent = response.headers.get('traceparent') ?? undefined;
 
           if (!response.ok) {
             return throwError(
-              () => new Error('ServerError', { cause: response }),
+              () =>
+                new Error(
+                  JSON.stringify({
+                    message: 'ServerError',
+                    traceparent,
+                  }),
+                  { cause: response },
+                ),
             );
           }
           if (!body) {
-            return throwError(() => new Error('No body received'));
+            return throwError(
+              () =>
+                new Error(
+                  JSON.stringify({
+                    message: 'No body received',
+                    traceparent,
+                  }),
+                ),
+            );
           }
 
           const reader = body.getReader();
@@ -1725,6 +1742,8 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          const { message: errorMsg, traceId } = parseApiError(error);
+
           if (error instanceof TimeoutError) {
             return of(
               ConversationsActions.streamMessageFail({
@@ -1732,11 +1751,12 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 message: translate(ChatI18nKeys.TimeoutError, {
                   ns: Translation.Chat,
                 }),
+                traceId,
               }),
             );
           }
 
-          if (error.message === 'ServerError') {
+          if (errorMsg === 'ServerError') {
             const cause = error.cause as
               | { status: number; statusText: string; message: string }
               | undefined;
@@ -1759,6 +1779,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 message,
                 response:
                   error.cause instanceof Response ? error.cause : undefined,
+                traceId,
               }),
             );
           }
@@ -1769,6 +1790,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               message: translate(ChatI18nKeys.GeneralClientError, {
                 ns: Translation.Chat,
               }),
+              traceId,
             }),
           );
         }),
@@ -1801,7 +1823,6 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         ConversationsSelectors.selectIsReplaySelectedConversations(
           state$.value,
         );
-
       const errorMessage = responseJSON?.message || payload.message;
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
 
@@ -1841,6 +1862,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         of(
           UIActions.showErrorToast({
             message: translate(errorMessage, { ns: Translation.Chat }),
+            traceId: payload.traceId,
           }),
         ),
         of(
