@@ -611,6 +611,7 @@ const copyFilesEpic: AppEpic = (action$) =>
             if (error?.name === 'AbortError') {
               return EMPTY;
             }
+            const { traceId } = parseApiError(error);
 
             return of(
               FilesActions.copyFilesFail({
@@ -621,6 +622,7 @@ const copyFilesEpic: AppEpic = (action$) =>
                 message: translate(FilesI18nKeys.FailedToCopy, {
                   ns: Translation.Files,
                 }),
+                traceId,
               }),
             );
           }),
@@ -667,6 +669,7 @@ const moveFilesEpic: AppEpic = (action$) =>
             if (error?.name === 'AbortError') {
               return EMPTY;
             }
+            const { traceId } = parseApiError(error);
 
             return of(
               FilesActions.moveFilesFail({
@@ -676,6 +679,7 @@ const moveFilesEpic: AppEpic = (action$) =>
                 message: translate(FilesI18nKeys.FailedToMove, {
                   ns: Translation.Files,
                 }),
+                traceId,
               }),
             );
           }),
@@ -705,7 +709,8 @@ const deleteFilesEpic: AppEpic = (action$) =>
             ]),
           );
         }),
-        catchError(() => {
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
           return of(
             FilesActions.deleteFilesFail({
               files: payload.files,
@@ -714,6 +719,7 @@ const deleteFilesEpic: AppEpic = (action$) =>
               message: translate(FilesI18nKeys.FailedToDeleteFiles, {
                 ns: Translation.Files,
               }),
+              traceId,
             }),
           );
         }),
@@ -748,12 +754,14 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$, state$) =>
 
         return from(FileService.downloadFilesAsArchive(files, appName)).pipe(
           map(() => FilesActions.downloadFilesAsArchiveSuccess()),
-          catchError(() => {
+          catchError((err) => {
+            const { traceId } = parseApiError(err);
             return of(
               UIActions.showErrorToast({
                 message: translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
+                traceId,
               }),
               FilesActions.downloadFilesAsArchiveFail(),
             );
@@ -911,16 +919,18 @@ const uploadArchiveEpic: AppEpic = (action$) =>
             }),
           ),
         ),
-        catchError(() =>
-          of(
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(
             UIActions.showErrorToast({
               message: translate(FilesI18nKeys.FailedToUploadArchive, {
                 ns: Translation.Files,
               }),
+              traceId,
             }),
             FilesActions.uploadArchiveFail(),
-          ),
-        ),
+          );
+        }),
       );
     }),
   );

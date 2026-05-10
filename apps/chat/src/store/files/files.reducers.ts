@@ -424,7 +424,10 @@ export const filesSlice = createSlice({
         folderPath: payload.folderPath,
       };
     },
-    getFullListingFail: (state, _action: PayloadAction<{ traceId?: string } | undefined>) => {
+    getFullListingFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.isLoadingSearchListing = false;
     },
     invalidateSearchCache: (
