@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "0.10.0-dev.27",
+    "@epam/ai-dial-ui-kit": "0.10.0-dev.28",
     "@epam/pdf-highlighter-kit": "^0.0.13",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
