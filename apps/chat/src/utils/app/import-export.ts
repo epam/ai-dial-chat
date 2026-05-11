@@ -158,7 +158,8 @@ export function getCurrentDate() {
   const date = new Date();
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  return `${month}-${day}`;
+  const year = date.getFullYear();
+  return `${year}-${month}-${day}`;
 }
 
 type ExportType =
@@ -180,10 +181,10 @@ export const getDownloadName = ({
   exportType?: string;
 }) => {
   const namePart = getDownloadFileName(name);
-  const typePart = exportType ? `_${exportType}_` : '_';
+  const typePart = exportType ? `_${exportType}` : '';
   const extensionPart = extension ? `.${extension}` : '';
 
-  return `${namePart}${typePart}${getCurrentDate()}${extensionPart}`;
+  return `${getCurrentDate()}_${namePart}${typePart}${extensionPart}`;
 };
 
 function downloadChatEntityData(

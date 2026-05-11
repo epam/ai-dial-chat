@@ -311,7 +311,7 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
             ];
             if (payload.autoChoseFiles) {
               actions.push(
-                FilesActions.setChosenFiles({
+                FilesActions.addChosenFiles({
                   ids: files.map((file) => file.id),
                 }),
               );
@@ -346,7 +346,7 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
           ];
           if (payload.autoChoseFiles) {
             actions.push(
-              FilesActions.setChosenFiles({
+              FilesActions.addChosenFiles({
                 ids: files.map((file) => file.id),
               }),
             );
@@ -553,9 +553,9 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const setChosenFolderEpic: AppEpic = (action$, state$) =>
+const addChosenFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(FilesActions.setChosenFolder.type),
+    ofType(FilesActions.addChosenFolder.type),
     mergeMap(({ payload }) => {
       const { folderId } = payload;
       const folders = FilesSelectors.selectFolders(state$.value);
@@ -1169,7 +1169,7 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
-  setChosenFolderEpic,
+  addChosenFolderEpic,
   copyFilesEpic,
   moveFilesEpic,
   deleteFilesEpic,
