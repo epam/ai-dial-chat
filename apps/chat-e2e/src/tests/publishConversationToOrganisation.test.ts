@@ -8,7 +8,6 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { GridSelectors } from '@/src/ui/selectors';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -30,10 +29,10 @@ dialAdminTest(
     conversationDropdownMenu,
     publishingRequestDialog,
     selectFolderManagerModal,
-    selectFolderManagerModalManager,
     selectFolderManagerModalGrid,
     selectFolderManagerModalGridAssertion,
     selectFolderManagerModalFoldersTree,
+    selectFolderManagerModalNavigationPanel,
     baseAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -112,10 +111,8 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        const folderNames = await selectFolderManagerModalGrid.gridRows
-          .getElementLocator()
-          .locator(GridSelectors.gridCellValue)
-          .allTextContents();
+        const folderNames =
+          await selectFolderManagerModalGrid.getNameColumnValues();
         baseAssertion.assertStringsSorting(folderNames, 'asc');
       },
     );
@@ -126,8 +123,7 @@ dialAdminTest(
         { isFilesListingTriggered: false },
         parentFolder,
       );
-      await selectFolderManagerModalManager
-        .getFileManagerNavigationPanel()
+      await selectFolderManagerModalNavigationPanel
         .getSearch()
         .inputField.fillInInput(subFolderSearchTerm);
       await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
@@ -137,8 +133,7 @@ dialAdminTest(
     });
 
     await dialTest.step('Search root folder by name', async () => {
-      await selectFolderManagerModalManager
-        .getFileManagerNavigationPanel()
+      await selectFolderManagerModalNavigationPanel
         .getSearch()
         .inputField.fillInInput(folderSearchTerm);
       await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
@@ -150,8 +145,7 @@ dialAdminTest(
     await dialTest.step(
       'Select folder, fill in name and submit the request',
       async () => {
-        await selectFolderManagerModalManager
-          .getFileManagerNavigationPanel()
+        await selectFolderManagerModalNavigationPanel
           .getSearch()
           .inputField.fillInInput('');
         await selectFolderManagerModalGrid
@@ -339,10 +333,8 @@ dialAdminTest(
       'Verify max length error on folder creation with a too-long name',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        const folderInput = selectFolderManagerModalGrid
-          .getRenameInput()
-          .getElementLocator();
-        await folderInput.fill(newFolderName);
+        const folderInput = selectFolderManagerModalGrid.getRenameInput();
+        await folderInput.fillInInput(newFolderName);
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           newFolderName,
