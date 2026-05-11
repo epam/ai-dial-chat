@@ -11,6 +11,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApplicationStatus } from '@/src/types/applications';
 import { ErrorMessage } from '@/src/types/error';
 import {
+  AgentUsageStats,
   DialAIEntityModel,
   InstalledModel,
   PublishRequestDialAIEntityModel,
@@ -40,6 +41,9 @@ const initialState: ModelsState = {
   publishRequestModels: [],
   publishedApplicationIds: [],
   defaultModelReference: DEFAULT_AGENT,
+
+  usageStatsById: {},
+  usageStatsLoading: false,
 };
 
 export const modelsSlice = createSlice({
@@ -355,6 +359,22 @@ export const modelsSlice = createSlice({
     },
     setDefaultModelReference: (state, { payload }: PayloadAction<string>) => {
       state.defaultModelReference = payload;
+    },
+    getUsageStats: (state, _action: PayloadAction<{ id: string }>) => {
+      state.usageStatsLoading = true;
+    },
+    getUsageStatsSuccess: (
+      state,
+      { payload }: PayloadAction<{ id: string; stats: AgentUsageStats }>,
+    ) => {
+      state.usageStatsLoading = false;
+      state.usageStatsById = {
+        ...state.usageStatsById,
+        [payload.id]: payload.stats,
+      };
+    },
+    getUsageStatsFailure: (state, _action: PayloadAction<{ id: string }>) => {
+      state.usageStatsLoading = false;
     },
   },
 });

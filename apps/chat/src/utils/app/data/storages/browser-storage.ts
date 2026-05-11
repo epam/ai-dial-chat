@@ -21,6 +21,7 @@ import { Conversation } from '@/src/types/chat';
 import { BackendChatEntity, FeatureType, MoveModel } from '@/src/types/common';
 import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { AgentUsageStats } from '@/src/types/models';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
   DialStorage,
@@ -492,6 +493,9 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   deleteToolset(_id: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  getAgentLimits(_id: string): Observable<AgentUsageStats> {
     throw new Error('Method not implemented.');
   }
 }
