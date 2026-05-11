@@ -610,6 +610,13 @@ dialAdminTest(
     );
 
     await dialTest.step('User selects nested folder', async () => {
+      await selectFolderManagerModalFoldersTree.expandFolders(
+        { isFilesListingTriggered: false },
+        `${folderNameTemplate} 1`,
+        `${folderNameTemplate} 2`,
+        `${folderNameTemplate} 3`,
+        `${folderNameTemplate} 4`,
+      );
       await selectFolderManagerModalFoldersTree
         .folderByPath(
           `${folderNameTemplate} 1`,
@@ -618,6 +625,7 @@ dialAdminTest(
           `${folderNameTemplate} 4`,
         )
         .click();
+      await selectFolderManagerModalFoldersTree.hoverOver();
       await selectFolderManagerModal.clickSelectFolderButton({
         triggeredApiHost: API.publicationRulesList,
       });

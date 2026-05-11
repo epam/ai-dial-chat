@@ -427,9 +427,14 @@ dialAdminTest(
           await selectFolderManagerModalFoldersTree
             .folderByPath(...path)
             .click();
+          await selectFolderManagerModalFoldersTree.hoverOver();
           await selectFolderManagerModalFoldersTreeAssertion.assertFolderSelectedState(
             true,
             ...path,
+          );
+          await baseAssertion.assertElementActionabilityState(
+            selectFolderManagerModal.getSelectFolderButton(),
+            'enabled',
           );
         }
       },
