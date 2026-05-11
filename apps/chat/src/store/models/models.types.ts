@@ -1,6 +1,7 @@
 import { ApplicationInfo } from '@/src/types/applications';
 import { ErrorMessage } from '@/src/types/error';
 import {
+  AgentUsageStats,
   DialAIEntityModel,
   InstalledModel,
   ModelsMap,
@@ -22,6 +23,9 @@ export interface ModelsState {
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
   defaultModelReference: string;
+
+  usageStatsById: Record<string, AgentUsageStats>;
+  usageStatsLoading: boolean;
 }
 
 export interface ModelUpdatedValues {
