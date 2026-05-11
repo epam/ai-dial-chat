@@ -103,8 +103,7 @@ export interface DialAIEntity {
 }
 
 export interface DialAIEntityModel
-  extends Omit<ShareEntity, 'folderId'>,
-    Omit<DialAIEntity, 'type'> {
+  extends Omit<ShareEntity, 'folderId'>, Omit<DialAIEntity, 'type'> {
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;
