@@ -50,6 +50,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -223,7 +224,9 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
 
         return of(
           ConversationsActions.createNewConversations({
-            names: [`isolated_${isolatedModelId}`],
+            names: [
+              `isolated_${isolatedModelId?.replace(notAllowedSymbolsRegex, '')}`,
+            ],
           }),
         );
       }
