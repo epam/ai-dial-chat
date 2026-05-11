@@ -12,6 +12,7 @@ RUN npm ci
 FROM build_dependencies AS build
 COPY . .
 RUN npm run build
+RUN rm -rf /app/dist/apps/ai-dial-chat/.next/cache
 
 # ---- Only required dependencies ----
 FROM build AS run_dependencies
