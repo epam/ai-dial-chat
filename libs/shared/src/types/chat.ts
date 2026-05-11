@@ -148,10 +148,8 @@ export interface FolderInterface extends ShareEntity {
   isRootSharedItem?: boolean;
 }
 
-export interface TemporaryFolderInterface extends Omit<
-  FolderInterface,
-  'type'
-> {
+export interface TemporaryFolderInterface
+  extends Omit<FolderInterface, 'type'> {
   temporary: true;
   type?: FeatureType;
 }

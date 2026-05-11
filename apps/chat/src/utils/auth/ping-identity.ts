@@ -2,10 +2,8 @@ import { OAuthConfig, OAuthUserConfig } from 'next-auth/providers';
 
 // from https://github.com/nextauthjs/next-auth/pull/6614
 
-export interface PingProfile extends Record<
-  string,
-  string | string[] | number
-> {
+export interface PingProfile
+  extends Record<string, string | string[] | number> {
   iss: string;
   sub: string;
   aud: string;

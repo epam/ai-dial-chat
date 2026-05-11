@@ -7,10 +7,8 @@ import { Tooltip } from '../Tooltip';
 
 import IconCircleChecked from '@/public/images/icons/radio-checked.svg';
 
-interface RadioButtonProps extends Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  'type'
-> {
+interface RadioButtonProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   caption?: React.ReactNode;
   className?: string;
   tooltip?: string;

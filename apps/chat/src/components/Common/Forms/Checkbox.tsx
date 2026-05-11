@@ -3,10 +3,8 @@ import { InputHTMLAttributes, forwardRef } from 'react';
 
 import classNames from 'classnames';
 
-interface CheckboxProps extends Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  'type'
-> {
+interface CheckboxProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   caption?: string;
   className?: string;
   isPartiallyChecked?: boolean;

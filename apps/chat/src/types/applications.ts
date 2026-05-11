@@ -53,11 +53,13 @@ export interface ApiApplicationResponseBase {
   updated_at?: number;
 }
 
-export interface ApiApplicationResponsePublication extends ApiApplicationResponseBase {
+export interface ApiApplicationResponsePublication
+  extends ApiApplicationResponseBase {
   application: string;
 }
 
-export interface ApiApplicationResponseDefault extends ApiApplicationResponseBase {
+export interface ApiApplicationResponseDefault
+  extends ApiApplicationResponseBase {
   name: string;
 }
 
@@ -118,7 +120,8 @@ export type ApplicationPropertiesType =
   | null;
 
 export interface CustomApplicationModel
-  extends DialAIEntityModel, ApplicationInfo {
+  extends DialAIEntityModel,
+    ApplicationInfo {
   completionUrl?: string;
   applicationTypeSchemaId?: string;
   function?: {
