@@ -6,6 +6,7 @@ import {
   ApplicationLogsType,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { AgentUsageStats } from '@/src/types/models';
 
 import { DataService } from './data-service';
 
@@ -69,5 +70,9 @@ export class ApplicationService {
     applicationId: string,
   ): Observable<MessageFormSchema> {
     return DataService.getDataStorage().getApplicationConfig(applicationId);
+  }
+
+  public static getAgentLimits(id: string): Observable<AgentUsageStats> {
+    return DataService.getDataStorage().getAgentLimits(id);
   }
 }

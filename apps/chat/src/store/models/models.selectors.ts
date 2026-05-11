@@ -191,6 +191,17 @@ const selectDefaultModelReference = createSelector(
   },
 );
 
+const selectUsageStats = (state: RootState) =>
+  rootSelector(state).usageStatsById;
+
+const selectUsageStatsById = createSelector(
+  [selectUsageStats, (_state, id: string) => id],
+  (usageStats, id) => usageStats[id],
+);
+
+const selectUsageStatsLoading = (state: RootState) =>
+  rootSelector(state).usageStatsLoading;
+
 export const ModelsSelectors = {
   selectModels,
   selectModelsVersionGroupByGroupId,
@@ -214,4 +225,7 @@ export const ModelsSelectors = {
   selectDefaultModelReference,
   selectToolSupportingModels,
   selectToolSupportingModelIds,
+  selectUsageStats,
+  selectUsageStatsById,
+  selectUsageStatsLoading,
 };
