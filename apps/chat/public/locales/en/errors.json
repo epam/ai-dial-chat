@@ -9,5 +9,5 @@
   "URL is not correct": "URL is not correct",
   "URL must start with a valid protocol": "URL must start with a valid protocol",
   "Endpoint cannot end with . or //": "Endpoint cannot end with . or //",
-  "Image not available.": "Image not available."
+  "The image has been deleted, does not exist, or you do not have access to it.": "The image has been deleted, does not exist, or you do not have access to it."
 }

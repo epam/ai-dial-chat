@@ -338,7 +338,7 @@ export enum ErrorsI18nKeys {
   UrlIsNotCorrect = 'URL is not correct',
   UrlMustStartWithValidProtocol = 'URL must start with a valid protocol',
   EndpointCannotEndWithDotOrDoubleSlash = 'Endpoint cannot end with . or //',
-  ImageNotAvailable = 'Image not available.',
+  ImageIsDeletedDoesNotExist = 'The image has been deleted, does not exist, or you do not have access to it.',
 }
 
 // sidebar.json

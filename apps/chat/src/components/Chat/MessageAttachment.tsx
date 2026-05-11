@@ -93,13 +93,17 @@ const ImageAttachmentRenderer = ({
   const [isImageValid, setIsImageValid] = useState(true);
   const imageUrl = getSourceDataUrl(attachment);
   if (!imageUrl) {
-    return <ErrorMessage error={t(ErrorsI18nKeys.ImageNotAvailable)} />;
+    return (
+      <ErrorMessage error={t(ErrorsI18nKeys.ImageIsDeletedDoesNotExist)} />
+    );
   }
   const onImageError = () => {
     setIsImageValid(false);
   };
   if (!isImageValid) {
-    return <ErrorMessage error={t(ErrorsI18nKeys.ImageNotAvailable)} />;
+    return (
+      <ErrorMessage error={t(ErrorsI18nKeys.ImageIsDeletedDoesNotExist)} />
+    );
   }
   return (
     <img
