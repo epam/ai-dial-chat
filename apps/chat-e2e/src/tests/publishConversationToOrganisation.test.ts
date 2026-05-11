@@ -251,7 +251,7 @@ dialAdminTest(
     selectFolderManagerModalGridAssertion,
     selectFolderManagerModalFoldersTree,
     selectFolderManagerModalFoldersTreeAssertion,
-    confirmationDialog,
+    fileManagerDeleteItemConfirmationPopup,
     baseAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -379,10 +379,9 @@ dialAdminTest(
       async () => {},
     );
 
-    await dialTest.step.skip(
+    await dialTest.step(
       'Delete low-level folder and verify a new one is created in edit mode in the root',
       async () => {
-        // New delete flow: hover grid row → three-dot button → dropdown (rename/delete) → delete
         // At this point the grid is inside folderNames[maxNestedLevel - 2] showing folderNames[maxNestedLevel - 1]
         const folderToDelete = folderNames[maxNestedLevel - 1];
         const dotsMenu =
@@ -396,11 +395,13 @@ dialAdminTest(
         await selectFolderManagerModalGrid
           .getRowDropdownMenu()
           .selectItem(MenuOptions.delete, { isHttpMethodTriggered: false });
-        await confirmationDialog.confirm();
+        await fileManagerDeleteItemConfirmationPopup.confirm();
         await selectFolderManagerModalGrid
           .gridRowByNameCell(folderToDelete)
           .waitFor({ state: 'hidden' });
-        // TODO: verify behaviour after deletion (old UI auto-opened a new folder in edit mode at root)
+        // Recreate the deleted folder to restore the full hierarchy for subsequent steps
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(folderToDelete, false);
       },
     );
 
