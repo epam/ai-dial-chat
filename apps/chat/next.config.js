@@ -83,17 +83,17 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/marketplace/share/:slug([A-Za-z0-9-]+)',
+        source: '/marketplace/share/:slug([^/]+)',
         destination: '/marketplace/?share=:slug',
         permanent: false,
       },
       {
-        source: '/share/:slug([A-Za-z0-9-]+)',
+        source: '/share/:slug([^/]+)',
         destination: '/?share=:slug',
         permanent: false,
       },
       {
-        source: '/models/:slug([A-Za-z0-9@.-]+)',
+        source: '/models/:slug([^/]+)',
         destination: '/?isolated-model-id=:slug',
         permanent: false,
       },

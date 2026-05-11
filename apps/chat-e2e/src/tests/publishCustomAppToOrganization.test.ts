@@ -184,7 +184,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: publicationPath,
+          publishPath: publicationPath,
           author: defaultAuthor,
           publicAuthor: defaultAuthor,
         });

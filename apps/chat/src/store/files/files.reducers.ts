@@ -762,14 +762,33 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{ files: DialFile[]; reviewBuckets?: string[] }>,
     ) => {
-      //remove sharedWithMe files from state except those on review to have the latest state from API
-      const filteredFiles = state.files.filter(
-        (file) =>
-          !file.sharedWithMe ||
+      const sharedWithMeRootIds = new Set(state.sharedWithMeFilesAndFoldersIds);
+      const belongsToActiveSharedRoot = (file: DialFile) =>
+        Array.from(sharedWithMeRootIds).some((rootId) =>
+          file.id.startsWith(`${rootId}/`),
+        );
+
+      // Keep nested shared descendants under active roots, but always replace root shared items
+      // with latest API payload to avoid stale root-level data after tab switches.
+      const filteredFiles = state.files.filter((file) => {
+        if (!file.sharedWithMe) {
+          return true;
+        }
+
+        if (
           payload.reviewBuckets?.some(
             (reviewBucket) => getEntityBucket(file) === reviewBucket,
-          ),
-      );
+          )
+        ) {
+          return true;
+        }
+
+        if (file.isRootSharedItem) {
+          return false;
+        }
+
+        return belongsToActiveSharedRoot(file);
+      });
       state.files = combineEntities(payload.files, filteredFiles);
     },
     resetAllFoldersStatus: (state) => {
