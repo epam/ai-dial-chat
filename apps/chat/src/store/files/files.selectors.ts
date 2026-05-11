@@ -275,8 +275,28 @@ const selectSearchResultsForFolder = createSelector(
     let filteredFolders = folders;
 
     if (isSharedFilter && !folderPath) {
-      filteredFiles = filteredFiles.filter((file) => file.sharedWithMe);
-      filteredFolders = filteredFolders.filter((folder) => folder.sharedWithMe);
+      const sharedRootFolderIds = folders
+        .filter((f) => f.sharedWithMe)
+        .map((f) => f.id);
+
+      filteredFiles = filteredFiles.filter(
+        (file) =>
+          file.sharedWithMe ||
+          sharedRootFolderIds.some(
+            (rootId) =>
+              file.folderId === rootId ||
+              file.folderId?.startsWith(`${rootId}/`),
+          ),
+      );
+      filteredFolders = filteredFolders.filter(
+        (folder) =>
+          folder.sharedWithMe ||
+          sharedRootFolderIds.some(
+            (rootId) =>
+              folder.folderId === rootId ||
+              folder.folderId?.startsWith(`${rootId}/`),
+          ),
+      );
     } else if (folderPath) {
       filteredFiles = filteredFiles.filter(
         (file) =>
