@@ -1,31 +1,25 @@
-import { useMemo } from 'react';
+import classNames from 'classnames';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
+import {
+  getModelDescription,
+  isDialAiEntityModel,
+} from '@/src/utils/app/application';
 
-import { getModelDescription } from '@/src/utils/app/application';
-
-import { Translation } from '@/src/types/translation';
-
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { EntityType } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import { ApplicationLimits } from '@/src/components/Marketplace/ApplicationDetails/ApplicationLimits';
 
 import { EntityInfo } from './EntityInfo';
 
 interface Props {
-  entity: { description?: string; createdAt?: number; author?: string };
+  entity: MarketplaceEntity;
 }
 
 export function EntityDetailsContent({ entity }: Props) {
-  const { t } = useTranslation(Translation.Marketplace);
-
-  const entityInfo = useMemo(
-    () => ({
-      author: entity?.author ?? t(MarketplaceI18nKeys.UnknownMarketplace),
-      createdAt: entity?.createdAt,
-    }),
-    [entity.author, entity?.createdAt, t],
-  );
+  const showLimitsSection =
+    isDialAiEntityModel(entity) && entity.type === EntityType.Model;
 
   return (
     <div
@@ -42,10 +36,15 @@ export function EntityDetailsContent({ entity }: Props) {
         </section>
       )}
       <section
-        className="flex flex-col gap-5 overflow-auto px-3 py-4 md:px-6"
+        className={classNames(
+          'flex flex-col overflow-auto px-3 py-4 md:px-6',
+          showLimitsSection ? 'gap-4' : 'gap-5',
+        )}
         data-qa="entity-information"
       >
-        <EntityInfo entityInfo={entityInfo} />
+        <EntityInfo entity={entity} />
+
+        {showLimitsSection && <ApplicationLimits entity={entity} />}
       </section>
     </div>
   );

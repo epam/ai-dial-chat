@@ -1091,4 +1091,9 @@ export enum MarketplaceI18nKeys {
   ConnectApplication = 'Connect application',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
+  TokenLimits = 'Token limits',
+  Minute = 'Minute',
+  Weekly = 'Weekly',
+  Daily = 'Daily',
+  Monthly = 'Monthly',
 }
