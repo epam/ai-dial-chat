@@ -10,19 +10,19 @@ const request =
 
 for (const entity of ttsRequestModels) {
   dialTest(
-    `Generate TTS audio response for entity: ${entity.eId}`,
+    `Generate TTS audio response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
           [request],
-          entity.eId,
+          entity.entityId,
         );
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.eId, 200);
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseAudioAttachment(
         response,
-        entity.eId,
+        entity.entityId,
       );
     },
   );

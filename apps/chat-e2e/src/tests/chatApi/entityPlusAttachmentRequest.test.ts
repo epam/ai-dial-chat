@@ -12,7 +12,7 @@ const entityPlusAttachmentRequests = process.env
 
 for (const entity of entityPlusAttachmentRequests) {
   dialTest(
-    `Generate response on request with attachment for entity: ${entity.eId}`,
+    `Generate response on request with attachment for entity: ${entity.entityId}`,
     async ({
       conversationData,
       chatApiHelper,
@@ -20,23 +20,23 @@ for (const entity of entityPlusAttachmentRequests) {
       apiAssertion,
     }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
-      const imageUrl = await fileApiHelper.putFile(entity.aN);
+      const imageUrl = await fileApiHelper.putFile(entity.attachmentName);
       const conversation =
         conversationData.prepareConversationWithAttachmentsInRequest(
-          entity.eId,
-          entity.req,
+          entity.entityId,
+          entity.request,
           undefined,
           imageUrl,
         );
-      if (entity.sP) {
-        conversation.prompt = entity.sP;
+      if (entity.systemPrompt) {
+        conversation.prompt = entity.systemPrompt;
       }
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.eId, 200);
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
-        entity.eId,
-        entity.r,
+        entity.entityId,
+        entity.response,
       );
     },
   );
@@ -60,11 +60,11 @@ dialTest(
     const replayEntity = GeneratorUtil.randomArrayElement(
       entityPlusAttachmentRequests,
     );
-    const imageUrl = await fileApiHelper.putFile(replayEntity.aN);
+    const imageUrl = await fileApiHelper.putFile(replayEntity.attachmentName);
     const conversation =
       conversationData.prepareConversationWithAttachmentsInRequest(
-        replayEntity.eId,
-        replayEntity.req,
+        replayEntity.entityId,
+        replayEntity.request,
         undefined,
         imageUrl,
       );
@@ -74,13 +74,13 @@ dialTest(
     const modelResponse = await chatApiHelper.postRequest(replayConversation);
     await apiAssertion.assertResponseCode(
       modelResponse,
-      replayEntity.eId,
+      replayEntity.entityId,
       200,
     );
     await apiAssertion.assertResponseTextContent(
       modelResponse,
-      replayEntity.eId,
-      replayEntity.r,
+      replayEntity.entityId,
+      replayEntity.response,
     );
   },
 );

@@ -17,29 +17,29 @@ const request = '1+2=';
 
 for (const entity of arithmeticRequestModels) {
   dialTest(
-    `Generate arithmetic response for entity: ${entity.eId}`,
+    `Generate arithmetic response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
-      const model = ModelsUtil.getOpenAIEntity(entity.eId)!;
+      const model = ModelsUtil.getOpenAIEntity(entity.entityId)!;
 
       const temperature =
-        entity.t !== undefined
-          ? Number(entity.t)
+        entity.temperature !== undefined
+          ? Number(entity.temperature)
           : model.features?.temperature
             ? 0
             : undefined;
       const prompt = model.features?.systemPrompt ? defaultSystemPrompt : '';
       const conversation = conversationData.prepareDefaultConversation(
-        entity.eId,
+        entity.entityId,
       );
       conversation.messages[0].content = request;
       conversation.temperature = temperature;
       conversation.prompt = prompt;
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.eId, 200);
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
-        entity.eId,
+        entity.entityId,
         '3',
       );
     },

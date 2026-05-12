@@ -16,11 +16,11 @@ test('Models API listing', async () => {
     .toBe(expectedModels.length);
 
   expectedModels.forEach((model) => {
-    const actualModel = ModelsUtil.getModel(model.eId);
+    const actualModel = ModelsUtil.getModel(model.entityId);
     expect
       .soft(
         actualModel,
-        `${model.eId}: ${ExpectedMessages.modelIsAvailable}`,
+        `${model.entityId}: ${ExpectedMessages.modelIsAvailable}`,
       )
       .toBeDefined();
   });

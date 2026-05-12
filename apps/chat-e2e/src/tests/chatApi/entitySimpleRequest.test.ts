@@ -11,25 +11,25 @@ const entitySimpleRequests = process.env.ENTITY_SIMPLE_REQUEST_FOR_API_TESTS
 
 for (const entity of entitySimpleRequests) {
   dialTest(
-    `Generate simple response for entity: ${entity.eId}`,
+    `Generate simple response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          [entity.req],
-          entity.eId,
+          [entity.request],
+          entity.entityId,
         );
-      if (entity.sP) {
-        conversation.prompt = entity.sP;
+      if (entity.systemPrompt) {
+        conversation.prompt = entity.systemPrompt;
       }
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.eId, 200);
-      entity.iAR
-        ? await apiAssertion.assertResponseAttachment(response, entity.eId)
+      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      entity.isAttachmentResponse
+        ? await apiAssertion.assertResponseAttachment(response, entity.entityId)
         : await apiAssertion.assertResponseTextContent(
             response,
-            entity.eId,
-            entity.r,
+            entity.entityId,
+            entity.response,
           );
     },
   );
@@ -44,21 +44,21 @@ dialTest(
     );
     setTestIds('EPMRTC-1803');
     const replayEntity = GeneratorUtil.randomArrayElement(
-      entitySimpleRequests.filter((e) => e.iAR),
+      entitySimpleRequests.filter((e) => e.isAttachmentResponse),
     );
     const conversation =
       conversationData.prepareModelConversationBasedOnRequests(
-        [replayEntity.req],
-        replayEntity.eId,
+        [replayEntity.request],
+        replayEntity.entityId,
       );
     conversationData.resetData();
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     const response = await chatApiHelper.postRequest(replayConversation);
-    await apiAssertion.assertResponseCode(response, replayEntity.eId, 200);
+    await apiAssertion.assertResponseCode(response, replayEntity.entityId, 200);
     await apiAssertion.assertResponseAttachment(
       response,
-      replayEntity.eId,
+      replayEntity.entityId,
     );
   },
 );
