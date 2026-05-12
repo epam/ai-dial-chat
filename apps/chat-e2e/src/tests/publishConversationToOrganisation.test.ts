@@ -324,10 +324,6 @@ dialAdminTest(
       },
     );
 
-    // The new ChangePathDialog has no row dropdown menu with a rename option,
-    // so the original two steps ("Open folder dropdown menu and verify
-    // available options" + "Verify folder renaming and max length") are
-    // replaced with a single step that creates a folder with a too-long name.
     // The new UI no longer truncates silently — it shows an inline alert icon
     await dialTest.step(
       'Verify max length error on folder creation with a too-long name',
@@ -345,9 +341,6 @@ dialAdminTest(
     await dialTest.step(
       'Create nested sub-folders down to depth 4',
       async () => {
-        // The new ChangePathDialog has no row dots menu: open the parent folder
-        // by clicking on its row and create the sub-folder via "Add folder".
-        // Build the chain folderNames[0] → ... → folderNames[maxNestedLevel - 1].
         for (let i = 1; i < maxNestedLevel; i++) {
           await selectFolderManagerModalGrid.openFolder(
             folderNames[i - 1],
@@ -420,7 +413,7 @@ dialAdminTest(
           await selectFolderManagerModalFoldersTree
             .folderByPath(...path)
             .click();
-          await selectFolderManagerModalFoldersTree.hoverOver();
+          await selectFolderManagerModal.hoverOver();
           await selectFolderManagerModalFoldersTreeAssertion.assertFolderSelectedState(
             true,
             ...path,
