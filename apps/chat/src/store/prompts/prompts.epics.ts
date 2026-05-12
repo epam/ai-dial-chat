@@ -1037,6 +1037,7 @@ const selectPromptEpic: AppEpic = (action$, state$) =>
           PromptsActions.setSelectedPrompt({
             promptId: payload.promptId,
             isApproveRequiredResource: payload.isApproveRequiredResource,
+            isSkillPrompt: payload.isSkillPrompt,
           }),
         ),
         of(

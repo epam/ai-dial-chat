@@ -504,6 +504,9 @@ export enum PromptBarI18nKeys {
   ConfirmDeletingSelectedPromptsCaption = 'Are you sure that you want to delete selected prompts?',
   ConfirmDeletingAllPromptsCaption = 'Are you sure that you want to delete all prompts?',
   VersionPrefix = 'v.',
+  AddAgentSkill = 'Add Agent Skill',
+  ValidAgentSkill = 'Valid Agent Skill',
+  AgentSkillHint = 'Agent Skills allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
 }
 
 //chat.json
@@ -1090,4 +1093,11 @@ export enum MarketplaceI18nKeys {
   ConnectApplication = 'Connect application',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
+  AgentSkills = 'Agent Skills',
+  AgentSkillsDescription = 'Reusable instruction modules the agent loads on demand when the task matches.',
+  NoAgentSkillsAdded = 'No Agent Skills added',
+  AddAgentSkills = 'Add Agent Skills',
+  SkillsLowercase = 'skills',
+  AgentSkillsInvalidError = 'This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have "name" and "description" fields.',
+  SelectAgentSkills = 'Select',
 }

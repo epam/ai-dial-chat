@@ -85,7 +85,6 @@ const PromptFolderTemplate = ({
   const isFolderEmpty = useAppSelector((state) =>
     PromptsSelectors.selectIsFolderEmpty(state, folder.id),
   );
-
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
     [filters, searchTerm],

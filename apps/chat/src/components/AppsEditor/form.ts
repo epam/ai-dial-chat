@@ -31,6 +31,7 @@ import {
   AnyToolset,
   CodeInterpreterToolset,
   DialDeploymentSimpleTool,
+  DialPromptSkill,
   MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
@@ -225,6 +226,7 @@ export const QuickApp2Schema = zodValidation
     toolSupportingModelIds: zodValidation
       .array(zodValidation.string())
       .optional(),
+    agentSkills: zodValidation.array(zodValidation.string()),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -475,6 +477,9 @@ const getQuickApp2FormData = (
     ],
     isJsonView: false,
     toolSupportingModelIds,
+    agentSkills: (appProperties?.skills ?? [])
+      .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
+      .map((s) => s.url.replace(/^prompts\//, '')),
   };
 };
 
@@ -856,6 +861,14 @@ export const getApplicationPayload = ({
             data.isJsonView && !keepCurrentToolsets
               ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
               : getQuickApp2Toolsets({ data, allEntitiesMap }),
+          ...(data.agentSkills.length > 0 && {
+            skills: data.agentSkills.map(
+              (promptId): DialPromptSkill => ({
+                type: 'dial-prompt',
+                url: `prompts/${promptId}`,
+              }),
+            ),
+          }),
           ...(starters.length
             ? {
                 conversation_starters: {
