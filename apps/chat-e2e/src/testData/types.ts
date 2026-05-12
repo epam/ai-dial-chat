@@ -27,32 +27,33 @@ export enum PublishPath {
   Organization = 'Organization',
 }
 
+// Abbreviated field names are used to reduce environment variable size (E2BIG prevention)
 export interface Entity {
-  entityId: string;
+  eId: string; // entityId
 }
 
 export interface ArithmeticRequestEntity extends Entity {
-  isSysPromptAllowed?: boolean;
-  systemPrompt?: string;
-  temperature?: string;
+  iSPA?: boolean; // isSysPromptAllowed
+  sP?: string; // systemPrompt
+  t?: string; // temperature
 }
 
 export interface EntitySimpleRequest extends Entity {
-  request: string;
-  systemPrompt?: string;
-  response?: string;
-  isAttachmentResponse: boolean;
+  req: string; // request
+  sP?: string; // systemPrompt
+  r?: string; // response
+  iAR: boolean; // isAttachmentResponse
 }
 
 export interface EntityPlusAttachmentRequest extends Entity {
-  attachmentName: string;
-  systemPrompt?: string;
-  request?: string;
-  response: string;
+  aN: string; // attachmentName
+  sP?: string; // systemPrompt
+  req?: string; // request
+  r: string; // response
 }
 
 export interface SttRequestEntity extends Entity {
-  response?: string;
+  r?: string; // response
 }
 
 export enum MarketplaceFilterTypes {

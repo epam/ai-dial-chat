@@ -11,7 +11,7 @@ const expectedTranscription = 'Robots are awesome';
 
 for (const entity of sttRequestModels) {
   dialTest(
-    `Generate STT transcription response for entity: ${entity.entityId}`,
+    `Generate STT transcription response for entity: ${entity.eId}`,
     async ({
       conversationData,
       chatApiHelper,
@@ -22,17 +22,17 @@ for (const entity of sttRequestModels) {
       const audioUrl = await fileApiHelper.putFile(Attachment.sttAudioName);
       const conversation =
         conversationData.prepareConversationWithAttachmentsInRequest(
-          entity.entityId,
+          entity.eId,
           undefined,
           undefined,
           audioUrl,
         );
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.assertResponseCode(response, entity.entityId, 200);
+      await apiAssertion.assertResponseCode(response, entity.eId, 200);
       await apiAssertion.assertResponseTextContent(
         response,
-        entity.entityId,
-        entity.response ?? expectedTranscription,
+        entity.eId,
+        entity.r ?? expectedTranscription,
       );
     },
   );
