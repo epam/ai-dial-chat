@@ -477,9 +477,7 @@ const getQuickApp2FormData = (
     ],
     isJsonView: false,
     toolSupportingModelIds,
-    agentSkills: (appProperties?.skills ?? [])
-      .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
-      .map((s) => s.url.replace(/^prompts\//, '')),
+    agentSkills: [],
   };
 };
 
@@ -865,7 +863,7 @@ export const getApplicationPayload = ({
             skills: data.agentSkills.map(
               (promptId): DialPromptSkill => ({
                 type: 'dial-prompt',
-                url: `prompts/${promptId}`,
+                url: promptId,
               }),
             ),
           }),

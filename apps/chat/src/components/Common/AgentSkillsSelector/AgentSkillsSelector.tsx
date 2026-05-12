@@ -1,4 +1,4 @@
-import { IconFile, IconPlus } from '@tabler/icons-react';
+import { IconBulb, IconPlus } from '@tabler/icons-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -8,7 +8,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 
-import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { AgentSkillsItem } from './AgentSkillsItem';
 import { AgentSkillsModal } from './AgentSkillsModal';
@@ -76,7 +76,7 @@ export const AgentSkillsSelector: React.FC<AgentSkillsSelectorProps> = ({
   );
 
   return (
-    <div className="relative grow rounded border border-primary p-2">
+    <div className="relative grow">
       <div className="absolute right-0 top-[-26px]">
         <DialLinkButton
           tooltipProps={{
@@ -92,8 +92,8 @@ export const AgentSkillsSelector: React.FC<AgentSkillsSelectorProps> = ({
 
       {!value.length ? (
         <div className="flex flex-col items-center justify-center rounded border border-primary py-4">
-          <IconFile size={60} className="mb-2 text-secondary" stroke={0.5} />
-          <span>{t(CommonI18nKeys.NoData)}</span>
+          <IconBulb size={60} className="mb-2 text-secondary" stroke={0.5} />
+          <span>{t(MarketplaceI18nKeys.NoAgentSkillsAdded)}</span>
         </div>
       ) : (
         <div className="flex flex-col gap-2 overflow-hidden rounded">
