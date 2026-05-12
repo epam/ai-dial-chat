@@ -1,10 +1,4 @@
-import {
-  ButtonAppearance,
-  ButtonVariant,
-  DialGhostIconButton,
-  DialIconButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import {
   IconCopy,
   IconMarkdown,
