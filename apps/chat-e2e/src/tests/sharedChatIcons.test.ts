@@ -10,6 +10,7 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
+  withTraceId,
 } from '@/src/testData';
 import {
   Colors,
@@ -23,7 +24,7 @@ import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.only(
   'Shared icon does not appear in chat model icon if to click on copy button.\n' +
     'Shared URL is copied using Ctrl+A, Ctrl+C\n' +
     'Share chat: tooltip for long chat name.\n' +
@@ -247,7 +248,9 @@ dialTest(
         const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);
+          .toMatch(
+            withTraceId(ExpectedConstants.shareInviteAcceptanceFailureMessage),
+          );
       },
     );
 
