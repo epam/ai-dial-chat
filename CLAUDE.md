@@ -40,6 +40,7 @@ Use these local skills directly in Claude:
 - `./.claude/skills/incremental-implementation/SKILL.md` for multi-file implementation and refactors
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
+- `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 
 Default behavior:
 - Implementation work should follow incremental slices with per-slice verification.
