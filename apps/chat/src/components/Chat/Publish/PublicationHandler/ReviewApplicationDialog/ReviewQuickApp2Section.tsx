@@ -134,11 +134,13 @@ const ReviewQuickApp2SectionView = ({
         value={orchestratorName}
         valueClassName="max-w-[414px] break-all text-primary"
       />
-      <MarketplaceEntityInfoRow
-        label={t('Temperature')}
-        value={config.orchestrator.deployment.parameters.temperature}
-        valueClassName="max-w-[414px] break-all text-primary"
-      />
+      {config.orchestrator.deployment.parameters?.temperature && (
+        <MarketplaceEntityInfoRow
+          label={t('Temperature')}
+          value={config.orchestrator.deployment.parameters.temperature}
+          valueClassName="max-w-[414px] break-all text-primary"
+        />
+      )}
       <MarketplaceEntityInfoRow
         label={t('Document URLs')}
         value={
