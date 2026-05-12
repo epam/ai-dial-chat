@@ -338,6 +338,7 @@ export enum ErrorsI18nKeys {
   UrlIsNotCorrect = 'URL is not correct',
   UrlMustStartWithValidProtocol = 'URL must start with a valid protocol',
   EndpointCannotEndWithDotOrDoubleSlash = 'Endpoint cannot end with . or //',
+  ImageIsDeletedDoesNotExist = 'The image has been deleted, does not exist, or you do not have access to it.',
 }
 
 // sidebar.json
@@ -1090,4 +1091,9 @@ export enum MarketplaceI18nKeys {
   ConnectApplication = 'Connect application',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
+  TokenLimits = 'Token limits',
+  Minute = 'Minute',
+  Weekly = 'Weekly',
+  Daily = 'Daily',
+  Monthly = 'Monthly',
 }
