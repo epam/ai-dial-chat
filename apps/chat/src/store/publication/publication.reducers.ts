@@ -6,6 +6,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -435,6 +436,7 @@ export const publicationSlice = createSlice({
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
+        tabToOpen?: MarketplaceEditorSteps;
       }>,
     ) => {
       state.isPublicationUpdating = true;

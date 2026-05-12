@@ -266,6 +266,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
           publicationUrl: payload.publicationUrl,
           oldApplication: payload.oldApplication,
           newApplication: updatedCustomApplication,
+          tabToOpen: payload.tabToOpen,
         };
 
         if (isMoved) {
