@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem \"c:\\\\projects\\\\chat-2.0\\\\node_modules\\\\@epam\\\\ai-dial-ui-kit\\\\dist\" -Filter \"*.d.ts\")",
+      "Bash(Select-Object -First 10)",
+      "PowerShell(npx nx test conversation-input --run 2>&1)",
+      "PowerShell(npx nx test conversation-input --run --verbose 2>&1)",
+      "PowerShell(npx nx show project conversation-input 2>&1)",
+      "Bash(Get-ChildItem -Path \"c:\\\\projects\\\\chat-2.0\\\\apps\" -Directory)",
+      "PowerShell(Get-Content \"c:\\\\projects\\\\chat-2.0\\\\package.json\" | ConvertFrom-Json | Select-Object -ExpandProperty dependencies | Get-Member -MemberType NoteProperty | Where-Object { $_.Name -match \"auth|jwt|oauth|oidc|passport|keycloak\" } | Select-Object Name)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:datatracker.ietf.org)",
+      "WebFetch(domain:authjs.dev)",
+      "WebFetch(domain:www.better-auth.com)",
+      "WebFetch(domain:authts.github.io)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebSearch",
+      "WebFetch(domain:better-auth.com)",
+      "WebFetch(domain:fusionauth.io)",
+      "WebFetch(domain:auth0.com)",
+      "WebFetch(domain:www.keycloak.org)",
+      "WebFetch(domain:docs.amplify.aws)",
+      "WebFetch(domain:docs.nestjs.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:curity.io)"
+    ],
+    "additionalDirectories": [
+      "C:\\projects\\chat-2.0\\openspec\\changes"
+    ]
+  },
+  "enabledPlugins": {
+    "nx@nx-claude-plugins": true
+  },
+  "extraKnownMarketplaces": {
+    "nx-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "nrwl/nx-ai-agents-config"
+      }
+    }
+  }
+}

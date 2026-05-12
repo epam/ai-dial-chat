@@ -1,0 +1,152 @@
+schema: spec-driven
+
+context: |
+  # Chat 2.0
+
+  ## Tech Stack
+  - Monorepo: Nx 22
+  - Frontend: React 19, Vite 8 (apps/chat, port 4207)
+  - Backend: NestJS 11 (apps/chat-api, port 3005)
+  - Language: TypeScript 5.9 (strict mode, noUnusedLocals, noUnusedParameters)
+  - Styling: Tailwind CSS 3 (primary) + SCSS (component overrides only)
+  - i18n: react-i18next + i18next-browser-languagedetector (keys in apps/chat/src/i18n/locales/en.json)
+  - State: React Context + custom hooks (no external state management library)
+  - API layer: typed fetch helpers in apps/chat/src/server-api/base.ts — get/post/put/del with TResponse generic
+  - Routing: React Router v6 (BrowserRouter, lazy-loaded routes)
+  - Testing: Vitest 4 + @testing-library/react 16 (frontend), supertest 7 (backend)
+  - Linting: ESLint 9 flat config (eslint.config.mjs) + Prettier 3
+  - Commits: Conventional commits — feat/fix/chore/refactor/test/docs with optional scope
+
+  ## Libraries
+  - @epam/ai-dial-ui-kit: Design system base components
+  - @tabler/icons-react: Icon set — use for all icons, no inline SVGs
+  - react-i18next / i18next: Internationalisation
+  - class-validator + class-transformer: NestJS DTO validation and serialisation
+  - @nestjs/swagger: OpenAPI documentation
+  - @nestjs/throttler: Rate limiting
+  - @nestjs/cache-manager + cache-manager: In-memory cache
+  - helmet: Security headers
+  - prettier-plugin-tailwindcss: Tailwind class ordering
+
+  ## Path Aliases
+  - @/*        → apps/chat/*
+  - @epam/conversation-input/* → libs/conversation-input/*
+  - @epam/chat-shared/*        → libs/chat-shared/*
+
+  ## Commands
+  - Frontend dev: `pnpm start` (localhost:4207, proxies /api → localhost:3005)
+  - Backend dev:  `pnpm start:api` (localhost:3005)
+  - Both:         `pnpm start:all`
+  - Build:        `pnpm nx affected --target=build --base=origin/main`
+  - Lint:         `pnpm nx affected --target=lint --base=origin/main`
+  - Typecheck:    `pnpm nx affected --target=typecheck --base=origin/main`
+  - Tests:        `pnpm nx affected --target=test --base=origin/main`
+  - All tests:    `pnpm test`
+  - Dep graph:    `pnpm graph`
+
+  ## Architecture
+
+  ### Frontend (apps/chat)
+  - Entry: apps/chat/src/main.tsx — wraps app in BrowserRouter + ThemeProvider
+  - App: apps/chat/src/app/app.tsx — root component, lazy-loads routes with Suspense
+  - Context: apps/chat/src/context/ — React Context providers and their consumer hooks
+    - ThemeContext.tsx is the reference pattern: createContext<T | undefined>(undefined),
+      useMemo on context value, guard hook throws if used outside provider
+  - Hooks: apps/chat/src/hooks/ — custom hooks co-located by concern
+    - useFavicon.ts is the reference pattern: JSDoc, AbortController/cleanup in useEffect,
+      cancelled flag for async operations
+  - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
+    - Each component in its own folder with co-located .test.tsx and index.ts barrel
+  - API: apps/chat/src/server-api/ — typed fetch helpers and endpoint constants
+  - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
+
+  ### Backend (apps/chat-api)
+  - Entry: apps/chat-api/src/main.ts — registers Helmet, ValidationPipe, CORS, Swagger, serves
+    compiled frontend static files from dist/apps/chat
+  - Modules: apps/chat-api/src/modules/{domain}/ — one folder per domain
+    - theme.controller.ts, theme.service.ts, theme.module.ts, dto/ — reference pattern
+  - Config: apps/chat-api/src/config/environment.config.ts — class-validator env validation
+  - Common: apps/chat-api/src/common/interceptors/ — MetricsInterceptor is the reference pattern
+  - Services use Logger(ClassName), ConfigService<EnvironmentVariables>, and @Inject(CACHE_MANAGER)
+  - Controllers are thin: validate input via DTO, delegate to service, return result directly
+
+  ### Libraries
+  - libs/chat-shared/  — shared TypeScript interfaces and types only (no logic)
+  - libs/conversation-input/  — ConversationInput React component
+  - libs/conversation-panel/  — ConversationPanel React component
+
+  ### Module boundary rules
+  - apps may import from libs; apps may not import from each other
+  - type:ui libs may import from chat-shared only
+  - type:shared libs (chat-shared) import nothing
+  - Enforced by @nx/enforce-module-boundaries in eslint.config.mjs
+
+rules:
+  proposal:
+    - Keep proposals concise — problem statement, proposed solution, non-goals
+    - Investigate the codebase before proposing — check if the pattern already exists in
+      context/, hooks/, server-api/, or common/
+    - Reference the closest existing file as the model (e.g. "follow ThemeContext pattern",
+      "follow useFavicon pattern", "follow ThemeController pattern")
+    - Flag scope creep — if the proposal touches shared libs or global providers, call it out
+    - Ask clarifying questions before finalising — especially around state ownership and
+      whether the feature needs a new context or can use an existing one
+    - Include impact on i18n: does this introduce new user-visible strings?
+
+  design:
+    - Use Tailwind utility classes for all layout and spacing — no inline styles, no custom CSS
+      for what Tailwind covers
+    - Use clsx for conditional class composition — not template literal concatenation
+    - Use @tabler/icons-react for all icons — no unicode characters, no inline SVGs
+    - Use components from @epam/ai-dial-ui-kit before creating new primitives
+    - Name props interfaces {ComponentName}Props — not Props, not inline anonymous types
+    - Export components as named exports wrapped in React.memo for performance-sensitive
+      components (e.g. ConversationView); default export the same name
+    - Use FC<{ComponentName}Props> for component type annotation
+    - All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}
+    - Use the existing typed API helpers (get, post) from server-api/base.ts — do not call
+      fetch directly in components or hooks
+    - Fetch inside useEffect with a cancelled flag to prevent setState-on-unmount warnings
+    - Context value must be wrapped in useMemo — prevents all consumers re-rendering on
+      every parent render
+    - Consumer hooks (e.g. useTheme) must throw a clear error when used outside the provider
+    - React Context providers and their hooks go in apps/chat/src/context/ — not co-located
+      with components
+    - Custom hooks go in apps/chat/src/hooks/ — one hook per file, JSDoc required explaining WHY
+    - Lazy-load every route component with React.lazy + Suspense — always provide a fallback
+    - For named exports from lazy-loaded libs: import the module then return { default: module.X }
+    - NestJS controllers are thin — no business logic; annotate every endpoint with @ApiOperation,
+      @ApiResponse (all possible status codes), and @Throttle
+    - NestJS services use private readonly logger = new Logger(ClassName.name)
+    - Every DTO field has both a class-validator decorator and @ApiProperty
+    - Filenames that accept user input (icons, paths) must use @Matches with a strict allowlist
+      regex to prevent path traversal
+    - Name handler functions with the handle prefix in React components
+      (e.g. handleSend, handleScroll, handleKeyDown)
+    - Use semantic HTML elements (button, nav, main, section) before div/span
+    - Apply ARIA attributes for dynamic content: role="log" + aria-live="polite" for chat
+      messages, role="alert" for errors
+
+  specs:
+    - Specify which context or hook owns the state being introduced
+    - Define the API endpoint shape if the feature requires a new backend endpoint
+      (method, path, request body, response body, error codes)
+    - Include i18n key names for all new user-visible strings
+    - Flag any memoisation requirements (useMemo, useCallback, React.memo)
+    - Define accessibility requirements: keyboard navigation, ARIA roles/labels
+    - Specify rate limiting requirements for new NestJS endpoints
+    - Include cache TTL and invalidation strategy for new cached data
+
+  tasks:
+    - Reference specific file paths — never vague descriptions like "update the service"
+    - Follow the file location conventions: context in context/, hooks in hooks/,
+      API helpers in server-api/, NestJS domains in modules/{domain}/
+    - Require unit tests for all new hooks, utilities, and services as a dedicated task
+    - Require integration tests (supertest) for all new NestJS controllers as a dedicated task
+    - Tests co-locate with source: ComponentName.test.tsx next to ComponentName.tsx,
+      feature.controller.spec.ts next to feature.controller.ts
+    - Test names describe observable behaviour — not implementation details
+    - Do not use data-testid attributes in tests — use role, label, and text queries
+    - Do not add manual testing tasks
+    - Add i18n keys to en.json as a dedicated task when new strings are introduced
+    - Run lint + typecheck + tests as a final verification task after all implementation tasks

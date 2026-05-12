@@ -1,92 +1,28 @@
-import { MouseEvent, MouseEventHandler } from 'react';
+import { DialLoader } from '@epam/ai-dial-ui-kit';
+import { FC, memo } from 'react';
+import { useTheme } from '../../context/ThemeContext';
+import { getIconPath } from '../../utils/icon-path';
 
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+/**
+ * Logo component that displays the theme-specific logo image or fallback text.
+ * Shows loading skeleton while theme is being loaded.
+ */
+const Logo: FC = () => {
+  const { currentThemeLogo, isLoading } = useTheme();
 
-import classNames from 'classnames';
+  // Show loading skeleton while theme is loading
+  if (isLoading) {
+    return <DialLoader size={14} ariaLabel="logo loading" />;
+  }
 
-import { ApiUtils } from '@/src/utils/server/api';
-
-import { ConversationsActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ConversationsSelectors,
-  SettingsSelectors,
-  UISelectors,
-} from '@/src/store/selectors';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { Routes } from '@/src/constants/routes';
-
-import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
-
-interface LogoProps {
-  onLogoClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
-}
-
-export const Logo = ({ onLogoClick }: LogoProps) => {
-  const router = useRouter();
-
-  const dispatch = useAppDispatch();
-
-  const areConversationsLoaded = useAppSelector(
-    ConversationsSelectors.areConversationsUploaded,
-  );
-  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-
-  const isCustomLogoFeatureEnabled = enabledFeatures.has(Feature.CustomLogo);
-  const isNewConversationDisabled = enabledFeatures.has(
-    Feature.HideNewConversation,
-  );
-  const customLogoUrl =
-    isCustomLogoFeatureEnabled &&
-    customLogo &&
-    `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
-
-  const createNewConversation = () => {
-    if (!areConversationsLoaded || isNewConversationDisabled) return;
-    dispatch(
-      ConversationsActions.createNewConversations({
-        names: [DEFAULT_CONVERSATION_NAME],
-      }),
-    );
-    dispatch(ConversationsActions.resetSearch());
-  };
-
-  const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
-    if (typeof onLogoClick === 'function') {
-      onLogoClick(e);
-    } else {
-      if (messageIsStreaming) return e.preventDefault();
-      if (router.route === Routes.Chat) {
-        e.preventDefault();
-      }
-      createNewConversation();
-    }
-  };
-
-  return (
-    <Link
-      href={Routes.Chat}
-      shallow
-      onClick={handleLogoClick}
-      className={classNames(
-        'min-w-[110px] bg-contain bg-center bg-no-repeat lg:bg-left',
-        messageIsStreaming && 'cursor-not-allowed',
-      )}
-      style={{
-        backgroundImage: customLogoUrl
-          ? `url(${cssEscape(customLogoUrl)})`
-          : `var(--app-logo)`,
-      }}
-      data-qa="logo"
-    ></Link>
-  );
+  return currentThemeLogo ? (
+    <a
+      href="/"
+      aria-label="logo"
+      style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
+      className="h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat"
+    />
+  ) : null;
 };
+
+export default memo(Logo);

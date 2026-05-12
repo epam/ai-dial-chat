@@ -1,48 +1,13 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "jsx": "preserve",
-    "allowJs": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["apps/chat/*"],
-      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
-      "@epam/ai-dial-visualizer-connector": [
-        "libs/visualizer-connector/src/index.ts"
-      ],
-      "@epam/ai-dial-modulify-ui": ["libs/modulify-ui/src/index.ts"]
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
     },
-    "baseUrl": "../../",
-    "types": [
-      "jsdom",
-      "vitest/globals",
-      "vitest/importMeta",
-      "vite/client",
-      "node",
-      "vitest"
-    ]
-  },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.js",
-    "**/*.jsx",
-    "next-env.d.ts",
-    "postcss.config.js",
-    "../../libs/shared/src/utils/features.ts",
-    "../../libs/shared/src/types/features.ts"
+    {
+      "path": "./tsconfig.spec.json"
+    }
   ],
-  "exclude": ["node_modules"]
+  "extends": "../../tsconfig.base.json"
 }

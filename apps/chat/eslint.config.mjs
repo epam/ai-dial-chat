@@ -1,63 +1,37 @@
+import nx from '@nx/eslint-plugin';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
 import baseConfig from '../../eslint.config.mjs';
 
 export default [
+  ...nx.configs['flat/react'],
   ...baseConfig,
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+    },
     settings: {
-      tailwindcss: {
-        config: './apps/chat/tailwind.config.js',
-        callees: ['classnames', 'classNames'],
+      react: {
+        version: 'detect',
       },
     },
     rules: {
-      '@next/next/no-html-link-for-pages': ['error', './apps/chat/src/pages'],
-      'react/jsx-boolean-value': ['error', 'never'],
-      'tailwindcss/no-custom-classname': 'error',
-      'tailwindcss/no-contradicting-classname': 'error',
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: ['react-i18next'],
-          patterns: ['../../**', '../../*', '../**', '!../*'],
-        },
-      ],
-      'no-restricted-globals': [
-        'warn',
-        {
-          name: 'localStorage',
-          message: 'Use DataService instead.',
-        },
-        {
-          name: 'sessionStorage',
-          message: 'Use DataService instead.',
-        },
-      ],
-      '@typescript-eslint/no-non-null-assertion': 'off',
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            "VariableDeclarator[init.callee.name='useFormContext'] > ObjectPattern > Property[key.name='watch']",
-          message:
-            "Do not destructure 'watch' from useFormContext. Use useWatch() hook instead for React Compiler compatibility.",
-        },
-        {
-          selector:
-            "VariableDeclarator[init.callee.name='useFormContext'] > ObjectPattern > Property[key.name='formState']",
-          message:
-            "Do not destructure 'formState' from useFormContext. Use useFormState() hook instead for React Compiler compatibility.",
-        },
-      ],
-    },
-  },
-  {
-    files: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
-    rules: {
-      'testing-library/await-async-queries': 'error',
-      'testing-library/no-await-sync-queries': 'error',
-      'testing-library/no-debugging-utils': 'warn',
-      'testing-library/no-dom-import': 'off',
+      'react/jsx-no-target-blank': 'warn',
+      'react/jsx-key': 'error',
+      'react/no-array-index-key': 'warn',
+      'react/no-children-prop': 'error',
+      'react/no-danger': 'warn',
+      'react/no-danger-with-children': 'error',
+      'react/no-deprecated': 'warn',
+      'react/no-unescaped-entities': 'warn',
+      'react/self-closing-comp': 'warn',
+      '@nx/enforce-module-boundaries': 'off',
+
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
 ];

@@ -1,80 +1,53 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.js
+node_modules
 
-# testing
-/coverage
-/test-results
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# next.js
-.next
-/out/
-/dist
-
-# production
-/build
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # misc
-.DS_Store
-*.pem
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+.claude/worktrees
+.claude/settings.local.json
+.nx/polygraph
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
 
 # local env files
 .env*.local
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-.idea
-pnpm-lock.yaml
-
-# overlay
-/public/overlay
-
-# generated at build time by next.config.js
-apps/chat/public/pdf.worker.min.mjs
-
-# editors
-.vscode
-.cursor
-.windsurf
-
-# AI tools
-.claude
-CLAUDE.local.md
-.agent
-.codemie
-.aider*
-.copilot
-.serena
-
-# e2e
-/apps/chat-e2e/test-results/
-/apps/chat-e2e/allure-results
-/apps/chat-e2e/allure-chat-results/
-/apps/chat-e2e/allure-overlay-results/
-/apps/chat-e2e/auth/
-/apps/chat-e2e/html-report/
-/apps/chat-e2e/chat-html-report/
-/apps/chat-e2e/overlay-html-report/
-/apps/chat-e2e/src/testData/export/
-/apps/chat-e2e/.env.local
-
-# coverage
-*/coverage
-
-# NX
-.nx
-tmp
-.rollup.cache

@@ -1,0 +1,11 @@
+@use 'tailwindcss/base';
+@use 'tailwindcss/components';
+@use 'tailwindcss/utilities';
+
+@layer base {
+  html,
+  body,
+  #root {
+    @apply bg-layer-1 text-primary size-full;
+  }
+}
