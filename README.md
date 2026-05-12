@@ -69,7 +69,7 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 
 ```bash
 git clone <repository-url>
-cd chat-2.0
+cd ai-dial-chat
 npm install
 ```
 
@@ -119,7 +119,7 @@ npm run start:api
 ## Project Structure
 
 ```
-chat-2.0/
+ai-dial-chat/
 ├── apps/
 │   ├── chat/                    # React frontend application
 │   │   ├── src/

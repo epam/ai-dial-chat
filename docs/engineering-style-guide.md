@@ -171,7 +171,7 @@ apps/chat/src/
 ### Current Structure
 
 ```
-chat-2.0/
+ai-dial-chat/
 ├── apps/
 │   ├── chat/                     # React 19 frontend (Vite, port 4207)
 │   └── chat-api/                 # NestJS 11 backend (port 3005)
