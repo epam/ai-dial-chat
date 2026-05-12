@@ -28,6 +28,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/conversation-input/src/index.ts',
       ),
+      '@epam/conversation-messages': path.resolve(
+        __dirname,
+        '../../libs/conversation-messages/src/index.ts',
+      ),
     },
   },
   build: {
