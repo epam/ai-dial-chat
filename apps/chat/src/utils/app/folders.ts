@@ -502,6 +502,14 @@ export const isFolderEmpty = ({
   );
 };
 
+export const getEmptyLeafFolderIds = (
+  folders: FolderInterface[],
+  entities: ShareEntity[],
+): string[] =>
+  folders
+    .filter(({ id }) => isFolderEmpty({ id, folders, entities }))
+    .map(({ id }) => id);
+
 export const canEditSharedFolderOrParent = (
   folders: FolderInterface[],
   folderId: string | undefined,

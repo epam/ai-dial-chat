@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
@@ -7,6 +7,7 @@ import { sortItemsVersions } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -114,6 +115,12 @@ export function ApplicationDetails({
     searchParams,
     widgetsSchemaIds,
   ]);
+
+  useEffect(() => {
+    if (entity.type === EntityType.Model) {
+      dispatch(ModelsActions.getUsageStats({ id: entity.id }));
+    }
+  }, [dispatch, entity.id, entity.type]);
 
   return (
     <Modal

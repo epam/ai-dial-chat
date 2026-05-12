@@ -20,6 +20,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
@@ -167,6 +168,7 @@ export const getUpdateApplicationGeneralInfoAction$ = (
   oldApplication: CustomApplicationModel,
   newApplication: CustomApplicationModel,
   isSaveAndExit?: boolean,
+  tabToOpen?: MarketplaceEditorSteps,
 ) => {
   return ApplicationService.get(newApplication.id).pipe(
     switchMap((application) => {
@@ -184,6 +186,7 @@ export const getUpdateApplicationGeneralInfoAction$ = (
         oldApplication,
         applicationData,
         isSaveAndExit,
+        tabToOpen,
       };
 
       if (newApplication.applicationTypeSchemaId) {
