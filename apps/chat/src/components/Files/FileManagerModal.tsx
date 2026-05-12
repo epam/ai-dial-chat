@@ -128,20 +128,20 @@ export const FileManagerModal = memo(
         for (const id of added) {
           if (folderPaths.has(id)) {
             dispatch(
-              FilesActions.setChosenFolder({
+              FilesActions.addChosenFolder({
                 folderId: id,
               }),
             );
           } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+            dispatch(FilesActions.addChosenFiles({ ids: [id] }));
           }
         }
 
         for (const id of removed) {
           if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
+            dispatch(FilesActions.removeChosenFolder({ folderId: id }));
           } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+            dispatch(FilesActions.removeChosenFiles({ ids: [id] }));
           }
         }
       },
