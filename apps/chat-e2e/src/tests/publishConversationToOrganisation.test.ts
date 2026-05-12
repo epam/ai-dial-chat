@@ -348,6 +348,7 @@ dialAdminTest(
           );
           await selectFolderManagerModal.getAddFolderButton().click();
           const subFolderInput = selectFolderManagerModalGrid.getRenameInput();
+          await baseAssertion.assertElementState(subFolderInput, 'visible');
           await baseAssertion.assertInputValue(subFolderInput, '');
           await baseAssertion.assertIsElementFocused(subFolderInput, true);
           await selectFolderManagerModalGrid.setFolderName(
