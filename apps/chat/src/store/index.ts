@@ -1,15 +1,12 @@
-import { useRouter } from 'next/router';
+import { NextRouter, useRouter } from 'next/router';
 
 import { BehaviorSubject, switchMap } from 'rxjs';
 
-import {
-  Action,
-  Store,
-  combineReducers,
-  configureStore,
-} from '@reduxjs/toolkit';
+import { Store, combineReducers, configureStore } from '@reduxjs/toolkit';
 
-import { Epic, EpicMiddleware, createEpicMiddleware } from 'redux-observable';
+import { EpicMiddleware, createEpicMiddleware } from 'redux-observable';
+
+import { AppAction, RootState } from '@/src/types/store';
 
 import { applicationSlice } from './application/application.reducers';
 import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducers';
@@ -42,8 +39,8 @@ interface NodeModuleWithHot extends NodeJS.Module {
 }
 
 const epic$ = new BehaviorSubject(rootEpic);
-const hotReloadingEpic = (...args: Parameters<Epic>) =>
-  epic$.pipe(switchMap((epic: Epic) => epic(...args)));
+const hotReloadingEpic = (...args: Parameters<typeof rootEpic>) =>
+  epic$.pipe(switchMap((epic) => epic(...args)));
 
 export const rootReducer = combineReducers({
   models: modelsSlice.reducer,
@@ -70,8 +67,12 @@ export const rootReducer = combineReducers({
 });
 
 const getMiddleware = (
-  //eslint-disable-next-line @typescript-eslint/no-explicit-any
-  epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
+  epicMiddleware: EpicMiddleware<
+    AppAction,
+    AppAction,
+    RootState,
+    { router: NextRouter }
+  >,
 ) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (getDefaultMiddleware: any) => {
@@ -87,7 +88,12 @@ export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {
   if (typeof window === 'undefined') {
-    const epicMiddleware = createEpicMiddleware({
+    const epicMiddleware = createEpicMiddleware<
+      AppAction,
+      AppAction,
+      RootState,
+      { router: NextRouter }
+    >({
       dependencies: { router: useRouter() },
     });
 
@@ -97,13 +103,18 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
       preloadedState,
       middleware,
     });
-    epicMiddleware.run(rootEpic as Epic);
+    epicMiddleware.run(rootEpic);
 
     return localStore;
   }
 
   if (!store) {
-    const epicMiddleware = createEpicMiddleware({
+    const epicMiddleware = createEpicMiddleware<
+      AppAction,
+      AppAction,
+      RootState,
+      { router: NextRouter }
+    >({
       dependencies: { router: useRouter() },
     });
 
