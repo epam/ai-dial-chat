@@ -129,7 +129,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] overflow-hidden text-nowrap border-l border-transparent hover:bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap border-l border-transparent hover:border-transparent hover:bg-accent-primary-alpha',
             (currentEntity.id === entity.id ||
               selectedBaseIdsSet?.has(entity.id)) &&
               '!border-accent-primary bg-accent-primary-alpha',
