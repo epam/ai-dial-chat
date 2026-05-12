@@ -24,7 +24,7 @@ import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Shared icon does not appear in chat model icon if to click on copy button.\n' +
     'Shared URL is copied using Ctrl+A, Ctrl+C\n' +
     'Share chat: tooltip for long chat name.\n' +
