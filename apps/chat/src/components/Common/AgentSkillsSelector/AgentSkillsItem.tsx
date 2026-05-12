@@ -70,7 +70,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
     }
   }, [dispatch, prompt, promptId, arePromptsUploaded]);
 
-  if (!arePromptsUploaded || !prompt) {
+  if (!arePromptsUploaded) {
     return (
       <div
         className="flex items-center justify-center py-4"
@@ -89,10 +89,10 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
         ? constructPath(PINNED_PROMPTS_SECTION_NAME, folderPath)
         : constructPath(RECENT_PROMPTS_SECTION_NAME, folderPath)
       : constructPath(SHARED_WITH_ME_SECTION_NAME, folderPath);
-  const displayName = prompt.name ?? promptId;
-  const isPromptLoaded = prompt.status === UploadStatus.LOADED;
+  const displayName = prompt?.name ?? promptId;
+  const isPromptLoaded = prompt?.status === UploadStatus.LOADED;
   const hasInvalidError =
-    isPromptLoaded && prompt.content && !isValidSkillContent(prompt.content);
+    isPromptLoaded && prompt?.content && !isValidSkillContent(prompt.content);
 
   return (
     <div
