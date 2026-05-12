@@ -34,6 +34,7 @@ import {
 import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
+import { AgentUsageStats } from '@/src/types/models';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
 import { DialStorage } from '@/src/types/storage';
@@ -413,6 +414,10 @@ export class ApiStorage implements DialStorage {
 
   getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
     return this._applicationApiStorage.getConfigurationSchema(applicationId);
+  }
+
+  getAgentLimits(id: string): Observable<AgentUsageStats> {
+    return this._applicationApiStorage.getAgentLimits(id);
   }
 
   // Toolsets
