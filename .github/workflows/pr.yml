@@ -19,4 +19,3 @@ jobs:
     with:
       node-version: 24
       maximize-build-space: true
-      ort-enabled: false
