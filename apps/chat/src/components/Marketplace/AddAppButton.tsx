@@ -42,6 +42,7 @@ export function AddAppButton() {
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
+  console.log('Application Type Schemas:', applicationTypeSchemas); // Debug log
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
   const hideCustomAppCreation = enabledFeatures.has(
     Feature.HideCustomAppCreation,
@@ -88,7 +89,7 @@ export function AddAppButton() {
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
-          name: t(schema.displayName),
+          name: schema.displayName,
           type: schema.displayName,
           dataQa: `add-${schema.displayName}`,
           display: true,
