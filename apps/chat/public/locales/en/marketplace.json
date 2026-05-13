@@ -169,7 +169,7 @@
   "Add Agent Skills": "Add Agent Skills",
   "Select": "Select",
   "skills": "skills",
-  "This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have \"name\" and \"description\" fields.": "This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have \"name\" and \"description\" fields."
+  "This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have \"name\" and \"description\" fields.": "This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have \"name\" and \"description\" fields.",
   "Token limits": "Token limits",
   "Minute": "Minute",
   "Weekly": "Weekly",
