@@ -39,6 +39,7 @@ import {
   isConversationId,
   isEntityIdExternal,
   isFolderId,
+  isMyEntity,
   isPromptId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -457,27 +458,39 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         invitationId: payload.invitationId,
       }).pipe(
         switchMap((data) => {
+          const acceptedIds = data.resources.filter(
+            (resource) =>
+              isPromptId(resource.url) ||
+              isConversationId(resource.url) ||
+              isApplicationId(resource.url),
+          );
+
+          const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
+          const permissions = acceptedIds[0].permissions;
+
+          if (isMyEntity({ id: acceptedId })) {
+            return of(
+              ShareActions.acceptShareInvitationSuccess({
+                acceptedId,
+                permissions,
+                isFolder: isFolderId(acceptedId),
+                isConversation: isConversationId(acceptedId),
+                isPrompt: isPromptId(acceptedId),
+                isApplication: isApplicationId(acceptedId),
+              }),
+            );
+          }
           return ShareService.shareAccept({
             invitationId: payload.invitationId,
           }).pipe(
             switchMap(() => {
-              const acceptedIds = data.resources.filter(
-                (resource) =>
-                  isPromptId(resource.url) ||
-                  isConversationId(resource.url) ||
-                  isApplicationId(resource.url),
-              );
-
-              const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
-              const permissions = acceptedIds[0].permissions;
-
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
                   permissions,
-                  isFolder: isFolderId(acceptedIds[0].url),
-                  isConversation: isConversationId(acceptedIds[0].url),
-                  isPrompt: isPromptId(acceptedIds[0].url),
+                  isFolder: isFolderId(acceptedId),
+                  isConversation: isConversationId(acceptedId),
+                  isPrompt: isPromptId(acceptedId),
                   isApplication: isApplicationId(acceptedId),
                 }),
               );
