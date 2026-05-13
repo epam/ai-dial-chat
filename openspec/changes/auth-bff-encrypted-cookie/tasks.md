@@ -1,0 +1,297 @@
+# Tasks: auth-bff-encrypted-cookie
+
+Implementation is split into five thin vertical slices. Each slice is independently testable and shippable. Work through slices in order.
+
+---
+
+## Slice 1 — Single provider (Keycloak), happy-path login + session + `/auth/me`
+
+### Dependencies
+
+- [ ] Install runtime dependencies
+  - Add to `apps/chat-api/package.json`:
+    - `openid-client: "~5.7.0"` (pin to v5 — v6 has a different functional API and does not match this design)
+    - `jose: "^5"`
+    - `cookie-parser: "^1"`
+  - Add to `apps/chat-api/package.json` devDependencies: `@types/cookie-parser: "^1"`
+  - Run `npm install` from workspace root
+
+### Environment config
+
+- [ ] Extend `apps/chat-api/src/config/environment.config.ts`
+  - Add `AUTH_SESSION_SECRET: string` (`@IsString()`, `@IsNotEmpty()`, `@Matches(/^[0-9a-f]{64}$/i)` — 32 bytes as hex)
+  - Add `AUTH_SESSION_PREV_SECRET?: string` (`@IsOptional()`, same hex pattern)
+  - Add `AUTH_SESSION_COOKIE_NAME: string` (`@IsOptional()`, default `__Host-chat.sess`)
+  - Add `AUTH_CALLBACK_BASE_URL: string` (`@IsUrl({ require_tld: false })`, `@IsNotEmpty()`)
+  - Add `AUTH_PROVIDERS: string` (`@IsString()`, `@IsNotEmpty()` — raw JSON, parsed in `ProviderRegistryService`)
+
+### Shared types
+
+- [ ] Create `libs/chat-shared/src/auth.types.ts`
+  - Export `UserProfile { sub: string; providerId: string; claims: Record<string, unknown> }`
+
+### Auth module scaffold
+
+> All files live directly under `apps/chat-api/src/auth/` (flat layout per `apps/chat-api/AGENTS.md` §1 — mirror of `apps/chat-api/src/themes/`). No `session/`, `providers/`, `refresh/`, `csrf/` sub-folders.
+
+- [ ] Create `apps/chat-api/src/auth/provider.types.ts`
+  - Export `ProviderConfig` class with `class-validator` decorators on each field (id, issuer, clientId, clientSecret, scope, audience?, rolesClaim?, adminRoles?, postLogoutRedirectUri) so that `AUTH_PROVIDERS` JSON can be structurally validated, not just JSON-parsed
+  - `id` MUST match `/^[a-z0-9][a-z0-9-]*$/` (allowlist — anti-injection in URL path segment)
+
+- [ ] Create `apps/chat-api/src/auth/session.types.ts`
+  - Export `SessionPayload` (includes `csrf: string` field — random per-session token used by the double-submit CSRF guard in Slice 5; populated at login/refresh) and `SessionUser` interfaces
+
+- [ ] Create `apps/chat-api/src/auth/express.d.ts`
+  - TypeScript module augmentation: `declare module 'express-serve-static-core' { interface Request { user?: SessionUser } }`
+  - Without this the controller / guard will not type-check when accessing `request.user`
+
+- [ ] Create `apps/chat-api/src/auth/keys.service.ts`
+  - Implement `KeysService` reading `AUTH_SESSION_SECRET` + `AUTH_SESSION_PREV_SECRET`
+  - Validate key length (32 bytes from hex) in `onModuleInit`; throw on invalid
+
+- [ ] Create `apps/chat-api/src/auth/session.service.ts`
+  - Implement `SessionService.encrypt(payload): Promise<string>` using `jose` `CompactEncrypt`, `alg: dir`, `enc: A256GCM`
+  - Implement `SessionService.decrypt(token): Promise<SessionPayload>` — try active key, fallback to previous key
+  - Throw `UnauthorizedException` on decryption failure
+  - Implement `SessionService.decryptFromRequest(req): Promise<SessionPayload>` — reads cookie, delegates to `decrypt` (shared by the local guard in Slice 1 and the global guard in Slice 2)
+
+- [ ] Create `apps/chat-api/src/auth/session.guard.ts` **scaffold only** for Slice 1
+  - Implement `CanActivate` minimal: read cookie → `SessionService.decryptFromRequest` → attach `SessionUser` to `request.user`
+  - Throw `UnauthorizedException` on missing/invalid cookie
+  - Used **locally** via `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` only (no `APP_GUARD` yet — that comes in Slice 2 together with refresh logic)
+
+- [ ] Create `apps/chat-api/src/auth/provider-registry.service.ts`
+  - Parse `AUTH_PROVIDERS` JSON in `onModuleInit`
+  - Validate each entry against `ProviderConfig` using `plainToInstance` + `validateSync` — throw on missing/invalid fields (not just on malformed JSON)
+  - Call `Issuer.discover(issuer)` for each provider; store `Client` instances
+  - Implement `getProvider(id)` (throws `NotFoundException`) and `listProviders()`
+
+- [ ] Create `apps/chat-api/src/auth/auth.controller.ts`
+  - Use `@Controller({ path: 'auth', version: '1' })` so routes resolve to `/api/v1/auth/*` (mandatory per `apps/chat-api/AGENTS.md` §2)
+  - Implement `GET /api/v1/auth/providers` → `listProviders()`
+  - Implement `GET /api/v1/auth/login/:providerId` → generate PKCE params, build `tx` cookie (`__Host-chat.tx`, `Path=/`, AEAD-encrypted), redirect to IdP
+  - Implement `GET /api/v1/auth/callback/:providerId` → exchange code, validate state, set session cookie (`__Host-chat.sess`), delete `tx` cookie, redirect to `/`
+  - Implement `GET /api/v1/auth/me` → return `UserProfile` from `request.user`; protect with `@UseGuards(SessionGuard)` (local)
+  - Annotate all endpoints with `@ApiOperation`, `@ApiResponse`, `@Throttle`
+  - Mark login/callback/providers with `@Public()` (no-op until Slice 2 wires `APP_GUARD`, but keeps the decorator surface stable)
+  - Validate `:providerId` via DTO + `@Matches(/^[a-z0-9][a-z0-9-]*$/)` to prevent URL-path injection and align with anti-traversal allowlist convention
+
+- [ ] Create `@Public()` decorator at `apps/chat-api/src/common/decorators/public.decorator.ts`
+  - Use `SetMetadata('isPublic', true)`
+
+- [ ] Create `apps/chat-api/src/auth/auth.module.ts`
+  - Declare all auth providers and controllers
+  - Provide `SessionGuard` so it can be `@UseGuards()`-applied locally
+  - Do NOT register `SessionGuard` as `APP_GUARD` yet (added in Slice 2)
+
+- [ ] Register `AuthModule` in `apps/chat-api/src/app/app.module.ts`
+
+- [ ] Update `apps/chat-api/src/main.ts`
+  - Add `app.use(cookieParser())`
+  - Add `app.enableVersioning({ type: VersioningType.URI })` — currently MISSING in the codebase; required by `apps/chat-api/AGENTS.md` §2 and a prerequisite for `/api/v1/auth/*` routes
+
+### Tests — Slice 1
+
+- [ ] Create `apps/chat-api/src/auth/keys.service.spec.ts`
+  - Test: valid 64-char hex key is accepted
+  - Test: invalid key length throws on module init
+  - Test: previous key is optional
+
+- [ ] Create `apps/chat-api/src/auth/session.service.spec.ts`
+  - Test: `encrypt` → `decrypt` round-trip returns original payload
+  - Test: tampered ciphertext throws `UnauthorizedException`
+  - Test: payload encrypted with previous key decrypts successfully
+  - Test: payload encrypted with unknown key throws `UnauthorizedException`
+
+- [ ] Create `apps/chat-api/src/auth/provider-registry.service.spec.ts`
+  - Mock `Issuer.discover` to avoid network calls
+  - Test: known provider id returns a `Client`
+  - Test: unknown provider id throws `NotFoundException`
+  - Test: malformed `AUTH_PROVIDERS` JSON throws on init
+  - Test: `AUTH_PROVIDERS` with a structurally invalid entry (e.g. missing `clientSecret` or `issuer`) throws on init via `validateSync` — not on first `Issuer.discover` call
+  - Test: provider id that violates the allowlist regex throws on init
+
+- [ ] Create `apps/chat-api/src/auth/auth.controller.spec.ts` (integration with supertest)
+  - Test: `GET /api/v1/auth/providers` returns provider list
+  - Test: `GET /api/v1/auth/login/keycloak` redirects to IdP URL and sets `__Host-chat.tx` cookie with `Path=/`, `HttpOnly`, `Secure`, `SameSite=Lax`
+  - Test: `GET /api/v1/auth/login/unknown` returns 404
+  - Test: `GET /api/v1/auth/login/%2e%2e` (path traversal attempt) returns 400 (DTO `@Matches` rejection)
+  - Test: `GET /api/v1/auth/callback/keycloak` with valid code + state sets `__Host-chat.sess` and redirects to `/`
+  - Test: `GET /api/v1/auth/callback/keycloak` with mismatched state returns 400
+  - Test: `GET /api/v1/auth/me` with valid session cookie returns `UserProfile`
+  - Test: `GET /api/v1/auth/me` without session cookie returns 401
+  - Test: `GET /api/v1/auth/me` with tampered cookie returns 401
+
+### Verification
+
+- [ ] Run `pnpm nx test chat-api`
+- [ ] Run `pnpm nx lint chat-api`
+- [ ] Run `pnpm nx build chat-api` (Slice 1 changes `main.ts` bootstrap — versioning + cookie-parser — so a build check is warranted)
+- [ ] Manual smoke: start API, complete Keycloak login in browser, verify `__Host-chat.sess` cookie is `HttpOnly`/`Secure`/`SameSite=Lax` in DevTools, verify `document.cookie` does not expose any token, verify `GET /api/v1/auth/me` returns the profile
+
+---
+
+## Slice 2 — Session guard (global) + transparent access-token refresh
+
+### Session guard
+
+- [ ] Extend `apps/chat-api/src/auth/session.guard.ts` (scaffolded in Slice 1)
+  - Honour `isPublic` metadata — skip cookie check
+  - If `at_exp < now + 60` call `RefreshService.refresh`
+  - Set refreshed cookie on response if refresh occurred
+  - Keep existing behaviour (decrypt → attach `SessionUser` → throw `UnauthorizedException` on failure)
+
+- [ ] Register `SessionGuard` as `APP_GUARD` in `apps/chat-api/src/auth/auth.module.ts`
+- [ ] Remove the local `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` (now redundant under the global guard)
+
+### Refresh service
+
+- [ ] Create `apps/chat-api/src/auth/refresh.service.ts`
+  - Implement `refresh(payload: SessionPayload): Promise<SessionPayload>`
+  - Per-pod `Map<sid, Promise>` mutex to prevent concurrent refresh races
+  - Call `client.refresh(rt)` from openid-client
+  - On `invalid_grant`: throw `UnauthorizedException`
+  - On success: return new `SessionPayload` with updated `at`, `at_exp`, and `rt`/`rt_exp` if rotated
+
+### Tests — Slice 2
+
+- [ ] Create `apps/chat-api/src/auth/session.guard.spec.ts`
+  - Test: missing cookie → 401
+  - Test: tampered cookie → 401
+  - Test: valid cookie with non-expired `at` → passes through, `request.user` set
+  - Test: valid cookie with near-expired `at` → calls `RefreshService.refresh`, sets new cookie
+  - Test: public route → no cookie required
+
+- [ ] Create `apps/chat-api/src/auth/refresh.service.spec.ts`
+  - Mock `openid-client` `client.refresh`
+  - Test: successful refresh returns new `SessionPayload`
+  - Test: `invalid_grant` throws `UnauthorizedException`
+  - Test: concurrent calls for same `sid` coalesce to a single upstream request
+
+- [ ] Add integration tests to `auth.controller.spec.ts`
+  - Test: protected route with valid session returns 200
+  - Test: protected route without session returns 401
+  - Test: protected route with near-expired `at` triggers refresh and returns new cookie
+
+### Verification
+
+- [ ] Run `pnpm nx test chat-api`
+- [ ] Run `pnpm nx lint chat-api`
+- [ ] Manual smoke: access `/api/v1/themes` without cookie → 401; with cookie → 200
+
+---
+
+## Slice 3 — Logout (local + federated)
+
+### Controller update
+
+- [ ] Add `POST /api/v1/auth/logout` to `apps/chat-api/src/auth/auth.controller.ts`
+  - Decrypt session cookie to get `providerId`
+  - Set cookie `Max-Age=0` to delete it
+  - Best-effort call to provider revocation endpoint
+  - Redirect to `end_session_endpoint` if provider supports it; otherwise redirect to `/`
+  - Mark with `@Public()` so guard doesn't block an expired session from being able to log out
+
+### Tests — Slice 3
+
+- [ ] Add logout tests to `auth.controller.spec.ts`
+  - Test: `POST /api/v1/auth/logout` clears session cookie (`Max-Age=0`)
+  - Test: `POST /api/v1/auth/logout` redirects to `end_session_endpoint` when provider supports it
+  - Test: `POST /api/v1/auth/logout` with no session cookie still responds 302 (graceful)
+
+### Verification
+
+- [ ] Run `pnpm nx test chat-api`
+- [ ] Manual smoke: log in, log out, verify cookie cleared, verify redirect to IdP logout
+
+---
+
+## Slice 4 — Second provider (Auth0)
+
+### Provider registry validation
+
+- [ ] Add Auth0 provider config to local `.env.local` for development
+- [ ] Verify `ProviderRegistryService` discovers Auth0 OIDC metadata without code changes
+- [ ] Verify `SessionPayload.providerId` correctly routes refresh and logout to Auth0
+
+### Tests — Slice 4
+
+- [ ] Add provider-registry integration test with a mocked Auth0 issuer
+  - Test: provider with `audience` claim is passed in token request
+  - Test: provider with custom `rolesClaim` extracts roles from correct JWT field
+  - Test: two providers registered simultaneously — requests route independently
+
+### Verification
+
+- [ ] Run `pnpm nx test chat-api`
+- [ ] Manual smoke: complete Auth0 login flow end-to-end
+
+---
+
+## Slice 5 — CSRF hardening, key rotation, CSP audit
+
+### CSRF guard
+
+- [ ] Create `apps/chat-api/src/auth/csrf.guard.ts`
+  - Double-submit CSRF token pattern
+  - Read `X-CSRF-Token` header; verify it matches the `csrf` field in the decrypted `SessionPayload` (field defined in Slice 1)
+  - Apply to all state-mutating endpoints (`POST`, `PUT`, `PATCH`, `DELETE`) except `/api/v1/auth/login`, `/api/v1/auth/callback`, `/api/v1/auth/logout`
+  - Expose CSRF token to SPA via a response header on `GET /api/v1/auth/me`
+
+### Key rotation support
+
+- [ ] Update `SessionService.decrypt` to try both active and previous key (already required in Slice 1, verify fully covered)
+- [ ] Document key rotation procedure in `docs/auth/auth-bff-encrypted-cookie.md` (update "Open Decisions" section 9)
+
+### Cookie size handling
+
+- [ ] Add size check in `AuthController.callback` after encrypting session
+  - If JWE > 3800 bytes: log warning and rebuild `SessionPayload` without `at` (refresh-only mode)
+  - Update `SessionGuard` to handle absent `at`: if missing, call `RefreshService.refresh` before attaching `SessionUser`
+
+### Security headers audit
+
+- [ ] Review `main.ts` `helmet` CSP directives
+  - Tighten `scriptSrc` to `'self'` only (remove `'unsafe-inline'`)
+  - Verify no inline scripts are used in the frontend before applying
+- [ ] Add `X-Frame-Options: DENY` (already set by helmet default; verify not overridden)
+
+### Tests — Slice 5
+
+- [ ] Create `apps/chat-api/src/auth/csrf.guard.spec.ts`
+  - Test: missing `X-CSRF-Token` on POST → 403
+  - Test: mismatched CSRF token → 403
+  - Test: correct CSRF token → passes
+  - Test: GET requests are not checked
+
+- [ ] Add key-rotation tests to `session.service.spec.ts`
+  - Test: rotating active key (old key → previous, new key → active): tokens encrypted with old key still decrypt
+
+### Frontend: CSRF token wiring
+
+- [ ] Add CSRF token to `UserContext` in `apps/chat/src/context/UserContext.tsx`
+  - Extract `X-CSRF-Token` response header from `GET /api/v1/auth/me`
+  - Include `X-CSRF-Token` header in all non-GET API calls via the `post`/`put`/`del` helpers in `apps/chat/src/server-api/base.ts`
+
+### Verification
+
+- [ ] Run `pnpm nx test chat-api`
+- [ ] Run `pnpm nx test chat`
+- [ ] Run `pnpm nx lint chat-api`
+- [ ] Run `pnpm nx lint chat`
+- [ ] Run `pnpm nx affected --target=lint --base=origin/development`
+
+---
+
+## Final cross-slice tasks
+
+- [ ] Update Swagger setup in `apps/chat-api/src/main.ts`
+  - Replace `.addBearerAuth()` with `.addCookieAuth('session')`
+  - Add `@ApiCookieAuth('session')` to all protected endpoints
+
+- [ ] Update `docs/auth/auth-bff-encrypted-cookie.md`
+  - Mark "Open Decisions" (section 9) with resolution for each decision taken
+  - Update status from `Proposal` to `Implemented`
+  - Replace the `NestJS Module Layout (Proposed)` block in §6 with the **flat layout actually shipped** (no `session/`, `providers/`, `csrf/`, `refresh/` sub-folders — see `apps/chat-api/AGENTS.md` §1 and the rewritten `design.md` "Module Structure")
+
+- [ ] Run full test suite and lint: `pnpm test` + `pnpm nx affected --target=lint --base=origin/development`
