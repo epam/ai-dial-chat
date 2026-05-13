@@ -1,4 +1,4 @@
-import MDEditor, { type PreviewType } from '@uiw/react-md-editor';
+import MDEditor, { ICommand, type PreviewType } from '@uiw/react-md-editor';
 import type { CSSProperties, FC } from 'react';
 
 import classNames from 'classnames';
@@ -16,6 +16,7 @@ export interface DialMarkdownEditorProps {
   theme?: EditorThemes;
   className?: string;
   placeholder?: string;
+  commands?: ICommand[];
 }
 
 // TODO: use from UI kit when MDEditor will be ready
@@ -27,6 +28,7 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
   theme = EditorThemes.dark,
   className,
   placeholder,
+  commands,
 }) => {
   return (
     <div
@@ -43,6 +45,7 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
         height={height}
         preview={preview}
         textareaProps={placeholder ? { placeholder } : undefined}
+        commands={commands}
         style={
           {
             backgroundColor: 'var(--bg-layer-2)',

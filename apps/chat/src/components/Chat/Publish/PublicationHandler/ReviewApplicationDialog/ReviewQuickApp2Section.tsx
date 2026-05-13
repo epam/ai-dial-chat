@@ -28,11 +28,16 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
+import {
+  DialMarkdownEditor,
+  EditorThemes,
+} from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 import { DocumentField } from './DocumentField';
@@ -54,6 +59,7 @@ const ReviewQuickApp2SectionView = ({
   const isCodeInterpreterEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
@@ -158,8 +164,17 @@ const ReviewQuickApp2SectionView = ({
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Instructions)}
-        value={config.orchestrator.system_prompt.content}
         valueClassName="grow break-all text-primary"
+        value={
+          <DialMarkdownEditor
+            value={config.orchestrator.system_prompt.content}
+            height={200}
+            theme={theme as EditorThemes}
+            preview="preview"
+            commands={[]}
+            className="rounded-[5px] border border-b-hover"
+          />
+        }
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Agents)}
