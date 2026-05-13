@@ -8,7 +8,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Dependencies
 
-- [ ] Install runtime dependencies
+- [x] Install runtime dependencies
   - Add to `apps/chat-api/package.json`:
     - `openid-client: "~5.7.0"` (pin to v5 — v6 has a different functional API and does not match this design)
     - `jose: "^5"`
