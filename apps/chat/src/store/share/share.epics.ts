@@ -89,6 +89,7 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
@@ -450,7 +451,7 @@ const shareFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const acceptInvitationEpic: AppEpic = (action$) =>
+const acceptInvitationEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitation.type),
     switchMap(({ payload }) =>
@@ -467,18 +468,59 @@ const acceptInvitationEpic: AppEpic = (action$) =>
 
           const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
           const permissions = acceptedIds[0].permissions;
+          const isFolder = isFolderId(acceptedIds[0].url);
+          const isConversation = isConversationId(acceptedId);
+          const isPrompt = isPromptId(acceptedId);
+          const isApplication = isApplicationId(acceptedId);
 
           if (isMyEntity({ id: acceptedId })) {
-            return of(
-              ShareActions.acceptShareInvitationSuccess({
-                acceptedId,
-                permissions,
-                isFolder: isFolderId(acceptedId),
-                isConversation: isConversationId(acceptedId),
-                isPrompt: isPromptId(acceptedId),
-                isApplication: isApplicationId(acceptedId),
-              }),
-            );
+            if (isApplication) {
+              return of(
+                ApplicationActions.get({
+                  applicationId: acceptedId,
+                  showCard: true,
+                }),
+              );
+            }
+
+            void router.push('/', undefined, { shallow: true });
+
+            if (isConversation) {
+              return isFolder
+                ? of(
+                    ConversationsActions.uploadConversationsFromMultipleFolders(
+                      {
+                        paths: [acceptedId],
+                        pathToSelectFrom: acceptedId,
+                      },
+                    ),
+                  )
+                : of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: [acceptedId],
+                    }),
+                  );
+            }
+
+            if (isPrompt) {
+              return concat(
+                isFolder
+                  ? of(
+                      PromptsActions.uploadPromptsFromMultipleFolders({
+                        paths: [acceptedId],
+                        pathToSelectFrom: acceptedId,
+                      }),
+                    )
+                  : of(PromptsActions.selectPrompt({ promptId: acceptedId })),
+                of(
+                  ConversationsActions.createNewConversations({
+                    names: [DEFAULT_CONVERSATION_NAME],
+                    headerCreateNew: false,
+                  }),
+                ),
+              );
+            }
+            return EMPTY;
           }
           return ShareService.shareAccept({
             invitationId: payload.invitationId,
@@ -488,10 +530,10 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
                   permissions,
-                  isFolder: isFolderId(acceptedId),
-                  isConversation: isConversationId(acceptedId),
-                  isPrompt: isPromptId(acceptedId),
-                  isApplication: isApplicationId(acceptedId),
+                  isFolder,
+                  isConversation,
+                  isPrompt,
+                  isApplication,
                 }),
               );
             }),
