@@ -18,7 +18,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Environment config
 
-- [ ] Extend `apps/chat-api/src/config/environment.config.ts`
+- [x] Extend `apps/chat-api/src/config/environment.config.ts`
   - Add `AUTH_SESSION_SECRET: string` (`@IsString()`, `@IsNotEmpty()`, `@Matches(/^[0-9a-f]{64}$/i)` — 32 bytes as hex)
   - Add `AUTH_SESSION_PREV_SECRET?: string` (`@IsOptional()`, same hex pattern)
   - Add `AUTH_SESSION_COOKIE_NAME: string` (`@IsOptional()`, default `__Host-chat.sess`)
@@ -27,7 +27,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Shared types
 
-- [ ] Create `libs/chat-shared/src/auth.types.ts`
+- [x] Create `libs/chat-shared/src/auth.types.ts`
   - Export `UserProfile { sub: string; providerId: string; claims: Record<string, unknown> }`
 
 ### Auth module scaffold
