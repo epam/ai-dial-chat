@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "0.10.0-dev.28",
+    "@epam/ai-dial-ui-kit": "0.10.0-dev.30",
     "@epam/pdf-highlighter-kit": "^0.0.13",
     "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
@@ -206,7 +206,8 @@
     "minimatch": "10.2.4",
     "serialize-javascript": "7.0.5",
     "picomatch": "4.0.4",
-    "lodash": "4.18.0"
+    "lodash": "4.18.0",
+    "protobufjs": "8.0.2"
   },
   "engines": {
     "node": ">=24.11.1",
