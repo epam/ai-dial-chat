@@ -16,9 +16,9 @@ import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -141,12 +141,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
                 entity={entity}
                 size={DEFAULT_ICON_SIZES.SMALL}
               />
-              <Tooltip
-                tooltip={getDisplayValue(entity)}
-                triggerClassName="truncate"
-              >
-                {getDisplayValue(entity)}
-              </Tooltip>
+              <DialEllipsisTooltip
+                text={getDisplayValue(entity)}
+                contentClassName="z-[1000]"
+              />
             </div>
           }
           disabled={readonly}
