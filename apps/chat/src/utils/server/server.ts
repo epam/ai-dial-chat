@@ -1,8 +1,12 @@
-import { NextApiRequest } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { GetTokenParams, JWT, getToken as getJWTToken } from 'next-auth/jwt';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
+
+import { DialAIError } from '@/src/types/error';
+
+import { errorsMessages } from '@/src/constants/errors';
 
 import { ApiUtils } from './api';
 
@@ -46,6 +50,22 @@ export class ServerUtils {
     } catch {
       return null;
     }
+  };
+
+  public static sendAPIError = (res: NextApiResponse, error: unknown) => {
+    const traceparent = res.getHeader('traceparent');
+
+    if (error instanceof DialAIError) {
+      return res.status(parseInt(error.code, 10) || 500).send({
+        message: error.message || errorsMessages.generalServer,
+        traceparent,
+      });
+    }
+
+    return res.status(500).send({
+      message: errorsMessages.generalServer,
+      traceparent,
+    });
   };
 }
 

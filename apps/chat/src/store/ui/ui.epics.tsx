@@ -249,7 +249,7 @@ const showErrorToastEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(UIActions.showErrorToast.type),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: ToastType.Error })),
+      of(UIActions.showToast({ ...payload, type: ToastType.Error })),
     ),
   );
 
@@ -313,10 +313,11 @@ const showToastEpic: AppEpic = (action$) =>
         message = responseMessage;
       }
 
-      const toastConfig: ToastOptions = {
+      const toastConfig: ToastOptions & { traceId?: string } = {
         id: 'toast',
         className: 'chat-toast',
         icon: payload.icon,
+        traceId: payload.traceId,
       };
 
       let content: Renderable = message;

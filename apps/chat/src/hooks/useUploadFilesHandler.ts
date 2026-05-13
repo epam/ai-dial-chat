@@ -83,12 +83,12 @@ export const useUploadFilesHandler = (
       const attachmentsAmount = selectedAttachmentsAmount + files.length;
       if (attachmentsAmount > maximumAttachmentsAmount) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.MaxAllowedAttachmentsNumber, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.MaxAllowedAttachmentsNumber, {
               maxAttachmentsAmount: maximumAttachmentsAmount,
               attachmentsAmount,
             }),
-          ),
+          }),
         );
         return;
       }
@@ -108,7 +108,7 @@ export const useUploadFilesHandler = (
         allowedTypes,
       );
 
-      if (errorMsg) dispatch(UIActions.showErrorToast(errorMsg));
+      if (errorMsg) dispatch(UIActions.showErrorToast({ message: errorMsg }));
       if (!validFiles?.length) return;
 
       const sameLevelFiles = allFiles.filter(

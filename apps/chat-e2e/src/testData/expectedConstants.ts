@@ -393,6 +393,11 @@ export const ExpectedConstants = {
     `Item copied successfully\u201C${name}\u201D copied to My Files`,
 };
 
+export const withTraceId = (message: string): RegExp => {
+  const escaped = message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escaped}Trace ID: [0-9a-f]+$`);
+};
+
 export enum Types {
   models = 'Models',
   assistants = 'Assistants',
