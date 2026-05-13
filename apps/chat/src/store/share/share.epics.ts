@@ -441,7 +441,9 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
               CommonI18nKeys.ShareApplicationWithPublicResourcesFailed;
           }
 
-          return of(ShareActions.shareFail({ message: failedPayload, traceId }));
+          return of(
+            ShareActions.shareFail({ message: failedPayload, traceId }),
+          );
         }),
       );
     }),
