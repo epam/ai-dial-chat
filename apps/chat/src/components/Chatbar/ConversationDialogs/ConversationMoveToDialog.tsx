@@ -55,12 +55,12 @@ function ConversationMoveToDialogComponent({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.ConversationNameExistsInThisFolder, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.ConversationNameExistsInThisFolder, {
               ns: Translation.Chat,
               name: moveToConversation.name,
             }),
-          ),
+          }),
         );
 
         return;

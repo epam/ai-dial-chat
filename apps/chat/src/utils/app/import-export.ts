@@ -493,7 +493,7 @@ export const getToastAction = (
   const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
 
   if (errorList.length > 0) {
-    return of(UIActions.showErrorToast(translate(errorMessage)));
+    return of(UIActions.showErrorToast({ message: translate(errorMessage) }));
   } else {
     return of(UIActions.showSuccessToast(translate(successMessage)));
   }
