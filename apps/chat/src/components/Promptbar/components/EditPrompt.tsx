@@ -106,21 +106,23 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
       if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
         dispatch(
-          UIActions.showErrorToast(
-            t(PromptBarI18nKeys.NewNameExistsInThisFolder, {
+          UIActions.showErrorToast({
+            message: t(PromptBarI18nKeys.NewNameExistsInThisFolder, {
               ns: Translation.PromptBar,
               newName,
             }),
-          ),
+          }),
         );
         return;
       }
 
       if (doesHaveDotsInTheEnd(newName)) {
         dispatch(
-          UIActions.showErrorToast(
-            t(PromptBarI18nKeys.UsingADotAtTheEndOfANameIsNotPermitted),
-          ),
+          UIActions.showErrorToast({
+            message: t(
+              PromptBarI18nKeys.UsingADotAtTheEndOfANameIsNotPermitted,
+            ),
+          }),
         );
         return;
       }

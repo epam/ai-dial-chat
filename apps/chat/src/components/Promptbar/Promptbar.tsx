@@ -81,12 +81,12 @@ export const Promptbar = () => {
             )
           ) {
             dispatch(
-              UIActions.showErrorToast(
-                t(PromptBarI18nKeys.ExistsAtRoot, {
+              UIActions.showErrorToast({
+                message: t(PromptBarI18nKeys.ExistsAtRoot, {
                   ns: Translation.PromptBar,
                   name: prompt.name,
                 }),
-              ),
+              }),
             );
 
             return;
