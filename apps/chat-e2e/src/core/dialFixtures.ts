@@ -202,8 +202,6 @@ import * as process from 'process';
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
 
-export const modelsFilePath = path.join(__dirname, '../../auth/models.json');
-
 const dialTest = test.extend<{
   beforeTestCleanup: string;
   dialHomePage: DialHomePage;

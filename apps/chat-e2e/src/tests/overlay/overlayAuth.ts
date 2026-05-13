@@ -1,7 +1,7 @@
 import config from '@/config/chat.playwright.config';
 import test from '@/src/core/baseFixtures';
-import { modelsFilePath } from '@/src/core/dialFixtures';
 import { overlayStateFilePath } from '@/src/core/dialOverlayFixtures';
+import { modelsFilePath } from '@/src/core/testPaths';
 import { API, OverlaySandboxUrls } from '@/src/testData';
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';

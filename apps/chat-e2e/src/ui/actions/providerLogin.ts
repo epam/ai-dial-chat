@@ -1,5 +1,5 @@
-import { modelsFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { modelsFilePath } from '@/src/core/testPaths';
 import { API } from '@/src/testData';
 import { LoginInterface } from '@/src/ui/actions/loginInterface';
 import { BasePage } from '@/src/ui/pages/basePage';

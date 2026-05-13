@@ -4,7 +4,7 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/chat/utils/app/models';
-import { modelsFilePath } from '@/src/core/dialFixtures';
+import { modelsFilePath } from '@/src/core/testPaths';
 import { ApplicationTypes, ModelTopic } from '@/src/testData';
 import * as fs from 'fs';
 

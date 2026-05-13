@@ -1,6 +1,7 @@
 import config from '../../config/chat.playwright.config';
 import { DebugAuth } from '../core/debugAuth';
-import { modelsFilePath, stateFilePath } from '../core/dialFixtures';
+import { stateFilePath } from '../core/dialFixtures';
+import { modelsFilePath } from '../core/testPaths';
 
 import test from '@/src/core/baseFixtures';
 import * as fs from 'fs';
