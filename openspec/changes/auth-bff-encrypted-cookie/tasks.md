@@ -92,18 +92,18 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Tests — Slice 1
 
-- [ ] Create `apps/chat-api/src/auth/keys.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/keys.service.spec.ts`
   - Test: valid 64-char hex key is accepted
   - Test: invalid key length throws on module init
   - Test: previous key is optional
 
-- [ ] Create `apps/chat-api/src/auth/session.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/session.service.spec.ts`
   - Test: `encrypt` → `decrypt` round-trip returns original payload
   - Test: tampered ciphertext throws `UnauthorizedException`
   - Test: payload encrypted with previous key decrypts successfully
   - Test: payload encrypted with unknown key throws `UnauthorizedException`
 
-- [ ] Create `apps/chat-api/src/auth/provider-registry.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/provider-registry.service.spec.ts`
   - Mock `Issuer.discover` to avoid network calls
   - Test: known provider id returns a `Client`
   - Test: unknown provider id throws `NotFoundException`
@@ -111,7 +111,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Test: `AUTH_PROVIDERS` with a structurally invalid entry (e.g. missing `clientSecret` or `issuer`) throws on init via `validateSync` — not on first `Issuer.discover` call
   - Test: provider id that violates the allowlist regex throws on init
 
-- [ ] Create `apps/chat-api/src/auth/auth.controller.spec.ts` (integration with supertest)
+- [x] Create `apps/chat-api/src/auth/auth.controller.spec.ts` (integration with supertest)
   - Test: `GET /api/v1/auth/providers` returns provider list
   - Test: `GET /api/v1/auth/login/keycloak` redirects to IdP URL and sets `__Host-chat.tx` cookie with `Path=/`, `HttpOnly`, `Secure`, `SameSite=Lax`
   - Test: `GET /api/v1/auth/login/unknown` returns 404

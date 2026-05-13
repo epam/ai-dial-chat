@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,13 +23,34 @@ describe('ThemeService', () => {
     }),
   };
 
+  const mockCacheManager = {
+    get: vi.fn(),
+    set: vi.fn(),
+  };
+
+  const mockFetchThatRejectsOnAbort = () =>
+    vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+        });
+      });
+    });
+
   beforeEach(async () => {
+    mockCacheManager.get.mockResolvedValue(undefined);
+    mockCacheManager.set.mockResolvedValue(undefined);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ThemeService,
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
         },
       ],
     }).compile();
@@ -107,19 +129,17 @@ describe('ThemeService', () => {
     it('should throw ServiceUnavailableException on timeout', async () => {
       vi.useFakeTimers();
 
-      global.fetch = vi.fn().mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => resolve({ ok: true } as any), 10000);
-          }),
-      );
+      global.fetch = mockFetchThatRejectsOnAbort();
 
       const promise = service.getThemes();
+      const exceptionExpectation = expect(promise).rejects.toThrow(
+        ServiceUnavailableException,
+      );
 
       // Fast-forward time to trigger timeout
-      vi.advanceTimersByTime(5000);
+      await vi.advanceTimersByTimeAsync(5000);
 
-      await expect(promise).rejects.toThrow(ServiceUnavailableException);
+      await exceptionExpectation;
       await expect(promise).rejects.toThrow('Theme service request timed out');
 
       vi.useRealTimers();
@@ -193,18 +213,16 @@ describe('ThemeService', () => {
     it('should throw ServiceUnavailableException on timeout', async () => {
       vi.useFakeTimers();
 
-      global.fetch = vi.fn().mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => resolve({ ok: true } as any), 10000);
-          }),
-      );
+      global.fetch = mockFetchThatRejectsOnAbort();
 
       const promise = service.getThemeIcon('icon.svg');
+      const exceptionExpectation = expect(promise).rejects.toThrow(
+        ServiceUnavailableException,
+      );
 
-      vi.advanceTimersByTime(5000);
+      await vi.advanceTimersByTimeAsync(5000);
 
-      await expect(promise).rejects.toThrow(ServiceUnavailableException);
+      await exceptionExpectation;
       await expect(promise).rejects.toThrow('Theme service request timed out');
 
       vi.useRealTimers();

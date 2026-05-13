@@ -1,9 +1,19 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  NotFoundException,
+  ServiceUnavailableException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeController } from './theme.controller';
 import { ThemeService } from './theme.service';
+
+// supertest is CJS; use require to avoid vite ESM interop issues
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const request = require('supertest') as (
+  app: Parameters<typeof import('supertest')>[0],
+) => import('supertest').SuperTest<import('supertest').Test>;
 
 describe('ThemeController (integration)', () => {
   let app: INestApplication;
@@ -65,19 +75,19 @@ describe('ThemeController (integration)', () => {
     });
 
     it('should return 404 when configuration is not found', async () => {
-      mockThemeService.getThemes.mockRejectedValue({
-        status: 404,
-        message: 'Theme configuration not found',
-      });
+      mockThemeService.getThemes.mockRejectedValue(
+        new NotFoundException('Theme configuration not found'),
+      );
 
       await request(app.getHttpServer()).get('/themes').expect(404);
     });
 
     it('should return 503 when service is unavailable', async () => {
-      mockThemeService.getThemes.mockRejectedValue({
-        status: 503,
-        message: 'Theme service is currently unavailable',
-      });
+      mockThemeService.getThemes.mockRejectedValue(
+        new ServiceUnavailableException(
+          'Theme service is currently unavailable',
+        ),
+      );
 
       await request(app.getHttpServer()).get('/themes').expect(503);
     });
@@ -93,7 +103,7 @@ describe('ThemeController (integration)', () => {
         .expect(200)
         .expect('Content-Type', /image\/svg\+xml/);
 
-      expect(response.text).toBe(mockSvg);
+      expect(response.text ?? response.body?.toString()).toBe(mockSvg);
       expect(themeService.getThemeIcon).toHaveBeenCalledWith('icon-light.svg');
     });
 
@@ -120,10 +130,9 @@ describe('ThemeController (integration)', () => {
     });
 
     it('should return 404 when icon is not found', async () => {
-      mockThemeService.getThemeIcon.mockRejectedValue({
-        status: 404,
-        message: 'Theme icon not found',
-      });
+      mockThemeService.getThemeIcon.mockRejectedValue(
+        new NotFoundException('Theme icon not found'),
+      );
 
       await request(app.getHttpServer())
         .get('/themes/icon?iconName=missing.svg')

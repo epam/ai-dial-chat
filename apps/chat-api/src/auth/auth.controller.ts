@@ -123,7 +123,9 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const txToken: string | undefined = (req.cookies as Record<string, string>)[TX_COOKIE];
+    const txToken: string | undefined = (
+      req.cookies as Record<string, string> | undefined
+    )?.[TX_COOKIE];
     if (!txToken) {
       throw new BadRequestException('Missing transaction cookie');
     }
