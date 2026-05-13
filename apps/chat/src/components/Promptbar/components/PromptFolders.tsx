@@ -161,12 +161,12 @@ const PromptFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsAtRoot, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsAtRoot, {
               ns: Translation.Chat,
               name: folder.name,
             }),
-          ),
+          }),
         );
 
         return;

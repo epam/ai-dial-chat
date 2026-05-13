@@ -6,16 +6,16 @@ import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIError } from '@/src/types/error';
 
-import { errorsMessages } from '@/src/constants/errors';
-
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -27,7 +27,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { id } = req.query;
     if (!id || typeof id !== 'string') {
-      return res.status(400).json({ error: 'Missing or invalid schema ID' });
+      throw new DialAIError('Missing or invalid schema ID', 400, req);
     }
 
     const detailedSchemaUrl = `${constructPath(
@@ -42,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     if (detailedSchemaResponse.status === 404) {
-      return res.status(404).json({ error: 'Schema not found' });
+      throw new DialAIError('Schema not found', 404, req);
     } else if (!detailedSchemaResponse.ok) {
       const serverErrorMessage = await detailedSchemaResponse.text();
       throw new DialAIError(
@@ -58,7 +58,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json(json);
   } catch (error) {
     logger.error(error);
-    return res.status(500).json(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 
