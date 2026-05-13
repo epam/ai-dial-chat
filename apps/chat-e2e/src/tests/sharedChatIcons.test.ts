@@ -10,6 +10,7 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
+  withTraceId,
 } from '@/src/testData';
 import {
   Colors,
@@ -247,7 +248,9 @@ dialTest(
         const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);
+          .toMatch(
+            withTraceId(ExpectedConstants.shareInviteAcceptanceFailureMessage),
+          );
       },
     );
 
