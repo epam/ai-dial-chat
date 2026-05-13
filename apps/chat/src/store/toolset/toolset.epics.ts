@@ -162,11 +162,11 @@ const getToolsetsEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error('Failed to get toolsets', err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.ToolsetsGetFailed, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.ToolsetsGetFailed, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       ),
@@ -203,12 +203,12 @@ const createToolsetEpic: AppEpic = (action$) =>
             catchError((err) => {
               console.error('Failed to get toolset: ', err);
               return of(
-                UIActions.showErrorToast(
-                  translate(CommonI18nKeys.ToolsetGetFailed, {
+                UIActions.showErrorToast({
+                  message: translate(CommonI18nKeys.ToolsetGetFailed, {
                     ns: Translation.Common,
                     name: data.id,
                   }),
-                ),
+                }),
               );
             }),
           ),
@@ -236,13 +236,14 @@ const createToolsetFailedEpic: AppEpic = (action$) =>
     ofType(ToolsetActions.createToolsetFailed.type),
     switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          payload?.message ??
+        UIActions.showErrorToast({
+          message:
+            payload?.message ??
             translate(CommonI18nKeys.CreateFailed, {
               ns: Translation.Common,
               entity: 'toolset',
             }),
-        ),
+        }),
       );
     }),
   );
@@ -277,12 +278,12 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
       }
 
       return of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.ToolsetGetFailed, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.ToolsetGetFailed, {
             ns: Translation.Common,
             name: payload?.id ?? '...',
           }),
-        ),
+        }),
       );
     }),
   );
@@ -316,11 +317,14 @@ const updateToolsetEpic: AppEpic = (action$) =>
                     success: false as const,
                     actions: [
                       ...failActions,
-                      UIActions.showErrorToast(
-                        translate(CommonI18nKeys.ToolsetAlreadyExists, {
-                          ns: Translation.Common,
-                        }),
-                      ),
+                      UIActions.showErrorToast({
+                        message: translate(
+                          CommonI18nKeys.ToolsetAlreadyExists,
+                          {
+                            ns: Translation.Common,
+                          },
+                        ),
+                      }),
                     ],
                   });
                 }
@@ -329,11 +333,11 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   success: false as const,
                   actions: [
                     ...failActions,
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.ToolsetMoveFailed, {
+                    UIActions.showErrorToast({
+                      message: translate(CommonI18nKeys.ToolsetMoveFailed, {
                         ns: Translation.Common,
                       }),
-                    ),
+                    }),
                   ],
                 });
               }),
@@ -351,12 +355,12 @@ const updateToolsetEpic: AppEpic = (action$) =>
                 switchMap((savedUpdatedToolset) => {
                   if (!savedUpdatedToolset) {
                     return of(
-                      UIActions.showErrorToast(
-                        translate(CommonI18nKeys.ToolsetGetFailed, {
+                      UIActions.showErrorToast({
+                        message: translate(CommonI18nKeys.ToolsetGetFailed, {
                           ns: Translation.Common,
                           name: updatedToolset.id,
                         }),
-                      ),
+                      }),
                     );
                   }
 
@@ -409,14 +413,14 @@ const updateToolsetEpic: AppEpic = (action$) =>
               console.error('Failed to update toolset', err.message);
               return concat(
                 of(
-                  UIActions.showErrorToast(
-                    translate(
+                  UIActions.showErrorToast({
+                    message: translate(
                       err.status === 400
                         ? CommonI18nKeys.ToolsetOAuthNotSupported
                         : CommonI18nKeys.ToolsetUpdateFailed,
                       { ns: Translation.Common },
                     ),
-                  ),
+                  }),
                 ),
                 iif(
                   () => err.status === 400,
@@ -565,13 +569,13 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.RemoveFromMarketplaceFailed, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.RemoveFromMarketplaceFailed, {
                 ns: Translation.Common,
                 entityType:
                   payload.references.length > 1 ? 'toolsets' : 'toolset',
               }),
-            ),
+            }),
           );
         }),
       );
@@ -635,13 +639,13 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
         catchError((error) => {
           console.error(error);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.AddToMarketplaceFailed, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.AddToMarketplaceFailed, {
                 ns: Translation.Common,
                 entityType:
                   payload.references.length > 1 ? 'toolsets' : 'toolset',
               }),
-            ),
+            }),
           );
         }),
       );
@@ -682,11 +686,11 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.deleteToolsetFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.ToolsetDeleteFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.ToolsetDeleteFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -927,11 +931,11 @@ const loginToolsetFailEpic: AppEpic = (action$) =>
     ofType(ToolsetActions.logInToolsetFail.type),
     filter(({ payload }) => !payload?.skipToastMessage),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.ToolsetSignInFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.ToolsetSignInFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -986,11 +990,11 @@ const logOutToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logOutToolsetFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.ToolsetSignOutFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.ToolsetSignOutFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 

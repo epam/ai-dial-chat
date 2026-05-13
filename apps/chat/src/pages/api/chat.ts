@@ -19,6 +19,7 @@ import {
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
 import { getFullToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -33,6 +34,7 @@ import { Message, Role } from '@epam/ai-dial-shared';
 const KEEPALIVE_INTERVAL_MS = 15_000;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
