@@ -17,8 +17,6 @@
 
 The chosen pattern is a **Stateless Backend-for-Frontend (BFF)**: NestJS performs the full OIDC dance, encrypts the resulting tokens with an AEAD cipher, and sends them back to the browser as `HttpOnly` cookies. No tokens are ever exposed to JavaScript, and no server-side session store is needed.
 
-> **Diagrams:** all diagrams below are kept as standalone Mermaid sources in [`./auth-diagrams/`](./auth-diagrams/) and embedded here as SVGs. If the images do not render in your viewer, generate them once with `npm run docs:diagrams` (or use the `mmdc` command in the [diagrams index](./auth-diagrams/README.md)). The `.mmd` files are the single source of truth — edit them, regenerate SVGs, commit both.
-
 ---
 
 ## 2. High-Level Architecture
