@@ -109,7 +109,7 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2 hover:border-primary"
         data-qa="change-source-files-path-container"
       >
-        <div className="flex w-full justify-between truncate whitespace-pre break-all">
+        <div className="flex h-[20px] w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
             tooltip={getIdWithoutRootPathSegments(value ?? '')}
             contentClassName="break-all"
