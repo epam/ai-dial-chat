@@ -1,12 +1,11 @@
 import { LocalStorageManager } from '@/src/core/localStorageManager';
-import { modelsFilePath } from '@/src/core/testPaths';
+import { writeModelsFile } from '@/src/core/testPaths';
 import { API } from '@/src/testData';
 import { LoginInterface } from '@/src/ui/actions/loginInterface';
 import { BasePage } from '@/src/ui/pages/basePage';
 import { LoginPage } from '@/src/ui/pages/loginPage';
 import { BaseElement } from '@/src/ui/webElements';
 import { TestInfo } from '@playwright/test';
-import * as fs from 'fs';
 
 export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
   public loginPage: LoginPage;
@@ -74,11 +73,7 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
       options,
     );
     if (options?.setEntitiesEnvVars) {
-      fs.writeFileSync(
-        modelsFilePath,
-        retrievedResponses.get(API.modelsHost) ?? '[]',
-        'utf-8',
-      );
+      writeModelsFile(retrievedResponses.get(API.modelsHost) ?? '[]');
       process.env.THEMES = retrievedResponses.get(API.themesListingHost);
       process.env.APP_SCHEMAS = retrievedResponses.get(API.appSchemasHost);
       process.env.RECENT_MODELS =
