@@ -37,12 +37,15 @@ context: |
   - Frontend dev: `pnpm start` (localhost:4207, proxies /api → localhost:3005)
   - Backend dev:  `pnpm start:api` (localhost:3005)
   - Both:         `pnpm start:all`
-  - Build:        `pnpm nx affected --target=build --base=origin/main`
-  - Lint:         `pnpm nx affected --target=lint --base=origin/main`
-  - Typecheck:    `pnpm nx affected --target=typecheck --base=origin/main`
-  - Tests:        `pnpm nx affected --target=test --base=origin/main`
+  - Affected build / lint / typecheck / test: `pnpm nx affected --target=<t> --base=origin/development`
+  - Single-project (preferred for slice verification, see AGENTS.md per project):
+    - `pnpm nx test chat-api`
+    - `pnpm nx lint chat-api`
+    - `pnpm nx build chat-api`
   - All tests:    `pnpm test`
   - Dep graph:    `pnpm graph`
+
+  Default base branch for `nx affected` is `origin/development`. Do NOT use `origin/main`.
 
   ## Architecture
 
@@ -61,14 +64,16 @@ context: |
   - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
 
   ### Backend (apps/chat-api)
-  - Entry: apps/chat-api/src/main.ts — registers Helmet, ValidationPipe, CORS, Swagger, serves
-    compiled frontend static files from dist/apps/chat
-  - Modules: apps/chat-api/src/modules/{domain}/ — one folder per domain
-    - theme.controller.ts, theme.service.ts, theme.module.ts, dto/ — reference pattern
+  - Entry: apps/chat-api/src/main.ts — registers Helmet, ValidationPipe, CORS, URI versioning,
+    Swagger; serves compiled frontend static files from dist/apps/chat
+  - Domains: apps/chat-api/src/{domain}/ — one folder per domain, NO `modules/` wrapper
+    (e.g. apps/chat-api/src/themes/theme.controller.ts, theme.service.ts, theme.module.ts, dto/)
+  - Business endpoints are URI-versioned at /api/v{N}/{resource}; infrastructure endpoints
+    (health, metrics) are exempt and stay at /api/{resource}
   - Config: apps/chat-api/src/config/environment.config.ts — class-validator env validation
   - Common: apps/chat-api/src/common/interceptors/ — MetricsInterceptor is the reference pattern
-  - Services use Logger(ClassName), ConfigService<EnvironmentVariables>, and @Inject(CACHE_MANAGER)
-  - Controllers are thin: validate input via DTO, delegate to service, return result directly
+  - Full NestJS conventions live in apps/chat-api/AGENTS.md — read it before designing or
+    implementing anything inside apps/chat-api/**
 
   ### Libraries
   - libs/chat-shared/  — shared TypeScript interfaces and types only (no logic)
@@ -115,12 +120,10 @@ rules:
     - Custom hooks go in apps/chat/src/hooks/ — one hook per file, JSDoc required explaining WHY
     - Lazy-load every route component with React.lazy + Suspense — always provide a fallback
     - For named exports from lazy-loaded libs: import the module then return { default: module.X }
-    - NestJS controllers are thin — no business logic; annotate every endpoint with @ApiOperation,
-      @ApiResponse (all possible status codes), and @Throttle
-    - NestJS services use private readonly logger = new Logger(ClassName.name)
-    - Every DTO field has both a class-validator decorator and @ApiProperty
-    - Filenames that accept user input (icons, paths) must use @Matches with a strict allowlist
-      regex to prevent path traversal
+    - For anything under apps/chat-api/**, follow apps/chat-api/AGENTS.md as the source of
+      truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
+      DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).
+      Do NOT duplicate or paraphrase those rules in the design — reference the section.
     - Name handler functions with the handle prefix in React components
       (e.g. handleSend, handleScroll, handleKeyDown)
     - Use semantic HTML elements (button, nav, main, section) before div/span
@@ -130,17 +133,26 @@ rules:
   specs:
     - Specify which context or hook owns the state being introduced
     - Define the API endpoint shape if the feature requires a new backend endpoint
-      (method, path, request body, response body, error codes)
+      (HTTP method, full versioned path like /api/v1/{resource} for business endpoints,
+      request body, response body, error codes including 4xx and 5xx)
     - Include i18n key names for all new user-visible strings
     - Flag any memoisation requirements (useMemo, useCallback, React.memo)
     - Define accessibility requirements: keyboard navigation, ARIA roles/labels
-    - Specify rate limiting requirements for new NestJS endpoints
+    - Specify rate limiting requirements for new NestJS endpoints (per-route @Throttle
+      when stricter than the global default)
     - Include cache TTL and invalidation strategy for new cached data
+      (cache key naming: <domain>:<resource>[:<param>])
 
   tasks:
     - Reference specific file paths — never vague descriptions like "update the service"
-    - Follow the file location conventions: context in context/, hooks in hooks/,
-      API helpers in server-api/, NestJS domains in modules/{domain}/
+    - Follow the file location conventions:
+      - Frontend: context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
+        API helpers in apps/chat/src/server-api/
+      - Backend: domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
+        see apps/chat-api/AGENTS.md §1 for the full layout
+    - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
+      AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
+      conventions of that project
     - Require unit tests for all new hooks, utilities, and services as a dedicated task
     - Require integration tests (supertest) for all new NestJS controllers as a dedicated task
     - Tests co-locate with source: ComponentName.test.tsx next to ComponentName.tsx,
@@ -150,3 +162,5 @@ rules:
     - Do not add manual testing tasks
     - Add i18n keys to en.json as a dedicated task when new strings are introduced
     - Run lint + typecheck + tests as a final verification task after all implementation tasks
+      using `pnpm nx <target> chat-api` for single-project checks or
+      `pnpm nx affected --target=<t> --base=origin/development` for affected sets

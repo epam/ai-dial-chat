@@ -58,6 +58,14 @@ Implement tasks from an OpenSpec change.
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
+   **Also read per-project conventions.** After reading the openspec context files,
+   scan the remaining tasks for paths under `apps/<app>/**` or `libs/<lib>/**`. For
+   every such project that contains an `AGENTS.md` at its root (e.g.
+   `apps/chat-api/AGENTS.md`), read that `AGENTS.md` and treat it as the authoritative
+   source for that project's conventions. If a task contradicts the project's
+   `AGENTS.md`, pause and flag it to the user before implementing — do not silently
+   override either the spec or the project conventions.
+
 5. **Show current progress**
 
    Display:
@@ -144,8 +152,13 @@ What would you like to do?
 
 - Keep going through tasks until done or blocked
 - Always read context files before starting (from the apply instructions output)
+- Always read per-project `AGENTS.md` files (e.g. `apps/chat-api/AGENTS.md`) for any
+  project touched by the remaining tasks. They are the source of truth for that
+  project's conventions and override paraphrased rules from `openspec/config.yaml`
 - If task is ambiguous, pause and ask before implementing
 - If implementation reveals issues, pause and suggest artifact updates
+- If a task and a project `AGENTS.md` contradict each other, pause and flag it —
+  do not silently override either
 - Keep code changes minimal and scoped to each task
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
