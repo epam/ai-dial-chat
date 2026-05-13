@@ -1,7 +1,15 @@
-import MDEditor, { ICommand, type PreviewType } from '@uiw/react-md-editor';
+import type { ICommand, PreviewType } from '@uiw/react-md-editor';
 import type { CSSProperties, FC } from 'react';
 
+import dynamic from 'next/dynamic';
+
 import classNames from 'classnames';
+
+// Dynamic import to avoid SSR issues with Markdown Editor
+const MDEditor = dynamic(
+  () => import('@uiw/react-md-editor').then((mod) => mod),
+  { ssr: false },
+);
 
 export enum EditorThemes {
   dark = 'dark',
