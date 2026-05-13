@@ -299,7 +299,9 @@ export const ChangePathDialog = ({
 
     if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
-        UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoreNestedFolders)),
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.NotAllowedMoreNestedFolders),
+        }),
       );
       return;
     }

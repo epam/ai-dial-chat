@@ -5,6 +5,7 @@ import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   getEntityBucket,
   getIdWithoutRootPathSegments,
@@ -203,12 +204,17 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           }),
           catchError((err) => {
             console.error(err);
+            const { traceId } = parseApiError(err);
             return of(
-              UIActions.showErrorToast(
-                translate(CommonI18nKeys.CannotFetchApplicationSchema, {
-                  ns: Translation.Common,
-                }),
-              ),
+              UIActions.showErrorToast({
+                message: translate(
+                  CommonI18nKeys.CannotFetchApplicationSchema,
+                  {
+                    ns: Translation.Common,
+                  },
+                ),
+                traceId,
+              }),
             );
           }),
         );

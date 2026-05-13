@@ -62,11 +62,11 @@ const getFileTextContentEpic: AppEpic = (action$) =>
           console.error(error);
           return concat(
             of(
-              UIActions.showErrorToast(
-                translate(ChatI18nKeys.FileContentRequestFailed, {
+              UIActions.showErrorToast({
+                message: translate(ChatI18nKeys.FileContentRequestFailed, {
                   ns: Translation.Chat,
                 }),
-              ),
+              }),
             ),
             of(CodeEditorActions.getFileTextContentFail()),
           );
@@ -206,11 +206,11 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
         catchError((error) => {
           console.error(error);
           return of(
-            UIActions.showErrorToast(
-              translate(ChatI18nKeys.FileContentUpdateFailed, {
+            UIActions.showErrorToast({
+              message: translate(ChatI18nKeys.FileContentUpdateFailed, {
                 ns: Translation.Chat,
               }),
-            ),
+            }),
           );
         }),
       );
