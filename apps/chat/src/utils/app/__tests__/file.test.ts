@@ -4,6 +4,7 @@ import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 
 import {
   formatFileSize,
+  getNestedEmptyFolderIdsForChosenParent,
   isAbsoluteUrl,
   prepareFileName,
   withoutFileManagerPlaceholderByName,
@@ -123,6 +124,35 @@ describe('File utility methods', () => {
 
     it('keeps file names with dot after sanitization', () => {
       expect(prepareFileName('test..json')).toBe('test..json');
+    });
+  });
+
+  describe('getNestedEmptyFolderIdsForChosenParent', () => {
+    it('maps matching empty folder ids to trailing-slash markers under parent', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['bucket/files/f1', 'bucket/files/f1/sub'],
+          'bucket/files/f1',
+        ),
+      ).toEqual(['bucket/files/f1/', 'bucket/files/f1/sub/']);
+    });
+
+    it('returns empty array when no empty folder is under parent', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['bucket/files/other'],
+          'bucket/files/f1',
+        ),
+      ).toEqual([]);
+    });
+
+    it('includes descendants when parent matches path prefix', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['root/a', 'root/a/nested'],
+          'root',
+        ),
+      ).toEqual(['root/a/', 'root/a/nested/']);
     });
   });
 });

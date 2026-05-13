@@ -117,6 +117,9 @@ export const ChatInputMessage = Inversify.register(
     const isReplay = useAppSelector(
       ConversationsSelectors.selectIsReplaySelectedConversations,
     );
+    const isPlayback = useAppSelector(
+      ConversationsSelectors.selectIsPlaybackSelectedConversations,
+    );
     const canAttachFiles = useAppSelector(
       ConversationsSelectors.selectCanAttachFile,
     );
@@ -589,6 +592,11 @@ export const ChatInputMessage = Inversify.register(
       [isDisabled, isAsrMode, messageIsStreaming],
     );
 
+    const isMicHidden = useMemo(
+      () => isPlayback || isReplay || !canRecordAudio,
+      [isPlayback, isReplay, canRecordAudio],
+    );
+
     useEffect(() => {
       const wasStreaming = prevStreamingRef.current;
       prevStreamingRef.current = messageIsStreaming;
@@ -664,7 +672,7 @@ export const ChatInputMessage = Inversify.register(
               dataQa="transcribing-overlay"
             />
           )}
-          {canRecordAudio && (
+          {!isMicHidden && (
             <MicrophoneButton
               ref={micButtonRef}
               isRecording={isRecording}

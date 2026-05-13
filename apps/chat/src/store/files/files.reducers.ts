@@ -4,14 +4,19 @@ import {
   addTrailingSlashIfAbsent,
   combineEntities,
 } from '@/src/utils/app/common';
-import { constructPath, getFileWithType } from '@/src/utils/app/file';
+import {
+  constructPath,
+  getFileWithType,
+  getNestedEmptyFolderIdsForChosenParent,
+} from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getEmptyLeafFolderIds,
   getFolderFromId,
   getNextDefaultName,
   getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
-  isFolderEmpty,
+  getSelectedEntitiesByFolderId,
   renameFolderAndMoveEntity,
   updateMovedEntityId,
   updateMovedFolderId,
@@ -762,14 +767,33 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{ files: DialFile[]; reviewBuckets?: string[] }>,
     ) => {
-      //remove sharedWithMe files from state except those on review to have the latest state from API
-      const filteredFiles = state.files.filter(
-        (file) =>
-          !file.sharedWithMe ||
+      const sharedWithMeRootIds = new Set(state.sharedWithMeFilesAndFoldersIds);
+      const belongsToActiveSharedRoot = (file: DialFile) =>
+        Array.from(sharedWithMeRootIds).some((rootId) =>
+          file.id.startsWith(`${rootId}/`),
+        );
+
+      // Keep nested shared descendants under active roots, but always replace root shared items
+      // with latest API payload to avoid stale root-level data after tab switches.
+      const filteredFiles = state.files.filter((file) => {
+        if (!file.sharedWithMe) {
+          return true;
+        }
+
+        if (
           payload.reviewBuckets?.some(
             (reviewBucket) => getEntityBucket(file) === reviewBucket,
-          ),
-      );
+          )
+        ) {
+          return true;
+        }
+
+        if (file.isRootSharedItem) {
+          return false;
+        }
+
+        return belongsToActiveSharedRoot(file);
+      });
       state.files = combineEntities(payload.files, filteredFiles);
     },
     resetAllFoldersStatus: (state) => {
@@ -780,8 +804,16 @@ export const filesSlice = createSlice({
       }));
     },
 
-    setChosenFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
-      state.chosenFileIds = xor(state.chosenFileIds, payload.ids);
+    addChosenFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
+      state.chosenFileIds = uniq(state.chosenFileIds.concat(payload.ids));
+    },
+    removeChosenFiles: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenFileIds = state.chosenFileIds.filter(
+        (id) => !payload.ids.includes(id),
+      );
     },
     resetChosenFiles: (state) => {
       state.chosenFileIds = [];
@@ -826,19 +858,17 @@ export const filesSlice = createSlice({
       state.chosenEmptyFoldersIds = emptyFolderIds;
       state.chosenFileIds = fileIdsToSelect;
     },
-    setChosenFolder: (
+
+    addChosenFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string }>,
     ) => {
       const { folderId } = payload;
-      const emptyFolderIds = state.folders
-        .filter(({ id }) =>
-          isFolderEmpty({ id, folders: state.folders, entities: state.files }),
-        )
-        .map(({ id }) => id);
+      const emptyFolderIds = getEmptyLeafFolderIds(state.folders, state.files);
 
       if (emptyFolderIds.includes(folderId)) {
-        state.chosenEmptyFoldersIds = xor(state.chosenEmptyFoldersIds, [
+        state.chosenEmptyFoldersIds = uniq([
+          ...state.chosenEmptyFoldersIds,
           folderId,
         ]);
         return;
@@ -851,22 +881,61 @@ export const filesSlice = createSlice({
         emptyFolderIds,
         state.chosenEmptyFoldersIds,
       );
-      const newChosenFileIds = state.files
-        .filter(
-          (file) =>
-            file.id.startsWith(folderId) &&
-            (!partialChosenFolderIds.includes(folderId) ||
-              !state.chosenFileIds.includes(file.id)),
-        )
-        .map(({ id }) => id);
-      const newChosenEmptyFolderIds = emptyFolderIds
-        .filter((id) => `${id}/`.startsWith(folderId))
-        .map((id) => `${id}/`);
+      const affectedFileIds = getSelectedEntitiesByFolderId({
+        entities: state.files,
+        folderId,
+        partialChosenFolderIds,
+        chosenItemsIds: state.chosenFileIds,
+      });
+      const nestedEmptyFolderChosenIds = getNestedEmptyFolderIdsForChosenParent(
+        emptyFolderIds,
+        folderId,
+      );
 
-      state.chosenFileIds = xor(state.chosenFileIds, newChosenFileIds);
-      state.chosenEmptyFoldersIds = xor(
+      state.chosenFileIds = uniq([...state.chosenFileIds, ...affectedFileIds]);
+      state.chosenEmptyFoldersIds = uniq([
+        ...state.chosenEmptyFoldersIds,
+        ...nestedEmptyFolderChosenIds,
+      ]);
+    },
+    removeChosenFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      const { folderId } = payload;
+      const emptyFolderIds = getEmptyLeafFolderIds(state.folders, state.files);
+
+      if (emptyFolderIds.includes(folderId)) {
+        state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.filter(
+          (id) => id !== folderId,
+        );
+        return;
+      }
+
+      const { partialChosenFolderIds } = getPartialAndFullyChosenFolders(
+        state.folders,
+        state.files,
+        state.chosenFileIds,
+        emptyFolderIds,
         state.chosenEmptyFoldersIds,
-        newChosenEmptyFolderIds,
+      );
+      const fileIdsToRemove = getSelectedEntitiesByFolderId({
+        entities: state.files,
+        folderId,
+        partialChosenFolderIds,
+        chosenItemsIds: state.chosenFileIds,
+      });
+
+      const emptyFolderIdsToRemove = getNestedEmptyFolderIdsForChosenParent(
+        emptyFolderIds,
+        folderId,
+      );
+
+      state.chosenFileIds = state.chosenFileIds.filter(
+        (id) => !fileIdsToRemove.includes(id),
+      );
+      state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.filter(
+        (id) => id !== folderId && !emptyFolderIdsToRemove.includes(id),
       );
     },
 

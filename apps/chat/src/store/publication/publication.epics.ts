@@ -116,6 +116,7 @@ import {
 } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 import { lookup as lookupMime } from 'mime-types';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -1539,8 +1540,13 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
     switchMap(({ payload }) => {
-      const { isSaveAndExit, publicationUrl, newApplication, oldApplication } =
-        payload;
+      const {
+        isSaveAndExit,
+        publicationUrl,
+        newApplication,
+        oldApplication,
+        tabToOpen,
+      } = payload;
 
       if (!newApplication.iconUrl) {
         return EMPTY;
@@ -1590,7 +1596,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
       return PublicationService.updatePublicationRequest({
         publicationData: {
           ...publication,
-          resources,
+          resources: uniqBy(resources, 'sourceUrl'),
         },
         url: publicationUrl,
       }).pipe(
@@ -1615,6 +1621,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
               oldApplication,
               newApplicationWithMappedIconUrl,
               isSaveAndExit,
+              tabToOpen,
             ),
             of(
               PublicationActions.setPublicationItems({

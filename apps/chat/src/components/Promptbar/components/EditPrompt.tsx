@@ -162,9 +162,19 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (!saveDisabled && allowEnterClick(e)) {
+      if (!allowEnterClick(e)) {
+        return;
+      }
+
+      const isContentTextarea =
+        e.target instanceof HTMLTextAreaElement && e.target.name === 'content';
+
+      if (!saveDisabled || isContentTextarea) {
         e.preventDefault();
         e.stopPropagation();
+      }
+
+      if (!saveDisabled) {
         handleEdit(prompt);
       }
     },

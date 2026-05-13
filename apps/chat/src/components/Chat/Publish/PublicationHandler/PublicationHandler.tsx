@@ -231,20 +231,21 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     PublishRequestFieldsNames.PUBLISH_TO_URL,
   );
 
-  const rulesPath = !isReview ? editedPublishToUrl : publication.targetFolder;
+  const rulesPath =
+    !isReview || isEditMode ? editedPublishToUrl : publication.targetFolder;
 
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, rulesPath),
   );
 
   useEffect(() => {
-    if (rules && !isReview) {
+    if (rules && (!isReview || isEditMode)) {
       formMethods.setValue(
         PublishRequestFieldsNames.RULES,
         rules[rulesPath] ?? [],
       );
     }
-  }, [formMethods, rulesPath, rules, isReview]);
+  }, [formMethods, rulesPath, rules, isReview, isEditMode]);
 
   useEffect(() => {
     if (!isEditMode) {

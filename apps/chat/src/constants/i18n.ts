@@ -338,6 +338,7 @@ export enum ErrorsI18nKeys {
   UrlIsNotCorrect = 'URL is not correct',
   UrlMustStartWithValidProtocol = 'URL must start with a valid protocol',
   EndpointCannotEndWithDotOrDoubleSlash = 'Endpoint cannot end with . or //',
+  ImageIsDeletedDoesNotExist = 'The image has been deleted, does not exist, or you do not have access to it.',
 }
 
 // sidebar.json
@@ -1100,4 +1101,9 @@ export enum MarketplaceI18nKeys {
   SkillsLowercase = 'skills',
   AgentSkillsInvalidError = 'This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have "name" and "description" fields.',
   SelectAgentSkills = 'Select',
+  TokenLimits = 'Token limits',
+  Minute = 'Minute',
+  Weekly = 'Weekly',
+  Daily = 'Daily',
+  Monthly = 'Monthly',
 }
