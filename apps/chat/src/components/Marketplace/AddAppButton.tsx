@@ -42,7 +42,6 @@ export function AddAppButton() {
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
-  console.log('Application Type Schemas:', applicationTypeSchemas); // Debug log
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
   const hideCustomAppCreation = enabledFeatures.has(
     Feature.HideCustomAppCreation,
