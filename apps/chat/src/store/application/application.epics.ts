@@ -179,14 +179,14 @@ const createApplicationEpic: AppEpic = (action$) =>
             iif(
               () => err.status === 412,
               of(
-                UIActions.showErrorToast(
-                  translate(
+                UIActions.showErrorToast({
+                  message: translate(
                     CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                     {
                       ns: Translation.Common,
                     },
                   ),
-                ),
+                }),
               ),
               EMPTY,
             ),
@@ -201,11 +201,11 @@ const createFailEpic: AppEpic = (action$) =>
     ofType(ApplicationActions.createFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.createFailed, {
+        UIActions.showErrorToast({
+          message: translate(errorsMessages.createFailed, {
             entity: 'application',
           }),
-        ),
+        }),
       ),
     ),
   );
@@ -314,14 +314,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     success: false as const,
                     actions: [
                       ...failActions,
-                      UIActions.showErrorToast(
-                        translate(
+                      UIActions.showErrorToast({
+                        message: translate(
                           CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                           {
                             ns: Translation.Common,
                           },
                         ),
-                      ),
+                      }),
                     ],
                   });
                 }
@@ -330,11 +330,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   success: false as const,
                   actions: [
                     ...failActions,
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.FailedToMoveApplication, {
-                        ns: Translation.Common,
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToMoveApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ],
                 });
               }),
@@ -421,11 +424,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   of(
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.FailedToUpdateApplication, {
-                        ns: Translation.Common,
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToUpdateApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ),
                   iif(
                     () => !!payload.shouldSetEditorError,
@@ -497,11 +503,11 @@ const editApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.editFail({
               oldApplication: payload.oldApplication,
             }),
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.FailedToUpdateApplication, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToUpdateApplication, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -777,9 +783,9 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
           }),
         ),
         of(
-          UIActions.showErrorToast(
-            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
-          ),
+          UIActions.showErrorToast({
+            message: `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
+          }),
         ),
       );
     }),
@@ -874,11 +880,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.FailedToEnterEditMode, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToEnterEditMode, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       );

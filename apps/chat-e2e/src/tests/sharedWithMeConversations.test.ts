@@ -12,6 +12,7 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
+  withTraceId,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -93,7 +94,7 @@ dialSharedWithMeTest(
           ),
         );
         await additionalShareUserToastAssertion.assertToastMessage(
-          ExpectedConstants.shareInviteDoesNotExist,
+          withTraceId(ExpectedConstants.shareInviteDoesNotExist),
         );
       },
     );
@@ -1035,7 +1036,7 @@ dialSharedWithMeTest(
         const errorMessage = await additionalShareUserToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteDoesNotExist);
+          .toMatch(withTraceId(ExpectedConstants.shareInviteDoesNotExist));
       },
     );
   },
