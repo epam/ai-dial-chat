@@ -1,0 +1,16 @@
+%% High-level architecture: BFF with encrypted cookie session
+%% SPA never sees raw tokens; NestJS is the confidential OIDC client.
+
+flowchart LR
+    User["User's Browser"]
+    SPA["React SPA<br/>apps/chat"]
+    BFF["NestJS BFF<br/>apps/chat-api"]
+    REG["Provider Registry<br/>Keycloak / Auth0 / Okta / Entra"]
+    IDP["OIDC Provider"]
+    API["Downstream APIs<br/>DIAL Core"]
+
+    User -->|HttpOnly encrypted cookie| SPA
+    SPA -->|fetch credentials: include| BFF
+    BFF --> REG
+    BFF -.->|Authorization Code + PKCE| IDP
+    BFF -->|Bearer access_token| API

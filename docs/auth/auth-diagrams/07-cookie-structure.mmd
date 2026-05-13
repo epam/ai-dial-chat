@@ -1,0 +1,19 @@
+%% Cookie payload structure.
+%% Plaintext is JSON; ciphertext is JWE (alg=dir, enc=A256GCM).
+%% Browser sees only opaque ciphertext.
+
+flowchart TB
+    subgraph Browser["Browser cookie jar"]
+        COOKIE["__Host-chat.sess<br/>HttpOnly · Secure · SameSite=Lax<br/>Max-Age = rt_exp"]
+    end
+
+    subgraph Wire["Cookie value on the wire"]
+        JWE["JWE compact<br/>kid · iv · ciphertext · tag"]
+    end
+
+    subgraph Plain["Decrypted plaintext (server only)"]
+        P["{<br/>  v: 1,<br/>  sid: '0d3e6a...',<br/>  providerId: 'keycloak',<br/>  sub: 'user-123',<br/>  at: '...',<br/>  rt: '...',<br/>  at_exp, rt_exp, iat,<br/>  claims: { roles, email }<br/>}"]
+    end
+
+    COOKIE -->|sent as-is to BFF| JWE
+    JWE -->|jose compactDecrypt<br/>active or previous key by kid| P
