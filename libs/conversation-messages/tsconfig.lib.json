@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "../../dist/libs/conversation-messages",
+
+    "jsx": "react-jsx",
+
+    "declaration": true,
+    "sourceMap": true,
+
+    "module": "node16",
+    "moduleResolution": "node16",
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "types": ["node"],
+    "lib": ["dom"],
+
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
