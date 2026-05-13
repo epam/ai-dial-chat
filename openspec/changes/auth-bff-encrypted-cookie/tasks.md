@@ -34,39 +34,39 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 > All files live directly under `apps/chat-api/src/auth/` (flat layout per `apps/chat-api/AGENTS.md` §1 — mirror of `apps/chat-api/src/themes/`). No `session/`, `providers/`, `refresh/`, `csrf/` sub-folders.
 
-- [ ] Create `apps/chat-api/src/auth/provider.types.ts`
+- [x] Create `apps/chat-api/src/auth/provider.types.ts`
   - Export `ProviderConfig` class with `class-validator` decorators on each field (id, issuer, clientId, clientSecret, scope, audience?, rolesClaim?, adminRoles?, postLogoutRedirectUri) so that `AUTH_PROVIDERS` JSON can be structurally validated, not just JSON-parsed
   - `id` MUST match `/^[a-z0-9][a-z0-9-]*$/` (allowlist — anti-injection in URL path segment)
 
-- [ ] Create `apps/chat-api/src/auth/session.types.ts`
+- [x] Create `apps/chat-api/src/auth/session.types.ts`
   - Export `SessionPayload` (includes `csrf: string` field — random per-session token used by the double-submit CSRF guard in Slice 5; populated at login/refresh) and `SessionUser` interfaces
 
-- [ ] Create `apps/chat-api/src/auth/express.d.ts`
+- [x] Create `apps/chat-api/src/auth/express.d.ts`
   - TypeScript module augmentation: `declare module 'express-serve-static-core' { interface Request { user?: SessionUser } }`
   - Without this the controller / guard will not type-check when accessing `request.user`
 
-- [ ] Create `apps/chat-api/src/auth/keys.service.ts`
+- [x] Create `apps/chat-api/src/auth/keys.service.ts`
   - Implement `KeysService` reading `AUTH_SESSION_SECRET` + `AUTH_SESSION_PREV_SECRET`
   - Validate key length (32 bytes from hex) in `onModuleInit`; throw on invalid
 
-- [ ] Create `apps/chat-api/src/auth/session.service.ts`
+- [x] Create `apps/chat-api/src/auth/session.service.ts`
   - Implement `SessionService.encrypt(payload): Promise<string>` using `jose` `CompactEncrypt`, `alg: dir`, `enc: A256GCM`
   - Implement `SessionService.decrypt(token): Promise<SessionPayload>` — try active key, fallback to previous key
   - Throw `UnauthorizedException` on decryption failure
   - Implement `SessionService.decryptFromRequest(req): Promise<SessionPayload>` — reads cookie, delegates to `decrypt` (shared by the local guard in Slice 1 and the global guard in Slice 2)
 
-- [ ] Create `apps/chat-api/src/auth/session.guard.ts` **scaffold only** for Slice 1
+- [x] Create `apps/chat-api/src/auth/session.guard.ts` **scaffold only** for Slice 1
   - Implement `CanActivate` minimal: read cookie → `SessionService.decryptFromRequest` → attach `SessionUser` to `request.user`
   - Throw `UnauthorizedException` on missing/invalid cookie
   - Used **locally** via `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` only (no `APP_GUARD` yet — that comes in Slice 2 together with refresh logic)
 
-- [ ] Create `apps/chat-api/src/auth/provider-registry.service.ts`
+- [x] Create `apps/chat-api/src/auth/provider-registry.service.ts`
   - Parse `AUTH_PROVIDERS` JSON in `onModuleInit`
   - Validate each entry against `ProviderConfig` using `plainToInstance` + `validateSync` — throw on missing/invalid fields (not just on malformed JSON)
   - Call `Issuer.discover(issuer)` for each provider; store `Client` instances
   - Implement `getProvider(id)` (throws `NotFoundException`) and `listProviders()`
 
-- [ ] Create `apps/chat-api/src/auth/auth.controller.ts`
+- [x] Create `apps/chat-api/src/auth/auth.controller.ts`
   - Use `@Controller({ path: 'auth', version: '1' })` so routes resolve to `/api/v1/auth/*` (mandatory per `apps/chat-api/AGENTS.md` §2)
   - Implement `GET /api/v1/auth/providers` → `listProviders()`
   - Implement `GET /api/v1/auth/login/:providerId` → generate PKCE params, build `tx` cookie (`__Host-chat.tx`, `Path=/`, AEAD-encrypted), redirect to IdP
@@ -76,17 +76,17 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Mark login/callback/providers with `@Public()` (no-op until Slice 2 wires `APP_GUARD`, but keeps the decorator surface stable)
   - Validate `:providerId` via DTO + `@Matches(/^[a-z0-9][a-z0-9-]*$/)` to prevent URL-path injection and align with anti-traversal allowlist convention
 
-- [ ] Create `@Public()` decorator at `apps/chat-api/src/common/decorators/public.decorator.ts`
+- [x] Create `@Public()` decorator at `apps/chat-api/src/common/decorators/public.decorator.ts`
   - Use `SetMetadata('isPublic', true)`
 
-- [ ] Create `apps/chat-api/src/auth/auth.module.ts`
+- [x] Create `apps/chat-api/src/auth/auth.module.ts`
   - Declare all auth providers and controllers
   - Provide `SessionGuard` so it can be `@UseGuards()`-applied locally
   - Do NOT register `SessionGuard` as `APP_GUARD` yet (added in Slice 2)
 
-- [ ] Register `AuthModule` in `apps/chat-api/src/app/app.module.ts`
+- [x] Register `AuthModule` in `apps/chat-api/src/app/app.module.ts`
 
-- [ ] Update `apps/chat-api/src/main.ts`
+- [x] Update `apps/chat-api/src/main.ts`
   - Add `app.use(cookieParser())`
   - Add `app.enableVersioning({ type: VersioningType.URI })` — currently MISSING in the codebase; required by `apps/chat-api/AGENTS.md` §2 and a prerequisite for `/api/v1/auth/*` routes
 
