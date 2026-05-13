@@ -7,6 +7,7 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import {
   BackendChatEntity,
@@ -16,12 +17,11 @@ import {
 import { DialAIError } from '@/src/types/error';
 import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
-import { errorsMessages } from '@/src/constants/errors';
-
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -135,7 +135,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).send(result);
   } catch (error) {
     logger.error(error);
-    return res.status(500).json(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

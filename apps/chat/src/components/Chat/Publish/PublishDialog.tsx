@@ -140,7 +140,11 @@ const PublishDialogContainer = ({
       !filteredEntities.length &&
       action !== PublishActions.DELETE
     ) {
-      dispatch(UIActions.showErrorToast(t(ChatI18nKeys.NoValidItemsToPublish)));
+      dispatch(
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.NoValidItemsToPublish),
+        }),
+      );
       dispatch(PublicationActions.setPublishModel());
     }
   }, [

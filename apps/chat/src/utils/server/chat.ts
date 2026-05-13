@@ -184,5 +184,10 @@ export const chatErrorHandler = ({
     fallbackErrorMessage,
   );
 
-  return res.status(statusCode).send(JSON.stringify(responseBody) + postfix);
+  return res.status(statusCode).send(
+    JSON.stringify({
+      ...responseBody,
+      traceparent: res.getHeader('traceparent'),
+    }) + postfix,
+  );
 };

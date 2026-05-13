@@ -177,11 +177,11 @@ const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.getConfigurationSchemaFailed.type),
     map(() => {
-      return UIActions.showErrorToast(
-        translate(ChatI18nKeys.FailedToLoadChatStarters, {
+      return UIActions.showErrorToast({
+        message: translate(ChatI18nKeys.FailedToLoadChatStarters, {
           ns: Translation.Chat,
         }),
-      );
+      });
     }),
   );
 
@@ -242,9 +242,9 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
       return concat(
         of(ChatActions.resetInfoModal()),
         of(
-          UIActions.showErrorToast(
-            translate(payload.errorText, { ns: Translation.Chat }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(payload.errorText, { ns: Translation.Chat }),
+          }),
         ),
       );
     }),
@@ -371,9 +371,9 @@ const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
       const { transcript } = payload;
       if (!transcript.trim()) {
         return of(
-          UIActions.showErrorToast(
-            translate(errorsMessages.transcriptionFailed),
-          ),
+          UIActions.showErrorToast({
+            message: translate(errorsMessages.transcriptionFailed),
+          }),
         );
       }
 
@@ -406,7 +406,9 @@ const transcriptionFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.transcriptionFailed.type),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.transcriptionFailed)),
+      UIActions.showErrorToast({
+        message: translate(errorsMessages.transcriptionFailed),
+      }),
     ),
   );
 
@@ -414,7 +416,9 @@ const userMessageTranscriptionFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.userMessageTranscriptionFailed.type),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.transcriptionFailed)),
+      UIActions.showErrorToast({
+        message: translate(errorsMessages.transcriptionFailed),
+      }),
     ),
   );
 
