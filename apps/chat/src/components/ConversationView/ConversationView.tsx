@@ -1,7 +1,7 @@
 import { ConversationInput } from '@epam/conversation-input';
-import { FC, useRef, useState, useEffect, memo, useCallback } from 'react';
+import { BubblePosition, MessageBubble } from '@epam/conversation-messages';
+import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Message as MessageType } from '../../types';
-import Message from '../Message/Message';
 
 /**
  * Props for the ConversationView component
@@ -67,7 +67,15 @@ const ConversationViewComponent: FC<ConversationViewProps> = ({
         className="relative flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-8"
       >
         {messages.map((msg) => (
-          <Message key={msg.id} message={msg} />
+          <MessageBubble
+            key={msg.id}
+            text={msg.content}
+            position={
+              msg.role === 'assistant'
+                ? BubblePosition.Top
+                : BubblePosition.Bottom
+            }
+          />
         ))}
         {/* Typing indicator */}
         {isAssistantTyping && (

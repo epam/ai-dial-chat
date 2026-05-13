@@ -12,7 +12,7 @@ export default defineConfig(() => ({
     host: 'localhost',
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3005',
         changeOrigin: true,
       },
     },
@@ -27,6 +27,10 @@ export default defineConfig(() => ({
       '@epam/conversation-input': path.resolve(
         __dirname,
         '../../libs/conversation-input/src/index.ts',
+      ),
+      '@epam/conversation-messages': path.resolve(
+        __dirname,
+        '../../libs/conversation-messages/src/index.ts',
       ),
     },
   },

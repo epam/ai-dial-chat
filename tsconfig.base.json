@@ -20,6 +20,7 @@
     "paths": {
       "@/*": ["apps/chat/*"],
       "@epam/conversation-input/*": ["./libs/conversation-input/*"],
+      "@epam/conversation-messages/*": ["./libs/conversation-messages/*"],
       "@epam/chat-shared/*": ["./libs/chat-shared/*"]
     }
   }
