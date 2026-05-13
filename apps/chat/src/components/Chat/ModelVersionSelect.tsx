@@ -143,7 +143,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
               />
               <DialEllipsisTooltip
                 text={getDisplayValue(entity)}
-                contentClassName="z-[1000]"
+                contentClassName="z-[10000]"
               />
             </div>
           }
