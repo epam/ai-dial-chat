@@ -55,13 +55,14 @@ export const SendMessageButton = Inversify.register(
       ConversationsSelectors.selectCanRecordAudio,
     );
 
-    const rightClass = canRecordAudio
-      ? isOverlay
-        ? 'right-10'
-        : 'right-11'
-      : isOverlay
-        ? 'right-3'
-        : 'right-4';
+    const rightClass =
+      canRecordAudio && !isLastMessageError
+        ? isOverlay
+          ? 'right-10'
+          : 'right-11'
+        : isOverlay
+          ? 'right-3'
+          : 'right-4';
 
     if (
       isLastMessageError ||
