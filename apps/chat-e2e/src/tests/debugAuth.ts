@@ -1,8 +1,9 @@
 import config from '../../config/chat.playwright.config';
 import { DebugAuth } from '../core/debugAuth';
-import { stateFilePath } from '../core/dialFixtures';
+import { modelsFilePath, stateFilePath } from '../core/dialFixtures';
 
 import test from '@/src/core/baseFixtures';
+import * as fs from 'fs';
 
 // Calculate required users: workers * 3 (main + additional + second additional) + admin
 const numWorkers = +config.workers!;
@@ -44,7 +45,7 @@ test('Debug authenticate all users in parallel', async () => {
 
       // Store additional data for first worker only
       if (index < numWorkers) {
-        process.env.MODELS = authTokens.models ?? '[]';
+        fs.writeFileSync(modelsFilePath, authTokens.models ?? '[]', 'utf-8');
         process.env.THEMES = authTokens.themes ?? '[]';
         process.env.APP_SCHEMAS = authTokens.appSchemas ?? '[]';
         process.env.RECENT_MODELS = authTokens.recentModels ?? '[]';

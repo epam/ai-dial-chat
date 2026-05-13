@@ -1,10 +1,12 @@
 import config from '@/config/chat.playwright.config';
 import test from '@/src/core/baseFixtures';
+import { modelsFilePath } from '@/src/core/dialFixtures';
 import { overlayStateFilePath } from '@/src/core/dialOverlayFixtures';
 import { API, OverlaySandboxUrls } from '@/src/testData';
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { OverlayLoginPage } from '@/src/ui/pages/overlay/overlayLoginPage';
+import * as fs from 'fs';
 
 const overlayUsernames = process.env
   .E2E_OVERLAY_USERNAME!.split(',')
@@ -51,7 +53,11 @@ for (let i = 0; i < overlayUsernames.length; i++) {
         options,
       );
     if (options?.setEntitiesEnvVars) {
-      process.env.MODELS = retrievedResponses.get(API.modelsHost);
+      fs.writeFileSync(
+        modelsFilePath,
+        retrievedResponses.get(API.modelsHost) ?? '[]',
+        'utf-8',
+      );
       process.env.THEMES = retrievedResponses.get(API.themesListingHost);
     }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
