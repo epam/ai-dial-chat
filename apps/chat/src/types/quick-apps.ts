@@ -33,7 +33,7 @@ export interface DialDeploymentToolset {
 export interface MCPToolset {
   name?: string;
   type?: ToolsetTypes.DialMcp;
-  dial_id: string;
+  deployment_id: string;
   transport?: ToolsetTransportType;
   description?: string;
 }
@@ -70,10 +70,15 @@ export interface ConversationStarters {
   starters: ConversationStarter[];
 }
 
+export interface DialPromptSkill {
+  type: 'dial-prompt';
+  url: string;
+}
+
 export interface QuickApp2Config {
   orchestrator: {
     deployment: {
-      name: string;
+      deployment_id: string;
       parameters?: {
         temperature: number;
       };
@@ -89,6 +94,7 @@ export interface QuickApp2Config {
   conversation_starters: ConversationStarters;
   input_attachment_types?: string[];
   max_input_attachments?: number;
+  skills?: DialPromptSkill[];
 }
 
 export function isDialDeploymentToolset(

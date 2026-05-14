@@ -1,4 +1,9 @@
 import {
+  IconCircleCheckFilled,
+  IconClipboardCopy,
+  IconHelpCircle,
+} from '@tabler/icons-react';
+import {
   ChangeEvent,
   FC,
   FocusEvent,
@@ -19,7 +24,11 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
+import {
+  areSomePromptsFieldsChanged,
+  generateSkillContent,
+  isValidSkillContent,
+} from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -34,8 +43,9 @@ import { PromptBarI18nKeys } from '@/src/constants/i18n';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -49,6 +59,10 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const dispatch = useAppDispatch();
 
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+
+  const { isSelectedPromptIsSkill } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const [name, setName] = useState<string>(prompt.name ?? '');
   const [description, setDescription] = useState(prompt?.description ?? '');
@@ -141,6 +155,10 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   });
   const saveDisabled =
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
+
+  const handleAddAgentSkill = useCallback(() => {
+    setContent(generateSkillContent());
+  }, []);
 
   const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
@@ -255,10 +273,35 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           />
         </div>
         <div>
-          <label className="mb-1 flex text-xs text-secondary" htmlFor="content">
-            {t(PromptBarI18nKeys.Prompt)}
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
+          <div className="mb-1 flex items-center justify-between text-secondary">
+            <label className="text-xs" htmlFor="content">
+              {t(PromptBarI18nKeys.Prompt)}
+              <span className="ml-1 inline text-accent-primary">*</span>
+            </label>
+            {isSelectedPromptIsSkill && (
+              <span className="flex items-center">
+                {isValidSkillContent(content) ? (
+                  <span className="mr-2 flex items-center gap-2 text-accent-secondary">
+                    <IconCircleCheckFilled size={16} />
+                    {t(PromptBarI18nKeys.ValidAgentSkill)}
+                  </span>
+                ) : (
+                  <DialLinkButton
+                    className="flex items-center gap-2 text-accent-primary hover:opacity-70"
+                    onClick={handleAddAgentSkill}
+                    iconBefore={<IconClipboardCopy size={20} />}
+                    label={t(PromptBarI18nKeys.AddAgentSkill)}
+                  />
+                )}
+                <Tooltip tooltip={t(PromptBarI18nKeys.AgentSkillHint)}>
+                  <IconHelpCircle
+                    size={16}
+                    className="cursor-help text-secondary"
+                  />
+                </Tooltip>
+              </span>
+            )}
+          </div>
           <textarea
             name="content"
             className={inputClassName}
