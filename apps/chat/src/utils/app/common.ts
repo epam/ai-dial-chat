@@ -527,15 +527,20 @@ export const getAvailableEntityNameBytes = (
 
 /**
  * Returns a `fitBaseName` callback suitable for use with `getStorageSafeUniqueName`.
+ *
+ * CONTRACT: `baseName` is expected to be already sanitised via `prepareEntityName`
+ * (which `getStorageSafeUniqueName` guarantees via `resolvedBaseName`).
+ *
  * When `availableNameBytes` is undefined (no byte limits configured) the callback
- * simply sanitises the name via `prepareEntityName`.  Otherwise it truncates the
- * sanitised base so that `base + suffix` stays within the byte budget.
+ * returns `baseName` as-is.  Otherwise it truncates the base so that
+ * `base + suffix` stays within the byte budget, then re-sanitises to strip any
+ * trailing dots or spaces exposed by the truncation.
  */
 export const buildByteAwareFitBaseName =
   (availableNameBytes: number | undefined) =>
   (baseName: string, suffix: string): string => {
     if (availableNameBytes === undefined) {
-      return prepareEntityName(baseName);
+      return baseName;
     }
 
     const allowedNameBytes = Math.max(
@@ -543,9 +548,9 @@ export const buildByteAwareFitBaseName =
       0,
     );
 
-    return prepareEntityName(
-      truncateToUtf8Bytes(prepareEntityName(baseName), allowedNameBytes),
-    );
+    // Outer prepareEntityName re-sanitises after truncation to strip trailing
+    // dots or spaces that may have been exposed by cutting mid-name.
+    return prepareEntityName(truncateToUtf8Bytes(baseName, allowedNameBytes));
   };
 
 /**
