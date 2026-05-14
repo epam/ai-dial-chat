@@ -83,6 +83,7 @@ The session cookie `__Host-chat.sess` is a compact JWE whose plaintext contains:
   "at_exp": 1715600000,
   "rt_exp": 1715686400,
   "iat": 1715596400,
+  "csrf": "<random-csrf-token>",
   "claims": { "roles": ["admin"], "email": "u@x.io" }
 }
 ```
@@ -107,11 +108,11 @@ Following the `incremental-implementation` approach, work is split into five thi
 - After completing login, the browser holds an `HttpOnly` cookie; `document.cookie` does not expose any token.
 - Refreshing the page preserves the session without a new login (verified end-to-end starting from Slice 2 — Slice 1 is backend-only, smoke-tested via DevTools).
 - Logging out clears the cookie and optionally redirects the browser to the IdP logout endpoint.
-- All new code passes `pnpm nx test chat-api` and `pnpm nx lint chat-api`.
+- All new code passes `npm exec nx run @epam/chat-api:test` and `npm exec nx run @epam/chat-api:lint`.
 
 ## Impact Assessment
 
 - **Scope**: `apps/chat-api` (new `auth` module); `apps/chat` (minimal — add `/auth/me` fetch to bootstrap context).
-- **Shared libs**: no new exports from `libs/chat-shared` in v1 (user profile type may be added in Slice 1).
+- **Shared libs**: `UserProfile` is exported from `libs/chat-shared` in Slice 1.
 - **i18n**: no new user-visible strings in this change (login/error pages use IdP-hosted UI in v1).
 - **Breaking changes**: none — existing unauthenticated routes remain public until the guard is applied.

@@ -80,7 +80,7 @@ interface ProviderConfig {
 
 ## Data Types
 
-### `SessionPayload` (cookie plaintext, in `session/session.types.ts`)
+### `SessionPayload` (cookie plaintext, in `apps/chat-api/src/auth/session.types.ts`)
 
 ```ts
 interface SessionPayload {
@@ -220,7 +220,7 @@ Returns the current user's profile — no tokens.
 
 ---
 
-## Session Guard (`session/session.guard.ts`)
+## Session Guard (`apps/chat-api/src/auth/session.guard.ts`)
 
 Implements `CanActivate`. Applied **locally** via `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` in Slice 1, then promoted to global `APP_GUARD` in Slice 2 (when refresh logic is added).
 
@@ -253,7 +253,7 @@ declare module 'express-serve-static-core' {
 
 ---
 
-## Session Service (`session/session.service.ts`)
+## Session Service (`apps/chat-api/src/auth/session.service.ts`)
 
 Wraps `jose` `CompactEncrypt` / `compactDecrypt`.
 
@@ -270,7 +270,7 @@ class SessionService {
 
 ---
 
-## Keys Service (`session/keys.service.ts`)
+## Keys Service (`apps/chat-api/src/auth/keys.service.ts`)
 
 ```ts
 class KeysService {
@@ -283,12 +283,12 @@ Reads `AUTH_SESSION_SECRET` and `AUTH_SESSION_PREV_SECRET` from `ConfigService`.
 
 ---
 
-## Provider Registry Service (`providers/provider-registry.service.ts`)
+## Provider Registry Service (`apps/chat-api/src/auth/provider-registry.service.ts`)
 
 ```ts
 class ProviderRegistryService implements OnModuleInit {
   async onModuleInit(): Promise<void>  // discovers OIDC metadata for each provider
-  getProvider(id: string): Issuer<Client>  // throws NotFoundException if unknown
+  getProvider(id: string): { client: Client; config: ProviderConfig }  // throws NotFoundException if unknown
   listProviders(): Array<{ id: string; label: string }>
 }
 ```
@@ -297,7 +297,7 @@ Uses `openid-client`'s `Issuer.discover(issuer)` to fetch `.well-known/openid-co
 
 ---
 
-## Refresh Service (`refresh/refresh.service.ts`)
+## Refresh Service (`apps/chat-api/src/auth/refresh.service.ts`)
 
 ```ts
 class RefreshService {
@@ -316,7 +316,7 @@ class RefreshService {
 
 Standard cookies are capped at ~4 KB. Entra ID access tokens can exceed this.
 
-**Strategy for v1 (Slice 1–4):** single cookie with both tokens. If the combined JWE exceeds 3800 bytes (a conservative browser limit), the service logs a warning and falls back to storing only `rt` + `claims` in the cookie, with `at` absent. The guard then fetches a fresh `at` via refresh before forwarding to upstream.
+**Strategy for Slice 1–4:** single cookie with both tokens. Slice 1 only logs a warning if the combined JWE exceeds 3800 bytes (a conservative browser limit). The refresh-only fallback is implemented in Slice 5: rebuild `SessionPayload` without `at`, then have the guard fetch a fresh `at` via refresh before forwarding to upstream.
 
 **Explicit split-cookie strategy (Slice 5 if needed):**
 - `__Host-chat.sess` — `rt`, `claims`, `sid`, `providerId`, `sub` (long-lived; `Max-Age=rt_exp`).
@@ -329,12 +329,12 @@ Standard cookies are capped at ~4 KB. Entra ID access tokens can exceed this.
 | Risk | Mitigation in this design |
 |---|---|
 | XSS reads tokens | `HttpOnly` + AES-GCM encrypted; tokens never appear in JS |
-| CSRF | `SameSite=Lax` blocks cross-site POST; `Origin` header checked in guard; double-submit CSRF token in Slice 5 |
+| CSRF | `SameSite=Lax` limits cross-site cookie sending; Slice 5 adds `Origin` validation and a double-submit CSRF token |
 | Cookie tampering | AES-GCM authenticated tag; `decrypt` fails on any byte change → 401 |
 | Key compromise | Key rotation with previous key fallback; no forced logout during rotation |
 | Session fixation | New `sid` generated on every `callback` |
 | Open redirect | `returnTo` validated against strict allow-list (same origin only) |
-| Token in URL | Not used — Authorization Code only, code in POST body |
+| Token in URL | Tokens are never returned in URLs; the callback receives only an authorization `code` query parameter |
 | Refresh replay | RT rotation; `sid` + `jti` in payload; `invalid_grant` → 401 |
 | Cookie overflow (Entra) | Size check with fallback to refresh-only storage |
 | Multi-tab race | Per-pod in-memory mutex on `sid` in `RefreshService` |

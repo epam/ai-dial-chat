@@ -124,9 +124,9 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `pnpm nx test chat-api`
-- [ ] Run `pnpm nx lint chat-api`
-- [ ] Run `pnpm nx build chat-api` (Slice 1 changes `main.ts` bootstrap — versioning + cookie-parser — so a build check is warranted)
+- [ ] Run `npm exec nx run @epam/chat-api:test`
+- [ ] Run `npm exec nx run @epam/chat-api:lint`
+- [ ] Run `npm exec nx run @epam/chat-api:build` (Slice 1 changes `main.ts` bootstrap — versioning + cookie-parser — so a build check is warranted)
 - [ ] Manual smoke: start API, complete Keycloak login in browser, verify `__Host-chat.sess` cookie is `HttpOnly`/`Secure`/`SameSite=Lax` in DevTools, verify `document.cookie` does not expose any token, verify `GET /api/v1/auth/me` returns the profile
 
 ---
@@ -175,8 +175,8 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `pnpm nx test chat-api`
-- [ ] Run `pnpm nx lint chat-api`
+- [ ] Run `npm exec nx run @epam/chat-api:test`
+- [ ] Run `npm exec nx run @epam/chat-api:lint`
 - [ ] Manual smoke: access `/api/v1/themes` without cookie → 401; with cookie → 200
 
 ---
@@ -201,7 +201,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `pnpm nx test chat-api`
+- [ ] Run `npm exec nx run @epam/chat-api:test`
 - [ ] Manual smoke: log in, log out, verify cookie cleared, verify redirect to IdP logout
 
 ---
@@ -223,7 +223,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `pnpm nx test chat-api`
+- [ ] Run `npm exec nx run @epam/chat-api:test`
 - [ ] Manual smoke: complete Auth0 login flow end-to-end
 
 ---
@@ -234,6 +234,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 - [ ] Create `apps/chat-api/src/auth/csrf.guard.ts`
   - Double-submit CSRF token pattern
+  - Validate `Origin`/`Referer` against the configured same-origin application URL for state-mutating requests
   - Read `X-CSRF-Token` header; verify it matches the `csrf` field in the decrypted `SessionPayload` (field defined in Slice 1)
   - Apply to all state-mutating endpoints (`POST`, `PUT`, `PATCH`, `DELETE`) except `/api/v1/auth/login`, `/api/v1/auth/callback`, `/api/v1/auth/logout`
   - Expose CSRF token to SPA via a response header on `GET /api/v1/auth/me`
@@ -275,11 +276,11 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `pnpm nx test chat-api`
-- [ ] Run `pnpm nx test chat`
-- [ ] Run `pnpm nx lint chat-api`
-- [ ] Run `pnpm nx lint chat`
-- [ ] Run `pnpm nx affected --target=lint --base=origin/development`
+- [ ] Run `npm exec nx run @epam/chat-api:test`
+- [ ] Run `npm exec nx run @epam/chat:test`
+- [ ] Run `npm exec nx run @epam/chat-api:lint`
+- [ ] Run `npm exec nx run @epam/chat:lint`
+- [ ] Run `npm exec nx affected --target=lint --base=origin/development`
 
 ---
 
@@ -294,4 +295,4 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Update status from `Proposal` to `Implemented`
   - Replace the `NestJS Module Layout (Proposed)` block in §6 with the **flat layout actually shipped** (no `session/`, `providers/`, `csrf/`, `refresh/` sub-folders — see `apps/chat-api/AGENTS.md` §1 and the rewritten `design.md` "Module Structure")
 
-- [ ] Run full test suite and lint: `pnpm test` + `pnpm nx affected --target=lint --base=origin/development`
+- [ ] Run full test suite and lint: `npm run test` + `npm exec nx affected --target=lint --base=origin/development`

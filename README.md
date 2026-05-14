@@ -78,18 +78,21 @@ npm install
 Set up the API environment variables:
 
 ```bash
-cp apps/chat-api/.env.template apps/chat-api/.env.local
+cp apps/chat-api/.env.template .env.local
 ```
 
-Edit `apps/chat-api/.env.local` with your configuration:
+Edit `.env.local` with your configuration:
 
 ```bash
 PORT=3005
 API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
-DIAL_CORE_URL=your-dial-core-url
-DIAL_API_KEY=your-api-key
-THEMES_CONFIG_URL=your-themes-url
+AUTH_SESSION_SECRET=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+AUTH_CALLBACK_BASE_URL=http://localhost:3005
+AUTH_PROVIDERS=[{"id":"demo","issuer":"https://demo.duendesoftware.com","clientId":"interactive.confidential","clientSecret":"secret","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
+# DIAL_CORE_URL=https://your-dial-core-url.example.com
+# DIAL_API_KEY=your-api-key
+# THEMES_CONFIG_URL=https://your-themes-url.example.com
 ```
 
 ### 3. Start Development
@@ -365,6 +368,9 @@ Ensure these environment variables are set in production:
 PORT=3005
 API_PREFIX=api
 CORS_ORIGIN=https://your-frontend-domain.com
+AUTH_SESSION_SECRET=your-64-character-hex-secret
+AUTH_CALLBACK_BASE_URL=https://your-api-domain.com
+AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"your-client-secret","scope":"openid email profile","rolesClaim":"roles","postLogoutRedirectUri":"https://your-frontend-domain.com"}]
 DIAL_CORE_URL=https://your-dial-core-url
 DIAL_API_KEY=your-production-api-key
 THEMES_CONFIG_URL=https://your-themes-url
@@ -382,7 +388,7 @@ If you see "Port already in use" errors:
 
 **NestJS API (3005):**
 
-- Change `PORT` in `apps/chat-api/.env.local`
+- Change `PORT` in `.env.local`
 
 ### CORS Issues
 
