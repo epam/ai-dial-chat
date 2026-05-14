@@ -10,9 +10,6 @@ export class Input extends BaseElement {
 
   public inputField = this.getChildElementBySelector(Tags.input);
   public alertIcon = this.getChildElementBySelector(IconSelectors.alertIcon);
-  public warningIcon = this.getChildElementBySelector(
-    IconSelectors.warningIcon,
-  );
 
   public inputContainerByValue(value: string) {
     return this.rootLocator.filter({
@@ -22,9 +19,5 @@ export class Input extends BaseElement {
 
   public alertIconByValue(value: string) {
     return this.inputContainerByValue(value).locator(IconSelectors.alertIcon);
-  }
-
-  public warningIconByValue(value: string) {
-    return this.inputContainerByValue(value).locator(IconSelectors.warningIcon);
   }
 }

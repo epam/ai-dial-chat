@@ -437,7 +437,7 @@ dialTest(
         await selectFolderManagerModalGrid
           .getRenameInput()
           .fillInInput(nameWithLeadingDot);
-        await selectFolderManagerModalGridAssertion.assertInputWarning(
+        await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           nameWithLeadingDot,
         );

@@ -1380,7 +1380,7 @@ dialTest(
         await fileManagerGrid
           .getRenameInput()
           .fillInInput('.' + Attachment.textName);
-        await fileManagerGridAssertion.assertInputWarning();
+        await fileManagerGridAssertion.assertInputError();
       },
     );
 
@@ -1388,7 +1388,7 @@ dialTest(
       'EPMRTC-8360: Remove dot from file name and verify warning icon disappears',
       async () => {
         await fileManagerGrid.getRenameInput().fillInInput(Attachment.textName);
-        await fileManagerGridAssertion.assertInputWarning('hidden');
+        await fileManagerGridAssertion.assertInputError('hidden');
         await page.keyboard.press(keys.escape);
       },
     );
@@ -1401,7 +1401,7 @@ dialTest(
         await dotsMenu.click({ force: true });
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid.getRenameInput().fillInInput('.' + folderName);
-        await fileManagerGridAssertion.assertInputWarning();
+        await fileManagerGridAssertion.assertInputError();
       },
     );
 
@@ -1409,7 +1409,7 @@ dialTest(
       'EPMRTC-8596: Remove dot from folder name and verify warning icon disappears',
       async () => {
         await fileManagerGrid.getRenameInput().fillInInput(folderName);
-        await fileManagerGridAssertion.assertInputWarning('hidden');
+        await fileManagerGridAssertion.assertInputError('hidden');
         await page.keyboard.press(keys.escape);
       },
     );

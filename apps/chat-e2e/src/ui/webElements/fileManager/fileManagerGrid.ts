@@ -169,13 +169,6 @@ export class FileManagerGrid extends Grid {
     return this.gridNameCellInput.alertIcon.getElementLocator();
   }
 
-  public getRowInputWarning(name?: string) {
-    if (name) {
-      return this.gridNameCellInput.warningIconByValue(name);
-    }
-    return this.gridNameCellInput.warningIcon.getElementLocator();
-  }
-
   public getRenameInput() {
     return this.gridNameCellInput.inputField;
   }

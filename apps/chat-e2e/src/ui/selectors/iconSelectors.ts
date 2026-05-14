@@ -32,6 +32,5 @@ export const IconSelectors = {
     `tabler-icon tabler-icon-file-type-${extension} `,
   defaultFileIconClass: 'tabler-icon tabler-icon-file ',
   alertIcon: '.tabler-icon-alert-circle-filled.text-error',
-  warningIcon: '.tabler-icon-alert-triangle-filled.text-warning-icon',
   sharedEntityIcon: '.tabler-icon-arrow-up-right',
 };
