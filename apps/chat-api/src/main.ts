@@ -54,6 +54,8 @@ async function bootstrap() {
     .addServer(`http://localhost:${port}`, 'Local development')
     .addTag('health', 'Health check and application status')
     .addTag('themes', 'Theme configuration and icon management')
+    .addTag('deployments', 'List and inspect available AI DIAL deployments')
+    .addTag('chat', 'Chat completion proxy to DIAL Core')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

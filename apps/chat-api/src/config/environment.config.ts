@@ -21,14 +21,13 @@ export class EnvironmentVariables {
   @IsString()
   CORS_ORIGIN?: string = 'http://localhost:4207';
 
-  // TODO: Make required when @epam/ai-dial-typescript-sdk is available
-  @IsOptional()
+  @IsNotEmpty()
   @IsUrl({ require_tld: false })
-  DIAL_CORE_URL?: string;
+  DIAL_CORE_URL!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  DIAL_API_KEY?: string;
+  DIAL_API_KEY!: string;
 
   @IsOptional()
   @IsUrl({ require_tld: false })

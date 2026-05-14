@@ -67,17 +67,9 @@ const ConversationViewComponent: FC<ConversationViewProps> = ({
         className="relative flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-8"
       >
         {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            text={msg.content}
-            position={
-              msg.role === 'assistant'
-                ? BubblePosition.Top
-                : BubblePosition.Bottom
-            }
-          />
+          <MessageBubble key={msg.id} text={msg.content} />
         ))}
-        {/* Typing indicator */}
+
         {isAssistantTyping && (
           <div
             className="mx-auto flex w-full max-w-3xl bg-[#f7f7f8] p-4 dark:bg-[#2f2f2f]"
