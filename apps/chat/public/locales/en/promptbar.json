@@ -42,5 +42,8 @@
   "Are you sure that you want to delete all prompts?": "Are you sure that you want to delete all prompts?",
   "v.": "v.",
   "Use": "Use",
-  "Use prompt": "Use prompt"
+  "Use prompt": "Use prompt",
+  "Add Agent Skill": "Add Agent Skill",
+  "Valid Agent Skill": "Valid Agent Skill",
+  "Agent Skills allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.": "Agent Skills allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption."
 }
