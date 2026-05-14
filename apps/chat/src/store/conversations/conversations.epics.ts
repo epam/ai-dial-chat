@@ -66,6 +66,7 @@ import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
   getEntityBucket,
+  getEntityNameFromId,
   isEntityIdExternal,
   isEntityIdLocal,
   isMyBucket,
@@ -262,10 +263,10 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                   : ConversationService.getConversation(
                       getConversationInfoFromId(id),
                     ).pipe(
-                      catchError((err) => {
+                      catchError(() => {
+                        const conversationName = getEntityNameFromId(id);
                         console.error(
-                          'The selected conversation was not found:',
-                          err,
+                          `The selected conversation '${conversationName}' was not found.`,
                         );
                         return of(null);
                       }),
