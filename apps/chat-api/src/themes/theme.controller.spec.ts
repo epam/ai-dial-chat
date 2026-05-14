@@ -4,13 +4,18 @@ import {
   ServiceUnavailableException,
   ValidationPipe,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RefreshService } from '../auth/refresh.service';
+import { SessionGuard } from '../auth/session.guard';
+import { SessionService } from '../auth/session.service';
 import { ThemeController } from './theme.controller';
 import { ThemeService } from './theme.service';
 
 // supertest is CJS; use require to avoid vite ESM interop issues
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const request = require('supertest') as (
   app: Parameters<typeof import('supertest')>[0],
 ) => import('supertest').SuperTest<import('supertest').Test>;
@@ -169,6 +174,59 @@ describe('ThemeController (integration)', () => {
       // Note: CORS headers would be added by the app.enableCors() in main.ts
       // This test verifies the endpoint is accessible for CORS testing
       await request(app.getHttpServer()).get('/themes').expect(200);
+    });
+  });
+
+  describe('with global SessionGuard', () => {
+    let guardedApp: INestApplication;
+
+    beforeEach(async () => {
+      const moduleFixture: TestingModule = await Test.createTestingModule({
+        controllers: [ThemeController],
+        providers: [
+          { provide: ThemeService, useValue: mockThemeService },
+          // SessionGuard dependencies — decryptFromRequest always throws so any
+          // non-public route would return 401; public routes must bypass it.
+          {
+            provide: SessionService,
+            useValue: {
+              decryptFromRequest: vi
+                .fn()
+                .mockRejectedValue(new Error('no session')),
+              encrypt: vi.fn(),
+            },
+          },
+          { provide: RefreshService, useValue: { refresh: vi.fn() } },
+          { provide: ConfigService, useValue: { get: vi.fn() } },
+          { provide: APP_GUARD, useClass: SessionGuard },
+        ],
+      }).compile();
+
+      guardedApp = moduleFixture.createNestApplication();
+      guardedApp.useGlobalPipes(
+        new ValidationPipe({
+          whitelist: true,
+          forbidNonWhitelisted: true,
+          transform: true,
+        }),
+      );
+      await guardedApp.init();
+    });
+
+    afterEach(async () => {
+      await guardedApp.close();
+    });
+
+    it('GET /themes is accessible without a session cookie (@Public)', async () => {
+      mockThemeService.getThemes.mockResolvedValue({ themes: [] });
+      await request(guardedApp.getHttpServer()).get('/themes').expect(200);
+    });
+
+    it('GET /themes/icon is accessible without a session cookie (@Public)', async () => {
+      mockThemeService.getThemeIcon.mockResolvedValue('<svg/>');
+      await request(guardedApp.getHttpServer())
+        .get('/themes/icon?iconName=icon.svg')
+        .expect(200);
     });
   });
 });

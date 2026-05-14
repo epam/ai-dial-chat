@@ -151,18 +151,18 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Session guard
 
-- [ ] Extend `apps/chat-api/src/auth/session.guard.ts` (scaffolded in Slice 1)
+- [x] Extend `apps/chat-api/src/auth/session.guard.ts` (scaffolded in Slice 1)
   - Honour `isPublic` metadata — skip cookie check
   - If `at_exp < now + 60` call `RefreshService.refresh`
   - Set refreshed cookie on response if refresh occurred
   - Keep existing behaviour (decrypt → attach `SessionUser` → throw `UnauthorizedException` on failure)
 
-- [ ] Register `SessionGuard` as `APP_GUARD` in `apps/chat-api/src/auth/auth.module.ts`
-- [ ] Remove the local `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` (now redundant under the global guard)
+- [x] Register `SessionGuard` as `APP_GUARD` in `apps/chat-api/src/auth/auth.module.ts`
+- [x] Remove the local `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` (now redundant under the global guard)
 
 ### Refresh service
 
-- [ ] Create `apps/chat-api/src/auth/refresh.service.ts`
+- [x] Create `apps/chat-api/src/auth/refresh.service.ts`
   - Implement `refresh(payload: SessionPayload): Promise<SessionPayload>`
   - Per-pod `Map<sid, Promise>` mutex to prevent concurrent refresh races
   - Call `client.refresh(rt)` from openid-client
@@ -171,29 +171,42 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Tests — Slice 2
 
-- [ ] Create `apps/chat-api/src/auth/session.guard.spec.ts`
+- [x] Create `apps/chat-api/src/auth/session.guard.spec.ts`
   - Test: missing cookie → 401
   - Test: tampered cookie → 401
   - Test: valid cookie with non-expired `at` → passes through, `request.user` set
   - Test: valid cookie with near-expired `at` → calls `RefreshService.refresh`, sets new cookie
   - Test: public route → no cookie required
 
-- [ ] Create `apps/chat-api/src/auth/refresh.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/refresh.service.spec.ts`
   - Mock `openid-client` `client.refresh`
   - Test: successful refresh returns new `SessionPayload`
   - Test: `invalid_grant` throws `UnauthorizedException`
   - Test: concurrent calls for same `sid` coalesce to a single upstream request
 
-- [ ] Add integration tests to `auth.controller.spec.ts`
+- [x] Add integration tests to `auth.controller.spec.ts`
   - Test: protected route with valid session returns 200
   - Test: protected route without session returns 401
   - Test: protected route with near-expired `at` triggers refresh and returns new cookie
 
+### Incidental fixes uncovered by Slice 2 (`@Public()` hotfix)
+
+- [x] Add `@Public()` to `apps/chat-api/src/themes/theme.controller.ts` (class-level)
+  - The global `APP_GUARD` introduced in Slice 2 blocked `GET /api/themes` and `GET /api/themes/icon` with 401. Themes are fetched by the SPA before authentication and must remain public.
+- [x] Add `@Public()` to `apps/chat-api/src/health/health.controller.ts` (class-level)
+  - Same root cause: health probes from load balancers / Kubernetes must never require a session.
+- [x] Add `APP_GUARD`-aware tests to `apps/chat-api/src/themes/theme.controller.spec.ts`
+  - Test: `GET /themes` accessible without session (`@Public`)
+  - Test: `GET /themes/icon` accessible without session (`@Public`)
+- [x] Create `apps/chat-api/src/health/health.controller.spec.ts`
+  - Test: `GET /health` returns 200 with `status: ok`
+  - Test: `GET /health` accessible without session (`@Public`)
+
 ### Verification
 
-- [ ] Run `npm exec nx run @epam/chat-api:test`
-- [ ] Run `npm exec nx run @epam/chat-api:lint`
-- [ ] Manual smoke: access `/api/v1/themes` without cookie → 401; with cookie → 200
+- [x] Run `npm exec nx run @epam/chat-api:test`
+- [x] Run `npm exec nx run @epam/chat-api:lint`
+- [x] Manual smoke: access `/api/v1/themes` without cookie → 200; `GET /api/v1/auth/me` without cookie → 401
 
 ---
 
@@ -201,7 +214,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Controller update
 
-- [ ] Add `POST /api/v1/auth/logout` to `apps/chat-api/src/auth/auth.controller.ts`
+- [x] Add `POST /api/v1/auth/logout` to `apps/chat-api/src/auth/auth.controller.ts`
   - Decrypt session cookie to get `providerId`
   - Set cookie `Max-Age=0` to delete it
   - Best-effort call to provider revocation endpoint
@@ -210,14 +223,14 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Tests — Slice 3
 
-- [ ] Add logout tests to `auth.controller.spec.ts`
+- [x] Add logout tests to `auth.controller.spec.ts`
   - Test: `POST /api/v1/auth/logout` clears session cookie (`Max-Age=0`)
   - Test: `POST /api/v1/auth/logout` redirects to `end_session_endpoint` when provider supports it
   - Test: `POST /api/v1/auth/logout` with no session cookie still responds 302 (graceful)
 
 ### Verification
 
-- [ ] Run `npm exec nx run @epam/chat-api:test`
+- [x] Run `npm exec nx run @epam/chat-api:test`
 - [ ] Manual smoke: log in, log out, verify cookie cleared, verify redirect to IdP logout
 
 ---
@@ -232,14 +245,14 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Tests — Slice 4
 
-- [ ] Add provider-registry integration test with a mocked Auth0 issuer
+- [x] Add provider-registry integration test with a mocked Auth0 issuer
   - Test: provider with `audience` claim is passed in token request
   - Test: provider with custom `rolesClaim` extracts roles from correct JWT field
   - Test: two providers registered simultaneously — requests route independently
 
 ### Verification
 
-- [ ] Run `npm exec nx run @epam/chat-api:test`
+- [x] Run `npm exec nx run @epam/chat-api:test`
 - [ ] Manual smoke: complete Auth0 login flow end-to-end
 
 ---
@@ -248,7 +261,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### CSRF guard
 
-- [ ] Create `apps/chat-api/src/auth/csrf.guard.ts`
+- [x] Create `apps/chat-api/src/auth/csrf.guard.ts`
   - Double-submit CSRF token pattern
   - Validate `Origin`/`Referer` against the configured same-origin application URL for state-mutating requests
   - Read `X-CSRF-Token` header; verify it matches the `csrf` field in the decrypted `SessionPayload` (field defined in Slice 1)
@@ -257,21 +270,21 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Key rotation support
 
-- [ ] Update `SessionService.decrypt` to try both active and previous key (already required in Slice 1, verify fully covered)
-- [ ] Document key rotation procedure in `docs/auth/auth-bff-encrypted-cookie.md` (update "Open Decisions" section 9)
+- [x] Update `SessionService.decrypt` to try both active and previous key (already required in Slice 1, verify fully covered)
+- [x] Document key rotation procedure in `docs/auth/auth-bff-encrypted-cookie.md` (update "Open Decisions" section 9)
 
 ### Cookie size handling
 
-- [ ] Add size check in `AuthController.callback` after encrypting session
+- [x] Add size check in `AuthController.callback` after encrypting session
   - If JWE > 3800 bytes: log warning and rebuild `SessionPayload` without `at` (refresh-only mode)
   - Update `SessionGuard` to handle absent `at`: if missing, call `RefreshService.refresh` before attaching `SessionUser`
 
 ### Security headers audit
 
-- [ ] Review `main.ts` `helmet` CSP directives
+- [x] Review `main.ts` `helmet` CSP directives
   - Tighten `scriptSrc` to `'self'` only (remove `'unsafe-inline'`)
   - Verify no inline scripts are used in the frontend before applying
-- [ ] Add `X-Frame-Options: DENY` (already set by helmet default; verify not overridden)
+- [x] Add `X-Frame-Options: DENY` (already set by helmet default; verify not overridden)
 
 ### Already shipped in Slice 1 (scope shift — record only, no work)
 
@@ -279,13 +292,13 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Tests — Slice 5
 
-- [ ] Create `apps/chat-api/src/auth/csrf.guard.spec.ts`
+- [x] Create `apps/chat-api/src/auth/csrf.guard.spec.ts`
   - Test: missing `X-CSRF-Token` on POST → 403
   - Test: mismatched CSRF token → 403
   - Test: correct CSRF token → passes
   - Test: GET requests are not checked
 
-- [ ] Add key-rotation tests to `session.service.spec.ts`
+- [x] Add key-rotation tests to `session.service.spec.ts`
   - Test: rotating active key (old key → previous, new key → active): tokens encrypted with old key still decrypt
 
 ### Frontend: CSRF token wiring
@@ -296,23 +309,23 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `npm exec nx run @epam/chat-api:test`
+- [x] Run `npm exec nx run @epam/chat-api:test`
 - [ ] Run `npm exec nx run @epam/chat:test`
-- [ ] Run `npm exec nx run @epam/chat-api:lint`
+- [x] Run `npm exec nx run @epam/chat-api:lint`
 - [ ] Run `npm exec nx run @epam/chat:lint`
-- [ ] Run `npm exec nx affected --target=lint --base=origin/development`
+- [x] Run `npm exec nx affected --target=lint --base=origin/development`
 
 ---
 
 ## Final cross-slice tasks
 
-- [ ] Update Swagger setup in `apps/chat-api/src/main.ts`
+- [x] Update Swagger setup in `apps/chat-api/src/main.ts`
   - Replace `.addBearerAuth()` with `.addCookieAuth('session')`
   - Add `@ApiCookieAuth('session')` to all protected endpoints
 
-- [ ] Update `docs/auth/auth-bff-encrypted-cookie.md`
+- [x] Update `docs/auth/auth-bff-encrypted-cookie.md`
   - Mark "Open Decisions" (section 9) with resolution for each decision taken
   - Update status from `Proposal` to `Implemented`
   - Replace the `NestJS Module Layout (Proposed)` block in §6 with the **flat layout actually shipped** (no `session/`, `providers/`, `csrf/`, `refresh/` sub-folders — see `apps/chat-api/AGENTS.md` §1 and the rewritten `design.md` "Module Structure")
 
-- [ ] Run full test suite and lint: `npm run test` + `npm exec nx affected --target=lint --base=origin/development`
+- [x] Run full test suite and lint: `npm run test` + `npm exec nx affected --target=lint --base=origin/development`

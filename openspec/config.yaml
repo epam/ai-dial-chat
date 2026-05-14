@@ -104,11 +104,11 @@ rules:
     - Use clsx for conditional class composition — not template literal concatenation
     - Use @tabler/icons-react for all icons — no unicode characters, no inline SVGs
     - Use components from @epam/ai-dial-ui-kit before creating new primitives
-    - Name props interfaces {ComponentName}Props — not Props, not inline anonymous types
+    - "Name props interfaces {ComponentName}Props — not Props, not inline anonymous types"
     - Export components as named exports wrapped in React.memo for performance-sensitive
       components (e.g. ConversationView); default export the same name
-    - Use FC<{ComponentName}Props> for component type annotation
-    - All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}
+    - "Use FC<{ComponentName}Props> for component type annotation"
+    - "All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}"
     - Use the existing typed API helpers (get, post) from server-api/base.ts — do not call
       fetch directly in components or hooks
     - Fetch inside useEffect with a cancelled flag to prevent setState-on-unmount warnings
@@ -119,7 +119,7 @@ rules:
       with components
     - Custom hooks go in apps/chat/src/hooks/ — one hook per file, JSDoc required explaining WHY
     - Lazy-load every route component with React.lazy + Suspense — always provide a fallback
-    - For named exports from lazy-loaded libs: import the module then return { default: module.X }
+    - "For named exports from lazy-loaded libs: import the module then return { default: module.X }"
     - For anything under apps/chat-api/**, follow apps/chat-api/AGENTS.md as the source of
       truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
       DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).

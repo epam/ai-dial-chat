@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 
 /**
  * Health check controller.
@@ -7,6 +8,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
  * Provides a simple endpoint to verify that the application is running.
  * Useful for load balancers, monitoring systems, and deployment health checks.
  */
+@Public()
 @ApiTags('health')
 @Controller('health')
 export class HealthController {

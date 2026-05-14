@@ -83,4 +83,49 @@ describe('ProviderRegistryService', () => {
     expect(list).toHaveLength(1);
     expect(list[0].id).toBe('keycloak');
   });
+
+  describe('Auth0-style provider (audience + rolesClaim)', () => {
+    const AUTH0_PROVIDER = {
+      id: 'auth0',
+      issuer: 'https://tenant.auth0.com/',
+      clientId: 'auth0-client-id',
+      clientSecret: 'auth0-secret',
+      scope: 'openid email profile',
+      audience: 'https://api.example.com',
+      rolesClaim: 'https://example.com/roles',
+      postLogoutRedirectUri: 'https://app.example.com',
+    };
+
+    it('preserves audience in the stored config', async () => {
+      const module = await buildModule(JSON.stringify([AUTH0_PROVIDER]));
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+      const { config } = svc.getProvider('auth0');
+      expect(config.audience).toBe('https://api.example.com');
+    });
+
+    it('preserves custom rolesClaim in the stored config', async () => {
+      const module = await buildModule(JSON.stringify([AUTH0_PROVIDER]));
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+      const { config } = svc.getProvider('auth0');
+      expect(config.rolesClaim).toBe('https://example.com/roles');
+    });
+
+    it('two providers registered simultaneously route independently', async () => {
+      const module = await buildModule(
+        JSON.stringify([VALID_PROVIDER, AUTH0_PROVIDER]),
+      );
+      await module.init();
+      const svc = module.get(ProviderRegistryService);
+
+      const keycloak = svc.getProvider('keycloak');
+      const auth0 = svc.getProvider('auth0');
+
+      expect(keycloak.config.id).toBe('keycloak');
+      expect(auth0.config.id).toBe('auth0');
+      expect(keycloak.client).not.toBe(auth0.client);
+      expect(discoverSpy).toHaveBeenCalledTimes(2);
+    });
+  });
 });

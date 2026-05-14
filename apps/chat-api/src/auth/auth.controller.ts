@@ -6,10 +6,10 @@ import {
   Get,
   Logger,
   Param,
+  Post,
   Query,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -26,7 +26,6 @@ import type { EnvironmentVariables } from '../config/environment.config';
 import { AuthCallbackQueryDto } from './dto/auth-callback.query.dto';
 import { ProviderIdParamDto } from './dto/provider-id-param.dto';
 import { ProviderRegistryService } from './provider-registry.service';
-import { SessionGuard } from './session.guard';
 import { SessionService } from './session.service';
 import type { SessionPayload, SessionUser } from './session.types';
 
@@ -247,15 +246,71 @@ export class AuthController {
     res.redirect('/');
   }
 
+  @Post('logout')
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Log out and clear session cookie' })
+  @ApiResponse({ status: 302, description: 'Redirect after logout' })
+  async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', {
+      infer: true,
+    }) as string;
+
+    const sessionToken: string | undefined = (
+      req.cookies as Record<string, string> | undefined
+    )?.[cookieName];
+
+    // Clear the session cookie unconditionally so even an expired session can log out.
+    res.cookie(cookieName, '', { ...COOKIE_OPTS, maxAge: 0 });
+
+    let endSessionUrl: string | undefined;
+
+    if (sessionToken) {
+      let payload: SessionPayload | undefined;
+      try {
+        payload = await this.session.decrypt(sessionToken);
+      } catch {
+        // Expired or tampered cookie — proceed to plain redirect.
+      }
+
+      if (payload) {
+        const { client, config: providerConfig } = this.registry.getProvider(
+          payload.providerId,
+        );
+
+        // Best-effort revocation — do not block logout on failure.
+        const revocationEndpoint =
+          client.issuer.metadata['revocation_endpoint'];
+        if (revocationEndpoint && payload.rt) {
+          try {
+            await client.revoke(payload.rt);
+          } catch (err) {
+            this.logger.warn('Token revocation failed (non-fatal)', err);
+          }
+        }
+
+        const endSession = client.issuer.metadata['end_session_endpoint'];
+        if (endSession) {
+          endSessionUrl = client.endSessionUrl({
+            post_logout_redirect_uri: providerConfig.postLogoutRedirectUri,
+            id_token_hint: payload.at,
+          });
+        }
+      }
+    }
+
+    res.redirect(endSessionUrl ?? '/');
+  }
+
   @Get('me')
-  @UseGuards(SessionGuard)
   @ApiCookieAuth('session')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
   @ApiResponse({ status: 401, description: 'No valid session' })
-  me(@Req() req: Request) {
+  me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const user = req.user as SessionUser;
+    res.setHeader('X-CSRF-Token', user.csrf);
     return {
       sub: user.sub,
       providerId: user.providerId,

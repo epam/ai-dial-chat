@@ -5,6 +5,7 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { CompactEncrypt } from 'jose';
@@ -12,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthController } from './auth.controller';
 import { KeysService } from './keys.service';
 import { ProviderRegistryService } from './provider-registry.service';
+import { RefreshService } from './refresh.service';
 import { SessionGuard } from './session.guard';
 import { SessionService } from './session.service';
 import type { SessionPayload } from './session.types';
@@ -33,6 +35,17 @@ const MOCK_CLIENT = {
     .mockReturnValue('https://keycloak.example.com/auth?state=s&nonce=n'),
   callbackParams: vi.fn(),
   callback: vi.fn(),
+  revoke: vi.fn().mockResolvedValue(undefined),
+  endSessionUrl: vi
+    .fn()
+    .mockReturnValue('https://keycloak.example.com/end-session'),
+  issuer: {
+    metadata: {} as Record<string, string | undefined>,
+  },
+};
+
+const MOCK_REFRESH_SERVICE = {
+  refresh: vi.fn(),
 };
 
 async function buildApp(): Promise<INestApplication> {
@@ -92,7 +105,8 @@ async function buildApp(): Promise<INestApplication> {
       { provide: SessionService, useValue: sessionService },
       { provide: ProviderRegistryService, useValue: registryMock },
       { provide: ConfigService, useValue: configMock },
-      SessionGuard,
+      { provide: RefreshService, useValue: MOCK_REFRESH_SERVICE },
+      { provide: APP_GUARD, useClass: SessionGuard },
     ],
   }).compile();
 
@@ -158,6 +172,7 @@ describe('AuthController (integration)', () => {
 
   afterEach(async () => {
     vi.clearAllMocks();
+    MOCK_REFRESH_SERVICE.refresh.mockReset();
     await app.close();
   });
 
@@ -334,6 +349,93 @@ describe('AuthController (integration)', () => {
         .get('/api/v1/auth/me')
         .set('Cookie', `${COOKIE_NAME}=tampered.value.here`)
         .expect(401);
+    });
+  });
+
+  describe('POST /api/v1/auth/logout', () => {
+    afterEach(() => {
+      MOCK_CLIENT.issuer.metadata = {};
+    });
+
+    it('clears session cookie and redirects to / when provider has no end_session_endpoint', async () => {
+      const sessCookie = await makeSessionCookie(sampleSession);
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(302);
+
+      expect(res.headers.location).toBe('/');
+      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      const cleared = cookies.find((c) => c?.startsWith(COOKIE_NAME));
+      expect(cleared).toBeDefined();
+      expect(cleared).toMatch(/Max-Age=0/i);
+    });
+
+    it('redirects to end_session_endpoint when provider supports it', async () => {
+      MOCK_CLIENT.issuer.metadata = {
+        end_session_endpoint: 'https://keycloak.example.com/end-session',
+      };
+      const sessCookie = await makeSessionCookie(sampleSession);
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(302);
+
+      expect(res.headers.location).toContain(
+        'keycloak.example.com/end-session',
+      );
+      expect(MOCK_CLIENT.endSessionUrl).toHaveBeenCalledTimes(1);
+    });
+
+    it('responds 302 gracefully with no session cookie', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .expect(302);
+
+      expect(res.headers.location).toBe('/');
+    });
+  });
+
+  describe('Global SessionGuard (Slice 2)', () => {
+    it('allows GET /api/v1/auth/providers without session (public route)', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/providers')
+        .expect(200);
+    });
+
+    it('blocks a protected route without session cookie', async () => {
+      await request(app.getHttpServer()).get('/api/v1/auth/me').expect(401);
+    });
+
+    it('triggers refresh and sets new cookie when at is near-expired', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const nearExpiredSession: SessionPayload = {
+        ...sampleSession,
+        sid: randomUUID(),
+        at_exp: now + 30, // below the 60-second threshold
+      };
+      const refreshedSession: SessionPayload = {
+        ...nearExpiredSession,
+        at: 'refreshed-access-token',
+        at_exp: now + 3600,
+        csrf: randomUUID(),
+      };
+      MOCK_REFRESH_SERVICE.refresh.mockResolvedValue(refreshedSession);
+
+      const sessCookie = await makeSessionCookie(nearExpiredSession);
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+
+      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      const newSessCookie = cookies.find((c) => c?.startsWith(COOKIE_NAME));
+      expect(newSessCookie).toBeDefined();
+      expect(MOCK_REFRESH_SERVICE.refresh).toHaveBeenCalledTimes(1);
     });
   });
 });

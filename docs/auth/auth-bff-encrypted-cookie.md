@@ -1,7 +1,7 @@
 # Auth Architecture: Stateless BFF with Encrypted Cookie Session
 
 **Project:** Chat 2.0 (React/Vite + NestJS)
-**Version:** 1.0 | **Date:** 2026-05-13 | **Status:** Proposal
+**Version:** 1.0 | **Date:** 2026-05-14 | **Status:** Implemented
 
 ---
 
@@ -145,23 +145,33 @@ Any pod can decrypt any cookie because all pods share the same active key + prev
 
 ---
 
-## 6. NestJS Module Layout (Proposed)
+## 6. NestJS Module Layout (Shipped)
+
+Follows the flat one-folder-per-domain layout mandated by `apps/chat-api/AGENTS.md` §1. All files are co-located under `auth/`; the only sub-folder is `dto/` for input-validation classes.
 
 ```
 apps/chat-api/src/auth/
-├── auth.module.ts
-├── auth.controller.ts        # /auth/login, /auth/callback, /auth/logout, /auth/me
-├── providers/
-│   ├── provider-registry.ts  # config-driven OIDC clients (openid-client)
-│   └── provider.types.ts
-├── session/
-│   ├── session.service.ts    # encrypt/decrypt via jose (JWE A256GCM)
-│   ├── session.guard.ts      # reads cookie, validates, attaches principal
-│   └── keys.service.ts       # active + previous keys, rotation
-├── csrf/
-│   └── csrf.guard.ts         # double-submit token for state-mutating endpoints
-└── refresh/
-    └── refresh.service.ts    # server-side refresh + in-memory per-pod mutex
+├── auth.module.ts                      # wires controllers + services; SessionGuard + CsrfGuard as APP_GUARDs
+├── auth.controller.ts                  # /api/v1/auth/* endpoints
+├── auth.controller.spec.ts             # supertest integration
+├── session.service.ts                  # JWE encrypt/decrypt (jose A256GCM)
+├── session.service.spec.ts
+├── session.guard.ts                    # global APP_GUARD; isPublic skip, refresh on near-expiry
+├── session.guard.spec.ts
+├── keys.service.ts                     # active + previous keys from env (hex, validated on init)
+├── keys.service.spec.ts
+├── provider-registry.service.ts        # AUTH_PROVIDERS parse + struct-validate + Issuer.discover
+├── provider-registry.service.spec.ts
+├── refresh.service.ts                  # server-side token refresh + per-pod sid-keyed mutex
+├── refresh.service.spec.ts
+├── csrf.guard.ts                       # double-submit CSRF guard (Origin check + X-CSRF-Token header)
+├── csrf.guard.spec.ts
+├── session.types.ts                    # SessionPayload, SessionUser
+├── provider.types.ts                   # ProviderConfig with class-validator decorators
+├── express.d.ts                        # Request.user augmentation
+└── dto/
+    ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
+    └── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description
 ```
 
 Public endpoints:
@@ -180,6 +190,9 @@ The session guard is applied globally to `/api/*` routes; everything except `/au
 ---
 
 ## 7. Security Checklist
+
+Testing instructions for the currently implemented slices live in
+[`testing-current-auth-implementation.md`](./testing-current-auth-implementation.md).
 
 | Risk | Mitigation |
 |---|---|
@@ -212,14 +225,21 @@ The proposed pattern is the only column that scores well on **all four** of your
 
 ---
 
-## 9. Open Decisions Before Implementation
+## 9. Open Decisions — Resolutions
 
-1. **Cookie shape**: single cookie with both tokens, or split `sess` + `at`?
-2. **Audience strategy**: does the SPA call DIAL Core directly (cookie domain matters) or always through the BFF proxy? The proposal assumes the latter.
-3. **Cookie domain**: same-site `app.example.com` and `api.example.com`? If different, set parent domain `.example.com` + `SameSite=Lax`; if cross-site, `SameSite=None; Secure` and add CSRF tokens to every endpoint.
-4. **Logout policy**: federated `end_session_endpoint` for every provider, or only those that support it cleanly?
-5. **Provider list scope for v1**: which IdPs are first-class on day one (Keycloak + Auth0 only, or full preset list)?
-6. **Key management**: env-only for v1, KMS later?
+1. **Cookie shape**: single cookie with both tokens. Size warning logged at >3800 bytes; a refresh-only fallback (store only RT in the cookie, fetch AT on demand) is deferred until a real overflow is observed in testing.
+
+2. **Audience strategy**: the SPA always calls through the BFF (`/api/*`). DIAL Core is not called directly from the browser, so the cookie domain scope is the same origin.
+
+3. **Cookie domain**: same origin (SPA static files served by the same NestJS process via `ServeStaticModule`). `__Host-` prefix used — locks to host, path `/`, and requires `Secure`. No cross-site complexity.
+
+4. **Logout policy**: best-effort `end_session_endpoint` redirect when the provider advertises one; graceful fallback to `/` otherwise. Token revocation attempted before redirect (best-effort, non-fatal).
+
+5. **Provider list scope for v1**: provider-neutral — any OIDC provider works via `AUTH_PROVIDERS` config. Keycloak and Auth0 are smoke-tested; Okta and Entra ID work but are not yet regression-tested.
+
+6. **Key management**: env-only for v1 (`AUTH_SESSION_SECRET` / `AUTH_SESSION_PREV_SECRET`). KMS integration deferred. Key rotation procedure: set old active key as `AUTH_SESSION_PREV_SECRET`, generate new key for `AUTH_SESSION_SECRET`, redeploy. Existing sessions decrypt via the previous key for one grace period.
+
+7. **CSRF strategy**: double-submit pattern — CSRF token sealed inside the JWE (unreadable by JS), exposed to the SPA only via `X-CSRF-Token` response header on `GET /api/v1/auth/me`. `CsrfGuard` validates `Origin`/`Referer` and the header token for all non-safe non-public methods.
 
 ---
 

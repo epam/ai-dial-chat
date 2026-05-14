@@ -84,4 +84,21 @@ describe('SessionService', () => {
     const svc = await buildService(ACTIVE_HEX, PREV_HEX);
     await expect(svc.decrypt(token)).rejects.toThrow(UnauthorizedException);
   });
+
+  it('key rotation: tokens encrypted with old active key still decrypt after it becomes the previous key', async () => {
+    // Before rotation: PREV_HEX is active.
+    const beforeRotation = await buildService(PREV_HEX);
+    const tokenEncryptedBeforeRotation =
+      await beforeRotation.encrypt(samplePayload);
+
+    // After rotation: ACTIVE_HEX becomes active, PREV_HEX moves to previous.
+    const afterRotation = await buildService(ACTIVE_HEX, PREV_HEX);
+    const result = await afterRotation.decrypt(tokenEncryptedBeforeRotation);
+    expect(result).toEqual(samplePayload);
+
+    // Tokens encrypted with the new active key also decrypt.
+    const newToken = await afterRotation.encrypt(samplePayload);
+    const result2 = await afterRotation.decrypt(newToken);
+    expect(result2).toEqual(samplePayload);
+  });
 });
