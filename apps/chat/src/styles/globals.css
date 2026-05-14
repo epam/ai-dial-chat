@@ -33,6 +33,17 @@
     word-break: break-word;
     overflow-wrap: break-word;
   }
+  /* light */
+  .light input::selection {
+    background: #b3d4fc;
+    color: #000;
+  }
+
+  /* dark */
+  .dark input::selection {
+    background: #1d63a9;
+    color: #fff;
+  }
 }
 
 html {

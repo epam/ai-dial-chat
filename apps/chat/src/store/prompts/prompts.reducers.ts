@@ -30,6 +30,7 @@ const initialState: PromptsState = {
   isSelectedPromptApproveRequiredResource: false,
   isPromptModalOpen: false,
   isPromptModalInitModeEdit: false,
+  isSelectedPromptIsSkill: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -308,12 +309,14 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         promptId: string | undefined;
         isApproveRequiredResource?: boolean;
+        isSkillPrompt?: boolean;
       }>,
     ) => {
       state.selectedPromptId = payload.promptId;
       state.isSelectedPromptApproveRequiredResource =
         !!payload.isApproveRequiredResource;
       state.isPromptLoading = !!payload.promptId;
+      state.isSelectedPromptIsSkill = !!payload.isSkillPrompt;
     },
     uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
       state.isPromptLoading = true;
@@ -441,6 +444,7 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         promptId: string | undefined;
         selectInEditMode?: boolean;
+        isSkillPrompt?: boolean;
         isApproveRequiredResource?: boolean;
       }>,
     ) => {
