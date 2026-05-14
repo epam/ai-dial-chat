@@ -13,7 +13,16 @@ export const EMPTY_MODEL_ID = 'empty';
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
 export const MIN_ENTITY_LENGTH = 1;
-export const MAX_ENTITY_NAME_NUMERATION = 9999999;
+export const MAX_ENTITY_NAME_NUMERATION = 999;
+
+// Byte limits for resource ids/segments in the configured storage backend.
+// RESOURCE_MAX_ID_BYTES is fixed at 1024 (S3/GCS/Azure standard) and cannot
+// be overridden at runtime.
+// RESOURCE_MAX_SEGMENT_BYTES can be tuned via env var (e.g. MinIO uses 255)
+// but must be strictly less than RESOURCE_MAX_ID_BYTES.
+export const RESOURCE_MAX_ID_BYTES = 1024;
+
+const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
 
 const parsePositiveInteger = (
   value: string | undefined,
@@ -28,18 +37,15 @@ const parsePositiveInteger = (
     : undefined;
 };
 
-// Byte limits for resource ids/segments in the configured storage backend.
-// Defaults match common storage backends (S3/GCS/Azure: 1024-byte key; MinIO: 255-byte segment).
-// Override via env vars when a different backend is used.
-const DEFAULT_RESOURCE_MAX_ID_BYTES = 1024;
-const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
-
-export const RESOURCE_MAX_ID_BYTES =
-  parsePositiveInteger(process.env.NEXT_PUBLIC_RESOURCE_MAX_ID_BYTES) ??
-  DEFAULT_RESOURCE_MAX_ID_BYTES;
-export const RESOURCE_MAX_SEGMENT_BYTES =
-  parsePositiveInteger(process.env.NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES) ??
-  DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
+export const RESOURCE_MAX_SEGMENT_BYTES = (() => {
+  const configured = parsePositiveInteger(
+    process.env.NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES,
+  );
+  if (configured !== undefined && configured < RESOURCE_MAX_ID_BYTES) {
+    return configured;
+  }
+  return DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
+})();
 
 export const FALLBACK_TEMPERATURE = 1;
 
