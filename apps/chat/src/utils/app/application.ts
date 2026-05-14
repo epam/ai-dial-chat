@@ -497,11 +497,11 @@ export const getEntityDisplayName = (
 export const getQuickAppItemNameFromConfig = (
   item: MCPToolset | DialDeploymentSimpleTool,
 ): string => {
-  if ('dial_id' in item) {
+  if ('deployment_id' in item && 'name' in item) {
     return (
       item.name ||
       ApiUtils.decodeApiUrl(
-        parseEntityApiKey(splitEntityId(item.dial_id).name, {
+        parseEntityApiKey(splitEntityId(item.deployment_id).name, {
           parseVersion: true,
         }).name,
       )

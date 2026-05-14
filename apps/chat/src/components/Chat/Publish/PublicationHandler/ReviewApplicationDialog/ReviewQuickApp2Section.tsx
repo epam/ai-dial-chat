@@ -109,17 +109,18 @@ const ReviewQuickApp2SectionView = ({
     [config.tool_sets, modelsMap],
   );
 
-  const orchestratorModel = modelsMap[config.orchestrator.deployment.name];
+  const orchestratorModel =
+    modelsMap[config.orchestrator.deployment.deployment_id];
   const orchestratorName = orchestratorModel
     ? orchestratorModel.name
-    : !isApplicationId(config.orchestrator.deployment.name)
+    : !isApplicationId(config.orchestrator.deployment.deployment_id)
       ? ApiUtils.decodeApiUrl(
           parseEntityApiKey(
-            splitEntityId(config.orchestrator.deployment.name).name,
+            splitEntityId(config.orchestrator.deployment.deployment_id).name,
             { parseVersion: true },
           ).name,
         )
-      : config.orchestrator.deployment.name;
+      : config.orchestrator.deployment.deployment_id;
   const hasToolsets = toolsets.length > 0 || unknownToolsets.length > 0;
 
   return (
@@ -188,7 +189,7 @@ const ReviewQuickApp2SectionView = ({
           hasToolsets ? (
             <div className="flex flex-wrap gap-2 text-primary">
               {toolsets.map((toolset) => {
-                const decodedId = ApiUtils.decodeApiUrl(toolset.dial_id);
+                const decodedId = ApiUtils.decodeApiUrl(toolset.deployment_id);
                 return (
                   <AgentAndToolsetChip
                     key={decodedId}
