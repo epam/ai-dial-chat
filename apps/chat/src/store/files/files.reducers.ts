@@ -1130,9 +1130,7 @@ export const filesSlice = createSlice({
           return false;
         }
         return deletedFolderPrefixes.some(
-          (p) =>
-            isPathUnderPrefix(id, p) ||
-            isPathUnderPrefix(folderId, p),
+          (p) => isPathUnderPrefix(id, p) || isPathUnderPrefix(folderId, p),
         );
       };
 
@@ -1147,8 +1145,7 @@ export const filesSlice = createSlice({
         }
         return deletedFolderPrefixes.some(
           (p) =>
-            isPathUnderPrefix(id, p) ||
-            isPathUnderPrefix(parentFolderId, p),
+            isPathUnderPrefix(id, p) || isPathUnderPrefix(parentFolderId, p),
         );
       };
 

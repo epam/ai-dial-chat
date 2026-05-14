@@ -21,17 +21,26 @@ describe('File utility methods', () => {
 
     it('returns true only for strict path descendants', () => {
       expect(
-        isPathUnderPrefix('files/bucket/parent/zip/nested/file.txt', 'files/bucket/parent/zip'),
+        isPathUnderPrefix(
+          'files/bucket/parent/zip/nested/file.txt',
+          'files/bucket/parent/zip',
+        ),
       ).toBe(true);
       expect(
-        isPathUnderPrefix('files/bucket/parent/zip/nested', 'files/bucket/parent/zip'),
+        isPathUnderPrefix(
+          'files/bucket/parent/zip/nested',
+          'files/bucket/parent/zip',
+        ),
       ).toBe(true);
     });
 
     it('does not match sibling path segments (foo vs foobar)', () => {
-      expect(isPathUnderPrefix('files/bucket/parent/foobar', 'files/bucket/parent/foo')).toBe(
-        false,
-      );
+      expect(
+        isPathUnderPrefix(
+          'files/bucket/parent/foobar',
+          'files/bucket/parent/foo',
+        ),
+      ).toBe(false);
     });
 
     it('returns false for empty path or prefix', () => {

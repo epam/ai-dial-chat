@@ -1,11 +1,12 @@
-import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it } from 'vitest';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 
 import { FilesActions, filesSlice } from '../files.reducers';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 
 const makeFile = (partial: Partial<DialFile>): DialFile =>
   ({
@@ -17,7 +18,9 @@ const makeFile = (partial: Partial<DialFile>): DialFile =>
     ...partial,
   }) as DialFile;
 
-const makeFolder = (partial: Partial<FileFolderInterface>): FileFolderInterface =>
+const makeFolder = (
+  partial: Partial<FileFolderInterface>,
+): FileFolderInterface =>
   ({
     id: 'files/test/folder',
     name: 'folder',
@@ -236,7 +239,9 @@ describe('files.reducers deleteFilesSuccess', () => {
     );
 
     expect(nextState.files.map((f) => f.id)).toEqual([siblingFileId]);
-    expect(nextState.folders.map((f) => f.id)).toEqual([`${parent}/otherFolder`]);
+    expect(nextState.folders.map((f) => f.id)).toEqual([
+      `${parent}/otherFolder`,
+    ]);
     expect(nextState.chosenFileIds).toEqual([siblingFileId]);
     expect(nextState.chosenEmptyFoldersIds).toEqual([]);
     expect(nextState.selectedFilesIds).toEqual([]);
@@ -290,7 +295,9 @@ describe('files.reducers deleteFilesSuccess', () => {
           succeeded: 1,
           failed: 1,
           results: [{ index: 0, data: nestedFileId }],
-          errors: [{ index: 1, data: `${nestedFolderId}/other.bin`, error: 'x' }],
+          errors: [
+            { index: 1, data: `${nestedFolderId}/other.bin`, error: 'x' },
+          ],
         },
       }),
     );
