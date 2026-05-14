@@ -460,6 +460,7 @@ export const getStorageSafeUniqueFolderName = (params: {
   defaultName?: string;
   existingNames: string[];
   limits?: EntityStorageLimits;
+  type?: FolderInterface['type'];
 }): string => {
   const { folderId, desiredName, existingNames } = params;
   const limits = params.limits ?? getResourceStorageLimits();
@@ -496,7 +497,7 @@ export const getStorageSafeUniqueFolderName = (params: {
     folderId,
     name:
       prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
-    type: 'chat' as FolderInterface['type'],
+    type: params.type ?? FeatureType.Chat,
   }).name;
 };
 

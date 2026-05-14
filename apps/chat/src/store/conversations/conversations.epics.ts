@@ -2929,7 +2929,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
             .map((conv) => conv.name)
         : [];
 
-      const storageSafeName = saveInStorage
+      const storageSafeName: string | undefined = saveInStorage
         ? getStorageSafeUniqueConversationName({
             conversation: {
               ...(conversation as Conversation),
@@ -2944,7 +2944,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
-        ...(storageSafeName && { name: storageSafeName }),
+        ...(storageSafeName !== undefined && { name: storageSafeName }),
         folderId,
         updatedAt: Date.now(),
       });
