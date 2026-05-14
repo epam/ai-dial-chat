@@ -27,6 +27,12 @@ type RequestMethod = 'GET' | 'POST' | 'PUT';
 
 type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   body?: unknown;
+  responseHandler?: (response: Response) => void;
+};
+
+let _csrfToken: string | null = null;
+export const setCsrfToken = (token: string | null): void => {
+  _csrfToken = token;
 };
 
 // Type guard for validating response structure
@@ -81,7 +87,7 @@ const request = async <TResponse>(
   method: RequestMethod,
   options: RequestOptions = {},
 ): Promise<TResponse> => {
-  const { body, headers, ...restOptions } = options;
+  const { body, headers, responseHandler, ...restOptions } = options;
   const isFormData = body instanceof FormData;
 
   const response = await fetch(url, {
@@ -90,6 +96,7 @@ const request = async <TResponse>(
     credentials: 'include',
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(method !== 'GET' && _csrfToken ? { 'X-CSRF-Token': _csrfToken } : {}),
       ...(headers ?? {}),
     },
     body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
@@ -105,6 +112,7 @@ const request = async <TResponse>(
     );
   }
 
+  responseHandler?.(response);
   return parseResponse<TResponse>(response);
 };
 

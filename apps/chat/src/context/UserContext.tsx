@@ -12,6 +12,7 @@ import {
   ApiEndpoints,
   get,
   onUnauthorized,
+  setCsrfToken,
   UnauthorizedError,
 } from '../server-api/base';
 
@@ -33,7 +34,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const bootstrap = useCallback(async (signal: { cancelled: boolean }) => {
     setStatus('loading');
     try {
-      const profile = await get<UserProfile>(ApiEndpoints.AUTH_ME);
+      const profile = await get<UserProfile>(ApiEndpoints.AUTH_ME, {
+        responseHandler: (res) => setCsrfToken(res.headers.get('x-csrf-token')),
+      });
       if (!signal.cancelled) {
         setUser(profile);
         setStatus('authenticated');

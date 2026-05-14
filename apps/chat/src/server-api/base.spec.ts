@@ -3,6 +3,7 @@ import {
   get,
   post,
   put,
+  setCsrfToken,
   ApiEndpoints,
   UnauthorizedError,
   onUnauthorized,
@@ -12,6 +13,7 @@ describe('API client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+    setCsrfToken(null);
   });
 
   describe('get', () => {
@@ -337,6 +339,75 @@ describe('API client', () => {
       await get('/api/protected').catch(() => undefined);
 
       expect(listener).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('CSRF token', () => {
+    const okResponse = () =>
+      ({
+        ok: true,
+        status: 200,
+        headers: { get: vi.fn().mockReturnValue('application/json') },
+        json: vi.fn().mockResolvedValue({}),
+      }) as unknown as Response;
+
+    it('responseHandler receives the Response object', async () => {
+      const mockResponse = okResponse();
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse,
+      );
+      const handler = vi.fn();
+
+      await get('/api/test', { responseHandler: handler });
+
+      expect(handler).toHaveBeenCalledWith(mockResponse);
+    });
+
+    it('POST includes X-CSRF-Token when token is set', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        okResponse(),
+      );
+      setCsrfToken('test-csrf-token');
+
+      await post('/api/test', {});
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/test',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-CSRF-Token': 'test-csrf-token',
+          }),
+        }),
+      );
+    });
+
+    it('GET does not include X-CSRF-Token even when token is set', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        okResponse(),
+      );
+      setCsrfToken('test-csrf-token');
+
+      await get('/api/test');
+
+      const [, fetchOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock
+        .calls[0] as [string, RequestInit];
+      expect(
+        (fetchOptions.headers as Record<string, string>)['X-CSRF-Token'],
+      ).toBeUndefined();
+    });
+
+    it('POST does not include X-CSRF-Token when token is null', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        okResponse(),
+      );
+
+      await post('/api/test', {});
+
+      const [, fetchOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock
+        .calls[0] as [string, RequestInit];
+      expect(
+        (fetchOptions.headers as Record<string, string>)['X-CSRF-Token'],
+      ).toBeUndefined();
     });
   });
 

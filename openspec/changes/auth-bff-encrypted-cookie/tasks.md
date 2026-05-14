@@ -128,38 +128,38 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 This follow-up supersedes the initial Slice 1 callback behaviour that always redirected to `/` on the callback request origin.
 
-- [ ] Add `apps/chat-api/src/auth/dto/login-query.dto.ts`
+- [x] Add `apps/chat-api/src/auth/dto/login-query.dto.ts`
   - Replace the relative-only `returnTo` query with optional `callbackUrl`
   - Accept both absolute `http(s)` URLs and relative app paths at the DTO boundary; reject obviously invalid scalar values early
   - Keep the property name `callbackUrl` in Swagger/API docs to match the BFF login contract
 
-- [ ] Add `apps/chat-api/src/auth/callback-url.util.ts`
+- [x] Add `apps/chat-api/src/auth/callback-url.util.ts`
   - Export a resolver that receives the raw `callbackUrl`, `CORS_ORIGIN`, and `AUTH_CALLBACK_BASE_URL`
   - Resolve relative paths against the configured application origin (`CORS_ORIGIN` when it is a concrete URL)
   - Accept absolute URLs only when their origin is in the allow-list derived from `CORS_ORIGIN` plus `AUTH_CALLBACK_BASE_URL`
   - Reject protocol-relative URLs (`//example.com`), non-HTTP schemes, URLs with username/password credentials, malformed URLs, and off-origin URLs
   - Return a fully qualified safe URL for redirects
 
-- [ ] Add `apps/chat-api/src/auth/callback-url.util.spec.ts`
+- [x] Add `apps/chat-api/src/auth/callback-url.util.spec.ts`
   - Test: missing `callbackUrl` resolves to the app root (`CORS_ORIGIN` origin when configured)
   - Test: relative `/conversation?x=1` resolves to the app origin
   - Test: absolute `http://localhost:4207/conversation` is accepted when `CORS_ORIGIN=http://localhost:4207`
   - Test: absolute API-origin callback is accepted only when it matches the allow-list
   - Test: `https://evil.example.com`, `javascript:alert(1)`, `//evil.example.com`, and URLs with credentials are rejected
 
-- [ ] Update `apps/chat-api/src/auth/auth.controller.ts`
+- [x] Update `apps/chat-api/src/auth/auth.controller.ts`
   - In `login()`, resolve and validate `query.callbackUrl` before creating the IdP authorization URL
   - Store only the resolved safe `callbackUrl` inside the encrypted `tx` cookie
   - In `callback()`, read `callbackUrl` from the decrypted transaction payload and redirect to that exact validated URL after setting `__Host-chat.sess`
   - Remove `returnTo` handling from new code paths; do not emit or document `returnTo`
 
-- [ ] Update `apps/chat-api/src/auth/auth.controller.spec.ts`
+- [x] Update `apps/chat-api/src/auth/auth.controller.spec.ts`
   - Test: login with `?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation` returns 302 to IdP and later callback redirects to `http://localhost:4207/conversation`
   - Test: login with relative `?callbackUrl=%2Fconversation` later redirects to `http://localhost:4207/conversation`
   - Test: login without `callbackUrl` later redirects to the configured app root
   - Test: unsafe callback URL returns 400 and does not set `__Host-chat.tx`
 
-- [ ] Verify the follow-up: `npm exec nx run @epam/chat-api:test`, `npm exec nx run @epam/chat-api:lint`, and `npm exec nx run @epam/chat-api:build`
+- [x] Verify the follow-up: `npm exec nx run @epam/chat-api:test`, `npm exec nx run @epam/chat-api:lint`, and `npm exec nx run @epam/chat-api:build`
 
 ### Verification
 
@@ -344,16 +344,16 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### Frontend: CSRF token wiring
 
-- [ ] Add CSRF token to `UserContext` in `apps/chat/src/context/UserContext.tsx`
+- [x] Add CSRF token to `UserContext` in `apps/chat/src/context/UserContext.tsx`
   - Extract `X-CSRF-Token` response header from `GET /api/v1/auth/me`
   - Include `X-CSRF-Token` header in all non-GET API calls via the `post`/`put`/`del` helpers in `apps/chat/src/server-api/base.ts`
 
 ### Verification
 
 - [x] Run `npm exec nx run @epam/chat-api:test`
-- [ ] Run `npm exec nx run @epam/chat:test`
+- [x] Run `npm exec nx run @epam/chat:test`
 - [x] Run `npm exec nx run @epam/chat-api:lint`
-- [ ] Run `npm exec nx run @epam/chat:lint`
+- [x] Run `npm exec nx run @epam/chat:lint`
 - [x] Run `npm exec nx affected --target=lint --base=origin/development`
 
 ---
