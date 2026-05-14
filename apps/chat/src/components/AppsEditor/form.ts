@@ -31,6 +31,7 @@ import {
   AnyToolset,
   CodeInterpreterToolset,
   DialDeploymentSimpleTool,
+  DialPromptSkill,
   MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
@@ -225,6 +226,7 @@ export const QuickApp2Schema = zodValidation
     toolSupportingModelIds: zodValidation
       .array(zodValidation.string())
       .optional(),
+    agentSkills: zodValidation.array(zodValidation.string()),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -412,9 +414,7 @@ export const getAgentsAndToolsetsFormValue = (
     const id =
       isUnknownToolset(item) && !isDialDeploymentSimpleTool(item)
         ? undefined
-        : 'dial_id' in item
-          ? item.dial_id
-          : item.deployment_id;
+        : item.deployment_id;
     return {
       id: id ? ApiUtils.decodeApiUrl(id) : (item.name ?? 'unknown'),
       tool: item,
@@ -430,7 +430,7 @@ const getQuickApp2FormData = (
 ): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
   // show selected model for existing Quick Apps
-  let model = appProperties?.orchestrator?.deployment?.name;
+  let model = appProperties?.orchestrator?.deployment?.deployment_id;
   if (!model) {
     const defaultModelId = DefaultsService.get(
       'quickAppsModel',
@@ -475,6 +475,9 @@ const getQuickApp2FormData = (
     ],
     isJsonView: false,
     toolSupportingModelIds,
+    agentSkills: (appProperties?.skills ?? [])
+      .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
+      .map((s) => ApiUtils.decodeApiUrl(s.url)),
   };
 };
 
@@ -645,8 +648,7 @@ export const getAgentOrToolsetOption = (id: string): AgentOrToolsetFormType => {
       type: isDeploymentToolset
         ? DialDeploymentToolsetToolTypes.DialDeploymentSimple
         : ToolsetTypes.DialMcp,
-      [isDeploymentToolset ? 'deployment_id' : 'dial_id']:
-        ApiUtils.encodeApiUrl(id),
+      deployment_id: ApiUtils.encodeApiUrl(id),
     },
     isDialDeploymentTool: isDeploymentToolset,
   };
@@ -679,7 +681,7 @@ export const getQuickApp2Toolsets = ({
           } else if (isToolsetId(agentAndToolset.id)) {
             acc.dialMCPToolsets.push({
               ...omit(toolData, ['isDeploymentTool', 'name']),
-              dial_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
+              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset.id),
               type: ToolsetTypes.DialMcp,
             });
           } else if (
@@ -704,7 +706,7 @@ export const getQuickApp2Toolsets = ({
         } else {
           acc.dialMCPToolsets.push({
             ...omit(toolData, ['isDeploymentTool', 'name']),
-            dial_id: ApiUtils.encodeApiUrl(entity.id),
+            deployment_id: ApiUtils.encodeApiUrl(entity.id),
             type: ToolsetTypes.DialMcp,
           });
         }
@@ -836,7 +838,7 @@ export const getApplicationPayload = ({
         applicationProperties: {
           orchestrator: {
             deployment: {
-              name: model?.id ?? data.model,
+              deployment_id: model?.id ?? data.model,
               ...(temperatureToUse && {
                 parameters: { temperature: temperatureToUse },
               }),
@@ -856,6 +858,14 @@ export const getApplicationPayload = ({
             data.isJsonView && !keepCurrentToolsets
               ? (JSON.parse(data.agentsAndToolsetsJson) as AnyToolset[])
               : getQuickApp2Toolsets({ data, allEntitiesMap }),
+          ...(data.agentSkills.length > 0 && {
+            skills: data.agentSkills.map(
+              (promptId): DialPromptSkill => ({
+                type: 'dial-prompt',
+                url: ApiUtils.encodeApiUrl(promptId),
+              }),
+            ),
+          }),
           ...(starters.length
             ? {
                 conversation_starters: {

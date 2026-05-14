@@ -95,12 +95,12 @@ export const Chatbar = () => {
             )
           ) {
             dispatch(
-              UIActions.showErrorToast(
-                t(ChatI18nKeys.ConversationNameExistsAtRoot, {
+              UIActions.showErrorToast({
+                message: t(ChatI18nKeys.ConversationNameExistsAtRoot, {
                   ns: Translation.Chat,
                   name: conversation.name,
                 }),
-              ),
+              }),
             );
 
             return;

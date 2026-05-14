@@ -14,6 +14,8 @@ interface CollapsibleSectionProps {
   isHighlighted?: boolean;
   caretIconSize?: number;
   caretIconHidden?: boolean;
+  caretIconArrowView?: boolean;
+  caretIconClassName?: string;
   dataQa?: string;
   className?: string;
   showOnHoverOnly?: boolean;
@@ -32,6 +34,8 @@ export function CollapsibleSection({
   children,
   caretIconSize = 10,
   caretIconHidden,
+  caretIconArrowView = false,
+  caretIconClassName,
   dataQa,
   className,
   showOnHoverOnly,
@@ -79,6 +83,8 @@ export function CollapsibleSection({
             size={caretIconSize}
             hidden={caretIconHidden}
             showOnHoverOnly={showOnHoverOnly}
+            arrowView={caretIconArrowView}
+            iconClassName={caretIconClassName}
           />
           {name}
         </div>

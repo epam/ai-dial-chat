@@ -162,5 +162,17 @@
   "Copy endpoint URL to easily integrate application into your workflows": "Copy endpoint URL to easily integrate application into your workflows",
   "Publication details": "Publication details",
   "Published to": "Published to",
-  "Allow access if all match": "Allow access if all match"
+  "Allow access if all match": "Allow access if all match",
+  "Agent Skills": "Agent Skills",
+  "Reusable instruction modules the agent loads on demand when the task matches.": "Reusable instruction modules the agent loads on demand when the task matches.",
+  "No Agent Skills added": "No Agent Skills added",
+  "Add Agent Skills": "Add Agent Skills",
+  "Select": "Select",
+  "skills": "skills",
+  "This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have \"name\" and \"description\" fields.": "This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have \"name\" and \"description\" fields.",
+  "Token limits": "Token limits",
+  "Minute": "Minute",
+  "Weekly": "Weekly",
+  "Daily": "Daily",
+  "Monthly": "Monthly"
 }

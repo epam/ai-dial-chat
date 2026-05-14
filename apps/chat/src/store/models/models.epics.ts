@@ -23,6 +23,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -486,8 +487,8 @@ const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
         .map((reference) => modelsMap[reference]?.name)
         .join(', ');
       return of(
-        UIActions.showErrorToast(
-          translate(
+        UIActions.showErrorToast({
+          message: translate(
             payload.references.length > 1
               ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
               : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
@@ -496,7 +497,7 @@ const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
               failedNames,
             },
           ),
-        ),
+        }),
       );
     }),
   );
@@ -568,6 +569,27 @@ const setDefaultModelReferenceEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const getUsageStatsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.getUsageStats.type),
+    switchMap(({ payload }) => {
+      return ApplicationService.getAgentLimits(payload.id).pipe(
+        switchMap((stats) => {
+          if (stats) {
+            return of(
+              ModelsActions.getUsageStatsSuccess({ ...payload, stats }),
+            );
+          }
+          return of(ModelsActions.getUsageStatsFailure(payload));
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ModelsActions.getUsageStatsFailure(payload));
+        }),
+      );
+    }),
+  );
+
 export const ModelsEpics = combineEpics(
   initEpic,
   getModelsEpic,
@@ -582,4 +604,5 @@ export const ModelsEpics = combineEpics(
   initRecentModelsEpic,
   initDefaultModelReferenceEpic,
   setDefaultModelReferenceEpic,
+  getUsageStatsEpic,
 );

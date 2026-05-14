@@ -16,9 +16,9 @@ import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -129,10 +129,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] overflow-hidden text-nowrap border-l border-transparent hover:bg-accent-primary-alpha',
-            (currentEntity.id === entity.id ||
-              selectedBaseIdsSet?.has(entity.id)) &&
-              '!border-accent-primary bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap border-l  hover:bg-accent-primary-alpha',
+            currentEntity.id === entity.id || selectedBaseIdsSet?.has(entity.id)
+              ? 'border-accent-primary bg-accent-primary-alpha'
+              : 'border-transparent',
           )}
           item={
             <div className="flex w-full items-center gap-2">
@@ -141,12 +141,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
                 entity={entity}
                 size={DEFAULT_ICON_SIZES.SMALL}
               />
-              <Tooltip
-                tooltip={getDisplayValue(entity)}
-                triggerClassName="truncate"
-              >
-                {getDisplayValue(entity)}
-              </Tooltip>
+              <DialEllipsisTooltip
+                text={getDisplayValue(entity)}
+                contentClassName="z-[10000]"
+              />
             </div>
           }
           disabled={readonly}

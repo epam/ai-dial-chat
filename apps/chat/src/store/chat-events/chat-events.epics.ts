@@ -15,6 +15,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { ChatEventsService } from '@/src/utils/app/data/chat-events-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -113,7 +114,10 @@ const subscribeEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ChatEventsActions.subscribeFailure({ retryAttempt }));
+          const { traceId } = parseApiError(err);
+          return of(
+            ChatEventsActions.subscribeFailure({ retryAttempt, traceId }),
+          );
         }),
       );
     }),
@@ -171,7 +175,10 @@ const reportEventEpic: AppEpic = (action$, state$) =>
         switchMap(() => of(ChatEventsActions.reportEventSuccess(payload))),
         catchError((err) => {
           console.error(err);
-          return of(ChatEventsActions.reportEventFailure(payload));
+          const { traceId } = parseApiError(err);
+          return of(
+            ChatEventsActions.reportEventFailure({ ...payload, traceId }),
+          );
         }),
       );
     }),
@@ -223,8 +230,8 @@ const reportEventFailureEpic: AppEpic = (action$) =>
     ofType(ChatEventsActions.reportEventFailure.type),
     switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(
+        UIActions.showErrorToast({
+          message: translate(
             payload.result === ChatEventResult.Success
               ? ChatI18nKeys.FailedToResolveRequest
               : ChatI18nKeys.FailedToDeclineRequest,
@@ -232,7 +239,8 @@ const reportEventFailureEpic: AppEpic = (action$) =>
               ns: Translation.Chat,
             },
           ),
-        ),
+          traceId: payload.traceId,
+        }),
       );
     }),
   );
@@ -262,7 +270,10 @@ const declineAllEventsEpic: AppEpic = (action$, state$) =>
         switchMap(() => of(ChatEventsActions.declineAllEventsSuccess(payload))),
         catchError((err) => {
           console.error(err);
-          return of(ChatEventsActions.declineAllEventsFailure(payload));
+          const { traceId } = parseApiError(err);
+          return of(
+            ChatEventsActions.declineAllEventsFailure({ ...payload, traceId }),
+          );
         }),
       );
     }),
@@ -289,13 +300,14 @@ const declineAllEventsSuccessEpic: AppEpic = (action$) =>
 const declineAllEventsFailureEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatEventsActions.declineAllEventsFailure.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(ChatI18nKeys.FailedToDeclineAllRequests, {
+        UIActions.showErrorToast({
+          message: translate(ChatI18nKeys.FailedToDeclineAllRequests, {
             ns: Translation.Chat,
           }),
-        ),
+          traceId: payload.traceId,
+        }),
       );
     }),
   );

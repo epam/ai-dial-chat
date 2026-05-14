@@ -534,6 +534,7 @@ export const conversationsSlice = createSlice({
         conversation: Conversation;
         message: string;
         response?: Response;
+        traceId?: string;
       }>,
     ) => state,
     streamMessageSuccess: (state) => state,

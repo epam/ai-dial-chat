@@ -116,6 +116,7 @@ import {
 } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 import { lookup as lookupMime } from 'mime-types';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -185,11 +186,11 @@ const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.publishFail.type),
     map(({ payload }) => {
-      return UIActions.showErrorToast(
-        translate(payload ?? CommonI18nKeys.PublicationFailed, {
+      return UIActions.showErrorToast({
+        message: translate(payload ?? CommonI18nKeys.PublicationFailed, {
           ns: Translation.Common,
         }),
-      );
+      });
     }),
   );
 
@@ -225,11 +226,11 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.PublicationsUploadFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublicationsUploadFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -452,11 +453,11 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.PublicationUploadFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublicationUploadFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -651,11 +652,11 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublishedWithMeItemsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.PublishedItemsUploadFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublishedItemsUploadFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -1047,11 +1048,11 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.approvePublicationFail.type),
     map(({ payload }) =>
-      UIActions.showErrorToast(
-        translate(payload ?? CommonI18nKeys.PublicationApproveFailed, {
+      UIActions.showErrorToast({
+        message: translate(payload ?? CommonI18nKeys.PublicationApproveFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -1075,11 +1076,11 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.rejectPublicationFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.PublicationRejectFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublicationRejectFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -1172,11 +1173,11 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadRulesFail.type),
     map(({ payload }) =>
-      UIActions.showErrorToast(
-        translate(payload ?? CommonI18nKeys.RulesUploadingFailed, {
+      UIActions.showErrorToast({
+        message: translate(payload ?? CommonI18nKeys.RulesUploadingFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -1297,11 +1298,11 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadAllPublishedWithMeItemsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(CommonI18nKeys.PublishedItemsUploadFailed, {
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublishedItemsUploadFailed, {
           ns: Translation.Common,
         }),
-      ),
+      }),
     ),
   );
 
@@ -1319,23 +1320,29 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
       if (!publication) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.CannotUpdateEntityPublicationNotFound, {
-              ns: Translation.Common,
-              entityType: isConversation ? 'conversation' : 'prompt',
-            }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateEntityPublicationNotFound,
+              {
+                ns: Translation.Common,
+                entityType: isConversation ? 'conversation' : 'prompt',
+              },
+            ),
+          }),
         );
       }
 
       if (!publication.resources) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.CannotUpdateEntityPublicationNoResources, {
-              ns: Translation.Common,
-              entityType: isConversation ? 'conversation' : 'prompt',
-            }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateEntityPublicationNoResources,
+              {
+                ns: Translation.Common,
+                entityType: isConversation ? 'conversation' : 'prompt',
+              },
+            ),
+          }),
         );
       }
 
@@ -1464,14 +1471,14 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
 
       if (!publication || !publication?.resources || !publicationUrl) {
         return of(
-          UIActions.showErrorToast(
-            translate(
+          UIActions.showErrorToast({
+            message: translate(
               CommonI18nKeys.CannotUpdateApplicationPublicationNotFound,
               {
                 ns: Translation.Common,
               },
             ),
-          ),
+          }),
         );
       }
 
@@ -1539,8 +1546,13 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
     switchMap(({ payload }) => {
-      const { isSaveAndExit, publicationUrl, newApplication, oldApplication } =
-        payload;
+      const {
+        isSaveAndExit,
+        publicationUrl,
+        newApplication,
+        oldApplication,
+        tabToOpen,
+      } = payload;
 
       if (!newApplication.iconUrl) {
         return EMPTY;
@@ -1554,14 +1566,14 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
 
       if (!publication) {
         return of(
-          UIActions.showErrorToast(
-            translate(
+          UIActions.showErrorToast({
+            message: translate(
               CommonI18nKeys.CannotUpdateApplicationIconPublicationNotFound,
               {
                 ns: Translation.Common,
               },
             ),
-          ),
+          }),
         );
       }
 
@@ -1590,7 +1602,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
       return PublicationService.updatePublicationRequest({
         publicationData: {
           ...publication,
-          resources,
+          resources: uniqBy(resources, 'sourceUrl'),
         },
         url: publicationUrl,
       }).pipe(
@@ -1615,6 +1627,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
               oldApplication,
               newApplicationWithMappedIconUrl,
               isSaveAndExit,
+              tabToOpen,
             ),
             of(
               PublicationActions.setPublicationItems({
@@ -1649,21 +1662,27 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
 
       if (!publication) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.CannotUpdateFolderPublicationNotFound, {
-              ns: Translation.Common,
-            }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateFolderPublicationNotFound,
+              {
+                ns: Translation.Common,
+              },
+            ),
+          }),
         );
       }
 
       if (!publication.resources) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.CannotUpdateFolderPublicationNoResources, {
-              ns: Translation.Common,
-            }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateFolderPublicationNoResources,
+              {
+                ns: Translation.Common,
+              },
+            ),
+          }),
         );
       }
 
