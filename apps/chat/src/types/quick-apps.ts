@@ -33,7 +33,7 @@ export interface DialDeploymentToolset {
 export interface MCPToolset {
   name?: string;
   type?: ToolsetTypes.DialMcp;
-  dial_id: string;
+  deployment_id: string;
   transport?: ToolsetTransportType;
   description?: string;
 }
@@ -78,7 +78,7 @@ export interface DialPromptSkill {
 export interface QuickApp2Config {
   orchestrator: {
     deployment: {
-      name: string;
+      deployment_id: string;
       parameters?: {
         temperature: number;
       };
