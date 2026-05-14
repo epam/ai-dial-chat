@@ -28,11 +28,11 @@ import {
 import {
   EntityStorageLimits,
   addTrailingSlashIfAbsent,
+  buildByteAwareFitBaseName,
   doesHaveDotsInTheEnd,
   getAvailableEntityNameBytes,
   getResourceStorageLimits,
   getStorageSafeUniqueName,
-  getUtf8BytesLength,
   prepareEntityName,
   truncateToUtf8Bytes,
 } from './common';
@@ -472,20 +472,7 @@ export const getStorageSafeUniqueFolderName = (params: {
     desiredName,
     defaultName,
     existingNames,
-    fitBaseName: (baseName, suffix) => {
-      if (availableNameBytes === undefined) {
-        return prepareEntityName(baseName);
-      }
-
-      const allowedNameBytes = Math.max(
-        availableNameBytes - getUtf8BytesLength(suffix),
-        0,
-      );
-
-      return prepareEntityName(
-        truncateToUtf8Bytes(prepareEntityName(baseName), allowedNameBytes),
-      );
-    },
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
   });
 
   if (uniqueName) {

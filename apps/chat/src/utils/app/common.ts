@@ -526,6 +526,29 @@ export const getAvailableEntityNameBytes = (
 };
 
 /**
+ * Returns a `fitBaseName` callback suitable for use with `getStorageSafeUniqueName`.
+ * When `availableNameBytes` is undefined (no byte limits configured) the callback
+ * simply sanitises the name via `prepareEntityName`.  Otherwise it truncates the
+ * sanitised base so that `base + suffix` stays within the byte budget.
+ */
+export const buildByteAwareFitBaseName =
+  (availableNameBytes: number | undefined) =>
+  (baseName: string, suffix: string): string => {
+    if (availableNameBytes === undefined) {
+      return prepareEntityName(baseName);
+    }
+
+    const allowedNameBytes = Math.max(
+      availableNameBytes - getUtf8BytesLength(suffix),
+      0,
+    );
+
+    return prepareEntityName(
+      truncateToUtf8Bytes(prepareEntityName(baseName), allowedNameBytes),
+    );
+  };
+
+/**
  * Shared naming routine for all resource types.
  *
  * Algorithm:

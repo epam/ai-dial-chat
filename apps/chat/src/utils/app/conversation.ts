@@ -1,10 +1,10 @@
 import {
   EntityStorageLimits,
+  buildByteAwareFitBaseName,
   getAvailableEntityNameBytes,
   getLastPathSegment,
   getResourceStorageLimits,
   getStorageSafeUniqueName,
-  getUtf8BytesLength,
   isEntityNameOrPathInvalid,
   prepareEntityName,
   truncateToUtf8Bytes,
@@ -108,20 +108,7 @@ export const getStorageSafeUniqueConversationName = (params: {
     desiredName,
     defaultName,
     existingNames,
-    fitBaseName: (baseName, suffix) => {
-      if (availableNameBytes === undefined) {
-        return prepareEntityName(baseName);
-      }
-
-      const allowedNameBytes = Math.max(
-        availableNameBytes - getUtf8BytesLength(suffix),
-        0,
-      );
-
-      return prepareEntityName(
-        truncateToUtf8Bytes(prepareEntityName(baseName), allowedNameBytes),
-      );
-    },
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
   });
 
   if (uniqueName) {
