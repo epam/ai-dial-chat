@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { get, post, put, ApiEndpoints } from './base';
+import {
+  get,
+  post,
+  put,
+  ApiEndpoints,
+  UnauthorizedError,
+  onUnauthorized,
+} from './base';
 
 describe('API client', () => {
   beforeEach(() => {
@@ -211,6 +218,125 @@ describe('API client', () => {
           body: undefined,
         }),
       );
+    });
+  });
+
+  describe('credentials', () => {
+    it('get passes credentials: include to fetch', async () => {
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        headers: { get: vi.fn().mockReturnValue('application/json') },
+        json: vi.fn().mockResolvedValue({}),
+      } as unknown as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse,
+      );
+
+      await get('/api/test');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/test',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+
+    it('post passes credentials: include to fetch', async () => {
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        headers: { get: vi.fn().mockReturnValue('application/json') },
+        json: vi.fn().mockResolvedValue({}),
+      } as unknown as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse,
+      );
+
+      await post('/api/test', {});
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/test',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+
+    it('put passes credentials: include to fetch', async () => {
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        headers: { get: vi.fn().mockReturnValue('application/json') },
+        json: vi.fn().mockResolvedValue({}),
+      } as unknown as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse,
+      );
+
+      await put('/api/test/1', {});
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/test/1',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+  });
+
+  describe('UnauthorizedError', () => {
+    it('401 response throws UnauthorizedError with status 401 and url', async () => {
+      const mockResponse = { ok: false, status: 401 } as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse,
+      );
+
+      const err = await get('/api/protected').catch((e) => e);
+
+      expect(err).toBeInstanceOf(UnauthorizedError);
+      const unauthorizedErr = err as UnauthorizedError;
+      expect(unauthorizedErr.status).toBe(401);
+      expect(unauthorizedErr.url).toBe('/api/protected');
+    });
+
+    it('500 response throws a plain Error, not UnauthorizedError', async () => {
+      const mockResponse = { ok: false, status: 500 } as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse,
+      );
+
+      const err = await get('/api/protected').catch((e) => e);
+
+      expect(err).toBeInstanceOf(Error);
+      expect(err).not.toBeInstanceOf(UnauthorizedError);
+    });
+
+    it('onUnauthorized listener is invoked exactly once per 401 and not for non-401 errors', async () => {
+      const listener = vi.fn();
+      const cleanup = onUnauthorized(listener);
+
+      const mock401 = { ok: false, status: 401 } as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mock401);
+      await get('/api/protected').catch(() => undefined);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith('/api/protected');
+
+      const mock500 = { ok: false, status: 500 } as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mock500);
+      await get('/api/other').catch(() => undefined);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      cleanup();
+    });
+
+    it('cleanup callback unregisters the listener', async () => {
+      const listener = vi.fn();
+      const cleanup = onUnauthorized(listener);
+      cleanup();
+
+      const mock401 = { ok: false, status: 401 } as Response;
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mock401);
+      await get('/api/protected').catch(() => undefined);
+
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 

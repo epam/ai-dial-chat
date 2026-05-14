@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
+  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -59,6 +60,19 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   AUTH_SESSION_COOKIE_NAME?: string = '__Host-chat.sess';
+
+  @IsOptional()
+  @IsString()
+  AUTH_TRANSACTION_COOKIE_NAME?: string = '__Host-chat.tx';
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  AUTH_COOKIE_SECURE?: boolean = true;
 
   @IsNotEmpty()
   @IsUrl({ require_tld: false })

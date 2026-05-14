@@ -43,7 +43,7 @@ The chosen pattern — BFF + encrypted cookie — is the only option that satisf
 
 ```
 Browser (SPA)
-  │  GET /api/v1/auth/login/:providerId
+  │  GET /api/v1/auth/login/:providerId?callbackUrl=<app-url>
   ▼
 NestJS BFF (apps/chat-api)
   │  openid-client → redirects to IdP
@@ -55,6 +55,7 @@ NestJS BFF
   │  exchanges code → tokens
   │  encrypts tokens → JWE cookie (__Host-chat.sess)
   │  sets HttpOnly Secure SameSite=Lax cookie
+  │  redirects to validated callbackUrl
   ▼
 Browser — all subsequent API calls carry the cookie automatically
   │  GET /api/v1/…
@@ -88,7 +89,7 @@ The session cookie `__Host-chat.sess` is a compact JWE whose plaintext contains:
 }
 ```
 
-Attributes: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, `Max-Age=rt_exp`, name prefix `__Host-`.
+Attributes: `HttpOnly`, `Secure` by default, `SameSite=Lax`, `Path=/`, `Max-Age=rt_exp`, name prefix `__Host-`. Local HTTP smoke tests may set `AUTH_COOKIE_SECURE=false`, which also drops the `__Host-` prefix at runtime.
 
 ### Incremental implementation slices
 
@@ -97,6 +98,7 @@ Following the `incremental-implementation` approach, work is split into five thi
 | Slice | Scope |
 |---|---|
 | 1 | Single provider (Keycloak), happy-path login + cookie + `/auth/me` |
+| 1a | Application `callbackUrl` support so the BFF returns users to the correct SPA origin/page after login |
 | 2 | Session guard on `/api/*` + transparent access-token refresh |
 | 3 | Logout (local cookie clear + federated `end_session_endpoint`) |
 | 4 | Second provider (Auth0) — validates registry abstraction |
@@ -106,6 +108,7 @@ Following the `incremental-implementation` approach, work is split into five thi
 
 - A browser making an API call without a valid session receives `401`.
 - After completing login, the browser holds an `HttpOnly` cookie; `document.cookie` does not expose any token.
+- Completing login redirects the browser to the validated application `callbackUrl`, not blindly to `/` on the API origin.
 - Refreshing the page preserves the session without a new login (verified end-to-end starting from Slice 2 — Slice 1 is backend-only, smoke-tested via DevTools).
 - Logging out clears the cookie and optionally redirects the browser to the IdP logout endpoint.
 - All new code passes `npm exec nx run @epam/chat-api:test` and `npm exec nx run @epam/chat-api:lint`.

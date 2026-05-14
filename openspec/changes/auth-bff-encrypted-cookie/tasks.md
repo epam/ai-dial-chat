@@ -22,6 +22,8 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Add `AUTH_SESSION_SECRET: string` (`@IsString()`, `@IsNotEmpty()`, `@Matches(/^[0-9a-f]{64}$/i)` — 32 bytes as hex)
   - Add `AUTH_SESSION_PREV_SECRET?: string` (`@IsOptional()`, same hex pattern)
   - Add `AUTH_SESSION_COOKIE_NAME: string` (`@IsOptional()`, default `__Host-chat.sess`)
+  - Add `AUTH_TRANSACTION_COOKIE_NAME: string` (`@IsOptional()`, default `__Host-chat.tx`)
+  - Add `AUTH_COOKIE_SECURE: boolean` (`@IsOptional()`, default `true`; `false` only for local HTTP smoke testing)
   - Add `AUTH_CALLBACK_BASE_URL: string` (`@IsUrl({ require_tld: false })`, `@IsNotEmpty()`)
   - Add `AUTH_PROVIDERS: string` (`@IsString()`, `@IsNotEmpty()` — raw JSON, parsed in `ProviderRegistryService`)
 
@@ -122,11 +124,49 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Test: `GET /api/v1/auth/me` without session cookie returns 401
   - Test: `GET /api/v1/auth/me` with tampered cookie returns 401
 
+### Follow-up — Application callback URL
+
+This follow-up supersedes the initial Slice 1 callback behaviour that always redirected to `/` on the callback request origin.
+
+- [ ] Add `apps/chat-api/src/auth/dto/login-query.dto.ts`
+  - Replace the relative-only `returnTo` query with optional `callbackUrl`
+  - Accept both absolute `http(s)` URLs and relative app paths at the DTO boundary; reject obviously invalid scalar values early
+  - Keep the property name `callbackUrl` in Swagger/API docs to match the BFF login contract
+
+- [ ] Add `apps/chat-api/src/auth/callback-url.util.ts`
+  - Export a resolver that receives the raw `callbackUrl`, `CORS_ORIGIN`, and `AUTH_CALLBACK_BASE_URL`
+  - Resolve relative paths against the configured application origin (`CORS_ORIGIN` when it is a concrete URL)
+  - Accept absolute URLs only when their origin is in the allow-list derived from `CORS_ORIGIN` plus `AUTH_CALLBACK_BASE_URL`
+  - Reject protocol-relative URLs (`//example.com`), non-HTTP schemes, URLs with username/password credentials, malformed URLs, and off-origin URLs
+  - Return a fully qualified safe URL for redirects
+
+- [ ] Add `apps/chat-api/src/auth/callback-url.util.spec.ts`
+  - Test: missing `callbackUrl` resolves to the app root (`CORS_ORIGIN` origin when configured)
+  - Test: relative `/conversation?x=1` resolves to the app origin
+  - Test: absolute `http://localhost:4207/conversation` is accepted when `CORS_ORIGIN=http://localhost:4207`
+  - Test: absolute API-origin callback is accepted only when it matches the allow-list
+  - Test: `https://evil.example.com`, `javascript:alert(1)`, `//evil.example.com`, and URLs with credentials are rejected
+
+- [ ] Update `apps/chat-api/src/auth/auth.controller.ts`
+  - In `login()`, resolve and validate `query.callbackUrl` before creating the IdP authorization URL
+  - Store only the resolved safe `callbackUrl` inside the encrypted `tx` cookie
+  - In `callback()`, read `callbackUrl` from the decrypted transaction payload and redirect to that exact validated URL after setting `__Host-chat.sess`
+  - Remove `returnTo` handling from new code paths; do not emit or document `returnTo`
+
+- [ ] Update `apps/chat-api/src/auth/auth.controller.spec.ts`
+  - Test: login with `?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation` returns 302 to IdP and later callback redirects to `http://localhost:4207/conversation`
+  - Test: login with relative `?callbackUrl=%2Fconversation` later redirects to `http://localhost:4207/conversation`
+  - Test: login without `callbackUrl` later redirects to the configured app root
+  - Test: unsafe callback URL returns 400 and does not set `__Host-chat.tx`
+
+- [ ] Verify the follow-up: `npm exec nx run @epam/chat-api:test`, `npm exec nx run @epam/chat-api:lint`, and `npm exec nx run @epam/chat-api:build`
+
 ### Verification
 
 - [x] Run `npm exec nx run @epam/chat-api:test`
 - [x] Run `npm exec nx run @epam/chat-api:lint`
 - [x] Run `npm exec nx run @epam/chat-api:build` (Slice 1 changes `main.ts` bootstrap — versioning + cookie-parser — so a build check is warranted)
+
 ### Incidental fixes uncovered by Slice 1 manual smoke
 
 - [x] Fix `ServeStaticModule.exclude` pattern in `apps/chat-api/src/app/app.module.ts`
@@ -137,7 +177,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 ### Manual smoke
 
 - [ ] Manual smoke against a local Keycloak (Docker), full checklist:
-  1. Happy path: `GET /api/v1/auth/login/keycloak` → IdP login → callback with Keycloak extras (`iss`, `session_state`) succeeds with 302 (regression guard for the DTO `forbidNonWhitelisted` fix).
+  1. Happy path: `GET /api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2F` → IdP login → callback with Keycloak extras (`iss`, `session_state`) succeeds with 302 back to the callback URL (regression guard for the DTO `forbidNonWhitelisted` fix).
   2. Cookie attributes in DevTools: `__Host-chat.sess` has `HttpOnly` + `Secure` + `SameSite=Lax` + `Path=/`; `__Host-chat.tx` is deleted on callback.
   3. `document.cookie` in browser console does NOT contain any token.
   4. `GET /api/v1/auth/me` returns the user profile (no tokens in the body).
@@ -275,9 +315,10 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Cookie size handling
 
-- [x] Add size check in `AuthController.callback` after encrypting session
-  - If JWE > 3800 bytes: log warning and rebuild `SessionPayload` without `at` (refresh-only mode)
-  - Update `SessionGuard` to handle absent `at`: if missing, call `RefreshService.refresh` before attaching `SessionUser`
+- [x] Add session cookie chunking after encrypting session
+  - If JWE > 3800 bytes: split it into numbered cookies (`<session-cookie-name>.0`, `<session-cookie-name>.1`, ...)
+  - Update `SessionService.decryptFromRequest` to reassemble numbered chunks before decrypting
+  - Update `AuthController.logout` and refreshed-cookie writes to clear stale base/chunk cookies
 
 ### Security headers audit
 

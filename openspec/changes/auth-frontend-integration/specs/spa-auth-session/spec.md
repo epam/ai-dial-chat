@@ -30,27 +30,27 @@ The SPA SHALL load the current user session from the BFF on initial mount by iss
 
 ### Requirement: Automatic redirect to the BFF login flow when unauthenticated
 
-The SPA SHALL automatically initiate the BFF login flow when the user is unauthenticated. The redirect policy MUST depend on the number of registered providers reported by `GET /api/v1/auth/providers`:
+The SPA SHALL automatically initiate the BFF login flow when the user is unauthenticated. Before redirecting, it MUST compute an application `callbackUrl` from the current browser URL (`window.location.href`, including pathname, search, and hash) so the BFF can return the user to the same application origin/page after authentication. The redirect policy MUST depend on the number of registered providers reported by `GET /api/v1/auth/providers`:
 
-- Exactly one provider → top-level browser navigation to `/api/v1/auth/login/<providerId>` via `window.location.assign`.
-- More than one provider → client-side navigation to `/login` via React Router `navigate(..., { replace: true })`, where the user picks a provider.
+- Exactly one provider → top-level browser navigation to `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-current-url>` via `window.location.assign`.
+- More than one provider → client-side navigation to `/login?callbackUrl=<encoded-current-url>` via React Router `navigate(..., { replace: true })`, where the user picks a provider.
 
-The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT perform a provider-list redirect on the `/login` route itself, and MUST NOT loop when the BFF immediately re-issues a `401`.
+The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT perform a provider-list redirect on the `/login` route itself, and MUST NOT loop when the BFF immediately re-issues a `401`. After one automatic single-provider attempt for a given callback URL in the current tab, a subsequent unauthenticated bootstrap MUST fall back to `/login?callbackUrl=...` instead of starting another automatic provider redirect. The SPA MUST only generate same-origin callback URLs; the BFF remains authoritative for final validation.
 
 #### Scenario: Single provider auto-redirect
 
 - **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns one entry
-- **THEN** the SPA performs `window.location.assign('/api/v1/auth/login/<id>')` exactly once during that session
+- **THEN** the SPA performs `window.location.assign('/api/v1/auth/login/<id>?callbackUrl=<encoded-current-url>')` exactly once during that session
 
 #### Scenario: Multi-provider navigation to picker
 
 - **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns two or more entries
-- **THEN** the SPA calls React Router `navigate('/login', { replace: true })` exactly once and renders the lazy-loaded `<LoginPage />`
+- **THEN** the SPA calls React Router `navigate('/login?callbackUrl=<encoded-current-url>', { replace: true })` exactly once and renders the lazy-loaded `<LoginPage />`
 
 #### Scenario: Already authenticated user lands on /login
 
 - **WHEN** the bootstrap finishes with `status = 'authenticated'` and the current URL pathname is `/login`
-- **THEN** the SPA calls `navigate('/', { replace: true })`
+- **THEN** the SPA calls `navigate('<callback-path>', { replace: true })` when a same-origin `callbackUrl` query parameter is present, otherwise `navigate('/', { replace: true })`
 
 #### Scenario: No redirect during loading
 
@@ -119,12 +119,17 @@ The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login`
 
 ### Requirement: Login picker page lists providers and links to the BFF login endpoint
 
-The `<LoginPage />` component SHALL own provider loading on the `/login` route, load the provider list via `GET /api/v1/auth/providers` exactly once on mount, and render one HTML anchor element per provider whose `href` is `/api/v1/auth/login/<providerId>`. Anchors MUST NOT be React Router `<Link>` elements, because the destination is a BFF route that requires a top-level browser navigation to the IdP. While loading, a localised placeholder MUST be shown; on failure, a localised error message MUST be shown.
+The `<LoginPage />` component SHALL own provider loading on the `/login` route, load the provider list via `GET /api/v1/auth/providers` exactly once on mount, read an optional `callbackUrl` from the route query string, and render one HTML anchor element per provider whose `href` is `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-callback-url>`. If the route query omits `callbackUrl`, the page SHALL default to the application root (`window.location.origin + '/'`). Anchors MUST NOT be React Router `<Link>` elements, because the destination is a BFF route that requires a top-level browser navigation to the IdP. While loading, a localised placeholder MUST be shown; on failure, a localised error message MUST be shown.
 
 #### Scenario: Provider list rendered
 
 - **WHEN** `GET /api/v1/auth/providers` returns `[{ id: 'keycloak', label: 'Keycloak' }, { id: 'auth0', label: 'Auth0' }]`
-- **THEN** `<LoginPage />` renders two anchor elements with `href` values `/api/v1/auth/login/keycloak` and `/api/v1/auth/login/auth0`, labelled with the i18n key `auth.providerButtonLabel` interpolated with each provider's `label`
+- **THEN** `<LoginPage />` renders two anchor elements with `href` values `/api/v1/auth/login/keycloak?callbackUrl=<encoded-callback-url>` and `/api/v1/auth/login/auth0?callbackUrl=<encoded-callback-url>`, labelled with the i18n key `auth.providerButtonLabel` interpolated with each provider's `label`
+
+#### Scenario: Callback URL preserved through provider picker
+
+- **WHEN** the current route is `/login?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1`
+- **THEN** every provider anchor forwards that same encoded `callbackUrl` to `/api/v1/auth/login/<providerId>`
 
 #### Scenario: Loading placeholder
 
@@ -177,7 +182,7 @@ Every user-visible string introduced by this change MUST be looked up via `useTr
 
 ### Requirement: Auth endpoint constants in the server-api module
 
-The `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` SHALL be extended with at minimum `AUTH_ME = '/api/v1/auth/me'`, `AUTH_PROVIDERS = '/api/v1/auth/providers'`, and `AUTH_LOGOUT = '/api/v1/auth/logout'`. The dynamic login URL `/api/v1/auth/login/<providerId>` MAY be constructed inline since `providerId` is a runtime value. No call site outside `server-api/` is permitted to hard-code any `/api/v1/auth/*` literal.
+The `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` SHALL be extended with at minimum `AUTH_ME = '/api/v1/auth/me'`, `AUTH_PROVIDERS = '/api/v1/auth/providers'`, and `AUTH_LOGOUT = '/api/v1/auth/logout'`. The dynamic login URL `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-url>` MAY be constructed inline since `providerId` and `callbackUrl` are runtime values. No call site outside `server-api/` is permitted to hard-code any static `/api/v1/auth/*` literal other than the dynamic login URL builder.
 
 #### Scenario: Enum contains auth endpoints
 
@@ -203,7 +208,7 @@ The change SHALL ship co-located Vitest specs that cover every new module: `User
 #### Scenario: useAuthRedirect policy is tested
 
 - **WHEN** the test suite for `useAuthRedirect` runs
-- **THEN** it covers at least: single-provider auto-redirect via a mocked `window.location.assign`, multi-provider `navigate('/login')` call, no-op while `loading`, and the already-authenticated-on-/login redirect to `/`
+- **THEN** it covers at least: single-provider auto-redirect via a mocked `window.location.assign` including `callbackUrl`, multi-provider `navigate('/login?callbackUrl=...')` call, no-op while `loading`, and the already-authenticated-on-/login redirect to the same-origin callback path or `/`
 
 #### Scenario: API helper raises UnauthorizedError on 401
 

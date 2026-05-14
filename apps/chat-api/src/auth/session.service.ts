@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
 import { CompactEncrypt, compactDecrypt } from 'jose';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { getSessionCookieName, readCookieValue } from './cookie-options';
 import { KeysService } from './keys.service';
 import type { SessionPayload } from './session.types';
 
@@ -41,12 +42,11 @@ export class SessionService {
   }
 
   async decryptFromRequest(req: Request): Promise<SessionPayload> {
-    const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', {
-      infer: true,
-    }) as string;
-    const token: string | undefined = (req.cookies as Record<string, string>)[
-      cookieName
-    ];
+    const cookieName = getSessionCookieName(this.config);
+    const token = readCookieValue(
+      req.cookies as Record<string, string> | undefined,
+      cookieName,
+    );
     if (!token) {
       throw new UnauthorizedException('No session cookie');
     }

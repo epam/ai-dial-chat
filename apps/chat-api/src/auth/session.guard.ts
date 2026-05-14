@@ -8,16 +8,14 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import type { EnvironmentVariables } from '../config/environment.config';
+import {
+  getCookieOptions,
+  getSessionCookieName,
+  setCookieValue,
+} from './cookie-options';
 import { RefreshService } from './refresh.service';
 import { SessionService } from './session.service';
 import type { SessionPayload, SessionUser } from './session.types';
-
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'lax' as const,
-  path: '/',
-};
 
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -51,13 +49,17 @@ export class SessionGuard implements CanActivate {
     if (payload.at_exp < now + 60) {
       payload = await this.refresh.refresh(payload);
       const newToken = await this.session.encrypt(payload);
-      const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', {
-        infer: true,
-      }) as string;
-      res.cookie(cookieName, newToken, {
-        ...COOKIE_OPTS,
-        maxAge: (payload.rt_exp - now) * 1000,
-      });
+      const cookieName = getSessionCookieName(this.config);
+      setCookieValue(
+        res,
+        cookieName,
+        newToken,
+        {
+          ...getCookieOptions(this.config),
+          maxAge: (payload.rt_exp - now) * 1000,
+        },
+        req.cookies as Record<string, string> | undefined,
+      );
     }
 
     const user: SessionUser = {

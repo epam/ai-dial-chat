@@ -29,6 +29,7 @@ const samplePayload: SessionPayload = {
 async function buildService(
   activeHex: string,
   prevHex?: string,
+  configOverrides: Record<string, string | boolean | undefined> = {},
 ): Promise<SessionService> {
   const module = await Test.createTestingModule({
     providers: [
@@ -38,10 +39,11 @@ async function buildService(
         provide: ConfigService,
         useValue: {
           get: (key: string) => {
-            const map: Record<string, string | undefined> = {
+            const map: Record<string, string | boolean | undefined> = {
               AUTH_SESSION_SECRET: activeHex,
               AUTH_SESSION_PREV_SECRET: prevHex,
               AUTH_SESSION_COOKIE_NAME: COOKIE_NAME,
+              ...configOverrides,
             };
             return map[key];
           },
@@ -100,5 +102,35 @@ describe('SessionService', () => {
     const newToken = await afterRotation.encrypt(samplePayload);
     const result2 = await afterRotation.decrypt(newToken);
     expect(result2).toEqual(samplePayload);
+  });
+
+  it('decryptFromRequest reads relaxed cookie name when secure cookies are disabled', async () => {
+    const svc = await buildService(ACTIVE_HEX, undefined, {
+      AUTH_COOKIE_SECURE: false,
+    });
+    const token = await svc.encrypt(samplePayload);
+
+    const result = await svc.decryptFromRequest({
+      cookies: { 'chat.sess': token },
+    } as never);
+
+    expect(result).toEqual(samplePayload);
+  });
+
+  it('decryptFromRequest assembles chunked session cookie values', async () => {
+    const svc = await buildService(ACTIVE_HEX);
+    const token = await svc.encrypt({
+      ...samplePayload,
+      at: 'x'.repeat(5000),
+    });
+
+    const result = await svc.decryptFromRequest({
+      cookies: {
+        [`${COOKIE_NAME}.0`]: token.slice(0, 3800),
+        [`${COOKIE_NAME}.1`]: token.slice(3800),
+      },
+    } as never);
+
+    expect(result.at).toBe('x'.repeat(5000));
   });
 });

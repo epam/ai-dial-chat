@@ -56,6 +56,8 @@ DIAL_CORE_URL=https://your-dial-service.com
 DIAL_API_KEY=your-secret-api-key
 THEMES_CONFIG_URL=https://your-themes-service.com
 THEMES_SERVICE_TIMEOUT_MS=5000
+# Local HTTP smoke only. Keep true/default for HTTPS and production-like runs.
+AUTH_COOKIE_SECURE=false
 ```
 
 **Note**: `.env.local` takes precedence over `.env` and is not committed to version control.
@@ -77,6 +79,9 @@ THEMES_SERVICE_TIMEOUT_MS=5000
 | `PORT` | `3005` | HTTP server port |
 | `API_PREFIX` | `api` | Global route prefix for all API endpoints |
 | `CORS_ORIGIN` | `http://localhost:4207` | Allowed CORS origin for frontend |
+| `AUTH_SESSION_COOKIE_NAME` | `__Host-chat.sess` | Session cookie name |
+| `AUTH_TRANSACTION_COOKIE_NAME` | `__Host-chat.tx` | Login transaction cookie name |
+| `AUTH_COOKIE_SECURE` | `true` | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled |
 | `DIAL_CORE_URL` | — | AI DIAL core service URL |
 | `DIAL_API_KEY` | — | AI DIAL authentication key |
 | `THEMES_CONFIG_URL` | — | Base URL for theme configuration and icons |

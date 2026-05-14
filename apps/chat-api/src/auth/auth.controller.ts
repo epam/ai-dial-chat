@@ -23,19 +23,21 @@ import type { Request, Response } from 'express';
 import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { resolveCallbackUrl } from './callback-url.util';
+import {
+  clearCookieValue,
+  getCookieOptions,
+  getSessionCookieName,
+  getTransactionCookieName,
+  readCookieValue,
+  setCookieValue,
+} from './cookie-options';
 import { AuthCallbackQueryDto } from './dto/auth-callback.query.dto';
+import { LoginQueryDto } from './dto/login-query.dto';
 import { ProviderIdParamDto } from './dto/provider-id-param.dto';
 import { ProviderRegistryService } from './provider-registry.service';
 import { SessionService } from './session.service';
 import type { SessionPayload, SessionUser } from './session.types';
-
-const TX_COOKIE = '__Host-chat.tx';
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'lax' as const,
-  path: '/',
-};
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -62,9 +64,11 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Start OIDC login flow' })
   @ApiResponse({ status: 302, description: 'Redirect to identity provider' })
+  @ApiResponse({ status: 400, description: 'Unsafe callback URL' })
   @ApiResponse({ status: 404, description: 'Unknown provider' })
   async login(
     @Param() params: ProviderIdParamDto,
+    @Query() query: LoginQueryDto,
     @Res() res: Response,
   ): Promise<void> {
     const { client, config: providerConfig } = this.registry.getProvider(
@@ -79,7 +83,12 @@ export class AuthController {
     const callbackBase = this.config.get('AUTH_CALLBACK_BASE_URL', {
       infer: true,
     });
+    const corsOrigin = this.config.get('CORS_ORIGIN', { infer: true });
     const redirectUri = `${callbackBase}/api/v1/auth/callback/${params.providerId}`;
+    const callbackUrl = resolveCallbackUrl(query.callbackUrl, {
+      authCallbackBaseUrl: callbackBase,
+      corsOrigin,
+    });
 
     const authUrl = client.authorizationUrl({
       redirect_uri: redirectUri,
@@ -95,6 +104,7 @@ export class AuthController {
       nonce,
       codeVerifier,
       providerId: params.providerId,
+      callbackUrl,
     };
     const txToken = await this.session.encrypt({
       v: 1,
@@ -110,7 +120,10 @@ export class AuthController {
       claims: {},
     });
 
-    res.cookie(TX_COOKIE, txToken, { ...COOKIE_OPTS, maxAge: 600 * 1000 });
+    res.cookie(getTransactionCookieName(this.config), txToken, {
+      ...getCookieOptions(this.config),
+      maxAge: 600 * 1000,
+    });
     res.redirect(authUrl);
   }
 
@@ -147,7 +160,7 @@ export class AuthController {
 
     const txToken: string | undefined = (
       req.cookies as Record<string, string> | undefined
-    )?.[TX_COOKIE];
+    )?.[getTransactionCookieName(this.config)];
     if (!txToken) {
       throw new BadRequestException('Missing transaction cookie');
     }
@@ -157,6 +170,7 @@ export class AuthController {
       nonce: string;
       codeVerifier: string;
       providerId: string;
+      callbackUrl: string;
     };
     try {
       const txPayload = await this.session.decrypt(txToken);
@@ -189,7 +203,12 @@ export class AuthController {
     const callbackBase = this.config.get('AUTH_CALLBACK_BASE_URL', {
       infer: true,
     });
+    const corsOrigin = this.config.get('CORS_ORIGIN', { infer: true });
     const redirectUri = `${callbackBase}/api/v1/auth/callback/${params.providerId}`;
+    const callbackUrl = resolveCallbackUrl(txData.callbackUrl, {
+      authCallbackBaseUrl: callbackBase,
+      corsOrigin,
+    });
 
     let tokenSet;
     try {
@@ -230,20 +249,24 @@ export class AuthController {
     };
 
     const sessionToken = await this.session.encrypt(payload);
-    const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', {
-      infer: true,
-    }) as string;
+    const cookieName = getSessionCookieName(this.config);
 
-    if (Buffer.byteLength(sessionToken) > 3800) {
-      this.logger.warn('Session cookie exceeds 3800 bytes; storing rt-only');
-    }
-
-    res.cookie(cookieName, sessionToken, {
-      ...COOKIE_OPTS,
-      maxAge: (payload.rt_exp - now) * 1000,
+    setCookieValue(
+      res,
+      cookieName,
+      sessionToken,
+      {
+        ...getCookieOptions(this.config),
+        maxAge: (payload.rt_exp - now) * 1000,
+      },
+      req.cookies as Record<string, string> | undefined,
+    );
+    res.cookie(getTransactionCookieName(this.config), '', {
+      ...getCookieOptions(this.config),
+      maxAge: 0,
     });
-    res.cookie(TX_COOKIE, '', { ...COOKIE_OPTS, maxAge: 0 });
-    res.redirect('/');
+
+    res.redirect(callbackUrl);
   }
 
   @Post('logout')
@@ -252,16 +275,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Log out and clear session cookie' })
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', {
-      infer: true,
-    }) as string;
+    const cookieName = getSessionCookieName(this.config);
+    const requestCookies = req.cookies as Record<string, string> | undefined;
 
-    const sessionToken: string | undefined = (
-      req.cookies as Record<string, string> | undefined
-    )?.[cookieName];
+    const sessionToken = readCookieValue(requestCookies, cookieName);
 
     // Clear the session cookie unconditionally so even an expired session can log out.
-    res.cookie(cookieName, '', { ...COOKIE_OPTS, maxAge: 0 });
+    clearCookieValue(
+      res,
+      cookieName,
+      getCookieOptions(this.config),
+      requestCookies,
+    );
 
     let endSessionUrl: string | undefined;
 

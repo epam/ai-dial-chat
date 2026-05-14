@@ -7,13 +7,13 @@
 
 ## 1. Goals and Constraints
 
-| Requirement | Decision |
-|---|---|
-| Strong security against XSS token theft | Tokens MUST NOT be readable by browser JavaScript |
-| Multiple identity providers (Keycloak, Auth0, Okta, Entra ID, …) | Provider-neutral OIDC layer on the server |
-| No Redis or external session store available | Session state lives **inside an encrypted HttpOnly cookie** |
-| Greenfield React/Vite SPA + NestJS API | NestJS is the confidential OIDC client (BFF) |
-| Compatible with IETF BCP 212 (browser-based apps) | BFF pattern, code + PKCE, no implicit flow |
+| Requirement                                                      | Decision                                                    |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| Strong security against XSS token theft                          | Tokens MUST NOT be readable by browser JavaScript           |
+| Multiple identity providers (Keycloak, Auth0, Okta, Entra ID, …) | Provider-neutral OIDC layer on the server                   |
+| No Redis or external session store available                     | Session state lives **inside an encrypted HttpOnly cookie** |
+| Greenfield React/Vite SPA + NestJS API                           | NestJS is the confidential OIDC client (BFF)                |
+| Compatible with IETF BCP 212 (browser-based apps)                | BFF pattern, code + PKCE, no implicit flow                  |
 
 The chosen pattern is a **Stateless Backend-for-Frontend (BFF)**: NestJS performs the full OIDC dance, encrypts the resulting tokens with an AEAD cipher, and sends them back to the browser as `HttpOnly` cookies. No tokens are ever exposed to JavaScript, and no server-side session store is needed.
 
@@ -61,23 +61,23 @@ The session is a JWE (`alg: dir`, `enc: A256GCM`) whose plaintext payload is:
 
 ### 3.2 Cookie Attributes
 
-| Attribute | Value | Reason |
-|---|---|---|
-| `HttpOnly` | `true` | JS cannot read or write |
-| `Secure` | `true` | HTTPS only |
-| `SameSite` | `Lax` | Blocks most CSRF, allows top-level OIDC redirect |
-| `Path` | `/` | One cookie for whole app |
-| `Max-Age` | `rt_exp` | Lives as long as the refresh token |
-| `Name` | `__Host-chat.sess` | `__Host-` prefix locks host/path |
+| Attribute  | Value              | Reason                                                                                      |
+| ---------- | ------------------ | ------------------------------------------------------------------------------------------- |
+| `HttpOnly` | `true`             | JS cannot read or write                                                                     |
+| `Secure`   | `true` by default  | HTTPS only; may be disabled only for local HTTP smoke testing                               |
+| `SameSite` | `Lax`              | Blocks most CSRF, allows top-level OIDC redirect                                            |
+| `Path`     | `/`                | One cookie for whole app                                                                    |
+| `Max-Age`  | `rt_exp`           | Lives as long as the refresh token                                                          |
+| `Name`     | `__Host-chat.sess` | `__Host-` prefix locks host/path; runtime drops this prefix when `AUTH_COOKIE_SECURE=false` |
 
 ### 3.3 Size Considerations
 
-Browsers cap cookies at ~4 KB. Entra ID access tokens can be large; if a single cookie does not fit, split into two:
+Browsers cap individual cookies at ~4 KB. Entra ID access tokens can be large, so the BFF writes the encrypted session as one cookie while it fits, and splits it into numbered chunks when it does not:
 
-- `__Host-chat.sess` — long-lived (refresh + identity claims)
-- `__Host-chat.at` — short-lived (current access token only)
+- `__Host-chat.sess` — single-cookie mode
+- `__Host-chat.sess.0`, `__Host-chat.sess.1`, ... — chunked mode
 
-If splitting is undesirable, **store only `refresh_token` + claims in the cookie** and re-acquire `access_token` server-side on demand via the refresh grant; cache it in memory per pod for its short TTL.
+Each chunk uses the same `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and `Max-Age` attributes as the single cookie. When local `AUTH_COOKIE_SECURE=false` is enabled, the runtime names are `chat.sess`, `chat.sess.0`, `chat.sess.1`, and so on.
 
 ### 3.4 Encryption Keys
 
@@ -109,7 +109,7 @@ type ProviderConfig = {
 };
 ```
 
-Login URLs become `/auth/login/:providerId`. The active provider is encoded in the session, so refresh and logout always use the correct IdP.
+Login URLs become `/auth/login/:providerId?callbackUrl=<app-url>`. The active provider is encoded in the session, so refresh and logout always use the correct IdP; the validated `callbackUrl` is encoded in the short-lived transaction cookie so the callback can return the browser to the correct SPA origin/page.
 
 ---
 
@@ -171,19 +171,20 @@ apps/chat-api/src/auth/
 ├── express.d.ts                        # Request.user augmentation
 └── dto/
     ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
-    └── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description
+    ├── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description
+    └── login-query.dto.ts              # callbackUrl for app return after login
 ```
 
 Public endpoints:
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/auth/providers` | List of available providers for the UI |
-| GET | `/auth/login/:providerId` | Start login (sets `tx` cookie, redirects to IdP) |
-| GET | `/auth/callback/:providerId` | Exchange code, set session cookie |
-| GET | `/auth/me` | Return current user profile (no tokens) |
-| POST | `/auth/logout` | Revoke + clear cookie + federated logout |
-| POST | `/auth/refresh` | Optional explicit refresh (also done implicitly) |
+| Method | Path                                            | Purpose                                                                        |
+| ------ | ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| GET    | `/auth/providers`                               | List of available providers for the UI                                         |
+| GET    | `/auth/login/:providerId?callbackUrl=<app-url>` | Start login (sets `tx` cookie with validated app return URL, redirects to IdP) |
+| GET    | `/auth/callback/:providerId`                    | Exchange code, set session cookie, redirect to validated `callbackUrl`         |
+| GET    | `/auth/me`                                      | Return current user profile (no tokens)                                        |
+| POST   | `/auth/logout`                                  | Revoke + clear cookie + federated logout                                       |
+| POST   | `/auth/refresh`                                 | Optional explicit refresh (also done implicitly)                               |
 
 The session guard is applied globally to `/api/*` routes; everything except `/auth/*` requires a valid decrypted cookie.
 
@@ -194,18 +195,18 @@ The session guard is applied globally to `/api/*` routes; everything except `/au
 Testing instructions for the currently implemented slices live in
 [`testing-current-auth-implementation.md`](./testing-current-auth-implementation.md).
 
-| Risk | Mitigation |
-|---|---|
-| XSS reads tokens | `HttpOnly` cookie + AEAD encryption; tokens never in JS |
-| CSRF on mutating endpoints | Double-submit CSRF token + `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks |
-| Refresh token replay | Refresh token rotation; `sid`/`jti` in payload; reject reused token |
-| Cookie tampering | AES-GCM authenticated tag; decryption fails on any byte change |
-| Key compromise | Key rotation with `kid` header; previous keys for grace period |
-| Session fixation | New `sid` generated on every login |
-| Open redirect on callback | Strict `redirect_uri` allow-list per provider |
-| Token in URL fragment | Not used — Authorization Code only, never implicit |
-| Cookie size overflow (Entra) | Split cookie or store refresh-only + cache `access_token` in memory |
-| Multi-tab refresh race | Per-pod in-memory mutex on `sid`; idempotent refresh |
+| Risk                         | Mitigation                                                                                                      |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                         |
+| CSRF on mutating endpoints   | Double-submit CSRF token + `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks                                      |
+| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                             |
+| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                  |
+| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                  |
+| Session fixation             | New `sid` generated on every login                                                                              |
+| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins |
+| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                              |
+| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                     |
+| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh                                                            |
 
 Mandatory transport: HTTPS everywhere, HSTS, `Secure` cookies, strict CSP (`script-src 'self'`).
 
@@ -213,13 +214,13 @@ Mandatory transport: HTTPS everywhere, HSTS, `Secure` cookies, strict CSP (`scri
 
 ## 8. Trade-offs vs. Other Options
 
-| Option | Tokens in JS | Multi-provider | No Redis | Refresh reliability |
-|---|---|---|---|---|
-| Pure SPA OIDC | Yes (risk) | Manual | Yes | Iframe broken |
-| Hybrid (SPA + JWKS in API) | Yes (risk) | Manual | Yes | Iframe broken |
-| **BFF + encrypted cookie (this doc)** | **No** | **Native** | **Yes** | **Server-side** |
-| BFF + Redis session | No | Native | No (needs Redis) | Server-side |
-| Auth.js Express | No | Built-in | Yes (JWE cookie) | Server-side; experimental |
+| Option                                | Tokens in JS | Multi-provider | No Redis         | Refresh reliability       |
+| ------------------------------------- | ------------ | -------------- | ---------------- | ------------------------- |
+| Pure SPA OIDC                         | Yes (risk)   | Manual         | Yes              | Iframe broken             |
+| Hybrid (SPA + JWKS in API)            | Yes (risk)   | Manual         | Yes              | Iframe broken             |
+| **BFF + encrypted cookie (this doc)** | **No**       | **Native**     | **Yes**          | **Server-side**           |
+| BFF + Redis session                   | No           | Native         | No (needs Redis) | Server-side               |
+| Express auth adapter                  | No           | Built-in       | Yes (JWE cookie) | Server-side; experimental |
 
 The proposed pattern is the only column that scores well on **all four** of your constraints simultaneously.
 
@@ -227,11 +228,11 @@ The proposed pattern is the only column that scores well on **all four** of your
 
 ## 9. Open Decisions — Resolutions
 
-1. **Cookie shape**: single cookie with both tokens. Size warning logged at >3800 bytes; a refresh-only fallback (store only RT in the cookie, fetch AT on demand) is deferred until a real overflow is observed in testing.
+1. **Cookie shape**: single encrypted cookie with both tokens while the value is ≤ 3800 bytes. Larger values are split into numbered chunks (`<name>.0`, `<name>.1`, ...). The BFF reassembles chunks before decrypting, and clears stale chunks whenever it writes a new session cookie.
 
 2. **Audience strategy**: the SPA always calls through the BFF (`/api/*`). DIAL Core is not called directly from the browser, so the cookie domain scope is the same origin.
 
-3. **Cookie domain**: same origin (SPA static files served by the same NestJS process via `ServeStaticModule`). `__Host-` prefix used — locks to host, path `/`, and requires `Secure`. No cross-site complexity.
+3. **Cookie domain**: same origin (SPA static files served by the same NestJS process via `ServeStaticModule`). `__Host-` prefix used by default — locks to host, path `/`, and requires `Secure`. For local HTTP smoke testing, `AUTH_COOKIE_SECURE=false` relaxes `Secure` and drops the `__Host-` prefix at runtime.
 
 4. **Logout policy**: best-effort `end_session_endpoint` redirect when the provider advertises one; graceful fallback to `/` otherwise. Token revocation attempted before redirect (best-effort, non-fatal).
 

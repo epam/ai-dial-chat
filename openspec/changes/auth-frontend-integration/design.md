@@ -5,8 +5,8 @@
 The BFF authentication layer in `apps/chat-api/src/auth/*` (shipped in `auth-bff-encrypted-cookie` Slices 1-2) is functional from the server's perspective:
 
 - `GET /api/v1/auth/providers` returns the configured provider list.
-- `GET /api/v1/auth/login/:providerId` starts the OIDC Authorization Code + PKCE flow.
-- `GET /api/v1/auth/callback/:providerId` exchanges the code, sets the encrypted `__Host-chat.sess` cookie, and redirects to `/`.
+- `GET /api/v1/auth/login/:providerId?callbackUrl=<app-url>` starts the OIDC Authorization Code + PKCE flow and remembers the validated app landing URL in the encrypted transaction cookie.
+- `GET /api/v1/auth/callback/:providerId` exchanges the code, sets the encrypted `__Host-chat.sess` cookie, and redirects to the validated `callbackUrl`.
 - `GET /api/v1/auth/me` is protected by the global `SessionGuard` and returns the `UserProfile` from the decrypted cookie.
 - The global `SessionGuard` protects non-public API routes and transparently refreshes near-expired access tokens.
 
@@ -27,7 +27,7 @@ The frontend conventions to follow are codified in `openspec/config.yaml` and ex
 **Goals:**
 
 - Bootstrap the user session on app mount via a single `GET /api/v1/auth/me` call and expose the resulting `UserProfile` through a `UserContext` consumer hook.
-- Auto-redirect to the BFF login endpoint on `401`, with a `/login` page fallback when multiple providers are registered.
+- Auto-redirect to the BFF login endpoint on `401`, with a `/login` page fallback when multiple providers are registered, while preserving the current app URL in an application `callbackUrl` query parameter.
 - Send cookies (`credentials: 'include'`) on every SPA `fetch` so the encrypted session cookie reaches the BFF on every API call.
 - Surface protected-endpoint `401`s as a typed `UnauthorizedError` and let `UserContext` reset state in response — one canonical recovery path for the whole app.
 - Add a minimal signed-in-as / backend-dependent sign-out UI in `Header.tsx` using existing design-system primitives.
@@ -35,8 +35,7 @@ The frontend conventions to follow are codified in `openspec/config.yaml` and ex
 **Non-Goals:**
 
 - No CSRF token wiring (`X-CSRF-Token` header). Lands together with backend `CsrfGuard` in a future change.
-- No backend changes whatsoever. `APP_GUARD` and `RefreshService` are already implemented in `auth-bff-encrypted-cookie` Slice 2; `POST /api/v1/auth/logout` remains tracked in backend Slice 3.
-- No dev-time cookie relaxation (`__Host-` + `Secure` over HTTP); manual smoke continues to require an HTTPS dev URL or a backend env flag that ships separately.
+- No backend changes except relying on the `callbackUrl` contract from `auth-bff-encrypted-cookie`. `APP_GUARD` and `RefreshService` are already implemented in Slice 2; `POST /api/v1/auth/logout` remains tracked in backend Slice 3.
 - No new external dependencies (no `react-query`, no `swr`, no auth library).
 - No new global state-management library — strictly React Context, mirroring `ThemeContext`.
 - No changes to protection of `apps/chat-api` endpoints — the global `SessionGuard` already owns that behaviour.
@@ -94,7 +93,7 @@ Rationale:
 
 - Theme bootstrap (`GET /api/themes`) does **not** require an authenticated session today and stays accessible to the public `/login` page.
 - Routing exists already (`BrowserRouter`) but no `<Routes>` is declared yet. Adding `<Routes>` here is the minimal step that lets `/login` exist as a distinct route while every other path stays under `<RequireAuth>`.
-- `UserProvider` sitting at the outermost layer means `useUser()` is available on the `/login` page too, which lets it auto-redirect to `/` when an already-authenticated user lands on `/login` (e.g. via a stale tab).
+- `UserProvider` sitting at the outermost layer means `useUser()` is available on the `/login` page too, which lets it auto-redirect to the same-origin `callbackUrl` path, or `/` when no callback is present, if an already-authenticated user lands on `/login` (e.g. via a stale tab).
 
 *Alternative considered:* keep everything in `app.tsx` without routing. Rejected — we would need an ad-hoc state machine inside `App` to switch between `<LoginPicker />` and the chat UI, and that complicates the existing `lazy` setup with `Suspense`.
 
@@ -102,9 +101,10 @@ Rationale:
 
 `apps/chat/src/hooks/useAuthRedirect.ts` is a new hook that consumes `useUser()` and, outside `/login`, the `GET /api/v1/auth/providers` response. It centralises the redirect rule for protected routes while leaving the `/login` page as the owner of provider-list rendering:
 
-- If `status === 'unauthenticated'` **and** the providers list has length `1`: `window.location.assign('/api/v1/auth/login/<id>')`. This is a real browser navigation, not React Router — the next response is a `302` from the BFF and must replace the document.
-- If `status === 'unauthenticated'` **and** the providers list has length `> 1`: `navigate('/login', { replace: true })`. The login page shows one button per provider.
-- If `status === 'authenticated'` and the current path is `/login`: `navigate('/', { replace: true })`.
+- Before any unauthenticated redirect, compute `callbackUrl` from the current browser URL (`window.location.href`) so the BFF can return the user to the same SPA origin and page after authentication. This must include pathname, search, and hash.
+- If `status === 'unauthenticated'` **and** the providers list has length `1`: `window.location.assign('/api/v1/auth/login/<id>?callbackUrl=<encoded-current-url>')`. This is a real browser navigation, not React Router — the next response is a `302` from the BFF and must replace the document.
+- If `status === 'unauthenticated'` **and** the providers list has length `> 1`: `navigate('/login?callbackUrl=<encoded-current-url>', { replace: true })`. The login page shows one button per provider and forwards the same callback URL to the selected BFF login link.
+- If `status === 'authenticated'` and the current path is `/login`: if a same-origin `callbackUrl` query parameter exists, navigate to that URL's path/search/hash; otherwise `navigate('/', { replace: true })`.
 - If `status === 'loading'`: render nothing (or a tiny "Checking your session…" splash — see D8).
 
 `useAuthRedirect()` is called from `<RequireAuth>` and from `<LoginPage>` so both code paths agree on the authenticated-on-login redirect. On `/login`, the hook MUST NOT fetch providers or perform unauthenticated provider redirects; that avoids a duplicate `/auth/providers` request because `<LoginPage>` fetches the list itself.
@@ -181,9 +181,10 @@ This means the Sign-out button is wired in this change, but successful logout de
 `apps/chat/src/pages/Login.tsx` (a new folder, mirroring how the codebase already structures the conversation page) is a small functional component:
 
 1. Calls `get<ProviderInfo[]>(ApiEndpoints.AUTH_PROVIDERS)` once on mount.
-2. Renders one `<a href="/api/v1/auth/login/<id>">…</a>` per provider — anchor tags, not `react-router` `Link`, because the destination is a BFF route that must trigger a top-level browser navigation to the IdP.
-3. While loading: shows a small "Loading providers…" placeholder.
-4. On error: surfaces a user-readable message via `t('auth.providersError')`.
+2. Reads `callbackUrl` from the route query string. If absent, defaults to the current app root (`window.location.origin + '/'`). The page does not accept or rewrite off-origin values; backend validation remains authoritative.
+3. Renders one `<a href="/api/v1/auth/login/<id>?callbackUrl=<encoded-callback-url>">…</a>` per provider — anchor tags, not `react-router` `Link`, because the destination is a BFF route that must trigger a top-level browser navigation to the IdP.
+4. While loading: shows a small "Loading providers…" placeholder.
+5. On error: surfaces a user-readable message via `t('auth.providersError')`.
 
 The page is `React.lazy`-imported in `main.tsx` to keep the unauthenticated bundle minimal — only the picker is downloaded on the `/login` route. The convention "lazy-load every route component" is mandated by `openspec/config.yaml` design rules.
 
@@ -234,7 +235,6 @@ The Vite proxy in `apps/chat/vite.config.mts` already forwards `/api → http://
 
 | Risk | Mitigation |
 |---|---|
-| **Dev-cookie blocker (`Secure: true` + HTTP):** the browser silently refuses to store the BFF cookie over `http://localhost`, so the SPA appears to "never log in" in dev. | Out of scope here, but called out explicitly in the proposal. A backend env flag (`AUTH_COOKIE_INSECURE_DEV` or `NODE_ENV !== 'production'`) is required before this change can be smoke-tested end-to-end. Tracked separately. |
 | **Sign-out endpoint pending until backend Slice 3:** the button is wired before the BFF endpoint exists. | Document the backend dependency in the PR. The wiring is additive — when Slice 3 ships, no frontend change is needed. |
 | **Refresh-token expiry while SPA is open:** backend Slice 2 already provides transparent refresh, but refresh can still fail after refresh-token expiry or IdP revocation. | The `UnauthorizedError` listener resets state and `useAuthRedirect()` debounces by checking `status`, so the recovery path is a fresh login rather than a broken UI. |
 | **`<RequireAuth>` shows a blank gate during cold load:** if bootstrap takes > 0 ms, the user briefly sees `null` (D8) before either content or the login page paints. | Acceptable for v1. The explicit `/login` page still shows `auth.loading` while its provider-list request is in flight. |
@@ -258,4 +258,4 @@ A revert is trivial: removing `<UserProvider>` and `<Routes>` from `main.tsx` pu
 
 1. **Should `<UserMenu />` show the provider id alongside the email?** (e.g. "u@x.io · keycloak"). Useful for multi-IdP debugging; possibly noisy for end users. Default: hide; expose via a future settings toggle.
 2. **Should the bootstrap `GET /api/v1/auth/me` retry on a `5xx`?** A single retry with 500 ms backoff would smooth over transient pod restarts. Default for v1: no retry, surface the error in `<RequireAuth>` and let the user reload. Revisit if observability shows it is common.
-3. **Should the `/login` page persist the originally requested URL (deep-link return)?** E.g. user clicks `/conversation/123` while signed out → we redirect to `/login` → after auth, navigate to `/conversation/123`. Out of scope for v1 (the SPA has no deep-linked routes yet), but the BFF callback already accepts a `returnTo` query parameter per `auth-bff-encrypted-cookie/design.md`. Wire it up once the SPA grows additional routes.
+3. **Should the frontend allow user-supplied off-origin `callbackUrl` values?** Default: no. The SPA only generates same-origin callback URLs, and the BFF enforces the final allow-list.

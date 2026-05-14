@@ -28,6 +28,7 @@ const ACTIVE_KEY = new Uint8Array(Buffer.from(ACTIVE_HEX, 'hex'));
 const COOKIE_NAME = '__Host-chat.sess';
 const TX_COOKIE = '__Host-chat.tx';
 const CALLBACK_BASE = 'http://localhost:3005';
+const APP_BASE = 'http://localhost:4207';
 
 const MOCK_CLIENT = {
   authorizationUrl: vi
@@ -93,6 +94,7 @@ async function buildApp(): Promise<INestApplication> {
       const map: Record<string, string> = {
         AUTH_CALLBACK_BASE_URL: CALLBACK_BASE,
         AUTH_SESSION_COOKIE_NAME: COOKIE_NAME,
+        CORS_ORIGIN: APP_BASE,
       };
       return map[key];
     },
@@ -202,6 +204,23 @@ describe('AuthController (integration)', () => {
       expect(txCookie).toContain('Path=/');
     });
 
+    it('accepts a safe callbackUrl query', async () => {
+      const callbackUrl = encodeURIComponent(`${APP_BASE}/conversation?x=1`);
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/login/keycloak?callbackUrl=${callbackUrl}`)
+        .expect(302);
+
+      expect(res.headers.location).toContain('keycloak.example.com');
+    });
+
+    it('returns 400 for unsafe callbackUrl query', async () => {
+      await request(app.getHttpServer())
+        .get(
+          `/api/v1/auth/login/keycloak?callbackUrl=${encodeURIComponent('https://evil.example.com')}`,
+        )
+        .expect(400);
+    });
+
     it('returns 404 for unknown provider', async () => {
       await request(app.getHttpServer())
         .get('/api/v1/auth/login/unknown')
@@ -216,7 +235,92 @@ describe('AuthController (integration)', () => {
   });
 
   describe('GET /api/v1/auth/callback/:providerId', () => {
-    it('sets session cookie and redirects to / with valid code+state', async () => {
+    it('sets session cookie and redirects to callbackUrl with valid code+state', async () => {
+      const state = 'valid-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+        callbackUrl: `${APP_BASE}/conversation`,
+      });
+
+      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state });
+      MOCK_CLIENT.callback.mockResolvedValue({
+        access_token: 'at',
+        refresh_token: 'rt',
+        expires_at: 9999999999,
+        claims: () => ({
+          sub: 'user-1',
+          email: 'u@example.com',
+        }),
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/callback/keycloak?code=code&state=${state}`)
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(302);
+
+      expect(res.headers.location).toBe(`${APP_BASE}/conversation`);
+      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      const sessCookie = cookies.find((c) => c.startsWith(COOKIE_NAME));
+      expect(sessCookie).toBeDefined();
+    });
+
+    it('splits a large session cookie into chunks', async () => {
+      const state = 'valid-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+        callbackUrl: `${APP_BASE}/conversation`,
+      });
+
+      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state });
+      MOCK_CLIENT.callback.mockResolvedValue({
+        access_token: 'x'.repeat(5000),
+        refresh_token: 'rt',
+        expires_at: 9999999999,
+        claims: () => ({
+          sub: 'user-1',
+          email: 'u@example.com',
+        }),
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/callback/keycloak?code=code&state=${state}`)
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(302);
+
+      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      const clearedBaseCookie = cookies.find((c) =>
+        c.startsWith(`${COOKIE_NAME}=`),
+      );
+      const sessionChunks = cookies
+        .filter((c) => c.startsWith(`${COOKIE_NAME}.`))
+        .sort((a, b) => {
+          const aIndex = Number(a.slice(COOKIE_NAME.length + 1).split('=')[0]);
+          const bIndex = Number(b.slice(COOKIE_NAME.length + 1).split('=')[0]);
+          return aIndex - bIndex;
+        });
+      const cookieValue = sessionChunks
+        .map((c) => c.match(/^[^=]+=([^;]+)/)?.[1] ?? '')
+        .join('');
+
+      expect(clearedBaseCookie).toMatch(/Max-Age=0/i);
+      expect(sessionChunks.length).toBeGreaterThan(1);
+      const payload = await app.get(SessionService).decrypt(cookieValue);
+      expect(payload.at).toBe('x'.repeat(5000));
+      expect(payload.at_exp).toBe(9999999999);
+      expect(payload.rt).toBe('rt');
+    });
+
+    it('defaults callback redirect to app root when tx cookie has no callbackUrl', async () => {
       const state = 'valid-state';
       const txCookieValue = await makeTxCookie({
         state,
@@ -241,12 +345,7 @@ describe('AuthController (integration)', () => {
         .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
         .expect(302);
 
-      expect(res.headers.location).toBe('/');
-      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
-        ? (res.headers['set-cookie'] as string[])
-        : [res.headers['set-cookie'] as string];
-      const sessCookie = cookies.find((c) => c.startsWith(COOKIE_NAME));
-      expect(sessCookie).toBeDefined();
+      expect(res.headers.location).toBe(`${APP_BASE}/`);
     });
 
     it('returns 400 on state mismatch', async () => {
@@ -293,7 +392,7 @@ describe('AuthController (integration)', () => {
         .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
         .expect(302);
 
-      expect(res.headers.location).toBe('/');
+      expect(res.headers.location).toBe(`${APP_BASE}/`);
     });
 
     it('returns 400 with descriptive message on IdP error parameter', async () => {
@@ -395,6 +494,32 @@ describe('AuthController (integration)', () => {
         .expect(302);
 
       expect(res.headers.location).toBe('/');
+    });
+
+    it('decrypts and clears chunked session cookies on logout', async () => {
+      const sessCookie = await makeSessionCookie({
+        ...sampleSession,
+        at: 'x'.repeat(5000),
+      });
+      const splitAt = 3800;
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', [
+          `${COOKIE_NAME}.0=${sessCookie.slice(0, splitAt)}`,
+          `${COOKIE_NAME}.1=${sessCookie.slice(splitAt)}`,
+        ])
+        .expect(302);
+
+      expect(res.headers.location).toBe('/');
+      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      expect(cookies.find((c) => c.startsWith(`${COOKIE_NAME}.0=`))).toMatch(
+        /Max-Age=0/i,
+      );
+      expect(cookies.find((c) => c.startsWith(`${COOKIE_NAME}.1=`))).toMatch(
+        /Max-Age=0/i,
+      );
     });
   });
 

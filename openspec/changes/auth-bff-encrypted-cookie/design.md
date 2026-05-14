@@ -52,25 +52,27 @@ The reusable `@Public()` decorator lives at `apps/chat-api/src/common/decorators
 
 Added to `apps/chat-api/src/config/environment.config.ts`:
 
-| Variable | Type | Required | Description |
-|---|---|---|---|
-| `AUTH_SESSION_SECRET` | string (32-byte hex) | Yes | Active JWE encryption key |
-| `AUTH_SESSION_PREV_SECRET` | string (32-byte hex) | No | Previous key for rotation grace period |
-| `AUTH_SESSION_COOKIE_NAME` | string | No | Default: `__Host-chat.sess` |
-| `AUTH_CALLBACK_BASE_URL` | URL | Yes | Base URL for OIDC redirect_uri, e.g. `https://app.example.com` |
-| `AUTH_PROVIDERS` | JSON string | Yes | Array of `ProviderConfig` objects (see below) |
+| Variable                       | Type                 | Required | Description                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------ | -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_SESSION_SECRET`          | string (32-byte hex) | Yes      | Active JWE encryption key                                                                                                                                                                                                                                                                                                                                      |
+| `AUTH_SESSION_PREV_SECRET`     | string (32-byte hex) | No       | Previous key for rotation grace period                                                                                                                                                                                                                                                                                                                         |
+| `AUTH_SESSION_COOKIE_NAME`     | string               | No       | Default: `__Host-chat.sess`                                                                                                                                                                                                                                                                                                                                    |
+| `AUTH_TRANSACTION_COOKIE_NAME` | string               | No       | Default: `__Host-chat.tx`                                                                                                                                                                                                                                                                                                                                      |
+| `AUTH_COOKIE_SECURE`           | boolean              | No       | Default: `true`; set to `false` only for local HTTP smoke testing. When disabled, runtime cookie names drop the `__Host-` prefix because that prefix requires `Secure`.                                                                                                                                                                                        |
+| `AUTH_CALLBACK_BASE_URL`       | URL                  | Yes      | Base URL used to build the OIDC `redirect_uri`, e.g. `https://api.example.com` or `http://localhost:3005`. This is where the IdP sends the authorization response; it does **not** decide where the browser lands after the BFF creates the session. The post-auth landing page is controlled by the validated `callbackUrl` query parameter on `/auth/login`. |
+| `AUTH_PROVIDERS`               | JSON string          | Yes      | Array of `ProviderConfig` objects (see below)                                                                                                                                                                                                                                                                                                                  |
 
 `AUTH_PROVIDERS` JSON schema (per entry):
 
 ```ts
 interface ProviderConfig {
-  id: string;            // e.g. "keycloak"
-  issuer: string;        // OIDC discovery URL root
+  id: string; // e.g. "keycloak"
+  issuer: string; // OIDC discovery URL root
   clientId: string;
   clientSecret: string;
-  scope: string;         // e.g. "openid email profile"
+  scope: string; // e.g. "openid email profile"
   audience?: string;
-  rolesClaim?: string;   // JWT claim path for roles, default "roles"
+  rolesClaim?: string; // JWT claim path for roles, default "roles"
   adminRoles?: string[];
   postLogoutRedirectUri: string;
 }
@@ -85,16 +87,16 @@ interface ProviderConfig {
 ```ts
 interface SessionPayload {
   v: 1;
-  sid: string;         // random UUID, changes on every login
+  sid: string; // random UUID, changes on every login
   providerId: string;
   sub: string;
-  at: string;          // access_token (opaque or JWT)
-  rt: string;          // refresh_token
-  at_exp: number;      // Unix seconds
-  rt_exp: number;      // Unix seconds
-  iat: number;         // issued-at (Unix seconds)
-  csrf: string;        // random per-session token used by the double-submit CSRF guard (Slice 5)
-  claims: Record<string, unknown>;  // roles, email, etc.
+  at: string; // access_token (opaque or JWT)
+  rt: string; // refresh_token
+  at_exp: number; // Unix seconds
+  rt_exp: number; // Unix seconds
+  iat: number; // issued-at (Unix seconds)
+  csrf: string; // random per-session token used by the double-submit CSRF guard (Slice 5)
+  claims: Record<string, unknown>; // roles, email, etc.
 }
 ```
 
@@ -108,7 +110,7 @@ interface SessionUser {
   sub: string;
   providerId: string;
   claims: Record<string, unknown>;
-  at: string;   // forwarded to upstream DIAL Core
+  at: string; // forwarded to upstream DIAL Core
 }
 ```
 
@@ -125,6 +127,7 @@ All endpoints live under `/api/v1/auth/*` — URI-versioned per `apps/chat-api/A
 Returns the list of configured provider IDs for the SPA login-picker UI.
 
 **Response 200:**
+
 ```json
 [{ "id": "keycloak", "label": "Keycloak" }]
 ```
@@ -139,10 +142,19 @@ Starts the OIDC flow. Generates `state`, `nonce`, `code_verifier` (PKCE), stores
 
 **Path params:** `providerId` — must match a registered provider id.
 
+**Query params:**
+
+| Param         | Required | Validation                                                                                                                                                                                                                                                                                                                                                                                                      | Description                                                                                                                                                      |
+| ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `callbackUrl` | No       | Must resolve to an allowed application URL. Relative paths are resolved against the configured application origin; absolute URLs must use `http:` or `https:` and match the application-origin allow-list derived from `CORS_ORIGIN` plus the origin of `AUTH_CALLBACK_BASE_URL`. Protocol-relative URLs (`//host/path`), non-HTTP schemes, URLs with credentials, and off-origin URLs are rejected with `400`. | Final browser landing URL after a successful BFF callback. Preserves the correct app origin/page even when the OIDC callback itself is served by the API origin. |
+
+If `callbackUrl` is omitted, the BFF defaults to the application root derived from `CORS_ORIGIN` when it is a concrete URL, otherwise `/` on the current callback origin.
+
 **Transient `tx` cookie:**
-- Name: `__Host-chat.tx`
-- Attributes: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, `Max-Age=600`
-- Payload (JWE-encrypted same as session): `{ state, nonce, codeVerifier, providerId, returnTo? }`
+
+- Name: `__Host-chat.tx` by default, or `chat.tx` when `AUTH_COOKIE_SECURE=false`
+- Attributes: `HttpOnly`, `Secure` by default, `SameSite=Lax`, `Path=/`, `Max-Age=600`
+- Payload (JWE-encrypted same as session): `{ state, nonce, codeVerifier, providerId, callbackUrl }`
 
 > The `__Host-` prefix mandates `Path=/` and `Secure`, and disallows `Domain`. Narrowing the path
 > to `/api/v1/auth/callback` is therefore not possible while keeping the prefix. The cookie is
@@ -152,7 +164,7 @@ Starts the OIDC flow. Generates `state`, `nonce`, `code_verifier` (PKCE), stores
 
 **Response:** `302 Redirect` to IdP authorization URL.
 
-**Errors:** `404` if `providerId` is unknown.
+**Errors:** `400` if `callbackUrl` is unsafe or malformed; `404` if `providerId` is unknown.
 
 ---
 
@@ -162,45 +174,46 @@ Handles the IdP redirect after user authentication.
 
 **Query params (`AuthCallbackQueryDto`):**
 
-| Param | When sent | Validation |
-|---|---|---|
-| `code` | Success branch (OIDC standard) | `@IsOptional()` at DTO level — required in controller on the success branch |
-| `state` | Success branch (OIDC standard) | `@IsOptional()` at DTO level — required and matched against `tx` cookie |
-| `iss` | Optional; sent by Keycloak 18+, Auth0, Okta (RFC 9207) | `@IsOptional()` — if present, MUST equal `providerConfig.issuer` (mix-up defense) |
-| `session_state` | Keycloak-specific session monitoring | `@IsOptional()` — accepted, not used |
-| `error` | Error branch (e.g. user cancels) | `@IsOptional()` — short-circuits handler with 400 |
-| `error_description` | Error branch | `@IsOptional()` — surfaced in the 400 response body |
+| Param               | When sent                                              | Validation                                                                        |
+| ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `code`              | Success branch (OIDC standard)                         | `@IsOptional()` at DTO level — required in controller on the success branch       |
+| `state`             | Success branch (OIDC standard)                         | `@IsOptional()` at DTO level — required and matched against `tx` cookie           |
+| `iss`               | Optional; sent by Keycloak 18+, Auth0, Okta (RFC 9207) | `@IsOptional()` — if present, MUST equal `providerConfig.issuer` (mix-up defense) |
+| `session_state`     | Keycloak-specific session monitoring                   | `@IsOptional()` — accepted, not used                                              |
+| `error`             | Error branch (e.g. user cancels)                       | `@IsOptional()` — short-circuits handler with 400                                 |
+| `error_description` | Error branch                                           | `@IsOptional()` — surfaced in the 400 response body                               |
 
 > All real-world IdPs send query parameters beyond the OIDC minimum. The global `ValidationPipe` is configured with `forbidNonWhitelisted: true`, so every legitimately expected parameter MUST be declared on the DTO; otherwise the handler rejects the entire callback with `400 "property X should not exist"` and login becomes impossible.
 
 **Steps:**
+
 1. If `error` is present → log a warning and reject with `BadRequestException(error_description ?? error)`.
 2. If `code` or `state` is missing → reject with `BadRequestException('Missing required callback parameters (code, state)')`.
-3. Read and decrypt the `tx` cookie; verify `state` matches and `providerId` matches `:providerId`; extract `code_verifier`.
+3. Read and decrypt the `tx` cookie; verify `state` matches and `providerId` matches `:providerId`; extract `code_verifier` and the already-validated `callbackUrl`.
 4. If `iss` is present and ≠ `providerConfig.issuer` → reject with `BadRequestException('Issuer mismatch')` (RFC 9207 mix-up defense).
 5. Exchange `code` for tokens via `openid-client` (PKCE).
 6. Validate `id_token`; extract `sub` and claims.
 7. Build `SessionPayload`; encrypt to JWE; set session cookie.
 8. Delete `tx` cookie (set `Max-Age=0`).
-9. Redirect browser to `/` (or a pre-validated `returnTo` parameter).
+9. Redirect browser to the pre-validated `callbackUrl`.
 
 **Session cookie attributes:**
 
-| Attribute | Value |
-|---|---|
-| Name | `__Host-chat.sess` (or `AUTH_SESSION_COOKIE_NAME`) |
-| `HttpOnly` | `true` |
-| `Secure` | `true` |
-| `SameSite` | `Lax` |
-| `Path` | `/` |
-| `Max-Age` | `rt_exp - now` |
+| Attribute  | Value                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| Name       | `__Host-chat.sess` (or `AUTH_SESSION_COOKIE_NAME`)                                           |
+| `HttpOnly` | `true`                                                                                       |
+| `Secure`   | `true` by default; `false` only when `AUTH_COOKIE_SECURE=false` for local HTTP smoke testing |
+| `SameSite` | `Lax`                                                                                        |
+| `Path`     | `/`                                                                                          |
+| `Max-Age`  | `rt_exp - now`                                                                               |
 
 **Errors:**
 
-| Status | Reason |
-|---|---|
-| `400` | Missing `tx` cookie / invalid `tx` cookie / state mismatch / provider mismatch / issuer mismatch (RFC 9207) / IdP returned `error` / missing `code` or `state` |
-| `502` | Token exchange against the IdP failed |
+| Status | Reason                                                                                                                                                         |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`  | Missing `tx` cookie / invalid `tx` cookie / state mismatch / provider mismatch / issuer mismatch (RFC 9207) / IdP returned `error` / missing `code` or `state` |
+| `502`  | Token exchange against the IdP failed                                                                                                                          |
 
 ---
 
@@ -209,6 +222,7 @@ Handles the IdP redirect after user authentication.
 Clears the session cookie and optionally redirects to the IdP `end_session_endpoint`.
 
 **Steps:**
+
 1. Decrypt session cookie to extract `providerId` and IdP hint.
 2. Set cookie `Max-Age=0` to delete it.
 3. Attempt token revocation via provider revocation endpoint (best-effort; no error on failure).
@@ -227,6 +241,7 @@ Returns the current user's profile — no tokens.
 > Slice 1: protected via local `@UseGuards(SessionGuard)` (the same guard is later promoted to `APP_GUARD` in Slice 2). The slice can ship an end-to-end happy path because the guard is wired locally, not globally.
 
 **Response 200:**
+
 ```json
 {
   "sub": "user-123",
@@ -278,8 +293,8 @@ Wraps `jose` `CompactEncrypt` / `compactDecrypt`.
 
 ```ts
 class SessionService {
-  async encrypt(payload: SessionPayload): Promise<string>   // → JWE compact string
-  async decrypt(token: string): Promise<SessionPayload>     // throws on failure/tamper
+  async encrypt(payload: SessionPayload): Promise<string>; // → JWE compact string
+  async decrypt(token: string): Promise<SessionPayload>; // throws on failure/tamper
 }
 ```
 
@@ -293,8 +308,8 @@ class SessionService {
 
 ```ts
 class KeysService {
-  get activeKey(): Uint8Array
-  get previousKey(): Uint8Array | undefined
+  get activeKey(): Uint8Array;
+  get previousKey(): Uint8Array | undefined;
 }
 ```
 
@@ -306,9 +321,9 @@ Reads `AUTH_SESSION_SECRET` and `AUTH_SESSION_PREV_SECRET` from `ConfigService`.
 
 ```ts
 class ProviderRegistryService implements OnModuleInit {
-  async onModuleInit(): Promise<void>  // discovers OIDC metadata for each provider
-  getProvider(id: string): { client: Client; config: ProviderConfig }  // throws NotFoundException if unknown
-  listProviders(): Array<{ id: string; label: string }>
+  async onModuleInit(): Promise<void>; // discovers OIDC metadata for each provider
+  getProvider(id: string): { client: Client; config: ProviderConfig }; // throws NotFoundException if unknown
+  listProviders(): Array<{ id: string; label: string }>;
 }
 ```
 
@@ -320,7 +335,7 @@ Uses `openid-client`'s `Issuer.discover(issuer)` to fetch `.well-known/openid-co
 
 ```ts
 class RefreshService {
-  async refresh(payload: SessionPayload): Promise<SessionPayload>
+  async refresh(payload: SessionPayload): Promise<SessionPayload>;
 }
 ```
 
@@ -335,31 +350,32 @@ class RefreshService {
 
 Standard cookies are capped at ~4 KB. Entra ID access tokens can exceed this.
 
-**Strategy for Slice 1–4:** single cookie with both tokens. Slice 1 only logs a warning if the combined JWE exceeds 3800 bytes (a conservative browser limit). The refresh-only fallback is implemented in Slice 5: rebuild `SessionPayload` without `at`, then have the guard fetch a fresh `at` via refresh before forwarding to upstream.
+**Strategy:** use a single cookie while the encrypted JWE is ≤ 3800 bytes. If the encrypted value exceeds that conservative browser limit, split the value into numbered chunks:
 
-**Explicit split-cookie strategy (Slice 5 if needed):**
-- `__Host-chat.sess` — `rt`, `claims`, `sid`, `providerId`, `sub` (long-lived; `Max-Age=rt_exp`).
-- `__Host-chat.at` — `at`, `at_exp` only (short-lived; `Max-Age=at_exp - now`).
+- `__Host-chat.sess` — single-cookie mode.
+- `__Host-chat.sess.0`, `__Host-chat.sess.1`, ... — chunked mode.
+
+Each chunk uses the same `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and `Max-Age` attributes as the single cookie. When local `AUTH_COOKIE_SECURE=false` is enabled, runtime chunk names drop the `__Host-` prefix (`chat.sess.0`, `chat.sess.1`, ...). The BFF reassembles chunks before decrypting, and clears stale base/chunk cookies whenever it writes or clears a session.
 
 ---
 
 ## Security Properties
 
-| Risk | Mitigation in this design |
-|---|---|
-| XSS reads tokens | `HttpOnly` + AES-GCM encrypted; tokens never appear in JS |
-| CSRF | `SameSite=Lax` limits cross-site cookie sending; Slice 5 adds `Origin` validation and a double-submit CSRF token |
-| Cookie tampering | AES-GCM authenticated tag; `decrypt` fails on any byte change → 401 |
-| Key compromise | Key rotation with previous key fallback; no forced logout during rotation |
-| Session fixation | New `sid` generated on every `callback` |
-| Open redirect | `returnTo` validated against strict allow-list (same origin only) |
-| IdP mix-up attack (multi-provider) | RFC 9207 `iss` query param verified against `providerConfig.issuer` on callback (shipped in Slice 1 alongside the callback DTO fix) |
-| Token in URL | Tokens are never returned in URLs; the callback receives only an authorization `code` query parameter |
-| Refresh replay | RT rotation; `sid` + `jti` in payload; `invalid_grant` → 401 |
-| Cookie overflow (Entra) | Size check with fallback to refresh-only storage |
-| Multi-tab race | Per-pod in-memory mutex on `sid` in `RefreshService` |
+| Risk                               | Mitigation in this design                                                                                                                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| XSS reads tokens                   | `HttpOnly` + AES-GCM encrypted; tokens never appear in JS                                                                                                                                            |
+| CSRF                               | `SameSite=Lax` limits cross-site cookie sending; Slice 5 adds `Origin` validation and a double-submit CSRF token                                                                                     |
+| Cookie tampering                   | AES-GCM authenticated tag; `decrypt` fails on any byte change → 401                                                                                                                                  |
+| Key compromise                     | Key rotation with previous key fallback; no forced logout during rotation                                                                                                                            |
+| Session fixation                   | New `sid` generated on every `callback`                                                                                                                                                              |
+| Open redirect                      | `callbackUrl` is validated before it is stored in the encrypted `tx` cookie. Relative paths resolve against the configured application origin; absolute URLs must match the allowed app-origin list. |
+| IdP mix-up attack (multi-provider) | RFC 9207 `iss` query param verified against `providerConfig.issuer` on callback (shipped in Slice 1 alongside the callback DTO fix)                                                                  |
+| Token in URL                       | Tokens are never returned in URLs; the callback receives only an authorization `code` query parameter                                                                                                |
+| Refresh replay                     | RT rotation; `sid` + `jti` in payload; `invalid_grant` → 401                                                                                                                                         |
+| Cookie overflow (Entra)            | Size check with numbered cookie chunking                                                                                                                                                             |
+| Multi-tab race                     | Per-pod in-memory mutex on `sid` in `RefreshService`                                                                                                                                                 |
 
-**Mandatory transport:** HTTPS everywhere; HSTS already configured in `main.ts` via `helmet`; `Secure` cookie attribute enforced.
+**Mandatory transport:** HTTPS everywhere; HSTS already configured in `main.ts` via `helmet`; `Secure` cookie attribute enforced except for explicit local HTTP smoke testing with `AUTH_COOKIE_SECURE=false`.
 
 ---
 
@@ -369,7 +385,7 @@ Minimal changes required:
 
 1. **Bootstrap call** — on app mount, `GET /api/v1/auth/me`:
    - 200 → user is authenticated; store `SessionUser` in a `UserContext`.
-   - 401 → redirect to `/api/v1/auth/login/:defaultProviderId` (or show provider picker if `GET /api/v1/auth/providers` returns multiple).
+   - 401 → redirect to `/api/v1/auth/login/:defaultProviderId?callbackUrl=<encoded-current-app-url>` (or show provider picker if `GET /api/v1/auth/providers` returns multiple).
 
 2. **API calls** — no changes needed; cookies are sent automatically by the browser on same-origin requests.
 

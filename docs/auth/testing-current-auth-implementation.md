@@ -41,7 +41,17 @@ npm exec nx run @epam/chat:build
 
 ## 2. Local Runtime Setup
 
-Create or update `apps/chat-api/.env.local` or the workspace-root `.env.local` with a real OIDC provider that allows this callback URL:
+Start both the API and the SPA dev server in separate terminals:
+
+```bash
+# Terminal 1 — API (port 3005)
+npm exec nx run @epam/chat-api:serve
+
+# Terminal 2 — SPA dev server (port 4207, proxies /api → localhost:3005)
+npm exec nx run @epam/chat:serve
+```
+
+Create or update `apps/chat-api/.env.local` (or the workspace-root `.env.local`) with:
 
 ```bash
 PORT=3005
@@ -49,57 +59,50 @@ API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
 
 AUTH_SESSION_SECRET=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
-AUTH_CALLBACK_BASE_URL=http://localhost:3005
+AUTH_CALLBACK_BASE_URL=http://localhost:4207
 AUTH_PROVIDERS=[{"id":"keycloak","issuer":"https://your-idp.example.com/realms/your-realm","clientId":"your-client-id","clientSecret":"your-client-secret","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
 ```
 
-The provider must register this redirect URI:
+> **Callback URL vs. OIDC callback base**
+> `AUTH_CALLBACK_BASE_URL` is used to build the OIDC `redirect_uri` registered in the provider.
+> The final app landing page is controlled by `callbackUrl` on `/api/v1/auth/login/*`.
+> In local dev, `CORS_ORIGIN=http://localhost:4207` is also the default app return origin when `callbackUrl` is omitted.
+
+The provider must register this redirect URI in its client configuration:
 
 ```text
-http://localhost:3005/api/v1/auth/callback/keycloak
+http://localhost:4207/api/v1/auth/callback/keycloak
 ```
 
 If the provider id is not `keycloak`, replace the final path segment with the configured `id`.
 
-Start the API through Nx:
-
-```bash
-npm exec nx run @epam/chat-api:serve
-```
-
-Optional, start the current SPA separately. It does not yet perform auth bootstrap or redirect handling, but it is useful for checking that the API redirect returns to `/`:
-
-```bash
-npm exec nx run @epam/chat:serve
-```
-
 ## 3. Browser Smoke Test
 
-Use a normal browser session and DevTools.
+Use a normal browser session and DevTools. All steps go through the **SPA origin** (`localhost:4207`) — the Vite proxy forwards API calls to the backend automatically.
 
-1. Open `http://localhost:3005/api/v1/auth/providers`.
+1. Open `http://localhost:4207/api/v1/auth/providers`.
 2. Confirm the response is a JSON array with the configured provider, for example `[{ "id": "keycloak", "label": "Keycloak" }]`.
-3. Open `http://localhost:3005/api/v1/auth/login/keycloak`.
+3. Open `http://localhost:4207/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2F`.
 4. Confirm the browser is redirected to the IdP.
 5. Complete login at the IdP.
-6. Confirm the callback redirects back to `/`.
-7. In DevTools, inspect cookies for `localhost`.
-8. Confirm `__Host-chat.sess` exists and has `HttpOnly`, `Secure`, `SameSite=Lax`, and `Path=/`.
-9. Confirm `__Host-chat.tx` is cleared after callback.
+6. Confirm the callback redirects back to `http://localhost:4207/` (the SPA).
+7. In DevTools → Application → Cookies, inspect cookies for `localhost`.
+8. Confirm the session cookie exists. With secure defaults it is either `__Host-chat.sess` or chunked cookies like `__Host-chat.sess.0`, `__Host-chat.sess.1`; all have `HttpOnly`, `Secure`, `SameSite=Lax`, and `Path=/`. With local `AUTH_COOKIE_SECURE=false`, names become `chat.sess` / `chat.sess.0` and do not have `Secure`.
+9. Confirm the tx cookie (`__Host-chat.tx`, or `chat.tx` when `AUTH_COOKIE_SECURE=false`) is cleared after callback.
 10. In the browser console, run `document.cookie` and confirm it does not expose tokens.
-11. Open `http://localhost:3005/api/v1/auth/me`.
+11. Open `http://localhost:4207/api/v1/auth/me`.
 12. Confirm the response is a user profile containing `sub`, `providerId`, and `claims`, with no `access_token` or `refresh_token` fields.
 
-If the browser does not retain `Secure` cookies on your local HTTP URL, repeat the smoke test through an HTTPS local URL or a development proxy that terminates TLS.
+> **Local HTTP smoke:** for `http://localhost` testing, set `AUTH_COOKIE_SECURE=false` in `apps/chat-api/.env.local`. Production-like HTTPS testing should keep the secure defaults.
 
 ## 4. Protected Endpoint Smoke
 
 The global `SessionGuard` protects non-public API routes.
 
-In a fresh browser profile or after deleting `__Host-chat.sess`, open:
+In a fresh browser profile or after deleting `__Host-chat.sess` / `chat.sess` and any numbered chunks, open:
 
 ```text
-http://localhost:3005/api/themes
+http://localhost:4207/api/themes
 ```
 
 Expected result: `401 Unauthorized`.
@@ -107,7 +110,7 @@ Expected result: `401 Unauthorized`.
 After completing the login flow, open the same URL again:
 
 ```text
-http://localhost:3005/api/themes
+http://localhost:4207/api/themes
 ```
 
 Expected auth result: the request passes the auth guard. The final HTTP status may still be `200`, `404`, `502`, or `503` depending on `THEMES_CONFIG_URL` and the external themes service, but it should no longer be `401`.
@@ -132,7 +135,7 @@ Expected: `400`.
 GET /api/v1/auth/me
 ```
 
-Expected without `__Host-chat.sess`: `401`.
+Expected without the session cookie/chunks: `401`.
 
 Tamper with the session cookie value in DevTools, then call:
 
@@ -152,7 +155,4 @@ Expected: `400` with `Issuer mismatch`. Use the real provider id and a real in-f
 
 ## 6. Current Known Gaps
 
-- `POST /api/v1/auth/logout` is not implemented yet; do not treat logout smoke as a required pass for the current backend state.
-- The React app does not yet call `/api/v1/auth/me`, send `credentials: 'include'`, show a login page, or render a user menu.
-- CSRF protection is planned but not currently enforced.
 - The Swagger setup still needs final cookie-auth documentation cleanup.

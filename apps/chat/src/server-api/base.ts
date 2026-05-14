@@ -1,7 +1,27 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
+  AUTH_ME = '/api/v1/auth/me',
+  AUTH_PROVIDERS = '/api/v1/auth/providers',
+  AUTH_LOGOUT = '/api/v1/auth/logout',
 }
+
+export class UnauthorizedError extends Error {
+  readonly status = 401 as const;
+  constructor(public readonly url: string) {
+    super(`Unauthorized: ${url}`);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+type UnauthorizedListener = (url: string) => void;
+const listeners = new Set<UnauthorizedListener>();
+export const onUnauthorized = (
+  listener: UnauthorizedListener,
+): (() => void) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
 
 type RequestMethod = 'GET' | 'POST' | 'PUT';
 
@@ -67,6 +87,7 @@ const request = async <TResponse>(
   const response = await fetch(url, {
     ...restOptions,
     method,
+    credentials: 'include',
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(headers ?? {}),
@@ -75,6 +96,10 @@ const request = async <TResponse>(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      listeners.forEach((l) => l(url));
+      throw new UnauthorizedError(url);
+    }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}`,
     );
