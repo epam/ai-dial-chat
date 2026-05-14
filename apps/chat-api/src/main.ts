@@ -60,6 +60,8 @@ async function bootstrap() {
     .addTag('health', 'Health check and application status')
     .addTag('themes', 'Theme configuration and icon management')
     .addTag('auth', 'Authentication and session management')
+    .addTag('deployments', 'List and inspect available AI DIAL deployments')
+    .addTag('chat', 'Chat completion proxy to DIAL Core')
     .addCookieAuth('session')
     .build();
 

@@ -6,8 +6,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from '../auth/auth.module';
+import { ChatModule } from '../chat/chat.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
+import { DeploymentsModule } from '../deployments/deployments.module';
 import { HealthController } from '../health/health.controller';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
@@ -37,6 +39,8 @@ import { AppService } from './app.service';
       rootPath: join(__dirname, '..', '..', '..', 'dist', 'apps', 'chat'),
       exclude: ['/api{/*splat}'],
     }),
+    DeploymentsModule,
+    ChatModule,
   ],
   controllers: [AppController, ThemeController, HealthController],
   providers: [

@@ -45,3 +45,7 @@ Use these local skills directly in Claude:
 Default behavior:
 - Implementation work should follow incremental slices with per-slice verification.
 - Before merge (or on explicit review requests), run the five-axis quality review.
+
+## Local coding conventions
+
+- In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.

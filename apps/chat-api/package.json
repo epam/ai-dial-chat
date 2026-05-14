@@ -55,6 +55,14 @@
         ],
         "executor": "nx:noop"
       },
+      "test": {
+        "executor": "nx:run-commands",
+        "outputs": ["{workspaceRoot}/apps/chat-api/test-output/vitest/coverage"],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "vitest run --config apps/chat-api/vitest.config.ts"
+        }
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",
