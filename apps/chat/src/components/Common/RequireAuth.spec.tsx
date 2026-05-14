@@ -20,7 +20,7 @@ describe('RequireAuth', () => {
     mockUseAuthRedirect.mockReturnValue(undefined);
   });
 
-  it('renders null when status is loading', () => {
+  it('renders a loading spinner when status is loading', () => {
     mockUseUser.mockReturnValue({
       status: 'loading',
       user: null,
@@ -34,7 +34,7 @@ describe('RequireAuth', () => {
       </RequireAuth>,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(container.firstChild).not.toBeNull();
     expect(screen.queryByText('Protected content')).toBeNull();
   });
 

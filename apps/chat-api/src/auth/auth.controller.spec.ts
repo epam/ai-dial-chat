@@ -426,6 +426,83 @@ describe('AuthController (integration)', () => {
         .get('/api/v1/auth/callback/keycloak?state=some-state')
         .expect(400);
     });
+
+    it('returns 400 when transaction cookie is expired', async () => {
+      const state = 'valid-state';
+      const expiredTxCookie = await (async () => {
+        const inner = {
+          v: 1 as const,
+          sid: randomUUID(),
+          providerId: 'keycloak',
+          sub: '',
+          at: JSON.stringify({
+            state,
+            nonce: 'nonce',
+            codeVerifier: 'verifier',
+            providerId: 'keycloak',
+          }),
+          rt: '',
+          at_exp: Math.floor(Date.now() / 1000) - 1, // already expired
+          rt_exp: 0,
+          iat: Math.floor(Date.now() / 1000) - 700,
+          csrf: randomUUID(),
+          claims: {},
+        };
+        return makeSessionCookie(inner);
+      })();
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/auth/callback/keycloak?code=code&state=${state}`)
+        .set('Cookie', `${TX_COOKIE}=${expiredTxCookie}`)
+        .expect(400);
+    });
+
+    it('stores only allowlisted claims in session cookie', async () => {
+      const state = 'valid-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+        callbackUrl: `${APP_BASE}/conversation`,
+      });
+
+      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state });
+      MOCK_CLIENT.callback.mockResolvedValue({
+        access_token: 'at',
+        refresh_token: 'rt',
+        expires_at: 9999999999,
+        claims: () => ({
+          sub: 'user-1',
+          email: 'u@example.com',
+          name: 'Test User',
+          phone_number: '+1234567890', // should NOT be stored
+          address: { formatted: '123 St' }, // should NOT be stored
+          roles: ['admin'],
+        }),
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/callback/keycloak?code=code&state=${state}`)
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(302);
+
+      const rawCookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      const sessCookieHeader = rawCookies.find((c) =>
+        c.startsWith(COOKIE_NAME),
+      );
+      expect(sessCookieHeader).toBeDefined();
+      const cookieValue = sessCookieHeader!.split(';')[0].split('=')[1];
+      const payload = await app.get(SessionService).decrypt(cookieValue);
+
+      expect(payload.claims['email']).toBe('u@example.com');
+      expect(payload.claims['name']).toBe('Test User');
+      expect(payload.claims['roles']).toEqual(['admin']);
+      expect(payload.claims['phone_number']).toBeUndefined();
+      expect(payload.claims['address']).toBeUndefined();
+    });
   });
 
   describe('GET /api/v1/auth/me', () => {
@@ -460,6 +537,7 @@ describe('AuthController (integration)', () => {
       const sessCookie = await makeSessionCookie(sampleSession);
       const res = await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
+        .set('Origin', CALLBACK_BASE)
         .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
         .expect(302);
 
@@ -479,6 +557,7 @@ describe('AuthController (integration)', () => {
       const sessCookie = await makeSessionCookie(sampleSession);
       const res = await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
+        .set('Origin', CALLBACK_BASE)
         .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
         .expect(302);
 
@@ -491,6 +570,35 @@ describe('AuthController (integration)', () => {
     it('responds 302 gracefully with no session cookie', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
+        .set('Origin', CALLBACK_BASE)
+        .expect(302);
+
+      expect(res.headers.location).toBe('/');
+    });
+
+    it('returns 403 when Origin header is absent (CSRF logout protection)', async () => {
+      const sessCookie = await makeSessionCookie(sampleSession);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(403);
+    });
+
+    it('returns 403 when Origin is from an untrusted domain', async () => {
+      const sessCookie = await makeSessionCookie(sampleSession);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Origin', 'https://evil.example.com')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(403);
+    });
+
+    it('accepts Referer as fallback for Origin check', async () => {
+      const sessCookie = await makeSessionCookie(sampleSession);
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Referer', `${CALLBACK_BASE}/some/page`)
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
         .expect(302);
 
       expect(res.headers.location).toBe('/');
@@ -504,6 +612,7 @@ describe('AuthController (integration)', () => {
       const splitAt = 3800;
       const res = await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
+        .set('Origin', CALLBACK_BASE)
         .set('Cookie', [
           `${COOKIE_NAME}.0=${sessCookie.slice(0, splitAt)}`,
           `${COOKIE_NAME}.1=${sessCookie.slice(splitAt)}`,

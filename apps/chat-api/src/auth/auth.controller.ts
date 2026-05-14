@@ -3,6 +3,7 @@ import {
   BadRequestException,
   BadGatewayException,
   Controller,
+  ForbiddenException,
   Get,
   Logger,
   Param,
@@ -49,6 +50,26 @@ export class AuthController {
     private readonly session: SessionService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
+
+  private isOriginAllowed(origin: string): boolean {
+    const callbackBase = this.config.get('AUTH_CALLBACK_BASE_URL', {
+      infer: true,
+    });
+    const corsOrigin = this.config.get('CORS_ORIGIN', { infer: true });
+
+    const allowed = new Set<string>([new URL(callbackBase).origin]);
+    for (const candidate of (corsOrigin ?? '').split(',')) {
+      const trimmed = candidate.trim();
+      if (trimmed && trimmed !== '*') {
+        try {
+          allowed.add(new URL(trimmed).origin);
+        } catch {
+          /* skip unparseable entries */
+        }
+      }
+    }
+    return allowed.has(origin);
+  }
 
   @Get('providers')
   @Public()
@@ -174,8 +195,12 @@ export class AuthController {
     };
     try {
       const txPayload = await this.session.decrypt(txToken);
+      if (txPayload.at_exp < Math.floor(Date.now() / 1000)) {
+        throw new BadRequestException('Transaction expired');
+      }
       txData = JSON.parse(txPayload.at) as typeof txData;
-    } catch {
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException('Invalid transaction cookie');
     }
 
@@ -226,6 +251,32 @@ export class AuthController {
     const claims = tokenSet.claims();
     const now = Math.floor(Date.now() / 1000);
 
+    // Only store a defined allowlist of OIDC claims — never spread all claims,
+    // which could include sensitive IdP-specific data (phone, address, etc.).
+    const ALLOWED_CLAIM_KEYS = new Set([
+      'sub',
+      'email',
+      'email_verified',
+      'name',
+      'given_name',
+      'family_name',
+      'middle_name',
+      'nickname',
+      'preferred_username',
+      'picture',
+      'locale',
+      'zoneinfo',
+    ]);
+    const allClaims = claims as Record<string, unknown>;
+    const filteredClaims: Record<string, unknown> = {};
+    for (const key of ALLOWED_CLAIM_KEYS) {
+      if (key in allClaims) filteredClaims[key] = allClaims[key];
+    }
+    const rolesClaim = providerConfig.rolesClaim ?? 'roles';
+    if (rolesClaim in allClaims) {
+      filteredClaims[rolesClaim] = allClaims[rolesClaim];
+    }
+
     const payload: SessionPayload = {
       v: 1,
       sid: randomUUID(),
@@ -240,13 +291,7 @@ export class AuthController {
         (providerConfig.scope.includes('offline_access') ? 86400 * 30 : 3600),
       iat: now,
       csrf: randomUUID(),
-      claims: {
-        email: claims.email,
-        roles: (claims as Record<string, unknown>)[
-          providerConfig.rolesClaim ?? 'roles'
-        ],
-        ...(claims as Record<string, unknown>),
-      },
+      claims: filteredClaims,
     };
 
     const sessionToken = await this.session.encrypt(payload);
@@ -276,6 +321,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Log out and clear session cookie' })
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
+    // Protect against CSRF logout even though this route is @Public().
+    // Native HTML form POSTs always carry an Origin header the browser sets.
+    const origin = req.headers['origin'];
+    const referer = req.headers['referer'];
+    const candidate =
+      origin ?? (referer ? new URL(referer as string).origin : undefined);
+    if (!candidate || !this.isOriginAllowed(candidate)) {
+      throw new ForbiddenException('Origin check failed');
+    }
+
     const cookieName = getSessionCookieName(this.config);
     const requestCookies = req.cookies as Record<string, string> | undefined;
 

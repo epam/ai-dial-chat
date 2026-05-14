@@ -119,6 +119,6 @@ export const useAuthRedirect = () => {
         cancelled = true;
       };
     }
-    return;
+    // unauthenticated on /login — LoginPage handles its own state, nothing to do
   }, [status, pathname, search, hash, navigate]);
 };

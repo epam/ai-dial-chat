@@ -1,15 +1,27 @@
 export interface SessionPayload {
+  /** Schema version — always 1 */
   v: 1;
+  /** Unique session ID (UUID) */
   sid: string;
+  /** Registered provider ID */
   providerId: string;
+  /** OIDC subject (user identifier) */
   sub: string;
+  /** Access token (or JSON-serialised transaction payload before auth completes) */
   at: string;
+  /** Refresh token */
   rt: string;
+  /** ID token (used for RP-initiated logout) */
   it?: string;
+  /** Access-token expiry — Unix timestamp (seconds) */
   at_exp: number;
+  /** Refresh-token expiry — Unix timestamp (seconds) */
   rt_exp: number;
+  /** Cookie issue time — Unix timestamp (seconds) */
   iat: number;
+  /** CSRF token — random UUID rotated on every refresh */
   csrf: string;
+  /** Filtered OIDC claims stored for the UI (allowlist only) */
   claims: Record<string, unknown>;
 }
 

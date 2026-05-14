@@ -32,6 +32,10 @@ export class ProviderConfig {
 
   @IsOptional()
   @IsString()
+  label?: string;
+
+  @IsOptional()
+  @IsString()
   audience?: string;
 
   @IsOptional()

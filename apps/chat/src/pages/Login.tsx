@@ -11,7 +11,7 @@ const LoginPage = () => {
   const [searchParams] = useSearchParams();
   const callbackUrl =
     searchParams.get('callbackUrl') ?? `${window.location.origin}/`;
-  useUser();
+  useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
   const [providers, setProviders] = useState<ProviderInfo[] | null>(null);

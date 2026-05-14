@@ -36,7 +36,7 @@ export class ProviderRegistryService implements OnModuleInit {
       throw new Error('AUTH_PROVIDERS must be a non-empty JSON array');
     }
 
-    for (const entry of parsed) {
+    const providerConfigs = parsed.map((entry) => {
       const providerConfig = plainToInstance(ProviderConfig, entry);
       const errors = validateSync(providerConfig, {
         whitelist: true,
@@ -47,21 +47,26 @@ export class ProviderRegistryService implements OnModuleInit {
           `Invalid provider config: ${errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('; ')}`,
         );
       }
+      return providerConfig;
+    });
 
-      this.logger.log(
-        `Discovering OIDC metadata for provider: ${providerConfig.id}`,
-      );
-      const issuer = await Issuer.discover(providerConfig.issuer);
-      const client = new issuer.Client({
-        client_id: providerConfig.clientId,
-        client_secret: providerConfig.clientSecret,
-        redirect_uris: [],
-        response_types: ['code'],
-        token_endpoint_auth_method: 'client_secret_basic',
-      });
-      this.clients.set(providerConfig.id, { client, config: providerConfig });
-      this.logger.log(`Provider ${providerConfig.id} registered`);
-    }
+    await Promise.all(
+      providerConfigs.map(async (providerConfig) => {
+        this.logger.log(
+          `Discovering OIDC metadata for provider: ${providerConfig.id}`,
+        );
+        const issuer = await Issuer.discover(providerConfig.issuer);
+        const client = new issuer.Client({
+          client_id: providerConfig.clientId,
+          client_secret: providerConfig.clientSecret,
+          redirect_uris: [],
+          response_types: ['code'],
+          token_endpoint_auth_method: 'client_secret_basic',
+        });
+        this.clients.set(providerConfig.id, { client, config: providerConfig });
+        this.logger.log(`Provider ${providerConfig.id} registered`);
+      }),
+    );
   }
 
   getProvider(id: string): { client: Client; config: ProviderConfig } {
@@ -73,9 +78,11 @@ export class ProviderRegistryService implements OnModuleInit {
   }
 
   listProviders(): Array<{ id: string; label: string }> {
-    return Array.from(this.clients.keys()).map((id) => ({
-      id,
-      label: id.charAt(0).toUpperCase() + id.slice(1),
+    return Array.from(this.clients.values()).map(({ config }) => ({
+      id: config.id,
+      label:
+        config.label ??
+        (config.id.charAt(0).toUpperCase() + config.id.slice(1)),
     }));
   }
 }

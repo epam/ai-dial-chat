@@ -17,14 +17,20 @@ const isSecureCookieEnabled = (
   return secure !== false;
 };
 
+const COOKIE_NAME_DEFAULTS: Record<
+  'AUTH_SESSION_COOKIE_NAME' | 'AUTH_TRANSACTION_COOKIE_NAME',
+  string
+> = {
+  AUTH_SESSION_COOKIE_NAME: '__Host-chat.sess',
+  AUTH_TRANSACTION_COOKIE_NAME: '__Host-chat.tx',
+};
+
 const getCookieName = (
   config: ConfigService<EnvironmentVariables, true>,
   key: 'AUTH_SESSION_COOKIE_NAME' | 'AUTH_TRANSACTION_COOKIE_NAME',
 ): string => {
-  const fallback =
-    key === 'AUTH_SESSION_COOKIE_NAME' ? '__Host-chat.sess' : '__Host-chat.tx';
   const configuredName =
-    (config.get(key, { infer: true }) as string) ?? fallback;
+    config.get(key, { infer: true }) ?? COOKIE_NAME_DEFAULTS[key];
   if (isSecureCookieEnabled(config)) {
     return configuredName;
   }

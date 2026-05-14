@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { IS_PUBLIC_KEY } from '../common/decorators/public.decorator';
 import {
   getCookieOptions,
   getSessionCookieName,
@@ -27,7 +28,7 @@ export class SessionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

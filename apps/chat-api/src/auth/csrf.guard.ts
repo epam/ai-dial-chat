@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { IS_PUBLIC_KEY } from '../common/decorators/public.decorator';
 import type { SessionUser } from './session.types';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -27,7 +28,7 @@ export class CsrfGuard implements CanActivate {
     }
 
     // Public routes (login, callback, logout, health, themes) skip CSRF.
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
