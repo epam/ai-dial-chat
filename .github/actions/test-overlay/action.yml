@@ -68,7 +68,7 @@ runs:
         ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Install Playwright
       run: |
-        npm install -D @playwright/test@${{ inputs.playwright-version }} allure-playwright
+        npm install -D @playwright/test@${{ inputs.playwright-version }}
         npx playwright install --with-deps
         echo "Playwright version: $(npx playwright --version)"
       shell: bash
