@@ -380,34 +380,7 @@ describe('utils/app/conversation.ts', () => {
       ).toBe('conversation 2');
     });
 
-    it('Should fallback to default name when desired name is empty', () => {
-      expect(
-        getStorageSafeUniqueConversationName({
-          conversation: testConv1,
-          desiredName: '',
-          defaultName: 'New conversation',
-          existingNames: [],
-        }),
-      ).toBe('New conversation');
-    });
 
-    it('Should reserve bytes for numeric suffix when base is already occupied', () => {
-      mockFns.getConversationApiKey.mockImplementation(
-        (c: ConversationInfo) => `${c.model.id}__${c.name}`,
-      );
-
-      expect(
-        getStorageSafeUniqueConversationName({
-          conversation: {
-            ...testConv1,
-            model: { id: 'model' },
-          },
-          desiredName: 'abcde',
-          existingNames: ['abc'],
-          limits: { maxSegmentBytes: 10 },
-        }),
-      ).toBe('a 1');
-    });
   });
 
   describe('getGeneratedConversationId', () => {

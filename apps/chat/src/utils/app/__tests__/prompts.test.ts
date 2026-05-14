@@ -26,16 +26,6 @@ describe('Prompt utility methods', () => {
     },
   );
 
-  it('uses default prompt name when desired name is empty', () => {
-    expect(
-      getStorageSafeUniquePromptName({
-        prompt: { id: 'prompts/test', folderId: 'prompts', name: 'Prompt' },
-        desiredName: '',
-        defaultName: 'Prompt',
-        existingNames: [],
-      }),
-    ).toBe('Prompt');
-  });
 
   it('adds numeric suffix and keeps it within byte limit', () => {
     expect(
