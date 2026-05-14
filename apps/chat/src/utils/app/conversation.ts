@@ -73,6 +73,10 @@ export const fitConversationNameToStorageLimits = <
     return conversation;
   }
 
+  // Inner prepareEntityName: sanitise before counting bytes so the truncation
+  // point is calculated on the already-clean string.
+  // Outer prepareEntityName: re-sanitise after truncation to strip any trailing
+  // dots or spaces that may have been exposed by cutting mid-name.
   const fittedName = prepareEntityName(
     truncateToUtf8Bytes(
       prepareEntityName(conversation.name),

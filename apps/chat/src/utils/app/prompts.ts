@@ -86,6 +86,8 @@ export const getStorageSafeUniquePromptName = (params: {
     prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
 
   if (availableNameBytes === undefined) return baseName;
+  // baseName is already sanitised; outer prepareEntityName re-sanitises after
+  // truncation to strip trailing dots/spaces exposed by cutting mid-name.
   return prepareEntityName(truncateToUtf8Bytes(baseName, availableNameBytes));
 };
 

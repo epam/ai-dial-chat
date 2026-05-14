@@ -440,6 +440,10 @@ export const fitFolderNameToStorageLimits = <
     return folder;
   }
 
+  // Inner prepareEntityName: sanitise before counting bytes so the truncation
+  // point is calculated on the already-clean string.
+  // Outer prepareEntityName: re-sanitise after truncation to strip any trailing
+  // dots or spaces that may have been exposed by cutting mid-name.
   const fittedName = prepareEntityName(
     truncateToUtf8Bytes(prepareEntityName(folder.name), availableNameBytes),
   );
