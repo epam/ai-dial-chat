@@ -56,11 +56,11 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - `auth.providerButtonLabel`: "Sign in with {{provider}}"
   - `auth.providersError`: "Could not load identity providers. Please retry."
   - `auth.userMenuLabel`: "User menu"
-- [ ] 3.2 Run `pnpm nx lint chat` to confirm no ESLint key-format rule is violated.
+- [x] 3.2 Run `pnpm nx lint chat` to confirm no ESLint key-format rule is violated.
 
 ## 4. Slice 4 — useAuthRedirect hook and <RequireAuth> gate with routing
 
-- [ ] 4.1 Create `apps/chat/src/hooks/useAuthRedirect.ts`. JSDoc at the top explains WHY the policy is centralised here (per the design doc D3). The hook:
+- [x] 4.1 Create `apps/chat/src/hooks/useAuthRedirect.ts`. JSDoc at the top explains WHY the policy is centralised here (per the design doc D3). The hook:
   - Reads `status` from `useUser()` and the current pathname from `react-router-dom` (`useLocation`).
   - Computes a same-origin `callbackUrl` from the current browser URL (`window.location.href`, including pathname, search, and hash) before any unauthenticated redirect.
   - Loads the provider list via `get<ProviderInfo[]>(ApiEndpoints.AUTH_PROVIDERS)` once when `status === 'unauthenticated'` and the current pathname is not `/login`, using a `cancelled` flag in the effect. The `/login` route owns its own provider-list fetch.
@@ -68,31 +68,31 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - If two or more providers and status is `'unauthenticated'` and current pathname is **not** `/login`: `navigate('/login?callbackUrl=' + encodeURIComponent(callbackUrl), { replace: true })`.
   - If `status === 'authenticated'` and current pathname is `/login`: navigate to the same-origin `callbackUrl` query parameter's path/search/hash when present, otherwise `navigate('/', { replace: true })`.
   - Returns `void`.
-- [ ] 4.2 Create `apps/chat/src/components/Common/RequireAuth.tsx`. It is a functional component with prop `children: ReactNode` that:
+- [x] 4.2 Create `apps/chat/src/components/Common/RequireAuth.tsx`. It is a functional component with prop `children: ReactNode` that:
   - Calls `useUser()` and `useAuthRedirect()`.
   - Returns `null` when `status === 'loading'` or `status === 'unauthenticated'`.
   - Returns `<>{children}</>` only when `status === 'authenticated'`.
-- [ ] 4.3 Update `apps/chat/src/main.tsx` to add a `<Routes>` block inside `<ThemeProvider>`:
+- [x] 4.3 Update `apps/chat/src/main.tsx` to add a `<Routes>` block inside `<ThemeProvider>`:
   - `<Route path="/login" element={<LoginPage />} />` (lazy import added in slice 5; for now use a temporary placeholder component or skip this route until slice 5).
   - `<Route path="*" element={<RequireAuth><App /></RequireAuth>} />`.
   Wrap the routes in `<Suspense fallback={null}>` consistent with the existing lazy-loading pattern.
-- [ ] 4.4 Add a `ProviderInfo` type to `libs/chat-shared/src/auth.types.ts`: `export interface ProviderInfo { id: string; label: string }`. Re-export it from `libs/chat-shared/src/index.ts` if such a barrel exists; otherwise leave the named export at the file level.
-- [ ] 4.5 Add `apps/chat/src/hooks/useAuthRedirect.spec.ts`. Cover:
+- [x] 4.4 Add a `ProviderInfo` type to `libs/chat-shared/src/auth.types.ts`: `export interface ProviderInfo { id: string; label: string }`. Re-export it from `libs/chat-shared/src/index.ts` if such a barrel exists; otherwise leave the named export at the file level.
+- [x] 4.5 Add `apps/chat/src/hooks/useAuthRedirect.spec.ts`. Cover:
   - 4.5.a Mocked `window.location.assign` is called once with the correct login URL and encoded `callbackUrl` when one provider, `status='unauthenticated'`, and pathname is not `/login`.
   - 4.5.b `navigate('/login?callbackUrl=...', { replace: true })` is called when ≥ 2 providers and `status='unauthenticated'` and the pathname is `/conversation`.
   - 4.5.c No navigation happens when `status='loading'`.
   - 4.5.d `navigate('<callback-path>', { replace: true })` is called when `status='authenticated'`, pathname is `/login`, and a same-origin `callbackUrl` query parameter exists; otherwise `navigate('/', { replace: true })`.
   - 4.5.e No provider-list fetch or unauthenticated redirect happens on `/login`; `LoginPage` owns provider loading there.
   - 4.5.f No redirect loop: re-rendering after the assign/navigate does not trigger a second call.
-- [ ] 4.6 Add `apps/chat/src/components/Common/RequireAuth.spec.tsx`. Cover:
+- [x] 4.6 Add `apps/chat/src/components/Common/RequireAuth.spec.tsx`. Cover:
   - 4.6.a Renders `null` when `status='loading'`.
   - 4.6.b Renders `null` when `status='unauthenticated'` (and `useAuthRedirect` is invoked — assert via a spy on its module export, or by asserting the side-effect from 4.5.a).
   - 4.6.c Renders children (resolved by role/text) when `status='authenticated'`.
-- [ ] 4.7 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 4.7 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
 
 ## 5. Slice 5 — LoginPage route
 
-- [ ] 5.1 Create `apps/chat/src/pages/Login.tsx` as a functional component named `LoginPage`. It:
+- [x] 5.1 Create `apps/chat/src/pages/Login.tsx` as a functional component named `LoginPage`. It:
   - Calls `useUser()` and `useAuthRedirect()` so that an already-authenticated user is bounced back to `/`.
   - Loads providers via `get<ProviderInfo[]>(ApiEndpoints.AUTH_PROVIDERS)` once on mount inside `useEffect` with a `cancelled` flag.
   - Reads `callbackUrl` from the route query string via React Router. If absent, defaults to `window.location.origin + '/'`.
@@ -100,43 +100,43 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - On error: renders `t('auth.providersError')` and logs the error via `console.error`.
   - On success: renders an `<h1>` with `t('auth.loginTitle')`, a paragraph with `t('auth.loginDescription')`, and one `<a>` per provider whose `href` is `'/api/v1/auth/login/' + encodeURIComponent(id) + '?callbackUrl=' + encodeURIComponent(callbackUrl)` and whose accessible name is `t('auth.providerButtonLabel', { provider: label })`. Anchor tags MUST NOT be React Router `<Link>`.
   - Layout uses Tailwind utility classes only (no inline styles).
-- [ ] 5.2 In `apps/chat/src/main.tsx`, swap the slice-4 placeholder for a lazy-loaded import: `const LoginPage = React.lazy(() => import('../pages/Login'))`. The `<Suspense fallback={null}>` from slice 4.3 covers it.
-- [ ] 5.3 Add `apps/chat/src/pages/Login.spec.tsx`. Cover:
+- [x] 5.2 In `apps/chat/src/main.tsx`, swap the slice-4 placeholder for a lazy-loaded import: `const LoginPage = React.lazy(() => import('../pages/Login'))`. The `<Suspense fallback={null}>` from slice 4.3 covers it.
+- [x] 5.3 Add `apps/chat/src/pages/Login.spec.tsx`. Cover:
   - 5.3.a Loading state shows the `auth.loading` text (resolved by `getByText` against the translated string).
   - 5.3.b Successful providers fetch renders one anchor per provider with the correct `href`, encoded `callbackUrl`, and accessible name (resolved by `getByRole('link', { name })`).
   - 5.3.c Failed providers fetch renders the `auth.providersError` text and logs an error.
   - 5.3.d Anchors are real `<a>` elements (assert `anchor.tagName === 'A'`) — guards against the regression "someone replaced with `<Link>`".
   - 5.3.e Direct visits to `/login` without `callbackUrl` use `window.location.origin + '/'` as the default callback URL.
-- [ ] 5.4 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 5.4 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
 
 ## 6. Slice 6 — UserMenu widget in Header
 
-- [ ] 6.1 Create `apps/chat/src/components/Header/UserMenu.tsx`. Wrap with `React.memo` and export as a named export plus default of the same name. The component:
+- [x] 6.1 Create `apps/chat/src/components/Header/UserMenu.tsx`. Wrap with `React.memo` and export as a named export plus default of the same name. The component:
   - Calls `useUser()`.
   - Returns `null` when `status !== 'authenticated'`.
   - Otherwise renders a `<button>` (accessible name: `t('auth.signedInAs', { email })`) that toggles a dropdown panel.
   - Dropdown contains an inline `<form method="POST" action="/api/v1/auth/logout">` with a submit `<button>` whose label is `t('auth.signOut')`.
   - Icon for the trigger button uses `@tabler/icons-react` (e.g. `IconUserCircle`).
   - All layout via Tailwind utilities; no inline styles. Use `clsx` for any conditional classes.
-- [ ] 6.2 Update `apps/chat/src/components/Header/Header.tsx` to render `<UserMenu />` on the right side of the existing flex container. Adjust the `<header>` Tailwind classes minimally to accommodate the new child without regressing the existing centred `<Logo />` alignment.
-- [ ] 6.3 Add `apps/chat/src/components/Header/UserMenu.spec.tsx`. Cover:
+- [x] 6.2 Update `apps/chat/src/components/Header/Header.tsx` to render `<UserMenu />` on the right side of the existing flex container. Adjust the `<header>` Tailwind classes minimally to accommodate the new child without regressing the existing centred `<Logo />` alignment.
+- [x] 6.3 Add `apps/chat/src/components/Header/UserMenu.spec.tsx`. Cover:
   - 6.3.a Returns `null` when `status='loading'`.
   - 6.3.b Returns `null` when `status='unauthenticated'`.
   - 6.3.c When authenticated with `claims.email = 'u@x.io'`, the trigger button is resolvable by `getByRole('button', { name: /u@x\.io/ })`.
   - 6.3.d Clicking the trigger reveals the sign-out form (`getByRole('form')` or a role-equivalent query) whose `method` attribute is `'post'` and `action` attribute is `'/api/v1/auth/logout'`.
   - 6.3.e The submit button is resolvable by `getByRole('button', { name: /sign out/i })`.
   - 6.3.f No assertion uses `data-testid`.
-- [ ] 6.4 Update `apps/chat/src/components/Header/Header.spec.tsx` minimally: add a single test verifying the `<UserMenu />` mount point exists when `<UserProvider>` is mocked with an authenticated user. Existing logo assertions stay intact.
-- [ ] 6.5 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 6.4 Update `apps/chat/src/components/Header/Header.spec.tsx` minimally: add a single test verifying the `<UserMenu />` mount point exists when `<UserProvider>` is mocked with an authenticated user. Existing logo assertions stay intact.
+- [x] 6.5 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
 
 ## 7. Final cross-slice verification
 
-- [ ] 7.1 Run `pnpm nx test chat` and confirm green.
-- [ ] 7.2 Run `pnpm nx lint chat` and confirm green.
-- [ ] 7.3 Run `pnpm nx build chat` to confirm the bundle builds (validates the new lazy chunk for `LoginPage`).
-- [ ] 7.4 Run `pnpm nx affected --target=lint --base=origin/development` from the workspace root to catch any cross-project regressions in `libs/chat-shared` (the only shared lib touched, via the new `ProviderInfo` type).
-- [ ] 7.5 Run `pnpm nx affected --target=test --base=origin/development` from the workspace root.
-- [ ] 7.6 Open `apps/chat-api/AGENTS.md` and confirm that no rule in §1–§13 is violated by this change (sanity check — this change touches `apps/chat` only, but `libs/chat-shared` is shared with the API).
+- [x] 7.1 Run `pnpm nx test chat` and confirm green.
+- [x] 7.2 Run `pnpm nx lint chat` and confirm green.
+- [x] 7.3 Run `pnpm nx build chat` to confirm the bundle builds (validates the new lazy chunk for `LoginPage`).
+- [x] 7.4 Run `pnpm nx affected --target=lint --base=origin/development` from the workspace root to catch any cross-project regressions in `libs/chat-shared` (the only shared lib touched, via the new `ProviderInfo` type).
+- [x] 7.5 Run `pnpm nx affected --target=test --base=origin/development` from the workspace root.
+- [x] 7.6 Open `apps/chat-api/AGENTS.md` and confirm that no rule in §1–§13 is violated by this change (sanity check — this change touches `apps/chat` only, but `libs/chat-shared` is shared with the API).
 
 ## 8. Out-of-scope notes (record only, no implementation here)
 

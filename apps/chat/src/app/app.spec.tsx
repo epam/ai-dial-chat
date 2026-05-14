@@ -2,10 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ThemeContext from '../context/ThemeContext';
+import * as UserContextModule from '../context/UserContext';
 import { App } from './app';
 
-// Mock modules
 vi.mock('../context/ThemeContext');
+vi.mock('../context/UserContext');
 vi.mock('../components/ConversationView/ConversationView', () => ({
   default: ({ messages }: { messages: Array<{ content: string }> }) => (
     <div data-testid="conversation-view">
@@ -51,6 +52,7 @@ vi.mock('react-i18next', () => ({
 
 describe('App', () => {
   const mockUseTheme = vi.mocked(ThemeContext.useTheme);
+  const mockUseUser = vi.mocked(UserContextModule.useUser);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -60,6 +62,12 @@ describe('App', () => {
       themes: [],
       setTheme: vi.fn(),
       isLoading: false,
+    });
+    mockUseUser.mockReturnValue({
+      status: 'unauthenticated',
+      user: null,
+      refresh: vi.fn(),
+      reset: vi.fn(),
     });
   });
 

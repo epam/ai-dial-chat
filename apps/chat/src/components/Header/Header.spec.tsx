@@ -1,14 +1,22 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as ThemeContext from '../../context/ThemeContext';
+import * as UserContextModule from '../../context/UserContext';
 import Header from './Header';
 
-// Mock the ThemeContext for Logo component
 vi.mock('../../context/ThemeContext');
 vi.mock('../../utils/icon-path');
+vi.mock('../../context/UserContext');
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, string>) =>
+      key === 'auth.signedInAs' ? `Signed in as ${params?.email}` : key,
+  }),
+}));
 
 describe('Header', () => {
   const mockUseTheme = vi.mocked(ThemeContext.useTheme);
+  const mockUseUser = vi.mocked(UserContextModule.useUser);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -18,6 +26,12 @@ describe('Header', () => {
       themes: [],
       setTheme: vi.fn(),
       isLoading: false,
+    });
+    mockUseUser.mockReturnValue({
+      status: 'unauthenticated',
+      user: null,
+      refresh: vi.fn(),
+      reset: vi.fn(),
     });
   });
 
@@ -48,5 +62,18 @@ describe('Header', () => {
   it('should match snapshot', () => {
     const { container } = render(<Header />);
     expect(container).toMatchSnapshot();
+  });
+
+  it('renders UserMenu mount point when authenticated user is present', () => {
+    mockUseUser.mockReturnValue({
+      status: 'authenticated',
+      user: { sub: 'u1', providerId: 'keycloak', claims: { email: 'u@x.io' } },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(<Header />);
+
+    expect(screen.getByRole('button', { name: /u@x\.io/ })).toBeTruthy();
   });
 });

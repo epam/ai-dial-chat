@@ -233,6 +233,7 @@ export class AuthController {
       sub: claims.sub,
       at: tokenSet.access_token ?? '',
       rt: tokenSet.refresh_token ?? '',
+      it: tokenSet.id_token,
       at_exp: tokenSet.expires_at ?? now + 3600,
       rt_exp:
         now +
@@ -318,7 +319,7 @@ export class AuthController {
         if (endSession) {
           endSessionUrl = client.endSessionUrl({
             post_logout_redirect_uri: providerConfig.postLogoutRedirectUri,
-            id_token_hint: payload.at,
+            ...(payload.it ? { id_token_hint: payload.it } : {}),
           });
         }
       }

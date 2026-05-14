@@ -5,6 +5,7 @@ export interface SessionPayload {
   sub: string;
   at: string;
   rt: string;
+  it?: string;
   at_exp: number;
   rt_exp: number;
   iat: number;
