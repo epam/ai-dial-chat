@@ -76,10 +76,10 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
         data-qa="change-path-container"
       >
-        <div className="flex h-[20px] w-full justify-between truncate whitespace-pre break-all">
+        <div className="flex w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
             tooltip={displayPublishToUrl}
-            triggerClassName="truncate whitespace-pre"
+            triggerClassName="truncate whitespace-pre flex items-center"
             contentClassName="break-all"
             dataQa="path"
           >
