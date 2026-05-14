@@ -1,6 +1,9 @@
+import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it } from 'vitest';
 
-import { DialFile } from '@/src/types/files';
+import { FeatureType } from '@/src/types/common';
+import { DialFile, FileFolderInterface } from '@/src/types/files';
 
 import { FilesActions, filesSlice } from '../files.reducers';
 
@@ -13,6 +16,16 @@ const makeFile = (partial: Partial<DialFile>): DialFile =>
     contentType: 'text/plain',
     ...partial,
   }) as DialFile;
+
+const makeFolder = (partial: Partial<FileFolderInterface>): FileFolderInterface =>
+  ({
+    id: 'files/test/folder',
+    name: 'folder',
+    folderId: 'files/test',
+    type: FeatureType.File,
+    status: UploadStatus.LOADED,
+    ...partial,
+  }) as FileFolderInterface;
 
 describe('files.reducers addSharedFiles', () => {
   it('keeps nested shared descendants under active shared roots', () => {
@@ -147,5 +160,144 @@ describe('files.reducers addSharedFiles', () => {
     expect(rootItems).toHaveLength(1);
     expect(rootItems[0].name).toBe('fresh-name.txt');
     expect(rootItems[0].contentLength).toBe(10);
+  });
+});
+
+describe('files.reducers deleteFilesSuccess', () => {
+  const parent = 'files/bucket/parent';
+  const zipRoot = `${parent}/zipRoot`;
+  const nestedFolderId = `${zipRoot}/nested`;
+  const nestedFileId = `${nestedFolderId}/doc.txt`;
+  const siblingFileId = `${parent}/sibling.txt`;
+
+  it('removes nested ZIP-like files and folders when batch fully succeeds', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: nestedFileId,
+          name: 'doc.txt',
+          folderId: nestedFolderId,
+        }),
+        makeFile({
+          id: siblingFileId,
+          name: 'sibling.txt',
+          folderId: parent,
+        }),
+      ],
+      folders: [
+        makeFolder({
+          id: zipRoot,
+          name: 'zipRoot',
+          folderId: parent,
+        }),
+        makeFolder({
+          id: nestedFolderId,
+          name: 'nested',
+          folderId: zipRoot,
+        }),
+        makeFolder({
+          id: `${parent}/otherFolder`,
+          name: 'otherFolder',
+          folderId: parent,
+        }),
+      ],
+      chosenFileIds: [nestedFileId, siblingFileId],
+      chosenEmptyFoldersIds: [nestedFolderId],
+      selectedFilesIds: [nestedFileId],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.deleteFilesSuccess({
+        deletedItems: [
+          {
+            sourceUrl: zipRoot,
+            nodeType: DialFileNodeType.FOLDER,
+          },
+        ],
+        request: {
+          files: [
+            {
+              sourceUrl: zipRoot,
+              nodeType: DialFileNodeType.FOLDER,
+            },
+          ],
+          folderUrl: parent,
+        },
+        result: {
+          success: true,
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+          results: [{ index: 0, data: nestedFileId }],
+        },
+      }),
+    );
+
+    expect(nextState.files.map((f) => f.id)).toEqual([siblingFileId]);
+    expect(nextState.folders.map((f) => f.id)).toEqual([`${parent}/otherFolder`]);
+    expect(nextState.chosenFileIds).toEqual([siblingFileId]);
+    expect(nextState.chosenEmptyFoldersIds).toEqual([]);
+    expect(nextState.selectedFilesIds).toEqual([]);
+  });
+
+  it('when batch has failures, removes only succeeded file ids and keeps subtree folders', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: nestedFileId,
+          name: 'doc.txt',
+          folderId: nestedFolderId,
+        }),
+      ],
+      folders: [
+        makeFolder({
+          id: zipRoot,
+          name: 'zipRoot',
+          folderId: parent,
+        }),
+        makeFolder({
+          id: nestedFolderId,
+          name: 'nested',
+          folderId: zipRoot,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.deleteFilesSuccess({
+        deletedItems: [
+          {
+            sourceUrl: zipRoot,
+            nodeType: DialFileNodeType.FOLDER,
+          },
+        ],
+        request: {
+          files: [
+            {
+              sourceUrl: zipRoot,
+              nodeType: DialFileNodeType.FOLDER,
+            },
+          ],
+          folderUrl: parent,
+        },
+        result: {
+          success: false,
+          total: 2,
+          succeeded: 1,
+          failed: 1,
+          results: [{ index: 0, data: nestedFileId }],
+          errors: [{ index: 1, data: `${nestedFolderId}/other.bin`, error: 'x' }],
+        },
+      }),
+    );
+
+    expect(nextState.files).toHaveLength(0);
+    expect(nextState.folders.map((f) => f.id).sort()).toEqual(
+      [nestedFolderId, zipRoot].sort(),
+    );
   });
 });
