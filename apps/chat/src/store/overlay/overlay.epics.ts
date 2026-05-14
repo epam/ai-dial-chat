@@ -3,7 +3,10 @@ import { signIn, signOut } from 'next-auth/react';
 import {
   EMPTY,
   Observable,
+  TimeoutError,
+  catchError,
   concat,
+  defer,
   distinctUntilChanged,
   filter,
   first,
@@ -19,6 +22,7 @@ import {
   takeUntil,
   tap,
   timer,
+  timeout,
 } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
@@ -114,198 +118,200 @@ import {
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
+const OVERLAY_THEME_LISTING_TIMEOUT_MS = 15_000;
+
 const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
     ? fromEvent<MessageEvent>(window, 'message').pipe(
-        filter(isPostMessageOverlayRequest),
-        map((event) => {
-          const data = event.data as OverlayRequest;
+      filter(isPostMessageOverlayRequest),
+      map((event) => {
+        const data = event.data as OverlayRequest;
 
-          return {
-            requestName: data.type.replace(`${overlayAppName}/`, ''),
-            ...data,
-          };
-        }),
-        switchMap(({ requestName, requestId, payload }) => {
-          switch (requestName) {
-            case OverlayRequests.getMessages: {
-              return of(OverlayActions.getMessages({ requestId }));
-            }
-            case OverlayRequests.getConversations: {
-              return of(OverlayActions.getConversations({ requestId }));
-            }
-            case OverlayRequests.getSelectedConversations: {
-              return of(OverlayActions.getSelectedConversations({ requestId }));
-            }
-            case OverlayRequests.createConversation: {
-              const options = payload as CreateConversationRequest;
-
-              return of(
-                OverlayActions.createConversation({
-                  requestId,
-                  parentPath: options.parentPath,
-                  local: options.local,
-                }),
-              );
-            }
-            case OverlayRequests.createLocalConversation: {
-              return of(
-                OverlayActions.createLocalConversation({
-                  requestId,
-                }),
-              );
-            }
-            case OverlayRequests.selectConversation: {
-              const options = payload as SelectConversationRequest;
-
-              return of(
-                OverlayActions.selectConversation({
-                  requestId,
-                  id: options.id,
-                }),
-              );
-            }
-            case OverlayRequests.deleteConversation: {
-              const options = payload as DeleteConversationRequest;
-
-              return of(
-                OverlayActions.deleteConversation({
-                  requestId,
-                  id: options.id,
-                }),
-              );
-            }
-            case OverlayRequests.renameConversation: {
-              const options = payload as RenameConversationRequest;
-
-              return of(
-                OverlayActions.renameConversation({
-                  requestId,
-                  id: options.id,
-                  newName: options.newName,
-                }),
-              );
-            }
-            case OverlayRequests.createPlaybackConversation: {
-              const options = payload as CreatePlaybackConversationRequest;
-
-              return of(
-                OverlayActions.createPlaybackConversation({
-                  requestId,
-                  id: options.id,
-                }),
-              );
-            }
-            case OverlayRequests.stopSelectedPlaybackConversation: {
-              return of(
-                OverlayActions.stopSelectedPlaybackConversation({
-                  requestId,
-                }),
-              );
-            }
-            case OverlayRequests.exportConversation: {
-              const options = payload as ExportConversationRequest;
-
-              return of(
-                OverlayActions.exportConversation({
-                  requestId,
-                  id: options.id,
-                }),
-              );
-            }
-            case OverlayRequests.importConversation: {
-              const options = payload as ImportConversationRequest;
-
-              return of(
-                OverlayActions.importConversation({
-                  requestId,
-                  importConversation: options.importConversation,
-                }),
-              );
-            }
-            case OverlayRequests.setOverlayOptions: {
-              const options = payload as ChatOverlayOptions;
-
-              return of(
-                OverlayActions.setOverlayOptions({
-                  ...options,
-                  requestId,
-                }),
-              );
-            }
-            case OverlayRequests.sendMessage: {
-              const { content } = payload as SendMessageRequest;
-
-              return of(OverlayActions.sendMessage({ content, requestId }));
-            }
-            case OverlayRequests.deleteMessage: {
-              const { index } = payload as DeleteMessageRequest;
-
-              return of(OverlayActions.deleteMessage({ index, requestId }));
-            }
-            case OverlayRequests.updateMessage: {
-              const { index, updatedMessageFields } =
-                payload as UpdateMessageRequest;
-
-              return of(
-                OverlayActions.updateMessage({
-                  index,
-                  requestId,
-                  updatedMessageFields,
-                }),
-              );
-            }
-            case OverlayRequests.setInputContent: {
-              const { content } = payload as SetInputContentRequest;
-              const hostDomain = OverlaySelectors.selectHostDomain(
-                state$.value,
-              );
-
-              return concat(
-                of(
-                  OverlayActions.sendPMResponse({
-                    type: OverlayRequests.setInputContent,
-                    requestParams: {
-                      requestId,
-                      hostDomain,
-                    },
-                  }),
-                ),
-                of(ChatActions.setInputContent(content)),
-              );
-            }
-            case OverlayRequests.setSystemPrompt: {
-              const { systemPrompt } = payload as SetSystemPromptRequest;
-
-              const hostDomain = OverlaySelectors.selectHostDomain(
-                state$.value,
-              );
-
-              return concat(
-                of(
-                  OverlayActions.sendPMResponse({
-                    type: OverlayRequests.setSystemPrompt,
-                    requestParams: {
-                      requestId,
-                      hostDomain,
-                    },
-                  }),
-                ),
-                of(
-                  OverlayActions.setSystemPrompt({
-                    systemPrompt,
-                    requestId,
-                  }),
-                ),
-              );
-            }
-            default: {
-              console.warn(`[Overlay] ${requestName} event not supported.`);
-              return EMPTY;
-            }
+        return {
+          requestName: data.type.replace(`${overlayAppName}/`, ''),
+          ...data,
+        };
+      }),
+      switchMap(({ requestName, requestId, payload }) => {
+        switch (requestName) {
+          case OverlayRequests.getMessages: {
+            return of(OverlayActions.getMessages({ requestId }));
           }
-        }),
-      )
+          case OverlayRequests.getConversations: {
+            return of(OverlayActions.getConversations({ requestId }));
+          }
+          case OverlayRequests.getSelectedConversations: {
+            return of(OverlayActions.getSelectedConversations({ requestId }));
+          }
+          case OverlayRequests.createConversation: {
+            const options = payload as CreateConversationRequest;
+
+            return of(
+              OverlayActions.createConversation({
+                requestId,
+                parentPath: options.parentPath,
+                local: options.local,
+              }),
+            );
+          }
+          case OverlayRequests.createLocalConversation: {
+            return of(
+              OverlayActions.createLocalConversation({
+                requestId,
+              }),
+            );
+          }
+          case OverlayRequests.selectConversation: {
+            const options = payload as SelectConversationRequest;
+
+            return of(
+              OverlayActions.selectConversation({
+                requestId,
+                id: options.id,
+              }),
+            );
+          }
+          case OverlayRequests.deleteConversation: {
+            const options = payload as DeleteConversationRequest;
+
+            return of(
+              OverlayActions.deleteConversation({
+                requestId,
+                id: options.id,
+              }),
+            );
+          }
+          case OverlayRequests.renameConversation: {
+            const options = payload as RenameConversationRequest;
+
+            return of(
+              OverlayActions.renameConversation({
+                requestId,
+                id: options.id,
+                newName: options.newName,
+              }),
+            );
+          }
+          case OverlayRequests.createPlaybackConversation: {
+            const options = payload as CreatePlaybackConversationRequest;
+
+            return of(
+              OverlayActions.createPlaybackConversation({
+                requestId,
+                id: options.id,
+              }),
+            );
+          }
+          case OverlayRequests.stopSelectedPlaybackConversation: {
+            return of(
+              OverlayActions.stopSelectedPlaybackConversation({
+                requestId,
+              }),
+            );
+          }
+          case OverlayRequests.exportConversation: {
+            const options = payload as ExportConversationRequest;
+
+            return of(
+              OverlayActions.exportConversation({
+                requestId,
+                id: options.id,
+              }),
+            );
+          }
+          case OverlayRequests.importConversation: {
+            const options = payload as ImportConversationRequest;
+
+            return of(
+              OverlayActions.importConversation({
+                requestId,
+                importConversation: options.importConversation,
+              }),
+            );
+          }
+          case OverlayRequests.setOverlayOptions: {
+            const options = payload as ChatOverlayOptions;
+
+            return of(
+              OverlayActions.setOverlayOptions({
+                ...options,
+                requestId,
+              }),
+            );
+          }
+          case OverlayRequests.sendMessage: {
+            const { content } = payload as SendMessageRequest;
+
+            return of(OverlayActions.sendMessage({ content, requestId }));
+          }
+          case OverlayRequests.deleteMessage: {
+            const { index } = payload as DeleteMessageRequest;
+
+            return of(OverlayActions.deleteMessage({ index, requestId }));
+          }
+          case OverlayRequests.updateMessage: {
+            const { index, updatedMessageFields } =
+              payload as UpdateMessageRequest;
+
+            return of(
+              OverlayActions.updateMessage({
+                index,
+                requestId,
+                updatedMessageFields,
+              }),
+            );
+          }
+          case OverlayRequests.setInputContent: {
+            const { content } = payload as SetInputContentRequest;
+            const hostDomain = OverlaySelectors.selectHostDomain(
+              state$.value,
+            );
+
+            return concat(
+              of(
+                OverlayActions.sendPMResponse({
+                  type: OverlayRequests.setInputContent,
+                  requestParams: {
+                    requestId,
+                    hostDomain,
+                  },
+                }),
+              ),
+              of(ChatActions.setInputContent(content)),
+            );
+          }
+          case OverlayRequests.setSystemPrompt: {
+            const { systemPrompt } = payload as SetSystemPromptRequest;
+
+            const hostDomain = OverlaySelectors.selectHostDomain(
+              state$.value,
+            );
+
+            return concat(
+              of(
+                OverlayActions.sendPMResponse({
+                  type: OverlayRequests.setSystemPrompt,
+                  requestParams: {
+                    requestId,
+                    hostDomain,
+                  },
+                }),
+              ),
+              of(
+                OverlayActions.setSystemPrompt({
+                  systemPrompt,
+                  requestId,
+                }),
+              ),
+            );
+          }
+          default: {
+            console.warn(`[Overlay] ${requestName} event not supported.`);
+            return EMPTY;
+          }
+        }
+      }),
+    )
     : EMPTY;
 
 const getMessagesEpic: AppEpic = (action$, state$) =>
@@ -984,11 +990,11 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
       return concat(
         foldersPaths
           ? of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: foldersPaths,
-                featureType: FeatureType.Chat,
-              }),
-            )
+            UIActions.setOpenedFoldersIds({
+              openedFolderIds: foldersPaths,
+              featureType: FeatureType.Chat,
+            }),
+          )
           : EMPTY,
         of(
           ConversationsActions.selectConversations({
@@ -1205,6 +1211,35 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       if (theme && isOptionChanged('theme')) {
         if (availableThemes.some(({ id }) => id === theme)) {
           actions.push(of(UIActions.setTheme(theme)));
+        } else if (!availableThemes.length) {
+          actions.push(
+            defer(() =>
+              state$.pipe(
+                map((s) => UISelectors.selectAvailableThemes(s)),
+                filter((themes) => themes.length > 0),
+                first(),
+                timeout({ first: OVERLAY_THEME_LISTING_TIMEOUT_MS }),
+                catchError((err) => {
+                  if (err instanceof TimeoutError) {
+                    console.warn(
+                      `[Overlay](Theme) Theme listing did not load within ${OVERLAY_THEME_LISTING_TIMEOUT_MS}ms: ${theme}.\nTheme isn't set.`,
+                    );
+                    return EMPTY;
+                  }
+                  throw err;
+                }),
+                mergeMap((themes) => {
+                  if (themes.some(({ id }) => id === theme)) {
+                    return of(UIActions.setTheme(theme));
+                  }
+                  console.warn(
+                    `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
+                  );
+                  return EMPTY;
+                }),
+              ),
+            ),
+          );
         } else {
           console.warn(
             `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,

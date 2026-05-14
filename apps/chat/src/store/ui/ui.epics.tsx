@@ -47,12 +47,12 @@ const initEpic: AppEpic = (action$, state$) =>
 
       return forkJoin({
         showChatbar: DataService.getShowChatbar(
-          enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
-            !isTabletScreenOrMobile(),
+          enabledFeatures.has(Feature.ShowConversationsSectionByDefault) && (
+            !isTabletScreenOrMobile() || process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT === 'true'),
         ),
         showPromptbar: DataService.getShowPromptbar(
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
-            !isTabletScreenOrMobile(),
+          !isTabletScreenOrMobile(),
         ),
         showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(
           enabledFeatures.has(Feature.Marketplace) && !isTabletScreenOrMobile(),
