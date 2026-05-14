@@ -379,8 +379,6 @@ describe('utils/app/conversation.ts', () => {
         }),
       ).toBe('conversation 2');
     });
-
-
   });
 
   describe('getGeneratedConversationId', () => {

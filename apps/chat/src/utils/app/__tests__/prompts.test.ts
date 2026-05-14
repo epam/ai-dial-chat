@@ -26,7 +26,6 @@ describe('Prompt utility methods', () => {
     },
   );
 
-
   it('adds numeric suffix and keeps it within byte limit', () => {
     expect(
       getStorageSafeUniquePromptName({
