@@ -41,7 +41,7 @@
 
   /* dark */
   .dark input::selection {
-    background: #264f78;
+    background: #1d63a9;
     color: #fff;
   }
 }
