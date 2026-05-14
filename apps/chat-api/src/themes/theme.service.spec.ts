@@ -1,9 +1,9 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

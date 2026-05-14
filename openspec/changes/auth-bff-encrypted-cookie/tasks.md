@@ -124,10 +124,26 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Verification
 
-- [ ] Run `npm exec nx run @epam/chat-api:test`
-- [ ] Run `npm exec nx run @epam/chat-api:lint`
-- [ ] Run `npm exec nx run @epam/chat-api:build` (Slice 1 changes `main.ts` bootstrap — versioning + cookie-parser — so a build check is warranted)
-- [ ] Manual smoke: start API, complete Keycloak login in browser, verify `__Host-chat.sess` cookie is `HttpOnly`/`Secure`/`SameSite=Lax` in DevTools, verify `document.cookie` does not expose any token, verify `GET /api/v1/auth/me` returns the profile
+- [x] Run `npm exec nx run @epam/chat-api:test`
+- [x] Run `npm exec nx run @epam/chat-api:lint`
+- [x] Run `npm exec nx run @epam/chat-api:build` (Slice 1 changes `main.ts` bootstrap — versioning + cookie-parser — so a build check is warranted)
+### Incidental fixes uncovered by Slice 1 manual smoke
+
+- [x] Fix `ServeStaticModule.exclude` pattern in `apps/chat-api/src/app/app.module.ts`
+  - Pre-existing bug: `exclude: ['/api*']` is invalid under `path-to-regexp` v8 (pulled in by Express 5). Every request that triggers a route-excluded check (including the auth callback's redirect to `/`) crashed with `PathError [TypeError]: Missing parameter name at index 5: /api*`.
+  - Replaced with named-wildcard syntax: `exclude: ['/api{/*splat}']`.
+  - Latent until Slice 1 because the SPA static-serve path was rarely exercised before auth introduced the `/api/v1/auth/callback → /` redirect.
+
+### Manual smoke
+
+- [ ] Manual smoke against a local Keycloak (Docker), full checklist:
+  1. Happy path: `GET /api/v1/auth/login/keycloak` → IdP login → callback with Keycloak extras (`iss`, `session_state`) succeeds with 302 (regression guard for the DTO `forbidNonWhitelisted` fix).
+  2. Cookie attributes in DevTools: `__Host-chat.sess` has `HttpOnly` + `Secure` + `SameSite=Lax` + `Path=/`; `__Host-chat.tx` is deleted on callback.
+  3. `document.cookie` in browser console does NOT contain any token.
+  4. `GET /api/v1/auth/me` returns the user profile (no tokens in the body).
+  5. Error branch: `?error=access_denied&error_description=...` → 400 with `error_description` surfaced in the response body.
+  6. RFC 9207 issuer mismatch: `?iss=https://evil.example.com` → 400 "Issuer mismatch".
+  7. Robustness: missing `code` → 400; no session cookie → 401; tampered cookie → 401; unknown `:providerId` → 404; path-traversal `:providerId` → 400.
 
 ---
 
@@ -256,6 +272,10 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Tighten `scriptSrc` to `'self'` only (remove `'unsafe-inline'`)
   - Verify no inline scripts are used in the frontend before applying
 - [ ] Add `X-Frame-Options: DENY` (already set by helmet default; verify not overridden)
+
+### Already shipped in Slice 1 (scope shift — record only, no work)
+
+- [x] **RFC 9207 issuer check on callback** — pulled forward from this slice to Slice 1 when the callback DTO was extended to accept `iss`/`session_state`. The same handler block that validates `state` also enforces `iss === providerConfig.issuer` when `iss` is present. See `apps/chat-api/src/auth/auth.controller.ts` (`callback` method) and the test `returns 400 on issuer mismatch (RFC 9207)` in `auth.controller.spec.ts`.
 
 ### Tests — Slice 5
 

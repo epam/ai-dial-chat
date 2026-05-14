@@ -35,7 +35,7 @@ import { AppService } from './app.service';
     ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'dist', 'apps', 'chat'),
-      exclude: ['/api*'],
+      exclude: ['/api{/*splat}'],
     }),
   ],
   controllers: [AppController, ThemeController, HealthController],

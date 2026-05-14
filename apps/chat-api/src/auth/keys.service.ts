@@ -19,10 +19,7 @@ export class KeysService implements OnModuleInit {
       infer: true,
     });
     if (prevHex) {
-      this._previousKey = this.parseHexKey(
-        prevHex,
-        'AUTH_SESSION_PREV_SECRET',
-      );
+      this._previousKey = this.parseHexKey(prevHex, 'AUTH_SESSION_PREV_SECRET');
     }
   }
 
@@ -42,7 +39,9 @@ export class KeysService implements OnModuleInit {
     }
     const bytes = Buffer.from(hex, 'hex');
     if (bytes.length !== 32) {
-      throw new Error(`${varName} decoded to ${bytes.length} bytes, expected 32`);
+      throw new Error(
+        `${varName} decoded to ${bytes.length} bytes, expected 32`,
+      );
     }
     return new Uint8Array(bytes);
   }

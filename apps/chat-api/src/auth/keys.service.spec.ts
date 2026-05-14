@@ -1,5 +1,5 @@
-import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { KeysService } from './keys.service';
 

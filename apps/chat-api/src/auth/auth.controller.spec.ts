@@ -1,19 +1,25 @@
 import { randomUUID } from 'crypto';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CompactEncrypt } from 'jose';
+import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
-// supertest is CJS; use require to avoid vite ESM interop issues
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const request = require('supertest') as (app: Parameters<typeof import('supertest')>[0]) => import('supertest').SuperTest<import('supertest').Test>;
+import { CompactEncrypt } from 'jose';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthController } from './auth.controller';
+import { KeysService } from './keys.service';
 import { ProviderRegistryService } from './provider-registry.service';
 import { SessionGuard } from './session.guard';
 import { SessionService } from './session.service';
-import { KeysService } from './keys.service';
 import type { SessionPayload } from './session.types';
+
+// supertest is CJS; use require to avoid vite ESM interop issues
+const request = require('supertest') as (
+  app: Parameters<typeof import('supertest')>[0],
+) => import('supertest').SuperTest<import('supertest').Test>;
 
 const ACTIVE_HEX = 'a'.repeat(64);
 const ACTIVE_KEY = new Uint8Array(Buffer.from(ACTIVE_HEX, 'hex'));
@@ -22,7 +28,9 @@ const TX_COOKIE = '__Host-chat.tx';
 const CALLBACK_BASE = 'http://localhost:3005';
 
 const MOCK_CLIENT = {
-  authorizationUrl: vi.fn().mockReturnValue('https://keycloak.example.com/auth?state=s&nonce=n'),
+  authorizationUrl: vi
+    .fn()
+    .mockReturnValue('https://keycloak.example.com/auth?state=s&nonce=n'),
   callbackParams: vi.fn(),
   callback: vi.fn(),
 };
@@ -46,7 +54,9 @@ async function buildApp(): Promise<INestApplication> {
   );
 
   const registryMock: Partial<ProviderRegistryService> = {
-    listProviders: vi.fn().mockReturnValue([{ id: 'keycloak', label: 'Keycloak' }]),
+    listProviders: vi
+      .fn()
+      .mockReturnValue([{ id: 'keycloak', label: 'Keycloak' }]),
     getProvider: vi.fn().mockImplementation((id: string) => {
       if (id !== 'keycloak') {
         const { NotFoundException } = require('@nestjs/common');
@@ -56,6 +66,7 @@ async function buildApp(): Promise<INestApplication> {
         client: MOCK_CLIENT,
         config: {
           id: 'keycloak',
+          issuer: 'https://kc.example.com/realms/chat',
           scope: 'openid email profile',
           rolesClaim: 'roles',
           postLogoutRedirectUri: 'https://app.example.com',
@@ -88,7 +99,11 @@ async function buildApp(): Promise<INestApplication> {
   const app = moduleFixture.createNestApplication();
   app.use(cookieParser());
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
   app.enableVersioning({ type: VersioningType.URI });
   app.setGlobalPrefix('api');
@@ -226,11 +241,75 @@ describe('AuthController (integration)', () => {
         codeVerifier: 'verifier',
         providerId: 'keycloak',
       });
-      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state: 'wrong-state' });
+      MOCK_CLIENT.callbackParams.mockReturnValue({
+        code: 'code',
+        state: 'wrong-state',
+      });
 
       await request(app.getHttpServer())
         .get('/api/v1/auth/callback/keycloak?code=code&state=wrong-state')
         .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(400);
+    });
+
+    it('accepts Keycloak-style extra query params (iss, session_state)', async () => {
+      const state = 'valid-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+      });
+      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state });
+      MOCK_CLIENT.callback.mockResolvedValue({
+        access_token: 'at',
+        refresh_token: 'rt',
+        expires_at: 9999999999,
+        claims: () => ({ sub: 'user-1', email: 'u@example.com' }),
+      });
+
+      const issEncoded = encodeURIComponent(
+        'https://kc.example.com/realms/chat',
+      );
+      const res = await request(app.getHttpServer())
+        .get(
+          `/api/v1/auth/callback/keycloak?code=code&state=${state}&iss=${issEncoded}&session_state=abc-123`,
+        )
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(302);
+
+      expect(res.headers.location).toBe('/');
+    });
+
+    it('returns 400 with descriptive message on IdP error parameter', async () => {
+      const res = await request(app.getHttpServer())
+        .get(
+          '/api/v1/auth/callback/keycloak?error=access_denied&error_description=User%20cancelled',
+        )
+        .expect(400);
+      expect(JSON.stringify(res.body)).toContain('User cancelled');
+    });
+
+    it('returns 400 on issuer mismatch (RFC 9207)', async () => {
+      const state = 'valid-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+      });
+
+      await request(app.getHttpServer())
+        .get(
+          `/api/v1/auth/callback/keycloak?code=code&state=${state}&iss=https%3A%2F%2Fevil.example.com`,
+        )
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(400);
+    });
+
+    it('returns 400 when code is missing', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/callback/keycloak?state=some-state')
         .expect(400);
     });
   });

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   BadRequestException,
   BadGatewayException,
@@ -18,11 +19,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { generators } from 'openid-client';
 import type { Request, Response } from 'express';
-import { randomUUID } from 'crypto';
-import type { EnvironmentVariables } from '../config/environment.config';
+import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
+import type { EnvironmentVariables } from '../config/environment.config';
 import { AuthCallbackQueryDto } from './dto/auth-callback.query.dto';
 import { ProviderIdParamDto } from './dto/provider-id-param.dto';
 import { ProviderRegistryService } from './provider-registry.service';
@@ -91,7 +91,12 @@ export class AuthController {
       code_challenge_method: 'S256',
     });
 
-    const txPayload = { state, nonce, codeVerifier, providerId: params.providerId };
+    const txPayload = {
+      state,
+      nonce,
+      codeVerifier,
+      providerId: params.providerId,
+    };
     const txToken = await this.session.encrypt({
       v: 1,
       sid: randomUUID(),
@@ -115,7 +120,10 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'OIDC authorization callback' })
   @ApiResponse({ status: 302, description: 'Redirect to app after login' })
-  @ApiResponse({ status: 400, description: 'State mismatch or missing tx cookie' })
+  @ApiResponse({
+    status: 400,
+    description: 'State mismatch or missing tx cookie',
+  })
   @ApiResponse({ status: 502, description: 'Token exchange failed' })
   async callback(
     @Param() params: ProviderIdParamDto,
@@ -123,6 +131,21 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
+    if (query.error) {
+      this.logger.warn(
+        `IdP returned error for provider=${params.providerId}: ${query.error} - ${query.error_description ?? 'no description'}`,
+      );
+      throw new BadRequestException(
+        `Authentication failed: ${query.error_description ?? query.error}`,
+      );
+    }
+
+    if (!query.code || !query.state) {
+      throw new BadRequestException(
+        'Missing required callback parameters (code, state)',
+      );
+    }
+
     const txToken: string | undefined = (
       req.cookies as Record<string, string> | undefined
     )?.[TX_COOKIE];
@@ -130,7 +153,12 @@ export class AuthController {
       throw new BadRequestException('Missing transaction cookie');
     }
 
-    let txData: { state: string; nonce: string; codeVerifier: string; providerId: string };
+    let txData: {
+      state: string;
+      nonce: string;
+      codeVerifier: string;
+      providerId: string;
+    };
     try {
       const txPayload = await this.session.decrypt(txToken);
       txData = JSON.parse(txPayload.at) as typeof txData;
@@ -149,6 +177,15 @@ export class AuthController {
     const { client, config: providerConfig } = this.registry.getProvider(
       params.providerId,
     );
+
+    // RFC 9207: if the IdP advertises iss in the callback, it MUST match the
+    // configured issuer for this provider. Defends against IdP mix-up attacks.
+    if (query.iss && query.iss !== providerConfig.issuer) {
+      this.logger.warn(
+        `Issuer mismatch on callback: expected ${providerConfig.issuer}, got ${query.iss}`,
+      );
+      throw new BadRequestException('Issuer mismatch');
+    }
 
     const callbackBase = this.config.get('AUTH_CALLBACK_BASE_URL', {
       infer: true,
@@ -179,18 +216,24 @@ export class AuthController {
       at: tokenSet.access_token ?? '',
       rt: tokenSet.refresh_token ?? '',
       at_exp: tokenSet.expires_at ?? now + 3600,
-      rt_exp: now + (providerConfig.scope.includes('offline_access') ? 86400 * 30 : 3600),
+      rt_exp:
+        now +
+        (providerConfig.scope.includes('offline_access') ? 86400 * 30 : 3600),
       iat: now,
       csrf: randomUUID(),
       claims: {
         email: claims.email,
-        roles: (claims as Record<string, unknown>)[providerConfig.rolesClaim ?? 'roles'],
+        roles: (claims as Record<string, unknown>)[
+          providerConfig.rolesClaim ?? 'roles'
+        ],
         ...(claims as Record<string, unknown>),
       },
     };
 
     const sessionToken = await this.session.encrypt(payload);
-    const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', { infer: true }) as string;
+    const cookieName = this.config.get('AUTH_SESSION_COOKIE_NAME', {
+      infer: true,
+    }) as string;
 
     if (Buffer.byteLength(sessionToken) > 3800) {
       this.logger.warn('Session cookie exceeds 3800 bytes; storing rt-only');

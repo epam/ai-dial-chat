@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CompactEncrypt, compactDecrypt } from 'jose';
 import type { Request } from 'express';
+import { CompactEncrypt, compactDecrypt } from 'jose';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { KeysService } from './keys.service';
 import type { SessionPayload } from './session.types';
@@ -29,7 +29,9 @@ export class SessionService {
     for (const key of keysToTry) {
       try {
         const { plaintext } = await compactDecrypt(token, key);
-        return JSON.parse(new TextDecoder().decode(plaintext)) as SessionPayload;
+        return JSON.parse(
+          new TextDecoder().decode(plaintext),
+        ) as SessionPayload;
       } catch {
         // try next key
       }

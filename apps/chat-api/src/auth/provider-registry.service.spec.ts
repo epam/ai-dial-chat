@@ -1,6 +1,6 @@
-import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Test } from '@nestjs/testing';
 import { Issuer } from 'openid-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProviderRegistryService } from './provider-registry.service';
@@ -30,14 +30,10 @@ describe('ProviderRegistryService', () => {
   let discoverSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    discoverSpy = vi
-      .spyOn(Issuer, 'discover')
-      .mockResolvedValue({
-        Client: class {
-          constructor() {}
-        },
-        metadata: {},
-      } as unknown as Issuer<never>);
+    discoverSpy = vi.spyOn(Issuer, 'discover').mockResolvedValue({
+      Client: class {},
+      metadata: {},
+    } as unknown as Issuer<never>);
   });
 
   afterEach(() => {

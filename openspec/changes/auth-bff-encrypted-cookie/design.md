@@ -160,15 +160,29 @@ Starts the OIDC flow. Generates `state`, `nonce`, `code_verifier` (PKCE), stores
 
 Handles the IdP redirect after user authentication.
 
-**Query params:** `code`, `state` (from IdP).
+**Query params (`AuthCallbackQueryDto`):**
+
+| Param | When sent | Validation |
+|---|---|---|
+| `code` | Success branch (OIDC standard) | `@IsOptional()` at DTO level — required in controller on the success branch |
+| `state` | Success branch (OIDC standard) | `@IsOptional()` at DTO level — required and matched against `tx` cookie |
+| `iss` | Optional; sent by Keycloak 18+, Auth0, Okta (RFC 9207) | `@IsOptional()` — if present, MUST equal `providerConfig.issuer` (mix-up defense) |
+| `session_state` | Keycloak-specific session monitoring | `@IsOptional()` — accepted, not used |
+| `error` | Error branch (e.g. user cancels) | `@IsOptional()` — short-circuits handler with 400 |
+| `error_description` | Error branch | `@IsOptional()` — surfaced in the 400 response body |
+
+> All real-world IdPs send query parameters beyond the OIDC minimum. The global `ValidationPipe` is configured with `forbidNonWhitelisted: true`, so every legitimately expected parameter MUST be declared on the DTO; otherwise the handler rejects the entire callback with `400 "property X should not exist"` and login becomes impossible.
 
 **Steps:**
-1. Decrypt `tx` cookie; verify `state` matches; extract `code_verifier`.
-2. Exchange `code` for tokens via `openid-client` (PKCE).
-3. Validate `id_token`; extract `sub` and claims.
-4. Build `SessionPayload`; encrypt to JWE; set session cookie.
-5. Delete `tx` cookie (set `Max-Age=0`).
-6. Redirect browser to `/` (or a pre-validated `returnTo` parameter).
+1. If `error` is present → log a warning and reject with `BadRequestException(error_description ?? error)`.
+2. If `code` or `state` is missing → reject with `BadRequestException('Missing required callback parameters (code, state)')`.
+3. Read and decrypt the `tx` cookie; verify `state` matches and `providerId` matches `:providerId`; extract `code_verifier`.
+4. If `iss` is present and ≠ `providerConfig.issuer` → reject with `BadRequestException('Issuer mismatch')` (RFC 9207 mix-up defense).
+5. Exchange `code` for tokens via `openid-client` (PKCE).
+6. Validate `id_token`; extract `sub` and claims.
+7. Build `SessionPayload`; encrypt to JWE; set session cookie.
+8. Delete `tx` cookie (set `Max-Age=0`).
+9. Redirect browser to `/` (or a pre-validated `returnTo` parameter).
 
 **Session cookie attributes:**
 
@@ -181,7 +195,12 @@ Handles the IdP redirect after user authentication.
 | `Path` | `/` |
 | `Max-Age` | `rt_exp - now` |
 
-**Errors:** `400` if state mismatch or missing `tx` cookie; `502` if token exchange fails.
+**Errors:**
+
+| Status | Reason |
+|---|---|
+| `400` | Missing `tx` cookie / invalid `tx` cookie / state mismatch / provider mismatch / issuer mismatch (RFC 9207) / IdP returned `error` / missing `code` or `state` |
+| `502` | Token exchange against the IdP failed |
 
 ---
 
@@ -334,6 +353,7 @@ Standard cookies are capped at ~4 KB. Entra ID access tokens can exceed this.
 | Key compromise | Key rotation with previous key fallback; no forced logout during rotation |
 | Session fixation | New `sid` generated on every `callback` |
 | Open redirect | `returnTo` validated against strict allow-list (same origin only) |
+| IdP mix-up attack (multi-provider) | RFC 9207 `iss` query param verified against `providerConfig.issuer` on callback (shipped in Slice 1 alongside the callback DTO fix) |
 | Token in URL | Tokens are never returned in URLs; the callback receives only an authorization `code` query parameter |
 | Refresh replay | RT rotation; `sid` + `jti` in payload; `invalid_grant` → 401 |
 | Cookie overflow (Entra) | Size check with fallback to refresh-only storage |

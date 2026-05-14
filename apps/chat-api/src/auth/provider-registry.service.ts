@@ -14,7 +14,10 @@ import { ProviderConfig } from './provider.types';
 @Injectable()
 export class ProviderRegistryService implements OnModuleInit {
   private readonly logger = new Logger(ProviderRegistryService.name);
-  private readonly clients = new Map<string, { client: Client; config: ProviderConfig }>();
+  private readonly clients = new Map<
+    string,
+    { client: Client; config: ProviderConfig }
+  >();
 
   constructor(
     private readonly config: ConfigService<EnvironmentVariables, true>,
@@ -45,7 +48,9 @@ export class ProviderRegistryService implements OnModuleInit {
         );
       }
 
-      this.logger.log(`Discovering OIDC metadata for provider: ${providerConfig.id}`);
+      this.logger.log(
+        `Discovering OIDC metadata for provider: ${providerConfig.id}`,
+      );
       const issuer = await Issuer.discover(providerConfig.issuer);
       const client = new issuer.Client({
         client_id: providerConfig.clientId,
