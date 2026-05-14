@@ -28,7 +28,7 @@ export default [
       'playwright/no-conditional-expect': 'off',
       'playwright/no-skipped-test': 'off',
       'playwright/expect-expect': 'off',
-      'playwright/missing-playwright-await' : 'off',
+      'playwright/missing-playwright-await': 'off',
       'playwright/consistent-spacing-between-blocks': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
     },
