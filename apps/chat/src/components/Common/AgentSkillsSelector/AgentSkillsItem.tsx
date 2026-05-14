@@ -87,7 +87,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
     : isMyEntity({ id: promptId })
       ? promptId.split('/').length > 3
         ? constructPath(PINNED_PROMPTS_SECTION_NAME, folderPath)
-        : constructPath(RECENT_PROMPTS_SECTION_NAME, folderPath)
+        : RECENT_PROMPTS_SECTION_NAME
       : constructPath(SHARED_WITH_ME_SECTION_NAME, folderPath);
   const displayName = prompt?.name ?? promptId;
   const isPromptLoaded = prompt?.status === UploadStatus.LOADED;
@@ -119,7 +119,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
             <span className="truncate text-sm font-medium text-primary">
               {displayName}
             </span>
-            {folderPath && (
+            {resultFolderPath && (
               <span className="truncate text-xs text-secondary">
                 {resultFolderPath}
               </span>
