@@ -399,17 +399,6 @@ export const addGeneratedFolderId = (
   return folder as FolderInterface;
 };
 
-// ---------------------------------------------------------------------------
-// Folder storage byte-limit utilities
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the number of UTF-8 bytes available for a folder name given the
- * configured storage limits.
- *
- * For a folder the full storage key is `constructPath(folderId, name)` and the
- * last path segment is simply `name` (no API-key wrapper).
- */
 export const getAvailableFolderNameBytes = (
   folderId: string,
   limits: EntityStorageLimits = getResourceStorageLimits(),
@@ -420,11 +409,6 @@ export const getAvailableFolderNameBytes = (
     limits,
   );
 
-/**
- * Truncates `folder.name` so that the resulting folder ID fits within the
- * configured storage byte limits.  Returns the original folder object when no
- * truncation is required.
- */
 export const fitFolderNameToStorageLimits = <
   T extends PartialBy<FolderInterface, 'id'>,
 >(
@@ -440,10 +424,8 @@ export const fitFolderNameToStorageLimits = <
     return folder;
   }
 
-  // Inner prepareEntityName: sanitise before counting bytes so the truncation
-  // point is calculated on the already-clean string.
-  // Outer prepareEntityName: re-sanitise after truncation to strip any trailing
-  // dots or spaces that may have been exposed by cutting mid-name.
+  // Inner prepareEntityName sanitises before byte-truncation;
+  // outer re-sanitises after to strip trailing dots/spaces exposed by the cut.
   const fittedName = prepareEntityName(
     truncateToUtf8Bytes(prepareEntityName(folder.name), availableNameBytes),
   );
@@ -451,13 +433,6 @@ export const fitFolderNameToStorageLimits = <
   return fittedName === folder.name ? folder : { ...folder, name: fittedName };
 };
 
-/**
- * Returns a storage-safe, unique folder name by:
- * 1. Sanitising the desired name via `prepareEntityName`.
- * 2. Truncating the base so that `name + suffix` fits within byte limits.
- * 3. Appending numeric suffixes (` 1`, ` 2`, …) until no collision with
- *    siblings at the same level.
- */
 export const getStorageSafeUniqueFolderName = (params: {
   folderId: string;
   desiredName?: string;

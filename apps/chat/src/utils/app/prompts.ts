@@ -35,11 +35,6 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   return prompt as Prompt;
 };
 
-/**
- * Returns available UTF-8 bytes for the prompt name given the configured limits.
- * For prompts the last path segment is simply `name` (or `name__version`), with
- * no model-id prefix unlike conversations.
- */
 export const getAvailablePromptNameBytes = (
   prompt: PartialBy<PromptInfo, 'id'>,
   limits: EntityStorageLimits = getResourceStorageLimits(),
@@ -50,13 +45,6 @@ export const getAvailablePromptNameBytes = (
     limits,
   );
 
-/**
- * Returns a storage-safe, unique prompt name by:
- * 1. Sanitising the desired name via `prepareEntityName`.
- * 2. Truncating the base so that `name + suffix` fits within byte limits.
- * 3. Appending numeric suffixes (` 1`, ` 2`, …) until no collision with
- *    `existingNames` at the same folder level.
- */
 export const getStorageSafeUniquePromptName = (params: {
   prompt: PartialBy<PromptInfo, 'id'>;
   desiredName?: string;
@@ -86,8 +74,7 @@ export const getStorageSafeUniquePromptName = (params: {
     prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
 
   if (availableNameBytes === undefined) return baseName;
-  // baseName is already sanitised; outer prepareEntityName re-sanitises after
-  // truncation to strip trailing dots/spaces exposed by cutting mid-name.
+  // Re-sanitise after truncation to strip trailing dots/spaces exposed by the cut.
   return prepareEntityName(truncateToUtf8Bytes(baseName, availableNameBytes));
 };
 

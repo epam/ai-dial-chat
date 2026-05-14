@@ -1962,7 +1962,7 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
       return concat(
         ...selectedConversations.map((conv) => {
           const { messages } = conv;
-          let newMessages: typeof messages;
+          let newMessages = [];
 
           if (
             payload.index < messages.length - 1 &&
