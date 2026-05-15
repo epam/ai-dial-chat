@@ -1,123 +1,149 @@
-# Specs: Add Navigation and Routing
+# Spec: add-navigation-routing
 
-## State Ownership
+## ADDED Requirements
 
-Navigation state (current active route) is owned entirely by **React Router** via `BrowserRouter` (already mounted in `main.tsx`). No custom context, hook, or component state is introduced for routing.
+### Requirement: Client-side routing resolves two top-level routes
 
-Component-level state in `ConversationRoute`:
+The application SHALL declare two routes using React Router v6 `<Routes>` in `apps/chat/src/app/app.tsx`. The `/` route MUST render `<ConversationRoute>` (the existing conversation + welcome UI). The `/catalog` route MUST render a lazy-loaded `<CatalogView>` stub. Any unregistered path MUST NOT match these routes without an explicit fallback route.
 
-| State          | Owner             | Type            | Persistence              |
-|----------------|-------------------|-----------------|--------------------------|
-| `messages`     | `ConversationRoute` | `Message[]`   | `localStorage` (key: `chat-messages`) |
-| `isAssistantTyping` | `ConversationRoute` | `boolean` | React state, ephemeral   |
+#### Scenario: Root path renders the conversation shell
 
-No new context providers are required. `Navigation` reads router state via `useLocation()` — it is a consumer of React Router context, not an owner.
+- **WHEN** the browser navigates to `/`
+- **THEN** `<ConversationRoute>` is mounted and the welcome screen or conversation view is visible
 
-## Route Configuration
+#### Scenario: Catalog path renders the catalog stub
 
-| Path       | Component            | Lazy-loaded | Fallback       |
-|------------|----------------------|-------------|----------------|
-| `/`        | `ConversationRoute`  | No (inline) | n/a            |
-| `/catalog` | `CatalogView`        | Yes         | Loading spinner |
+- **WHEN** the browser navigates to `/catalog`
+- **THEN** the lazy-loaded `<CatalogView>` is mounted and a "coming soon" placeholder is visible
 
-`ConversationRoute` is an inline named component defined in `apps/chat/src/app/app.tsx`. It is not lazy-loaded because it contains the primary app flow and its code is already bundled with `app.tsx`.
+#### Scenario: CatalogView is lazy-loaded
 
-`CatalogView` is lazy-loaded via:
-```typescript
-const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
-```
+- **WHEN** the JS bundle is evaluated
+- **THEN** `CatalogView` code is NOT included in the initial bundle; it is loaded on demand via `React.lazy`
 
-No route guards, redirects, or 404 handling are specified in this change.
+---
 
-## Component Contracts
+### Requirement: Navigation sidebar reflects the active route via aria-current
 
-### `NavigationItem` (config type)
+The `<Navigation>` component SHALL read `useLocation().pathname` from React Router and mark exactly one `DialGhostIconButton` with `aria-current="page"` — the one whose configured `path` matches the current pathname. No other button SHALL carry `aria-current` at the same time.
 
-```typescript
-// apps/chat/src/constants/navigation.ts
-interface NavigationItem {
-  path: string;                                       // absolute path, e.g. '/' or '/catalog'
-  icon: FC<{ size?: number; stroke?: number }>;       // Tabler icon component
-  labelKey: NavigationI18nKeys;                       // i18n key for aria-label
-}
-```
+#### Scenario: Home button is active on /
 
-### `Navigation` component
+- **WHEN** the current pathname is `/`
+- **THEN** the button with `aria-label` equal to the value of `navigation.home` has `aria-current="page"` and the catalog button does NOT have `aria-current`
 
-```typescript
-// apps/chat/src/components/Navigation/Navigation.tsx
-// Props: none
-// Reads: useLocation().pathname, useNavigate(), useTranslation()
-// Renders: <nav> with NAVIGATION_CONFIG mapped to DialGhostIconButton
-// Exported: export default memo(Navigation)
-```
+#### Scenario: Catalog button is active on /catalog
 
-Active route detection rules:
-- Path `'/'` — exact match: `pathname === '/'`
-- All other paths — prefix match: `pathname.startsWith(path)`
+- **WHEN** the current pathname is `/catalog`
+- **THEN** the button with `aria-label` equal to the value of `navigation.catalog` has `aria-current="page"` and the home button does NOT have `aria-current`
 
-### `CatalogView` component
+#### Scenario: Home button exact-matches / only
 
-```typescript
-// apps/chat/src/components/CatalogView/CatalogView.tsx
-// Props: none
-// Renders: <section> placeholder with i18n coming-soon text
-// Exported: export default memo(CatalogView)
-```
+- **WHEN** the current pathname is `/catalog`
+- **THEN** the home button does NOT have `aria-current="page"` (prefix match on `/` MUST NOT fire for sub-paths)
 
-## i18n Keys
+---
 
-All new user-visible strings are accessed via enum members — never raw string literals.
+### Requirement: Navigation buttons perform client-side navigation
 
-### `NavigationI18nKeys` (new enum)
+Each `DialGhostIconButton` in the top section of `<Navigation>` MUST call `useNavigate()(path)` when clicked. Navigation MUST be client-side (no full page reload).
 
-| Member      | Key                    | English value      | Usage                          |
-|-------------|------------------------|--------------------|--------------------------------|
-| `AriaLabel` | `navigation.ariaLabel` | "Main navigation"  | `<nav aria-label>`             |
-| `Home`      | `navigation.home`      | "Home"             | Home button `aria-label`       |
-| `Catalog`   | `navigation.catalog`   | "Catalog"          | Catalog button `aria-label`    |
+#### Scenario: Clicking Home navigates to /
 
-### `CatalogI18nKeys` (new enum)
+- **WHEN** the user clicks the Home button while on `/catalog`
+- **THEN** `useNavigate` is called with `'/'` and the `/` route is rendered
 
-| Member       | Key                  | English value            | Usage                       |
-|--------------|----------------------|--------------------------|-----------------------------|
-| `AriaLabel`  | `catalog.ariaLabel`  | "Catalog"                | `<section aria-label>`      |
-| `ComingSoon` | `catalog.comingSoon` | "Catalog coming soon"    | Placeholder paragraph text  |
+#### Scenario: Clicking Catalog navigates to /catalog
 
-Both enums are defined in `apps/chat/src/constants/translation-keys.ts`. The existing `ChatI18nKeys` enum is unchanged.
+- **WHEN** the user clicks the Catalog button while on `/`
+- **THEN** `useNavigate` is called with `'/catalog'` and the `/catalog` route is rendered
 
-## Accessibility
+---
 
-### ARIA
+### Requirement: Navigation is driven by NAVIGATION_CONFIG
 
-| Element                        | Attribute          | Value                              |
-|--------------------------------|--------------------|------------------------------------|
-| `<nav>`                        | `aria-label`       | `t(NavigationI18nKeys.AriaLabel)`  |
-| `DialGhostIconButton` (active) | `aria-current`     | `"page"`                           |
-| `DialGhostIconButton` (inactive)| `aria-current`    | absent (not rendered)              |
-| `DialGhostIconButton`          | `aria-label`       | `t(labelKey)` — icon-only button   |
-| `<main>`                       | `role`             | `"main"` (existing, unchanged)     |
+The `<Navigation>` component SHALL NOT hard-code route paths or icon components. It MUST iterate over the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` to render buttons. Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new button in the sidebar with no changes to `Navigation.tsx`.
 
-### Keyboard Navigation
+#### Scenario: Config drives rendered buttons
 
-- `Tab` moves focus between nav buttons in DOM order (top-to-bottom).
-- `Enter` / `Space` on a focused `DialGhostIconButton` triggers `onClick` → `navigate(path)`.
-- No custom keyboard handling is required; the button's native behaviour covers it.
+- **WHEN** `NAVIGATION_CONFIG` contains two entries (home, catalog)
+- **THEN** exactly two icon buttons are rendered in the top `<div>` of `<nav>`
 
-### Focus Management
+---
 
-No programmatic focus movement on route change. The browser retains focus on the clicked nav button after navigation; route content becomes available below.
+### Requirement: Navigation sidebar exposes accessible labels and tooltip
 
-## Memoisation
+Every `DialGhostIconButton` in the navigation top section MUST carry an `aria-label` derived from the `labelKey` field of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
 
-| Component / value    | Mechanism           | Reason                                             |
-|----------------------|---------------------|----------------------------------------------------|
-| `Navigation`         | `React.memo`        | Already memoised; re-renders only when router context changes |
-| `CatalogView`        | `React.memo`        | Stub with no props; memo prevents any parent re-render cost |
-| `ConversationRoute`  | None                | Route root — mounts/unmounts on navigation; memo provides no benefit |
-| `handleSend`         | `useCallback([t])`  | Existing callback; stable across renders           |
-| `NAVIGATION_CONFIG`  | Module-level const  | Defined outside component; no memoisation needed   |
+#### Scenario: aria-label and tooltip match the i18n value
 
-## No Backend Changes
+- **WHEN** `<Navigation>` renders with the default config
+- **THEN** the Home button has `aria-label="Home"` and `tooltip="Home"`, and the Catalog button has `aria-label="Catalog"` and `tooltip="Catalog"` (based on `en.json` values)
 
-This change is entirely frontend. No new NestJS endpoints, no rate limiting, no cache keys.
+---
+
+### Requirement: UserMenu renders for authenticated users only
+
+The `<UserMenu>` component SHALL render `null` when `useUser().status` is `'loading'` or `'unauthenticated'`. When `status === 'authenticated'`, it MUST render a trigger button labelled with the i18n key `auth.signedInAs` interpolated with the user's email (from `user.claims.email`) or `user.sub` as fallback. Clicking the trigger MUST open a dropdown containing a form that performs a `POST` to `/api/v1/auth/logout` on submit.
+
+#### Scenario: Unauthenticated state renders nothing
+
+- **WHEN** `useUser()` returns `status = 'unauthenticated'`
+- **THEN** `<UserMenu>` renders `null` and no button is visible in the bottom section of `<nav>`
+
+#### Scenario: Loading state renders nothing
+
+- **WHEN** `useUser()` returns `status = 'loading'`
+- **THEN** `<UserMenu>` renders `null`
+
+#### Scenario: Authenticated state shows user button
+
+- **WHEN** `useUser()` returns `status = 'authenticated'` with `user.claims.email = 'user@example.com'`
+- **THEN** `<UserMenu>` renders a button whose accessible name contains `'user@example.com'` via the `auth.signedInAs` i18n interpolation
+
+#### Scenario: Dropdown opens on click
+
+- **WHEN** the authenticated user clicks the `<UserMenu>` trigger button
+- **THEN** a dropdown appears showing the email address and a sign-out button
+
+#### Scenario: Sign-out uses a form POST
+
+- **WHEN** the sign-out button inside the dropdown is clicked
+- **THEN** a `<form method="POST" action="/api/v1/auth/logout">` is submitted (no `fetch` call)
+
+---
+
+### Requirement: All new user-visible strings flow through react-i18next
+
+Every user-visible string introduced by this change MUST be looked up via `useTranslation().t()`. Keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced through the typed enums `NavigationI18nKeys` and `CatalogI18nKeys` in `apps/chat/src/constants/translation-keys.ts`. No hard-coded English strings are permitted in `Navigation.tsx` or `CatalogView.tsx`.
+
+#### Scenario: Navigation keys are present in en.json
+
+- **WHEN** the change is applied
+- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.home`, and `navigation.catalog`
+
+#### Scenario: Catalog keys are present in en.json
+
+- **WHEN** the change is applied
+- **THEN** `en.json` contains `catalog.ariaLabel` and `catalog.comingSoon`
+
+#### Scenario: Components use the t function
+
+- **WHEN** any string is rendered by `Navigation` or `CatalogView`
+- **THEN** that string is the result of `t(SomeI18nKeys.Member)`, never a string literal
+
+---
+
+### Requirement: Tests cover the navigation surface
+
+The change SHALL ship co-located Vitest specs covering: `Navigation.spec.tsx` and `CatalogView.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries (no `data-testid`) and describe observable behaviour.
+
+#### Scenario: Navigation active-state tests
+
+- **WHEN** the test suite for `Navigation` runs
+- **THEN** it covers at least: nav landmark aria-label, Home button render, Catalog button render, Home active on `/`, Catalog active on `/catalog`, Home not active on `/catalog`, click-to-navigate
+
+#### Scenario: CatalogView render tests
+
+- **WHEN** the test suite for `CatalogView` runs
+- **THEN** it covers at least: section landmark aria-label, coming-soon text visible

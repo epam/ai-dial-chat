@@ -1,4 +1,4 @@
-import { IconBook, IconMessage } from '@tabler/icons-react';
+import { IconBook2, IconMessage } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { NavigationI18nKeys } from './translation-keys';
 
@@ -16,7 +16,7 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
   },
   {
     path: '/catalog',
-    icon: IconBook,
+    icon: IconBook2,
     labelKey: NavigationI18nKeys.Catalog,
   },
 ];
