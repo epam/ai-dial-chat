@@ -5,9 +5,9 @@ import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RefreshService } from '../../refresh/refresh.service';
-import { SessionGuard } from '../../session/session.guard';
-import { SessionService } from '../../session/session.service';
-import type { SessionPayload } from '../../session/session.types';
+import { SessionGuard } from '../session.guard';
+import { SessionService } from '../session.service';
+import type { SessionPayload } from '../session.types';
 
 const COOKIE_NAME = '__Host-chat.sess';
 

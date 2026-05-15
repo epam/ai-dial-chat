@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { KeysService } from '../../keys/keys.service';
-import { SessionService } from '../../session/session.service';
-import type { SessionPayload } from '../../session/session.types';
+import { SessionService } from '../session.service';
+import type { SessionPayload } from '../session.types';
 
 const ACTIVE_HEX = 'a'.repeat(64);
 const PREV_HEX = 'b'.repeat(64);
