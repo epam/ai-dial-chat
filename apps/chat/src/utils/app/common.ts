@@ -537,7 +537,13 @@ export const getStorageSafeUniqueName = (params: {
   const resolvedBaseName =
     prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
 
-  for (let index = 0; index <= maxNumeration; index++) {
+  // When no desired name is given (new entity), start from 1 so the result is
+  // always "Name 1", "Name 2", ... — matching the behaviour E2E tests expect!
+  // When a desired name is provided (rename/copy), start from 0 so the name
+  // itself is tried first before appending a suffix.
+  const startIndex = desiredName !== undefined ? 0 : 1;
+
+  for (let index = startIndex; index <= maxNumeration; index++) {
     const suffix = index === 0 ? '' : ` ${index}`;
     const fittedBaseName = fitBaseName(resolvedBaseName, suffix);
     const candidate = `${fittedBaseName}${suffix}`.trim();
