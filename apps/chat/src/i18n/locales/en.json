@@ -41,5 +41,15 @@
     "tryAgain": "Try again",
     "failedToLoadTheme": "Failed to load themes. Using default theme.",
     "failedToLoadLogo": "Failed to load logo"
+  },
+  "auth": {
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {{email}}",
+    "loading": "Checking your session…",
+    "loginTitle": "Sign in to continue",
+    "loginDescription": "Choose your identity provider",
+    "providerButtonLabel": "Sign in with {{provider}}",
+    "providersError": "Could not load identity providers. Please retry.",
+    "userMenuLabel": "User menu"
   }
 }

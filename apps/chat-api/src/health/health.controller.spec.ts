@@ -1,0 +1,73 @@
+import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RefreshService } from '../auth/refresh/refresh.service';
+import { SessionGuard } from '../auth/session/session.guard';
+import { SessionService } from '../auth/session/session.service';
+import { HealthController } from './health.controller';
+
+// supertest is CJS; use require to avoid vite ESM interop issues
+const request = require('supertest') as (
+  app: Parameters<typeof import('supertest')>[0],
+) => import('supertest').SuperTest<import('supertest').Test>;
+
+describe('HealthController', () => {
+  let app: INestApplication;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      controllers: [HealthController],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('GET /health returns 200 with status ok', async () => {
+    const res = await request(app.getHttpServer()).get('/health').expect(200);
+    expect(res.body.status).toBe('ok');
+    expect(res.body.timestamp).toBeDefined();
+  });
+
+  describe('with global SessionGuard', () => {
+    let guardedApp: INestApplication;
+
+    beforeEach(async () => {
+      const moduleFixture: TestingModule = await Test.createTestingModule({
+        controllers: [HealthController],
+        providers: [
+          // decryptFromRequest always throws — any non-public route returns 401
+          {
+            provide: SessionService,
+            useValue: {
+              decryptFromRequest: vi
+                .fn()
+                .mockRejectedValue(new Error('no session')),
+              encrypt: vi.fn(),
+            },
+          },
+          { provide: RefreshService, useValue: { refresh: vi.fn() } },
+          { provide: ConfigService, useValue: { get: vi.fn() } },
+          { provide: APP_GUARD, useClass: SessionGuard },
+        ],
+      }).compile();
+
+      guardedApp = moduleFixture.createNestApplication();
+      await guardedApp.init();
+    });
+
+    afterEach(async () => {
+      await guardedApp.close();
+    });
+
+    it('GET /health is accessible without a session cookie (@Public)', async () => {
+      await request(guardedApp.getHttpServer()).get('/health').expect(200);
+    });
+  });
+});

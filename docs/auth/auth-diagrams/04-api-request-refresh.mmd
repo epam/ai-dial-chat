@@ -1,0 +1,24 @@
+%% Authenticated API request with transparent server-side refresh.
+%% Refresh token rotation: new RT replaces old; cookie is re-issued on the same response.
+
+sequenceDiagram
+    autonumber
+    participant SPA as React SPA
+    participant BFF as NestJS BFF
+    participant IDP as OIDC Provider
+    participant API as Downstream API
+
+    SPA->>BFF: GET /api/conversations (cookie)
+    BFF->>BFF: Decrypt session cookie
+    alt access_token still valid
+        BFF->>API: GET /conversations<br/>Authorization: Bearer at
+    else access_token expired, refresh_token valid
+        BFF->>IDP: POST /token (refresh_token, rotation)
+        IDP-->>BFF: new access_token + new refresh_token
+        BFF->>BFF: Re-encrypt session<br/>(Set-Cookie on response)
+        BFF->>API: GET /conversations<br/>Authorization: Bearer at'
+    else refresh_token expired
+        BFF-->>SPA: 401 (auth required)
+    end
+    API-->>BFF: 200 payload
+    BFF-->>SPA: 200 payload

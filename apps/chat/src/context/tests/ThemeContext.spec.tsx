@@ -105,6 +105,7 @@ describe('ThemeContext', () => {
 
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('dark');
+      expect(result.current.themes).toEqual(mockThemeConfig.themes);
     });
 
     await waitFor(() => {
@@ -141,12 +142,12 @@ describe('ThemeContext', () => {
 
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('dark');
+      expect(result.current.themes).toEqual(mockThemeConfig.themes);
     });
 
     // Clear previous calls
     mockApplyThemeColors.mockClear();
 
-    // Change theme
     await act(async () => {
       result.current.setTheme('light');
     });

@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-Chat 2.0 is a greenfield React/Vite SPA (`apps/chat`) with a NestJS API backend (`apps/chat-api`). The previous Chat 1.0 relied on NextAuth (now Auth.js), which was deeply tied to the Next.js SSR model. The new architecture separates frontend and backend entirely, which makes the auth choice non-trivial: every pattern that worked in a monolithic Next.js app needs explicit re-evaluation.
+Chat 2.0 is a greenfield React/Vite SPA (`apps/chat`) with a NestJS API backend (`apps/chat-api`). The previous Chat 1.0 relied on a framework-specific auth layer that was deeply tied to the Next.js SSR model. The new architecture separates frontend and backend entirely, which makes the auth choice non-trivial: every pattern that worked in a monolithic Next.js app needs explicit re-evaluation.
 
 This document does **not** start with a predetermined answer. It examines six realistic auth architectures, evaluates them against a common set of criteria, and arrives at a recommendation only after the comparison.
 
@@ -28,7 +28,7 @@ This document does **not** start with a predetermined answer. It examines six re
 | CORS | Configured (single origin) |
 | Session store | Not present |
 
-This is a clean slate. No migration cost from Chat 2.0 itself — migration cost is from team familiarity with NextAuth patterns.
+This is a clean slate. No migration cost from Chat 2.0 itself — migration cost is from team familiarity with previous auth patterns.
 
 ---
 
@@ -187,9 +187,9 @@ NestJS validates JWTs via JWKS. `passport-jwt` + `jwks-rsa`, or `jose`'s `create
 - Silent renew requires careful configuration per IdP
 - Multi-provider management is awkward in the SPA
 
-#### Migration from NextAuth
+#### Migration from Existing Auth
 
-**Easy**: Replace NextAuth hooks with `useAuth()` from `react-oidc-context`. Provider configs map directly.
+**Easy**: Replace existing auth hooks with `useAuth()` from `react-oidc-context`. Provider configs map directly.
 
 ---
 
@@ -271,13 +271,13 @@ Claims extracted from the access token or ID token on the server. NestJS guards 
 - `openid-client` v6 ESM migration needed for NestJS CJS projects
 - More implementation work
 
-#### Migration from NextAuth
+#### Migration from Existing Auth
 
-**Medium complexity**: Replicating NextAuth's BFF pattern manually in NestJS. Provider configurations and callback logic map directly.
+**Medium complexity**: Replicating the previous BFF-style pattern manually in NestJS. Provider configurations and callback logic map directly.
 
 ---
 
-### Option C: Auth.js / @auth/express
+### Option C: Express Auth Adapter
 
 #### How the flow works
 
@@ -296,11 +296,11 @@ Claims extracted from the access token or ID token on the server. NestJS guards 
 
 - **LOW** (tokens server-side)
 - **MEDIUM**: API instability — v0.12.1 with known import/dependency bugs
-- **HIGH (project risk)**: Auth.js is merging into Better Auth; future maintenance direction is unclear
+- **HIGH (project risk)**: The adapter ecosystem is moving toward Better Auth; future maintenance direction is unclear
 
 #### Pros
 
-- Familiar for teams with NextAuth experience
+- Familiar for teams with BFF auth experience
 - 100+ provider catalog
 
 #### Cons
@@ -310,9 +310,9 @@ Claims extracted from the access token or ID token on the server. NestJS guards 
 - ESM-only conflicts with NestJS CJS setups
 - No first-class NestJS support
 
-#### Migration from NextAuth
+#### Migration from Existing Auth
 
-**Easiest conceptually** — same library, same provider configs. But Next.js-specific session handling does not translate.
+**Easiest conceptually** — similar provider configs. But Next.js-specific session handling does not translate.
 
 **Verdict**: Not recommended for greenfield production.
 
@@ -371,7 +371,7 @@ Server-side session (database) + `HttpOnly` cookie reference. Access and refresh
 - v1.x — API can change
 - `toNodeHandler` inside Express subrouter has known 404 issues
 
-#### Migration from NextAuth
+#### Migration from Existing Auth
 
 **Medium**: Provider configs map well. Session model is different (database-backed vs JWT cookies).
 
@@ -487,7 +487,7 @@ Same browser-side risks as Option A. Conscious trade-off: simpler backend, token
 - NestJS stateless — scales horizontally without session affinity
 - Full provider neutrality
 - Multi-provider at scale via dynamic issuer resolver
-- Straightforward migration from NextAuth
+- Straightforward migration from the existing auth approach
 
 #### Cons
 
@@ -499,7 +499,7 @@ Same browser-side risks as Option A. Conscious trade-off: simpler backend, token
 
 ## 5. Comparison Table
 
-| Criterion | A: SPA OIDC | B: NestJS BFF | C: Auth.js Express | D: Better Auth | E: Provider SDKs | F: Hybrid |
+| Criterion | A: SPA OIDC | B: NestJS BFF | C: Express Adapter | D: Better Auth | E: Provider SDKs | F: Hybrid |
 |---|---|---|---|---|---|---|
 | **Security (token location)** | Browser (medium) | Server only (high) | Server only (high) | Server only (high) | Browser (medium) | Browser (medium) |
 | **Provider coverage** | Any OIDC | Any OIDC | 100+ built-in | OIDC + SAML 2.0 | One per SDK | Any OIDC |
@@ -521,7 +521,7 @@ Same browser-side risks as Option A. Conscious trade-off: simpler backend, token
 
 ## 6. Provider Compatibility Matrix
 
-| Provider | A: SPA OIDC | B: BFF | C: Auth.js | D: Better Auth | E: Provider SDK | F: Hybrid |
+| Provider | A: SPA OIDC | B: BFF | C: Express Adapter | D: Better Auth | E: Provider SDK | F: Hybrid |
 |---|---|---|---|---|---|---|
 | Keycloak | Full | Full | Partial (undoc'd for Express) | Full (SSO plugin) | Keycloak-only SDK | Full |
 | Auth0 | Full | Full | Full | Full | Auth0-only SDK | Full |
@@ -681,7 +681,7 @@ The `@better-auth/sso` plugin's SAML 2.0 implementation is unique among the opti
 | 4 | **iframe silent renew deprecation**: Confirm all target IdPs support refresh token grant for silent renew. Document explicit settings per provider. | HIGH |
 | 5 | **`openid-client` v6 ESM migration**: If the team later chooses Option B, assess effort for NestJS CJS → ESM migration. | MEDIUM |
 | 6 | **Multi-tenant Entra ID audience**: The `audience` claim differs by API registration. NestJS trusted issuers config needs explicit `audience` per issuer. | MEDIUM |
-| 7 | **Auth.js / Better Auth merger**: Auth.js is merging into Better Auth. Track as a future upgrade option. | LOW |
+| 7 | **Express auth adapter transition**: The adapter ecosystem is moving toward Better Auth. Track as a future upgrade option. | LOW |
 | 8 | **FAPI 2.0 PAR requirement**: If any customer requires FAPI 2.0 compliance, Option F is insufficient — a BFF migration would be needed. | LOW (for now) |
 | 9 | **DPoP sender-constrained tokens**: For high-security scenarios, consider DPoP binding. Not needed for initial release. | LOW |
 | 10 | **React tab management**: `sessionStorage` is per-tab. Consider `localStorage` with refresh token rotation or a shared worker for token management. | MEDIUM |
@@ -697,7 +697,6 @@ The `@better-auth/sso` plugin's SAML 2.0 implementation is unique among the opti
 - [oidc-client-ts](https://github.com/authts/oidc-client-ts) | [react-oidc-context](https://github.com/authts/react-oidc-context)
 - [openid-client v6 (panva)](https://github.com/panva/openid-client)
 - [jose v6 (panva)](https://github.com/panva/jose)
-- [Auth.js / @auth/express](https://authjs.dev/reference/express)
 - [Better Auth SSO Plugin](https://www.better-auth.com/docs/plugins/sso)
 - [OWASP CSRF Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 - [FAPI 2.0 — OpenID Foundation](https://fapi.openid.net/)

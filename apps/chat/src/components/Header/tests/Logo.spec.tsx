@@ -5,8 +5,8 @@ import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
 
 // Mock the modules
-vi.mock('../../context/ThemeContext');
-vi.mock('../../utils/icon-path');
+vi.mock('../../../context/ThemeContext');
+vi.mock('../../../utils/icon-path');
 
 describe('Logo', () => {
   const mockGetIconPath = vi.mocked(iconPathUtils.getIconPath);

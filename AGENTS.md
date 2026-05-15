@@ -22,18 +22,4 @@
 
 <!-- nx configuration end-->
 
-## Cross-agent feature research
-
-For broad "global feature" research (best practices, architecture alternatives, trade-offs), use `./.claude/skills/feature-research/SKILL.md` as the default workflow before implementation.
-
-Expected output:
-- Context and constraints
-- 2-4 options with trade-offs
-- Recommended approach
-- Risks and rollback notes
-- Thin-slice implementation draft with Nx verification steps
-
-## Local coding conventions
-
-- In `apps/*` React component files, name the component props type/interface `Props`.
-- In `apps/*` React component files, prefer `export default` for component exports.
+For coding conventions, skill routing, and feature research workflows, see [CLAUDE.md](./CLAUDE.md).

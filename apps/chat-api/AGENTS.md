@@ -26,10 +26,15 @@ apps/chat-api/src/
 │   └── health.controller.ts      # GET /api/health  (infrastructure — versioning exempt)
 └── <domain>/                     # one folder per domain (e.g. themes, auth)
     ├── <domain>.controller.ts    # GET /api/v1/<domain>
-    ├── <domain>.controller.spec.ts
     ├── <domain>.service.ts
-    ├── <domain>.service.spec.ts
     ├── <domain>.module.ts        # only when domain needs its own providers/imports
+    ├── <concern>/                # optional for larger domains: session, providers, csrf, etc.
+    │   ├── <concern>.service.ts
+    │   └── <concern>.guard.ts
+    ├── tests/                    # domain tests mirror the source concern structure
+    │   ├── <domain>.controller.spec.ts
+    │   └── <concern>/
+    │       └── <concern>.service.spec.ts
     └── dto/
         └── <action>.dto.ts
 ```
@@ -37,7 +42,14 @@ apps/chat-api/src/
 Rules:
 
 - One folder per domain under `src/<domain>/`. Do not co-locate cross-domain code.
-- Tests are **co-located** with the source: `theme.service.spec.ts` next to `theme.service.ts`.
+- Larger domains may group private implementation by concern under domain-local subfolders.
+  Keep the controller/module at the domain root when they are the main public entrypoints.
+- Domain tests live under `src/<domain>/tests/`, mirroring concern subfolders when needed.
+  Example: `auth/session/session.service.ts` is covered by
+  `auth/tests/session/session.service.spec.ts`.
+- When a source folder would contain more than one spec, keep those specs in a
+  local `tests/` subfolder instead of mixing multiple test files with
+  implementation files.
 - Shared types live in `libs/chat-shared` and are imported as `@epam/chat-shared`. Do not
   duplicate them in the app.
 
@@ -344,7 +356,7 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
 
 ## 11. Testing
 
-- Unit tests: `<file>.spec.ts` co-located with the source. Use `@nestjs/testing` to build
+- Unit tests: `<file>.spec.ts` under the domain `tests/` folder. Use `@nestjs/testing` to build
   a `TestingModule`. Mock providers with `.overrideProvider(X).useValue(...)`.
 - Integration / e2e tests: `supertest` against the bootstrapped app. Cover at least:
   - Happy path (200/201 with correct body)

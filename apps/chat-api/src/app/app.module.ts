@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
@@ -17,6 +18,7 @@ import { AppService } from './app.service';
 
 @Module({
   imports: [
+    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
@@ -35,7 +37,7 @@ import { AppService } from './app.service';
     ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'dist', 'apps', 'chat'),
-      exclude: ['/api*'],
+      exclude: ['/api{/*splat}'],
     }),
     DeploymentsModule,
     ChatModule,
