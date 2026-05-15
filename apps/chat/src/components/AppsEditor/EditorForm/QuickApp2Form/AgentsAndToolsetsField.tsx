@@ -14,6 +14,7 @@ import {
   getEntityDisplayName,
   isDialAiEntityModel,
 } from '@/src/utils/app/application';
+import { isApplicationId } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
@@ -33,8 +34,9 @@ import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetTypes } from '@/src/constants/quick-apps';
 
 import {
+  AgentOrToolsetSchemaKeys,
   QuickApp2Form as QuickApp2FormType,
-  getAgentOrToolsetOption,
+  getAgentOrToolsetItem,
   getAgentsAndToolsetsFormValue,
   getQuickApp2Toolsets,
 } from '@/src/components/AppsEditor/form';
@@ -127,7 +129,11 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   );
 
   const sortedAgentsAndToolsets = useMemo(() => {
-    const ids = [...(agentsAndToolsetsOptions.map(({ id }) => id) || [])];
+    const ids = [
+      ...(agentsAndToolsetsOptions.map(
+        ({ [AgentOrToolsetSchemaKeys.id]: id }) => id,
+      ) || []),
+    ];
 
     const itemsWithName = ids.map((id) => ({
       id: id,
@@ -194,12 +200,17 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
-      const processedValue = value.map((id) => ({
-        id,
-        tool:
-          agentsAndToolsetsOptions.find((option) => option.id === id)?.tool ??
-          getAgentOrToolsetOption(id),
-      }));
+      const processedValue = value.map(
+        (id) =>
+          agentsAndToolsetsOptions.find(
+            (option) => option[AgentOrToolsetSchemaKeys.id] === id,
+          ) || {
+            [AgentOrToolsetSchemaKeys.id]: id,
+            [AgentOrToolsetSchemaKeys.tool]: getAgentOrToolsetItem(id),
+            [AgentOrToolsetSchemaKeys.isDialDeploymentTool]:
+              isApplicationId(id),
+          },
+      );
       setValue('agentsAndToolsets', processedValue, {
         shouldTouch: true,
         shouldDirty: true,

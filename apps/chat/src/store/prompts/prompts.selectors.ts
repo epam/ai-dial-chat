@@ -189,6 +189,7 @@ const selectSelectedPromptId = createSelector([rootSelector], (state) => {
     selectedPromptId: state.selectedPromptId,
     isSelectedPromptApproveRequiredResource:
       state.isSelectedPromptApproveRequiredResource,
+    isSelectedPromptIsSkill: state.isSelectedPromptIsSkill,
   };
 });
 
