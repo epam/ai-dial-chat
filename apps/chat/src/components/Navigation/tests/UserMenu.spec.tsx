@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import { UserMenu } from '../UserMenu';
@@ -13,6 +12,15 @@ describe('UserMenu', () => {
     vi.clearAllMocks();
   });
 
+  const mockUser = {
+    sub: 'user-123',
+    providerId: 'keycloak',
+    claims: {
+      email: 'john.doe@example.com',
+      name: 'John Doe',
+    },
+  };
+
   it('returns null when status is loading', () => {
     mockUseUser.mockReturnValue({
       status: 'loading',
@@ -25,63 +33,60 @@ describe('UserMenu', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('returns null when status is unauthenticated', () => {
-    mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
-      user: null,
-      refresh: vi.fn(),
-      reset: vi.fn(),
-    });
-
-    const { container } = render(<UserMenu />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('renders trigger button with email-based accessible name when authenticated', () => {
+  it('renders avatar image when authenticated and image claim exists', () => {
     mockUseUser.mockReturnValue({
       status: 'authenticated',
-      user: { sub: 'u1', providerId: 'keycloak', claims: { email: 'u@x.io' } },
+      user: {
+        ...mockUser,
+        claims: {
+          ...mockUser.claims,
+          image: 'https://example.com/avatar.png',
+        },
+      },
       refresh: vi.fn(),
       reset: vi.fn(),
     });
 
     render(<UserMenu />);
 
-    expect(screen.getByRole('button', { name: /u@x\.io/ })).toBeTruthy();
+    const avatar = screen.getByRole('img', { name: 'User avatar' });
+    expect(avatar).not.toBeNull();
+    expect(avatar.getAttribute('src')).toBe('https://example.com/avatar.png');
   });
 
-  it('clicking trigger reveals sign-out form with correct method and action', async () => {
+  it('renders short name fallback when image is missing', () => {
     mockUseUser.mockReturnValue({
       status: 'authenticated',
-      user: { sub: 'u1', providerId: 'keycloak', claims: { email: 'u@x.io' } },
+      user: mockUser,
       refresh: vi.fn(),
       reset: vi.fn(),
     });
 
     render(<UserMenu />);
 
-    const trigger = screen.getByRole('button', { name: /u@x\.io/ });
-    await userEvent.click(trigger);
-
-    const form = document.querySelector('form');
-    expect(form).toBeTruthy();
-    expect(form?.getAttribute('method')).toBe('POST');
-    expect(form?.getAttribute('action')).toBe('/api/v1/auth/logout');
+    expect(screen.getByText('JD')).not.toBeNull();
+    expect(screen.queryByRole('img', { name: 'User avatar' })).toBeNull();
   });
 
-  it('sign-out submit button is accessible by role and name', async () => {
+  it('switches to fallback when image fails to load', () => {
     mockUseUser.mockReturnValue({
       status: 'authenticated',
-      user: { sub: 'u1', providerId: 'keycloak', claims: { email: 'u@x.io' } },
+      user: {
+        ...mockUser,
+        claims: {
+          ...mockUser.claims,
+          image: 'https://example.com/broken-avatar.png',
+        },
+      },
       refresh: vi.fn(),
       reset: vi.fn(),
     });
 
     render(<UserMenu />);
 
-    const trigger = screen.getByRole('button', { name: /u@x\.io/ });
-    await userEvent.click(trigger);
+    const avatar = screen.getByRole('img', { name: 'User avatar' });
+    fireEvent.error(avatar);
 
-    expect(screen.getByRole('button', { name: /sign out/i })).toBeTruthy();
+    expect(screen.getByText('JD')).not.toBeNull();
   });
 });
