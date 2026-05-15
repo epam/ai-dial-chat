@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCallbackUrl } from '../../utils/callback-url.util';
+import { resolveCallbackUrl } from './callback-url.util';
 
 const OPTIONS = {
   authCallbackBaseUrl: 'http://localhost:3005',

@@ -2,9 +2,9 @@ import { randomUUID } from 'crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProviderRegistryService } from '../../providers/provider-registry.service';
-import { RefreshService } from '../../refresh/refresh.service';
-import type { SessionPayload } from '../../session/session.types';
+import { ProviderRegistryService } from '../providers/provider-registry.service';
+import { SessionPayload } from '../session/session.types';
+import { RefreshService } from './refresh.service';
 
 function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
   const now = Math.floor(Date.now() / 1000);

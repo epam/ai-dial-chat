@@ -2,9 +2,9 @@ import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../../config/environment.config';
-import { CsrfGuard } from '../../csrf/csrf.guard';
-import type { SessionUser } from '../../session/session.types';
+import { EnvironmentVariables } from '../../config/environment.config';
+import { SessionUser } from '../session/session.types';
+import { CsrfGuard } from './csrf.guard';
 
 const APP_ORIGIN = 'https://app.example.com';
 

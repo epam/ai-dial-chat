@@ -7,7 +7,7 @@
     "start": "nx serve chat",
     "start:api": "nx serve chat-api --port=3005",
     "start:all": "nx run-many --target=serve --projects=chat,chat-api --parallel",
-    "build": "nx build web",
+    "build": "nx build chat",
     "build:api": "nx build chat-api",
     "build:all": "nx run-many --target=build --all",
     "test": "nx run-many -t test --all",

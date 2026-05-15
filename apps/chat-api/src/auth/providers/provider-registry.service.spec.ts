@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { Issuer } from 'openid-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProviderRegistryService } from '../../providers/provider-registry.service';
+import { ProviderRegistryService } from './provider-registry.service';
 
 const VALID_PROVIDER = {
   id: 'keycloak',

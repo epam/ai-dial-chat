@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
-import { KeysService } from '../../keys/keys.service';
+import { KeysService } from './keys.service';
 
 const VALID_HEX = 'a'.repeat(64);
 const VALID_HEX_2 = 'b'.repeat(64);
