@@ -230,6 +230,24 @@ export const mapApplicationPropertiesFromApi = (
     }
   }
 
+  // TODO: Remove after migrating old apps from 'name' to 'deployment_id'
+  type DeploymentField = keyof QuickApp2Config['orchestrator']['deployment'];
+  if (
+    typeof propertiesQA2?.orchestrator?.deployment?.[
+      'name' as DeploymentField
+    ] === 'string'
+  ) {
+    (result as QuickApp2Config).orchestrator.deployment.deployment_id =
+      propertiesQA2.orchestrator.deployment.deployment_id
+        ? propertiesQA2.orchestrator.deployment.deployment_id
+        : (propertiesQA2.orchestrator.deployment[
+            'name' as DeploymentField
+          ] as string);
+    delete (result as QuickApp2Config).orchestrator.deployment[
+      'name' as DeploymentField
+    ];
+  }
+
   return result;
 };
 
@@ -492,6 +510,19 @@ export const getEntityDisplayName = (
       parseVersion: true,
     }).name,
   );
+};
+
+// TODO: Remove after migrating all old toolsets with 'dial_id' to 'deployment_id'
+export const migrateMCPToolsetIdName = (
+  item: MCPToolset & { dial_id?: string },
+) => {
+  if (typeof item.dial_id === 'string') {
+    return {
+      ...omit(item, ['dial_id']),
+      deployment_id: item.deployment_id ? item.deployment_id : item.dial_id,
+    } as MCPToolset;
+  }
+  return item as MCPToolset;
 };
 
 export const getQuickAppItemNameFromConfig = (

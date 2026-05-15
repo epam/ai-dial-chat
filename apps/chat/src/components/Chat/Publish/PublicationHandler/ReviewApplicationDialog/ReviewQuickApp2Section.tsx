@@ -6,6 +6,7 @@ import {
   getQuickApp2Config,
   getQuickAppItemNameFromConfig,
   isQuickApp2,
+  migrateMCPToolsetIdName,
 } from '@/src/utils/app/application';
 import { isApplicationId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -91,7 +92,9 @@ const ReviewQuickApp2SectionView = ({
           } else if (isMcpToolset(toolset)) {
             acc.toolsets.push({
               ...toolset,
-              name: getQuickAppItemNameFromConfig(toolset),
+              name: getQuickAppItemNameFromConfig(
+                migrateMCPToolsetIdName(toolset),
+              ),
             });
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
