@@ -43,18 +43,16 @@ describe('LoginPage', () => {
       '/login?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
 
-    const keycloakLink = await screen.findByRole('link', {
-      name: 'Sign in with Keycloak',
+    const links = await screen.findAllByRole('link', {
+      name: 'auth.providerButtonLabel',
     });
-    const auth0Link = screen.getByRole('link', {
-      name: 'Sign in with Auth0',
-    });
+    const [keycloakLink, auth0Link] = links;
 
     expect(keycloakLink.tagName).toBe('A');
     expect(keycloakLink.getAttribute('href')).toBe(
       '/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
-    expect(auth0Link.getAttribute('href')).toBe(
+    expect(auth0Link?.getAttribute('href')).toBe(
       '/api/v1/auth/login/auth0?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
   });
@@ -65,7 +63,7 @@ describe('LoginPage', () => {
     renderLogin();
 
     const keycloakLink = await screen.findByRole('link', {
-      name: 'Sign in with Keycloak',
+      name: 'auth.providerButtonLabel',
     });
 
     expect(keycloakLink.getAttribute('href')).toBe(

@@ -25,6 +25,15 @@
     "send": "Send",
     "loading": "Loading..."
   },
+  "navigation": {
+    "ariaLabel": "Main navigation",
+    "home": "Home",
+    "catalog": "Catalog"
+  },
+  "catalog": {
+    "ariaLabel": "Catalog",
+    "comingSoon": "Catalog coming soon"
+  },
   "errors": {
     "generic": "Something went wrong",
     "genericMessage": "We're sorry, but something unexpected happened. Please try refreshing the page.",

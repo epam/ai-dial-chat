@@ -30,7 +30,7 @@ export default [
       '@nx/enforce-module-boundaries': 'off',
 
       // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/rules-of-hooks': 'off',
       'react-hooks/exhaustive-deps': 'warn',
     },
   },

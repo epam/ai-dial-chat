@@ -1,12 +1,12 @@
 import { ConversationInput } from '@epam/conversation-input';
-import { BubblePosition, MessageBubble } from '@epam/conversation-messages';
+import { MessageBubble } from '@epam/conversation-messages';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Message as MessageType } from '../../types';
 
 /**
  * Props for the ConversationView component
  */
-interface ConversationViewProps {
+interface Props {
   /** Array of messages to display */
   messages: MessageType[];
   /** Callback when user sends a message */
@@ -22,7 +22,7 @@ interface ConversationViewProps {
  * Handles auto-scrolling to bottom, scroll-to-bottom button visibility,
  * and typing indicator for assistant responses.
  */
-const ConversationViewComponent: FC<ConversationViewProps> = ({
+const ConversationView: FC<Props> = ({
   messages,
   onSend,
   placeholder,
@@ -130,5 +130,4 @@ const ConversationViewComponent: FC<ConversationViewProps> = ({
   );
 };
 
-export const ConversationView = memo(ConversationViewComponent);
-export default ConversationView;
+export default memo(ConversationView);

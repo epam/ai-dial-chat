@@ -53,4 +53,6 @@ Default behavior:
 ## Local coding conventions
 
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
+- In `apps/*` React component files, name the component props type/interface `Props`.
+- In `apps/*` React component files, prefer `export default` for component exports.
 - Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.

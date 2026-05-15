@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ThemeContext from '../../../context/ThemeContext';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';

@@ -6,12 +6,14 @@ import {
   useRef,
   useState,
 } from 'react';
+import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Route, Routes } from 'react-router-dom';
 import Header from '../components/Header/Header';
+import Navigation from '../components/Navigation/Navigation';
 import { Message } from '../types';
 import { getFromLocalStorage } from '../utils/local-storage';
 
-// Lazy load heavy components
 const ConversationView = lazy(
   () => import('../components/ConversationView/ConversationView'),
 );
@@ -20,16 +22,15 @@ const ConversationInput = lazy(() =>
     default: module.ConversationInput,
   })),
 );
+const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
 const MESSAGES_STORAGE_KEY = 'chat-messages';
 
-export function App() {
+const ConversationRoute: FC = () => {
   const { t } = useTranslation();
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape to clear focus from input
       if (e.key === 'Escape') {
         const activeElement = document.activeElement;
         if (activeElement instanceof HTMLElement) {
@@ -41,6 +42,7 @@ export function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const stored = getFromLocalStorage(MESSAGES_STORAGE_KEY);
@@ -70,7 +72,6 @@ export function App() {
       setMessages((prev) => [...prev, userMessage]);
       setIsAssistantTyping(true);
 
-      // Simulate a response
       setTimeout(() => {
         const assistantMessage: Message = {
           id: `msg_${Date.now()}`,
@@ -81,7 +82,6 @@ export function App() {
         setMessages((prev) => [...prev, assistantMessage]);
         setIsAssistantTyping(false);
 
-        // Focus input after message is sent for better keyboard navigation
         setTimeout(() => {
           const textarea = inputRef.current?.querySelector('textarea');
           textarea?.focus();
@@ -92,43 +92,55 @@ export function App() {
   );
 
   return (
-    <div className="flex size-full flex-col">
-      <Header />
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <Suspense
+        fallback={
+          <div className="flex size-full items-center justify-center">
+            <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+          </div>
+        }
+      >
+        {messages.length === 0 ? (
+          <div
+            className="flex h-full flex-col items-center justify-center p-8"
+            role="region"
+            aria-label="Welcome screen"
+          >
+            <ConversationInput
+              onSend={handleSend}
+              welcomeText={t('chat.welcomeText')}
+              placeholder={t('chat.placeholder')}
+            />
+          </div>
+        ) : (
+          <div ref={inputRef}>
+            <ConversationView
+              messages={messages}
+              onSend={handleSend}
+              placeholder={t('chat.placeholder')}
+              isAssistantTyping={isAssistantTyping}
+            />
+          </div>
+        )}
+      </Suspense>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <div className="flex size-full flex-row">
+      <Navigation />
       <main
         id="main-content"
-        className="flex flex-1 flex-col overflow-hidden"
         role="main"
+        className="flex min-h-0 flex-1 flex-col bg-layer-1"
       >
-        <Suspense
-          fallback={
-            <div className="flex size-full items-center justify-center">
-              <div className="text-gray-500 dark:text-gray-400">Loading...</div>
-            </div>
-          }
-        >
-          {messages.length === 0 ? (
-            <div
-              className="flex h-full flex-col items-center justify-center p-8"
-              role="region"
-              aria-label="Welcome screen"
-            >
-              <ConversationInput
-                onSend={handleSend}
-                welcomeText={t('chat.welcomeText')}
-                placeholder={t('chat.placeholder')}
-              />
-            </div>
-          ) : (
-            <div ref={inputRef}>
-              <ConversationView
-                messages={messages}
-                onSend={handleSend}
-                placeholder={t('chat.placeholder')}
-                isAssistantTyping={isAssistantTyping}
-              />
-            </div>
-          )}
-        </Suspense>
+        <Header />
+        <Routes>
+          <Route path="/" element={<ConversationRoute />} />
+          <Route path="/catalog" element={<CatalogView />} />
+        </Routes>
       </main>
     </div>
   );
