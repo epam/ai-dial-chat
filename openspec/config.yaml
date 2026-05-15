@@ -38,7 +38,7 @@ context: |
   - Backend dev:  `pnpm start:api` (localhost:3005)
   - Both:         `pnpm start:all`
   - Affected build / lint / typecheck / test: `pnpm nx affected --target=<t> --base=origin/development`
-  - Single-project (preferred for slice verification, see AGENTS.md per project):
+  - Single-project (preferred for slice verification, see CLAUDE.md per project):
     - `pnpm nx test chat-api`
     - `pnpm nx lint chat-api`
     - `pnpm nx build chat-api`
@@ -88,6 +88,9 @@ context: |
   - Enforced by @nx/enforce-module-boundaries in eslint.config.mjs
 
 rules:
+  # Coding conventions (arrow functions, component folder structure, etc.) are defined in
+  # CLAUDE.md — this rules block governs proposal/design/spec/task quality only.
+
   proposal:
     - Keep proposals concise — problem statement, proposed solution, non-goals
     - Investigate the codebase before proposing — check if the pattern already exists in

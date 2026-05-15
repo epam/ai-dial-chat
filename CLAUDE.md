@@ -22,6 +22,10 @@
 
 <!-- nx configuration end-->
 
+## Architecture context
+
+Full tech stack, path aliases, commands, and architecture layout live in `openspec/config.yaml` — read it before designing or implementing features. The `opsx:*` skills use it as their primary context.
+
 ## Cross-agent feature research
 
 For broad "global feature" research (best practices, architecture alternatives, trade-offs), use `./.claude/skills/feature-research/SKILL.md` as the default workflow before implementation.
