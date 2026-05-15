@@ -10,14 +10,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { CompactEncrypt } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
-import { AuthController } from '../auth.controller';
-import { KeysService } from '../keys/keys.service';
-import { ProviderRegistryService } from '../providers/provider-registry.service';
-import { RefreshService } from '../refresh/refresh.service';
-import { SessionGuard } from '../session/session.guard';
-import { SessionService } from '../session/session.service';
-import type { SessionPayload } from '../session/session.types';
+import type { EnvironmentVariables } from '../config/environment.config';
+import { AuthController } from './auth.controller';
+import { KeysService } from './keys/keys.service';
+import { ProviderRegistryService } from './providers/provider-registry.service';
+import { RefreshService } from './refresh/refresh.service';
+import { SessionGuard } from './session/session.guard';
+import { SessionService } from './session/session.service';
+import type { SessionPayload } from './session/session.types';
 
 // supertest is CJS; use require to avoid vite ESM interop issues
 const request = require('supertest') as (

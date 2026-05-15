@@ -1,6 +1,6 @@
 import { memo } from 'react';
-import UserMenu from './UserMenu';
 import Logo from './Logo';
+import UserMenu from './UserMenu';
 
 const Header = () => {
   return (
