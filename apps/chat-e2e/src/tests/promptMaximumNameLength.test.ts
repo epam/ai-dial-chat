@@ -6,12 +6,13 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
+import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
-  'Prompt name consists of a maximum of 160 symbols.\n' +
+  'Prompt name consists of a maximum of 255 bytes (UTF-8).\n' +
     'Long prompt name is cut in the panel.\n' +
-    'Prompt folder name consists of a maximum of 160 symbols',
+    'Prompt folder name consists of a maximum of 255 bytes (UTF-8)',
   async ({
     dialHomePage,
     promptData,
@@ -31,8 +32,9 @@ dialTest(
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
-    const longName =
-      'Lorem ipsum dolor sit amett consectetur adipiscing elit. Nullam ultricies ipsum nullaa nec viverra lectus rutrum id. Sed volutpat ante ac fringilla turpis duis!ABC';
+    const longName = GeneratorUtil.randomString(
+      ExpectedConstants.maxEntityNameLength + 1,
+    );
     const expectedName = longName.substring(
       0,
       ExpectedConstants.maxEntityNameLength,
@@ -41,7 +43,7 @@ dialTest(
       'This prompt is renamed to very long-long-long name to see how the system cuts the name';
 
     await dialTest.step(
-      'Create a prompt and enter text longer than 160 symbols',
+      'Create a prompt and enter text longer than 255 bytes (UTF-8)',
       async () => {
         await localStorageManager.setPromptCollapsedSection(
           CollapsedSections.Organization,
@@ -65,7 +67,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify the prompt name is cut to 160 symbols and no error toast is shown',
+      'Verify the prompt name is cut to 255 bytes (UTF-8) and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
           { name: expectedName },
@@ -131,7 +133,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Edit both folder names with more than 160 symbols names',
+      'Edit both folder names with more than 255 bytes (UTF-8) names',
       async () => {
         // Rename Folder_parent
         await folderPrompts.openFolderDropdownMenu(
@@ -150,7 +152,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Check that the folder names are cut to 160 symbols and no error message appears',
+      'Check that the folder names are cut to 255 bytes (UTF-8) and no error message appears',
       async () => {
         // Get the actual folder names
         const parentFolderName = await folderPrompts

@@ -266,7 +266,7 @@ dialTest(
     'Tooltip shows full long chat name in chat header. Named manually.\n' +
     'Long chat name is cut in chat header. Named automatically by the system.\n' +
     'Tooltip shows full long chat name in chat header. Named automatically by the system.\n' +
-    'Rename chat or chat folder with 161 symbol with dot in the end',
+    'Rename chat or chat folder with 256 bytes (UTF-8) name with dot in the end',
   async ({
     dialHomePage,
     conversations,
@@ -292,13 +292,26 @@ dialTest(
       'EPMRTC-820',
       'EPMRTC-3188',
     );
-    const newLongNameWithMiddleSpacesEndDot = `${GeneratorUtil.randomString(80)}${' '.repeat(3)}${GeneratorUtil.randomString(77)}.`;
-    const expectedName = newLongNameWithMiddleSpacesEndDot.substring(
-      0,
-      ExpectedConstants.maxEntityNameLength,
-    );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    // The last storage segment is "{encodedModelId}__{name}", so the name
+    // can only use (SEGMENT_LIMIT - len("{modelId}__")) bytes.
+    // For ASCII model IDs (no "__" inside) encodeModelId is identity, so:
+    const modelPrefix = `${conversation.model.id}__`;
+    const availableNameBytes =
+      ExpectedConstants.maxEntityNameLength - modelPrefix.length;
+    // Build a name of exactly availableNameBytes + 1 chars (all ASCII) with
+    // spaces in the middle and a trailing dot so we verify:
+    //  1. Truncation fires at the correct byte boundary.
+    //  2. Spaces in the middle are preserved after truncation.
+    //  3. The trailing dot (the over-limit byte) is dropped.
+    const midSpaces = ' '.repeat(3);
+    const halfLen = Math.floor((availableNameBytes - midSpaces.length) / 2);
+    const newLongNameWithMiddleSpacesEndDot = `${GeneratorUtil.randomString(halfLen)}${midSpaces}${GeneratorUtil.randomString(availableNameBytes - halfLen - midSpaces.length)}.`;
+    const expectedName = newLongNameWithMiddleSpacesEndDot.substring(
+      0,
+      availableNameBytes,
+    );
     await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
@@ -1525,23 +1538,27 @@ dialTest(
 
 const longRequest =
   'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+// The conversation segment is "{encodedModelId}__{name}", so the name is
+// limited to (SEGMENT_LIMIT - prefix_bytes). For ASCII model IDs without "__"
+// inside, encodeModelId is identity, so prefix = modelId + "__".
+const _defaultModelRef = ModelsUtil.getDefaultAgent()?.reference ?? '';
+const _modelPrefixBytes = `${_defaultModelRef}__`.length;
+const _availableConversationNameBytes =
+  ExpectedConstants.maxEntityNameLength - _modelPrefixBytes;
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
     'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  [
-    longRequest,
-    longRequest.substring(0, ExpectedConstants.maxEntityNameLength),
-  ],
+  [longRequest, longRequest.substring(0, _availableConversationNameBytes)],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(
     'Chat name: tab is changed to space if to use it in chat name.\n' +
       'Chat name: ASCII control characters %00-%1F are changed to space if to use them in chat name.\n' +
       'The first and only row from the first message is used as chat name.\n' +
-      'The first 160 symbols from the first message is used as chat name' +
+      'The first 255 bytes (UTF-8) from the first message is used as chat name' +
       ` for ${expectedConversationName}`,
     async ({
       dialHomePage,

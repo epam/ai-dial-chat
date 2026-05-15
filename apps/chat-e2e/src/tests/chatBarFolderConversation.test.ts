@@ -339,7 +339,7 @@ dialTest(
 dialTest(
   'Rename chat folder when chats are inside using check button\n' +
     'Long Folder name is cut.\n' +
-    'Rename chat folder with 161 symbols with dot in the end',
+    'Rename chat folder with 256 bytes (UTF-8) name with dot in the end',
   async ({
     dialHomePage,
     conversationData,
