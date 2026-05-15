@@ -70,6 +70,11 @@ export interface ConversationStarters {
   starters: ConversationStarter[];
 }
 
+export interface DialPromptSkill {
+  type: 'dial-prompt';
+  url: string;
+}
+
 export interface QuickApp2Config {
   orchestrator: {
     deployment: {
@@ -89,6 +94,7 @@ export interface QuickApp2Config {
   conversation_starters: ConversationStarters;
   input_attachment_types?: string[];
   max_input_attachments?: number;
+  skills?: DialPromptSkill[];
 }
 
 export function isDialDeploymentToolset(

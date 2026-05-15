@@ -46,6 +46,7 @@ import {
 } from '@/src/constants/i18n';
 
 import { FormCollapsibleSection } from '@/src/components/AppsEditor/EditorForm/FormCollapsibleSection';
+import { AgentSkillsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentSkillsField';
 import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentsAndToolsetsField';
 import { CodeInterpreterField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/CodeInterpreterField';
 import { ConversationStartersList } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/ConversationStartersField';
@@ -316,6 +317,14 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         />
 
         <CodeInterpreterField />
+      </FormCollapsibleSection>
+
+      <FormCollapsibleSection
+        name={t(MarketplaceI18nKeys.AgentSkills)}
+        description={t(MarketplaceI18nKeys.AgentSkillsDescription)}
+        dataQa="agent-skills-section"
+      >
+        <AgentSkillsField />
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
