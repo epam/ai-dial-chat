@@ -1491,6 +1491,10 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                       !selectedConversationIds.includes(conv.id),
                   )
                   .map((conv) => conv.name),
+                suffixOffset: Math.max(
+                  selectedConversationIds.indexOf(payload.conversation.id),
+                  0,
+                ),
               });
 
         const updatedConversation = regenerateConversationId<Conversation>({

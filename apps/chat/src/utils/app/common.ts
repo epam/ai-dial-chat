@@ -524,6 +524,7 @@ export const getStorageSafeUniqueName = (params: {
   existingNames: string[];
   fitBaseName: (baseName: string, suffix: string) => string;
   maxNumeration?: number;
+  suffixOffset?: number;
 }): string | undefined => {
   const {
     desiredName,
@@ -531,6 +532,7 @@ export const getStorageSafeUniqueName = (params: {
     existingNames,
     fitBaseName,
     maxNumeration = MAX_ENTITY_NAME_NUMERATION,
+    suffixOffset,
   } = params;
 
   const existingNamesSet = new Set(existingNames);
@@ -541,7 +543,12 @@ export const getStorageSafeUniqueName = (params: {
   // always "Name 1", "Name 2", ... — matching the behaviour E2E tests expect!
   // When a desired name is provided (rename/copy), start from 0 so the name
   // itself is tried first before appending a suffix.
-  const startIndex = desiredName !== undefined ? 0 : 1;
+  // suffixOffset shifts the start further (used in compare mode so that the
+  // N-th simultaneously-created conversation gets suffix N).
+  const startIndex = Math.max(
+    desiredName !== undefined ? 0 : 1,
+    suffixOffset ?? 0,
+  );
 
   for (let index = startIndex; index <= maxNumeration; index++) {
     const suffix = index === 0 ? '' : ` ${index}`;
