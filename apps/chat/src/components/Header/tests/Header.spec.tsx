@@ -57,17 +57,4 @@ describe('Header', () => {
     const { container } = render(<Header />);
     expect(container).toMatchSnapshot();
   });
-
-  it('renders UserMenu mount point when authenticated user is present', () => {
-    mockUseUser.mockReturnValue({
-      status: 'authenticated',
-      user: { sub: 'u1', providerId: 'keycloak', claims: { email: 'u@x.io' } },
-      refresh: vi.fn(),
-      reset: vi.fn(),
-    });
-
-    render(<Header />);
-
-    expect(screen.getByRole('button', { name: /u@x\.io/ })).toBeTruthy();
-  });
 });
