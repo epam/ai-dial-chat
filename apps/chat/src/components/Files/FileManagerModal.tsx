@@ -11,7 +11,6 @@ import {
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
-import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -40,6 +39,7 @@ import {
   DialFileManagerTabs,
   DialLoader,
   DialPrimaryButton,
+  FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -174,6 +174,18 @@ export const FileManagerModal = memo(
       }
     }, [allowedTypesArray, allowedTypesLabel, t]);
 
+    const getDisabledTooltip = useCallback(
+      (row: FileManagerGridRow) => {
+        const isHiddenOrInHiddenFolder = row.path
+          .split('/')
+          .some((segment) => segment.startsWith('.'));
+        return isHiddenOrInHiddenFolder
+          ? t(ChatI18nKeys.AttachingHiddenFilesNotAllowed)
+          : undefined;
+      },
+      [t],
+    );
+
     useEffect(() => {
       if (isOpen) {
         dispatch(FilesActions.resetAllFoldersStatus());
@@ -199,7 +211,11 @@ export const FileManagerModal = memo(
         ),
       );
       const hiddenFilesIds = new Set(
-        selectedFiles.filter(isHiddenEntity).map(({ id }) => id),
+        selectedFiles
+          .filter((file) =>
+            file.id.split('/').some((segment) => segment.startsWith('.')),
+          )
+          .map(({ id }) => id),
       );
 
       if (invalidFileIds.size > 0) {
@@ -424,6 +440,7 @@ export const FileManagerModal = memo(
               onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
+              getDisabledTooltip={getDisabledTooltip}
               hideSearchPathItemName
               autoSelectUploadedItems
             />

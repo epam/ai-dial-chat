@@ -824,6 +824,7 @@ export enum ChatI18nKeys {
   WriteText = 'Write text',
   UnsupportedFilesSkipped = 'Unsupported files skipped',
   UnsupportedFilesDescription = "Some files in the selected folder(-s) weren't attached because their type isn't supported.",
+  AttachingHiddenFilesNotAllowed = 'Attaching hidden files is not allowed.',
   TooManyFilesSelected = 'Too many files selected',
   TooManyFilesDescription = 'You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.',
   MaxSizeSupportedTypes = 'Maximum size: {{maxSelectableFileSize}}. Supported types: {{allowedExtensions}}.',
