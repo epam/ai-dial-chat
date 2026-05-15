@@ -30,7 +30,7 @@ Without SPA-side wiring, the encrypted cookie is not exercised by the frontend, 
 ## Impact
 
 - **Scope**: `apps/chat`, plus the already-specified `callbackUrl` contract in `apps/chat-api` (`auth-bff-encrypted-cookie`). The required BFF login, callback, providers, `/me`, global guard, and refresh behaviour already exist in `auth-bff-encrypted-cookie` Slices 1-2.
-- **Shared libs**: re-uses the existing `UserProfile` type from `libs/chat-shared/src/models/auth.types.ts` (shipped in Slice 1) — no new exports.
+- **Shared libs**: re-uses the existing `UserProfile` type from `libs/chat-shared/src/models/auth.ts` (shipped in Slice 1) — no new exports.
 - **Routing**: introduces a single new route, `/login`, lazy-loaded; the rest of the app remains behind the (new) `<RequireAuth>` gate.
 - **i18n**: adds the `auth.*` namespace to `en.json` (new user-visible strings: sign-in / signed-in-as / sign-out / loading / provider-picker copy).
 - **Breaking changes**: none for the API; from the SPA user perspective the experience changes from "no auth" to "redirect to IdP on first load" — a UX change that is the entire point of this work.

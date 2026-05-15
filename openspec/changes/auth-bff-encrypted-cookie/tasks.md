@@ -29,7 +29,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Shared types
 
-- [x] Create `libs/chat-shared/src/models/auth.types.ts`
+- [x] Create `libs/chat-shared/src/models/auth.ts`
   - Export `UserProfile { sub: string; providerId: string; claims: Record<string, unknown> }`
 
 ### Auth module scaffold

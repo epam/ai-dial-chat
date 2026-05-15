@@ -405,7 +405,7 @@ Minimal changes required:
 
 > The Slice 1 backend deliverable does **not** include the SPA bootstrap. Frontend wiring is sequenced into Slice 2 (alongside the global guard so a missing-session redirect path actually exists) and Slice 5 (CSRF header). Slice 1 is smoke-tested via DevTools / curl.
 
-New type in `libs/chat-shared/src/models/auth.types.ts`:
+New type in `libs/chat-shared/src/models/auth.ts`:
 
 ```ts
 export interface UserProfile {

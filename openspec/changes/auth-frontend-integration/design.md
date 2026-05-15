@@ -64,7 +64,7 @@ interface UserContextType {
 }
 ```
 
-`UserProfile` is the shared interface already exported from `libs/chat-shared/src/models/auth.types.ts` — no new shared types are introduced.
+`UserProfile` is the shared interface already exported from `libs/chat-shared/src/models/auth.ts` — no new shared types are introduced.
 
 *Alternatives considered:*
 
