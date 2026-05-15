@@ -32,3 +32,8 @@ Expected output:
 - Recommended approach
 - Risks and rollback notes
 - Thin-slice implementation draft with Nx verification steps
+
+## Local coding conventions
+
+- In `apps/*` React component files, name the component props type/interface `Props`.
+- In `apps/*` React component files, prefer `export default` for component exports.

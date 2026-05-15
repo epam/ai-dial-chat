@@ -49,3 +49,5 @@ Default behavior:
 ## Local coding conventions
 
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
+- In `apps/*` React component files, name the component props type/interface `Props`.
+- In `apps/*` React component files, prefer `export default` for component exports.

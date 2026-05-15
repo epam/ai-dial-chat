@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as ThemeContext from '../context/ThemeContext';
-import { App } from './app';
+import * as ThemeContext from '../../context/ThemeContext';
+import App from '../app';
 
 // Mock modules
-vi.mock('../context/ThemeContext');
-vi.mock('../components/ConversationView/ConversationView', () => ({
+vi.mock('../../context/ThemeContext');
+vi.mock('../../components/ConversationView/ConversationView', () => ({
   default: ({ messages }: { messages: Array<{ content: string }> }) => (
     <div data-testid="conversation-view">
       {messages.map((message) => (

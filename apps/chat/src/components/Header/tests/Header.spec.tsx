@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as ThemeContext from '../../context/ThemeContext';
-import Header from './Header';
+import * as ThemeContext from '../../../context/ThemeContext';
+import Header from '../Header';
 
 // Mock the ThemeContext for Logo component
 vi.mock('../../context/ThemeContext');

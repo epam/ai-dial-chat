@@ -1,17 +1,17 @@
 import { ThemeConfiguration } from '@epam/chat-shared';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as useFaviconModule from '../hooks/useFavicon';
-import * as serverApi from '../server-api/base';
-import * as applyThemeColors from '../utils/apply-theme-colors';
-import * as localStorage from '../utils/local-storage';
-import { ThemeProvider, useTheme } from './ThemeContext';
+import * as useFaviconModule from '../../hooks/useFavicon';
+import * as serverApi from '../../server-api/base';
+import * as applyThemeColors from '../../utils/apply-theme-colors';
+import * as localStorage from '../../utils/local-storage';
+import { ThemeProvider, useTheme } from '../ThemeContext';
 
 // Mock modules
-vi.mock('../server-api/base');
-vi.mock('../utils/local-storage');
-vi.mock('../utils/apply-theme-colors');
-vi.mock('../hooks/useFavicon');
+vi.mock('../../server-api/base');
+vi.mock('../../utils/local-storage');
+vi.mock('../../utils/apply-theme-colors');
+vi.mock('../../hooks/useFavicon');
 
 describe('ThemeContext', () => {
   const mockGet = vi.mocked(serverApi.get);
@@ -63,7 +63,7 @@ describe('ThemeContext', () => {
   });
 
   it('should fetch theme config on mount', async () => {
-    const { result } = renderHook(() => useTheme(), {
+    renderHook(() => useTheme(), {
       wrapper: ThemeProvider,
     });
 
@@ -147,7 +147,9 @@ describe('ThemeContext', () => {
     mockApplyThemeColors.mockClear();
 
     // Change theme
-    result.current.setTheme('light');
+    await act(async () => {
+      result.current.setTheme('light');
+    });
 
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('light');
