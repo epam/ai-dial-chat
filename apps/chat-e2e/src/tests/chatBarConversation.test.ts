@@ -1531,7 +1531,10 @@ const testRequestMap = new Map([
     'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  [longRequest, longRequest.substring(0, ExpectedConstants.maxEntityNameLength)],
+  [
+    longRequest,
+    longRequest.substring(0, ExpectedConstants.maxEntityNameLength),
+  ],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(

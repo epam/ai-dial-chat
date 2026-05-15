@@ -519,11 +519,7 @@ dialAdminTest(
     const author = username.substring(0, username.indexOf('@'));
     const publicAuthor = GeneratorUtil.randomString(10);
     const currentDate = DateUtil.getCurrentLocalDate();
-    const requestNames = [
-      GeneratorUtil.randomString(300),
-      '1',
-      '',
-    ];
+    const requestNames = [GeneratorUtil.randomString(300), '1', ''];
 
     await dialTest.step('Prepare a new prompt', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
