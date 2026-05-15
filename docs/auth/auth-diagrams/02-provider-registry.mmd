@@ -1,0 +1,14 @@
+%% Multi-provider registry: one confidential OIDC client per IdP entry.
+%% Selection happens per-request via /auth/login/:providerId.
+
+flowchart TB
+    REG["Provider Registry<br/>config.providers"]
+    KC["keycloak<br/>issuer, clientId, secret, scope"]
+    A0["auth0<br/>issuer, clientId, secret, audience"]
+    OK["okta<br/>issuer, clientId, secret"]
+    AZ["entra<br/>tenant, clientId, secret"]
+
+    REG --> KC
+    REG --> A0
+    REG --> OK
+    REG --> AZ

@@ -57,7 +57,9 @@
       },
       "test": {
         "executor": "nx:run-commands",
-        "outputs": ["{workspaceRoot}/apps/chat-api/test-output/vitest/coverage"],
+        "outputs": [
+          "{workspaceRoot}/apps/chat-api/test-output/vitest/coverage"
+        ],
         "options": {
           "cwd": "{workspaceRoot}",
           "command": "vitest run --config apps/chat-api/vitest.config.ts"
@@ -92,11 +94,15 @@
     "@nestjs/platform-express": "^11.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "cookie-parser": "^1.4.7",
+    "jose": "5.10.0",
+    "openid-client": "~5.7.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.0.0"
+    "@nestjs/testing": "^11.0.0",
+    "@types/cookie-parser": "^1.4.10"
   }
 }

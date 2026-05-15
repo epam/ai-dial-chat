@@ -1411,7 +1411,7 @@ vi.spyOn(console, 'warn').mockImplementation(() => {});
 ### NestJS Controller Integration Tests
 
 ```typescript
-// From apps/chat-api/src/themes/theme.controller.spec.ts — follow this pattern
+// From apps/chat-api/src/themes/tests/theme.controller.spec.ts — follow this pattern
 describe('ThemeController', () => {
   let app: INestApplication;
   const mockThemeService = { getThemes: vi.fn(), getThemeIcon: vi.fn() };

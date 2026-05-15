@@ -1,0 +1,18 @@
+%% Federated logout flow.
+%% Best-effort token revocation + cookie clear + end_session_endpoint redirect.
+
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant SPA as React SPA
+    participant BFF as NestJS BFF
+    participant IDP as OIDC Provider
+
+    U->>SPA: Click "Logout"
+    SPA->>BFF: POST /auth/logout
+    BFF->>BFF: Decrypt session, look up providerId
+    BFF->>IDP: POST /revoke (refresh_token) (best-effort)
+    BFF-->>U: Clear __Host-chat.sess cookie<br/>302 -> IDP end_session_endpoint
+    U->>IDP: GET /logout (id_token_hint)
+    IDP-->>U: 302 -> post_logout_redirect_uri
+    U->>SPA: Loads anonymous app

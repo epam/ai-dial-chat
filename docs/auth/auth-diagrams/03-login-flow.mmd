@@ -1,0 +1,26 @@
+%% Login flow: Authorization Code + PKCE through the BFF.
+%% Transient tx cookie holds state/nonce/code_verifier during redirect.
+%% Final session cookie is JWE-encrypted with HttpOnly + Secure + SameSite=Lax.
+
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant SPA as React SPA
+    participant BFF as NestJS BFF
+    participant IDP as OIDC Provider
+
+    U->>SPA: Click "Sign in with Keycloak"
+    SPA->>BFF: GET /auth/login/keycloak
+    BFF->>BFF: Generate state, nonce, PKCE verifier
+    BFF-->>U: Set short-lived encrypted tx cookie<br/>302 -> IDP /authorize?code_challenge=...
+    U->>IDP: Authenticate (password / MFA / federation)
+    IDP-->>U: 302 -> /auth/callback/keycloak?code=...&state=...
+    U->>BFF: GET /auth/callback/keycloak
+    BFF->>BFF: Read tx cookie, verify state + nonce
+    BFF->>IDP: POST /token (code + verifier + client_secret)
+    IDP-->>BFF: access_token + refresh_token + id_token
+    BFF->>BFF: Encrypt payload (AES-GCM via jose)
+    BFF-->>U: Set __Host-chat.sess cookie<br/>302 -> /
+    U->>SPA: Loads app, calls /auth/me
+    SPA->>BFF: GET /auth/me (cookie sent automatically)
+    BFF-->>SPA: { sub, email, roles, providerId }

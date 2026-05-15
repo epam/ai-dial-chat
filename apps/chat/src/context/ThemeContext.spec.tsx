@@ -63,7 +63,7 @@ describe('ThemeContext', () => {
   });
 
   it('should fetch theme config on mount', async () => {
-    const { result } = renderHook(() => useTheme(), {
+    renderHook(() => useTheme(), {
       wrapper: ThemeProvider,
     });
 
@@ -105,6 +105,7 @@ describe('ThemeContext', () => {
 
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('dark');
+      expect(result.current.themes).toEqual(mockThemeConfig.themes);
     });
 
     await waitFor(() => {
@@ -141,13 +142,15 @@ describe('ThemeContext', () => {
 
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('dark');
+      expect(result.current.themes).toEqual(mockThemeConfig.themes);
     });
 
     // Clear previous calls
     mockApplyThemeColors.mockClear();
 
-    // Change theme
-    result.current.setTheme('light');
+    await act(async () => {
+      result.current.setTheme('light');
+    });
 
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('light');

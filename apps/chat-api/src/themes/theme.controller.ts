@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { lookup } from 'mime-types';
+import { Public } from '../common/decorators/public.decorator';
 import { GetThemeIconDto } from './dto/get-theme-icon.dto';
 import { ThemeService } from './theme.service';
 /**
@@ -11,6 +12,7 @@ import { ThemeService } from './theme.service';
  * Provides access to theme configuration and icon resources from an external themes service.
  * Rate limiting: 100 requests per minute (global), with custom limits per endpoint.
  */
+@Public()
 @ApiTags('themes')
 @Controller('themes')
 export class ThemeController {

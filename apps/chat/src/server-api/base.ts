@@ -1,12 +1,38 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
+  AUTH_ME = '/api/v1/auth/me',
+  AUTH_PROVIDERS = '/api/v1/auth/providers',
+  AUTH_LOGOUT = '/api/v1/auth/logout',
 }
+
+export class UnauthorizedError extends Error {
+  readonly status = 401 as const;
+  constructor(public readonly url: string) {
+    super(`Unauthorized: ${url}`);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+type UnauthorizedListener = (url: string) => void;
+const listeners = new Set<UnauthorizedListener>();
+export const onUnauthorized = (
+  listener: UnauthorizedListener,
+): (() => void) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
 
 type RequestMethod = 'GET' | 'POST' | 'PUT';
 
 type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   body?: unknown;
+  responseHandler?: (response: Response) => void;
+};
+
+let _csrfToken: string | null = null;
+export const setCsrfToken = (token: string | null): void => {
+  _csrfToken = token;
 };
 
 // Type guard for validating response structure
@@ -61,25 +87,32 @@ const request = async <TResponse>(
   method: RequestMethod,
   options: RequestOptions = {},
 ): Promise<TResponse> => {
-  const { body, headers, ...restOptions } = options;
+  const { body, headers, responseHandler, ...restOptions } = options;
   const isFormData = body instanceof FormData;
 
   const response = await fetch(url, {
     ...restOptions,
     method,
+    credentials: 'include',
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(method !== 'GET' && _csrfToken ? { 'X-CSRF-Token': _csrfToken } : {}),
       ...(headers ?? {}),
     },
     body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      listeners.forEach((l) => l(url));
+      throw new UnauthorizedError(url);
+    }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}`,
     );
   }
 
+  responseHandler?.(response);
   return parseResponse<TResponse>(response);
 };
 

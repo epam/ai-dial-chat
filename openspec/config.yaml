@@ -38,7 +38,7 @@ context: |
   - Backend dev:  `pnpm start:api` (localhost:3005)
   - Both:         `pnpm start:all`
   - Affected build / lint / typecheck / test: `pnpm nx affected --target=<t> --base=origin/development`
-  - Single-project (preferred for slice verification, see AGENTS.md per project):
+  - Single-project (preferred for slice verification, see CLAUDE.md per project):
     - `pnpm nx test chat-api`
     - `pnpm nx lint chat-api`
     - `pnpm nx build chat-api`
@@ -59,7 +59,8 @@ context: |
     - useFavicon.ts is the reference pattern: JSDoc, AbortController/cleanup in useEffect,
       cancelled flag for async operations
   - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
-    - Each component in its own folder with co-located .test.tsx and index.ts barrel
+    - Folder name must be PascalCase and match the component name exactly (e.g. RequireAuth/RequireAuth.tsx)
+    - Tests go in a tests/ subfolder inside the component folder (e.g. RequireAuth/tests/RequireAuth.spec.tsx)
   - API: apps/chat/src/server-api/ — typed fetch helpers and endpoint constants
   - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
 
@@ -87,6 +88,9 @@ context: |
   - Enforced by @nx/enforce-module-boundaries in eslint.config.mjs
 
 rules:
+  # Coding conventions (arrow functions, component folder structure, etc.) are defined in
+  # CLAUDE.md — this rules block governs proposal/design/spec/task quality only.
+
   proposal:
     - Keep proposals concise — problem statement, proposed solution, non-goals
     - Investigate the codebase before proposing — check if the pattern already exists in
@@ -104,11 +108,11 @@ rules:
     - Use clsx for conditional class composition — not template literal concatenation
     - Use @tabler/icons-react for all icons — no unicode characters, no inline SVGs
     - Use components from @epam/ai-dial-ui-kit before creating new primitives
-    - Name props interfaces {ComponentName}Props — not Props, not inline anonymous types
+    - "Name props interfaces {ComponentName}Props — not Props, not inline anonymous types"
     - Export components as named exports wrapped in React.memo for performance-sensitive
       components (e.g. ConversationView); default export the same name
-    - Use FC<{ComponentName}Props> for component type annotation
-    - All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}
+    - "Use FC<{ComponentName}Props> for component type annotation"
+    - "All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}"
     - Use the existing typed API helpers (get, post) from server-api/base.ts — do not call
       fetch directly in components or hooks
     - Fetch inside useEffect with a cancelled flag to prevent setState-on-unmount warnings
@@ -119,7 +123,7 @@ rules:
       with components
     - Custom hooks go in apps/chat/src/hooks/ — one hook per file, JSDoc required explaining WHY
     - Lazy-load every route component with React.lazy + Suspense — always provide a fallback
-    - For named exports from lazy-loaded libs: import the module then return { default: module.X }
+    - "For named exports from lazy-loaded libs: import the module then return { default: module.X }"
     - For anything under apps/chat-api/**, follow apps/chat-api/AGENTS.md as the source of
       truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
       DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).
@@ -155,8 +159,9 @@ rules:
       conventions of that project
     - Require unit tests for all new hooks, utilities, and services as a dedicated task
     - Require integration tests (supertest) for all new NestJS controllers as a dedicated task
-    - Tests co-locate with source: ComponentName.test.tsx next to ComponentName.tsx,
-      feature.controller.spec.ts next to feature.controller.ts
+    - Tests co-locate with source: frontend components use a tests/ subfolder
+      (ComponentName/tests/ComponentName.spec.tsx); backend specs sit next to the source file
+      (feature.controller.spec.ts next to feature.controller.ts)
     - Test names describe observable behaviour — not implementation details
     - Do not use data-testid attributes in tests — use role, label, and text queries
     - Do not add manual testing tasks

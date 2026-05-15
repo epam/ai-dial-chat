@@ -1,11 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as UserContextModule from '../context/auth/UserContext';
 import * as ThemeContext from '../context/ThemeContext';
 import { App } from './app';
 
-// Mock modules
 vi.mock('../context/ThemeContext');
+vi.mock('../context/auth/UserContext');
 vi.mock('../components/ConversationView/ConversationView', () => ({
   default: ({ messages }: { messages: Array<{ content: string }> }) => (
     <div data-testid="conversation-view">
@@ -36,21 +37,9 @@ vi.mock('@epam/conversation-input', () => ({
   ),
 }));
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'chat.welcomeText': 'Welcome to Chat',
-        'chat.placeholder': 'Type a message...',
-        'chat.demoResponse': 'This is a demo response',
-      };
-      return translations[key] || key;
-    },
-  }),
-}));
-
 describe('App', () => {
   const mockUseTheme = vi.mocked(ThemeContext.useTheme);
+  const mockUseUser = vi.mocked(UserContextModule.useUser);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -60,6 +49,12 @@ describe('App', () => {
       themes: [],
       setTheme: vi.fn(),
       isLoading: false,
+    });
+    mockUseUser.mockReturnValue({
+      status: 'unauthenticated',
+      user: null,
+      refresh: vi.fn(),
+      reset: vi.fn(),
     });
   });
 

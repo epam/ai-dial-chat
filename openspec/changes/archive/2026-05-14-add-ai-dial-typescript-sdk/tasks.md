@@ -54,10 +54,10 @@
   - Declare `DeploymentsController` and `DeploymentsService`
   - Import nothing extra (inherits `ConfigModule` from global)
 - [x] Register `DeploymentsModule` in `AppModule` imports
-- [x] Write unit tests in `apps/chat-api/src/deployments/deployments.service.spec.ts`
+- [x] Write unit tests in `apps/chat-api/src/deployments/tests/deployments.service.spec.ts`
   - Mock the SDK client on the service instance
   - Test `getDeployments()` success and error paths
-- [x] Write unit tests in `apps/chat-api/src/deployments/deployments.controller.spec.ts`
+- [x] Write unit tests in `apps/chat-api/src/deployments/tests/deployments.controller.spec.ts`
 
 ---
 
@@ -79,8 +79,8 @@
 - [x] Create `apps/chat-api/src/chat/chat.module.ts`
   - Declare `ChatController` and `ChatService`
 - [x] Register `ChatModule` in `AppModule` imports
-- [x] Write unit tests in `apps/chat-api/src/chat/chat.service.spec.ts`
-- [x] Write unit tests in `apps/chat-api/src/chat/chat.controller.spec.ts`
+- [x] Write unit tests in `apps/chat-api/src/chat/tests/chat.service.spec.ts`
+- [x] Write unit tests in `apps/chat-api/src/chat/tests/chat.controller.spec.ts`
 
 ---
 
@@ -94,12 +94,12 @@
 
 ### 7. Integration tests
 
-- [x] Add integration test `apps/chat-api/src/deployments/deployments.controller.integration.spec.ts`
+- [x] Add integration test `apps/chat-api/src/deployments/tests/deployments.controller.integration.spec.ts`
   - Boot test app with `AppService` providing a mock SDK client via custom provider
   - Test `GET /api/deployments` returns 200 with deployment array
   - Test `GET /api/deployments/unknown` returns 404
   - Test `GET /api/deployments` returns 503 when SDK throws network error
-- [x] Add integration test `apps/chat-api/src/chat/chat.controller.integration.spec.ts`
+- [x] Add integration test `apps/chat-api/src/chat/tests/chat.controller.integration.spec.ts`
   - Test `POST /api/chat/completions/:deployment` with valid body returns 201
   - Test invalid body returns 400
   - Test missing deployment returns 404

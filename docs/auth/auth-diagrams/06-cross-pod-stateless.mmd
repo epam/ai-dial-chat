@@ -1,0 +1,17 @@
+%% Cross-pod stateless decryption.
+%% Any pod can decrypt any cookie because all pods share the active + previous keys.
+%% No session affinity, no Redis.
+
+flowchart LR
+    LB["Load Balancer"]
+    P1["Nest Pod 1"]
+    P2["Nest Pod 2"]
+    P3["Nest Pod 3"]
+    KMS[("Shared Key<br/>ENV / KMS")]
+
+    LB --> P1
+    LB --> P2
+    LB --> P3
+    P1 --- KMS
+    P2 --- KMS
+    P3 --- KMS
