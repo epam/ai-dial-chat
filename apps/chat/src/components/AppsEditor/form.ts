@@ -53,7 +53,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
-import { CommonI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -255,7 +255,7 @@ export const QuickApp2Schema = zodValidation
       ctx.addIssue({
         code: 'custom',
         path: ['model'],
-        message: translate(CommonI18nKeys.SelectedModelDoesNotSupportTools),
+        message: translate(ChatI18nKeys.IncorrectSelectedModel),
       });
     }
   });
