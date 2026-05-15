@@ -35,7 +35,7 @@ No route guards, redirects, or 404 handling are specified in this change.
 
 ```typescript
 // apps/chat/src/constants/navigation.ts
-export interface NavigationItem {
+interface NavigationItem {
   path: string;                                       // absolute path, e.g. '/' or '/catalog'
   icon: FC<{ size?: number; stroke?: number }>;       // Tabler icon component
   labelKey: NavigationI18nKeys;                       // i18n key for aria-label

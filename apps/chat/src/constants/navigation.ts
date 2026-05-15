@@ -2,7 +2,7 @@ import { IconBook, IconMessage } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { NavigationI18nKeys } from './translation-keys';
 
-export interface NavigationItem {
+interface NavigationItem {
   path: string;
   icon: FC<{ size?: number; stroke?: number }>;
   labelKey: NavigationI18nKeys;
