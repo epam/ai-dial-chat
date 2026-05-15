@@ -1,20 +1,33 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as UserContextModule from '../context/auth/UserContext';
-import * as ThemeContext from '../context/ThemeContext';
-import { App } from './app';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+import App from '../app';
 
-vi.mock('../context/ThemeContext');
-vi.mock('../context/auth/UserContext');
-vi.mock('../components/ConversationView/ConversationView', () => ({
+vi.mock('../../components/Header/Header', () => ({
+  default: () => <header data-testid="header" />,
+}));
+
+vi.mock('../../components/Navigation/Navigation', () => ({
+  default: () => <nav data-testid="navigation" />,
+}));
+
+vi.mock('../../components/CatalogView/CatalogView', () => ({
+  default: () => <div data-testid="catalog-view">Catalog</div>,
+}));
+
+vi.mock('../../components/ConversationView/ConversationView', () => ({
   default: ({ messages }: { messages: Array<{ content: string }> }) => (
     <div data-testid="conversation-view">
       {messages.map((message) => (
-        <div key={`${message.content}`}>{message.content}</div>
+        <div key={message.content}>{message.content}</div>
       ))}
     </div>
   ),
+}));
+
+vi.mock('../../utils/local-storage', () => ({
+  getFromLocalStorage: vi.fn(() => null),
 }));
 
 vi.mock('@epam/conversation-input', () => ({
@@ -37,111 +50,41 @@ vi.mock('@epam/conversation-input', () => ({
   ),
 }));
 
+const renderApp = (initialPath = '/') =>
+  render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <App />
+    </MemoryRouter>,
+  );
+
 describe('App', () => {
-  const mockUseTheme = vi.mocked(ThemeContext.useTheme);
-  const mockUseUser = vi.mocked(UserContextModule.useUser);
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseTheme.mockReturnValue({
-      currentTheme: 'dark',
-      currentThemeLogo: 'logo.svg',
-      themes: [],
-      setTheme: vi.fn(),
-      isLoading: false,
-    });
-    mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
-      user: null,
-      refresh: vi.fn(),
-      reset: vi.fn(),
-    });
+  it('renders navigation and header', () => {
+    renderApp();
+    expect(screen.getByTestId('navigation')).toBeTruthy();
+    expect(screen.getByTestId('header')).toBeTruthy();
   });
 
-  it('should render successfully', () => {
-    const { container } = render(<App />);
-    expect(container).toBeTruthy();
-  });
-
-  it('should render welcome screen when no messages', async () => {
-    render(<App />);
-
+  it('renders welcome state on root route', async () => {
+    renderApp('/');
     expect(await screen.findByText('Welcome to Chat')).toBeTruthy();
+    expect(
+      await screen.findByPlaceholderText('Type a message...'),
+    ).toBeTruthy();
   });
 
-  it('should render Header component', () => {
-    const { container } = render(<App />);
-
-    const header = container.querySelector('header');
-    expect(header).toBeTruthy();
-  });
-
-  it('should render ConversationInput with welcome text', async () => {
-    render(<App />);
-
-    expect(await screen.findByText('Welcome to Chat')).toBeTruthy();
-  });
-
-  it('should add user message when onSend is called', async () => {
+  it('switches to conversation view after send', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderApp('/');
 
-    const sendButton = await screen.findByRole('button', { name: 'Send' });
-    await user.click(sendButton);
+    await user.click(await screen.findByRole('button', { name: 'Send' }));
 
     expect(await screen.findByTestId('conversation-view')).toBeTruthy();
     expect(screen.getByText('Hello')).toBeTruthy();
-
-    await waitFor(() => {
-      expect(screen.getByText('This is a demo response')).toBeTruthy();
-    });
+    expect(await screen.findByText('This is a demo response')).toBeTruthy();
   });
 
-  it('should render conversation view when messages exist', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    const sendButton = await screen.findByRole('button', { name: 'Send' });
-    await user.click(sendButton);
-
-    expect(await screen.findByTestId('conversation-view')).toBeTruthy();
-  });
-
-  it('should apply correct layout classes', () => {
-    const { container } = render(<App />);
-
-    const mainContainer = container.firstChild as HTMLElement;
-    expect(mainContainer.classList.contains('flex')).toBe(true);
-    expect(mainContainer.classList.contains('size-full')).toBe(true);
-    expect(mainContainer.classList.contains('flex-col')).toBe(true);
-  });
-
-  it('should render placeholder text from i18n', async () => {
-    render(<App />);
-
-    const placeholder = await screen.findByPlaceholderText('Type a message...');
-    expect(placeholder).toBeTruthy();
-  });
-
-  it('should use i18n for welcome text', async () => {
-    render(<App />);
-
-    expect(await screen.findByText('Welcome to Chat')).toBeTruthy();
-  });
-
-  it('should have scrollable message container structure', () => {
-    const { container } = render(<App />);
-
-    const flexContainer = container.querySelector('.flex-1');
-    expect(flexContainer).toBeTruthy();
-  });
-
-  it('should center ConversationInput in welcome state', () => {
-    const { container } = render(<App />);
-
-    const centerContainer = container.querySelector(
-      '.items-center.justify-center',
-    );
-    expect(centerContainer).toBeTruthy();
+  it('renders catalog view on /catalog route', async () => {
+    renderApp('/catalog');
+    expect(await screen.findByTestId('catalog-view')).toBeTruthy();
   });
 });

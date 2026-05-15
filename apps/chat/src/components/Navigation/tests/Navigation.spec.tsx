@@ -5,13 +5,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import Navigation from '../Navigation';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: {
+    LG: 24,
+  },
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,
@@ -28,6 +25,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
+}));
+
+vi.mock('../UserMenu', () => ({
+  default: () => <div data-testid="user-menu" />,
 }));
 
 const renderNavigation = (initialPath = '/') =>
