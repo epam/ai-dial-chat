@@ -14,10 +14,14 @@ import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/selectors';
+import { ModelsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import {
+  DialMarkdownEditor,
+  EditorThemes,
+} from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
@@ -34,6 +38,7 @@ const ReviewQuickAppSectionView = ({
 }: ReviewQuickAppSectionViewProps) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const editorTabs = useMemo(
     () => [
@@ -84,8 +89,17 @@ const ReviewQuickAppSectionView = ({
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Instructions)}
-        value={config.instructions}
         valueClassName="grow break-all text-primary"
+        value={
+          <DialMarkdownEditor
+            value={config.instructions}
+            height={200}
+            theme={theme as EditorThemes}
+            preview="preview"
+            commands={[]}
+            className="rounded-[5px] border border-b-hover"
+          />
+        }
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Toolsets)}
