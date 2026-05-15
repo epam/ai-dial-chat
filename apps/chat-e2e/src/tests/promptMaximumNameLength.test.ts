@@ -32,9 +32,7 @@ dialTest(
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
-    const longName = GeneratorUtil.randomString(
-      ExpectedConstants.maxEntityNameLength + 1,
-    );
+    const longName = GeneratorUtil.randomString(300);
     const expectedName = longName.substring(
       0,
       ExpectedConstants.maxEntityNameLength,

@@ -520,7 +520,7 @@ dialAdminTest(
     const publicAuthor = GeneratorUtil.randomString(10);
     const currentDate = DateUtil.getCurrentLocalDate();
     const requestNames = [
-      GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength + 1),
+      GeneratorUtil.randomString(300),
       '1',
       '',
     ];

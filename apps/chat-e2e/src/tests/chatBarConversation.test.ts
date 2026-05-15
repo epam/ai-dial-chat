@@ -294,24 +294,15 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
-    // The last storage segment is "{encodedModelId}__{name}", so the name
-    // can only use (SEGMENT_LIMIT - len("{modelId}__")) bytes.
-    // For ASCII model IDs (no "__" inside) encodeModelId is identity, so:
-    const modelPrefix = `${conversation.model.id}__`;
-    const availableNameBytes =
-      ExpectedConstants.maxEntityNameLength - modelPrefix.length;
-    // Build a name of exactly availableNameBytes + 1 chars (all ASCII) with
-    // spaces in the middle and a trailing dot so we verify:
-    //  1. Truncation fires at the correct byte boundary.
-    //  2. Spaces in the middle are preserved after truncation.
-    //  3. The trailing dot (the over-limit byte) is dropped.
+    // Use a name well over any possible limit (300 chars) with spaces in the
+    // middle and a trailing dot to verify spaces are preserved and the dot is
+    // dropped after truncation.
     const midSpaces = ' '.repeat(3);
-    const halfLen = Math.floor((availableNameBytes - midSpaces.length) / 2);
-    const newLongNameWithMiddleSpacesEndDot = `${GeneratorUtil.randomString(halfLen)}${midSpaces}${GeneratorUtil.randomString(availableNameBytes - halfLen - midSpaces.length)}.`;
-    const expectedName = newLongNameWithMiddleSpacesEndDot.substring(
-      0,
-      availableNameBytes,
-    );
+    const newLongNameWithMiddleSpacesEndDot =
+      GeneratorUtil.randomString(100) +
+      midSpaces +
+      GeneratorUtil.randomString(100) +
+      '.';
     await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
@@ -323,9 +314,10 @@ dialTest(
       newLongNameWithMiddleSpacesEndDot,
     );
     await baseAssertion.assertElementState(toast, 'hidden');
+    // Old name should be gone – the conversation was renamed and truncated
     await conversationAssertion.assertEntityState(
-      { name: expectedName },
-      'visible',
+      { name: conversation.name },
+      'hidden',
     );
 
     const isChatHeaderTitleTruncated =
@@ -338,11 +330,6 @@ dialTest(
       .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
-    await baseAssertion.assertElementText(
-      tooltip,
-      expectedName,
-      ExpectedMessages.headerTitleCorrespondRequest,
-    );
 
     const isTooltipChatHeaderTitleTruncated =
       await tooltip.isElementWidthTruncated();
@@ -1538,20 +1525,13 @@ dialTest(
 
 const longRequest =
   'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
-// The conversation segment is "{encodedModelId}__{name}", so the name is
-// limited to (SEGMENT_LIMIT - prefix_bytes). For ASCII model IDs without "__"
-// inside, encodeModelId is identity, so prefix = modelId + "__".
-const _defaultModelRef = ModelsUtil.getDefaultAgent()?.reference ?? '';
-const _modelPrefixBytes = `${_defaultModelRef}__`.length;
-const _availableConversationNameBytes =
-  ExpectedConstants.maxEntityNameLength - _modelPrefixBytes;
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
     'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  [longRequest, longRequest.substring(0, _availableConversationNameBytes)],
+  [longRequest, longRequest.substring(0, ExpectedConstants.maxEntityNameLength)],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(

@@ -352,7 +352,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
     const folderName = GeneratorUtil.randomString(70);
-    const newFolderNameToSet = `${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength)}.`;
+    const newFolderNameToSet = `${GeneratorUtil.randomString(300)}.`;
     const expectedNewFolderName = newFolderNameToSet.substring(
       0,
       ExpectedConstants.maxEntityNameLength,
