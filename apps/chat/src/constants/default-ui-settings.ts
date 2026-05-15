@@ -13,7 +13,7 @@ export const EMPTY_MODEL_ID = 'empty';
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
 export const MIN_ENTITY_LENGTH = 1;
-export const MAX_ENTITY_NAME_NUMERATION = 999;
+export const MAX_ENTITY_NAME_NUMERATION = 1999;
 
 // Byte limits for resource ids/segments in the configured storage backend.
 // RESOURCE_MAX_ID_BYTES is fixed at 1024 (S3/GCS/Azure standard) and cannot
