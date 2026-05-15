@@ -129,10 +129,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] overflow-hidden text-nowrap border-l  hover:bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap border-l hover:bg-accent-primary-alpha',
             currentEntity.id === entity.id || selectedBaseIdsSet?.has(entity.id)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-transparent',
+              ? '!border-accent-primary bg-accent-primary-alpha'
+              : '!border-transparent',
           )}
           item={
             <div className="flex w-full items-center gap-2">
@@ -143,7 +143,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
               />
               <DialEllipsisTooltip
                 text={getDisplayValue(entity)}
-                contentClassName="z-[10000]"
+                contentClassName="!z-[10000]"
               />
             </div>
           }
