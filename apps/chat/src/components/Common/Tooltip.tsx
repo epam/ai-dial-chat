@@ -210,7 +210,7 @@ const TooltipContent = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
           }}
           {...context.getFloatingProps(props)}
           className={classNames(
-            'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+            '!z-[10000] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
             context.getFloatingProps(props).className as string,
           )}
           data-qa="tooltip"
@@ -266,7 +266,7 @@ export function Tooltip({
       </TooltipTrigger>
       <TooltipContent
         className={classNames(
-          'max-w-[250px] break-words sm:max-w-[400px]',
+          '!z-[10000] max-w-[250px] break-words sm:max-w-[400px]',
           contentClassName,
         )}
       >

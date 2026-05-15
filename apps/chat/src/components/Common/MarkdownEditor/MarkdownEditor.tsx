@@ -1,7 +1,15 @@
-import MDEditor, { type PreviewType } from '@uiw/react-md-editor';
+import type { ICommand, PreviewType } from '@uiw/react-md-editor';
 import type { CSSProperties, FC } from 'react';
 
+import dynamic from 'next/dynamic';
+
 import classNames from 'classnames';
+
+// Dynamic import to avoid SSR issues with Markdown Editor
+const MDEditor = dynamic(
+  () => import('@uiw/react-md-editor').then((mod) => mod),
+  { ssr: false },
+);
 
 export enum EditorThemes {
   dark = 'dark',
@@ -16,6 +24,7 @@ export interface DialMarkdownEditorProps {
   theme?: EditorThemes;
   className?: string;
   placeholder?: string;
+  commands?: ICommand[];
 }
 
 // TODO: use from UI kit when MDEditor will be ready
@@ -27,6 +36,7 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
   theme = EditorThemes.dark,
   className,
   placeholder,
+  commands,
 }) => {
   return (
     <div
@@ -43,6 +53,7 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
         height={height}
         preview={preview}
         textareaProps={placeholder ? { placeholder } : undefined}
+        commands={commands}
         style={
           {
             backgroundColor: 'var(--bg-layer-2)',

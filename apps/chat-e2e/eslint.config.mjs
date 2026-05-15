@@ -28,6 +28,9 @@ export default [
       'playwright/no-conditional-expect': 'off',
       'playwright/no-skipped-test': 'off',
       'playwright/expect-expect': 'off',
+      //TODO: remove the rule when released https://github.com/mskelton/eslint-plugin-playwright/pull/464
+      'playwright/missing-playwright-await': 'off',
+      'playwright/consistent-spacing-between-blocks': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
