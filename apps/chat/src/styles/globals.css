@@ -39,8 +39,18 @@
     color: #000;
   }
 
+  .light input::-moz-selection {
+    background: #b3d4fc;
+    color: #000;
+  }
+
   /* dark */
   .dark input::selection {
+    background: #1d63a9;
+    color: #fff;
+  }
+
+  .dark input::-moz-selection {
     background: #1d63a9;
     color: #fff;
   }
