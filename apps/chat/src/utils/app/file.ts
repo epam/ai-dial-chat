@@ -65,6 +65,23 @@ export const constructPath = (
   return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
+export function removeTrailingSlash(path: string): string {
+  return path.replace(/\/+$/, '');
+}
+
+/** True if `path` equals `prefix` or is a strict descendant (`prefix/…`). Trailing slashes ignored. */
+export function isPathUnderPrefix(path: string, prefix: string): boolean {
+  const normalizedPath = removeTrailingSlash(path);
+  const normalizedPrefix = removeTrailingSlash(prefix);
+  if (!normalizedPath || !normalizedPrefix) {
+    return false;
+  }
+  if (normalizedPath === normalizedPrefix) {
+    return true;
+  }
+  return normalizedPath.startsWith(`${normalizedPrefix}/`);
+}
+
 export const getRelativePath = (
   absolutePath: string | undefined,
 ): string | undefined => {
