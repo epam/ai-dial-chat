@@ -1359,13 +1359,74 @@ const rateMessageFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const sendMessagesEpic: AppEpic = (action$) =>
+const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
     switchMap(({ payload }) => {
+      // When multiple conversations are sent simultaneously (compare mode) we
+      // must compute their new names atomically – reading the same Redux state
+      // snapshot – so that each successive conversation sees the names already
+      // reserved by earlier ones in the same batch.
+      const isCompareMode = payload.conversations.length > 1;
+
+      let precomputedNames: (string | undefined)[] = payload.conversations.map(
+        () => undefined,
+      );
+
+      if (isCompareMode) {
+        const conversations = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
+        const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+        const overlayNewConversationsFolder =
+          isOverlay && state$.value.overlay.newConversationsFolder;
+        const conversationRootFolderId = getConversationRootId();
+
+        // Accumulate already-chosen names so each successive conversation in
+        // the batch avoids conflicts with its predecessor(s).
+        const reservedNames: string[] = [];
+
+        precomputedNames = payload.conversations.map((conv) => {
+          // Only auto-name local conversations that have no messages yet
+          // (i.e. the first user message).  For anything else keep the
+          // existing name – the same condition as in sendMessageEpic.
+          if (
+            isReplayConversation(conv) ||
+            conv.messages.filter((m) => m.role === Role.User).length > 0 ||
+            !isEntityIdLocal(conv)
+          ) {
+            return undefined; // let sendMessageEpic decide (keep existing name)
+          }
+
+          const existingNames = conversations
+            .filter(
+              (c) =>
+                (c.folderId === conv.folderId ||
+                  (isEntityIdLocal(conv) &&
+                    (isOverlay && overlayNewConversationsFolder
+                      ? c.folderId === overlayNewConversationsFolder
+                      : c.folderId === conversationRootFolderId))) &&
+                c.id !== conv.id,
+            )
+            .map((c) => c.name)
+            .concat(reservedNames);
+
+          const name = getStorageSafeUniqueConversationName({
+            conversation: conv,
+            desiredName: getNewConversationName(conv, payload.message),
+            existingNames,
+          });
+
+          // Reserve this name so the next conversation in the batch won't
+          // pick the same one.
+          if (name) reservedNames.push(name);
+          return name;
+        });
+      }
+
       return concat(
         of(ConversationsActions.createAbortController()),
-        ...payload.conversations.map((conv) => {
+        ...payload.conversations.map((conv, index) => {
           return of(
             ConversationsActions.sendMessage({
               conversation: conv,
@@ -1373,6 +1434,7 @@ const sendMessagesEpic: AppEpic = (action$) =>
               deleteCount: payload.deleteCount,
               activeReplayIndex: payload.activeReplayIndex,
               skipRecentModelsUpdate: payload.skipRecentModelsUpdate,
+              precomputedName: precomputedNames[index],
             }),
           );
         }),
@@ -1388,8 +1450,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
       installedModelIds: ModelsSelectors.selectInstalledModelIds(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      selectedConversationIds:
-        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
       overlaySystemPrompt: OverlaySelectors.selectOverlaySystemPrompt(
         state$.value,
       ),
@@ -1401,7 +1461,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         modelsMap,
         installedModelIds,
         conversations,
-        selectedConversationIds,
         overlaySystemPrompt,
         isOverlay,
       }) => {
@@ -1470,7 +1529,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isOverlay && state$.value.overlay.newConversationsFolder;
 
         const newConversationName =
-          isReplayConversation(payload.conversation) ||
+          payload.precomputedName ??
+          (isReplayConversation(payload.conversation) ||
           updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
           !isEntityIdLocal(payload.conversation)
             ? payload.conversation.name
@@ -1488,14 +1548,10 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                           (isOverlay && overlayNewConversationsFolder
                             ? conv.folderId === overlayNewConversationsFolder
                             : conv.folderId === conversationRootFolderId))) &&
-                      !selectedConversationIds.includes(conv.id),
+                      conv.id !== payload.conversation.id,
                   )
                   .map((conv) => conv.name),
-                suffixOffset: Math.max(
-                  selectedConversationIds.indexOf(payload.conversation.id),
-                  0,
-                ),
-              });
+              }));
 
         const updatedConversation = regenerateConversationId<Conversation>({
           ...payload.conversation,

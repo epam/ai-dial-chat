@@ -96,7 +96,6 @@ export const getStorageSafeUniqueConversationName = (params: {
   defaultName?: string;
   existingNames: string[];
   limits?: EntityStorageLimits;
-  suffixOffset?: number;
 }): string => {
   const { conversation, desiredName, existingNames } = params;
   const limits = params.limits ?? getResourceStorageLimits();
@@ -112,7 +111,6 @@ export const getStorageSafeUniqueConversationName = (params: {
     defaultName,
     existingNames,
     fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
-    suffixOffset: params.suffixOffset,
   });
 
   if (uniqueName) {
