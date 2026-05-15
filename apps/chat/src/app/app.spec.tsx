@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as UserContextModule from '../context/auth/UserContext';
 import * as ThemeContext from '../context/ThemeContext';
-import * as UserContextModule from '../context/UserContext';
 import { App } from './app';
 
 vi.mock('../context/ThemeContext');
-vi.mock('../context/UserContext');
+vi.mock('../context/auth/UserContext');
 vi.mock('../components/ConversationView/ConversationView', () => ({
   default: ({ messages }: { messages: Array<{ content: string }> }) => (
     <div data-testid="conversation-view">
@@ -35,19 +35,6 @@ vi.mock('@epam/conversation-input', () => ({
       </button>
     </div>
   ),
-}));
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        'chat.welcomeText': 'Welcome to Chat',
-        'chat.placeholder': 'Type a message...',
-        'chat.demoResponse': 'This is a demo response',
-      };
-      return translations[key] || key;
-    },
-  }),
 }));
 
 describe('App', () => {

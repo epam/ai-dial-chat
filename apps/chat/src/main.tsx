@@ -3,13 +3,13 @@ import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
-import RequireAuth from './components/Common/RequireAuth';
+import RequireAuth from './components/auth/RequireAuth';
+import { UserProvider } from './context/auth/UserContext';
+import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
 import './styles.scss';
-import { ThemeProvider } from './context/ThemeContext';
-import { UserProvider } from './context/UserContext';
 
-const LoginPage = lazy(() => import('./pages/Login'));
+const LoginPage = lazy(() => import('./pages/auth/Login'));
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,

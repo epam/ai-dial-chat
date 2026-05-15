@@ -10,12 +10,14 @@ This guide covers the auth behavior that exists today:
 Run all auth-related backend tests:
 
 ```bash
-npm exec nx run @epam/chat-api:test-ci--src/auth/auth.controller.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/session.guard.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/session.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/keys.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/provider-registry.service.spec.ts
-npm exec nx run @epam/chat-api:test-ci--src/auth/refresh.service.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/auth.controller.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/session/session.guard.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/session/session.service.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/keys/keys.service.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/providers/provider-registry.service.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/refresh/refresh.service.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/csrf/csrf.guard.spec.ts
+npm exec nx run @epam/chat-api:test-ci--src/auth/tests/utils/callback-url.util.spec.ts
 ```
 
 Run the whole API test target when you want the broader regression check:
@@ -58,9 +60,9 @@ PORT=3005
 API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
 
-AUTH_SESSION_SECRET=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:4207
-AUTH_PROVIDERS=[{"id":"keycloak","issuer":"https://your-idp.example.com/realms/your-realm","clientId":"your-client-id","clientSecret":"your-client-secret","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
+AUTH_PROVIDERS=[{"id":"keycloak","issuer":"https://your-idp.example.com/realms/your-realm","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
 ```
 
 > **Callback URL vs. OIDC callback base**

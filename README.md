@@ -87,9 +87,9 @@ Edit `.env.local` with your configuration:
 PORT=3005
 API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
-AUTH_SESSION_SECRET=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:3005
-AUTH_PROVIDERS=[{"id":"demo","issuer":"https://demo.duendesoftware.com","clientId":"interactive.confidential","clientSecret":"secret","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
+AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
 # DIAL_CORE_URL=https://your-dial-core-url.example.com
 # DIAL_API_KEY=your-api-key
 # THEMES_CONFIG_URL=https://your-themes-url.example.com
@@ -368,9 +368,9 @@ Ensure these environment variables are set in production:
 PORT=3005
 API_PREFIX=api
 CORS_ORIGIN=https://your-frontend-domain.com
-AUTH_SESSION_SECRET=your-64-character-hex-secret
+AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=https://your-api-domain.com
-AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"your-client-secret","scope":"openid email profile","rolesClaim":"roles","postLogoutRedirectUri":"https://your-frontend-domain.com"}]
+AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile","rolesClaim":"roles","postLogoutRedirectUri":"https://your-frontend-domain.com"}]
 DIAL_CORE_URL=https://your-dial-core-url
 DIAL_API_KEY=your-production-api-key
 THEMES_CONFIG_URL=https://your-themes-url

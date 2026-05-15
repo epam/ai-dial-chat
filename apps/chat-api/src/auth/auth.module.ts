@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthController } from './auth.controller';
-import { CsrfGuard } from './csrf.guard';
-import { KeysService } from './keys.service';
-import { ProviderRegistryService } from './provider-registry.service';
-import { RefreshService } from './refresh.service';
-import { SessionGuard } from './session.guard';
-import { SessionService } from './session.service';
+import { CsrfGuard } from './csrf/csrf.guard';
+import { KeysService } from './keys/keys.service';
+import { ProviderRegistryService } from './providers/provider-registry.service';
+import { RefreshService } from './refresh/refresh.service';
+import { SessionGuard } from './session/session.guard';
+import { SessionService } from './session/session.service';
 
 @Module({
   controllers: [AuthController],

@@ -24,7 +24,6 @@ import type { Request, Response } from 'express';
 import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
-import { resolveCallbackUrl } from './callback-url.util';
 import {
   clearCookieValue,
   getCookieOptions,
@@ -32,13 +31,14 @@ import {
   getTransactionCookieName,
   readCookieValue,
   setCookieValue,
-} from './cookie-options';
+} from './cookies/cookie-options';
 import { AuthCallbackQueryDto } from './dto/auth-callback.query.dto';
 import { LoginQueryDto } from './dto/login-query.dto';
 import { ProviderIdParamDto } from './dto/provider-id-param.dto';
-import { ProviderRegistryService } from './provider-registry.service';
-import { SessionService } from './session.service';
-import type { SessionPayload, SessionUser } from './session.types';
+import { ProviderRegistryService } from './providers/provider-registry.service';
+import { SessionService } from './session/session.service';
+import type { SessionPayload, SessionUser } from './session/session.types';
+import { resolveCallbackUrl } from './utils/callback-url.util';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })

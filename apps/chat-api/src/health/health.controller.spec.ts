@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { RefreshService } from '../auth/refresh.service';
-import { SessionGuard } from '../auth/session.guard';
-import { SessionService } from '../auth/session.service';
+import { RefreshService } from '../auth/refresh/refresh.service';
+import { SessionGuard } from '../auth/session/session.guard';
+import { SessionService } from '../auth/session/session.service';
 import { HealthController } from './health.controller';
 
 // supertest is CJS; use require to avoid vite ESM interop issues

@@ -29,40 +29,40 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Shared types
 
-- [x] Create `libs/chat-shared/src/auth.types.ts`
+- [x] Create `libs/chat-shared/src/models/auth.types.ts`
   - Export `UserProfile { sub: string; providerId: string; claims: Record<string, unknown> }`
 
 ### Auth module scaffold
 
-> All files live directly under `apps/chat-api/src/auth/` (flat layout per `apps/chat-api/AGENTS.md` §1 — mirror of `apps/chat-api/src/themes/`). No `session/`, `providers/`, `refresh/`, `csrf/` sub-folders.
+> `auth.module.ts` and `auth.controller.ts` live at the domain root; implementation files are grouped by concern under `session/`, `providers/`, `keys/`, `refresh/`, `csrf/`, `cookies/`, and `utils/`. Tests live under `auth/tests/`, mirroring the source concern folders.
 
-- [x] Create `apps/chat-api/src/auth/provider.types.ts`
+- [x] Create `apps/chat-api/src/auth/providers/provider.types.ts`
   - Export `ProviderConfig` class with `class-validator` decorators on each field (id, issuer, clientId, clientSecret, scope, audience?, rolesClaim?, adminRoles?, postLogoutRedirectUri) so that `AUTH_PROVIDERS` JSON can be structurally validated, not just JSON-parsed
   - `id` MUST match `/^[a-z0-9][a-z0-9-]*$/` (allowlist — anti-injection in URL path segment)
 
-- [x] Create `apps/chat-api/src/auth/session.types.ts`
+- [x] Create `apps/chat-api/src/auth/session/session.types.ts`
   - Export `SessionPayload` (includes `csrf: string` field — random per-session token used by the double-submit CSRF guard in Slice 5; populated at login/refresh) and `SessionUser` interfaces
 
-- [x] Create `apps/chat-api/src/auth/express.d.ts`
+- [x] Create `apps/chat-api/src/auth/session/express.d.ts`
   - TypeScript module augmentation: `declare module 'express-serve-static-core' { interface Request { user?: SessionUser } }`
   - Without this the controller / guard will not type-check when accessing `request.user`
 
-- [x] Create `apps/chat-api/src/auth/keys.service.ts`
+- [x] Create `apps/chat-api/src/auth/keys/keys.service.ts`
   - Implement `KeysService` reading `AUTH_SESSION_SECRET` + `AUTH_SESSION_PREV_SECRET`
   - Validate key length (32 bytes from hex) in `onModuleInit`; throw on invalid
 
-- [x] Create `apps/chat-api/src/auth/session.service.ts`
+- [x] Create `apps/chat-api/src/auth/session/session.service.ts`
   - Implement `SessionService.encrypt(payload): Promise<string>` using `jose` `CompactEncrypt`, `alg: dir`, `enc: A256GCM`
   - Implement `SessionService.decrypt(token): Promise<SessionPayload>` — try active key, fallback to previous key
   - Throw `UnauthorizedException` on decryption failure
   - Implement `SessionService.decryptFromRequest(req): Promise<SessionPayload>` — reads cookie, delegates to `decrypt` (shared by the local guard in Slice 1 and the global guard in Slice 2)
 
-- [x] Create `apps/chat-api/src/auth/session.guard.ts` **scaffold only** for Slice 1
+- [x] Create `apps/chat-api/src/auth/session/session.guard.ts` **scaffold only** for Slice 1
   - Implement `CanActivate` minimal: read cookie → `SessionService.decryptFromRequest` → attach `SessionUser` to `request.user`
   - Throw `UnauthorizedException` on missing/invalid cookie
   - Used **locally** via `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` only (no `APP_GUARD` yet — that comes in Slice 2 together with refresh logic)
 
-- [x] Create `apps/chat-api/src/auth/provider-registry.service.ts`
+- [x] Create `apps/chat-api/src/auth/providers/provider-registry.service.ts`
   - Parse `AUTH_PROVIDERS` JSON in `onModuleInit`
   - Validate each entry against `ProviderConfig` using `plainToInstance` + `validateSync` — throw on missing/invalid fields (not just on malformed JSON)
   - Call `Issuer.discover(issuer)` for each provider; store `Client` instances
@@ -94,18 +94,18 @@ Implementation is split into five thin vertical slices. Each slice is independen
 
 ### Tests — Slice 1
 
-- [x] Create `apps/chat-api/src/auth/keys.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/tests/keys/keys.service.spec.ts`
   - Test: valid 64-char hex key is accepted
   - Test: invalid key length throws on module init
   - Test: previous key is optional
 
-- [x] Create `apps/chat-api/src/auth/session.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/tests/session/session.service.spec.ts`
   - Test: `encrypt` → `decrypt` round-trip returns original payload
   - Test: tampered ciphertext throws `UnauthorizedException`
   - Test: payload encrypted with previous key decrypts successfully
   - Test: payload encrypted with unknown key throws `UnauthorizedException`
 
-- [x] Create `apps/chat-api/src/auth/provider-registry.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/tests/providers/provider-registry.service.spec.ts`
   - Mock `Issuer.discover` to avoid network calls
   - Test: known provider id returns a `Client`
   - Test: unknown provider id throws `NotFoundException`
@@ -113,7 +113,7 @@ Implementation is split into five thin vertical slices. Each slice is independen
   - Test: `AUTH_PROVIDERS` with a structurally invalid entry (e.g. missing `clientSecret` or `issuer`) throws on init via `validateSync` — not on first `Issuer.discover` call
   - Test: provider id that violates the allowlist regex throws on init
 
-- [x] Create `apps/chat-api/src/auth/auth.controller.spec.ts` (integration with supertest)
+- [x] Create `apps/chat-api/src/auth/tests/auth.controller.spec.ts` (integration with supertest)
   - Test: `GET /api/v1/auth/providers` returns provider list
   - Test: `GET /api/v1/auth/login/keycloak` redirects to IdP URL and sets `__Host-chat.tx` cookie with `Path=/`, `HttpOnly`, `Secure`, `SameSite=Lax`
   - Test: `GET /api/v1/auth/login/unknown` returns 404
@@ -133,14 +133,14 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
   - Accept both absolute `http(s)` URLs and relative app paths at the DTO boundary; reject obviously invalid scalar values early
   - Keep the property name `callbackUrl` in Swagger/API docs to match the BFF login contract
 
-- [x] Add `apps/chat-api/src/auth/callback-url.util.ts`
+- [x] Add `apps/chat-api/src/auth/utils/callback-url.util.ts`
   - Export a resolver that receives the raw `callbackUrl`, `CORS_ORIGIN`, and `AUTH_CALLBACK_BASE_URL`
   - Resolve relative paths against the configured application origin (`CORS_ORIGIN` when it is a concrete URL)
   - Accept absolute URLs only when their origin is in the allow-list derived from `CORS_ORIGIN` plus `AUTH_CALLBACK_BASE_URL`
   - Reject protocol-relative URLs (`//example.com`), non-HTTP schemes, URLs with username/password credentials, malformed URLs, and off-origin URLs
   - Return a fully qualified safe URL for redirects
 
-- [x] Add `apps/chat-api/src/auth/callback-url.util.spec.ts`
+- [x] Add `apps/chat-api/src/auth/tests/utils/callback-url.util.spec.ts`
   - Test: missing `callbackUrl` resolves to the app root (`CORS_ORIGIN` origin when configured)
   - Test: relative `/conversation?x=1` resolves to the app origin
   - Test: absolute `http://localhost:4207/conversation` is accepted when `CORS_ORIGIN=http://localhost:4207`
@@ -153,7 +153,7 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
   - In `callback()`, read `callbackUrl` from the decrypted transaction payload and redirect to that exact validated URL after setting `__Host-chat.sess`
   - Remove `returnTo` handling from new code paths; do not emit or document `returnTo`
 
-- [x] Update `apps/chat-api/src/auth/auth.controller.spec.ts`
+- [x] Update `apps/chat-api/src/auth/tests/auth.controller.spec.ts`
   - Test: login with `?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation` returns 302 to IdP and later callback redirects to `http://localhost:4207/conversation`
   - Test: login with relative `?callbackUrl=%2Fconversation` later redirects to `http://localhost:4207/conversation`
   - Test: login without `callbackUrl` later redirects to the configured app root
@@ -191,7 +191,7 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### Session guard
 
-- [x] Extend `apps/chat-api/src/auth/session.guard.ts` (scaffolded in Slice 1)
+- [x] Extend `apps/chat-api/src/auth/session/session.guard.ts` (scaffolded in Slice 1)
   - Honour `isPublic` metadata — skip cookie check
   - If `at_exp < now + 60` call `RefreshService.refresh`
   - Set refreshed cookie on response if refresh occurred
@@ -202,7 +202,7 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### Refresh service
 
-- [x] Create `apps/chat-api/src/auth/refresh.service.ts`
+- [x] Create `apps/chat-api/src/auth/refresh/refresh.service.ts`
   - Implement `refresh(payload: SessionPayload): Promise<SessionPayload>`
   - Per-pod `Map<sid, Promise>` mutex to prevent concurrent refresh races
   - Call `client.refresh(rt)` from openid-client
@@ -211,14 +211,14 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### Tests — Slice 2
 
-- [x] Create `apps/chat-api/src/auth/session.guard.spec.ts`
+- [x] Create `apps/chat-api/src/auth/tests/session/session.guard.spec.ts`
   - Test: missing cookie → 401
   - Test: tampered cookie → 401
   - Test: valid cookie with non-expired `at` → passes through, `request.user` set
   - Test: valid cookie with near-expired `at` → calls `RefreshService.refresh`, sets new cookie
   - Test: public route → no cookie required
 
-- [x] Create `apps/chat-api/src/auth/refresh.service.spec.ts`
+- [x] Create `apps/chat-api/src/auth/tests/refresh/refresh.service.spec.ts`
   - Mock `openid-client` `client.refresh`
   - Test: successful refresh returns new `SessionPayload`
   - Test: `invalid_grant` throws `UnauthorizedException`
@@ -235,7 +235,7 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
   - The global `APP_GUARD` introduced in Slice 2 blocked `GET /api/themes` and `GET /api/themes/icon` with 401. Themes are fetched by the SPA before authentication and must remain public.
 - [x] Add `@Public()` to `apps/chat-api/src/health/health.controller.ts` (class-level)
   - Same root cause: health probes from load balancers / Kubernetes must never require a session.
-- [x] Add `APP_GUARD`-aware tests to `apps/chat-api/src/themes/theme.controller.spec.ts`
+- [x] Add `APP_GUARD`-aware tests to `apps/chat-api/src/themes/tests/theme.controller.spec.ts`
   - Test: `GET /themes` accessible without session (`@Public`)
   - Test: `GET /themes/icon` accessible without session (`@Public`)
 - [x] Create `apps/chat-api/src/health/health.controller.spec.ts`
@@ -301,7 +301,7 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### CSRF guard
 
-- [x] Create `apps/chat-api/src/auth/csrf.guard.ts`
+- [x] Create `apps/chat-api/src/auth/csrf/csrf.guard.ts`
   - Double-submit CSRF token pattern
   - Validate `Origin`/`Referer` against the configured same-origin application URL for state-mutating requests
   - Read `X-CSRF-Token` header; verify it matches the `csrf` field in the decrypted `SessionPayload` (field defined in Slice 1)
@@ -333,7 +333,7 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### Tests — Slice 5
 
-- [x] Create `apps/chat-api/src/auth/csrf.guard.spec.ts`
+- [x] Create `apps/chat-api/src/auth/tests/csrf/csrf.guard.spec.ts`
   - Test: missing `X-CSRF-Token` on POST → 403
   - Test: mismatched CSRF token → 403
   - Test: correct CSRF token → passes
@@ -367,6 +367,6 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 - [x] Update `docs/auth/auth-bff-encrypted-cookie.md`
   - Mark "Open Decisions" (section 9) with resolution for each decision taken
   - Update status from `Proposal` to `Implemented`
-  - Replace the `NestJS Module Layout (Proposed)` block in §6 with the **flat layout actually shipped** (no `session/`, `providers/`, `csrf/`, `refresh/` sub-folders — see `apps/chat-api/AGENTS.md` §1 and the rewritten `design.md` "Module Structure")
+  - Replace the `NestJS Module Layout (Proposed)` block in §6 with the grouped layout actually shipped (see `apps/chat-api/AGENTS.md` §1 and the rewritten `design.md` "Module Structure")
 
 - [x] Run full test suite and lint: `npm run test` + `npm exec nx affected --target=lint --base=origin/development`

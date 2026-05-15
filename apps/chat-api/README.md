@@ -44,9 +44,9 @@ Create a `.env.local` file in the project root:
 
 ```bash
 # Required
-AUTH_SESSION_SECRET=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:3005
-AUTH_PROVIDERS=[{"id":"demo","issuer":"https://demo.duendesoftware.com","clientId":"interactive.confidential","clientSecret":"secret","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
+AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
 
 # Optional
 PORT=3005
@@ -68,9 +68,9 @@ AUTH_COOKIE_SECURE=false
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `AUTH_SESSION_SECRET` | 32-byte session encryption key encoded as 64 hex chars | `001122...eeff` |
+| `AUTH_SESSION_SECRET` | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
 | `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs | `http://localhost:3005` |
-| `AUTH_PROVIDERS` | JSON array of OIDC provider configs | `[{"id":"demo",...}]` |
+| `AUTH_PROVIDERS` | JSON array of OIDC provider configs | `[{"id":"your-provider",...}]` |
 
 **Optional:**
 

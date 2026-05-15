@@ -147,32 +147,44 @@ Any pod can decrypt any cookie because all pods share the same active key + prev
 
 ## 6. NestJS Module Layout (Shipped)
 
-Follows the flat one-folder-per-domain layout mandated by `apps/chat-api/AGENTS.md` §1. All files are co-located under `auth/`; the only sub-folder is `dto/` for input-validation classes.
+The auth domain keeps its public NestJS entrypoints at `auth/` root and groups internal
+implementation by concern. Tests live under `auth/tests/`, mirroring the source concern folders.
 
 ```
 apps/chat-api/src/auth/
 ├── auth.module.ts                      # wires controllers + services; SessionGuard + CsrfGuard as APP_GUARDs
 ├── auth.controller.ts                  # /api/v1/auth/* endpoints
-├── auth.controller.spec.ts             # supertest integration
-├── session.service.ts                  # JWE encrypt/decrypt (jose A256GCM)
-├── session.service.spec.ts
-├── session.guard.ts                    # global APP_GUARD; isPublic skip, refresh on near-expiry
-├── session.guard.spec.ts
-├── keys.service.ts                     # active + previous keys from env (hex, validated on init)
-├── keys.service.spec.ts
-├── provider-registry.service.ts        # AUTH_PROVIDERS parse + struct-validate + Issuer.discover
-├── provider-registry.service.spec.ts
-├── refresh.service.ts                  # server-side token refresh + per-pod sid-keyed mutex
-├── refresh.service.spec.ts
-├── csrf.guard.ts                       # double-submit CSRF guard (Origin check + X-CSRF-Token header)
-├── csrf.guard.spec.ts
-├── session.types.ts                    # SessionPayload, SessionUser
-├── provider.types.ts                   # ProviderConfig with class-validator decorators
-├── express.d.ts                        # Request.user augmentation
-└── dto/
-    ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
-    ├── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description
-    └── login-query.dto.ts              # callbackUrl for app return after login
+├── cookies/
+│   └── cookie-options.ts               # cookie names, chunking, read/write helpers
+├── csrf/
+│   └── csrf.guard.ts                   # double-submit CSRF guard (Origin check + X-CSRF-Token header)
+├── dto/
+│   ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
+│   ├── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description
+│   └── login-query.dto.ts              # callbackUrl for app return after login
+├── keys/
+│   └── keys.service.ts                 # active + previous keys from env (hex, validated on init)
+├── providers/
+│   ├── provider-registry.service.ts    # AUTH_PROVIDERS parse + struct-validate + Issuer.discover
+│   └── provider.types.ts               # ProviderConfig with class-validator decorators
+├── refresh/
+│   └── refresh.service.ts              # server-side token refresh + per-pod sid-keyed mutex
+├── session/
+│   ├── express.d.ts                    # Request.user augmentation
+│   ├── session.guard.ts                # global APP_GUARD; isPublic skip, refresh on near-expiry
+│   ├── session.service.ts              # JWE encrypt/decrypt (jose A256GCM)
+│   └── session.types.ts                # SessionPayload, SessionUser
+├── tests/
+│   ├── auth.controller.spec.ts         # supertest integration
+│   ├── csrf/csrf.guard.spec.ts
+│   ├── keys/keys.service.spec.ts
+│   ├── providers/provider-registry.service.spec.ts
+│   ├── refresh/refresh.service.spec.ts
+│   ├── session/session.guard.spec.ts
+│   ├── session/session.service.spec.ts
+│   └── utils/callback-url.util.spec.ts
+└── utils/
+    └── callback-url.util.ts            # validates and normalizes callbackUrl
 ```
 
 Public endpoints:

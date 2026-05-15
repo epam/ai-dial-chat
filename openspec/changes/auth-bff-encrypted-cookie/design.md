@@ -8,31 +8,43 @@ The `AuthModule` turns `apps/chat-api` into a confidential OIDC client. It perfo
 
 ## Module Structure
 
-Follows the flat one-folder-per-domain layout mandated by `apps/chat-api/AGENTS.md` §1 and mirrored on the only existing reference implementation in the repo (`apps/chat-api/src/themes/`). All files inside `auth/` are co-located and prefixed by their concern; tests sit next to source; the only sub-folder is `dto/` for input validation classes.
+The auth domain keeps its public NestJS entrypoints at `auth/` root and groups internal
+implementation by concern. Tests live under `auth/tests/`, mirroring the source concern folders.
 
 ```
 apps/chat-api/src/auth/
 ├── auth.module.ts                      # Wires controllers + services; promotes SessionGuard to APP_GUARD in Slice 2
 ├── auth.controller.ts                  # /api/v1/auth/* endpoints
-├── auth.controller.spec.ts             # Supertest integration
-├── session.service.ts                  # JWE encrypt/decrypt (jose) + decryptFromRequest()
-├── session.service.spec.ts
-├── session.guard.ts                    # Slice 1: local @UseGuards on /auth/me. Slice 2: APP_GUARD + refresh
-├── session.guard.spec.ts
-├── keys.service.ts                     # Active + previous keys (hex from env), validated on OnModuleInit
-├── keys.service.spec.ts
-├── provider-registry.service.ts        # AUTH_PROVIDERS parse + structural validate + Issuer.discover
-├── provider-registry.service.spec.ts
-├── refresh.service.ts                  # Slice 2: server-side token refresh + per-pod sid-keyed mutex
-├── refresh.service.spec.ts
-├── csrf.guard.ts                       # Slice 5: double-submit CSRF guard (reads SessionPayload.csrf)
-├── csrf.guard.spec.ts
-├── session.types.ts                    # SessionPayload, SessionUser
-├── provider.types.ts                   # ProviderConfig (class with class-validator decorators)
-├── express.d.ts                        # Request.user augmentation for express-serve-static-core
-└── dto/
-    ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
-    └── auth-callback.query.dto.ts      # code, state from IdP callback
+├── cookies/
+│   └── cookie-options.ts               # Cookie names, chunking, read/write helpers
+├── csrf/
+│   └── csrf.guard.ts                   # Slice 5: double-submit CSRF guard (reads SessionPayload.csrf)
+├── dto/
+│   ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
+│   └── auth-callback.query.dto.ts      # code, state from IdP callback
+├── keys/
+│   └── keys.service.ts                 # Active + previous keys (hex from env), validated on OnModuleInit
+├── providers/
+│   ├── provider-registry.service.ts    # AUTH_PROVIDERS parse + structural validate + Issuer.discover
+│   └── provider.types.ts               # ProviderConfig (class with class-validator decorators)
+├── refresh/
+│   └── refresh.service.ts              # Slice 2: server-side token refresh + per-pod sid-keyed mutex
+├── session/
+│   ├── express.d.ts                    # Request.user augmentation for express-serve-static-core
+│   ├── session.guard.ts                # Slice 1: local @UseGuards on /auth/me. Slice 2: APP_GUARD + refresh
+│   ├── session.service.ts              # JWE encrypt/decrypt (jose) + decryptFromRequest()
+│   └── session.types.ts                # SessionPayload, SessionUser
+├── tests/
+│   ├── auth.controller.spec.ts         # Supertest integration
+│   ├── csrf/csrf.guard.spec.ts
+│   ├── keys/keys.service.spec.ts
+│   ├── providers/provider-registry.service.spec.ts
+│   ├── refresh/refresh.service.spec.ts
+│   ├── session/session.guard.spec.ts
+│   ├── session/session.service.spec.ts
+│   └── utils/callback-url.util.spec.ts
+└── utils/
+    └── callback-url.util.ts            # Validates and normalizes callbackUrl
 ```
 
 The reusable `@Public()` decorator lives at `apps/chat-api/src/common/decorators/public.decorator.ts` per `AGENTS.md` §1 (cross-cutting concerns go to `common/`, not into a specific domain).
@@ -82,7 +94,7 @@ interface ProviderConfig {
 
 ## Data Types
 
-### `SessionPayload` (cookie plaintext, in `apps/chat-api/src/auth/session.types.ts`)
+### `SessionPayload` (cookie plaintext, in `apps/chat-api/src/auth/session/session.types.ts`)
 
 ```ts
 interface SessionPayload {
@@ -254,7 +266,7 @@ Returns the current user's profile — no tokens.
 
 ---
 
-## Session Guard (`apps/chat-api/src/auth/session.guard.ts`)
+## Session Guard (`apps/chat-api/src/auth/session/session.guard.ts`)
 
 Implements `CanActivate`. Applied **locally** via `@UseGuards(SessionGuard)` on `GET /api/v1/auth/me` in Slice 1, then promoted to global `APP_GUARD` in Slice 2 (when refresh logic is added).
 
@@ -274,7 +286,7 @@ Steps 1 and 4 are no-ops in Slice 1 (no public-metadata short-circuit, no refres
 
 ### TypeScript: `request.user` augmentation
 
-Express's `Request` type does not declare a `user` property. `apps/chat-api/src/auth/express.d.ts` augments it so guards and controllers can read/write `request.user: SessionUser` without `as any` casts:
+Express's `Request` type does not declare a `user` property. `apps/chat-api/src/auth/session/express.d.ts` augments it so guards and controllers can read/write `request.user: SessionUser` without `as any` casts:
 
 ```ts
 import type { SessionUser } from './session.types';
@@ -287,7 +299,7 @@ declare module 'express-serve-static-core' {
 
 ---
 
-## Session Service (`apps/chat-api/src/auth/session.service.ts`)
+## Session Service (`apps/chat-api/src/auth/session/session.service.ts`)
 
 Wraps `jose` `CompactEncrypt` / `compactDecrypt`.
 
@@ -304,7 +316,7 @@ class SessionService {
 
 ---
 
-## Keys Service (`apps/chat-api/src/auth/keys.service.ts`)
+## Keys Service (`apps/chat-api/src/auth/keys/keys.service.ts`)
 
 ```ts
 class KeysService {
@@ -317,7 +329,7 @@ Reads `AUTH_SESSION_SECRET` and `AUTH_SESSION_PREV_SECRET` from `ConfigService`.
 
 ---
 
-## Provider Registry Service (`apps/chat-api/src/auth/provider-registry.service.ts`)
+## Provider Registry Service (`apps/chat-api/src/auth/providers/provider-registry.service.ts`)
 
 ```ts
 class ProviderRegistryService implements OnModuleInit {
@@ -331,7 +343,7 @@ Uses `openid-client`'s `Issuer.discover(issuer)` to fetch `.well-known/openid-co
 
 ---
 
-## Refresh Service (`apps/chat-api/src/auth/refresh.service.ts`)
+## Refresh Service (`apps/chat-api/src/auth/refresh/refresh.service.ts`)
 
 ```ts
 class RefreshService {
@@ -393,7 +405,7 @@ Minimal changes required:
 
 > The Slice 1 backend deliverable does **not** include the SPA bootstrap. Frontend wiring is sequenced into Slice 2 (alongside the global guard so a missing-session redirect path actually exists) and Slice 5 (CSRF header). Slice 1 is smoke-tested via DevTools / curl.
 
-New type in `libs/chat-shared/src/auth.types.ts`:
+New type in `libs/chat-shared/src/models/auth.types.ts`:
 
 ```ts
 export interface UserProfile {

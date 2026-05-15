@@ -44,7 +44,7 @@ The frontend conventions to follow are codified in `openspec/config.yaml` and ex
 
 ### D1 — State ownership: a new `UserContext`, mirroring `ThemeContext`
 
-A new `UserContext` lives at `apps/chat/src/context/UserContext.tsx` and follows the exact pattern of `apps/chat/src/context/ThemeContext.tsx`:
+A new `UserContext` lives at `apps/chat/src/context/auth/UserContext.tsx` and follows the exact pattern of `apps/chat/src/context/ThemeContext.tsx`:
 
 - `createContext<UserContextType | undefined>(undefined)`.
 - Provider performs the bootstrap fetch inside `useEffect` with a `cancelled` flag.
@@ -64,7 +64,7 @@ interface UserContextType {
 }
 ```
 
-`UserProfile` is the shared interface already exported from `libs/chat-shared/src/auth.types.ts` — no new shared types are introduced.
+`UserProfile` is the shared interface already exported from `libs/chat-shared/src/models/auth.types.ts` — no new shared types are introduced.
 
 *Alternatives considered:*
 
@@ -99,7 +99,7 @@ Rationale:
 
 ### D3 — Unauthenticated redirect policy
 
-`apps/chat/src/hooks/useAuthRedirect.ts` is a new hook that consumes `useUser()` and, outside `/login`, the `GET /api/v1/auth/providers` response. It centralises the redirect rule for protected routes while leaving the `/login` page as the owner of provider-list rendering:
+`apps/chat/src/hooks/auth/useAuthRedirect.ts` is a new hook that consumes `useUser()` and, outside `/login`, the `GET /api/v1/auth/providers` response. It centralises the redirect rule for protected routes while leaving the `/login` page as the owner of provider-list rendering:
 
 - Before any unauthenticated redirect, compute `callbackUrl` from the current browser URL (`window.location.href`) so the BFF can return the user to the same SPA origin and page after authentication. This must include pathname, search, and hash.
 - If `status === 'unauthenticated'` **and** the providers list has length `1`: `window.location.assign('/api/v1/auth/login/<id>?callbackUrl=<encoded-current-url>')`. This is a real browser navigation, not React Router — the next response is a `302` from the BFF and must replace the document.
@@ -178,7 +178,7 @@ This means the Sign-out button is wired in this change, but successful logout de
 
 ### D6 — Provider picker page: lazy-loaded route at `/login`
 
-`apps/chat/src/pages/Login.tsx` (a new folder, mirroring how the codebase already structures the conversation page) is a small functional component:
+`apps/chat/src/pages/auth/Login.tsx` is a small functional component inside the auth domain's `pages/` concern:
 
 1. Calls `get<ProviderInfo[]>(ApiEndpoints.AUTH_PROVIDERS)` once on mount.
 2. Reads `callbackUrl` from the route query string. If absent, defaults to the current app root (`window.location.origin + '/'`). The page does not accept or rewrite off-origin values; backend validation remains authoritative.
@@ -195,7 +195,7 @@ The page is `React.lazy`-imported in `main.tsx` to keep the unauthenticated bund
 - `status === 'authenticated'`: avatar / initial circle from `claims.email` + dropdown with "Signed in as <email>" + a "Sign out" button (the form from D5).
 - `status === 'unauthenticated' | 'loading'`: nothing (the gate from D3 already redirected).
 
-`<UserMenu />` lives at `apps/chat/src/components/Header/UserMenu.tsx` next to `Logo.tsx`. The icon comes from `@tabler/icons-react` per the project rule "use @tabler/icons-react for all icons".
+`<UserMenu />` lives at `apps/chat/src/components/auth/UserMenu.tsx`; `Header` imports the auth-owned widget from there. The icon comes from `@tabler/icons-react` per the project rule "use @tabler/icons-react for all icons".
 
 ### D8 — Loading state: render `null`, not a splash
 

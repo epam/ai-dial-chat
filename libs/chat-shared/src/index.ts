@@ -1,2 +1,2 @@
 export * from './models/theme.js';
-export * from './auth.types.js';
+export * from './models/auth.types.js';
