@@ -3,7 +3,7 @@ import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
-import RequireAuth from './components/auth/RequireAuth';
+import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';

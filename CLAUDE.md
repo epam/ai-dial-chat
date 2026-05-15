@@ -49,3 +49,4 @@ Default behavior:
 ## Local coding conventions
 
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
+- Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.

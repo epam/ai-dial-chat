@@ -25,21 +25,21 @@ Rules:
 - Keep the top-level React concern folders (`components/`, `context/`,
   `hooks/`, `pages/`, `utils/`) and create domain subfolders inside them when a
   feature needs ownership, e.g. `pages/auth/`, `context/auth/`, `hooks/auth/`,
-  and `components/auth/`.
+  and `components/User/`.
 - Keep cross-domain shared code directly in the top-level folders only when it
   is not owned by a single feature domain.
 - Tests are co-located with the source folder they cover. When a folder has a
   single spec, keep it next to the source file; when a folder would contain
   more than one spec, put those specs under that folder's `tests/` subfolder.
-  Example: `components/auth/tests/UserMenu.spec.tsx` and
-  `components/auth/tests/RequireAuth.spec.tsx`.
+  Example: `components/RequireAuth/tests/UserMenu.spec.tsx` and
+  `components/RequireAuth/tests/RequireAuth.spec.tsx`.
 - Shared test mocks belong in `src/test-setup.ts` and are wired through
   `vite.config.mts` `test.setupFiles`. Do not duplicate global framework mocks
   such as `react-i18next` in individual specs.
 - Auth UI and logic live in auth subfolders inside the relevant concern folder:
-  `components/auth/`, `context/auth/`, `hooks/auth/`, and `pages/auth/`.
+  `components/RequireAuth/`, `context/auth/`, `hooks/auth/`, and `pages/auth/`.
 - Header may render auth-owned widgets by importing from
-  `src/components/auth/`; the widget implementation still belongs to the auth
+  `src/components/RequireAuth/`; the widget implementation still belongs to the auth
   concern.
 
 ## 2. Routing and API Boundaries

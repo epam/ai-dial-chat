@@ -68,7 +68,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - If two or more providers and status is `'unauthenticated'` and current pathname is **not** `/login`: `navigate('/login?callbackUrl=' + encodeURIComponent(callbackUrl), { replace: true })`.
   - If `status === 'authenticated'` and current pathname is `/login`: navigate to the same-origin `callbackUrl` query parameter's path/search/hash when present, otherwise `navigate('/', { replace: true })`.
   - Returns `void`.
-- [x] 4.2 Create `apps/chat/src/components/auth/RequireAuth.tsx`. It is a functional component with prop `children: ReactNode` that:
+- [x] 4.2 Create `apps/chat/src/components/RequireAuth/RequireAuth.tsx`. It is a functional component with prop `children: ReactNode` that:
   - Calls `useUser()` and `useAuthRedirect()`.
   - Returns `null` when `status === 'loading'` or `status === 'unauthenticated'`.
   - Returns `<>{children}</>` only when `status === 'authenticated'`.
@@ -84,7 +84,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 4.5.d `navigate('<callback-path>', { replace: true })` is called when `status='authenticated'`, pathname is `/login`, and a same-origin `callbackUrl` query parameter exists; otherwise `navigate('/', { replace: true })`.
   - 4.5.e No provider-list fetch or unauthenticated redirect happens on `/login`; `LoginPage` owns provider loading there.
   - 4.5.f No redirect loop: re-rendering after the assign/navigate does not trigger a second call.
-- [x] 4.6 Add `apps/chat/src/components/auth/tests/RequireAuth.spec.tsx`. Cover:
+- [x] 4.6 Add `apps/chat/src/components/RequireAuth/tests/RequireAuth.spec.tsx`. Cover:
   - 4.6.a Renders `null` when `status='loading'`.
   - 4.6.b Renders `null` when `status='unauthenticated'` (and `useAuthRedirect` is invoked — assert via a spy on its module export, or by asserting the side-effect from 4.5.a).
   - 4.6.c Renders children (resolved by role/text) when `status='authenticated'`.
@@ -111,7 +111,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
 
 ## 6. Slice 6 — UserMenu widget in Header
 
-- [x] 6.1 Create `apps/chat/src/components/auth/UserMenu.tsx`. Wrap with `React.memo` and export as a named export plus default of the same name. The component:
+- [x] 6.1 Create `apps/chat/src/components/Header/UserMenu.tsx`. Wrap with `React.memo` and export as a named export plus default of the same name. The component:
   - Calls `useUser()`.
   - Returns `null` when `status !== 'authenticated'`.
   - Otherwise renders a `<button>` (accessible name: `t('auth.signedInAs', { email })`) that toggles a dropdown panel.
@@ -119,7 +119,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - Icon for the trigger button uses `@tabler/icons-react` (e.g. `IconUserCircle`).
   - All layout via Tailwind utilities; no inline styles. Use `clsx` for any conditional classes.
 - [x] 6.2 Update `apps/chat/src/components/Header/Header.tsx` to render `<UserMenu />` on the right side of the existing flex container. Adjust the `<header>` Tailwind classes minimally to accommodate the new child without regressing the existing centred `<Logo />` alignment.
-- [x] 6.3 Add `apps/chat/src/components/auth/tests/UserMenu.spec.tsx`. Cover:
+- [x] 6.3 Add `apps/chat/src/components/Header/tests/UserMenu.spec.tsx`. Cover:
   - 6.3.a Returns `null` when `status='loading'`.
   - 6.3.b Returns `null` when `status='unauthenticated'`.
   - 6.3.c When authenticated with `claims.email = 'u@x.io'`, the trigger button is resolvable by `getByRole('button', { name: /u@x\.io/ })`.

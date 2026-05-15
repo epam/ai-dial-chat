@@ -195,7 +195,7 @@ The page is `React.lazy`-imported in `main.tsx` to keep the unauthenticated bund
 - `status === 'authenticated'`: avatar / initial circle from `claims.email` + dropdown with "Signed in as <email>" + a "Sign out" button (the form from D5).
 - `status === 'unauthenticated' | 'loading'`: nothing (the gate from D3 already redirected).
 
-`<UserMenu />` lives at `apps/chat/src/components/auth/UserMenu.tsx`; `Header` imports the auth-owned widget from there. The icon comes from `@tabler/icons-react` per the project rule "use @tabler/icons-react for all icons".
+`<UserMenu />` lives at `apps/chat/src/components/Header/UserMenu.tsx`; `Header` imports the auth-owned widget from there. The icon comes from `@tabler/icons-react` per the project rule "use @tabler/icons-react for all icons".
 
 ### D8 — Loading state: render `null`, not a splash
 

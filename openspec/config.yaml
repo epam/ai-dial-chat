@@ -59,7 +59,8 @@ context: |
     - useFavicon.ts is the reference pattern: JSDoc, AbortController/cleanup in useEffect,
       cancelled flag for async operations
   - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
-    - Each component in its own folder with co-located .test.tsx and index.ts barrel
+    - Folder name must be PascalCase and match the component name exactly (e.g. RequireAuth/RequireAuth.tsx)
+    - Tests go in a tests/ subfolder inside the component folder (e.g. RequireAuth/tests/RequireAuth.spec.tsx)
   - API: apps/chat/src/server-api/ — typed fetch helpers and endpoint constants
   - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
 
@@ -155,8 +156,9 @@ rules:
       conventions of that project
     - Require unit tests for all new hooks, utilities, and services as a dedicated task
     - Require integration tests (supertest) for all new NestJS controllers as a dedicated task
-    - Tests co-locate with source: ComponentName.test.tsx next to ComponentName.tsx,
-      feature.controller.spec.ts next to feature.controller.ts
+    - Tests co-locate with source: frontend components use a tests/ subfolder
+      (ComponentName/tests/ComponentName.spec.tsx); backend specs sit next to the source file
+      (feature.controller.spec.ts next to feature.controller.ts)
     - Test names describe observable behaviour — not implementation details
     - Do not use data-testid attributes in tests — use role, label, and text queries
     - Do not add manual testing tasks
