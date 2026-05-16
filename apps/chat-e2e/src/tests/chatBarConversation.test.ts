@@ -294,14 +294,17 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
-    // Use a name well over any possible limit (300 chars) with spaces in the
-    // middle and a trailing dot to verify spaces are preserved and the dot is
-    // dropped after truncation.
+    // Build a name well over the segment byte limit (SEGMENT_LIMIT = 255).
+    // Even for the shortest possible model prefix ("" + "__" = 2 bytes),
+    // the name portion is at most 253 bytes, so 304 ASCII chars always
+    // exceeds the limit.  The trailing dot is therefore always truncated,
+    // proving the system strips the dot when cutting to the byte boundary,
+    // and spaces in the middle survive because they fall before the cut point.
     const midSpaces = ' '.repeat(3);
     const newLongNameWithMiddleSpacesEndDot =
-      GeneratorUtil.randomString(100) +
+      GeneratorUtil.randomString(150) +
       midSpaces +
-      GeneratorUtil.randomString(100) +
+      GeneratorUtil.randomString(150) +
       '.';
     await localStorageManager.setShowSideBarPanels();
 
@@ -1531,10 +1534,6 @@ const testRequestMap = new Map([
     'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  [
-    longRequest,
-    longRequest.substring(0, ExpectedConstants.maxEntityNameLength),
-  ],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(
@@ -1578,6 +1577,55 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
     },
   );
 }
+
+dialTest(
+  'The first 255 bytes (UTF-8) from the first message is used as chat name for long messages',
+  async ({
+    dialHomePage,
+    sendMessage,
+    chatMessages,
+    setTestIds,
+    localStorageManager,
+    baseAssertion,
+    conversationAssertion,
+  }) => {
+    setTestIds('EPMRTC-2961');
+
+    await dialTest.step(
+      'Send long request and verify the name is truncated to available bytes',
+      async () => {
+        // The conversation storage segment key is "{encodeModelId(model.id)}__{name}".
+        // For ASCII model IDs that contain no "__", encodeModelId is identity,
+        // so the available bytes for the name = SEGMENT_LIMIT - len(model.id) - 2.
+        const model = ModelsUtil.getDefaultAgent()!;
+        const modelApiPrefix = `${model.id}__`;
+        const availableBytes =
+          ExpectedConstants.maxEntityNameLength - modelApiPrefix.length;
+        const expectedConversationName = longRequest.substring(
+          0,
+          availableBytes,
+        );
+
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.send(longRequest);
+
+        await conversationAssertion.assertEntityState(
+          { name: expectedConversationName },
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          chatMessages.getChatMessage(1),
+          longRequest,
+        );
+      },
+    );
+  },
+);
 
 dialTest(
   'Chat name: restricted special characters are removed from chat name if to name automatically via updating the 1st message',

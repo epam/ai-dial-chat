@@ -537,11 +537,30 @@ export const getStorageSafeUniqueName = (params: {
   const resolvedBaseName =
     prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
 
-  // When no desired name is given (new entity), start from 1 so the result is
-  // always "Name 1", "Name 2", ... — matching the behaviour E2E tests expect!
   // When a desired name is provided (rename/copy), start from 0 so the name
   // itself is tried first before appending a suffix.
-  const startIndex = desiredName !== undefined ? 0 : 1;
+  // When no desired name is given (new entity), use max-based numeration:
+  // find the highest existing "{baseName} N" suffix and start from N+1.
+  // This matches the historical behaviour E2E tests expect — renamed or
+  // deleted entities are not counted, and numeration always continues from
+  // the current maximum rather than filling gaps.
+  let startIndex: number;
+  if (desiredName !== undefined) {
+    startIndex = 0;
+  } else {
+    const prefix = `${resolvedBaseName} `;
+    let maxSuffix = 0;
+    for (const name of existingNames) {
+      if (name.startsWith(prefix)) {
+        const rest = name.slice(prefix.length);
+        if (/^\d+$/.test(rest)) {
+          const n = parseInt(rest, 10);
+          if (n > maxSuffix) maxSuffix = n;
+        }
+      }
+    }
+    startIndex = maxSuffix + 1;
+  }
 
   for (let index = startIndex; index <= maxNumeration; index++) {
     const suffix = index === 0 ? '' : ` ${index}`;
