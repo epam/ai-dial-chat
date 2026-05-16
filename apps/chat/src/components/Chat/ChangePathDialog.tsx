@@ -20,6 +20,7 @@ import {
   ConversationsSelectors,
   FilesSelectors,
   PromptsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
@@ -88,6 +89,10 @@ export const ChangePathDialog = ({
   const applicationPublicFolders = useAppSelector(
     ApplicationSelectors.selectPublicFolders,
   );
+  const filesPublicFolders = useAppSelector(FilesSelectors.selectPublicFolders);
+  const toolsetPublicFolders = useAppSelector(
+    ToolsetSelectors.selectPublicFolders,
+  );
 
   const additionalOrganizationFolders = useMemo(
     () =>
@@ -96,10 +101,18 @@ export const ChangePathDialog = ({
           ...conversationPublicFolders,
           ...promptPublicFolders,
           ...applicationPublicFolders,
+          ...filesPublicFolders,
+          ...toolsetPublicFolders,
         ].map(remapPublicFolderToFilesNamespace),
         'id',
       ),
-    [conversationPublicFolders, promptPublicFolders, applicationPublicFolders],
+    [
+      conversationPublicFolders,
+      promptPublicFolders,
+      applicationPublicFolders,
+      filesPublicFolders,
+      toolsetPublicFolders,
+    ],
   );
 
   const {
