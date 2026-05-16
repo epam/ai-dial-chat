@@ -79,19 +79,23 @@ function RenameConversationView({
       )
     ) {
       dispatch(
-        UIActions.showErrorToast(
-          t(ChatI18nKeys.ConversationNameExistsInFolder, {
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.ConversationNameExistsInFolder, {
             ns: Translation.Chat,
             newName,
           }),
-        ),
+        }),
       );
 
       return;
     }
 
     if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(UIActions.showErrorToast(t(ChatI18nKeys.DotAtEndNotPermitted)));
+      dispatch(
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.DotAtEndNotPermitted),
+        }),
+      );
       return;
     }
 

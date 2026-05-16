@@ -156,9 +156,13 @@ export const uiSlice = createSlice({
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;
+        traceId?: string;
       }>,
     ) => state,
-    showErrorToast: (state, _action: PayloadAction<string>) => state,
+    showErrorToast: (
+      state,
+      _action: PayloadAction<{ message: string; traceId?: string }>,
+    ) => state,
     showWarningToast: (state, _action: PayloadAction<string>) => state,
     showInfoToast: (state, _action: PayloadAction<string>) => state,
     showSuccessToast: (state, _action: PayloadAction<string>) => state,

@@ -6,6 +6,7 @@ import {
   getQuickApp2Config,
   getQuickAppItemNameFromConfig,
   isQuickApp2,
+  migrateMCPToolsetIdName,
 } from '@/src/utils/app/application';
 import { isApplicationId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -28,11 +29,16 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
+import {
+  DialMarkdownEditor,
+  EditorThemes,
+} from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 import { DocumentField } from './DocumentField';
@@ -54,6 +60,7 @@ const ReviewQuickApp2SectionView = ({
   const isCodeInterpreterEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
@@ -85,7 +92,9 @@ const ReviewQuickApp2SectionView = ({
           } else if (isMcpToolset(toolset)) {
             acc.toolsets.push({
               ...toolset,
-              name: getQuickAppItemNameFromConfig(toolset),
+              name: getQuickAppItemNameFromConfig(
+                migrateMCPToolsetIdName(toolset),
+              ),
             });
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
@@ -109,17 +118,18 @@ const ReviewQuickApp2SectionView = ({
     [config.tool_sets, modelsMap],
   );
 
-  const orchestratorModel = modelsMap[config.orchestrator.deployment.name];
+  const orchestratorModel =
+    modelsMap[config.orchestrator.deployment.deployment_id];
   const orchestratorName = orchestratorModel
     ? orchestratorModel.name
-    : !isApplicationId(config.orchestrator.deployment.name)
+    : !isApplicationId(config.orchestrator.deployment.deployment_id)
       ? ApiUtils.decodeApiUrl(
           parseEntityApiKey(
-            splitEntityId(config.orchestrator.deployment.name).name,
+            splitEntityId(config.orchestrator.deployment.deployment_id).name,
             { parseVersion: true },
           ).name,
         )
-      : config.orchestrator.deployment.name;
+      : config.orchestrator.deployment.deployment_id;
   const hasToolsets = toolsets.length > 0 || unknownToolsets.length > 0;
 
   return (
@@ -158,8 +168,17 @@ const ReviewQuickApp2SectionView = ({
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Instructions)}
-        value={config.orchestrator.system_prompt.content}
         valueClassName="grow break-all text-primary"
+        value={
+          <DialMarkdownEditor
+            value={config.orchestrator.system_prompt.content}
+            height={200}
+            theme={theme as EditorThemes}
+            preview="preview"
+            commands={[]}
+            className="rounded-[5px] border border-b-hover"
+          />
+        }
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Agents)}
@@ -188,7 +207,7 @@ const ReviewQuickApp2SectionView = ({
           hasToolsets ? (
             <div className="flex flex-wrap gap-2 text-primary">
               {toolsets.map((toolset) => {
-                const decodedId = ApiUtils.decodeApiUrl(toolset.dial_id);
+                const decodedId = ApiUtils.decodeApiUrl(toolset.deployment_id);
                 return (
                   <AgentAndToolsetChip
                     key={decodedId}

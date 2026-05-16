@@ -79,7 +79,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
         <div className="flex w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
             tooltip={displayPublishToUrl}
-            triggerClassName="truncate whitespace-pre"
+            triggerClassName="truncate whitespace-pre flex items-center"
             contentClassName="break-all"
             dataQa="path"
           >

@@ -593,8 +593,8 @@ export const ChatInputMessage = Inversify.register(
     );
 
     const isMicHidden = useMemo(
-      () => isPlayback || isReplay || !canRecordAudio,
-      [isPlayback, isReplay, canRecordAudio],
+      () => isPlayback || isReplay || !canRecordAudio || isMessageError,
+      [isPlayback, isReplay, canRecordAudio, isMessageError],
     );
 
     useEffect(() => {
