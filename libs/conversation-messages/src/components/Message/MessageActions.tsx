@@ -1,4 +1,5 @@
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/chat-shared';
 import {
   IconCopy,
   IconMarkdown,
@@ -8,7 +9,6 @@ import {
   IconThumbUp,
   IconTrash,
 } from '@tabler/icons-react';
-import classNames from 'classnames';
 import { FC } from 'react';
 
 export type MessageSource = 'User' | 'Agent';
@@ -40,7 +40,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
 }) => {
   return (
     <div
-      className={classNames(
+      className={mergeClasses(
         'flex gap-1 opacity-0 group-hover:opacity-100',
         className,
       )}

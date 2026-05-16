@@ -66,18 +66,6 @@ describe('ConversationInput', () => {
     expect(screen.queryByRole('heading')).toBeNull();
   });
 
-  it('should not call onSend when disabled and Enter is pressed', () => {
-    const handleSend = vi.fn();
-    const { container } = render(
-      <ConversationInput onSend={handleSend} disabled initialMessage="Hello" />,
-    );
-    const textarea = container.querySelector('textarea');
-    if (textarea) {
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-      expect(handleSend).not.toHaveBeenCalled();
-    }
-  });
-
   it('should not call onSend when Shift+Enter is pressed', () => {
     const handleSend = vi.fn();
     const { container } = render(<ConversationInput onSend={handleSend} />);

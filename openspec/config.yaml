@@ -131,7 +131,7 @@ rules:
     - Name handler functions with the handle prefix in React components
       (e.g. handleSend, handleScroll, handleKeyDown)
     - Use semantic HTML elements (button, nav, main, section) before div/span
-    - Apply ARIA attributes for dynamic content: role="log" + aria-live="polite" for chat
+    - Apply ARIA attributes for dynamic content — role="log" + aria-live="polite" for chat
       messages, role="alert" for errors
 
   specs:
@@ -141,25 +141,25 @@ rules:
       request body, response body, error codes including 4xx and 5xx)
     - Include i18n key names for all new user-visible strings
     - Flag any memoisation requirements (useMemo, useCallback, React.memo)
-    - Define accessibility requirements: keyboard navigation, ARIA roles/labels
+    - Define accessibility requirements — keyboard navigation, ARIA roles/labels
     - Specify rate limiting requirements for new NestJS endpoints (per-route @Throttle
       when stricter than the global default)
     - Include cache TTL and invalidation strategy for new cached data
-      (cache key naming: <domain>:<resource>[:<param>])
+      (cache key naming — <domain>:<resource>[:<param>])
 
   tasks:
     - Reference specific file paths — never vague descriptions like "update the service"
     - Follow the file location conventions:
-      - Frontend: context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
+      - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
         API helpers in apps/chat/src/server-api/
-      - Backend: domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
+      - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
         see apps/chat-api/AGENTS.md §1 for the full layout
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
       AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
       conventions of that project
     - Require unit tests for all new hooks, utilities, and services as a dedicated task
     - Require integration tests (supertest) for all new NestJS controllers as a dedicated task
-    - Tests co-locate with source: frontend components use a tests/ subfolder
+    - Tests co-locate with source — frontend components use a tests/ subfolder
       (ComponentName/tests/ComponentName.spec.tsx); backend specs sit next to the source file
       (feature.controller.spec.ts next to feature.controller.ts)
     - Test names describe observable behaviour — not implementation details

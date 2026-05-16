@@ -64,7 +64,7 @@ const ConversationView: FC<Props> = ({
         aria-label="Conversation messages"
         aria-live="polite"
         aria-relevant="additions"
-        className="relative flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-8"
+        className="relative flex flex-1 flex-col justify-between gap-6 overflow-y-auto px-4 py-8"
       >
         {messages.map((msg) => (
           <MessageBubble key={msg.id} text={msg.content} />
@@ -119,11 +119,7 @@ const ConversationView: FC<Props> = ({
           </button>
         )}
       </div>
-      <div
-        className="border-gray-200 bg-white border-t py-4 dark:border-[#565869] dark:bg-[#212121]"
-        role="region"
-        aria-label="Message input"
-      >
+      <div role="region" aria-label="Message input">
         <ConversationInput onSend={onSend} placeholder={placeholder} />
       </div>
     </>

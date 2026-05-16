@@ -16,6 +16,8 @@
     }
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "classnames": "2.5.1",
+    "tailwind-merge": "^3.6.0"
   }
 }
