@@ -9,6 +9,7 @@ import {
   formatFileSize,
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
+  isAllowedMimeType,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
 
@@ -37,6 +38,7 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  DialFileNodeType,
   DialLoader,
   DialPrimaryButton,
   FileManagerGridRow,
@@ -115,6 +117,11 @@ export const FileManagerModal = memo(
       [dispatch, onClose],
     );
 
+    const isHiddenPath = useCallback(
+      (id: string) => id.split('/').some((segment) => segment.startsWith('.')),
+      [],
+    );
+
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
         const prev = prevSelectionRef.current;
@@ -123,9 +130,14 @@ export const FileManagerModal = memo(
         const added = [...next].filter((id) => !prev.has(id));
         const removed = [...prev].filter((id) => !next.has(id));
 
-        prevSelectionRef.current = next;
+        const filteredNext = new Set(
+          [...next].filter((id) => !isHiddenPath(id)),
+        );
+        prevSelectionRef.current = filteredNext;
 
         for (const id of added) {
+          if (isHiddenPath(id)) continue;
+
           if (folderPaths.has(id)) {
             dispatch(
               FilesActions.addChosenFolder({
@@ -145,7 +157,7 @@ export const FileManagerModal = memo(
           }
         }
       },
-      [dispatch, folderPaths],
+      [dispatch, folderPaths, isHiddenPath],
     );
 
     const allowedTypesArray = useMemo(
@@ -325,7 +337,6 @@ export const FileManagerModal = memo(
       treeOptions,
       fileMetadataPopupOptions,
       navigationPanelOptions,
-      gridOptions,
       toolbarOptions,
       deleteConfirmationOptions,
 
@@ -341,6 +352,7 @@ export const FileManagerModal = memo(
       sharedWithMeIds,
 
       uploadEnabled,
+      gridOptions,
     } = useFileManager({
       actionLabelsOptions: {
         actionsByTab: {
@@ -361,6 +373,55 @@ export const FileManagerModal = memo(
       reviewBucket,
       additionalFilesAndFolders,
     });
+
+    // Extend gridOptions with a custom isRowSelectable that natively disables
+    // hidden rows (and replicates the UI kit's file-type/size check so those
+    // rows remain non-selectable too). This overrides the internal rowSelection
+    // option via additionalGridOptions, which is spread last in the AG-Grid
+    // component inside DialFileManager.
+    const mergedGridOptions = useMemo(
+      () => ({
+        ...gridOptions,
+        additionalGridOptions: {
+          rowSelection: {
+            mode: 'multiRow' as const,
+            isRowSelectable: (node: {
+              data?: FileManagerGridRow | null;
+            }) => {
+              const row = node.data;
+              if (!row) return true;
+
+              // Disable hidden files/folders and items inside hidden folders.
+              if (row.path.split('/').some((seg) => seg.startsWith('.')))
+                return false;
+
+              // Replicate the UI kit's internal type/size disabled check so
+              // those rows stay non-selectable when we override rowSelection.
+              if (row.nodeType !== DialFileNodeType.FOLDER) {
+                if (
+                  row.contentType &&
+                  !allowedTypes.includes('*/*') &&
+                  allowedTypes.length > 0 &&
+                  !isAllowedMimeType(allowedTypes, row.contentType)
+                ) {
+                  return false;
+                }
+                if (
+                  maxSelectableFileSize != null &&
+                  row.contentLength != null &&
+                  row.contentLength > maxSelectableFileSize
+                ) {
+                  return false;
+                }
+              }
+
+              return true;
+            },
+          },
+        },
+      }),
+      [allowedTypes, gridOptions, maxSelectableFileSize],
+    );
 
     return (
       <Modal
@@ -426,7 +487,7 @@ export const FileManagerModal = memo(
               treeOptions={treeOptions}
               fileMetadataPopupOptions={fileMetadataPopupOptions}
               navigationPanelOptions={navigationPanelOptions}
-              gridOptions={gridOptions}
+              gridOptions={mergedGridOptions}
               toolbarOptions={toolbarOptions}
               onDeleteFiles={handleDeleteFiles}
               onDownloadFiles={handleDownloadFiles}

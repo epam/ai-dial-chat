@@ -194,7 +194,14 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.map((file) => {
-        return file.id === payload.apiResult.id ? payload.apiResult : file;
+        if (file.id === payload.apiResult.id) {
+          return {
+            ...payload.apiResult,
+            contentLength: payload.apiResult.contentLength || file.contentLength,
+            contentType: payload.apiResult.contentType || file.contentType,
+          };
+        }
+        return file;
       });
       invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
@@ -260,6 +267,10 @@ export const filesSlice = createSlice({
         const merged: DialFile = {
           ...oldFile,
           ...newFile,
+          // The backend may temporarily return contentLength: 0 immediately
+          // after an upload. Preserve the locally-known size (from fileContent.size)
+          // until the backend catches up with the real value.
+          contentLength: newFile.contentLength || oldFile.contentLength,
         };
 
         return merged;
