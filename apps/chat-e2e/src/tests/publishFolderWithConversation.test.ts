@@ -510,27 +510,45 @@ dialAdminTest(
       },
     );
 
-    await dialTest.step.skip(
+    await dialTest.step(
       'Open folder dropdown menu and verify available options',
       async () => {
-        // New row context menu flow: hover grid row → three-dot button → dropdown (rename/delete)
-        const dotsMenu =
+        await selectFolderManagerModalBreadcrumb.clickBreadcrumbByName(
+          PublishPath.Organization,
+        );
+        // Create a user-owned temp folder — dots menu only appears for session-created folders
+        const tempFolderName = GeneratorUtil.randomString(5);
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(tempFolderName, false);
+        const tempFolderDotsMenu =
+          await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
+            tempFolderName,
+          );
+        await selectFolderManagerModalGrid
+          .gridRowByNameCell(tempFolderName)
+          .hover();
+        await tempFolderDotsMenu.click();
+        const dropdownMenu = selectFolderManagerModalGrid.getRowDropdownMenu();
+        for (const option of [MenuOptions.rename, MenuOptions.delete]) {
+          await baseAssertion.assertElementState(
+            dropdownMenu.dropdownItemByName(option),
+            'visible',
+          );
+        }
+        // Navigate to published folder row (handles scrolling), hover to close dropdown,
+        // then verify it has no dots menu
+        const publishedFolderRow =
+          await selectFolderManagerModalGrid.goToGridRowByNameCell(
+            publishedFolderConversation.folders.name,
+          );
+        await publishedFolderRow.hover();
+        const publishedFolderDotsMenu =
           await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
             publishedFolderConversation.folders.name,
           );
-        const folderRow = selectFolderManagerModalGrid.gridRowByNameCell(
-          publishedFolderConversation.folders.name,
-        );
-        await folderRow.hover();
-        await dotsMenu.click();
-        const dropdownMenu = selectFolderManagerModalGrid.getRowDropdownMenu();
         await baseAssertion.assertElementState(
-          dropdownMenu.dropdownItemByName(MenuOptions.rename),
-          'visible',
-        );
-        await baseAssertion.assertElementState(
-          dropdownMenu.dropdownItemByName(MenuOptions.delete),
-          'visible',
+          publishedFolderDotsMenu,
+          'hidden',
         );
       },
     );

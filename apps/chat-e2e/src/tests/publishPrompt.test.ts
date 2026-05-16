@@ -41,7 +41,8 @@ dialAdminTest(
       selectFolderManagerModal,
       selectFolderManagerModalGrid,
       selectFolderManagerModalFoldersTree,
-      confirmationDialog,
+      selectFolderManagerModalBreadcrumb,
+      fileManagerDeleteItemConfirmationPopup,
       adminDialHomePage,
       adminApproveRequiredPromptsAssertion,
       adminApproveRequiredPrompts,
@@ -124,8 +125,8 @@ dialAdminTest(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderManagerModal.getAddFolderButton().click();
-        await selectFolderManagerModalGrid.setFolderName(orgFolderName, false);
-        await selectFolderManagerModalGrid.openFolder(orgFolderName, false);
+        await selectFolderManagerModalGrid.setFolderName(folderName, false);
+        await selectFolderManagerModalGrid.openFolder(folderName, false);
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(
           `${orgFolderName} 2`,
@@ -134,34 +135,32 @@ dialAdminTest(
       },
     );
 
-    await dialTest.step.skip(
-      'Delete child folder via context menu',
-      async () => {
-        // New delete flow: hover grid row → three-dot button → dropdown (rename/delete) → delete
-        const dotsMenu =
-          await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
-            `${orgFolderName} 2`,
-          );
-        const childRow = selectFolderManagerModalGrid.gridRowByNameCell(
+    await dialTest.step('Delete child folder via context menu', async () => {
+      // New delete flow: hover grid row → three-dot button → dropdown (rename/delete) → delete
+      const dotsMenu =
+        await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
           `${orgFolderName} 2`,
         );
-        await childRow.hover();
-        await dotsMenu.click();
-        await selectFolderManagerModalGrid
-          .getRowDropdownMenu()
-          .selectItem(MenuOptions.delete, { isHttpMethodTriggered: false });
-        await confirmationDialog.confirm();
-        await selectFolderManagerModalGrid
-          .gridRowByNameCell(`${orgFolderName} 2`)
-          .waitFor({ state: 'hidden' });
-      },
-    );
+      const childRow = selectFolderManagerModalGrid.gridRowByNameCell(
+        `${orgFolderName} 2`,
+      );
+      await childRow.hover();
+      await dotsMenu.click();
+      await selectFolderManagerModalGrid
+        .getRowDropdownMenu()
+        .selectItem(MenuOptions.delete, { isHttpMethodTriggered: false });
+      await fileManagerDeleteItemConfirmationPopup.confirm();
+      await selectFolderManagerModalGrid
+        .gridRowByNameCell(`${orgFolderName} 2`)
+        .waitFor({ state: 'hidden' });
+    });
 
-    await dialTest.step.skip(
+    await dialTest.step(
       'User renames created folder under Organization',
       async () => {
-        // New rename flow: hover grid row → three-dot button → dropdown (rename/delete) → rename → input
-        // When re-enabling: change the create step to use folderName instead of orgFolderName
+        await selectFolderManagerModalBreadcrumb.clickBreadcrumbByName(
+          PublishPath.Organization,
+        );
         const dotsMenu =
           await selectFolderManagerModalGrid.gridDotsMenuByNameCell(folderName);
         const folderRow =
@@ -610,6 +609,13 @@ dialAdminTest(
     );
 
     await dialTest.step('User selects nested folder', async () => {
+      await selectFolderManagerModalFoldersTree.expandFolders(
+        { isFilesListingTriggered: false },
+        `${folderNameTemplate} 1`,
+        `${folderNameTemplate} 2`,
+        `${folderNameTemplate} 3`,
+        `${folderNameTemplate} 4`,
+      );
       await selectFolderManagerModalFoldersTree
         .folderByPath(
           `${folderNameTemplate} 1`,
@@ -618,6 +624,7 @@ dialAdminTest(
           `${folderNameTemplate} 4`,
         )
         .click();
+      await selectFolderManagerModalFoldersTree.hoverOver();
       await selectFolderManagerModal.clickSelectFolderButton({
         triggeredApiHost: API.publicationRulesList,
       });

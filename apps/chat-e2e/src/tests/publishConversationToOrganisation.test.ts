@@ -8,7 +8,6 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { GridSelectors } from '@/src/ui/selectors';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -30,10 +29,10 @@ dialAdminTest(
     conversationDropdownMenu,
     publishingRequestDialog,
     selectFolderManagerModal,
-    selectFolderManagerModalManager,
     selectFolderManagerModalGrid,
     selectFolderManagerModalGridAssertion,
     selectFolderManagerModalFoldersTree,
+    selectFolderManagerModalNavigationPanel,
     baseAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -112,10 +111,8 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        const folderNames = await selectFolderManagerModalGrid.gridRows
-          .getElementLocator()
-          .locator(GridSelectors.gridCellValue)
-          .allTextContents();
+        const folderNames =
+          await selectFolderManagerModalGrid.getNameColumnValues();
         baseAssertion.assertStringsSorting(folderNames, 'asc');
       },
     );
@@ -126,8 +123,7 @@ dialAdminTest(
         { isFilesListingTriggered: false },
         parentFolder,
       );
-      await selectFolderManagerModalManager
-        .getFileManagerNavigationPanel()
+      await selectFolderManagerModalNavigationPanel
         .getSearch()
         .inputField.fillInInput(subFolderSearchTerm);
       await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
@@ -137,8 +133,7 @@ dialAdminTest(
     });
 
     await dialTest.step('Search root folder by name', async () => {
-      await selectFolderManagerModalManager
-        .getFileManagerNavigationPanel()
+      await selectFolderManagerModalNavigationPanel
         .getSearch()
         .inputField.fillInInput(folderSearchTerm);
       await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
@@ -150,8 +145,7 @@ dialAdminTest(
     await dialTest.step(
       'Select folder, fill in name and submit the request',
       async () => {
-        await selectFolderManagerModalManager
-          .getFileManagerNavigationPanel()
+        await selectFolderManagerModalNavigationPanel
           .getSearch()
           .inputField.fillInInput('');
         await selectFolderManagerModalGrid
@@ -257,7 +251,7 @@ dialAdminTest(
     selectFolderManagerModalGridAssertion,
     selectFolderManagerModalFoldersTree,
     selectFolderManagerModalFoldersTreeAssertion,
-    confirmationDialog,
+    fileManagerDeleteItemConfirmationPopup,
     baseAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -330,19 +324,13 @@ dialAdminTest(
       },
     );
 
-    // The new ChangePathDialog has no row dropdown menu with a rename option,
-    // so the original two steps ("Open folder dropdown menu and verify
-    // available options" + "Verify folder renaming and max length") are
-    // replaced with a single step that creates a folder with a too-long name.
     // The new UI no longer truncates silently — it shows an inline alert icon
     await dialTest.step(
       'Verify max length error on folder creation with a too-long name',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        const folderInput = selectFolderManagerModalGrid
-          .getRenameInput()
-          .getElementLocator();
-        await folderInput.fill(newFolderName);
+        const folderInput = selectFolderManagerModalGrid.getRenameInput();
+        await folderInput.fillInInput(newFolderName);
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           newFolderName,
@@ -353,9 +341,6 @@ dialAdminTest(
     await dialTest.step(
       'Create nested sub-folders down to depth 4',
       async () => {
-        // The new ChangePathDialog has no row dots menu: open the parent folder
-        // by clicking on its row and create the sub-folder via "Add folder".
-        // Build the chain folderNames[0] → ... → folderNames[maxNestedLevel - 1].
         for (let i = 1; i < maxNestedLevel; i++) {
           await selectFolderManagerModalGrid.openFolder(
             folderNames[i - 1],
@@ -363,6 +348,7 @@ dialAdminTest(
           );
           await selectFolderManagerModal.getAddFolderButton().click();
           const subFolderInput = selectFolderManagerModalGrid.getRenameInput();
+          await baseAssertion.assertElementState(subFolderInput, 'visible');
           await baseAssertion.assertInputValue(subFolderInput, '');
           await baseAssertion.assertIsElementFocused(subFolderInput, true);
           await selectFolderManagerModalGrid.setFolderName(
@@ -387,10 +373,9 @@ dialAdminTest(
       async () => {},
     );
 
-    await dialTest.step.skip(
+    await dialTest.step(
       'Delete low-level folder and verify a new one is created in edit mode in the root',
       async () => {
-        // New delete flow: hover grid row → three-dot button → dropdown (rename/delete) → delete
         // At this point the grid is inside folderNames[maxNestedLevel - 2] showing folderNames[maxNestedLevel - 1]
         const folderToDelete = folderNames[maxNestedLevel - 1];
         const dotsMenu =
@@ -404,11 +389,13 @@ dialAdminTest(
         await selectFolderManagerModalGrid
           .getRowDropdownMenu()
           .selectItem(MenuOptions.delete, { isHttpMethodTriggered: false });
-        await confirmationDialog.confirm();
+        await fileManagerDeleteItemConfirmationPopup.confirm();
         await selectFolderManagerModalGrid
           .gridRowByNameCell(folderToDelete)
           .waitFor({ state: 'hidden' });
-        // TODO: verify behaviour after deletion (old UI auto-opened a new folder in edit mode at root)
+        // Recreate the deleted folder to restore the full hierarchy for subsequent steps
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(folderToDelete, false);
       },
     );
 
@@ -427,9 +414,14 @@ dialAdminTest(
           await selectFolderManagerModalFoldersTree
             .folderByPath(...path)
             .click();
+          await selectFolderManagerModal.hoverOver();
           await selectFolderManagerModalFoldersTreeAssertion.assertFolderSelectedState(
             true,
             ...path,
+          );
+          await baseAssertion.assertElementActionabilityState(
+            selectFolderManagerModal.getSelectFolderButton(),
+            'enabled',
           );
         }
       },
