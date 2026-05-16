@@ -1,0 +1,46 @@
+.wrapper {
+  background: var(--ci-bg, var(--bg-layer-2, #161b2d));
+  border-color: var(--ci-border, #f3f6ff00);
+
+  &:focus-within {
+    border-color: var(--ci-border-focus, var(--stroke-focus, #eef1f7));
+  }
+}
+
+.textarea {
+  color: var(--ci-text, var(--text-primary, #eef1f7));
+  font-family: var(--ci-font-family, var(--theme-font, sans-serif));
+  font-size: var(--ci-font-size, 14px);
+  font-weight: var(--ci-font-weight, 400);
+  line-height: var(--ci-line-height, 1.5);
+
+  &::placeholder {
+    color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+  }
+}
+
+.sendButton {
+  background: var(--ci-send-bg, var(--controls-bg-accent-primary, #3664e2));
+  color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
+  font-family: var(--ci-font-family, var(--theme-font, sans-serif));
+  font-size: var(--ci-font-size, 14px);
+
+  &:hover {
+    background: var(
+      --ci-send-bg-hover,
+      var(--controls-bg-accent-primary-hover, #2a52c7)
+    );
+  }
+
+  &:active {
+    background: var(
+      --ci-send-bg-active,
+      var(--controls-bg-accent-primary-active, #1e3ea8)
+    );
+  }
+
+  &:disabled {
+    background: var(--ci-send-bg-disabled, var(--controls-bg-disable, #2e3550));
+    color: var(--ci-send-text-disabled, var(--controls-text-disable, #5a6282));
+  }
+}

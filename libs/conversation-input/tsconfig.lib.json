@@ -21,5 +21,10 @@
 
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": [
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    }
+  ]
 }

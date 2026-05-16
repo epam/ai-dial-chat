@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import { mergeClasses } from '@epam/chat-shared';
 import { FC } from 'react';
 import { BubblePosition } from '../../types/bubble-position.js';
 
@@ -18,7 +18,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
 
   return (
     <div
-      className={classNames(
+      className={mergeClasses(
         'bg-layer-4 flex items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
         positionRadius,
         className,
