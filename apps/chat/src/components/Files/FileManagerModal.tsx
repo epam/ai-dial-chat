@@ -374,20 +374,13 @@ export const FileManagerModal = memo(
       additionalFilesAndFolders,
     });
 
-    // Extend gridOptions with a custom isRowSelectable that natively disables
-    // hidden rows (and replicates the UI kit's file-type/size check so those
-    // rows remain non-selectable too). This overrides the internal rowSelection
-    // option via additionalGridOptions, which is spread last in the AG-Grid
-    // component inside DialFileManager.
     const mergedGridOptions = useMemo(
       () => ({
         ...gridOptions,
         additionalGridOptions: {
           rowSelection: {
             mode: 'multiRow' as const,
-            isRowSelectable: (node: {
-              data?: FileManagerGridRow | null;
-            }) => {
+            isRowSelectable: (node: { data?: FileManagerGridRow | null }) => {
               const row = node.data;
               if (!row) return true;
 
