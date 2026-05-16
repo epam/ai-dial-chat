@@ -103,7 +103,9 @@ describe('Input', () => {
 
   it('should use custom placeholder when provided', () => {
     const { container } = render(<Input placeholder="Ask anything" />);
-    expect(container.querySelector('textarea')?.placeholder).toBe('Ask anything');
+    expect(container.querySelector('textarea')?.placeholder).toBe(
+      'Ask anything',
+    );
   });
 
   it('should use default placeholder when prop is omitted', () => {
