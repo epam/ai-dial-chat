@@ -89,6 +89,39 @@ const initEpic: AppEpic = (action$, state$) =>
     ),
   );
 
+const initFileSizeCacheEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.init.type),
+    map(() => {
+      const cache: Record<string, number> = {};
+      if (typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('dial_file_size_')) {
+            const id = key.replace('dial_file_size_', '');
+            cache[id] = Number(localStorage.getItem(key));
+          }
+        }
+      }
+      return FilesActions.initFileSizeCache(cache);
+    }),
+  );
+
+const syncFileSizeCacheEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.getFilesSuccess.type),
+    tap(({ payload }) => {
+      if (typeof window !== 'undefined') {
+        payload.files.forEach((file) => {
+          if (file.contentLength) {
+            localStorage.removeItem(`dial_file_size_${file.id}`);
+          }
+        });
+      }
+    }),
+    ignoreElements(),
+  );
+
 const uploadFileEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.uploadFile.type),
@@ -811,6 +844,12 @@ const uploadFilesEpic: AppEpic = (action$) =>
           ),
           map(({ percent, result }) => {
             if (result) {
+              if (typeof window !== 'undefined' && file.fileContent.size) {
+                localStorage.setItem(
+                  `dial_file_size_${result.id}`,
+                  String(file.fileContent.size),
+                );
+              }
               return FilesActions.uploadFileSuccess({
                 apiResult: result,
                 showSuccessMessage: false,
@@ -1151,6 +1190,8 @@ const createNewFolderEpic: AppEpic = (action$) =>
 
 export const FilesEpics = combineEpics(
   initEpic,
+  initFileSizeCacheEpic,
+  syncFileSizeCacheEpic,
 
   uploadFileEpic,
   uploadFilesSuccessEpic,

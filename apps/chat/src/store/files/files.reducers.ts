@@ -103,6 +103,7 @@ const initialState: FilesState = {
   isLoadingSearchListing: false,
   searchListingMetadata: {},
   sharedWithMeFilesAndFoldersIds: [],
+  localFileSizeCache: {},
 };
 
 export const filesSlice = createSlice({
@@ -112,6 +113,12 @@ export const filesSlice = createSlice({
     init: (state) => state,
     initFinish: (state) => {
       state.initialized = true;
+    },
+    initFileSizeCache: (
+      state,
+      { payload }: PayloadAction<Record<string, number>>,
+    ) => {
+      state.localFileSizeCache = payload;
     },
     uploadFile: (
       state,
@@ -195,9 +202,11 @@ export const filesSlice = createSlice({
     ) => {
       state.files = state.files.map((file) => {
         if (file.id === payload.apiResult.id) {
+          delete state.localFileSizeCache[file.id];
           return {
             ...payload.apiResult,
-            contentLength: payload.apiResult.contentLength || file.contentLength,
+            contentLength:
+              payload.apiResult.contentLength || file.contentLength,
             contentType: payload.apiResult.contentType || file.contentType,
           };
         }
@@ -261,16 +270,24 @@ export const filesSlice = createSlice({
       );
 
       const mergedMappedFiles: DialFile[] = mappedFiles.map((newFile) => {
+        const cachedSize = state.localFileSizeCache[newFile.id];
+        if (newFile.contentLength) {
+          delete state.localFileSizeCache[newFile.id];
+        }
+
         const oldFile = prevById[newFile.id];
-        if (!oldFile) return newFile;
+        if (!oldFile) {
+          return {
+            ...newFile,
+            contentLength: newFile.contentLength || cachedSize,
+          };
+        }
 
         const merged: DialFile = {
           ...oldFile,
           ...newFile,
-          // The backend may temporarily return contentLength: 0 immediately
-          // after an upload. Preserve the locally-known size (from fileContent.size)
-          // until the backend catches up with the real value.
-          contentLength: newFile.contentLength || oldFile.contentLength,
+          contentLength:
+            newFile.contentLength || oldFile.contentLength || cachedSize,
         };
 
         return merged;
@@ -1185,6 +1202,10 @@ export const filesSlice = createSlice({
           contentLength: file.fileContent.size,
           contentType: fileContent.type,
         });
+
+        if (file.fileContent.size) {
+          state.localFileSizeCache[id] = file.fileContent.size;
+        }
       });
     },
 
