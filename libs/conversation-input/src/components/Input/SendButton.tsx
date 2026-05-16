@@ -15,6 +15,7 @@ export const SendButton: FC<Props> = ({ onSend }) => {
         styles.sendButton,
         'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
       )}
+      aria-label="Send message"
       onClick={() => onSend?.()}
       type="button"
     >

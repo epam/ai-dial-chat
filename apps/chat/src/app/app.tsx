@@ -110,10 +110,11 @@ const ConversationRoute: FC = () => {
               onSend={handleSend}
               welcomeText={t('chat.welcomeText')}
               placeholder={t('chat.placeholder')}
+              typography={{ welcomeClassName: 'dial-display2-text' }}
             />
           </div>
         ) : (
-          <div ref={inputRef}>
+          <div ref={inputRef} className="h-full">
             <ConversationView
               messages={messages}
               onSend={handleSend}

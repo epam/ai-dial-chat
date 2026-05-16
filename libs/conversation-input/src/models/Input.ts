@@ -20,6 +20,7 @@ export interface InputProps {
   onChange?: (message: string) => void;
   onSend?: (message: string) => void;
   placeholder?: string;
+  ariaLabel?: string;
   colors?: InputColors;
   typography?: InputTypography;
   className?: string;

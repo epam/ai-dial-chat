@@ -8,7 +8,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   onSend,
   initialMessage = '',
   placeholder = 'Type a new prompt or use "/" to select one',
-  welcomeText = 'Hello World, good day for prompting!',
+  welcomeText,
   colors,
   typography,
   className,

@@ -1,0 +1,127 @@
+import { fireEvent, render } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { Input } from '../Input.js';
+
+describe('Input', () => {
+  it('should hide send button when textarea is empty', () => {
+    const { container } = render(<Input />);
+    expect(container.querySelector('button')).toBeNull();
+  });
+
+  it('should show send button when user types non-whitespace text', () => {
+    const { container } = render(<Input />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      expect(container.querySelector('button')).toBeTruthy();
+    }
+  });
+
+  it('should keep send button hidden for whitespace-only input', () => {
+    const { container } = render(<Input />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: '   ' } });
+      expect(container.querySelector('button')).toBeNull();
+    }
+  });
+
+  it('should pre-populate textarea with initialMessage', () => {
+    const { container } = render(<Input initialMessage="Hello" />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.value).toBe('Hello');
+  });
+
+  it('should call onSend with message text and clear textarea on Enter', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Test message' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(textarea.value).toBe('');
+    }
+  });
+
+  it('should not call onSend on Shift+Enter', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Test message' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
+      expect(handleSend).not.toHaveBeenCalled();
+      expect(textarea.value).toBe('Test message');
+    }
+  });
+
+  it('should call onChange on each keystroke', () => {
+    const handleChange = vi.fn();
+    const { container } = render(<Input onChange={handleChange} />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hi' } });
+      expect(handleChange).toHaveBeenCalledWith('Hi');
+    }
+  });
+
+  it('should call onSend when send button is clicked', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} />);
+    const textarea = container.querySelector('textarea');
+    const button = container.querySelector('button');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Click send' } });
+    }
+    if (button) {
+      fireEvent.click(button);
+      expect(handleSend).toHaveBeenCalledWith('Click send');
+    }
+  });
+
+  it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
+    const { container } = render(
+      <Input colors={{ background: '#fff', text: '#000' }} />,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.getPropertyValue('--ci-bg')).toBe('#fff');
+    expect(wrapper.style.getPropertyValue('--ci-text')).toBe('#000');
+  });
+
+  it('should not set CSS variable for omitted color fields', () => {
+    const { container } = render(<Input colors={{ background: '#fff' }} />);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.getPropertyValue('--ci-text')).toBe('');
+  });
+
+  it('should set --ci-font-size CSS variable when typography prop is provided', () => {
+    const { container } = render(<Input typography={{ fontSize: '16px' }} />);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.getPropertyValue('--ci-font-size')).toBe('16px');
+  });
+
+  it('should use custom placeholder when provided', () => {
+    const { container } = render(<Input placeholder="Ask anything" />);
+    expect(container.querySelector('textarea')?.placeholder).toBe('Ask anything');
+  });
+
+  it('should use default placeholder when prop is omitted', () => {
+    const { container } = render(<Input />);
+    expect(container.querySelector('textarea')?.placeholder).toBe(
+      'Type a message...',
+    );
+  });
+
+  it('should merge className onto the wrapper element', () => {
+    const { container } = render(<Input className="mt-4" />);
+    expect(container.firstElementChild?.classList.contains('mt-4')).toBe(true);
+  });
+
+  it('should set aria-label on textarea when ariaLabel prop is provided', () => {
+    const { container } = render(<Input ariaLabel="Message input" />);
+    expect(
+      container.querySelector('textarea')?.getAttribute('aria-label'),
+    ).toBe('Message input');
+  });
+});

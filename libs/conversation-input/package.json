@@ -18,6 +18,8 @@
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "@epam/chat-shared": "0.0.1"
+    "@epam/chat-shared": "0.0.1",
+    "@epam/ai-dial-ui-kit": "^0.9.0",
+    "@tabler/icons-react": "^3.44.0"
   }
 }

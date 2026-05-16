@@ -9,6 +9,7 @@ export const Input: FC<InputProps> = ({
   onSend,
   onChange,
   placeholder = 'Type a message...',
+  ariaLabel,
   colors,
   typography,
   className,
@@ -48,15 +49,10 @@ export const Input: FC<InputProps> = ({
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
-        'flex h-[56px] w-[748px] items-end gap-2 rounded border px-3 py-2',
+        'flex min-h-[56px] w-full max-w-[748px] items-center gap-2 rounded border px-3 py-2',
         className,
       )}
     >
-      {/* plus button */}
-      {/* input */}
-      {/* select1 */}
-      {/* select2 */}
-
       <textarea
         className={mergeClasses(
           styles.textarea,
@@ -69,6 +65,7 @@ export const Input: FC<InputProps> = ({
         }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        aria-label={ariaLabel}
         rows={1}
       />
       {message.trim() && <SendButton onSend={() => onSend?.(message)} />}
