@@ -77,7 +77,6 @@ export const MarketplaceSideBarSelectors = {
 };
 
 export const ToolsetLoginModalSelectors = {
-  modalContainer: '[data-qa="marketplace-toolset-signin"]',
   header: '[data-qa="login-header"]',
   toolsetName: '[data-qa="toolset-name"]',
   toolsetVersion: '[data-qa="toolset-version"]',

@@ -1,11 +1,11 @@
 import { IconSelectors, ToolsetLoginModalSelectors } from '@/src/ui/selectors';
-import { BaseElement, Button } from '@/src/ui/webElements';
+import { Button, Popup } from '@/src/ui/webElements';
 import { FieldLabel } from '@/src/ui/webElements/fieldLabel';
 import { Page } from '@playwright/test';
 
-export class ToolsetLoginModal extends BaseElement {
+export class ToolsetLoginModal extends Popup {
   constructor(page: Page) {
-    super(page, ToolsetLoginModalSelectors.modalContainer);
+    super(page);
   }
 
   public header = this.getChildElementBySelector(

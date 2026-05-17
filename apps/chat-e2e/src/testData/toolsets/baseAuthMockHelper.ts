@@ -12,7 +12,7 @@ import { Route } from 'playwright-core';
 
 const DEFAULT_STATUS_CODES: StatusCodeConfig = {
   updateToolsetCode: 200,
-  backendSigInCode: 200,
+  backendSignInCode: 200,
 };
 
 export abstract class BaseAuthMockHelper<T extends SignInRequest> {
@@ -119,8 +119,8 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
           await route.continue();
           return;
         }
-        const { backendSigInCode } = this.expectedStatusCodes;
-        if (backendSigInCode === 200) {
+        const { backendSignInCode } = this.expectedStatusCodes;
+        if (backendSignInCode === 200) {
           this.state.isSignedIn = true;
           this.state.signInRequest = request.postDataJSON();
           await route.fulfill({
@@ -133,7 +133,7 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
           });
         } else {
           await route.fulfill({
-            status: backendSigInCode,
+            status: backendSignInCode,
             contentType: 'application/json',
           });
         }

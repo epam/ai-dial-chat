@@ -26,7 +26,7 @@ export interface AuthState<T extends SignInRequest> {
 
 export interface StatusCodeConfig {
   updateToolsetCode?: number;
-  backendSigInCode?: number;
+  backendSignInCode?: number;
 }
 
 export interface OAuthMockOptions extends StatusCodeConfig {
