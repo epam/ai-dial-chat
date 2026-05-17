@@ -1,16 +1,21 @@
+import { IconSettings } from '@tabler/icons-react';
 import React, { useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import {
   getEntityNameFromId,
   isApplicationId,
   isToolsetId,
 } from '@/src/utils/app/id';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
+
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -19,7 +24,11 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
-import { ButtonVariant } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonVariant,
+  DialGhostIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -34,7 +43,7 @@ const ChipWrapper: React.FC<ChipWrapperProps> = ({
 }) => (
   <div
     className={classNames(
-      'flex h-[34px] items-center rounded',
+      'group flex h-[34px] items-center rounded',
       isCustomTool
         ? 'bg-layer-4'
         : isError
@@ -68,6 +77,35 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
       onClick={() => onRemove?.(id)}
       aria-label="Remove item"
       variant={isError ? ButtonVariant.Error : ButtonVariant.Primary}
+    />
+  );
+};
+
+interface ChipConfigureButtonProps {
+  item?: MarketplaceEntity;
+  onConfigure?: (item: MarketplaceEntity) => void;
+}
+
+const ChipConfigureButton: React.FC<ChipConfigureButtonProps> = ({
+  item,
+  onConfigure,
+}) => {
+  const isConfigurableApp =
+    item && isDialAiEntityModel(item) && doesAgentSupportMcp(item);
+
+  const handleClick = () => {
+    if (item) onConfigure?.(item);
+  };
+
+  if (!isConfigurableApp) return null;
+
+  return (
+    <DialGhostIconButton
+      name="Configure"
+      icon={<IconSettings size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+      size={ElementSize.Small}
+      className="invisible group-hover:visible"
+      onClick={handleClick}
     />
   );
 };
@@ -128,6 +166,7 @@ interface AgentAndToolsetChipProps {
   onRemove?: (id: string) => void;
   readonly?: boolean;
   onItemClick?: (id: string) => void;
+  onConfigure?: (item: MarketplaceEntity) => void;
   isInSelectionList?: boolean;
 }
 
@@ -137,6 +176,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   onRemove,
   readonly,
   onItemClick,
+  onConfigure,
   isInSelectionList,
 }) => {
   const { isInvalid, isError } = getEntityStatus(item);
@@ -180,6 +220,10 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           onClick={onItemClick}
         />
       </Tooltip>
+
+      {!readonly && (
+        <ChipConfigureButton item={item} onConfigure={onConfigure} />
+      )}
 
       {!readonly && (
         <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />

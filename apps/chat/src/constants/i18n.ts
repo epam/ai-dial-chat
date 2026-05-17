@@ -1107,4 +1107,9 @@ export enum MarketplaceI18nKeys {
   Weekly = 'Weekly',
   Daily = 'Daily',
   Monthly = 'Monthly',
+  AdvancedSettings = 'Advanced settings',
+  ConnectVia = 'Connect via',
+  ApplyChanges = 'Apply changes',
+  MCP = 'MCP',
+  ChatCompletion = 'Chat Completion',
 }
