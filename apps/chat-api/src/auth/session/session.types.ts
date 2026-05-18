@@ -31,5 +31,6 @@ export interface SessionUser {
   providerId: string;
   claims: Record<string, unknown>;
   at: string;
+  bucket: string;
   csrf: string;
 }

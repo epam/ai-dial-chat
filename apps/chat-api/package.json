@@ -88,6 +88,7 @@
     }
   },
   "dependencies": {
+    "@epam/chat-shared": "0.0.1",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",

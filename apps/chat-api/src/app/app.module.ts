@@ -9,6 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
+import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { HealthController } from '../health/health.controller';
 import { ThemeController } from '../themes/theme.controller';
@@ -41,6 +42,7 @@ import { AppService } from './app.service';
     }),
     DeploymentsModule,
     ChatModule,
+    ConversationModule,
   ],
   controllers: [AppController, ThemeController, HealthController],
   providers: [
