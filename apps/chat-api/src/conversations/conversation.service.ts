@@ -1,13 +1,18 @@
 import { Conversation, MessageRole, Message } from '@epam/chat-shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { AppService } from '../app/app.service';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 
 @Injectable()
 export class ConversationService extends AppService {
   protected logger = new Logger(ConversationService.name);
 
-  async createConversation(firstMessage: string, accessToken: string, bucket: string): Promise<Conversation> {
+  async createConversation(
+    firstMessage: string,
+    accessToken: string,
+    bucket: string,
+  ): Promise<Conversation> {
     const now = new Date().toISOString();
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -22,7 +27,7 @@ export class ConversationService extends AppService {
     };
     try {
       const data = await this.client.saveConversation(bucket, conversation.id, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: getBearerAuthHeaders(accessToken),
         body: JSON.stringify(conversation),
       });
       this.logger.debug('Successfully created conversation');
