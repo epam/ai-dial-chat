@@ -1,6 +1,12 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
+import {
+  getUtf8BytesLength,
+  prepareEntityName,
+  truncateToUtf8Bytes,
+} from '@/chat/utils/app/common';
+import { encodeModelId, pathKeySeparator } from '@/chat/utils/server/api';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -1594,16 +1600,15 @@ dialTest(
     await dialTest.step(
       'Send long request and verify the name is truncated to available bytes',
       async () => {
-        // The conversation storage segment key is "{encodeModelId(model.id)}__{name}".
-        // For ASCII model IDs that contain no "__", encodeModelId is identity,
-        // so the available bytes for the name = SEGMENT_LIMIT - len(model.id) - 2.
+        // Storage segment key is "{encodeModelId(model.id)}__{name}".
+        // Available name bytes = SEGMENT_LIMIT - UTF-8 byte length of that prefix.
         const model = ModelsUtil.getDefaultAgent()!;
-        const modelApiPrefix = `${model.id}__`;
+        const modelApiPrefix = `${encodeModelId(model.id)}${pathKeySeparator}`;
         const availableBytes =
-          ExpectedConstants.maxEntityNameLength - modelApiPrefix.length;
-        const expectedConversationName = longRequest.substring(
-          0,
-          availableBytes,
+          ExpectedConstants.maxEntityNameLength -
+          getUtf8BytesLength(modelApiPrefix);
+        const expectedConversationName = prepareEntityName(
+          truncateToUtf8Bytes(prepareEntityName(longRequest), availableBytes),
         );
 
         await localStorageManager.setShowSideBarPanels();
