@@ -1594,10 +1594,9 @@ dialTest(
     await dialTest.step(
       'Send long request and verify the name is truncated to available bytes',
       async () => {
-        // Storage segment key is "{encodeModelId(model.id)}__{name}".
-        // Model IDs that contain "__" are encoded as "%5F%5F" inside the key,
-        // so we must compute the prefix exactly the same way the app does
-        // and measure it in UTF-8 bytes (not characters).
+        // Storage segment key is "{encodeModelId(model.reference)}__{name}".
+        // Conversations store model.reference in model.id (not the deployment id).
+        // Model references that contain "__" are encoded as "%5F%5F" inside the key.
         const PATH_KEY_SEPARATOR = '__';
         const ENCODED_KEY_SEPARATOR = '%5F%5F';
         const encodeModelId = (modelId: string) =>
@@ -1625,9 +1624,13 @@ dialTest(
           value.replace(/[. \t\r\n]+$/, '');
 
         const model = ModelsUtil.getDefaultAgent()!;
-        const modelApiPrefix = `${encodeModelId(model.id)}${PATH_KEY_SEPARATOR}`;
+        const modelReference = model.reference ?? model.id;
+        // getAvailableEntityNameBytes: segment limit uses placeholder "a" in the key.
+        const modelApiKeyPrefix = `${encodeModelId(modelReference)}${PATH_KEY_SEPARATOR}a`;
         const availableBytes =
-          ExpectedConstants.maxEntityNameLength - utf8Length(modelApiPrefix);
+          ExpectedConstants.maxEntityNameLength -
+          utf8Length(modelApiKeyPrefix) +
+          1;
         const expectedConversationName = trimEndDots(
           truncateToUtf8Bytes(longRequest, availableBytes),
         );
@@ -1639,6 +1642,7 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await sendMessage.send(longRequest);
+        await chatMessages.waitForResponseReceived();
 
         await conversationAssertion.assertEntityState(
           { name: expectedConversationName },
