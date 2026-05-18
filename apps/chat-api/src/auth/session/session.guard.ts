@@ -9,7 +9,6 @@ import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../../config/environment.config';
-import { BucketService } from '../bucket/bucket.service';
 import {
   getCookieOptions,
   getSessionCookieName,
@@ -26,7 +25,6 @@ export class SessionGuard implements CanActivate {
     private readonly refresh: RefreshService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
     private readonly reflector: Reflector,
-    private readonly bucket: BucketService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -65,7 +63,6 @@ export class SessionGuard implements CanActivate {
       );
     }
 
-    const { bucket } = await this.bucket.getUserBucket(payload.at);
     const user: SessionUser = {
       sid: payload.sid,
       sub: payload.sub,
@@ -73,7 +70,7 @@ export class SessionGuard implements CanActivate {
       claims: payload.claims,
       at: payload.at,
       csrf: payload.csrf,
-      bucket,
+      bucket: payload.bucket,
     };
     req.user = user;
     return true;
