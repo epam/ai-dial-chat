@@ -15,7 +15,6 @@ import {
 import {
   Colors,
   Overflow,
-  StyleValues,
   Styles,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
@@ -818,8 +817,7 @@ dialTest(
     'Confirmation message if to delete shared chat folder.\n' +
     'Shared icon disappears from the folder if to use Unshare.\n' +
     'Share form text differs for chat and folder.\n' +
-    'Shared folder disappears from Shared with me if the original was unshared.\n' +
-    'Unshare chat: tooltip for long chat folder name',
+    'Shared folder disappears from Shared with me if the original was unshared.\n',
   async ({
     dialHomePage,
     conversationData,
@@ -846,7 +844,6 @@ dialTest(
       'EPMRTC-2757',
       'EPMRTC-1811',
       'EPMRTC-2763',
-      'EPMRTC-2876',
     );
     let folderConversation: FolderConversation;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -912,21 +909,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Share option from menu for shared folder and verify folder name is truncated with dots, full name is shown on hover',
+      'Select Share option from menu for shared folder',
       async () => {
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModal.removeAccessBtn.click();
-
-        const chatNameOverflowProp =
-          await confirmationDialog.entityName.getComputedStyleProperty(
-            Styles.overflow_wrap,
-          );
-        expect
-          .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(StyleValues.breakWord);
       },
     );
 

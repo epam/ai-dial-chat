@@ -49,6 +49,8 @@ export const PdfHighlightViewer = ({ url }: Props) => {
 
   const viewerRef = useRef<PdfViewer | null>(null);
   const pageRefsMap = useRef<Map<number, HTMLButtonElement>>(new Map());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const requestedThumbnailsRef = useRef<Set<number>>(new Set());
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
 
     let cancelled = false;
     const viewer = new PdfViewer();
+    const requestedThumbnails = requestedThumbnailsRef.current;
 
     const onPageChanged = (e: unknown) => {
       setCurrentPage((e as PageChangeEvent).currentPage);
@@ -89,8 +92,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       try {
         await viewer.init(container, {
           enableTextSelection: true,
-          // TODO: Enable when will be fixed
-          enableVirtualScrolling: false,
+          enableVirtualScrolling: true,
           bufferPages: 2,
           maxCachedPages: 10,
         });
@@ -109,18 +111,6 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         viewer.addEventListener('pageChanged', onPageChanged);
         viewer.addEventListener('zoomChanged', onZoomChanged);
         viewer.setZoom(ZoomMode.AUTO);
-        viewer
-          .getThumbnailsDataUrl(range(1, total + 1), {
-            maxWidth: 150,
-            format: 'image/webp',
-            quality: 0.7,
-          })
-          .then((map) => {
-            if (!cancelled) setThumbnails(map);
-          })
-          .catch(() => {
-            // Thumbnail generation failed — keep showing the loading skeleton.
-          });
       } catch (e) {
         if (cancelled) return;
 
@@ -144,8 +134,47 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       if (viewerRef.current === viewer) {
         viewerRef.current = null;
       }
+
+      setThumbnails(new Map());
+      requestedThumbnails.clear();
     };
   }, [url, t]);
+
+  useEffect(() => {
+    if (totalPages === 0) return;
+
+    const THUMBNAIL_OPTIONS = {
+      maxWidth: 150,
+      format: 'image/webp' as const,
+      quality: 0.7,
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const pages = entries
+          .filter((e) => e.isIntersecting)
+          .map((e) => Number((e.target as HTMLElement).dataset.page))
+          .filter((n) => !isNaN(n) && !requestedThumbnailsRef.current.has(n));
+
+        if (!pages.length || !viewerRef.current) return;
+
+        pages.forEach((n) => requestedThumbnailsRef.current.add(n));
+        viewerRef.current
+          .getThumbnailsDataUrl(pages, THUMBNAIL_OPTIONS)
+          .then((map) => setThumbnails((prev) => new Map([...prev, ...map])))
+          .catch(() => {});
+      },
+      { threshold: 0 },
+    );
+
+    pageRefsMap.current.forEach((btn) => observer.observe(btn));
+    observerRef.current = observer;
+
+    return () => {
+      observer.disconnect();
+      observerRef.current = null;
+    };
+  }, [totalPages, url]);
 
   useEffect(() => {
     pageRefsMap.current
@@ -224,38 +253,44 @@ export const PdfHighlightViewer = ({ url }: Props) => {
 
       <div className="mt-4 flex min-h-0 grow">
         <div className="flex flex-col gap-2 overflow-y-auto">
-          {range(1, totalPages + 1).map((n) => {
-            const thumbUrl = thumbnails.get(n);
+          {range(1, totalPages + 1).map((pageNumber) => {
+            const thumbUrl = thumbnails.get(pageNumber);
             return (
               <button
                 type="button"
-                key={n}
+                key={pageNumber}
+                data-page={pageNumber}
                 ref={(el) => {
-                  if (el) pageRefsMap.current.set(n, el);
-                  else pageRefsMap.current.delete(n);
+                  if (el) {
+                    pageRefsMap.current.set(pageNumber, el);
+                    observerRef.current?.observe(el);
+                  } else {
+                    pageRefsMap.current.delete(pageNumber);
+                  }
                 }}
-                onClick={() => viewerRef.current?.setPage(n)}
+                onClick={() => viewerRef.current?.setPage(pageNumber)}
                 className={classNames(
                   'flex flex-col items-center gap-1 rounded p-2 hover:bg-accent-primary-alpha',
-                  n === currentPage && 'border border-primary',
+                  pageNumber === currentPage && 'border border-primary',
                 )}
-                aria-label={`${t(ChatI18nKeys.Page)} ${n}`}
-                aria-current={n === currentPage ? 'page' : undefined}
+                aria-label={`${t(ChatI18nKeys.Page)} ${pageNumber}`}
+                aria-current={pageNumber === currentPage ? 'page' : undefined}
               >
-                {thumbUrl ? (
-                  <Image
-                    src={thumbUrl}
-                    className="w-full rounded"
-                    alt={`${t(ChatI18nKeys.Page)} ${n}`}
-                    width={150}
-                    height={200}
-                    unoptimized
-                  />
-                ) : (
-                  <div className="aspect-[3/4] w-full animate-pulse rounded bg-layer-3" />
-                )}
+                <div className="relative aspect-[3/4] w-24">
+                  {thumbUrl ? (
+                    <Image
+                      src={thumbUrl}
+                      fill
+                      className="rounded object-contain"
+                      alt={`${t(ChatI18nKeys.Page)} ${pageNumber}`}
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="size-full animate-pulse rounded bg-layer-3" />
+                  )}
+                </div>
                 <span className="text-xs text-secondary" aria-hidden="true">
-                  {n}
+                  {pageNumber}
                 </span>
               </button>
             );
@@ -265,7 +300,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         <div className="relative min-w-0 grow">
           <div
             ref={containerRef}
-            className="size-full overflow-auto !bg-transparent [&_.pdf-container]:w-max [&_.pdf-container]:min-w-full [&_.pdf-container]:!bg-transparent [&_.pdf-container]:!p-2"
+            className="size-full overflow-auto !bg-transparent [&_.pdf-container]:min-w-full [&_.pdf-container]:!bg-transparent [&_.pdf-container]:!p-2"
           />
           {isLoading && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-layer-3">
