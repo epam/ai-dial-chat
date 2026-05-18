@@ -24,7 +24,6 @@ import type { Request, Response } from 'express';
 import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
-import { BucketService } from './bucket/bucket.service';
 import {
   clearCookieValue,
   getCookieOptions,
@@ -50,7 +49,6 @@ export class AuthController {
     private readonly registry: ProviderRegistryService,
     private readonly session: SessionService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
-    private readonly bucket: BucketService,
   ) {}
 
   private isOriginAllowed(origin: string): boolean {
@@ -391,16 +389,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
   @ApiResponse({ status: 401, description: 'No valid session' })
-  async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const user = req.user as SessionUser;
     res.setHeader('X-CSRF-Token', user.csrf);
-    const bucket = await this.bucket.getUserBucket(user.at);
-    console.log('User bucket:', bucket);
     return {
       sub: user.sub,
       providerId: user.providerId,
       claims: user.claims,
-      bucket,
+      bucket: user.bucket,
     };
   }
 }
