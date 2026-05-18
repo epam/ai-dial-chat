@@ -1,18 +1,17 @@
-**Description:**
+## Description of changes
 
-<SHORT_DESCRIPTION>
+<!-- Please explain the changes you made right below this line. -->
 
-Issues:
+## Applicable issues
 
-- Issue #<TICKET_ID>
+<!-- Please link the GitHub issues related to this PR (You can reference an issue using # then number, e.g. #123) -->
+- fixes #<ISSUE_ID>
 
-**UI changes**
+## UI changes
 
 <Please, provide Screenshots or Figma links>
 
-**Checklist:**
+## Checklist
 
-- [ ] the pull request name complies with [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-- [ ] the pull request name starts with `fix(<scope>):`, `feat(<scope>):`, `feature(<scope>):`, `chore(<scope>):`, `hotfix(<scope>):` or `e2e(<scope>):`. If contains breaking changes then the pull request name must start with `fix(<scope>)!:`, `feat(<scope>)!:`, `feature(<scope>)!:`, `chore(<scope>)!:`, `hotfix(<scope>)!:` or `e2e(<scope>)!:` where `<scope>` is name of affected project: `chat`, `chat-e2e`, `overlay`, `shared`, `sandbox-overlay`, etc.
-- [ ] the pull request name ends with `(Issue #<TICKET_ID>)` (comma-separated list of issues)
-- [ ] I confirm that do not share any confidential information like API keys or any other secrets and private URLs
+- [ ] the pull request name ends with `(Issue #<ISSUE_ID>)` (comma-separated list of issues)
+- [ ] I confirm that I don't share any confidential information like API keys or any other secrets and private URLs
