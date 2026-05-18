@@ -33,6 +33,10 @@ export class ConversationController {
   })
   createConversation(@Req() req: Request, @Body() dto: CreateConversationDto) {
     const { at, bucket } = req.user as SessionUser;
-    return this.conversationService.createConversation(dto.firstMessage, at, bucket);
+    return this.conversationService.createConversation(
+      dto.firstMessage,
+      at,
+      bucket,
+    );
   }
 }

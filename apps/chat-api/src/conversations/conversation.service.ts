@@ -7,26 +7,52 @@ import { handleDialError } from '../common/utils/dial-error';
 export class ConversationService extends AppService {
   protected logger = new Logger(ConversationService.name);
 
-  async createConversation(firstMessage: string, accessToken: string, bucket: string): Promise<Conversation> {
-    const now = new Date().toISOString();
+  async createConversation(
+    firstMessage: string,
+    accessToken: string,
+    bucket: string,
+  ): Promise<Conversation> {
+    const now = Date.now();
+    const uuid = crypto.randomUUID();
+    const name = firstMessage.slice(0, 160);
+    const conversationPath = `${uuid}__${name}`;
+    const folderId = `conversations/${bucket}`;
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
       content: firstMessage,
-      timestamp: now,
+      timestamp: new Date(now).toISOString(),
     };
+
     const conversation: Conversation = {
-      id: crypto.randomUUID(),
+      id: `${folderId}/${conversationPath}`,
+      folderId,
+      name,
+      model: { id: 'anthropic.claude-v3-sonnet' },
+      prompt: '',
+      temperature: 1,
       messages: [userMessage],
-      createdAt: now,
+      lastActivityDate: now,
+      updatedAt: now,
+      selectedAddons: [],
+      assistantModelId: 'anthropic.claude-v3-sonnet',
     };
+
     try {
-      const data = await this.client.saveConversation(bucket, conversation.id, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify(conversation),
-      });
-      this.logger.debug('Successfully created conversation');
-      return data as Conversation;
+      const { data, error } = (await this.client.saveConversation(
+        bucket,
+        conversationPath,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: conversation,
+        },
+      )) as { data?: unknown; error?: unknown };
+      if (error !== undefined || !data) {
+        this.logger.error('DIAL Core rejected saveConversation', error);
+        return handleDialError(error);
+      }
+      return conversation;
     } catch (error) {
       return handleDialError(error);
     }

@@ -24,6 +24,7 @@ import type { Request, Response } from 'express';
 import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { BucketService } from './bucket/bucket.service';
 import {
   clearCookieValue,
   getCookieOptions,
@@ -49,6 +50,7 @@ export class AuthController {
     private readonly registry: ProviderRegistryService,
     private readonly session: SessionService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
+    private readonly bucketService: BucketService,
   ) {}
 
   private isOriginAllowed(origin: string): boolean {
@@ -139,6 +141,7 @@ export class AuthController {
       iat: Math.floor(Date.now() / 1000),
       csrf: randomUUID(),
       claims: {},
+      bucket: '',
     });
 
     res.cookie(getTransactionCookieName(this.config), txToken, {
@@ -277,12 +280,15 @@ export class AuthController {
       filteredClaims[rolesClaim] = allClaims[rolesClaim];
     }
 
+    const accessToken = tokenSet.access_token ?? '';
+    const { bucket } = await this.bucketService.getUserBucket(accessToken);
+
     const payload: SessionPayload = {
       v: 1,
       sid: randomUUID(),
       providerId: params.providerId,
       sub: claims.sub,
-      at: tokenSet.access_token ?? '',
+      at: accessToken,
       rt: tokenSet.refresh_token ?? '',
       it: tokenSet.id_token,
       at_exp: tokenSet.expires_at ?? now + 3600,
@@ -292,6 +298,7 @@ export class AuthController {
       iat: now,
       csrf: randomUUID(),
       claims: filteredClaims,
+      bucket,
     };
 
     const sessionToken = await this.session.encrypt(payload);
