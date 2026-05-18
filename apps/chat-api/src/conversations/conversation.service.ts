@@ -20,34 +20,14 @@ export class ConversationService extends AppService {
       messages: [userMessage],
       createdAt: now,
     };
-    console.log('Creating ', `${this.configService.get('DIAL_CORE_URL', { infer: true }) as string}/v1/conversations/${conversation.id}`);
-
     try {
-      const response = await fetch(
-        `${this.configService.get('DIAL_CORE_URL', { infer: true }) as string}/v1/conversations/${bucket}/${conversation.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ conversation }),
-        },
-      );
-
-      console.log('Received response:', response);
-
-      if (!response.ok) {
-        this.logger.warn(
-          `Failed to create conversation: ${response.status} ${response.statusText}`,
-        );
-        throw new Error(
-          `Failed to create conversation: ${response.statusText}`,
-        );
-      }
-
-      const data = await response.json();
+      const data = await this.client.saveConversation(bucket, conversation.id, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify(conversation),
+      });
       this.logger.debug('Successfully created conversation');
       return data as Conversation;
     } catch (error) {
-      console.log('Error creating conversation:', error);
       return handleDialError(error);
     }
   }
