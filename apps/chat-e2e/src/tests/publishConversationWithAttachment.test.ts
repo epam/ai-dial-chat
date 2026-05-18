@@ -174,6 +174,10 @@ dialAdminTest(
       async () => {
         await publishingRequestDialog.requestName.fillInInput(requestName);
         await publishingRequestDialog.author.fillInInput(author);
+        await baseAssertion.assertElementActionabilityState(
+          publishingRequestDialog.sendRequestButton,
+          'enabled',
+        );
         publishApiModels =
           await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
