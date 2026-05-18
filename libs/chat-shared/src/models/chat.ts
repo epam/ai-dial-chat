@@ -14,7 +14,7 @@ export interface Conversation {
   id: string;
   folderId: string;
   name: string;
-  model: { id: string };
+  model: { id: string }; // TODO: add more model info
   prompt: string;
   temperature: number;
   messages: Message[];

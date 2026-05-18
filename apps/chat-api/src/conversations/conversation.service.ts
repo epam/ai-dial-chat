@@ -10,12 +10,12 @@ export class ConversationService extends AppService {
 
   async createConversation(
     firstMessage: string,
-    accessToken: string,
+    token: string,
     bucket: string,
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
-    const name = firstMessage.slice(0, 160);
+    const name = firstMessage.slice(0, 160); // TODO: implement better name generation based on the message content
     const conversationPath = `${uuid}__${name}`;
     const folderId = `conversations/${bucket}`;
 
@@ -26,6 +26,8 @@ export class ConversationService extends AppService {
       timestamp: new Date(now).toISOString(),
     };
 
+    // TODO: remove hardcoded - add model info
+    // TODO: add temperature and other conversation settings
     const conversation: Conversation = {
       id: `${folderId}/${conversationPath}`,
       folderId,
@@ -53,8 +55,11 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialError(error);
       }
+
+      console.log('Conversation saved successfully', data);
       return conversation;
     } catch (error) {
+      this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);
     }
   }

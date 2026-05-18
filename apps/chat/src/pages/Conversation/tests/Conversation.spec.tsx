@@ -1,15 +1,12 @@
-import type { Conversation } from '@epam/chat-shared';
+import { MessageRole, type Conversation } from '@epam/chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FC, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+import { ROUTES } from '../../../constants/routes';
 import { useConversation } from '../../../context/ConversationContext';
-import { ConversationPage } from '../ConversationPage';
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (k: string) => k }),
-}));
+import ConversationPage from '../Conversation';
 
 const mockSendMessage = vi.fn();
 
@@ -18,7 +15,7 @@ const knownConversation: Conversation = {
   messages: [
     {
       id: 'msg-1',
-      role: 'user',
+      role: MessageRole.User,
       content: 'Hello there',
       timestamp: '2024-01-01T00:00:00.000Z',
     },
@@ -41,7 +38,7 @@ const renderAtRoute = (path: string, children: ReactNode) =>
   );
 
 const WithRoute: FC<{ id: string }> = ({ id }) => (
-  <MemoryRouter initialEntries={[`/conversations/${id}`]}>
+  <MemoryRouter initialEntries={[`${ROUTES.CONVERSATIONS}/${id}`]}>
     <Routes>
       <Route
         path="/conversations/:conversationId"

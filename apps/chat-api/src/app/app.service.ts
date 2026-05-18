@@ -7,11 +7,16 @@ import { EnvironmentVariables } from '../config/environment.config';
 export class AppService {
   protected client: ReturnType<typeof createSDK>;
   protected configService: ConfigService<EnvironmentVariables>;
+  protected baseUrl: string;
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     this.configService = configService;
+    this.baseUrl = configService.get('DIAL_CORE_URL', {
+      infer: true,
+    }) as string;
+
     this.client = createSDK({
-      baseUrl: configService.get('DIAL_CORE_URL', { infer: true }) as string,
+      baseUrl: this.baseUrl,
       apiKey: configService.get('DIAL_API_KEY', { infer: true }),
     });
   }

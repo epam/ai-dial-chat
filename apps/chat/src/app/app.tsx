@@ -1,89 +1,18 @@
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import type { FC } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
-import { useConversation } from '../context/ConversationContext';
+import RouteFallback from '../components/RouteFallback/RouteFallback';
+import { ROUTES } from '../constants/routes';
 
-const ConversationInput = lazy(() =>
-  import('@epam/conversation-input').then((module) => ({
-    default: module.ConversationInput,
-  })),
-);
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+
 const ConversationPage = lazy(() =>
   import('../components/ConversationPage/ConversationPage').then((m) => ({
     default: m.ConversationPage,
   })),
 );
-
-const routeFallback = (
-  <div className="flex size-full items-center justify-center">
-    <div className="text-gray-500 dark:text-gray-400">Loading...</div>
-  </div>
-);
-
-const ConversationRoute: FC = () => {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { createConversation } = useConversation();
-  const [isSending, setIsSending] = useState(false);
-  const inputRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        const activeElement = document.activeElement;
-        if (activeElement instanceof HTMLElement) {
-          activeElement.blur();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleSend = useCallback(
-    async (message: string) => {
-      if (isSending) return;
-      setIsSending(true);
-      try {
-        const id = await createConversation(message);
-        navigate(`/conversations/${id}`);
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [createConversation, navigate, isSending],
-  );
-
-  return (
-    <div ref={inputRef} className="flex flex-1 flex-col overflow-hidden">
-      <Suspense fallback={routeFallback}>
-        <div
-          className="flex h-full flex-col items-center justify-center p-8"
-          role="region"
-          aria-label="Welcome screen"
-        >
-          <ConversationInput
-            onSend={handleSend}
-            welcomeText={t('chat.welcomeText')}
-            placeholder={t('chat.placeholder')}
-            typography={{ welcomeClassName: 'dial-display2-text' }}
-          />
-        </div>
-      </Suspense>
-    </div>
-  );
-};
 
 function App() {
   return (
@@ -96,11 +25,11 @@ function App() {
       >
         <Header />
         <Routes>
-          <Route path="/" element={<ConversationRoute />} />
+          <Route path={ROUTES.ROOT} element={<ConversationRoute />} />
           <Route
-            path="/catalog"
+            path={ROUTES.CATALOG}
             element={
-              <Suspense fallback={routeFallback}>
+              <Suspense fallback={<RouteFallback />}>
                 <CatalogView />
               </Suspense>
             }
@@ -108,7 +37,7 @@ function App() {
           <Route
             path="/conversations/:conversationId"
             element={
-              <Suspense fallback={routeFallback}>
+              <Suspense fallback={<RouteFallback />}>
                 <ConversationPage />
               </Suspense>
             }

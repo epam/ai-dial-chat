@@ -1,14 +1,14 @@
 import { FC, memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import ConversationView from '../../components/ConversationView/ConversationView';
+import { ROUTES } from '../../constants/routes';
 import { useConversation } from '../../context/ConversationContext';
-import ConversationView from '../ConversationView/ConversationView';
 
-export interface ConversationPageProps {}
-
-export const ConversationPage: FC<ConversationPageProps> = memo(() => {
+const ConversationPage: FC = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const { conversations, sendMessage } = useConversation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const conversation = conversationId
@@ -25,17 +25,8 @@ export const ConversationPage: FC<ConversationPageProps> = memo(() => {
   );
 
   if (!conversation) {
-    return (
-      <div
-        className="flex h-full items-center justify-center"
-        role="alert"
-        aria-live="assertive"
-      >
-        <p className="text-gray-500 dark:text-gray-400">
-          Conversation not found.
-        </p>
-      </div>
-    );
+    navigate(ROUTES.ROOT);
+    return null;
   }
 
   return (
@@ -47,6 +38,6 @@ export const ConversationPage: FC<ConversationPageProps> = memo(() => {
       />
     </div>
   );
-});
+};
 
-ConversationPage.displayName = 'ConversationPage';
+export default memo(ConversationPage);

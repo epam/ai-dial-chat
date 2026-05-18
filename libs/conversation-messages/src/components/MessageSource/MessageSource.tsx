@@ -7,6 +7,7 @@ interface MessageSourceProps {
   onClick?: () => void;
 }
 
+// TODO: review after usage in MessageActions
 export const MessageSource: FC<MessageSourceProps> = ({
   label,
   className,
