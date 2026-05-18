@@ -16,6 +16,7 @@ import {
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
+  buildDedupedPublicationFileTargetsFromConversations,
   createFoldersFilesTargetUrl,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
@@ -176,32 +177,51 @@ const PublishDialogContainer = ({
       };
     });
 
-    const mappedWithConversationsFiles = transformFoldersFilesIds(
-      filteredEntities as Conversation[],
-      entity.folderId,
-    );
+    let fileResources: {
+      action: PublishActions;
+      sourceUrl: string;
+      reviewUrl: string;
+      targetUrl: string;
+    }[] = [];
 
-    const fileResources =
-      action === PublishActions.DELETE
-        ? []
-        : filteredConversationFiles.map(({ id }) => {
-            const decodedId = ApiUtils.decodeApiUrl(id);
+    if (action !== PublishActions.DELETE) {
+      if (resourceType === BackendResourceType.CONVERSATION) {
+        fileResources = buildDedupedPublicationFileTargetsFromConversations(
+          filteredEntities as Conversation[],
+          entity.folderId,
+          { isFolder: !!isFolder },
+        ).map(({ sourceUrl, newUrl }) => ({
+          action: PublishActions.ADD_IF_ABSENT,
+          sourceUrl,
+          reviewUrl: sourceUrl,
+          targetUrl: replaceIdWithBucket(newUrl, PUBLIC_URL_PREFIX),
+        }));
+      } else {
+        const mappedWithConversationsFiles = transformFoldersFilesIds(
+          filteredEntities as Conversation[],
+          entity.folderId,
+        );
 
-            const url =
-              (isFolder
-                ? mappedWithConversationsFiles.find(
-                    (file) => file.oldUrl === decodedId,
-                  )?.newUrl
-                : transformIdToRootEntityId(decodedId)) ??
-              transformIdToRootEntityId(decodedId);
+        fileResources = filteredConversationFiles.map(({ id }) => {
+          const decodedId = ApiUtils.decodeApiUrl(id);
 
-            return {
-              action: PublishActions.ADD_IF_ABSENT,
-              sourceUrl: decodedId,
-              reviewUrl: decodedId,
-              targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
-            };
-          });
+          const url =
+            (isFolder
+              ? mappedWithConversationsFiles.find(
+                  (file) => file.oldUrl === decodedId,
+                )?.newUrl
+              : transformIdToRootEntityId(decodedId)) ??
+            transformIdToRootEntityId(decodedId);
+
+          return {
+            action: PublishActions.ADD_IF_ABSENT,
+            sourceUrl: decodedId,
+            reviewUrl: decodedId,
+            targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
+          };
+        });
+      }
+    }
 
     const iconResource = [];
     if (
