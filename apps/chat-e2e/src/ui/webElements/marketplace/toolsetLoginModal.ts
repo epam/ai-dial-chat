@@ -1,5 +1,6 @@
 import { IconSelectors, ToolsetLoginModalSelectors } from '@/src/ui/selectors';
-import { Button, Popup } from '@/src/ui/webElements';
+import { Button } from '@/src/ui/webElements';
+import { Popup } from '@/src/ui/webElements/common/popup';
 import { FieldLabel } from '@/src/ui/webElements/fieldLabel';
 import { Page } from '@playwright/test';
 
