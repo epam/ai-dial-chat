@@ -1,10 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { ROUTES } from '../constants/routes';
+import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 

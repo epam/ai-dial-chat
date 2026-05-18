@@ -1,7 +1,7 @@
 import { MessageRole, type Conversation } from '@epam/chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FC, ReactNode } from 'react';
+import { FC } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { ROUTES } from '../../../constants/routes';
@@ -9,6 +9,7 @@ import { useConversation } from '../../../context/ConversationContext';
 import ConversationPage from '../Conversation';
 
 const mockSendMessage = vi.fn();
+const mockNavigate = vi.fn();
 
 const knownConversation: Conversation = {
   id: 'conv-abc',
@@ -27,15 +28,13 @@ vi.mock('../../../context/ConversationContext', () => ({
   useConversation: vi.fn(),
 }));
 
-const renderAtRoute = (path: string, children: ReactNode) =>
-  render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/conversations/:conversationId" element={children} />
-        <Route path="*" element={children} />
-      </Routes>
-    </MemoryRouter>,
-  );
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 const WithRoute: FC<{ id: string }> = ({ id }) => (
   <MemoryRouter initialEntries={[`${ROUTES.CONVERSATIONS}/${id}`]}>
@@ -49,7 +48,7 @@ const WithRoute: FC<{ id: string }> = ({ id }) => (
 );
 
 describe('ConversationPage', () => {
-  it('renders the message log for a known conversation ID', () => {
+  it('renders the conversation view for a known conversation ID', () => {
     vi.mocked(useConversation).mockReturnValue({
       conversations: new Map([['conv-abc', knownConversation]]),
       createConversation: vi.fn(),
@@ -58,10 +57,10 @@ describe('ConversationPage', () => {
 
     render(<WithRoute id="conv-abc" />);
 
-    expect(screen.getByRole('log')).toBeInTheDocument();
+    expect(screen.getByText('Hello there')).toBeInTheDocument();
   });
 
-  it('renders a not-found alert for an unknown conversation ID', () => {
+  it('navigates to root when conversation is not found', () => {
     vi.mocked(useConversation).mockReturnValue({
       conversations: new Map(),
       createConversation: vi.fn(),
@@ -70,8 +69,7 @@ describe('ConversationPage', () => {
 
     render(<WithRoute id="does-not-exist" />);
 
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText(/conversation not found/i)).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.ROOT);
   });
 
   it('calls sendMessage when the user submits a message', async () => {

@@ -9,9 +9,9 @@ import {
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
 import { useConversation } from '../../context/ConversationContext';
-import RouteFallback from '../../components/RouteFallback/RouteFallback';
 
 const ConversationInput = lazy(() =>
   import('@epam/conversation-input').then((module) => ({

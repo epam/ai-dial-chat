@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { createConversation as apiCreateConversation } from '../server-api/conversations.api';
 
+// TODO: review context and investigate - we can use some store like Zustand or Jotai instead of context for better performance and simpler code
 interface ConversationContextValue {
   conversations: Map<string, Conversation>;
   createConversation: (firstMessage: string) => Promise<string>;
@@ -27,7 +28,7 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
   const createConversation = useCallback(
     async (firstMessage: string): Promise<string> => {
       const conversation = await apiCreateConversation(firstMessage);
-      console.log('Created conversation:', conversation);
+
       setConversations((prev) =>
         new Map(prev).set(conversation.id, conversation),
       );

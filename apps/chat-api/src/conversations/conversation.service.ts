@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
+import { getConversationName } from './conversation.utils';
 
 @Injectable()
 export class ConversationService extends AppService {
@@ -15,9 +16,9 @@ export class ConversationService extends AppService {
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
-    const name = firstMessage.slice(0, 160); // TODO: implement better name generation based on the message content
+    const name = getConversationName(firstMessage);
     const conversationPath = `${uuid}__${name}`;
-    const folderId = `conversations/${bucket}`;
+    const folderId = `conversations/${bucket}`; // TODO: check
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
