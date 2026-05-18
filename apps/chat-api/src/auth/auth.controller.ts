@@ -394,7 +394,7 @@ export class AuthController {
   async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const user = req.user as SessionUser;
     res.setHeader('X-CSRF-Token', user.csrf);
-    const bucket = await this.bucket.getUserBucket(user.sub);
+    const bucket = await this.bucket.getUserBucket(user.at);
     console.log('User bucket:', bucket);
     return {
       sub: user.sub,
