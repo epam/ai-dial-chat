@@ -1,12 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
-import {
-  getUtf8BytesLength,
-  prepareEntityName,
-  truncateToUtf8Bytes,
-} from '@/chat/utils/app/common';
-import { encodeModelId, pathKeySeparator } from '@/chat/utils/server/api';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -1601,14 +1595,41 @@ dialTest(
       'Send long request and verify the name is truncated to available bytes',
       async () => {
         // Storage segment key is "{encodeModelId(model.id)}__{name}".
-        // Available name bytes = SEGMENT_LIMIT - UTF-8 byte length of that prefix.
+        // Model IDs that contain "__" are encoded as "%5F%5F" inside the key,
+        // so we must compute the prefix exactly the same way the app does
+        // and measure it in UTF-8 bytes (not characters).
+        const PATH_KEY_SEPARATOR = '__';
+        const ENCODED_KEY_SEPARATOR = '%5F%5F';
+        const encodeModelId = (modelId: string) =>
+          modelId
+            .split(PATH_KEY_SEPARATOR)
+            .map((part) => encodeURI(part))
+            .join(ENCODED_KEY_SEPARATOR);
+        const utf8Length = (value: string) =>
+          new TextEncoder().encode(value).length;
+        const truncateToUtf8Bytes = (value: string, maxBytes: number) => {
+          if (maxBytes <= 0) return '';
+          let bytes = 0;
+          let result = '';
+          for (const char of value) {
+            const charBytes = utf8Length(char);
+            if (bytes + charBytes > maxBytes) break;
+            result += char;
+            bytes += charBytes;
+          }
+          return result;
+        };
+        // Matches prepareEntityName's trailing cleanup for single-line ASCII input:
+        // strip trailing dots/spaces/tabs/newlines exposed by the byte-boundary cut.
+        const trimEndDots = (value: string) =>
+          value.replace(/[. \t\r\n]+$/, '');
+
         const model = ModelsUtil.getDefaultAgent()!;
-        const modelApiPrefix = `${encodeModelId(model.id)}${pathKeySeparator}`;
+        const modelApiPrefix = `${encodeModelId(model.id)}${PATH_KEY_SEPARATOR}`;
         const availableBytes =
-          ExpectedConstants.maxEntityNameLength -
-          getUtf8BytesLength(modelApiPrefix);
-        const expectedConversationName = prepareEntityName(
-          truncateToUtf8Bytes(prepareEntityName(longRequest), availableBytes),
+          ExpectedConstants.maxEntityNameLength - utf8Length(modelApiPrefix);
+        const expectedConversationName = trimEndDots(
+          truncateToUtf8Bytes(longRequest, availableBytes),
         );
 
         await localStorageManager.setShowSideBarPanels();
