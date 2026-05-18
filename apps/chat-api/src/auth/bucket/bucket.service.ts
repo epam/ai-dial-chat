@@ -9,12 +9,16 @@ export class BucketService extends AppService {
     token: string,
   ): Promise<{ bucket: string; appdata?: string }> {
     try {
-      return (await this.client.getUserBucket({
-        headers: getBearerAuthHeaders(token),
+      const { data, error } = (await this.client.getUserBucket({
+       headers: getBearerAuthHeaders(token),
       })) as {
-        bucket: string;
-        appdata?: string;
+        data?: { bucket: string; appdata?: string };
+        error?: unknown;
       };
+      if (error !== undefined || !data) {
+        return handleDialError(error);
+      }
+      return data;
     } catch (error) {
       return handleDialError(error);
     }

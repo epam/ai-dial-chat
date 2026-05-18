@@ -23,6 +23,8 @@ export interface SessionPayload {
   csrf: string;
   /** Filtered OIDC claims stored for the UI (allowlist only) */
   claims: Record<string, unknown>;
+  /** DIAL Core bucket assigned to this user — fetched once at login */
+  bucket: string;
 }
 
 export interface SessionUser {
