@@ -12,6 +12,7 @@ import { CompactEncrypt } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { AuthController } from './auth.controller';
+import { BucketService } from './bucket/bucket.service';
 import { KeysService } from './keys/keys.service';
 import { ProviderRegistryService } from './providers/provider-registry.service';
 import { RefreshService } from './refresh/refresh.service';
@@ -48,6 +49,10 @@ const MOCK_CLIENT = {
 
 const MOCK_REFRESH_SERVICE = {
   refresh: vi.fn(),
+};
+
+const MOCK_BUCKET_SERVICE = {
+  getUserBucket: vi.fn().mockResolvedValue({ bucket: 'test-bucket' }),
 };
 
 async function buildApp(): Promise<INestApplication> {
@@ -109,6 +114,7 @@ async function buildApp(): Promise<INestApplication> {
       { provide: ProviderRegistryService, useValue: registryMock },
       { provide: ConfigService, useValue: configMock },
       { provide: RefreshService, useValue: MOCK_REFRESH_SERVICE },
+      { provide: BucketService, useValue: MOCK_BUCKET_SERVICE },
       { provide: APP_GUARD, useClass: SessionGuard },
     ],
   }).compile();
@@ -167,7 +173,7 @@ const sampleSession: SessionPayload = {
 };
 
 describe('AuthController (integration)', () => {
-  let app: INestApplication;
+  let app: INestApplication | undefined;
 
   beforeEach(async () => {
     app = await buildApp();
@@ -176,7 +182,8 @@ describe('AuthController (integration)', () => {
   afterEach(async () => {
     vi.clearAllMocks();
     MOCK_REFRESH_SERVICE.refresh.mockReset();
-    await app.close();
+    await app?.close();
+    app = undefined;
   });
 
   describe('GET /api/v1/auth/providers', () => {

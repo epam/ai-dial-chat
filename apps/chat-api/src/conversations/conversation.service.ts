@@ -1,5 +1,6 @@
 import { Conversation, MessageRole, Message } from '@epam/chat-shared';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
@@ -8,6 +9,10 @@ import { getConversationName } from './conversation.utils';
 @Injectable()
 export class ConversationService extends AppService {
   protected logger = new Logger(ConversationService.name);
+
+  constructor(configService: ConfigService) {
+    super(configService);
+  }
 
   async createConversation(
     firstMessage: string,

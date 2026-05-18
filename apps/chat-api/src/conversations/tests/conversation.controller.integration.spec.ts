@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +8,10 @@ import { ConversationService } from '../conversation.service';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TEST_USER = {
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
 
 describe('ConversationController (integration)', () => {
   let app: INestApplication;
@@ -21,6 +26,10 @@ describe('ConversationController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
+    app.use((req, _res, next) => {
+      req.user = TEST_USER;
+      next();
+    });
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -58,7 +67,11 @@ describe('ConversationController (integration)', () => {
         .expect(201);
 
       expect(result.body).toEqual(conversation);
-      expect(service.createConversation).toHaveBeenCalledWith('Hello');
+      expect(service.createConversation).toHaveBeenCalledWith(
+        'Hello',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
     });
 
     it('returns 400 when firstMessage is an empty string', async () => {
@@ -83,29 +96,48 @@ describe('ConversationController (integration)', () => {
     });
 
     it('returns 201 with a valid conversation shape from the real service', async () => {
-      const realService = new ConversationService();
+      const configService = {
+        get: vi.fn((key: string) => {
+          if (key === 'DIAL_CORE_URL') return 'http://localhost:3000';
+          if (key === 'DIAL_API_KEY') return 'test-api-key';
+          return undefined;
+        }),
+      };
+
       const realModule: TestingModule = await Test.createTestingModule({
         controllers: [ConversationController],
-        providers: [ConversationService],
+        providers: [
+          { provide: ConfigService, useValue: configService },
+          ConversationService,
+        ],
       }).compile();
 
       const realApp = realModule.createNestApplication();
+      realApp.use((req, _res, next) => {
+        req.user = TEST_USER;
+        next();
+      });
       realApp.useGlobalPipes(
         new ValidationPipe({ whitelist: true, transform: true }),
       );
       await realApp.init();
+
+      vi.spyOn(realApp.get(ConversationService)['client'], 'saveConversation').mockResolvedValue(
+        { data: {} } as never,
+      );
 
       const result = await request(realApp.getHttpServer())
         .post('/conversations')
         .send({ firstMessage: 'Hello from integration' })
         .expect(201);
 
-      expect(result.body.id).toMatch(UUID_REGEX);
+      expect(result.body.id).toMatch(
+        /^conversations\/test-bucket\/[0-9a-f-]{36}__Hello from integration\b/i,
+      );
       expect(result.body.messages).toHaveLength(1);
       expect(result.body.messages[0].content).toBe('Hello from integration');
 
       await realApp.close();
-      void realService;
     });
   });
 });
