@@ -7,7 +7,11 @@ import { handleDialError } from '../common/utils/dial-error';
 export class ConversationService extends AppService {
   protected logger = new Logger(ConversationService.name);
 
-  async createConversation(firstMessage: string, accessToken: string, bucket: string): Promise<Conversation> {
+  async createConversation(
+    firstMessage: string,
+    accessToken: string,
+    bucket: string,
+  ): Promise<Conversation> {
     const now = new Date().toISOString();
     const userMessage: Message = {
       id: crypto.randomUUID(),
