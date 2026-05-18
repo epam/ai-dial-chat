@@ -29,6 +29,7 @@ interface Props {
   isLastMessageError: boolean;
   isSendDisabled: boolean;
   isLoading: boolean;
+  microphoneButtonHidden?: boolean;
 }
 
 export const ChatControls: FC<Props> = ({
@@ -38,6 +39,7 @@ export const ChatControls: FC<Props> = ({
   isSendDisabled,
   isLoading,
   tooltip,
+  microphoneButtonHidden,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -72,6 +74,7 @@ export const ChatControls: FC<Props> = ({
         isDisabled={isSendDisabled}
         tooltip={tooltip}
         isLoading={isLoading}
+        microphoneButtonHidden={microphoneButtonHidden}
       />
     );
   }
