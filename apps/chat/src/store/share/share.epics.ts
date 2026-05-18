@@ -94,6 +94,7 @@ import {
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
 import { NA_VERSION } from '@/src/constants/publication';
+import { shareApiErrorsRegex } from '@/src/constants/share';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
@@ -429,8 +430,20 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          const { traceId } = parseApiError(err);
-          return of(ShareActions.shareFail({ traceId }));
+          const { traceId, message } = parseApiError(err);
+          const errorMessage = message?.toLowerCase()?.trim() ?? '';
+          let failedPayload = undefined;
+
+          if (
+            shareApiErrorsRegex.applicationWithPublicFiles.test(errorMessage)
+          ) {
+            failedPayload =
+              CommonI18nKeys.ShareApplicationWithPublicResourcesFailed;
+          }
+
+          return of(
+            ShareActions.shareFail({ message: failedPayload, traceId }),
+          );
         }),
       );
     }),

@@ -36,7 +36,11 @@ export const IconButton: React.FC<Props> = ({
         appearance={ButtonAppearance.Ghost}
         onClick={onClick}
         disabled={disabled}
-        icon={Icon && <Icon size={size} strokeWidth="1.5" />}
+        icon={
+          Icon && (
+            <Icon size={size} width={size} height={size} strokeWidth="1.5" />
+          )
+        }
         data-qa={dataQa}
         className={className}
       />

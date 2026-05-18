@@ -9,17 +9,19 @@ updates:
     # Disable version updates, keep security updates only
     open-pull-requests-limit: 0
     commit-message:
-      # Prefix all commit messages with "chore: "
       prefix: "chore"
+      include: scope
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - ".github/actions/**"
     schedule:
       interval: "weekly"
       day: "wednesday"
       time: "09:00"
     commit-message:
-      # Prefix all commit messages with "chore: "
-      prefix: "chore"
+      prefix: "ci"
+      include: scope
     groups:
       ai-dial-ci:
         applies-to: version-updates
