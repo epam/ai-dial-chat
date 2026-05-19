@@ -58,6 +58,10 @@ Implement tasks from an OpenSpec change.
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
+   If the context changes HTTP API behavior, read `.agents/skills/api-design/SKILL.md`
+   before implementation. If the context touches `apps/chat-api/**`, also read
+   `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`.
+
 5. **Show current progress**
 
    Display:
