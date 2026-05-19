@@ -168,7 +168,8 @@ const ReviewQuickApp2SectionView = ({
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Instructions)}
-        valueClassName="grow break-all text-primary"
+        valueClassName=""
+        noTooltip
         value={
           <DialMarkdownEditor
             value={config.orchestrator.system_prompt.content}
@@ -176,7 +177,7 @@ const ReviewQuickApp2SectionView = ({
             theme={theme as EditorThemes}
             preview="preview"
             commands={[]}
-            className="rounded-[5px] border border-b-hover"
+            className="rounded-[5px]"
           />
         }
       />
