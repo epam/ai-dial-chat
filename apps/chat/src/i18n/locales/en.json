@@ -1,7 +1,8 @@
 {
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Type a new prompt or use '/' to select one"
+    "placeholder": "Type a new prompt or use '/' to select one",
+    "streamError": "Something went wrong while generating the response."
   },
   "accessibility": {
     "skipToContent": "Skip to main content",

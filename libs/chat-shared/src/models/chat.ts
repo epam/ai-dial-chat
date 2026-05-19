@@ -24,6 +24,21 @@ export interface Message {
   timestamp: string;
 }
 
+export interface StreamChunkDelta {
+  content?: string;
+  role?: string;
+}
+
+export interface StreamChunk {
+  id: string;
+  object: 'chat.completion.chunk';
+  choices: Array<{
+    delta: StreamChunkDelta;
+    finish_reason: string | null;
+    index: number;
+  }>;
+}
+
 export interface Conversation {
   id: string;
   folderId: string;

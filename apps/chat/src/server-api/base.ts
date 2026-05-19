@@ -35,6 +35,7 @@ let _csrfToken: string | null = null;
 export const setCsrfToken = (token: string | null): void => {
   _csrfToken = token;
 };
+export const getCsrfToken = (): string | null => _csrfToken;
 
 // Type guard for validating response structure
 export const isValidResponse = <T>(

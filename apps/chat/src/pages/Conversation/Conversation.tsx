@@ -1,25 +1,28 @@
 import { Conversation } from '@epam/chat-shared';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import { ROUTES } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useConversation } from '../../context/ConversationContext';
+import { streamCompletion } from '../../server-api/chat-stream.api';
+import { saveConversation } from '../../server-api/conversations.api';
+import { createMessagePair } from '../../utils/message-factory';
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const { getConversation, sendMessage } = useConversation();
+  const { getConversation } = useConversation();
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [isFetching, setIsFetching] = useState(!!conversationId);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const [isFetching, setIsFetching] = useState(
-    !conversation && !!conversationId,
-  );
-
   useEffect(() => {
-    if (!conversationId || conversation) {
+    if (!conversationId) {
       setIsFetching(false);
       return;
     }
@@ -35,15 +38,79 @@ export const ConversationPage: FC = () => {
       })
       .catch(() => navigate(ROUTES.ROOT))
       .finally(() => setIsFetching(false));
-  }, [conversationId, conversation, getConversation, navigate]);
+  }, [conversationId, getConversation, navigate]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const handleSend = useCallback(
     (message: string) => {
-      if (conversationId) {
-        sendMessage(conversationId, message);
-      }
+      if (!conversationId || !conversation) return;
+
+      const { userMessage, assistantMessage, assistantMessageId } =
+        createMessagePair(message);
+
+      setConversation((prev) => {
+        if (!prev) return prev;
+        const next = {
+          ...prev,
+          messages: [...prev.messages, userMessage, assistantMessage],
+        };
+        conversationRef.current = next;
+        return next;
+      });
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setIsStreaming(true);
+
+      // Conversation id format: "{bucket}/{conversationPath}" — strip bucket prefix
+      const conversationPath = conversationId.substring(
+        conversationId.indexOf('/') + 1,
+      );
+      const model = conversation.model.id;
+
+      streamCompletion(conversationPath, message, model, {
+        signal: controller.signal,
+        onChunk: (chunk) => {
+          const token = chunk.choices[0]?.delta?.content ?? '';
+
+          if (!token) return;
+          setConversation((prev) => {
+            if (!prev) return prev;
+            const next = {
+              ...prev,
+              messages: prev.messages.map((m) =>
+                m.id === assistantMessageId
+                  ? { ...m, content: m.content + token }
+                  : m,
+              ),
+            };
+            conversationRef.current = next;
+            return next;
+          });
+        },
+        onComplete: () => {
+          setIsStreaming(false);
+          abortRef.current = null;
+          const final = conversationRef.current;
+          if (final) {
+            saveConversation(conversationPath, final).catch(
+              (err: unknown) => void err,
+            );
+          }
+        },
+        onError: () => {
+          setIsStreaming(false);
+          abortRef.current = null;
+        },
+      });
     },
-    [conversationId, sendMessage],
+    [conversation, conversationId],
   );
 
   if (isFetching) return null;
@@ -58,6 +125,7 @@ export const ConversationPage: FC = () => {
       <ConversationView
         messages={conversation.messages}
         onSend={handleSend}
+        isAssistantTyping={isStreaming}
         placeholder={t(ChatI18nKeys.Placeholder)}
       />
     </div>

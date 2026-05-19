@@ -9,13 +9,14 @@ import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
+import { EnvironmentVariables } from '../config/environment.config';
 import { getConversationName } from './conversation.utils';
 
 @Injectable()
 export class ConversationService extends AppService {
   protected logger = new Logger(ConversationService.name);
 
-  constructor(configService: ConfigService) {
+  constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
   }
 
@@ -139,6 +140,82 @@ export class ConversationService extends AppService {
       return data as ConversationMetadata;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversationMetadata', error);
+      return handleDialError(error);
+    }
+  }
+
+  async saveConversation(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    conversation: Conversation,
+  ): Promise<Conversation> {
+    try {
+      const { data, error } = (await this.client.saveConversation(
+        bucket,
+        conversationPath,
+        {
+          headers: getBearerAuthHeaders(token),
+          body: conversation,
+        },
+      )) as { data?: unknown; error?: unknown };
+      if (error !== undefined || !data) {
+        this.logger.error('DIAL Core rejected saveConversation', error);
+        return handleDialError(error);
+      }
+      return { ...data, ...conversation } as Conversation;
+    } catch (error) {
+      this.logger.error('DIAL Core rejected saveConversation', error);
+      return handleDialError(error);
+    }
+  }
+
+  async streamCompletion(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    message: string,
+    model: string,
+  ): Promise<ReadableStream<Uint8Array>> {
+    const conversation = await this.getConversation(
+      conversationPath,
+      token,
+      bucket,
+    );
+
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: MessageRole.User,
+      content: message,
+      timestamp: new Date().toISOString(),
+    };
+
+    const messages = [...conversation.messages, userMessage].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    try {
+      const result = (await this.client.sendChatCompletionRequest(model, {
+        body: { messages, stream: true },
+        headers: {
+          ...getBearerAuthHeaders(token),
+          Accept: 'text/event-stream',
+        },
+        parseAs: 'stream',
+      })) as { response: Response; error?: unknown };
+
+      if (!result.response.ok || !result.response.body) {
+        this.logger.error(
+          'DIAL Core rejected streamCompletion',
+          result.response.status,
+        );
+        return handleDialError({ status: result.response.status });
+      }
+
+      return result.response.body;
+    } catch (error) {
+      this.logger.error('DIAL Core streamCompletion failed', error);
       return handleDialError(error);
     }
   }

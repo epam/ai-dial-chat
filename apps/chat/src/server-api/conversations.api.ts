@@ -1,5 +1,5 @@
 import { Conversation, ConversationMetadata } from '@epam/chat-shared';
-import { ApiEndpoints, del, get, post } from './base';
+import { ApiEndpoints, del, get, post, put } from './base';
 
 export const createConversation = (
   firstMessage: string,
@@ -12,6 +12,17 @@ export const getConversation = (
   get<Conversation>(
     `${ApiEndpoints.CONVERSATIONS}?path=${encodeURIComponent(conversationPath)}`,
   );
+
+export const saveConversation = (
+  conversationPath: string,
+  conversation: Conversation,
+): Promise<Conversation> => {
+  const params = new URLSearchParams({ path: conversationPath });
+  return put<Conversation>(
+    `${ApiEndpoints.CONVERSATIONS}?${params.toString()}`,
+    { conversation },
+  );
+};
 
 export const deleteConversation = (conversationPath: string): Promise<void> =>
   del(

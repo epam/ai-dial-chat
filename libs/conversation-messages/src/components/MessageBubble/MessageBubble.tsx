@@ -1,9 +1,10 @@
-import { mergeClasses } from '@epam/chat-shared';
+import { mergeClasses, MessageRole } from '@epam/chat-shared';
 import { FC } from 'react';
 import { BubblePosition } from '../../types/bubble-position.js';
 
 interface MessageBubbleProps {
   text: string;
+  role: MessageRole;
   position?: BubblePosition;
   className?: string;
   bubbleClassName?: string;
@@ -11,6 +12,7 @@ interface MessageBubbleProps {
 
 export const MessageBubble: FC<MessageBubbleProps> = ({
   text,
+  role,
   position = BubblePosition.Bottom,
   className,
   bubbleClassName,
@@ -18,7 +20,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   const positionRadius =
     position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
 
-  return (
+  return role === MessageRole.User ? (
     <div className={mergeClasses('flex w-full', className)}>
       <div
         className={mergeClasses(
@@ -28,6 +30,12 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
         )}
       >
         <p className="dial-body-text text-primary text-right">{text}</p>
+      </div>
+    </div>
+  ) : (
+    <div className={mergeClasses('flex w-full', className)}>
+      <div className={mergeClasses('flex w-fit items-center', bubbleClassName)}>
+        <p className="dial-body-text text-primary text-left">{text}</p>
       </div>
     </div>
   );
