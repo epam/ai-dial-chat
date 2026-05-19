@@ -146,8 +146,7 @@ ai-dial-chat/
 │       └── README.md            # Backend docs
 │
 ├── libs/
-│   ├── conversation-input/      # Chat input component library
-│   └── conversation-panel/      # Chat panel component library
+│   └── conversation-input/      # Chat input component library
 │
 ├── .claude/                     # Claude Code configuration
 ├── nx.json                      # Nx configuration

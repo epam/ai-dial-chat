@@ -1,8 +1,22 @@
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { MessageRole, type Message as MessageType } from '@epam/chat-shared';
-import { ConversationInput } from '@epam/conversation-input';
 import { MessageBubble } from '@epam/conversation-messages';
-import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  FC,
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
+const ConversationInput = lazy(() =>
+  import('@epam/conversation-input').then((module) => ({
+    default: module.ConversationInput,
+  })),
+);
 
 interface Props {
   messages: MessageType[];
@@ -136,7 +150,9 @@ const ConversationView: FC<Props> = ({
       </div>
 
       <div role="region" aria-label="Message input" className="w-full">
-        <ConversationInput onSend={onSend} placeholder={placeholder} />
+        <Suspense fallback={null}>
+          <ConversationInput onSend={onSend} placeholder={placeholder} />
+        </Suspense>
       </div>
     </>
   );
