@@ -1599,7 +1599,7 @@ dialTest(
     setTestIds('EPMRTC-2961');
 
     const longRequest =
-      'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+      'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build one successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
 
     await dialTest.step(
       'Send long request and verify the name is truncated to available bytes',
