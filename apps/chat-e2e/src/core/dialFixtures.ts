@@ -54,6 +54,7 @@ import {
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginModal,
   TooltipPortal,
   TopicsTooltip,
   UploadProgressDialog,
@@ -98,6 +99,7 @@ import {
   ToastAssertion,
   ToolsetApiAuthenticationAssertion,
   ToolsetAuthAssertion,
+  ToolsetLoginModalAssertion,
   TooltipAssertion,
   TooltipPortalAssertion,
   VariableModalAssertion,
@@ -464,6 +466,8 @@ const dialTest = test.extend<{
   tooltipPortal: TooltipPortal;
   tooltipPortalAssertion: TooltipPortalAssertion;
   toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
+  toolsetLoginModal: ToolsetLoginModal;
+  toolsetLoginModalAssertion: ToolsetLoginModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1920,6 +1924,16 @@ const dialTest = test.extend<{
     const toolsetApiAuthenticationAssertion =
       new ToolsetApiAuthenticationAssertion();
     await use(toolsetApiAuthenticationAssertion);
+  },
+  toolsetLoginModal: async ({ page }, use) => {
+    const toolsetLoginModal = new ToolsetLoginModal(page);
+    await use(toolsetLoginModal);
+  },
+  toolsetLoginModalAssertion: async ({ toolsetLoginModal }, use) => {
+    const toolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      toolsetLoginModal,
+    );
+    await use(toolsetLoginModalAssertion);
   },
 });
 

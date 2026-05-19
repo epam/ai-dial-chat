@@ -3,7 +3,7 @@ import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { IconSelectors, MarketplaceEntitySelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, Button } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { Page } from '@playwright/test';
 
@@ -51,8 +51,15 @@ export class EntityDetailsModal extends BaseElement {
   public unshareButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.unshareButton,
   );
-  public loginButton = this.getChildElementBySelector(
+  public loginButton = new Button(
+    this.page,
     MarketplaceDetailsModal.loginButton,
+    this.rootLocator,
+  );
+  public logoutButton = new Button(
+    this.page,
+    MarketplaceDetailsModal.logoutButton,
+    this.rootLocator,
   );
   public arrowIcon = this.getChildElementBySelector(
     MarketplaceEntitySelectors.arrowIcon,
