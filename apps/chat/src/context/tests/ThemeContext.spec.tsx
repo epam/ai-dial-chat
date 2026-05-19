@@ -11,7 +11,7 @@ import { ThemeProvider, useTheme } from '../ThemeContext';
 vi.mock('../../server-api/base');
 vi.mock('../../utils/local-storage');
 vi.mock('../../utils/apply-theme-colors');
-vi.mock('../../hooks/useFavicon');
+vi.mock('../../hooks/favicon/useFavicon');
 
 describe('ThemeContext', () => {
   const mockGet = vi.mocked(serverApi.get);

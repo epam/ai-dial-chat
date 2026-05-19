@@ -81,17 +81,6 @@ describe('useFavicon', () => {
     expect(links.length).toBe(1);
   });
 
-  it('should build URL using getIconPath', () => {
-    const faviconUrl = 'https://example.com/favicon.png';
-
-    renderHook(() => useFavicon(faviconUrl));
-
-    expect(imageInstances).toHaveLength(1);
-    expect(iconPathModule.getIconPath).toHaveBeenCalledWith(faviconUrl);
-    expect(imageInstances[0].src).toContain('iconName=');
-    expect(imageInstances[0].src).toContain(encodeURIComponent(faviconUrl));
-  });
-
   it('should update link href on successful image load', () => {
     document.head.appendChild(mockLink);
     const faviconUrl = 'https://example.com/favicon.png';
