@@ -1,3 +1,17 @@
+export interface ConversationMetadata {
+  name: string;
+  author?: string;
+  parentPath: string;
+  bucket: string;
+  url: string;
+  nodeType: string;
+  resourceType: string;
+  etag?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  permissions?: string[];
+}
+
 export enum MessageRole {
   User = 'user',
   Assistant = 'assistant',

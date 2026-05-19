@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
+import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useConversation } from '../../context/ConversationContext';
 
 const ConversationInput = lazy(() =>
@@ -65,8 +66,8 @@ const ConversationRoute: FC = () => {
         >
           <ConversationInput
             onSend={handleSend}
-            welcomeText={t('chat.welcomeText')}
-            placeholder={t('chat.placeholder')}
+            welcomeText={t(ChatI18nKeys.WelcomeText)}
+            placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
           />
         </div>

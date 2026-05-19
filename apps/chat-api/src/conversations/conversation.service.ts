@@ -1,4 +1,9 @@
-import { Conversation, MessageRole, Message } from '@epam/chat-shared';
+import {
+  Conversation,
+  ConversationMetadata,
+  MessageRole,
+  Message,
+} from '@epam/chat-shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
@@ -65,6 +70,75 @@ export class ConversationService extends AppService {
       return { ...data, ...conversation } as Conversation;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
+      return handleDialError(error);
+    }
+  }
+
+  async getConversation(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<Conversation> {
+    try {
+      const { data, error } = (await this.client.getConversation(
+        bucket,
+        conversationPath,
+        { headers: getBearerAuthHeaders(token) },
+      )) as { data?: unknown; error?: unknown };
+      if (error !== undefined || !data) {
+        this.logger.error('DIAL Core rejected getConversation', error);
+        return handleDialError(error);
+      }
+      return data as Conversation;
+    } catch (error) {
+      this.logger.error('DIAL Core rejected getConversation', error);
+      return handleDialError(error);
+    }
+  }
+
+  async deleteConversation(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    try {
+      const { error } = (await this.client.deleteConversation(
+        bucket,
+        conversationPath,
+        { headers: getBearerAuthHeaders(token) },
+      )) as { data?: unknown; error?: unknown };
+      if (error !== undefined) {
+        this.logger.error('DIAL Core rejected deleteConversation', error);
+        handleDialError(error);
+      }
+    } catch (error) {
+      this.logger.error('DIAL Core rejected deleteConversation', error);
+      handleDialError(error);
+    }
+  }
+
+  async getConversationMetadata(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    permissions?: boolean,
+  ): Promise<ConversationMetadata> {
+    try {
+      const { data, error } = (await this.client.getConversationMetadata(
+        bucket,
+        conversationPath,
+        {
+          headers: getBearerAuthHeaders(token),
+          query: permissions !== undefined ? { permissions } : undefined,
+        },
+      )) as { data?: unknown; error?: unknown };
+      if (error !== undefined || !data) {
+        this.logger.error('DIAL Core rejected getConversationMetadata', error);
+        return handleDialError(error);
+      }
+      return data as ConversationMetadata;
+    } catch (error) {
+      this.logger.error('DIAL Core rejected getConversationMetadata', error);
       return handleDialError(error);
     }
   }

@@ -7,12 +7,16 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { createConversation as apiCreateConversation } from '../server-api/conversations.api';
+import {
+  createConversation as apiCreateConversation,
+  getConversation as apiGetConversation,
+} from '../server-api/conversations.api';
 
 // TODO: review context and investigate - we can use some store like Zustand or Jotai instead of context for better performance and simpler code
 interface ConversationContextValue {
   conversations: Map<string, Conversation>;
   createConversation: (firstMessage: string) => Promise<string>;
+  getConversation: (id: string) => Promise<Conversation | undefined>;
   sendMessage: (conversationId: string, message: string) => void;
 }
 
@@ -37,6 +41,26 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
+  const getConversation = useCallback(
+    async (id: string): Promise<Conversation | undefined> => {
+      const existing = conversations.get(id);
+      if (existing) return existing;
+
+      // Conversation id format: "{bucket}/{conversationPath}" — strip bucket prefix
+      const conversationPath = id.substring(id.indexOf('/') + 1);
+      try {
+        const conversation = await apiGetConversation(conversationPath);
+        setConversations((prev) =>
+          new Map(prev).set(conversation.id, conversation),
+        );
+        return conversation;
+      } catch {
+        return undefined;
+      }
+    },
+    [conversations],
+  );
+
   const sendMessage = useCallback((conversationId: string, message: string) => {
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
@@ -57,8 +81,8 @@ export const ConversationProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ conversations, createConversation, sendMessage }),
-    [conversations, createConversation, sendMessage],
+    () => ({ conversations, createConversation, getConversation, sendMessage }),
+    [conversations, createConversation, getConversation, sendMessage],
   );
 
   return (

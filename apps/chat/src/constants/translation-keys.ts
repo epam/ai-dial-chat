@@ -1,6 +1,6 @@
 export enum ChatI18nKeys {
-  LanguageEn = 'language.en',
-  LanguageUk = 'language.uk',
+  Placeholder = 'chat.placeholder',
+  WelcomeText = 'chat.welcomeText',
 }
 
 export enum NavigationI18nKeys {

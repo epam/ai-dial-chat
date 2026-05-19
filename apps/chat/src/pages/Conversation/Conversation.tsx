@@ -1,19 +1,40 @@
-import { FC, memo, useCallback } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import { ROUTES } from '../../constants/routes';
+import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useConversation } from '../../context/ConversationContext';
 
-const ConversationPage: FC = () => {
-  const { conversationId } = useParams<{ conversationId: string }>();
-  const { conversations, sendMessage } = useConversation();
+export const ConversationPage: FC = () => {
+  const { '*': conversationId } = useParams<{ '*': string }>();
+  const { conversations, getConversation, sendMessage } = useConversation();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  // Derived from map so it stays reactive to sendMessage updates
   const conversation = conversationId
     ? conversations.get(conversationId)
     : undefined;
+
+  const [isFetching, setIsFetching] = useState(
+    !conversation && !!conversationId,
+  );
+
+  useEffect(() => {
+    if (!conversationId || conversation) {
+      setIsFetching(false);
+      return;
+    }
+
+    setIsFetching(true);
+    getConversation(conversationId)
+      .then((result) => {
+        if (!result) navigate(ROUTES.ROOT);
+      })
+      .catch(() => navigate(ROUTES.ROOT))
+      .finally(() => setIsFetching(false));
+  }, [conversationId, conversation, getConversation, navigate]);
 
   const handleSend = useCallback(
     (message: string) => {
@@ -23,6 +44,8 @@ const ConversationPage: FC = () => {
     },
     [conversationId, sendMessage],
   );
+
+  if (isFetching) return null;
 
   if (!conversation) {
     navigate(ROUTES.ROOT);
@@ -34,10 +57,8 @@ const ConversationPage: FC = () => {
       <ConversationView
         messages={conversation.messages}
         onSend={handleSend}
-        placeholder={t('chat.placeholder')}
+        placeholder={t(ChatI18nKeys.Placeholder)}
       />
     </div>
   );
 };
-
-export default memo(ConversationPage);
