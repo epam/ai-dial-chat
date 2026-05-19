@@ -73,8 +73,6 @@ export const fitConversationNameToStorageLimits = <
     return conversation;
   }
 
-  // Inner prepareEntityName sanitises before byte-truncation;
-  // outer re-sanitises after to strip trailing dots/spaces exposed by the cut.
   const fittedName = prepareEntityName(
     truncateToUtf8Bytes(
       prepareEntityName(conversation.name),
@@ -130,7 +128,6 @@ export type ExistingConversationNamesForNamingOptions = {
   conversationRootFolderId: string;
 };
 
-/** Collects conversation names that must be avoided when auto-naming a local chat. */
 export const getExistingConversationNamesForNaming = (
   conversations: ConversationInfo[],
   targetConversation: Pick<ConversationInfo, 'id' | 'folderId'>,

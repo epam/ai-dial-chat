@@ -294,12 +294,6 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
-    // Build a name well over the segment byte limit (SEGMENT_LIMIT = 255).
-    // Even for the shortest possible model prefix ("" + "__" = 2 bytes),
-    // the name portion is at most 253 bytes, so 304 ASCII chars always
-    // exceeds the limit.  The trailing dot is therefore always truncated,
-    // proving the system strips the dot when cutting to the byte boundary,
-    // and spaces in the middle survive because they fall before the cut point.
     const midSpaces = ' '.repeat(3);
     const newLongNameWithMiddleSpacesEndDot =
       GeneratorUtil.randomString(150) +
@@ -1594,9 +1588,6 @@ dialTest(
     await dialTest.step(
       'Send long request and verify the name is truncated to available bytes',
       async () => {
-        // Storage segment key is "{encodeModelId(model.reference)}__{name}".
-        // Conversations store model.reference in model.id (not the deployment id).
-        // Model references that contain "__" are encoded as "%5F%5F" inside the key.
         const PATH_KEY_SEPARATOR = '__';
         const ENCODED_KEY_SEPARATOR = '%5F%5F';
         const encodeModelId = (modelId: string) =>
@@ -1620,7 +1611,6 @@ dialTest(
         };
         const trimEndDots = (value: string) =>
           value.replace(/[. \t\r\n]+$/, '');
-        // Mirrors prepareEntityName: sanitize restricted symbols, then byte-truncate.
         const prepareEntityName = (name: string, maxBytes = 255) =>
           trimEndDots(
             truncateToUtf8Bytes(
@@ -1631,13 +1621,11 @@ dialTest(
 
         const model = ModelsUtil.getDefaultAgent()!;
         const modelReference = model.reference ?? model.id;
-        // getAvailableEntityNameBytes: segment limit uses placeholder "a" in the key.
         const modelApiKeyPrefix = `${encodeModelId(modelReference)}${PATH_KEY_SEPARATOR}a`;
         const availableBytes =
           ExpectedConstants.maxEntityNameLength -
           utf8Length(modelApiKeyPrefix) +
           1;
-        // Same pipeline as getStorageSafeUniqueConversationName / buildByteAwareFitBaseName.
         const expectedConversationName = prepareEntityName(
           truncateToUtf8Bytes(prepareEntityName(longRequest), availableBytes),
         );

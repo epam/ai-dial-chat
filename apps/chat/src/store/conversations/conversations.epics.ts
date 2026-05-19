@@ -1394,10 +1394,6 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
     switchMap(({ payload }) => {
-      // When multiple conversations are sent simultaneously (compare mode) we
-      // must compute their new names atomically – reading the same Redux state
-      // snapshot – so that each successive conversation sees the names already
-      // reserved by earlier ones in the same batch.
       const isCompareMode = payload.conversations.length > 1;
 
       let precomputedNames: (string | undefined)[] = payload.conversations.map(
@@ -1416,20 +1412,15 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
           conversationRootFolderId,
         };
 
-        // Accumulate already-chosen names so each successive conversation in
-        // the batch avoids conflicts with its predecessor(s).
         const existingNames: string[] = [];
 
         precomputedNames = payload.conversations.map((conv) => {
-          // Only auto-name local conversations that have no messages yet
-          // (i.e. the first user message).  For anything else keep the
-          // existing name – the same condition as in sendMessageEpic.
           if (
             isReplayConversation(conv) ||
             conv.messages.filter((m) => m.role === Role.User).length > 0 ||
             !isEntityIdLocal(conv)
           ) {
-            return undefined; // let sendMessageEpic decide (keep existing name)
+            return undefined;
           }
 
           const name = getStorageSafeUniqueConversationName({
@@ -1445,8 +1436,6 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
             ],
           });
 
-          // Reserve this name so the next conversation in the batch won't
-          // pick the same one.
           if (name) existingNames.push(name);
           return name;
         });

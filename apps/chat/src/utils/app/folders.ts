@@ -424,8 +424,6 @@ export const fitFolderNameToStorageLimits = <
     return folder;
   }
 
-  // Inner prepareEntityName sanitises before byte-truncation;
-  // outer re-sanitises after to strip trailing dots/spaces exposed by the cut.
   const fittedName = prepareEntityName(
     truncateToUtf8Bytes(prepareEntityName(folder.name), availableNameBytes),
   );
@@ -458,7 +456,6 @@ export const getStorageSafeUniqueFolderName = (params: {
     return uniqueName;
   }
 
-  // Fallback: return byte-fitted name without suffix guarantee
   return fitFolderNameToStorageLimits({
     folderId,
     name:

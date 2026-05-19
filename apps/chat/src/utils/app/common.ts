@@ -500,8 +500,6 @@ export const getAvailableEntityNameBytes = (
   return Math.min(byIdLimit, bySegmentLimit);
 };
 
-// baseName is expected to be already sanitised via prepareEntityName.
-// Returns a fitBaseName callback for use with getStorageSafeUniqueName.
 export const buildByteAwareFitBaseName =
   (availableNameBytes: number | undefined) =>
   (baseName: string, suffix: string): string => {
@@ -514,7 +512,6 @@ export const buildByteAwareFitBaseName =
       0,
     );
 
-    // Re-sanitise after truncation to strip trailing dots/spaces exposed by cutting mid-name.
     return prepareEntityName(truncateToUtf8Bytes(baseName, allowedNameBytes));
   };
 
@@ -537,13 +534,7 @@ export const getStorageSafeUniqueName = (params: {
   const resolvedBaseName =
     prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
 
-  // When a desired name is provided (rename/copy), start from 0 so the name
-  // itself is tried first before appending a suffix.
-  // When no desired name is given (new entity), use max-based numeration:
-  // find the highest existing "{baseName} N" suffix and start from N+1.
-  // This matches the historical behaviour E2E tests expect — renamed or
-  // deleted entities are not counted, and numeration always continues from
-  // the current maximum rather than filling gaps.
+  // Rename/copy tries the base name first; new entities continue from max "{baseName} N".
   let startIndex: number;
   if (desiredName !== undefined) {
     startIndex = 0;

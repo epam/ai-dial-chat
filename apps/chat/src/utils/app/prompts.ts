@@ -69,12 +69,10 @@ export const getStorageSafeUniquePromptName = (params: {
     return uniqueName;
   }
 
-  // Fallback: return byte-fitted name without suffix guarantee
   const baseName =
     prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
 
   if (availableNameBytes === undefined) return baseName;
-  // Re-sanitise after truncation to strip trailing dots/spaces exposed by the cut.
   return prepareEntityName(truncateToUtf8Bytes(baseName, availableNameBytes));
 };
 

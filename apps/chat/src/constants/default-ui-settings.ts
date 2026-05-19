@@ -15,11 +15,8 @@ export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 export const MIN_ENTITY_LENGTH = 1;
 export const MAX_ENTITY_NAME_NUMERATION = 1999;
 
-// Byte limits for resource ids/segments in the configured storage backend.
-// RESOURCE_MAX_ID_BYTES is fixed at 1024 (S3/GCS/Azure standard) and cannot
-// be overridden at runtime.
-// RESOURCE_MAX_SEGMENT_BYTES can be tuned via env var (e.g. MinIO uses 255)
-// but must be strictly less than RESOURCE_MAX_ID_BYTES.
+// RESOURCE_MAX_ID_BYTES is fixed at 1024. Segment limit defaults to 255; override with
+// NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES when required (must stay below RESOURCE_MAX_ID_BYTES).
 export const RESOURCE_MAX_ID_BYTES = 1024;
 
 const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
