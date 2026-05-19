@@ -24,7 +24,7 @@ export const onUnauthorized = (
   return () => listeners.delete(listener);
 };
 
-type RequestMethod = 'GET' | 'POST' | 'PUT';
+type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   body?: unknown;
@@ -35,6 +35,7 @@ let _csrfToken: string | null = null;
 export const setCsrfToken = (token: string | null): void => {
   _csrfToken = token;
 };
+export const getCsrfToken = (): string | null => _csrfToken;
 
 // Type guard for validating response structure
 export const isValidResponse = <T>(
@@ -134,3 +135,8 @@ export const put = <TResponse>(
   body?: unknown,
   options?: RequestOptions,
 ) => request<TResponse>(url, 'PUT', { ...options, body });
+
+export const del = <TResponse = void>(
+  url: string,
+  options?: Omit<RequestOptions, 'body'>,
+) => request<TResponse>(url, 'DELETE', options);

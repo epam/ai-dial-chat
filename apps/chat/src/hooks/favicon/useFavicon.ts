@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getIconPath } from '../utils/icon-path';
+import { getIconPath } from '../../utils/icon-path';
 
 /**
  * Custom hook to manage dynamic favicon based on URL.

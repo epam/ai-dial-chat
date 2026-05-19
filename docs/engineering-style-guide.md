@@ -218,7 +218,6 @@ import type { Message } from '@epam/chat-shared/models/message';
 | `apps/chat`               | `type:app`    | any lib         | `apps/chat-api`     |
 | `apps/chat-api`           | `type:app`    | any lib         | `apps/chat`         |
 | `libs/conversation-input` | `type:ui`     | `chat-shared`   | `apps/*`            |
-| `libs/conversation-panel` | `type:ui`     | `chat-shared`   | `apps/*`            |
 | `libs/chat-shared`        | `type:shared` | nothing         | everything          |
 
 Boundaries are enforced by `@nx/enforce-module-boundaries` in `eslint.config.mjs`. A PR that disables or widens this rule requires a Staff Engineer sign-off.

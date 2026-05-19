@@ -1,28 +1,119 @@
-import { FC, memo, useCallback } from 'react';
+import { Conversation } from '@epam/chat-shared';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import { ROUTES } from '../../constants/routes';
-import { useConversation } from '../../context/ConversationContext';
+import { ChatI18nKeys } from '../../constants/translation-keys';
+import { streamCompletion } from '../../server-api/chat-stream.api';
+import {
+  getConversation as apiGetConversation,
+  saveConversation,
+} from '../../server-api/conversations.api';
+import { createMessagePair } from '../../utils/message-factory';
 
-const ConversationPage: FC = () => {
-  const { conversationId } = useParams<{ conversationId: string }>();
-  const { conversations, sendMessage } = useConversation();
+export const ConversationPage: FC = () => {
+  const { '*': conversationId } = useParams<{ '*': string }>();
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [isFetching, setIsFetching] = useState(!!conversationId);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const conversation = conversationId
-    ? conversations.get(conversationId)
-    : undefined;
+  useEffect(() => {
+    if (!conversationId) {
+      setIsFetching(false);
+      return;
+    }
+
+    const conversationPath = conversationId.substring(
+      conversationId.indexOf('/') + 1,
+    );
+    setIsFetching(true);
+    apiGetConversation(conversationPath)
+      .then((result: Conversation) => {
+        setConversation(result);
+      })
+      .catch(() => navigate(ROUTES.ROOT))
+      .finally(() => setIsFetching(false));
+  }, [conversationId, navigate]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const handleSend = useCallback(
     (message: string) => {
-      if (conversationId) {
-        sendMessage(conversationId, message);
-      }
+      if (!conversationId || !conversation) return;
+
+      const { userMessage, assistantMessage, assistantMessageId } =
+        createMessagePair(message);
+
+      setConversation((prev) => {
+        if (!prev) return prev;
+        const next = {
+          ...prev,
+          messages: [...prev.messages, userMessage, assistantMessage],
+        };
+        conversationRef.current = next;
+        return next;
+      });
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setIsStreaming(true);
+
+      // Conversation id format: "{bucket}/{conversationPath}" — strip bucket prefix
+      const conversationPath = conversationId.substring(
+        conversationId.indexOf('/') + 1,
+      );
+      const model = conversation.model.id;
+
+      streamCompletion(conversationPath, message, model, {
+        signal: controller.signal,
+        onChunk: (chunk) => {
+          const token = chunk.choices[0]?.delta?.content ?? '';
+
+          if (!token) return;
+          setConversation((prev) => {
+            if (!prev) return prev;
+            const next = {
+              ...prev,
+              messages: prev.messages.map((m) =>
+                m.id === assistantMessageId
+                  ? { ...m, content: m.content + token }
+                  : m,
+              ),
+            };
+            conversationRef.current = next;
+            return next;
+          });
+        },
+        onComplete: () => {
+          setIsStreaming(false);
+          abortRef.current = null;
+          const final = conversationRef.current;
+          if (final) {
+            saveConversation(conversationPath, final).catch(
+              (err: unknown) => void err,
+            );
+          }
+        },
+        onError: () => {
+          setIsStreaming(false);
+          abortRef.current = null;
+        },
+      });
     },
-    [conversationId, sendMessage],
+    [conversation, conversationId],
   );
+
+  if (isFetching) return null;
 
   if (!conversation) {
     navigate(ROUTES.ROOT);
@@ -30,14 +121,13 @@ const ConversationPage: FC = () => {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col items-center justify-center overflow-hidden">
       <ConversationView
         messages={conversation.messages}
         onSend={handleSend}
-        placeholder={t('chat.placeholder')}
+        isAssistantTyping={isStreaming}
+        placeholder={t(ChatI18nKeys.Placeholder)}
       />
     </div>
   );
 };
-
-export default memo(ConversationPage);
