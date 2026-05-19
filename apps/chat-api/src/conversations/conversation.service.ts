@@ -62,7 +62,6 @@ export class ConversationService extends AppService {
         return handleDialError(error);
       }
 
-
       return { ...data, ...conversation } as Conversation;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
