@@ -1,3 +1,5 @@
+import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
+
 export const marketplaceContainer = '[data-qa="marketplace"]';
 
 export const MarketplaceSelectors = {
@@ -59,7 +61,8 @@ export const MarketplaceDetailsModal = {
   unpublishButton: '[data-qa="unpublish"]',
   shareButton: '[data-qa="share"]',
   unshareButton: '[data-qa="unshare"]',
-  loginButton: '[data-qa="login-button"]',
+  loginButton: 'Log in',
+  logoutButton: 'Log out',
 };
 
 export const MarketplaceSideBarSelectors = {
@@ -71,4 +74,15 @@ export const MarketplaceSideBarSelectors = {
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
   optionLabel: '#option-label',
+};
+
+export const ToolsetLoginModalSelectors = {
+  modalContainer: '[data-qa="marketplace-toolset-signin"]',
+  header: '[data-qa="login-header"]',
+  toolsetName: '[data-qa="toolset-name"]',
+  toolsetVersion: '[data-qa="toolset-version"]',
+  apiKeyFieldContainer: '[data-qa="apiKey"]',
+  apiKeyMaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.password}"]`,
+  apiKeyUnmaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.text}"]`,
+  loginButton: 'Log in',
 };
