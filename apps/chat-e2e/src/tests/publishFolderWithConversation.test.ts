@@ -521,7 +521,7 @@ dialAdminTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(tempFolderName, false);
         const tempFolderDotsMenu =
-          await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
+          await selectFolderManagerModalGrid.gridDotsMenuByNameCellWithSearch(
             tempFolderName,
           );
         await selectFolderManagerModalGrid
@@ -535,6 +535,7 @@ dialAdminTest(
             'visible',
           );
         }
+        await selectFolderManagerModalBreadcrumb.click();
         // Navigate to published folder row (handles scrolling), hover to close dropdown,
         // then verify it has no dots menu
         const publishedFolderRow =
