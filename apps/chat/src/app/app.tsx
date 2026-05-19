@@ -10,10 +10,11 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
 const ConversationPage = lazy(() =>
   import('../pages/Conversation/Conversation').then((m) => ({
-    default: m.default,
+    default: m.ConversationPage,
   })),
 );
 
+console.log('App component rendered',ConversationPage);
 function App() {
   return (
     <div className="flex size-full flex-row">
@@ -35,7 +36,7 @@ function App() {
             }
           />
           <Route
-            path="/conversations/:conversationId"
+            path="/conversations/*"
             element={
               <Suspense fallback={<RouteFallback />}>
                 <ConversationPage />
