@@ -231,7 +231,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Publish chat: add, rename and delete options for new folder in Organization.\n' +
     'Max length of folder name in Publish to path should be 160 symbols .\n' +
     'Publish chat: add new folder inside nested folder structure with depth 4.\n' +
