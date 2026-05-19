@@ -9,8 +9,8 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
 const ConversationPage = lazy(() =>
-  import('../components/ConversationPage/ConversationPage').then((m) => ({
-    default: m.ConversationPage,
+  import('../pages/Conversation/Conversation').then((m) => ({
+    default: m.default,
   })),
 );
 
