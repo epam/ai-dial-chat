@@ -521,7 +521,7 @@ dialAdminTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         await selectFolderManagerModalGrid.setFolderName(tempFolderName, false);
         const tempFolderDotsMenu =
-          await selectFolderManagerModalGrid.gridDotsMenuByNameCellWithSearch(
+          await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
             tempFolderName,
           );
         await selectFolderManagerModalGrid
