@@ -1,3 +1,4 @@
+import { Conversation } from '@epam/chat-shared';
 import { FC, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,14 +9,10 @@ import { useConversation } from '../../context/ConversationContext';
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const { conversations, getConversation, sendMessage } = useConversation();
+  const { getConversation, sendMessage } = useConversation();
+  const [conversation, setConversation] = useState<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  // Derived from map so it stays reactive to sendMessage updates
-  const conversation = conversationId
-    ? conversations.get(conversationId)
-    : undefined;
 
   const [isFetching, setIsFetching] = useState(
     !conversation && !!conversationId,
@@ -30,7 +27,11 @@ export const ConversationPage: FC = () => {
     setIsFetching(true);
     getConversation(conversationId)
       .then((result) => {
-        if (!result) navigate(ROUTES.ROOT);
+        if (!result) {
+          navigate(ROUTES.ROOT);
+        } else {
+          setConversation(result);
+        }
       })
       .catch(() => navigate(ROUTES.ROOT))
       .finally(() => setIsFetching(false));
@@ -53,7 +54,7 @@ export const ConversationPage: FC = () => {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col items-center justify-center overflow-hidden">
       <ConversationView
         messages={conversation.messages}
         onSend={handleSend}

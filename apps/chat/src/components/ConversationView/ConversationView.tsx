@@ -1,4 +1,4 @@
-import { type Message as MessageType } from '@epam/chat-shared';
+import { MessageRole, type Message as MessageType } from '@epam/chat-shared';
 import { ConversationInput } from '@epam/conversation-input';
 import { MessageBubble } from '@epam/conversation-messages';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -69,62 +69,19 @@ const ConversationView: FC<Props> = ({
         aria-label="Conversation messages"
         aria-live="polite"
         aria-relevant="additions"
-        className="relative flex flex-1 flex-col justify-between gap-6 overflow-y-auto px-4 py-8"
+        className="relative flex w-[748px] flex-1 flex-col justify-between gap-6 overflow-y-auto px-4 py-8"
       >
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} text={msg.content} />
+          <MessageBubble
+            key={msg.id}
+            text={msg.content}
+            className={
+              msg.role === MessageRole.User ? 'justify-end' : 'justify-start'
+            }
+          />
         ))}
-
-        {isAssistantTyping && (
-          <div
-            className="mx-auto flex w-full max-w-3xl bg-[#f7f7f8] p-4 dark:bg-[#2f2f2f]"
-            role="status"
-            aria-live="polite"
-            aria-label="Assistant is typing"
-          >
-            <div className="flex items-center gap-1 leading-7 text-[#202123] dark:text-[#ececf1]">
-              <span className="animate-bounce">.</span>
-              <span
-                className="animate-bounce"
-                style={{ animationDelay: '0.1s' }}
-              >
-                .
-              </span>
-              <span
-                className="animate-bounce"
-                style={{ animationDelay: '0.2s' }}
-              >
-                .
-              </span>
-            </div>
-          </div>
-        )}
-        {/* Invisible element at the end for auto-scroll */}
-        <div ref={messagesEndRef} />
-        {/* Scroll to bottom button */}
-        {showScrollButton && (
-          <button
-            onClick={scrollToBottom}
-            className="bg-white hover:bg-gray-100 absolute bottom-4 right-4 flex size-10 items-center justify-center rounded-full shadow-lg transition-opacity dark:bg-[#2f2f2f] dark:hover:bg-[#3f3f3f]"
-            aria-label="Scroll to bottom of conversation"
-          >
-            <svg
-              className="text-gray-700 dark:text-gray-300 size-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </button>
-        )}
       </div>
-      <div role="region" aria-label="Message input">
+      <div role="region" aria-label="Message input" className="w-full">
         <ConversationInput onSend={onSend} placeholder={placeholder} />
       </div>
     </>

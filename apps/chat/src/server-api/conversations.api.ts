@@ -23,7 +23,7 @@ export const getConversationMetadata = (
   options?: { permissions?: boolean },
 ): Promise<ConversationMetadata> => {
   const params = new URLSearchParams({ path: conversationPath });
-  if (options?.permissions !== undefined) {
+  if (options?.permissions) {
     params.set('permissions', String(options.permissions));
   }
   return get<ConversationMetadata>(
