@@ -13,7 +13,7 @@ vi.mock('../utils/icon-path', () => ({
 
 describe('useFavicon', () => {
   let mockLink: HTMLLinkElement;
-  let imageInstances: any[] = [];
+  let imageInstances: HTMLImageElement[] = [];
 
   beforeEach(() => {
     // Reset state
@@ -26,15 +26,18 @@ describe('useFavicon', () => {
     mockLink.type = 'image/png';
 
     // Mock global Image constructor as a proper class
-    (global as any).Image = class MockImage {
-      onload: ((this: HTMLImageElement, ev: Event) => any) | null = null;
-      onerror: ((this: HTMLImageElement, ev: Event) => any) | null = null;
-      src = '';
+    Object.defineProperty(globalThis, 'Image', {
+      configurable: true,
+      value: class MockImage {
+        onload: ((this: HTMLImageElement, ev: Event) => void) | null = null;
+        onerror: ((this: HTMLImageElement, ev: Event) => void) | null = null;
+        src = '';
 
-      constructor() {
-        imageInstances.push(this);
-      }
-    };
+        constructor() {
+          imageInstances.push(this as unknown as HTMLImageElement);
+        }
+      },
+    });
 
     // Spy on console methods
     vi.spyOn(console, 'log').mockImplementation(() => {});
