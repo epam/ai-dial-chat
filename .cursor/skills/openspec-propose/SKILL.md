@@ -104,6 +104,10 @@ After completing all artifacts, summarize:
 - Follow the `instruction` field from `openspec instructions` for each artifact type
 - The schema defines what each artifact should contain - follow it
 - Read dependency artifacts for context before creating new ones
+- If the change adds or modifies HTTP API behavior, read `.agents/skills/api-design/SKILL.md`
+  before writing specs, design, or tasks.
+- If the change touches `apps/chat-api/**`, read `.agents/skills/nestjs-chat-api/SKILL.md`
+  and reference `apps/chat-api/AGENTS.md` instead of duplicating backend implementation rules.
 - Use `template` as the structure for your output file - fill in its sections
 - **IMPORTANT**: `context` and `rules` are constraints for YOU, not content for the file
   - Do NOT copy `<context>`, `<rules>`, `<project_context>` blocks into the artifact

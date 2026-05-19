@@ -45,6 +45,9 @@ Depending on what the user brings, you might:
 - Find integration points
 - Identify patterns already in use
 - Surface hidden complexity
+- For HTTP API questions, read `.agents/skills/api-design/SKILL.md`.
+- For `apps/chat-api/**` backend questions, read `.agents/skills/nestjs-chat-api/SKILL.md`
+  and `apps/chat-api/AGENTS.md`.
 
 **Compare options**
 
