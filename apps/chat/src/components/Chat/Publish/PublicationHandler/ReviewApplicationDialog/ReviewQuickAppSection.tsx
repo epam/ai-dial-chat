@@ -89,7 +89,8 @@ const ReviewQuickAppSectionView = ({
       />
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Instructions)}
-        valueClassName="grow break-all text-primary"
+        valueClassName=""
+        noTooltip
         value={
           <DialMarkdownEditor
             value={config.instructions}
@@ -97,7 +98,7 @@ const ReviewQuickAppSectionView = ({
             theme={theme as EditorThemes}
             preview="preview"
             commands={[]}
-            className="rounded-[5px] border border-b-hover"
+            className="rounded-[5px]"
           />
         }
       />

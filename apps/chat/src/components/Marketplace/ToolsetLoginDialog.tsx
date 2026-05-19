@@ -248,7 +248,10 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       onClose={handleClose}
     >
       <div className="px-6 py-4">
-        <p className="text-base font-semibold text-primary">
+        <p
+          className="text-base font-semibold text-primary"
+          data-qa={isOrganizationView ? 'manage-creds-header' : 'login-header'}
+        >
           {t(
             isOrganizationView
               ? MarketplaceI18nKeys.ManageCredentials
@@ -260,8 +263,13 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       <div className="flex gap-2 px-6 py-4">
         <ModelIcon size={40} entityId={toolset.id} entity={toolset} />
         <div className="flex flex-col justify-between">
-          <h3 className="text-sm font-semibold text-primary">{toolset.name}</h3>
-          <div className="flex items-center gap-1">
+          <h3
+            className="text-sm font-semibold text-primary"
+            data-qa="toolset-name"
+          >
+            {toolset.name}
+          </h3>
+          <div className="flex items-center gap-1" data-qa="toolset-version">
             <span className="text-xs text-primary">
               {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
             </span>
