@@ -1,4 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import {
   isFolderId,
   isMyEntity,
@@ -18,7 +19,6 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
 import {
   BYTES_IN_KB,
   BYTES_IN_MB,
@@ -493,7 +493,7 @@ export const prepareFileName = (filename: string) => {
   }
 
   const maxBaseNameLength = Math.max(
-    RESOURCE_MAX_SEGMENT_BYTES - getUtf8BytesLength(extension),
+    getResourceMaxSegmentBytes() - getUtf8BytesLength(extension),
     0,
   );
   const preparedBaseName = prepareEntityName(

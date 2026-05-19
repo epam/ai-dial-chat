@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { getUtf8BytesLength } from '@/src/utils/app/common';
 
-import { RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
+import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
 import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 
 import {
@@ -152,7 +152,7 @@ describe('File utility methods', () => {
       );
 
       expect(getUtf8BytesLength(result)).toBeLessThanOrEqual(
-        RESOURCE_MAX_SEGMENT_BYTES,
+        DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
       );
       expect(result.endsWith('.json')).toBe(true);
     });

@@ -8,10 +8,9 @@ import {
 
 import classNames from 'classnames';
 
-import {
-  MIN_ENTITY_LENGTH,
-  RESOURCE_MAX_SEGMENT_BYTES,
-} from '@/src/constants/default-ui-settings';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
+
+import { MIN_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import {
   formErrors,
   urlErrors,
@@ -111,7 +110,7 @@ export const getStringValidationErrors = ({
   value,
   label,
   checkDotsInTheEnd,
-  maxBytes = RESOURCE_MAX_SEGMENT_BYTES,
+  maxBytes,
   minLength = MIN_ENTITY_LENGTH,
   isNotUniqName,
   buildNameForByteValidation,
@@ -124,6 +123,7 @@ export const getStringValidationErrors = ({
   isNotUniqName?: boolean;
   buildNameForByteValidation?: (preparedName: string) => string;
 }) => {
+  const resolvedMaxBytes = maxBytes ?? getResourceMaxSegmentBytes();
   const errors: string[] = [];
   const trimmedValue = value.trim();
   if (!trimmedValue) errors.push(formErrors.required);
@@ -133,9 +133,9 @@ export const getStringValidationErrors = ({
   if (
     getUtf8BytesLength(
       buildNameForByteValidation?.(trimmedValue) ?? trimmedValue,
-    ) > maxBytes
+    ) > resolvedMaxBytes
   ) {
-    errors.push(formErrors.tooLong(label, maxBytes));
+    errors.push(formErrors.tooLong(label, resolvedMaxBytes));
   }
 
   if (doesHaveNotAllowedSymbols(trimmedValue)) {

@@ -33,7 +33,6 @@ declare global {
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
-      NEXT_PUBLIC_RESOURCE_MAX_ID_BYTES?: string;
       NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES?: string;
       DEFAULT_MODEL?: string;
       RECENT_MODELS_IDS?: string;

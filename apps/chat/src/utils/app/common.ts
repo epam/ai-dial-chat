@@ -5,6 +5,10 @@ import {
   notAllowedSpacesRegex,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
+import {
+  getResourceMaxIdBytes,
+  getResourceMaxSegmentBytes,
+} from '@/src/utils/app/resource-limits';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   getPublicItemIdWithoutVersion,
@@ -22,8 +26,6 @@ import { EntityFilters } from '@/src/types/search';
 import {
   MAX_ENTITY_NAME_NUMERATION,
   MIN_ENTITY_LENGTH,
-  RESOURCE_MAX_ID_BYTES,
-  RESOURCE_MAX_SEGMENT_BYTES,
 } from '@/src/constants/default-ui-settings';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
@@ -113,7 +115,8 @@ export const isEntityNameValid = (
     maxBytes,
   } = options ?? {};
   const trimmedName = name.trim();
-  const resolvedMaxBytes = maxBytes ?? maxLength ?? RESOURCE_MAX_SEGMENT_BYTES;
+  const resolvedMaxBytes =
+    maxBytes ?? maxLength ?? getResourceMaxSegmentBytes();
 
   return (
     !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
@@ -181,7 +184,7 @@ export const prepareEntityName = (
         .filter(Boolean)[0] ?? '');
 
   const maxEntityNameBytes =
-    options?.maxNameLength ?? RESOURCE_MAX_SEGMENT_BYTES;
+    options?.maxNameLength ?? getResourceMaxSegmentBytes();
   const additionalCuttedResult = truncateToUtf8Bytes(
     clearName,
     maxEntityNameBytes,
@@ -440,8 +443,8 @@ export type EntityStorageLimits = {
 };
 
 export const getResourceStorageLimits = (): EntityStorageLimits => ({
-  maxIdBytes: RESOURCE_MAX_ID_BYTES,
-  maxSegmentBytes: RESOURCE_MAX_SEGMENT_BYTES,
+  maxIdBytes: getResourceMaxIdBytes(),
+  maxSegmentBytes: getResourceMaxSegmentBytes(),
 });
 
 const _textEncoder = new TextEncoder();

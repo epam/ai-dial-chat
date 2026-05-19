@@ -15,34 +15,27 @@ export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 export const MIN_ENTITY_LENGTH = 1;
 export const MAX_ENTITY_NAME_NUMERATION = 1999;
 
-// RESOURCE_MAX_ID_BYTES is fixed at 1024. Segment limit defaults to 255; override with
-// NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES when required (must stay below RESOURCE_MAX_ID_BYTES).
 export const RESOURCE_MAX_ID_BYTES = 1024;
+export const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
 
-const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
-
-const parsePositiveInteger = (
+export const resolveResourceMaxSegmentBytes = (
   value: string | undefined,
-): number | undefined => {
+): number => {
   if (!value) {
-    return undefined;
+    return DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
   }
 
   const parsedValue = parseInt(value, 10);
-  return Number.isFinite(parsedValue) && parsedValue > 0
-    ? parsedValue
-    : undefined;
-};
-
-export const RESOURCE_MAX_SEGMENT_BYTES = (() => {
-  const configured = parsePositiveInteger(
-    process.env.NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES,
-  );
-  if (configured !== undefined && configured < RESOURCE_MAX_ID_BYTES) {
-    return configured;
+  if (
+    !Number.isFinite(parsedValue) ||
+    parsedValue <= 0 ||
+    parsedValue >= RESOURCE_MAX_ID_BYTES
+  ) {
+    return DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
   }
-  return DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
-})();
+
+  return parsedValue;
+};
 
 export const FALLBACK_TEMPERATURE = 1;
 

@@ -6,12 +6,10 @@ import {
   isVersionValid,
 } from '@/src/utils/app/common';
 import { notAllowedSpaces, notAllowedSymbols } from '@/src/utils/app/file';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
-import {
-  MIN_ENTITY_LENGTH,
-  RESOURCE_MAX_SEGMENT_BYTES,
-} from '@/src/constants/default-ui-settings';
+import { MIN_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import {
   formErrors,
@@ -44,10 +42,10 @@ export const getEntityNameSchema = (options: {
     .refine(
       (str) =>
         getUtf8BytesLength(options.buildNameForByteValidation?.(str) ?? str) <=
-        (options.maxBytes ?? RESOURCE_MAX_SEGMENT_BYTES),
+        (options.maxBytes ?? getResourceMaxSegmentBytes()),
       formErrors.tooLong(
         options.name,
-        options.maxBytes ?? RESOURCE_MAX_SEGMENT_BYTES,
+        options.maxBytes ?? getResourceMaxSegmentBytes(),
       ),
     )
     .refine(
