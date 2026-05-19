@@ -40,6 +40,11 @@ export class EnvironmentVariables {
   @IsNumber()
   THEMES_SERVICE_TIMEOUT_MS?: number = 5000;
 
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
+  DIAL_CORE_TIMEOUT_MS?: number = 10000;
+
   // Auth / session
   @IsNotEmpty()
   @IsString()
