@@ -83,7 +83,7 @@ export const safeStringifyApplicationFeatures = (
 };
 
 export const getGeneratedApplicationId = (
-  application: PartialBy<ApplicationInfo, 'id'>,
+  application: PartialBy<ApplicationInfo, 'id' | 'folderId'>,
 ): string => {
   if (application.folderId) {
     return constructPath(
@@ -114,7 +114,7 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 };
 
 export const getAvailableApplicationNameBytes = (
-  application: PartialBy<ApplicationInfo, 'id'>,
+  application: PartialBy<ApplicationInfo, 'id' | 'folderId'>,
   limits: EntityStorageLimits = getResourceStorageLimits(),
 ): number | undefined =>
   getAvailableEntityNameBytes(
@@ -124,7 +124,7 @@ export const getAvailableApplicationNameBytes = (
   );
 
 export const fitApplicationNameToStorageLimits = <
-  T extends PartialBy<ApplicationInfo, 'id'>,
+  T extends PartialBy<ApplicationInfo, 'id' | 'folderId'>,
 >(
   application: T,
   limits: EntityStorageLimits = getResourceStorageLimits(),
@@ -151,7 +151,7 @@ export const fitApplicationNameToStorageLimits = <
 };
 
 export const getStorageSafeUniqueApplicationName = (params: {
-  application: PartialBy<ApplicationInfo, 'id'>;
+  application: PartialBy<ApplicationInfo, 'id' | 'folderId'>;
   desiredName?: string;
   defaultName?: string;
   existingNames: string[];

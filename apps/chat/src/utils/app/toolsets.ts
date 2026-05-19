@@ -19,6 +19,7 @@ import { EntityType, PartialBy, ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import {
   ToolsetCredentialsLevel,
+  ToolsetInfo,
   ToolsetModel,
   ToolsetRedirectState,
 } from '@/src/types/toolsets';
@@ -145,7 +146,7 @@ export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
 });
 
 const getGeneratedToolsetId = (
-  toolset: PartialBy<ToolsetModel, 'id'>,
+  toolset: PartialBy<ToolsetInfo, 'id' | 'folderId'>,
 ): string => {
   if (toolset.folderId) {
     return constructPath(toolset.folderId, getMarketplaceEntityApiKey(toolset));
@@ -174,7 +175,7 @@ export const regenerateToolsetId = (
 };
 
 export const getAvailableToolsetNameBytes = (
-  toolset: PartialBy<ToolsetModel, 'id'>,
+  toolset: PartialBy<ToolsetInfo, 'id' | 'folderId'>,
   limits: EntityStorageLimits = getResourceStorageLimits(),
 ): number | undefined =>
   getAvailableEntityNameBytes(
@@ -184,7 +185,7 @@ export const getAvailableToolsetNameBytes = (
   );
 
 export const fitToolsetNameToStorageLimits = <
-  T extends PartialBy<ToolsetModel, 'id'>,
+  T extends PartialBy<ToolsetInfo, 'id' | 'folderId'>,
 >(
   toolset: T,
   limits: EntityStorageLimits = getResourceStorageLimits(),
@@ -205,7 +206,7 @@ export const fitToolsetNameToStorageLimits = <
 };
 
 export const getStorageSafeUniqueToolsetName = (params: {
-  toolset: PartialBy<ToolsetModel, 'id'>;
+  toolset: PartialBy<ToolsetInfo, 'id' | 'folderId'>;
   desiredName?: string;
   defaultName?: string;
   existingNames: string[];
