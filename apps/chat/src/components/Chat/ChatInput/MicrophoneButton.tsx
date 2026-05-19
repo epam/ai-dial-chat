@@ -66,11 +66,7 @@ export const MicrophoneButton = forwardRef<HTMLButtonElement, Props>(
         data-qa="voice-record"
         aria-label={tooltipText}
         iconBefore={
-          <Tooltip
-            hideTooltip={isRecording && !error}
-            tooltip={tooltipText}
-            isTriggerClickable
-          >
+          <Tooltip tooltip={tooltipText} isTriggerClickable>
             <IconMicrophone
               size={DEFAULT_ICON_SIZES.STANDARD}
               stroke="1.5"

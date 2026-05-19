@@ -334,7 +334,7 @@ dialTest(
         await baseAssertion.assertElementState(
           nameRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
 
         const versionRequiredIndicator =
@@ -344,7 +344,7 @@ dialTest(
         await baseAssertion.assertElementState(
           versionRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
       },
     );
@@ -424,7 +424,7 @@ dialTest(
         await baseAssertion.assertElementState(
           chatCompletionUrlRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
       },
     );
