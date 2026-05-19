@@ -1,8 +1,7 @@
 import {
-  getStorageSafeUniqueName,
-  prepareEntityName,
-} from '@/src/utils/app/common';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+  getStorageSafeUniqueToolsetName,
+  isToolsetSignedIn,
+} from '@/src/utils/app/toolsets';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
@@ -179,10 +178,15 @@ export const getDefaultFormData = ({
   return {
     name:
       toolset?.name ??
-      getStorageSafeUniqueName({
+      getStorageSafeUniqueToolsetName({
+        toolset: {
+          name: '',
+          version: toolset?.version ?? DEFAULT_VERSION,
+          folderId: toolset?.folderId,
+          id: toolset?.id,
+        },
         defaultName: DEFAULT_TOOLSET_NAME,
         existingNames: (toolsets ?? []).map((t) => t.name),
-        fitBaseName: (baseName) => prepareEntityName(baseName),
       }) ??
       DEFAULT_TOOLSET_NAME,
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,

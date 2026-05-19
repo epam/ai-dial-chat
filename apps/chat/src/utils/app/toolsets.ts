@@ -1,4 +1,13 @@
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
+import {
+  EntityStorageLimits,
+  buildByteAwareFitBaseName,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
+  prepareEntityName,
+  truncateToUtf8Bytes,
+} from '@/src/utils/app/common';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -14,6 +23,7 @@ import {
   ToolsetRedirectState,
 } from '@/src/types/toolsets';
 
+import { DEFAULT_TOOLSET_NAME } from '@/src/constants/default-ui-settings';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
@@ -161,6 +171,68 @@ export const regenerateToolsetId = (
   }
 
   return toolset as ToolsetModel;
+};
+
+export const getAvailableToolsetNameBytes = (
+  toolset: PartialBy<ToolsetModel, 'id'>,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => getGeneratedToolsetId({ ...toolset, name }),
+    (name) => getMarketplaceEntityApiKey({ ...toolset, name }),
+    limits,
+  );
+
+export const fitToolsetNameToStorageLimits = <
+  T extends PartialBy<ToolsetModel, 'id'>,
+>(
+  toolset: T,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): T => {
+  const availableNameBytes = getAvailableToolsetNameBytes(toolset, limits);
+
+  if (availableNameBytes === undefined || availableNameBytes <= 0) {
+    return toolset;
+  }
+
+  const fittedName = prepareEntityName(
+    truncateToUtf8Bytes(prepareEntityName(toolset.name), availableNameBytes),
+  );
+
+  return fittedName === toolset.name
+    ? toolset
+    : { ...toolset, name: fittedName };
+};
+
+export const getStorageSafeUniqueToolsetName = (params: {
+  toolset: PartialBy<ToolsetModel, 'id'>;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { toolset, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_TOOLSET_NAME;
+
+  const availableNameBytes = getAvailableToolsetNameBytes(toolset, limits);
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  return fitToolsetNameToStorageLimits({
+    ...toolset,
+    name:
+      prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
+  }).name;
 };
 
 export const encodeToolsetRedirectState = (

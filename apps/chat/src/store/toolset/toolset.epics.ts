@@ -31,6 +31,7 @@ import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   encodeToolsetRedirectState,
+  fitToolsetNameToStorageLimits,
   getToolsetRedirectUri,
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
@@ -177,7 +178,9 @@ const createToolsetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.createToolset.type),
     switchMap(({ payload }) => {
-      const data = regenerateToolsetId(payload.data);
+      const data = regenerateToolsetId(
+        fitToolsetNameToStorageLimits(payload.data),
+      );
 
       return ToolsetService.saveToolset(data).pipe(
         switchMap(() =>
@@ -292,7 +295,9 @@ const updateToolsetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.updateToolset.type),
     switchMap(({ payload }) => {
-      const updatedToolset = regenerateToolsetId(payload.newToolset);
+      const updatedToolset = regenerateToolsetId(
+        fitToolsetNameToStorageLimits(payload.newToolset),
+      );
 
       const isMoved = payload.oldToolset.id !== updatedToolset.id;
 

@@ -7,6 +7,7 @@ import {
 } from '@/src/utils/app/common';
 import { notAllowedSpaces, notAllowedSymbols } from '@/src/utils/app/file';
 import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
+import { getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import { MIN_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
@@ -30,6 +31,7 @@ export const getEntityNameSchema = (options: {
   checkDotsInTheStart?: boolean;
   maxBytes?: number;
   buildNameForByteValidation?: (preparedName: string) => string;
+  skipMaxBytesCheck?: boolean;
 }) =>
   zodValidation
     .string()
@@ -41,8 +43,9 @@ export const getEntityNameSchema = (options: {
     )
     .refine(
       (str) =>
+        options.skipMaxBytesCheck ||
         getUtf8BytesLength(options.buildNameForByteValidation?.(str) ?? str) <=
-        (options.maxBytes ?? getResourceMaxSegmentBytes()),
+          (options.maxBytes ?? getResourceMaxSegmentBytes()),
       formErrors.tooLong(
         options.name,
         options.maxBytes ?? getResourceMaxSegmentBytes(),
@@ -62,17 +65,37 @@ export const getEntityNameSchema = (options: {
       formErrors.noDotInTheStart(options.name),
     );
 
-export const MarketplaceEntityBaseSchema = zodValidation.object({
-  name: getEntityNameSchema({ name: 'Name', checkDotsInTheEnd: true }),
-  version: zodValidation
-    .string()
-    .nonempty(versionsErrors.required)
-    .refine(isVersionValid, versionsErrors.notValid)
-    .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
-  description: zodValidation.string(),
-  iconUrl: zodValidation.string(),
-  topics: zodValidation.array(zodValidation.string()),
-});
+export const MarketplaceEntityBaseSchema = zodValidation
+  .object({
+    name: getEntityNameSchema({
+      name: 'Name',
+      checkDotsInTheEnd: true,
+      skipMaxBytesCheck: true,
+    }),
+    version: zodValidation
+      .string()
+      .nonempty(versionsErrors.required)
+      .refine(isVersionValid, versionsErrors.notValid)
+      .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
+    description: zodValidation.string(),
+    iconUrl: zodValidation.string(),
+    topics: zodValidation.array(zodValidation.string()),
+  })
+  .superRefine((data, ctx) => {
+    const apiKey = getMarketplaceEntityApiKey({
+      name: data.name,
+      version: data.version,
+    });
+    const maxSegmentBytes = getResourceMaxSegmentBytes();
+
+    if (getUtf8BytesLength(apiKey) > maxSegmentBytes) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['name'],
+        message: formErrors.tooLong('Name', maxSegmentBytes),
+      });
+    }
+  });
 
 export const AttachmentTypesSchema = zodValidation
   .array(zodValidation.string())

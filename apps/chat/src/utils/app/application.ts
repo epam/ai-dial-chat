@@ -35,7 +35,10 @@ import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
-import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_APPLICATION_NAME,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
@@ -47,6 +50,15 @@ import {
 
 import { AppsEditorSchemaTypes } from '@/src/components/AppsEditor/form';
 
+import {
+  EntityStorageLimits,
+  buildByteAwareFitBaseName,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
+  prepareEntityName,
+  truncateToUtf8Bytes,
+} from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId, getEntityBucket, isApplicationId } from './id';
@@ -99,6 +111,77 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
     } as T;
   }
   return application as T;
+};
+
+export const getAvailableApplicationNameBytes = (
+  application: PartialBy<ApplicationInfo, 'id'>,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => getGeneratedApplicationId({ ...application, name }),
+    (name) => getMarketplaceEntityApiKey({ ...application, name }),
+    limits,
+  );
+
+export const fitApplicationNameToStorageLimits = <
+  T extends PartialBy<ApplicationInfo, 'id'>,
+>(
+  application: T,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): T => {
+  const availableNameBytes = getAvailableApplicationNameBytes(
+    application,
+    limits,
+  );
+
+  if (availableNameBytes === undefined || availableNameBytes <= 0) {
+    return application;
+  }
+
+  const fittedName = prepareEntityName(
+    truncateToUtf8Bytes(
+      prepareEntityName(application.name),
+      availableNameBytes,
+    ),
+  );
+
+  return fittedName === application.name
+    ? application
+    : ({ ...application, name: fittedName } as T);
+};
+
+export const getStorageSafeUniqueApplicationName = (params: {
+  application: PartialBy<ApplicationInfo, 'id'>;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { application, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_APPLICATION_NAME;
+
+  const availableNameBytes = getAvailableApplicationNameBytes(
+    application,
+    limits,
+  );
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  return fitApplicationNameToStorageLimits({
+    ...application,
+    name:
+      prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
+  }).name;
 };
 
 export const mapApplicationPropertiesToApi = (

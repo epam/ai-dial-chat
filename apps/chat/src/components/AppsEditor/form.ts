@@ -1,20 +1,18 @@
 import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
 
 import {
+  fitApplicationNameToStorageLimits,
   getEditorSchemaType,
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
   getQuickAppItemNameFromConfig,
+  getStorageSafeUniqueApplicationName,
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   migrateMCPToolsetIdName,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
-import {
-  getStorageSafeUniqueName,
-  prepareEntityName,
-} from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
@@ -351,10 +349,15 @@ const getBaseFormData = ({
 }): BaseAppForm => ({
   name:
     app?.name ??
-    getStorageSafeUniqueName({
+    getStorageSafeUniqueApplicationName({
+      application: {
+        name: '',
+        version: app?.version ?? DEFAULT_VERSION,
+        folderId: app?.folderId,
+        id: app?.id,
+      },
       defaultName: DEFAULT_APPLICATION_NAME,
       existingNames: (models ?? []).map((m) => m.name),
-      fitBaseName: (baseName) => prepareEntityName(baseName),
     }) ??
     DEFAULT_APPLICATION_NAME,
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
@@ -779,7 +782,7 @@ export const getApplicationPayload = ({
   currentApp?: CustomApplicationModel;
   keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
-  const generalData = {
+  const generalData = fitApplicationNameToStorageLimits({
     id: '',
     reference: '',
     folderId: '',
@@ -791,7 +794,7 @@ export const getApplicationPayload = ({
     version: data.version,
     topics: data.topics,
     isDefault: false,
-  };
+  });
 
   switch (data.type) {
     case AppsEditorSchemaTypes.CodeApp:
