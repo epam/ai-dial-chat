@@ -14,7 +14,7 @@ import {
 } from '@/src/testData';
 import { Overflow, Styles, ThemeColorAttributes } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
-import { DateUtil, GeneratorUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ItemUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -307,26 +307,42 @@ dialTest(
     await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await renameConversationModal.editConversationNameWithEnter(
-      newLongNameWithMiddleSpacesEndDot,
-    );
+    const responsesMap =
+      await renameConversationModal.editConversationNameWithEnter(
+        newLongNameWithMiddleSpacesEndDot,
+      );
+    const expectedFullName = responsesMap!.get('PUT')!.name;
+    const expectedName = expectedFullName.split(ItemUtil.entityIdSeparator)[1];
     await baseAssertion.assertElementState(toast, 'hidden');
     // Old name should be gone – the conversation was renamed and truncated
     await conversationAssertion.assertEntityState(
       { name: conversation.name },
       'hidden',
     );
+    await conversationAssertion.assertEntityState(
+      { name: expectedName },
+      'visible',
+    );
+    conversationAssertion.assertValue(
+      ItemUtil.getUtf8ByteLength(expectedFullName),
+      ExpectedConstants.maxEntityNameLength,
+    );
+    await conversationAssertion.assertElementText(
+      chatHeader.chatTitle,
+      expectedName,
+    );
+    await conversationAssertion.assertElementTextIsTruncated(
+      chatHeader.chatTitle,
+      ExpectedMessages.chatHeaderTitleTruncated,
+    );
 
-    const isChatHeaderTitleTruncated =
-      await chatHeader.chatTitle.isElementWidthTruncated();
-    expect
-      .soft(
-        isChatHeaderTitleTruncated,
-        ExpectedMessages.chatHeaderTitleTruncated,
-      )
-      .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
+    await baseAssertion.assertElementText(
+      tooltip,
+      expectedName,
+      ExpectedMessages.headerTitleCorrespondRequest,
+    );
 
     const isTooltipChatHeaderTitleTruncated =
       await tooltip.isElementWidthTruncated();
@@ -1520,8 +1536,6 @@ dialTest(
   },
 );
 
-const longRequest =
-  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
@@ -1534,7 +1548,6 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
     'Chat name: tab is changed to space if to use it in chat name.\n' +
       'Chat name: ASCII control characters %00-%1F are changed to space if to use them in chat name.\n' +
       'The first and only row from the first message is used as chat name.\n' +
-      'The first 255 bytes (UTF-8) from the first message is used as chat name' +
       ` for ${expectedConversationName}`,
     async ({
       dialHomePage,
@@ -1545,7 +1558,7 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
       baseAssertion,
       conversationAssertion,
     }) => {
-      setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853', 'EPMRTC-2961');
+      setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853');
 
       await dialTest.step(
         'Send request to chat and verify control chars are replaced with spaces',
@@ -1576,7 +1589,7 @@ dialTest(
   'The first 255 bytes (UTF-8) from the first message is used as chat name for long messages',
   async ({
     dialHomePage,
-    sendMessage,
+    chat,
     chatMessages,
     setTestIds,
     localStorageManager,
@@ -1585,63 +1598,30 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2961');
 
+    const longRequest =
+      'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+
     await dialTest.step(
       'Send long request and verify the name is truncated to available bytes',
       async () => {
-        const PATH_KEY_SEPARATOR = '__';
-        const ENCODED_KEY_SEPARATOR = '%5F%5F';
-        const encodeModelId = (modelId: string) =>
-          modelId
-            .split(PATH_KEY_SEPARATOR)
-            .map((part) => encodeURI(part))
-            .join(ENCODED_KEY_SEPARATOR);
-        const utf8Length = (value: string) =>
-          new TextEncoder().encode(value).length;
-        const truncateToUtf8Bytes = (value: string, maxBytes: number) => {
-          if (maxBytes <= 0) return '';
-          let bytes = 0;
-          let result = '';
-          for (const char of value) {
-            const charBytes = utf8Length(char);
-            if (bytes + charBytes > maxBytes) break;
-            result += char;
-            bytes += charBytes;
-          }
-          return result;
-        };
-        const trimEndDots = (value: string) =>
-          value.replace(/[. \t\r\n]+$/, '');
-        const prepareEntityName = (name: string, maxBytes = 255) =>
-          trimEndDots(
-            truncateToUtf8Bytes(
-              ExpectedConstants.replacedRestrictedCharsName(name),
-              maxBytes,
-            ),
-          );
-
-        const model = ModelsUtil.getDefaultAgent()!;
-        const modelReference = model.reference ?? model.id;
-        const modelApiKeyPrefix = `${encodeModelId(modelReference)}${PATH_KEY_SEPARATOR}a`;
-        const availableBytes =
-          ExpectedConstants.maxEntityNameLength -
-          utf8Length(modelApiKeyPrefix) +
-          1;
-        const expectedConversationName = prepareEntityName(
-          truncateToUtf8Bytes(prepareEntityName(longRequest), availableBytes),
-        );
-
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await sendMessage.send(longRequest);
-        await chatMessages.waitForResponseReceived();
-
+        const request = await chat.sendRequestWithButton(longRequest);
+        const expectedFullName = request.id.split(ItemUtil.urlSeparator)[2];
+        const expectedName = expectedFullName.split(
+          ItemUtil.entityIdSeparator,
+        )[1];
         await conversationAssertion.assertEntityState(
-          { name: expectedConversationName },
+          { name: expectedName },
           'visible',
+        );
+        conversationAssertion.assertValue(
+          ItemUtil.getUtf8ByteLength(expectedFullName),
+          ExpectedConstants.maxEntityNameLength,
         );
         await baseAssertion.assertElementText(
           chatMessages.getChatMessage(1),
