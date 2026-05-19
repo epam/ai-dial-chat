@@ -9,6 +9,7 @@ interface InfoRowProps {
   valueClassName?: string;
   labelClassName?: string;
   wrapperClassName?: string;
+  noTooltip?: boolean;
 }
 
 export function MarketplaceEntityInfoRow({
@@ -18,6 +19,7 @@ export function MarketplaceEntityInfoRow({
   valueClassName = 'text-primary',
   labelClassName = 'text-secondary shrink-0 self-start',
   wrapperClassName = 'contents',
+  noTooltip = false,
 }: InfoRowProps) {
   if (value == null || value === '') return null;
 
@@ -29,7 +31,11 @@ export function MarketplaceEntityInfoRow({
       >{`${label}:`}</span>
 
       <div data-qa={dataQa} className="min-w-0 flex-1">
-        <DialEllipsisTooltip text={value} className={valueClassName} />
+        {!noTooltip ? (
+          <DialEllipsisTooltip text={value} className={valueClassName} />
+        ) : (
+          value
+        )}
       </div>
     </div>
   );
