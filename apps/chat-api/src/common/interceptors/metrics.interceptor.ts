@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { getErrorDetails } from '../utils/error-details';
 
 /**
  * Interceptor for logging request metrics.
@@ -37,20 +38,7 @@ export class MetricsInterceptor implements NestInterceptor {
         },
         error: (error: unknown) => {
           const duration = Date.now() - startTime;
-          const statusCode =
-            typeof error === 'object' &&
-            error !== null &&
-            'status' in error &&
-            typeof (error as { status?: unknown }).status === 'number'
-              ? (error as { status: number }).status
-              : 500;
-          const message =
-            typeof error === 'object' &&
-            error !== null &&
-            'message' in error &&
-            typeof (error as { message?: unknown }).message === 'string'
-              ? (error as { message: string }).message
-              : 'Unknown error';
+          const { statusCode, message } = getErrorDetails(error);
 
           this.logger.error(
             `${method} ${url} ${statusCode} - ${duration}ms - Error: ${message}`,
