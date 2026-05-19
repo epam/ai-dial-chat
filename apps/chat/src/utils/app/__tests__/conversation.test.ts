@@ -8,6 +8,7 @@ import {
   getConversationInfoFromId,
   getConversationModelParams,
   getDefaultModelReference,
+  getExistingConversationNamesForNaming,
   getGeneratedConversationId,
   getMessageCustomContent,
   getNewConversationName,
@@ -378,6 +379,70 @@ describe('utils/app/conversation.ts', () => {
           existingNames: ['conversation', 'conversation 1'],
         }),
       ).toBe('conversation 2');
+    });
+  });
+
+  describe('getExistingConversationNamesForNaming', () => {
+    const rootFolderId = `${ApiKeys.Conversations}/local`;
+    const subFolderId = `${rootFolderId}/nested`;
+
+    const conversations: Conversation[] = [
+      {
+        ...testConv1,
+        id: `${subFolderId}/a`,
+        folderId: subFolderId,
+        name: 'sub-chat',
+      },
+      {
+        ...testConv1,
+        id: `${rootFolderId}/b`,
+        folderId: rootFolderId,
+        name: 'root-chat',
+      },
+      {
+        ...testConv1,
+        id: `${rootFolderId}/target`,
+        folderId: subFolderId,
+        name: 'target',
+      },
+    ];
+
+    it('Should collect names from the same folder and root folder', () => {
+      expect(
+        getExistingConversationNamesForNaming(
+          conversations,
+          { id: `${rootFolderId}/target`, folderId: subFolderId },
+          {
+            isOverlay: false,
+            conversationRootFolderId: rootFolderId,
+          },
+        ),
+      ).toEqual(['sub-chat', 'root-chat']);
+    });
+
+    it('Should use overlay folder instead of root when overlay is configured', () => {
+      const overlayFolderId = `${rootFolderId}/overlay`;
+      const overlayConversations: Conversation[] = [
+        ...conversations,
+        {
+          ...testConv1,
+          id: `${overlayFolderId}/overlay-chat`,
+          folderId: overlayFolderId,
+          name: 'overlay-chat',
+        },
+      ];
+
+      expect(
+        getExistingConversationNamesForNaming(
+          overlayConversations,
+          { id: `${rootFolderId}/target`, folderId: subFolderId },
+          {
+            isOverlay: true,
+            overlayNewConversationsFolder: overlayFolderId,
+            conversationRootFolderId: rootFolderId,
+          },
+        ),
+      ).toEqual(['sub-chat', 'overlay-chat']);
     });
   });
 

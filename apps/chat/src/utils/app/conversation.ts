@@ -124,6 +124,36 @@ export const getStorageSafeUniqueConversationName = (params: {
   }).name;
 };
 
+export type ExistingConversationNamesForNamingOptions = {
+  isOverlay: boolean;
+  overlayNewConversationsFolder?: string | null;
+  conversationRootFolderId: string;
+};
+
+/** Collects conversation names that must be avoided when auto-naming a local chat. */
+export const getExistingConversationNamesForNaming = (
+  conversations: Conversation[],
+  targetConversation: Pick<Conversation, 'id' | 'folderId'>,
+  options: ExistingConversationNamesForNamingOptions,
+): string[] => {
+  const { isOverlay, overlayNewConversationsFolder, conversationRootFolderId } =
+    options;
+
+  const sharedFolderId =
+    isOverlay && overlayNewConversationsFolder
+      ? overlayNewConversationsFolder
+      : conversationRootFolderId;
+
+  return conversations
+    .filter(
+      (conversation) =>
+        conversation.id !== targetConversation.id &&
+        (conversation.folderId === targetConversation.folderId ||
+          conversation.folderId === sharedFolderId),
+    )
+    .map((conversation) => conversation.name);
+};
+
 export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,

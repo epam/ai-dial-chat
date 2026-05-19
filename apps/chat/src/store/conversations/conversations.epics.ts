@@ -33,11 +33,13 @@ import { combineEpics, ofType } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { getDefaultConversationProps } from '@/src/utils/app/common';
 import {
+  type ExistingConversationNamesForNamingOptions,
   addPausedError,
   excludeSystemMessages,
   getConversationInfoFromId,
   getConversationModelParams,
   getDefaultModelReference,
+  getExistingConversationNamesForNaming,
   getNewConversationName,
   getStorageSafeUniqueConversationName,
   isChosenConversationValidForCompare,
@@ -95,7 +97,7 @@ import { parseEntityApiKey } from '@/src/utils/server/api';
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType, PartialBy } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
-import { AppAction, AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic, RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -146,6 +148,35 @@ import {
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+
+const getExistingConversationNamesForNamingFromState = (
+  state: RootState,
+  targetConversation: Pick<Conversation, 'id' | 'folderId'>,
+  options: ExistingConversationNamesForNamingOptions,
+): string[] => {
+  const sharedFolderId =
+    options.isOverlay && options.overlayNewConversationsFolder
+      ? options.overlayNewConversationsFolder
+      : options.conversationRootFolderId;
+
+  const folderIds =
+    targetConversation.folderId === sharedFolderId
+      ? [targetConversation.folderId]
+      : [targetConversation.folderId, sharedFolderId];
+
+  const conversations = folderIds.flatMap((folderId) =>
+    ConversationsSelectors.selectConversationsByFolderId(
+      state,
+      folderId,
+    ).filter((conversation) => conversation.folderId === folderId),
+  );
+
+  return getExistingConversationNamesForNaming(
+    conversations,
+    targetConversation,
+    options,
+  );
+};
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -1374,17 +1405,19 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
       );
 
       if (isCompareMode) {
-        const conversations = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
         const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
         const overlayNewConversationsFolder =
           isOverlay && state$.value.overlay.newConversationsFolder;
         const conversationRootFolderId = getConversationRootId();
+        const namingOptions: ExistingConversationNamesForNamingOptions = {
+          isOverlay,
+          overlayNewConversationsFolder,
+          conversationRootFolderId,
+        };
 
         // Accumulate already-chosen names so each successive conversation in
         // the batch avoids conflicts with its predecessor(s).
-        const reservedNames: string[] = [];
+        const existingNames: string[] = [];
 
         precomputedNames = payload.conversations.map((conv) => {
           // Only auto-name local conversations that have no messages yet
@@ -1398,28 +1431,22 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
             return undefined; // let sendMessageEpic decide (keep existing name)
           }
 
-          const existingNames = conversations
-            .filter(
-              (c) =>
-                (c.folderId === conv.folderId ||
-                  (isEntityIdLocal(conv) &&
-                    (isOverlay && overlayNewConversationsFolder
-                      ? c.folderId === overlayNewConversationsFolder
-                      : c.folderId === conversationRootFolderId))) &&
-                c.id !== conv.id,
-            )
-            .map((c) => c.name)
-            .concat(reservedNames);
-
           const name = getStorageSafeUniqueConversationName({
             conversation: conv,
             desiredName: getNewConversationName(conv, payload.message),
-            existingNames,
+            existingNames: [
+              ...getExistingConversationNamesForNamingFromState(
+                state$.value,
+                conv,
+                namingOptions,
+              ),
+              ...existingNames,
+            ],
           });
 
           // Reserve this name so the next conversation in the batch won't
           // pick the same one.
-          if (name) reservedNames.push(name);
+          if (name) existingNames.push(name);
           return name;
         });
       }
@@ -1449,7 +1476,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
       installedModelIds: ModelsSelectors.selectInstalledModelIds(state$.value),
-      conversations: ConversationsSelectors.selectConversations(state$.value),
       overlaySystemPrompt: OverlaySelectors.selectOverlaySystemPrompt(
         state$.value,
       ),
@@ -1460,7 +1486,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         payload,
         modelsMap,
         installedModelIds,
-        conversations,
         overlaySystemPrompt,
         isOverlay,
       }) => {
@@ -1540,17 +1565,15 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                   payload.conversation,
                   payload.message,
                 ),
-                existingNames: conversations
-                  .filter(
-                    (conv) =>
-                      (conv.folderId === payload.conversation.folderId ||
-                        (isEntityIdLocal(payload.conversation) &&
-                          (isOverlay && overlayNewConversationsFolder
-                            ? conv.folderId === overlayNewConversationsFolder
-                            : conv.folderId === conversationRootFolderId))) &&
-                      conv.id !== payload.conversation.id,
-                  )
-                  .map((conv) => conv.name),
+                existingNames: getExistingConversationNamesForNamingFromState(
+                  state$.value,
+                  payload.conversation,
+                  {
+                    isOverlay,
+                    overlayNewConversationsFolder,
+                    conversationRootFolderId,
+                  },
+                ),
               }));
 
         const updatedConversation = regenerateConversationId<Conversation>({
