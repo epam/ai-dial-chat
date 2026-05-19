@@ -510,6 +510,14 @@ export const UserMessage = memo(function UserMessage({
     return onDelete;
   }, [allMessages, isExternalChat, isApproveRequiredEntitySelected, onDelete]);
 
+  const handleStopRecording = useCallback(() => {
+    // To show the transcribing overlay when the user stops recording
+    if (isAsrMode) {
+      dispatch(ChatActions.startUserMessageTranscription());
+    }
+    stopRecording();
+  }, [isAsrMode, stopRecording, dispatch]);
+
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
@@ -573,7 +581,7 @@ export const UserMessage = memo(function UserMessage({
 
     setMessageContent((prev) =>
       prev.trim()
-        ? `${prev.trim()} ${userMessageTranscript.trim()}`
+        ? `${prev} ${userMessageTranscript.trim()}`
         : userMessageTranscript.trim(),
     );
     dispatch(ChatActions.clearUserMessageTranscript());
@@ -689,7 +697,7 @@ export const UserMessage = memo(function UserMessage({
                 ref={micButtonRef}
                 isRecording={isRecording}
                 onStartRecording={startRecording}
-                onStopRecording={stopRecording}
+                onStopRecording={handleStopRecording}
                 error={voiceError}
                 disabled={isMicDisabled}
               />
