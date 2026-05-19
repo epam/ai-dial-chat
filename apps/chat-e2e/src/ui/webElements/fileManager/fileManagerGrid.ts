@@ -121,13 +121,24 @@ export class FileManagerGrid extends Grid {
 
   public async setFolderName(folderName: string, waitForRequest = true) {
     await this.getRenameInput().fillInInput(folderName);
+    await this.confirmNewFolderName(folderName, waitForRequest);
+  }
+
+  /**
+   * Confirms the rename input value as-is by pressing Enter — used when the
+   * default pre-filled name ("New folder N") is accepted without changes.
+   */
+  public async confirmNewFolderName(
+    folderName?: string,
+    waitForRequest = true,
+  ) {
     if (waitForRequest) {
-      const requestPromise = this.page.waitForResponse(
-        (resp) =>
-          resp.url().endsWith(API.folderFilesListingHost(folderName)) &&
-          resp.request().method() === 'GET' &&
-          resp.ok(),
-      );
+      const requestPromise = this.page.waitForResponse((resp) => {
+        const urlMatches = folderName
+          ? resp.url().endsWith(API.folderFilesListingHost(folderName))
+          : resp.url().includes(API.folderFilesListingHost());
+        return urlMatches && resp.request().method() === 'GET' && resp.ok();
+      });
       await this.page.keyboard.press(keys.enter);
       await requestPromise;
     } else {
