@@ -132,8 +132,8 @@ export type ExistingConversationNamesForNamingOptions = {
 
 /** Collects conversation names that must be avoided when auto-naming a local chat. */
 export const getExistingConversationNamesForNaming = (
-  conversations: Conversation[],
-  targetConversation: Pick<Conversation, 'id' | 'folderId'>,
+  conversations: ConversationInfo[],
+  targetConversation: Pick<ConversationInfo, 'id' | 'folderId'>,
   options: ExistingConversationNamesForNamingOptions,
 ): string[] => {
   const { isOverlay, overlayNewConversationsFolder, conversationRootFolderId } =

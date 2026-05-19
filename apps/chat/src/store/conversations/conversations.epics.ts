@@ -151,7 +151,7 @@ import uniq from 'lodash-es/uniq';
 
 const getExistingConversationNamesForNamingFromState = (
   state: RootState,
-  targetConversation: Pick<Conversation, 'id' | 'folderId'>,
+  targetConversation: Pick<ConversationInfo, 'id' | 'folderId'>,
   options: ExistingConversationNamesForNamingOptions,
 ): string[] => {
   const sharedFolderId =
@@ -1406,8 +1406,9 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
 
       if (isCompareMode) {
         const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-        const overlayNewConversationsFolder =
-          isOverlay && state$.value.overlay.newConversationsFolder;
+        const overlayNewConversationsFolder = isOverlay
+          ? state$.value.overlay.newConversationsFolder
+          : undefined;
         const conversationRootFolderId = getConversationRootId();
         const namingOptions: ExistingConversationNamesForNamingOptions = {
           isOverlay,
@@ -1550,8 +1551,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         );
 
         const conversationRootFolderId = getConversationRootId();
-        const overlayNewConversationsFolder =
-          isOverlay && state$.value.overlay.newConversationsFolder;
+        const overlayNewConversationsFolder = isOverlay
+          ? state$.value.overlay.newConversationsFolder
+          : undefined;
 
         const newConversationName =
           payload.precomputedName ??
