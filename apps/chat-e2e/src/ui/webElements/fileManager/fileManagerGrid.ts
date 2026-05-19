@@ -91,6 +91,12 @@ export class FileManagerGrid extends Grid {
   public gridNameCellValue = (name: string) =>
     this.gridNameCell(name).locator(GridSelectors.gridCellValue);
 
+  public async getNameColumnValues(): Promise<string[]> {
+    return this.gridRowColumn(FileManagerColumnKey.Name)
+      .locator(GridSelectors.gridCellValue)
+      .allTextContents();
+  }
+
   /**
    * Opens a folder by clicking on its name cell
    * @param folderName Name of the folder to open
