@@ -14,7 +14,6 @@ import tailwindPlugin from 'eslint-plugin-tailwindcss';
 import testingLibraryPlugin from 'eslint-plugin-testing-library';
 import globals from 'globals';
 
-
 export default [
   {
     ignores: [
@@ -32,6 +31,7 @@ export default [
       'apps/chat-e2e/html-report',
       'apps/chat-e2e/chat-html-report',
       'apps/chat-e2e/overlay-html-report',
+      'apps/chat/public/monaco-editor',
       'next-env.d.ts',
       '**/package.json',
       '**/**.config.js',
