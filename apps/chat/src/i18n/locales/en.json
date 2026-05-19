@@ -4,25 +4,6 @@
     "placeholder": "Type a new prompt or use '/' to select one",
     "streamError": "Something went wrong while generating the response."
   },
-  "accessibility": {
-    "skipToContent": "Skip to main content",
-    "conversationMessages": "Conversation messages",
-    "messageInput": "Message input",
-    "welcomeScreen": "Welcome screen",
-    "userMessage": "User message",
-    "assistantMessage": "Assistant message",
-    "assistantTyping": "Assistant is typing",
-    "scrollToBottom": "Scroll to bottom of conversation",
-    "copyMessage": "Copy message",
-    "copyUserMessage": "Copy user message",
-    "copyAssistantMessage": "Copy assistant message",
-    "logoLoading": "Logo loading"
-  },
-  "actions": {
-    "copy": "Copy",
-    "send": "Send",
-    "loading": "Loading..."
-  },
   "navigation": {
     "ariaLabel": "Main navigation",
     "home": "Home",

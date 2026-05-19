@@ -5,14 +5,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import { ROUTES } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
-import { useConversation } from '../../context/ConversationContext';
 import { streamCompletion } from '../../server-api/chat-stream.api';
-import { saveConversation } from '../../server-api/conversations.api';
+import {
+  getConversation as apiGetConversation,
+  saveConversation,
+} from '../../server-api/conversations.api';
 import { createMessagePair } from '../../utils/message-factory';
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const { getConversation } = useConversation();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [isFetching, setIsFetching] = useState(!!conversationId);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -27,18 +28,17 @@ export const ConversationPage: FC = () => {
       return;
     }
 
+    const conversationPath = conversationId.substring(
+      conversationId.indexOf('/') + 1,
+    );
     setIsFetching(true);
-    getConversation(conversationId)
-      .then((result) => {
-        if (!result) {
-          navigate(ROUTES.ROOT);
-        } else {
-          setConversation(result);
-        }
+    apiGetConversation(conversationPath)
+      .then((result: Conversation) => {
+        setConversation(result);
       })
       .catch(() => navigate(ROUTES.ROOT))
       .finally(() => setIsFetching(false));
-  }, [conversationId, getConversation, navigate]);
+  }, [conversationId, navigate]);
 
   useEffect(() => {
     return () => {

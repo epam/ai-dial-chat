@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
-import { useConversation } from '../../context/ConversationContext';
+import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 
 const ConversationInput = lazy(() =>
   import('@epam/conversation-input').then((module) => ({
@@ -25,7 +25,6 @@ const ConversationInput = lazy(() =>
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { createConversation } = useConversation();
   const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
 
@@ -47,13 +46,13 @@ const ConversationRoute: FC = () => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const id = await createConversation(message);
-        navigate(getConversationRoute(id));
+        const conversation = await apiCreateConversation(message);
+        navigate(getConversationRoute(conversation.id));
       } finally {
         setIsSending(false);
       }
     },
-    [createConversation, navigate, isSending],
+    [navigate, isSending],
   );
 
   return (
