@@ -75,7 +75,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
 - [x] 4.3 Update `apps/chat/src/main.tsx` to add a `<Routes>` block inside `<ThemeProvider>`:
   - `<Route path="/login" element={<LoginPage />} />` (lazy import added in slice 5; for now use a temporary placeholder component or skip this route until slice 5).
   - `<Route path="*" element={<RequireAuth><App /></RequireAuth>} />`.
-  Wrap the routes in `<Suspense fallback={null}>` consistent with the existing lazy-loading pattern.
+    Wrap the routes in `<Suspense fallback={null}>` consistent with the existing lazy-loading pattern.
 - [x] 4.4 Add a `ProviderInfo` type to `libs/chat-shared/src/models/auth.ts`: `export interface ProviderInfo { id: string; label: string }`. Re-export it from `libs/chat-shared/src/index.ts` if such a barrel exists; otherwise leave the named export at the file level.
 - [x] 4.5 Add `apps/chat/src/hooks/auth/useAuthRedirect.spec.tsx`. Cover:
   - 4.5.a Mocked `window.location.assign` is called once with the correct login URL and encoded `callbackUrl` when one provider, `status='unauthenticated'`, and pathname is not `/login`.

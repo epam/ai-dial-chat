@@ -69,13 +69,13 @@ Do not re-run the same command twice in a row without code changes in between.
 
 ## Common rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "I'll test at the end" | Bugs compound; early slices invalidate later work. |
-| "Faster to do it all at once" | Breaks are harder to localize in huge diffs. |
-| "Too small to commit separately" | Small commits are cheap; large ones hide bugs. |
-| "I'll add the feature flag later" | Incomplete work should not be user-visible by accident. |
-| "Small refactor in the same change" | Mixing refactor and feature hurts review and bisect. |
+| Rationalization                     | Reality                                                 |
+| ----------------------------------- | ------------------------------------------------------- |
+| "I'll test at the end"              | Bugs compound; early slices invalidate later work.      |
+| "Faster to do it all at once"       | Breaks are harder to localize in huge diffs.            |
+| "Too small to commit separately"    | Small commits are cheap; large ones hide bugs.          |
+| "I'll add the feature flag later"   | Incomplete work should not be user-visible by accident. |
+| "Small refactor in the same change" | Mixing refactor and feature hurts review and bisect.    |
 
 ## Red flags
 

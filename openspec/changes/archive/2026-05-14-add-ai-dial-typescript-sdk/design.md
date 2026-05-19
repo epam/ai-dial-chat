@@ -75,15 +75,15 @@ This avoids a global DI token for the SDK instance while keeping the client cons
 
 ## Environment Variables
 
-| Variable        | Type   | Required | Default              | Description                                         |
-|-----------------|--------|----------|----------------------|-----------------------------------------------------|
-| `DIAL_CORE_URL` | string | **Yes**  | —                    | Base URL of the DIAL Core API                       |
-| `DIAL_API_KEY`  | string | **Yes**  | —                    | API key sent as `Api-Key` header to DIAL Core       |
-| `PORT`          | number | No       | `3005`               | HTTP port the NestJS server listens on              |
-| `API_PREFIX`    | string | No       | `api`                | Global REST prefix                                  |
-| `CORS_ORIGIN`   | string | No       | `http://localhost:4207` | Allowed CORS origin                              |
-| `THEMES_CONFIG_URL` | string | No  | —                    | External themes service URL                         |
-| `THEMES_SERVICE_TIMEOUT_MS` | number | No | `5000`      | Timeout (ms) for theme service calls                |
+| Variable                    | Type   | Required | Default                 | Description                                   |
+| --------------------------- | ------ | -------- | ----------------------- | --------------------------------------------- |
+| `DIAL_CORE_URL`             | string | **Yes**  | —                       | Base URL of the DIAL Core API                 |
+| `DIAL_API_KEY`              | string | **Yes**  | —                       | API key sent as `Api-Key` header to DIAL Core |
+| `PORT`                      | number | No       | `3005`                  | HTTP port the NestJS server listens on        |
+| `API_PREFIX`                | string | No       | `api`                   | Global REST prefix                            |
+| `CORS_ORIGIN`               | string | No       | `http://localhost:4207` | Allowed CORS origin                           |
+| `THEMES_CONFIG_URL`         | string | No       | —                       | External themes service URL                   |
+| `THEMES_SERVICE_TIMEOUT_MS` | number | No       | `5000`                  | Timeout (ms) for theme service calls          |
 
 `DIAL_CORE_URL` and `DIAL_API_KEY` change from `@IsOptional()` to `@IsNotEmpty()` + `@IsUrl()` / `@IsString()`. The existing `validate()` function in `config/validation.ts` uses `plainToInstance` + `validateSync`, so any missing required field will throw during `bootstrap()`.
 
@@ -98,6 +98,7 @@ Lists all deployments available in DIAL Core.
 **Response**: JSON array of deployment objects from the SDK.
 
 **Errors**:
+
 - `502 Bad Gateway` — DIAL Core returned an unexpected response
 - `503 Service Unavailable` — DIAL Core is unreachable
 
@@ -114,6 +115,7 @@ Returns a single deployment by name.
 **Response**: Deployment object.
 
 **Errors**:
+
 - `404 Not Found` — deployment does not exist
 - `502 Bad Gateway` — unexpected response from DIAL Core
 
@@ -163,6 +165,7 @@ export class MessageDto {
 **Response**: Chat completion object from DIAL Core (non-streaming).
 
 **Errors**:
+
 - `400 Bad Request` — invalid request body
 - `404 Not Found` — deployment does not exist
 - `502 Bad Gateway` — DIAL Core returned an invalid response
@@ -174,12 +177,12 @@ export class MessageDto {
 
 Feature services wrap SDK calls in try/catch and translate HTTP errors:
 
-| DIAL Core status | NestJS exception            |
-|------------------|-----------------------------|
-| 404              | `NotFoundException`         |
-| 400              | `BadRequestException`       |
+| DIAL Core status | NestJS exception              |
+| ---------------- | ----------------------------- |
+| 404              | `NotFoundException`           |
+| 400              | `BadRequestException`         |
 | 5xx / network    | `ServiceUnavailableException` |
-| Unexpected body  | `BadGatewayException`       |
+| Unexpected body  | `BadGatewayException`         |
 
 A shared helper `handleDialError(error: unknown)` in `common/utils/dial-error.ts` centralises this translation so controllers stay thin.
 

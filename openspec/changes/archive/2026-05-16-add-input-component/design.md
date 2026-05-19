@@ -7,6 +7,7 @@ The implementation is complete on branch `feat/input`. This document records the
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Provide a standalone, composable `Input` primitive in `libs/conversation-input`
 - Support runtime theming via `colors` and `typography` props mapped to CSS custom variables
 - Keep internal message state inside the component; expose `onSend` / `onChange` callbacks for the caller
@@ -14,6 +15,7 @@ The implementation is complete on branch `feat/input`. This document records the
 - Enter submits; Shift+Enter inserts a newline
 
 **Non-Goals:**
+
 - Replacing or modifying `ConversationInput`
 - Adding welcome-text rendering to `Input`
 - Connecting `Input` to any React Context or global state
