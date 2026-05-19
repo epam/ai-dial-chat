@@ -1,5 +1,5 @@
 ---
-name: "OPSX: Apply"
+name: 'OPSX: Apply'
 description: Implement tasks from an OpenSpec change (Experimental)
 category: Workflow
 tags: [workflow, artifacts, experimental]
@@ -23,9 +23,11 @@ Implement tasks from an OpenSpec change.
 2. **Check status to understand the schema**
 
    First try the CLI:
+
    ```bash
    openspec status --change "<name>" --json
    ```
+
    Parse the JSON to understand:
    - `schemaName`: The workflow being used (e.g., "spec-driven")
    - Which artifact contains the tasks (typically "tasks" for spec-driven, check status for others)
@@ -35,9 +37,11 @@ Implement tasks from an OpenSpec change.
 3. **Get apply instructions**
 
    **3a — CLI path (preferred):**
+
    ```bash
    openspec instructions apply --change "<name>" --json
    ```
+
    This returns:
    - `contextFiles`: artifact ID -> array of concrete file paths
    - Progress (total, complete, remaining)
@@ -148,6 +152,7 @@ What would you like to do?
 ```
 
 **Guardrails**
+
 - Keep going through tasks until done or blocked
 - Always read context files before starting; skip gracefully if a file doesn't exist
 - If the openspec CLI is unavailable, fall back to reading files directly from the change directory

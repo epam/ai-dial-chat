@@ -5,6 +5,7 @@ The app currently manages all conversation messages as local state inside `Conve
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Persist new conversations to the backend via `POST /api/v1/conversations`.
 - Assign a server-returned ID to each conversation.
 - Redirect the user to `/conversations/:conversationId` immediately after the conversation is created.
@@ -13,6 +14,7 @@ The app currently manages all conversation messages as local state inside `Conve
 - Share the `Conversation` and `Message` types between frontend and backend via `libs/chat-shared`.
 
 **Non-Goals:**
+
 - `GET /api/v1/conversations/:id` — fetching a saved conversation from the API (future slice).
 - Conversation list / sidebar — listing past conversations.
 - Multi-tab sync.
@@ -31,6 +33,7 @@ The app currently manages all conversation messages as local state inside `Conve
 **Decision:** Introduce `apps/chat-api/src/conversations/` with `conversation.controller.ts`, `conversation.service.ts`, `conversation.module.ts`, and `dto/create-conversation.dto.ts`. Follow the `themes` domain as the reference pattern.
 
 **API endpoint:**
+
 ```
 POST /api/v1/conversations
 Content-Type: application/json
@@ -76,9 +79,12 @@ Body: { "firstMessage": "<string, 1–4000 chars>" }
 ### 8. Lazy-loaded `ConversationPage`
 
 **Decision:** Registered in `app.tsx` with `React.lazy`. Named-export pattern:
+
 ```ts
 const ConversationPage = React.lazy(() =>
-  import('@/components/ConversationPage/ConversationPage').then(m => ({ default: m.ConversationPage }))
+  import('@/components/ConversationPage/ConversationPage').then((m) => ({
+    default: m.ConversationPage,
+  })),
 );
 ```
 

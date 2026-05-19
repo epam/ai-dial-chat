@@ -66,7 +66,7 @@ interface UserContextType {
 
 `UserProfile` is the shared interface already exported from `libs/chat-shared/src/models/auth.ts` — no new shared types are introduced.
 
-*Alternatives considered:*
+_Alternatives considered:_
 
 - **Redux / Zustand**: rejected. There is no existing store in `apps/chat`; introducing one only for auth contradicts the "React Context + custom hooks" rule in `openspec/config.yaml`.
 - **`@tanstack/react-query`**: rejected for the same reason — adds a dependency for a single fetch.
@@ -82,7 +82,14 @@ interface UserContextType {
     <ThemeProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="*" element={<RequireAuth><App /></RequireAuth>} />
+        <Route
+          path="*"
+          element={
+            <RequireAuth>
+              <App />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </ThemeProvider>
   </UserProvider>
@@ -95,7 +102,7 @@ Rationale:
 - Routing exists already (`BrowserRouter`) but no `<Routes>` is declared yet. Adding `<Routes>` here is the minimal step that lets `/login` exist as a distinct route while every other path stays under `<RequireAuth>`.
 - `UserProvider` sitting at the outermost layer means `useUser()` is available on the `/login` page too, which lets it auto-redirect to the same-origin `callbackUrl` path, or `/` when no callback is present, if an already-authenticated user lands on `/login` (e.g. via a stale tab).
 
-*Alternative considered:* keep everything in `app.tsx` without routing. Rejected — we would need an ad-hoc state machine inside `App` to switch between `<LoginPicker />` and the chat UI, and that complicates the existing `lazy` setup with `Suspense`.
+_Alternative considered:_ keep everything in `app.tsx` without routing. Rejected — we would need an ad-hoc state machine inside `App` to switch between `<LoginPicker />` and the chat UI, and that complicates the existing `lazy` setup with `Suspense`.
 
 ### D3 — Unauthenticated redirect policy
 
@@ -109,7 +116,7 @@ Rationale:
 
 `useAuthRedirect()` is called from `<RequireAuth>` and from `<LoginPage>` so both code paths agree on the authenticated-on-login redirect. On `/login`, the hook MUST NOT fetch providers or perform unauthenticated provider redirects; that avoids a duplicate `/auth/providers` request because `<LoginPage>` fetches the list itself.
 
-*Alternative considered:* always show a login picker even for a single provider. Rejected — the user picked `auto_redirect` in the proposal questions, and a one-button picker is poor UX.
+_Alternative considered:_ always show a login picker even for a single provider. Rejected — the user picked `auto_redirect` in the proposal questions, and a one-button picker is poor UX.
 
 ### D4 — Global `401` handling: a typed `UnauthorizedError` from the API helper
 
@@ -162,7 +169,7 @@ throw new UnauthorizedError(url);
 
 `UserProvider`'s `useEffect` subscribes once, sets `status = 'unauthenticated'`, and `useAuthRedirect()` does the rest. The listener pattern is intentionally tiny (no `EventEmitter` dependency, no global window event); it is encapsulated to `server-api/base.ts` so the rest of the app keeps treating API errors uniformly.
 
-*Alternatives considered:*
+_Alternatives considered:_
 
 - **Window event (`window.dispatchEvent`)**: rejected — would leak into `e2e/Playwright` setups and require typed CustomEvent.
 - **React Router error elements**: rejected — they don't fire for `fetch` errors raised inside `useEffect`.
@@ -174,7 +181,7 @@ The eventual `POST /api/v1/auth/logout` (backend Slice 3) ends with a `302 Redir
 
 This means the Sign-out button is wired in this change, but successful logout depends on backend Slice 3. That dependency is documented in the proposal's "Out of scope" section; the wiring is intentionally additive so the eventual backend change requires zero frontend work.
 
-*Alternative considered:* `fetch(..., { method: 'POST', redirect: 'manual' })` and then read `Location` and `window.location.assign` to it. Rejected — fragile, breaks on CORS to the IdP, requires reading response headers that browsers may strip.
+_Alternative considered:_ `fetch(..., { method: 'POST', redirect: 'manual' })` and then read `Location` and `window.location.assign` to it. Rejected — fragile, breaks on CORS to the IdP, requires reading response headers that browsers may strip.
 
 ### D6 — Provider picker page: lazy-loaded route at `/login`
 
@@ -203,7 +210,7 @@ While `status === 'loading'`, `<RequireAuth>` renders `null`. Rationale: the boo
 
 `<LoginPage>` uses the `auth.loading` key while its own provider-list fetch is in flight, because the user is already on the explicit login route and needs page-level feedback.
 
-### D9 — i18n keys (auth.*)
+### D9 — i18n keys (auth.\*)
 
 New keys under `apps/chat/src/i18n/locales/en.json`:
 
@@ -233,13 +240,13 @@ The Vite proxy in `apps/chat/vite.config.mts` already forwards `/api → http://
 
 ## Risks / Trade-offs
 
-| Risk | Mitigation |
-|---|---|
-| **Sign-out endpoint pending until backend Slice 3:** the button is wired before the BFF endpoint exists. | Document the backend dependency in the PR. The wiring is additive — when Slice 3 ships, no frontend change is needed. |
-| **Refresh-token expiry while SPA is open:** backend Slice 2 already provides transparent refresh, but refresh can still fail after refresh-token expiry or IdP revocation. | The `UnauthorizedError` listener resets state and `useAuthRedirect()` debounces by checking `status`, so the recovery path is a fresh login rather than a broken UI. |
-| **`<RequireAuth>` shows a blank gate during cold load:** if bootstrap takes > 0 ms, the user briefly sees `null` (D8) before either content or the login page paints. | Acceptable for v1. The explicit `/login` page still shows `auth.loading` while its provider-list request is in flight. |
-| **CORS and `credentials: 'include'`:** an accidental `Access-Control-Allow-Origin: *` on the BFF would block the cookie. | Already handled in `apps/chat-api/src/main.ts` (`origin: process.env.CORS_ORIGIN`, `credentials: true`); covered by the existing backend tests. This change adds no new CORS surface area. |
-| **i18n keys with `{{email}}` and `{{provider}}` interpolation:** typos in keys silently produce `undefined` on screen. | Adding all keys in a single PR-friendly diff and including a Vitest assertion that every key referenced in code exists in `en.json` (a small new test file under `apps/chat/src/i18n/`). Optional polish, not strictly required by `openspec/config.yaml`. |
+| Risk                                                                                                                                                                       | Mitigation                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sign-out endpoint pending until backend Slice 3:** the button is wired before the BFF endpoint exists.                                                                   | Document the backend dependency in the PR. The wiring is additive — when Slice 3 ships, no frontend change is needed.                                                                                                                                      |
+| **Refresh-token expiry while SPA is open:** backend Slice 2 already provides transparent refresh, but refresh can still fail after refresh-token expiry or IdP revocation. | The `UnauthorizedError` listener resets state and `useAuthRedirect()` debounces by checking `status`, so the recovery path is a fresh login rather than a broken UI.                                                                                       |
+| **`<RequireAuth>` shows a blank gate during cold load:** if bootstrap takes > 0 ms, the user briefly sees `null` (D8) before either content or the login page paints.      | Acceptable for v1. The explicit `/login` page still shows `auth.loading` while its provider-list request is in flight.                                                                                                                                     |
+| **CORS and `credentials: 'include'`:** an accidental `Access-Control-Allow-Origin: *` on the BFF would block the cookie.                                                   | Already handled in `apps/chat-api/src/main.ts` (`origin: process.env.CORS_ORIGIN`, `credentials: true`); covered by the existing backend tests. This change adds no new CORS surface area.                                                                 |
+| **i18n keys with `{{email}}` and `{{provider}}` interpolation:** typos in keys silently produce `undefined` on screen.                                                     | Adding all keys in a single PR-friendly diff and including a Vitest assertion that every key referenced in code exists in `en.json` (a small new test file under `apps/chat/src/i18n/`). Optional polish, not strictly required by `openspec/config.yaml`. |
 
 ## Migration Plan
 

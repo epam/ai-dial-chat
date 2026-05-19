@@ -84,10 +84,10 @@ either breaks all versioned routes.
 
 ### Versioning scope
 
-| Controller type | Must be versioned? | Example route |
-|---|---|---|
-| Business domain (themes, auth, chat, …) | **Yes** | `GET /api/v1/themes` |
-| Infrastructure (health, metrics, readiness) | No — exempt | `GET /api/health` |
+| Controller type                             | Must be versioned? | Example route        |
+| ------------------------------------------- | ------------------ | -------------------- |
+| Business domain (themes, auth, chat, …)     | **Yes**            | `GET /api/v1/themes` |
+| Infrastructure (health, metrics, readiness) | No — exempt        | `GET /api/health`    |
 
 Infrastructure endpoints exist for ops tooling (load balancers, Kubernetes probes, Prometheus
 scrapers) and MUST NOT carry a version prefix.
@@ -163,21 +163,24 @@ Good (follow `ThemeController`):
 
 ```ts
 @ApiTags('themes')
-@Controller({ path: 'themes', version: '1' })   // ✅ versioned: GET /api/v1/themes
+@Controller({ path: 'themes', version: '1' }) // ✅ versioned: GET /api/v1/themes
 export class ThemeController {
   constructor(private readonly themeService: ThemeService) {}
 
   @Get('icon')
   @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({ summary: 'Get theme icon', description: '...' })
-  @ApiResponse({ status: 200, description: 'Icon content', /* schema */ })
+  @ApiResponse({ status: 200, description: 'Icon content' /* schema */ })
   @ApiResponse({ status: 400, description: 'Invalid icon name' })
   @ApiResponse({ status: 404, description: 'Icon not found' })
   @ApiResponse({ status: 502, description: 'Upstream error' })
   @ApiResponse({ status: 503, description: 'Upstream unavailable' })
   async getThemeIcon(@Query() query: GetThemeIconDto, @Res() res: Response) {
     const file = await this.themeService.getThemeIcon(query.iconName ?? '');
-    res.setHeader('Content-Type', lookup(query.iconName ?? '') || 'image/svg+xml');
+    res.setHeader(
+      'Content-Type',
+      lookup(query.iconName ?? '') || 'image/svg+xml',
+    );
     return res.send(file);
   }
 }
@@ -186,7 +189,7 @@ export class ThemeController {
 Bad:
 
 ```ts
-@Controller('themes')                            // ❌ missing version → /api/themes
+@Controller('themes') // ❌ missing version → /api/themes
 export class BadController {
   @Get('icon')
   async icon(@Query('name') name: string) {
@@ -215,6 +218,7 @@ Services MUST:
   ```
 
   Never cast with `as string`; rely on the validated env schema.
+
 - For outbound HTTP, use `fetch` with an `AbortController` and the configurable timeout
   env var (e.g. `THEMES_SERVICE_TIMEOUT_MS`). Always `clearTimeout` in both branches.
 - Translate failures into proper Nest HTTP exceptions (see §6). Never return `null`,
@@ -266,15 +270,15 @@ unknown fields and wrong types are rejected automatically.
 
 Map failure modes to NestJS built-in exceptions:
 
-| Situation | Throw |
-|---|---|
-| Resource not found (404 from upstream) | `NotFoundException` |
-| Validation failure (handled by `ValidationPipe`) | — automatic `BadRequestException` |
-| Upstream returned non-OK status | `BadGatewayException` |
-| Upstream timed out / unreachable | `ServiceUnavailableException` |
-| Caller is unauthenticated | `UnauthorizedException` |
-| Caller is authenticated but lacks permission | `ForbiddenException` |
-| Programming error / unexpected branch | `InternalServerErrorException` (log first) |
+| Situation                                        | Throw                                      |
+| ------------------------------------------------ | ------------------------------------------ |
+| Resource not found (404 from upstream)           | `NotFoundException`                        |
+| Validation failure (handled by `ValidationPipe`) | — automatic `BadRequestException`          |
+| Upstream returned non-OK status                  | `BadGatewayException`                      |
+| Upstream timed out / unreachable                 | `ServiceUnavailableException`              |
+| Caller is unauthenticated                        | `UnauthorizedException`                    |
+| Caller is authenticated but lacks permission     | `ForbiddenException`                       |
+| Programming error / unexpected branch            | `InternalServerErrorException` (log first) |
 
 Rules:
 
@@ -300,7 +304,7 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
   `apps/chat-api/src/config/environment.config.ts`.
 - Each field has at least one `class-validator` decorator. URL fields use
   `@IsUrl({ require_tld: false })`. Numeric fields use `@Transform(({ value }) =>
-  parseInt(value, 10))` + `@IsNumber()`.
+parseInt(value, 10))` + `@IsNumber()`.
 - `ConfigModule.forRoot({ isGlobal: true, validate, envFilePath: ['.env.local', '.env'] })`
   in `AppModule`. The app MUST fail fast at boot if env validation fails (already wired
   via `validation.ts`).

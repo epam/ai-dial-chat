@@ -33,6 +33,7 @@ For lib styling conventions (CSS vars, SCSS modules, Tailwind split, `colors`/`t
 For broad "global feature" research (best practices, architecture alternatives, trade-offs), use `./.claude/skills/feature-research/SKILL.md` as the default workflow before implementation.
 
 Expected output:
+
 - Context and constraints
 - 2-4 options with trade-offs
 - Recommended approach
@@ -49,6 +50,7 @@ Use these local skills directly in Claude:
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 
 Default behavior:
+
 - Implementation work should follow incremental slices with per-slice verification.
 - Before merge (or on explicit review requests), run the five-axis quality review.
 

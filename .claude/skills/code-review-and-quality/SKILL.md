@@ -56,11 +56,11 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 
 ## Change sizing
 
-| Size (approx.) | Expectation |
-| --- | --- |
-| ~100 lines | Good — one focused review |
-| ~300 lines | OK if **one** logical change + tests |
-| ~1000+ lines | Too large — ask to split (stack, vertical slices, or refactor vs feature) |
+| Size (approx.) | Expectation                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| ~100 lines     | Good — one focused review                                                 |
+| ~300 lines     | OK if **one** logical change + tests                                      |
+| ~1000+ lines   | Too large — ask to split (stack, vertical slices, or refactor vs feature) |
 
 **Never mix** large refactor with new behavior in one changeset unless team explicitly allows.
 
@@ -68,13 +68,13 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 
 Use a prefix so authors know what is mandatory:
 
-| Label | Meaning |
-| --- | --- |
-| *(none)* or **Required:** | Must fix before merge |
-| **Critical:** | Blocks merge — security, data loss, broken contract |
-| **Nit:** | Optional — style, minor preference |
-| **Optional:** / **Consider:** | Worth discussing, not blocking |
-| **FYI:** | Context only |
+| Label                         | Meaning                                             |
+| ----------------------------- | --------------------------------------------------- |
+| _(none)_ or **Required:**     | Must fix before merge                               |
+| **Critical:**                 | Blocks merge — security, data loss, broken contract |
+| **Nit:**                      | Optional — style, minor preference                  |
+| **Optional:** / **Consider:** | Worth discussing, not blocking                      |
+| **FYI:**                      | Context only                                        |
 
 ## Review process
 
@@ -105,44 +105,52 @@ Use as a literal template when writing a review:
 ## Review: [title]
 
 ### Context
+
 - [ ] I understand intent and expected behavior
 
 ### Correctness
+
 - [ ] Matches spec/task
 - [ ] Edge and error paths
 - [ ] Tests adequate and meaningful
 
 ### Readability
+
 - [ ] Clear names and flow
 - [ ] No unnecessary complexity
 
 ### Architecture
+
 - [ ] Fits monorepo boundaries and patterns
 - [ ] Coupling and abstraction level appropriate
 
 ### Security
+
 - [ ] No secrets; boundaries validated; auth as needed
 - [ ] New deps justified
 
 ### Performance
+
 - [ ] No obvious N+1 / unbounded work / UI hot-path issues
 
 ### Verification
+
 - [ ] Relevant Nx targets (or CI) green
 - [ ] Manual / visual check noted if UI
 
 ### Verdict
+
 - [ ] Approve | [ ] Request changes (list blocking items)
 ```
 
 ## Rationalizations to reject
 
-| Excuse | Response |
-| --- | --- |
-| "It works, ship it" | Readability, security, and architecture debt still compound. |
-| "I wrote it, it's fine" | Second pass catches blind spots. |
-| "We'll clean up later" | Cleanup before merge unless true emergency + tracked follow-up. |
-| "Tests pass, so it's good" | Tests don't replace architecture or security review. |
+| Excuse                     | Response                                                        |
+| -------------------------- | --------------------------------------------------------------- |
+| "It works, ship it"        | Readability, security, and architecture debt still compound.    |
+| "I wrote it, it's fine"    | Second pass catches blind spots.                                |
+| "We'll clean up later"     | Cleanup before merge unless true emergency + tracked follow-up. |
+| "Tests pass, so it's good" | Tests don't replace architecture or security review.            |
 
 ## Red flags
 
