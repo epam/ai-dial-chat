@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
+import { ConversationProvider } from './context/ConversationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
 import './styles.scss';
@@ -19,21 +20,23 @@ root.render(
   <StrictMode>
     <BrowserRouter>
       <UserProvider>
-        <ThemeProvider>
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route
-                path="*"
-                element={
-                  <RequireAuth>
-                    <App />
-                  </RequireAuth>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </ThemeProvider>
+        <ConversationProvider>
+          <ThemeProvider>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="*"
+                  element={
+                    <RequireAuth>
+                      <App />
+                    </RequireAuth>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </ThemeProvider>
+        </ConversationProvider>
       </UserProvider>
     </BrowserRouter>
   </StrictMode>,

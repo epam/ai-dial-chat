@@ -6,6 +6,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { ApiEndpoints, get } from '../../server-api/base';
 
+// TODO: change styles, add app logo, etc.
 const LoginPage = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();

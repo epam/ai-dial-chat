@@ -1,7 +1,7 @@
+import { type Message as MessageType } from '@epam/chat-shared';
 import { ConversationInput } from '@epam/conversation-input';
 import { MessageBubble } from '@epam/conversation-messages';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Message as MessageType } from '../../types';
 
 /**
  * Props for the ConversationView component
@@ -32,10 +32,19 @@ const ConversationView: FC<Props> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  const scrollToBottom = useCallback(() => {
+    const target = messagesEndRef.current;
+    if (!target || typeof target.scrollIntoView !== 'function') {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   // Handle scroll detection to show/hide scroll button
   useEffect(() => {
@@ -51,10 +60,6 @@ const ConversationView: FC<Props> = ({
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages.length]);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
 
   return (
     <>

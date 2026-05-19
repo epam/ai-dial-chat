@@ -70,6 +70,7 @@ export class SessionGuard implements CanActivate {
       claims: payload.claims,
       at: payload.at,
       csrf: payload.csrf,
+      bucket: payload.bucket,
     };
     req.user = user;
     return true;

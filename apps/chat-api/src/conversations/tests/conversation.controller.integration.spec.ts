@@ -1,0 +1,143 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConversationController } from '../conversation.controller';
+import { ConversationService } from '../conversation.service';
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TEST_USER = {
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
+
+describe('ConversationController (integration)', () => {
+  let app: INestApplication;
+  let service: { createConversation: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = { createConversation: vi.fn() };
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ConversationController],
+      providers: [{ provide: ConversationService, useValue: service }],
+    }).compile();
+
+    app = module.createNestApplication();
+    app.use((req, _res, next) => {
+      req.user = TEST_USER;
+      next();
+    });
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  describe('POST /conversations', () => {
+    it('returns 201 with the created conversation for a valid body', async () => {
+      const conversation = {
+        id: '11111111-1111-1111-1111-111111111111',
+        messages: [
+          {
+            id: '22222222-2222-2222-2222-222222222222',
+            role: 'user',
+            content: 'Hello',
+            timestamp: new Date().toISOString(),
+          },
+        ],
+        createdAt: new Date().toISOString(),
+      };
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello' })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        'Hello',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when firstMessage is an empty string', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: '' })
+        .expect(400);
+    });
+
+    it('returns 400 when body is empty', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({})
+        .expect(400);
+    });
+
+    it('returns 400 when firstMessage exceeds 4000 characters', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'a'.repeat(4001) })
+        .expect(400);
+    });
+
+    it('returns 201 with a valid conversation shape from the real service', async () => {
+      const configService = {
+        get: vi.fn((key: string) => {
+          if (key === 'DIAL_CORE_URL') return 'http://localhost:3000';
+          if (key === 'DIAL_API_KEY') return 'test-api-key';
+          return undefined;
+        }),
+      };
+
+      const realModule: TestingModule = await Test.createTestingModule({
+        controllers: [ConversationController],
+        providers: [
+          { provide: ConfigService, useValue: configService },
+          ConversationService,
+        ],
+      }).compile();
+
+      const realApp = realModule.createNestApplication();
+      realApp.use((req, _res, next) => {
+        req.user = TEST_USER;
+        next();
+      });
+      realApp.useGlobalPipes(
+        new ValidationPipe({ whitelist: true, transform: true }),
+      );
+      await realApp.init();
+
+      vi.spyOn(realApp.get(ConversationService)['client'], 'saveConversation').mockResolvedValue(
+        { data: {} } as never,
+      );
+
+      const result = await request(realApp.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello from integration' })
+        .expect(201);
+
+      expect(result.body.id).toMatch(
+        /^conversations\/test-bucket\/[0-9a-f-]{36}__Hello from integration\b/i,
+      );
+      expect(result.body.messages).toHaveLength(1);
+      expect(result.body.messages[0].content).toBe('Hello from integration');
+
+      await realApp.close();
+    });
+  });
+});

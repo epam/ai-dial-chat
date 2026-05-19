@@ -1,6 +1,7 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
+  CONVERSATIONS = '/api/v1/conversations',
   AUTH_ME = '/api/v1/auth/me',
   AUTH_PROVIDERS = '/api/v1/auth/providers',
   AUTH_LOGOUT = '/api/v1/auth/logout',
@@ -107,8 +108,9 @@ const request = async <TResponse>(
       listeners.forEach((l) => l(url));
       throw new UnauthorizedError(url);
     }
+    const errorBody = await response.text().catch(() => '');
     throw new Error(
-      `Request failed with status ${response.status} for ${method} ${url}`,
+      `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,
     );
   }
 

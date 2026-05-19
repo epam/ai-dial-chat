@@ -42,10 +42,10 @@ export class CsrfGuard implements CanActivate {
   }
 
   private validateOrigin(req: Request): void {
-    const appBase = this.config.get('AUTH_CALLBACK_BASE_URL', {
+    const corsOrigin = this.config.get('CORS_ORIGIN', {
       infer: true,
     }) as string;
-    const appOrigin = new URL(appBase).origin;
+    const appOrigin = new URL(corsOrigin).origin;
 
     const origin = req.headers['origin'];
     const referer = req.headers['referer'];

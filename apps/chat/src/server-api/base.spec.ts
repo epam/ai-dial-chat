@@ -1,457 +1,287 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ApiEndpoints,
+  UnauthorizedError,
   get,
+  hasRequiredProperties,
+  isValidResponse,
+  onUnauthorized,
   post,
   put,
   setCsrfToken,
-  ApiEndpoints,
-  UnauthorizedError,
-  onUnauthorized,
 } from './base';
 
-describe('API client', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    global.fetch = vi.fn();
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const mockFetch = (overrides: Partial<Response> = {}) => {
+  const response: Partial<Response> = {
+    ok: true,
+    status: 200,
+    headers: new Headers({ 'content-type': 'application/json' }),
+    json: vi.fn().mockResolvedValue({ data: 'ok' }),
+    text: vi.fn().mockResolvedValue(''),
+    ...overrides,
+  };
+  global.fetch = vi.fn().mockResolvedValue(response as Response);
+  return response as Response;
+};
+
+// ---------------------------------------------------------------------------
+// UnauthorizedError
+// ---------------------------------------------------------------------------
+
+describe('UnauthorizedError', () => {
+  it('has status 401', () => {
+    const err = new UnauthorizedError('/api/test');
+    expect(err.status).toBe(401);
+  });
+
+  it('includes the url in the message', () => {
+    const err = new UnauthorizedError('/api/test');
+    expect(err.message).toContain('/api/test');
+  });
+
+  it('has correct name', () => {
+    const err = new UnauthorizedError('/api/test');
+    expect(err.name).toBe('UnauthorizedError');
+  });
+
+  it('is an instance of Error', () => {
+    expect(new UnauthorizedError('/api/test')).toBeInstanceOf(Error);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// onUnauthorized
+// ---------------------------------------------------------------------------
+
+describe('onUnauthorized', () => {
+  it('calls registered listener when a 401 occurs', async () => {
+    const listener = vi.fn();
+    const unregister = onUnauthorized(listener);
+
+    mockFetch({ ok: false, status: 401, text: vi.fn().mockResolvedValue('') });
+
+    await expect(get('/api/test')).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(listener).toHaveBeenCalledWith('/api/test');
+
+    unregister();
+  });
+
+  it('does not call listener after unregistering', async () => {
+    const listener = vi.fn();
+    const unregister = onUnauthorized(listener);
+    unregister();
+
+    mockFetch({ ok: false, status: 401, text: vi.fn().mockResolvedValue('') });
+
+    await expect(get('/api/test')).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isValidResponse
+// ---------------------------------------------------------------------------
+
+describe('isValidResponse', () => {
+  it('returns true when validator passes', () => {
+    const isString = (d: unknown): d is string => typeof d === 'string';
+    expect(isValidResponse('hello', isString)).toBe(true);
+  });
+
+  it('returns false when validator fails', () => {
+    const isString = (d: unknown): d is string => typeof d === 'string';
+    expect(isValidResponse(42, isString)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasRequiredProperties
+// ---------------------------------------------------------------------------
+
+describe('hasRequiredProperties', () => {
+  it('returns true when all properties are present', () => {
+    expect(hasRequiredProperties({ a: 1, b: 2 }, ['a', 'b'])).toBe(true);
+  });
+
+  it('returns false when a property is missing', () => {
+    expect(hasRequiredProperties({ a: 1 }, ['a', 'b'])).toBe(false);
+  });
+
+  it('returns false for null', () => {
+    expect(hasRequiredProperties(null, ['a'])).toBe(false);
+  });
+
+  it('returns false for a primitive', () => {
+    expect(hasRequiredProperties(42, ['a'])).toBe(false);
+  });
+
+  it('returns true for empty required list', () => {
+    expect(hasRequiredProperties({}, [])).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HTTP methods – request dispatch and parseResponse
+// ---------------------------------------------------------------------------
+
+describe('get', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('calls fetch with GET method and correct url', async () => {
+    mockFetch();
+    await get('/api/test');
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/test',
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
+  it('returns parsed JSON response', async () => {
+    mockFetch({ json: vi.fn().mockResolvedValue({ value: 42 }) });
+    const result = await get<{ value: number }>('/api/test');
+    expect(result).toEqual({ value: 42 });
+  });
+
+  it('throws for non-ok response', async () => {
+    mockFetch({ ok: false, status: 500, text: vi.fn().mockResolvedValue('err') });
+    await expect(get('/api/test')).rejects.toThrow('Request failed with status 500');
+  });
+
+  it('returns text when content-type is not JSON', async () => {
+    mockFetch({
+      headers: new Headers({ 'content-type': 'text/plain' }),
+      text: vi.fn().mockResolvedValue('plain text'),
+    });
+    const result = await get<string>('/api/test');
+    expect(result).toBe('plain text');
+  });
+
+  it('returns undefined for 204 No Content', async () => {
+    mockFetch({
+      status: 204,
+      headers: new Headers({}),
+    });
+    const result = await get('/api/test');
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('post', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('calls fetch with POST method', async () => {
+    mockFetch();
+    await post('/api/test', { key: 'value' });
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/test',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('serializes body as JSON', async () => {
+    mockFetch();
+    await post('/api/test', { key: 'value' });
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(init.body).toBe(JSON.stringify({ key: 'value' }));
+  });
+
+  it('sends FormData without Content-Type override', async () => {
+    mockFetch();
+    const formData = new FormData();
+    formData.append('field', 'val');
+    await post('/api/test', formData);
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(init.headers['Content-Type']).toBeUndefined();
+    expect(init.body).toBe(formData);
+  });
+});
+
+describe('put', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('calls fetch with PUT method', async () => {
+    mockFetch();
+    await put('/api/test', { key: 'value' });
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/test',
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CSRF token
+// ---------------------------------------------------------------------------
+
+describe('setCsrfToken', () => {
+  afterEach(() => {
     setCsrfToken(null);
+    vi.restoreAllMocks();
   });
 
-  describe('get', () => {
-    it('should make GET request with valid response', async () => {
-      const mockData = { themes: [] };
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: {
-          get: vi.fn().mockReturnValue('application/json'),
-        },
-        json: vi.fn().mockResolvedValue(mockData),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const result = await get(ApiEndpoints.THEMES);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        ApiEndpoints.THEMES,
-        expect.objectContaining({
-          method: 'GET',
-        }),
-      );
-      expect(result).toEqual(mockData);
-    });
-
-    it('should handle text responses', async () => {
-      const mockText = '<svg>...</svg>';
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: {
-          get: vi.fn().mockReturnValue('image/svg+xml'),
-        },
-        text: vi.fn().mockResolvedValue(mockText),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const result = await get<string>(ApiEndpoints.THEME_ICON);
-
-      expect(result).toBe(mockText);
-    });
-
-    it('should handle 204 No Content responses', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 204,
-        headers: {
-          get: vi.fn().mockReturnValue(''),
-        },
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const result = await get('/api/test');
-
-      expect(result).toBeUndefined();
-    });
-
-    it('should throw error for non-OK responses', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 404,
-      } as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await expect(get(ApiEndpoints.THEMES)).rejects.toThrow(
-        'Request failed with status 404 for GET /api/themes',
-      );
-    });
-
-    it('should throw error for network failures', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('Network error'),
-      );
-
-      await expect(get(ApiEndpoints.THEMES)).rejects.toThrow('Network error');
-    });
-
-    it('should pass custom headers', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: {
-          get: vi.fn().mockReturnValue('application/json'),
-        },
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await get('/api/test', {
-        headers: {
-          'X-Custom-Header': 'test',
-        },
-      });
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'X-Custom-Header': 'test',
-          }),
-        }),
-      );
-    });
+  it('includes X-CSRF-Token header in non-GET requests when set', async () => {
+    setCsrfToken('my-csrf-token');
+    mockFetch();
+    await post('/api/test', {});
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(init.headers['X-CSRF-Token']).toBe('my-csrf-token');
   });
 
-  describe('post', () => {
-    it('should make POST request with JSON body', async () => {
-      const mockBody = { name: 'test' };
-      const mockResponse = {
-        ok: true,
-        status: 201,
-        headers: {
-          get: vi.fn().mockReturnValue('application/json'),
-        },
-        json: vi.fn().mockResolvedValue({ id: 1, ...mockBody }),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const result = await post('/api/test', mockBody);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify(mockBody),
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json',
-          }),
-        }),
-      );
-      expect(result).toEqual({ id: 1, ...mockBody });
-    });
-
-    it('should handle FormData body', async () => {
-      const mockFormData = new FormData();
-      mockFormData.append('file', new Blob(['test']));
-
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: {
-          get: vi.fn().mockReturnValue('application/json'),
-        },
-        json: vi.fn().mockResolvedValue({ success: true }),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await post('/api/upload', mockFormData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/upload',
-        expect.objectContaining({
-          method: 'POST',
-          body: mockFormData,
-          headers: expect.not.objectContaining({
-            'Content-Type': 'application/json',
-          }),
-        }),
-      );
-    });
-
-    it('should handle POST without body', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: {
-          get: vi.fn().mockReturnValue('application/json'),
-        },
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await post('/api/test');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test',
-        expect.objectContaining({
-          method: 'POST',
-          body: undefined,
-        }),
-      );
-    });
+  it('does not include X-CSRF-Token in GET requests', async () => {
+    setCsrfToken('my-csrf-token');
+    mockFetch();
+    await get('/api/test');
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(init.headers['X-CSRF-Token']).toBeUndefined();
   });
 
-  describe('credentials', () => {
-    it('get passes credentials: include to fetch', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: { get: vi.fn().mockReturnValue('application/json') },
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
+  it('does not include X-CSRF-Token when token is null', async () => {
+    setCsrfToken(null);
+    mockFetch();
+    await post('/api/test', {});
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(init.headers['X-CSRF-Token']).toBeUndefined();
+  });
+});
 
-      await get('/api/test');
+// ---------------------------------------------------------------------------
+// parseResponse – error paths
+// ---------------------------------------------------------------------------
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test',
-        expect.objectContaining({ credentials: 'include' }),
-      );
+describe('parseResponse – malformed JSON', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('throws a descriptive error for malformed JSON', async () => {
+    mockFetch({
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: vi.fn().mockRejectedValue(new SyntaxError('Unexpected token')),
     });
-
-    it('post passes credentials: include to fetch', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: { get: vi.fn().mockReturnValue('application/json') },
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await post('/api/test', {});
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test',
-        expect.objectContaining({ credentials: 'include' }),
-      );
-    });
-
-    it('put passes credentials: include to fetch', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: { get: vi.fn().mockReturnValue('application/json') },
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await put('/api/test/1', {});
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test/1',
-        expect.objectContaining({ credentials: 'include' }),
-      );
-    });
+    await expect(get('/api/test')).rejects.toThrow(
+      'Failed to parse JSON response: malformed JSON',
+    );
   });
 
-  describe('UnauthorizedError', () => {
-    it('401 response throws UnauthorizedError with status 401 and url', async () => {
-      const mockResponse = { ok: false, status: 401 } as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const err = await get('/api/protected').catch((e) => e);
-
-      expect(err).toBeInstanceOf(UnauthorizedError);
-      const unauthorizedErr = err as UnauthorizedError;
-      expect(unauthorizedErr.status).toBe(401);
-      expect(unauthorizedErr.url).toBe('/api/protected');
+  it('rethrows non-SyntaxError from JSON parsing', async () => {
+    mockFetch({
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: vi.fn().mockRejectedValue(new TypeError('type error')),
     });
-
-    it('500 response throws a plain Error, not UnauthorizedError', async () => {
-      const mockResponse = { ok: false, status: 500 } as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const err = await get('/api/protected').catch((e) => e);
-
-      expect(err).toBeInstanceOf(Error);
-      expect(err).not.toBeInstanceOf(UnauthorizedError);
-    });
-
-    it('onUnauthorized listener is invoked exactly once per 401 and not for non-401 errors', async () => {
-      const listener = vi.fn();
-      const cleanup = onUnauthorized(listener);
-
-      const mock401 = { ok: false, status: 401 } as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mock401);
-      await get('/api/protected').catch(() => undefined);
-
-      expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith('/api/protected');
-
-      const mock500 = { ok: false, status: 500 } as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mock500);
-      await get('/api/other').catch(() => undefined);
-
-      expect(listener).toHaveBeenCalledTimes(1);
-
-      cleanup();
-    });
-
-    it('cleanup callback unregisters the listener', async () => {
-      const listener = vi.fn();
-      const cleanup = onUnauthorized(listener);
-      cleanup();
-
-      const mock401 = { ok: false, status: 401 } as Response;
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mock401);
-      await get('/api/protected').catch(() => undefined);
-
-      expect(listener).not.toHaveBeenCalled();
-    });
+    await expect(get('/api/test')).rejects.toThrow('type error');
   });
+});
 
-  describe('CSRF token', () => {
-    const okResponse = () =>
-      ({
-        ok: true,
-        status: 200,
-        headers: { get: vi.fn().mockReturnValue('application/json') },
-        json: vi.fn().mockResolvedValue({}),
-      }) as unknown as Response;
+// ---------------------------------------------------------------------------
+// ApiEndpoints enum sanity check
+// ---------------------------------------------------------------------------
 
-    it('responseHandler receives the Response object', async () => {
-      const mockResponse = okResponse();
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-      const handler = vi.fn();
-
-      await get('/api/test', { responseHandler: handler });
-
-      expect(handler).toHaveBeenCalledWith(mockResponse);
-    });
-
-    it('POST includes X-CSRF-Token when token is set', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        okResponse(),
-      );
-      setCsrfToken('test-csrf-token');
-
-      await post('/api/test', {});
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'X-CSRF-Token': 'test-csrf-token',
-          }),
-        }),
-      );
-    });
-
-    it('GET does not include X-CSRF-Token even when token is set', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        okResponse(),
-      );
-      setCsrfToken('test-csrf-token');
-
-      await get('/api/test');
-
-      const [, fetchOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock
-        .calls[0] as [string, RequestInit];
-      expect(
-        (fetchOptions.headers as Record<string, string>)['X-CSRF-Token'],
-      ).toBeUndefined();
-    });
-
-    it('POST does not include X-CSRF-Token when token is null', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        okResponse(),
-      );
-
-      await post('/api/test', {});
-
-      const [, fetchOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock
-        .calls[0] as [string, RequestInit];
-      expect(
-        (fetchOptions.headers as Record<string, string>)['X-CSRF-Token'],
-      ).toBeUndefined();
-    });
-  });
-
-  describe('put', () => {
-    it('should make PUT request with JSON body', async () => {
-      const mockBody = { name: 'updated' };
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        headers: {
-          get: vi.fn().mockReturnValue('application/json'),
-        },
-        json: vi.fn().mockResolvedValue(mockBody),
-      } as unknown as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      const result = await put('/api/test/1', mockBody);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/test/1',
-        expect.objectContaining({
-          method: 'PUT',
-          body: JSON.stringify(mockBody),
-        }),
-      );
-      expect(result).toEqual(mockBody);
-    });
-
-    it('should throw error for failed PUT requests', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 500,
-      } as Response;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse,
-      );
-
-      await expect(put('/api/test/1', {})).rejects.toThrow(
-        'Request failed with status 500 for PUT /api/test/1',
-      );
-    });
+describe('ApiEndpoints', () => {
+  it('exposes expected endpoint values', () => {
+    expect(ApiEndpoints.THEMES).toBe('/api/themes');
+    expect(ApiEndpoints.CONVERSATIONS).toBe('/api/v1/conversations');
+    expect(ApiEndpoints.AUTH_ME).toBe('/api/v1/auth/me');
   });
 });

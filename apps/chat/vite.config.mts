@@ -24,6 +24,10 @@ export default defineConfig(() => ({
   plugins: [react(), svgr()],
   resolve: {
     alias: {
+      '@epam/chat-shared': path.resolve(
+        __dirname,
+        '../../libs/chat-shared/src/index.ts',
+      ),
       '@epam/conversation-input': path.resolve(
         __dirname,
         '../../libs/conversation-input/src/index.ts',
