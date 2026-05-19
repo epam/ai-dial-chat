@@ -66,26 +66,26 @@ AUTH_COOKIE_SECURE=false
 
 **Required:**
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `AUTH_SESSION_SECRET` | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
-| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs | `http://localhost:3005` |
-| `AUTH_PROVIDERS` | JSON array of OIDC provider configs | `[{"id":"your-provider",...}]` |
+| Variable                 | Description                                            | Example                        |
+| ------------------------ | ------------------------------------------------------ | ------------------------------ |
+| `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>`    |
+| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:3005`        |
+| `AUTH_PROVIDERS`         | JSON array of OIDC provider configs                    | `[{"id":"your-provider",...}]` |
 
 **Optional:**
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3005` | HTTP server port |
-| `API_PREFIX` | `api` | Global route prefix for all API endpoints |
-| `CORS_ORIGIN` | `http://localhost:4207` | Allowed CORS origin for frontend |
-| `AUTH_SESSION_COOKIE_NAME` | `__Host-chat.sess` | Session cookie name |
-| `AUTH_TRANSACTION_COOKIE_NAME` | `__Host-chat.tx` | Login transaction cookie name |
-| `AUTH_COOKIE_SECURE` | `true` | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled |
-| `DIAL_CORE_URL` | — | AI DIAL core service URL |
-| `DIAL_API_KEY` | — | AI DIAL authentication key |
-| `THEMES_CONFIG_URL` | — | Base URL for theme configuration and icons |
-| `THEMES_SERVICE_TIMEOUT_MS` | `5000` | Timeout for theme service requests (milliseconds) |
+| Variable                       | Default                 | Description                                                                                               |
+| ------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `PORT`                         | `3005`                  | HTTP server port                                                                                          |
+| `API_PREFIX`                   | `api`                   | Global route prefix for all API endpoints                                                                 |
+| `CORS_ORIGIN`                  | `http://localhost:4207` | Allowed CORS origin for frontend                                                                          |
+| `AUTH_SESSION_COOKIE_NAME`     | `__Host-chat.sess`      | Session cookie name                                                                                       |
+| `AUTH_TRANSACTION_COOKIE_NAME` | `__Host-chat.tx`        | Login transaction cookie name                                                                             |
+| `AUTH_COOKIE_SECURE`           | `true`                  | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled |
+| `DIAL_CORE_URL`                | —                       | AI DIAL core service URL                                                                                  |
+| `DIAL_API_KEY`                 | —                       | AI DIAL authentication key                                                                                |
+| `THEMES_CONFIG_URL`            | —                       | Base URL for theme configuration and icons                                                                |
+| `THEMES_SERVICE_TIMEOUT_MS`    | `5000`                  | Timeout for theme service requests (milliseconds)                                                         |
 
 ### 3. Run the Application
 
@@ -114,6 +114,7 @@ npm run start:all
 ```
 
 The API will be available at:
+
 - **API**: `http://localhost:3005/api`
 - **Swagger Docs**: `http://localhost:3005/api/docs`
 - **Health Check**: `http://localhost:3005/api/health`
@@ -175,13 +176,13 @@ apps/chat-api/src/
 
 The API returns appropriate HTTP status codes:
 
-| Status | Description |
-|--------|-------------|
-| `200` | Success |
-| `400` | Bad Request (validation error) |
-| `404` | Resource Not Found |
-| `502` | Bad Gateway (external service error) |
-| `503` | Service Unavailable (timeout or unreachable) |
+| Status | Description                                  |
+| ------ | -------------------------------------------- |
+| `200`  | Success                                      |
+| `400`  | Bad Request (validation error)               |
+| `404`  | Resource Not Found                           |
+| `502`  | Bad Gateway (external service error)         |
+| `503`  | Service Unavailable (timeout or unreachable) |
 
 All errors include descriptive messages to help with debugging.
 
@@ -221,6 +222,7 @@ npx nx test chat-api --coverage
 The API is configured to accept requests from the React application. The allowed origin is configured via the `CORS_ORIGIN` environment variable.
 
 Default CORS settings:
+
 - Origin: `http://localhost:4207` (React app)
 - Credentials: `true`
 

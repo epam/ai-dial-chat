@@ -16,17 +16,17 @@ This document does **not** start with a predetermined answer. It examines six re
 
 ## 2. Current State (Codebase Audit)
 
-| Area | Status |
-|---|---|
-| Auth libraries installed | None |
-| Auth guards / middleware | None |
-| JWT / OIDC configuration | None |
-| Auth-related env variables | None |
-| Security headers (Helmet) | Implemented |
-| Rate limiting (Throttler) | Implemented (100 req/min) |
-| Input validation (class-validator) | Implemented |
-| CORS | Configured (single origin) |
-| Session store | Not present |
+| Area                               | Status                     |
+| ---------------------------------- | -------------------------- |
+| Auth libraries installed           | None                       |
+| Auth guards / middleware           | None                       |
+| JWT / OIDC configuration           | None                       |
+| Auth-related env variables         | None                       |
+| Security headers (Helmet)          | Implemented                |
+| Rate limiting (Throttler)          | Implemented (100 req/min)  |
+| Input validation (class-validator) | Implemented                |
+| CORS                               | Configured (single origin) |
+| Session store                      | Not present                |
 
 This is a clean slate. No migration cost from Chat 2.0 itself — migration cost is from team familiarity with previous auth patterns.
 
@@ -51,6 +51,7 @@ PKCE ensures that even if the auth code is intercepted in the redirect, it canno
 ### 3.2 Why Implicit Flow is Forbidden (MUST NOT)
 
 Implicit flow (`response_type=token`) returns the access token in the URL fragment, which:
+
 - Appears in browser history, proxy logs, and Referrer headers.
 - Cannot issue refresh tokens (security risk).
 - Is deprecated in OAuth 2.1 ([draft-ietf-oauth-v2-1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1)).
@@ -67,13 +68,13 @@ Placing a `client_secret` in browser JavaScript or in a shipped Vite bundle is a
 
 ### 3.4 Browser Token Storage Risks
 
-| Location | XSS Risk | CSRF Risk | Persistence | Cross-tab |
-|---|---|---|---|---|
-| `localStorage` | HIGH — any JS can read | Low | Survives close | Yes |
-| `sessionStorage` | HIGH — same-tab JS reads | Low | Lost on close | No |
-| In-memory (JS var) | HIGH — JS leaks on XSS | Low | Lost on refresh | No |
-| `HttpOnly` Cookie | LOW — JS cannot read | MEDIUM — automatic send | Configurable | Yes |
-| `HttpOnly` + `SameSite=Strict` | LOW | LOW | Configurable | Yes |
+| Location                       | XSS Risk                 | CSRF Risk               | Persistence     | Cross-tab |
+| ------------------------------ | ------------------------ | ----------------------- | --------------- | --------- |
+| `localStorage`                 | HIGH — any JS can read   | Low                     | Survives close  | Yes       |
+| `sessionStorage`               | HIGH — same-tab JS reads | Low                     | Lost on close   | No        |
+| In-memory (JS var)             | HIGH — JS leaks on XSS   | Low                     | Lost on refresh | No        |
+| `HttpOnly` Cookie              | LOW — JS cannot read     | MEDIUM — automatic send | Configurable    | Yes       |
+| `HttpOnly` + `SameSite=Strict` | LOW                      | LOW                     | Configurable    | Yes       |
 
 There is no "secure" way to store tokens in JavaScript that is immune to XSS. The only XSS-safe option is `HttpOnly` cookies managed by the server.
 
@@ -129,14 +130,14 @@ React SPA
 
 Any OIDC-compliant provider via `.well-known/openid-configuration`. Configuration is a single `authority` URL change.
 
-| Provider | Support | Notes |
-|---|---|---|
-| Keycloak | Full | `authority = https://<host>/realms/<realm>` |
-| Auth0 | Full | `authority = https://<tenant>.auth0.com` |
-| Okta | Full | `authority = https://<org>.okta.com/oauth2/default` |
-| Entra ID | Full | `authority = https://login.microsoftonline.com/{tenant}/v2.0` |
+| Provider    | Support | Notes                                                                    |
+| ----------- | ------- | ------------------------------------------------------------------------ |
+| Keycloak    | Full    | `authority = https://<host>/realms/<realm>`                              |
+| Auth0       | Full    | `authority = https://<tenant>.auth0.com`                                 |
+| Okta        | Full    | `authority = https://<org>.okta.com/oauth2/default`                      |
+| Entra ID    | Full    | `authority = https://login.microsoftonline.com/{tenant}/v2.0`            |
 | AWS Cognito | Partial | No `prompt=none`, no token revocation endpoint, custom `metadata` needed |
-| Custom OIDC | Full | Any compliant IdP with discovery document |
+| Custom OIDC | Full    | Any compliant IdP with discovery document                                |
 
 #### Multi-Provider Support
 
@@ -226,6 +227,7 @@ Protocol-level OIDC support for any compliant IdP via discovery. `openid-client`
 #### Multi-Provider Support
 
 The BFF is the natural place to manage multiple providers:
+
 - A provider registry maps provider IDs to OIDC configurations
 - `/auth/login?provider=keycloak` vs `/auth/login?provider=azure` initiates the right flow
 - The session stores which provider issued the tokens
@@ -381,13 +383,13 @@ Server-side session (database) + `HttpOnly` cookie reference. Access and refresh
 
 #### Summary of all five SDKs
 
-| SDK | Provider Lock-in | Auth Flow | Token Storage | Silent Renew (2026) | Multi-provider |
-|---|---|---|---|---|---|
-| `@auth0/auth0-react` | Auth0 only | Code + PKCE | Memory / localStorage | Refresh token (if rotation enabled) | No |
-| `@okta/okta-react` | Okta only | Code + PKCE | sessionStorage | Iframe (broken) / refresh token | No |
-| `keycloak-js` | Keycloak only | Code + PKCE (default) | **Memory only** | Iframe (broken) | No |
-| `@azure/msal-react` | Entra ID (+ B2C) | Code + PKCE | session/localStorage | `acquireTokenSilent` | Only via B2C |
-| AWS Amplify | Cognito + AWS | Cognito flows | Amplify-managed | Amplify-managed | Only via Cognito |
+| SDK                  | Provider Lock-in | Auth Flow             | Token Storage         | Silent Renew (2026)                 | Multi-provider   |
+| -------------------- | ---------------- | --------------------- | --------------------- | ----------------------------------- | ---------------- |
+| `@auth0/auth0-react` | Auth0 only       | Code + PKCE           | Memory / localStorage | Refresh token (if rotation enabled) | No               |
+| `@okta/okta-react`   | Okta only        | Code + PKCE           | sessionStorage        | Iframe (broken) / refresh token     | No               |
+| `keycloak-js`        | Keycloak only    | Code + PKCE (default) | **Memory only**       | Iframe (broken)                     | No               |
+| `@azure/msal-react`  | Entra ID (+ B2C) | Code + PKCE           | session/localStorage  | `acquireTokenSilent`                | Only via B2C     |
+| AWS Amplify          | Cognito + AWS    | Cognito flows         | Amplify-managed       | Amplify-managed                     | Only via Cognito |
 
 #### Key Observation
 
@@ -432,9 +434,11 @@ React SPA (oidc-client-ts / react-oidc-context)
 #### Libraries
 
 Frontend:
+
 - `oidc-client-ts` + `react-oidc-context`
 
 Backend:
+
 - `jose` v6 (panva) — 1M+ dependents, zero dependencies, JWKS-cached validation
 - OR `jwks-rsa` (Auth0) + `passport-jwt`
 
@@ -447,19 +451,31 @@ The dynamic issuer resolver pattern:
 import { jwtVerify, createRemoteJWKSet, decodeJwt } from 'jose';
 
 const TRUSTED_ISSUERS: Record<string, URL> = {
-  'https://keycloak.example.com/realms/chat': new URL('https://keycloak.example.com/realms/chat/protocol/openid-connect/certs'),
-  'https://dev-xxx.okta.com/oauth2/default': new URL('https://dev-xxx.okta.com/oauth2/default/v1/keys'),
-  'https://login.microsoftonline.com/{tenant}/v2.0': new URL('https://login.microsoftonline.com/{tenant}/discovery/v2.0/keys'),
-  'https://myapp.auth0.com/': new URL('https://myapp.auth0.com/.well-known/jwks.json'),
+  'https://keycloak.example.com/realms/chat': new URL(
+    'https://keycloak.example.com/realms/chat/protocol/openid-connect/certs',
+  ),
+  'https://dev-xxx.okta.com/oauth2/default': new URL(
+    'https://dev-xxx.okta.com/oauth2/default/v1/keys',
+  ),
+  'https://login.microsoftonline.com/{tenant}/v2.0': new URL(
+    'https://login.microsoftonline.com/{tenant}/discovery/v2.0/keys',
+  ),
+  'https://myapp.auth0.com/': new URL(
+    'https://myapp.auth0.com/.well-known/jwks.json',
+  ),
 };
 
 const jwksSets = Object.fromEntries(
-  Object.entries(TRUSTED_ISSUERS).map(([iss, url]) => [iss, createRemoteJWKSet(url)])
+  Object.entries(TRUSTED_ISSUERS).map(([iss, url]) => [
+    iss,
+    createRemoteJWKSet(url),
+  ]),
 );
 
 async function validateBearer(token: string) {
   const { iss } = decodeJwt(token); // no signature check — read `iss` only
-  if (!iss || !jwksSets[iss]) throw new UnauthorizedException('Untrusted issuer');
+  if (!iss || !jwksSets[iss])
+    throw new UnauthorizedException('Untrusted issuer');
   return jwtVerify(token, jwksSets[iss], {
     issuer: iss,
     audience: 'chat-api',
@@ -499,41 +515,41 @@ Same browser-side risks as Option A. Conscious trade-off: simpler backend, token
 
 ## 5. Comparison Table
 
-| Criterion | A: SPA OIDC | B: NestJS BFF | C: Express Adapter | D: Better Auth | E: Provider SDKs | F: Hybrid |
-|---|---|---|---|---|---|---|
-| **Security (token location)** | Browser (medium) | Server only (high) | Server only (high) | Server only (high) | Browser (medium) | Browser (medium) |
-| **Provider coverage** | Any OIDC | Any OIDC | 100+ built-in | OIDC + SAML 2.0 | One per SDK | Any OIDC |
-| **Vendor neutrality** | Full | Full | Full | Full | None | Full |
-| **Implementation complexity** | Low | Medium | Medium | Medium | Low | Low-Medium |
-| **Runtime/deployment complexity** | Low | Medium (session store) | Medium | Medium | Low | Low |
-| **React/Vite compatibility** | Native | Cookie-based (good) | Cookie-based (good) | Cookie-based (good) | Native | Native |
-| **NestJS compatibility** | Good (JWT guard) | Good (native) | Poor (community only) | Fair (community module) | Good (JWT guard) | Good (JWT guard) |
-| **Multi-provider flexibility** | Manual | Native | Native | Native | None | Manual (dynamic issuer) |
-| **Token refresh reliability** | Refresh token (good); iframe (broken) | Server-side (excellent) | Server-side (excellent) | Server-side (excellent) | Varies; iframe mostly broken | Refresh token (good) |
-| **3rd-party cookie restrictions** | Affected | Not affected | Not affected | Not affected | Affected | Affected |
-| **Role/claims mapping flexibility** | In-browser + backend | Backend (full control) | Backend | Backend | Provider-specific | Backend |
-| **Production readiness** | High | High | Low (experimental) | Medium (v1.x) | High (single provider) | High |
-| **Long-term maintainability** | Good | Good | Poor | Medium | Poor (lock-in) | Good |
-| **SAML 2.0 support** | No | Via openid-client | No | Yes (SSO plugin) | Partial (MSAL) | No |
-| **IETF BCP 212 compliance** | Conditional | Recommended | Compliant | Compliant | Conditional | Conditional |
+| Criterion                           | A: SPA OIDC                           | B: NestJS BFF           | C: Express Adapter      | D: Better Auth          | E: Provider SDKs             | F: Hybrid               |
+| ----------------------------------- | ------------------------------------- | ----------------------- | ----------------------- | ----------------------- | ---------------------------- | ----------------------- |
+| **Security (token location)**       | Browser (medium)                      | Server only (high)      | Server only (high)      | Server only (high)      | Browser (medium)             | Browser (medium)        |
+| **Provider coverage**               | Any OIDC                              | Any OIDC                | 100+ built-in           | OIDC + SAML 2.0         | One per SDK                  | Any OIDC                |
+| **Vendor neutrality**               | Full                                  | Full                    | Full                    | Full                    | None                         | Full                    |
+| **Implementation complexity**       | Low                                   | Medium                  | Medium                  | Medium                  | Low                          | Low-Medium              |
+| **Runtime/deployment complexity**   | Low                                   | Medium (session store)  | Medium                  | Medium                  | Low                          | Low                     |
+| **React/Vite compatibility**        | Native                                | Cookie-based (good)     | Cookie-based (good)     | Cookie-based (good)     | Native                       | Native                  |
+| **NestJS compatibility**            | Good (JWT guard)                      | Good (native)           | Poor (community only)   | Fair (community module) | Good (JWT guard)             | Good (JWT guard)        |
+| **Multi-provider flexibility**      | Manual                                | Native                  | Native                  | Native                  | None                         | Manual (dynamic issuer) |
+| **Token refresh reliability**       | Refresh token (good); iframe (broken) | Server-side (excellent) | Server-side (excellent) | Server-side (excellent) | Varies; iframe mostly broken | Refresh token (good)    |
+| **3rd-party cookie restrictions**   | Affected                              | Not affected            | Not affected            | Not affected            | Affected                     | Affected                |
+| **Role/claims mapping flexibility** | In-browser + backend                  | Backend (full control)  | Backend                 | Backend                 | Provider-specific            | Backend                 |
+| **Production readiness**            | High                                  | High                    | Low (experimental)      | Medium (v1.x)           | High (single provider)       | High                    |
+| **Long-term maintainability**       | Good                                  | Good                    | Poor                    | Medium                  | Poor (lock-in)               | Good                    |
+| **SAML 2.0 support**                | No                                    | Via openid-client       | No                      | Yes (SSO plugin)        | Partial (MSAL)               | No                      |
+| **IETF BCP 212 compliance**         | Conditional                           | Recommended             | Compliant               | Compliant               | Conditional                  | Conditional             |
 
 ---
 
 ## 6. Provider Compatibility Matrix
 
-| Provider | A: SPA OIDC | B: BFF | C: Express Adapter | D: Better Auth | E: Provider SDK | F: Hybrid |
-|---|---|---|---|---|---|---|
-| Keycloak | Full | Full | Partial (undoc'd for Express) | Full (SSO plugin) | Keycloak-only SDK | Full |
-| Auth0 | Full | Full | Full | Full | Auth0-only SDK | Full |
-| Okta | Full | Full | Full | Full (SSO plugin) | Okta-only SDK | Full |
-| Entra ID / Azure AD | Full | Full | Full | Full (SSO plugin) | MSAL only | Full |
-| Azure B2C | Full | Full | Full | Partial | MSAL (B2C flows) | Full |
-| AWS Cognito | Partial (quirks) | Partial (quirks) | Full | Partial | Amplify-only | Partial |
-| Google | Full | Full | Full | Full | Via Entra B2C or separately | Full |
-| GitLab | Full | Full | Full | Full | No | Full |
-| Ping Identity | Full (OIDC) | Full (OIDC) | Full (OIDC) | Full (OIDC) | No | Full |
-| Custom OIDC | Full | Full | Via generic OIDC | Via genericOIDC plugin | No | Full |
-| SAML 2.0 (no OIDC wrapper) | No | No (needs SAML lib) | No | Yes (SSO plugin) | MSAL (ADFS) | No |
+| Provider                   | A: SPA OIDC      | B: BFF              | C: Express Adapter            | D: Better Auth         | E: Provider SDK             | F: Hybrid |
+| -------------------------- | ---------------- | ------------------- | ----------------------------- | ---------------------- | --------------------------- | --------- |
+| Keycloak                   | Full             | Full                | Partial (undoc'd for Express) | Full (SSO plugin)      | Keycloak-only SDK           | Full      |
+| Auth0                      | Full             | Full                | Full                          | Full                   | Auth0-only SDK              | Full      |
+| Okta                       | Full             | Full                | Full                          | Full (SSO plugin)      | Okta-only SDK               | Full      |
+| Entra ID / Azure AD        | Full             | Full                | Full                          | Full (SSO plugin)      | MSAL only                   | Full      |
+| Azure B2C                  | Full             | Full                | Full                          | Partial                | MSAL (B2C flows)            | Full      |
+| AWS Cognito                | Partial (quirks) | Partial (quirks)    | Full                          | Partial                | Amplify-only                | Partial   |
+| Google                     | Full             | Full                | Full                          | Full                   | Via Entra B2C or separately | Full      |
+| GitLab                     | Full             | Full                | Full                          | Full                   | No                          | Full      |
+| Ping Identity              | Full (OIDC)      | Full (OIDC)         | Full (OIDC)                   | Full (OIDC)            | No                          | Full      |
+| Custom OIDC                | Full             | Full                | Via generic OIDC              | Via genericOIDC plugin | No                          | Full      |
+| SAML 2.0 (no OIDC wrapper) | No               | No (needs SAML lib) | No                            | Yes (SSO plugin)       | MSAL (ADFS)                 | No        |
 
 ---
 
@@ -555,7 +571,7 @@ Same browser-side risks as Option A. Conscious trade-off: simpler backend, token
 
 **Logout**: `signoutRedirect()` must be called; `removeUser()` alone clears local state but does not terminate the IdP session.
 
-**IETF stance on Option A**: [draft-ietf-oauth-browser-based-apps §7.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps): *"Browser-based applications SHOULD use the BFF pattern when they handle sensitive user data or business logic."* For non-sensitive internal tools, Option A/F is conditionally acceptable.
+**IETF stance on Option A**: [draft-ietf-oauth-browser-based-apps §7.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps): _"Browser-based applications SHOULD use the BFF pattern when they handle sensitive user data or business logic."_ For non-sensitive internal tools, Option A/F is conditionally acceptable.
 
 ### Options B / C / D (Server-Side Token Storage)
 
@@ -587,6 +603,7 @@ Same browser-side risks as Option A. Conscious trade-off: simpler backend, token
 **What to be honest about**: Option F inherits Option A's browser token storage risk. This is a conscious trade-off. The risk is **manageable** (not ignorable) via: strict CSP (`script-src 'self'`), refresh token rotation on all IdPs, short-lived access tokens (15 min), disable iframe silent renew, `offline_access` scope for all providers.
 
 **Implementation summary:**
+
 - Frontend: `oidc-client-ts` + `react-oidc-context`, with refresh token grant only
 - Backend: `jose` v6 with `createRemoteJWKSet`, dynamic issuer resolver, trusted issuers config
 - NestJS guard: extracts Bearer → decodes `iss` → validates signature + claims → attaches principal
@@ -611,6 +628,7 @@ Option B is strictly more secure. The only reasons to choose F over B are implem
 ### When to Choose Option D (Better Auth)
 
 Choose Better Auth when:
+
 - You need SAML 2.0 support (e.g., for Ping Identity, ADFS, some Okta/Entra enterprise configurations that don't offer OIDC).
 - You are building a multi-tenant SaaS where each organization brings their own IdP.
 - The team prefers a higher-level framework over assembling primitives.
@@ -673,18 +691,18 @@ The `@better-auth/sso` plugin's SAML 2.0 implementation is unique among the opti
 
 ## 10. Open Questions and Risks
 
-| # | Question / Risk | Priority |
-|---|---|---|
-| 1 | **SAML requirement**: Do any target customers require SAML 2.0 and not OIDC? If yes, Option D (Better Auth) must be added. | HIGH |
-| 2 | **Regulatory classification**: Is Chat 2.0 subject to GDPR Article 17 or financial/health data regulations? If yes, BFF (Option B) should be the architecture. | HIGH |
-| 3 | **Cognito quirks**: AWS Cognito does not support `offline_access` scope in the standard way and lacks a token revocation endpoint. Workaround doc needed. | MEDIUM |
-| 4 | **iframe silent renew deprecation**: Confirm all target IdPs support refresh token grant for silent renew. Document explicit settings per provider. | HIGH |
-| 5 | **`openid-client` v6 ESM migration**: If the team later chooses Option B, assess effort for NestJS CJS → ESM migration. | MEDIUM |
-| 6 | **Multi-tenant Entra ID audience**: The `audience` claim differs by API registration. NestJS trusted issuers config needs explicit `audience` per issuer. | MEDIUM |
-| 7 | **Express auth adapter transition**: The adapter ecosystem is moving toward Better Auth. Track as a future upgrade option. | LOW |
-| 8 | **FAPI 2.0 PAR requirement**: If any customer requires FAPI 2.0 compliance, Option F is insufficient — a BFF migration would be needed. | LOW (for now) |
-| 9 | **DPoP sender-constrained tokens**: For high-security scenarios, consider DPoP binding. Not needed for initial release. | LOW |
-| 10 | **React tab management**: `sessionStorage` is per-tab. Consider `localStorage` with refresh token rotation or a shared worker for token management. | MEDIUM |
+| #   | Question / Risk                                                                                                                                                | Priority      |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 1   | **SAML requirement**: Do any target customers require SAML 2.0 and not OIDC? If yes, Option D (Better Auth) must be added.                                     | HIGH          |
+| 2   | **Regulatory classification**: Is Chat 2.0 subject to GDPR Article 17 or financial/health data regulations? If yes, BFF (Option B) should be the architecture. | HIGH          |
+| 3   | **Cognito quirks**: AWS Cognito does not support `offline_access` scope in the standard way and lacks a token revocation endpoint. Workaround doc needed.      | MEDIUM        |
+| 4   | **iframe silent renew deprecation**: Confirm all target IdPs support refresh token grant for silent renew. Document explicit settings per provider.            | HIGH          |
+| 5   | **`openid-client` v6 ESM migration**: If the team later chooses Option B, assess effort for NestJS CJS → ESM migration.                                        | MEDIUM        |
+| 6   | **Multi-tenant Entra ID audience**: The `audience` claim differs by API registration. NestJS trusted issuers config needs explicit `audience` per issuer.      | MEDIUM        |
+| 7   | **Express auth adapter transition**: The adapter ecosystem is moving toward Better Auth. Track as a future upgrade option.                                     | LOW           |
+| 8   | **FAPI 2.0 PAR requirement**: If any customer requires FAPI 2.0 compliance, Option F is insufficient — a BFF migration would be needed.                        | LOW (for now) |
+| 9   | **DPoP sender-constrained tokens**: For high-security scenarios, consider DPoP binding. Not needed for initial release.                                        | LOW           |
+| 10  | **React tab management**: `sessionStorage` is per-tab. Consider `localStorage` with refresh token rotation or a shared worker for token management.            | MEDIUM        |
 
 ---
 

@@ -7,11 +7,13 @@
 The backend SHALL expose `POST /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint accepts a JSON body validated by `CreateConversationDto`. On success it returns HTTP 201 with the created `Conversation`. The service generates a UUID via `crypto.randomUUID()`, constructs a `Conversation` object `{ id, messages: [userMessage], createdAt }`, and stores it in an in-memory `Map<string, Conversation>`. Persistence is in-memory for this slice; a database layer is a follow-up.
 
 Request body (`CreateConversationDto`):
+
 ```
 { "firstMessage": "<string, @IsString, @MinLength(1), @MaxLength(4000)>" }
 ```
 
 Response body (201 Created) — shape matches the `Conversation` type from `@epam/chat-shared`:
+
 ```
 {
   "id": "<uuid>",
@@ -23,6 +25,7 @@ Response body (201 Created) — shape matches the `Conversation` type from `@epa
 Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })` on the handler — stricter than the global 100 req/min default.
 
 Error codes:
+
 - `400 Bad Request` — body fails DTO validation (empty `firstMessage`, exceeds 4000 chars)
 - `500 Internal Server Error` — unexpected failure in `ConversationService`
 
@@ -53,9 +56,10 @@ Error codes:
 The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shared/src/models/chat.ts` and re-exported from `libs/chat-shared/src/index.ts`. Both `apps/chat` (via `@epam/chat-shared`) and `apps/chat-api` (same import) MUST import these types from the shared lib. No duplicate type definitions are permitted in app-level files.
 
 `Message` shape:
+
 ```ts
 interface Message {
-  id: string;        // UUID
+  id: string; // UUID
   role: 'user' | 'assistant';
   content: string;
   timestamp: string; // ISO-8601
@@ -63,9 +67,10 @@ interface Message {
 ```
 
 `Conversation` shape:
+
 ```ts
 interface Conversation {
-  id: string;        // UUID
+  id: string; // UUID
   messages: Message[];
   createdAt: string; // ISO-8601
 }

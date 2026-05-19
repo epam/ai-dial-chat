@@ -22,6 +22,7 @@ Translate Figma designs into production-ready React components that match projec
 Call `get_design_context` with the `fileKey` and `nodeId` extracted from the URL.
 
 URL parsing rules:
+
 - `figma.com/design/:fileKey/...?node-id=:nodeId` → replace `-` with `:` in nodeId
 - `figma.com/board/:fileKey/...` → FigJam file, use `get_figjam` instead
 
@@ -31,14 +32,15 @@ If the design context includes **Code Connect** snippets, prefer those — they 
 
 Before writing any new code, check whether ui-kit or existing project components cover the need:
 
-| Design need | Check first |
-|---|---|
-| Buttons, inputs, modals, icons | `@epam/ai-dial-ui-kit` |
-| Generic icons | `@tabler/icons-react` |
-| Layout, spacing, color | Tailwind CSS classes |
-| Project-specific patterns | `libs/` and `apps/` in this monorepo |
+| Design need                    | Check first                          |
+| ------------------------------ | ------------------------------------ |
+| Buttons, inputs, modals, icons | `@epam/ai-dial-ui-kit`               |
+| Generic icons                  | `@tabler/icons-react`                |
+| Layout, spacing, color         | Tailwind CSS classes                 |
+| Project-specific patterns      | `libs/` and `apps/` in this monorepo |
 
 Grep the codebase before building from scratch:
+
 ```
 Grep("ComponentName", path="libs/")
 ```
@@ -54,6 +56,7 @@ Grep("ComponentName", path="libs/")
 ### Step 4 — Verify
 
 After implementation:
+
 1. Run `pnpm nx lint <project>` — fix any lint errors before reporting done
 2. If the component has logic, add a unit test in the same lib
 3. If the dev server is running, open the component in the browser and compare with the Figma screenshot
