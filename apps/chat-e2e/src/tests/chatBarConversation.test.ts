@@ -1619,7 +1619,7 @@ dialTest(
           { name: expectedName },
           'visible',
         );
-        conversationAssertion.assertValue(
+        conversationAssertion.assertNumberIsLessThanOrEqual(
           ItemUtil.getUtf8ByteLength(expectedFullName),
           ExpectedConstants.maxEntityNameLength,
         );

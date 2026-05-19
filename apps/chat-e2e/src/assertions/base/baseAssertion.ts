@@ -420,6 +420,19 @@ export class BaseAssertion {
       .toBeGreaterThanOrEqual(expectedNumber);
   }
 
+  public assertNumberIsLessThanOrEqual(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeLessThanOrEqual(expectedNumber);
+  }
+
   public assertValue(
     actualValue: string | number | undefined | null,
     expectedValue: string | number | undefined,
