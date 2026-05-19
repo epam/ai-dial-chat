@@ -1527,7 +1527,7 @@ dialTest(
 );
 
 const longRequest =
-  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
@@ -1618,10 +1618,16 @@ dialTest(
           }
           return result;
         };
-        // Matches prepareEntityName's trailing cleanup for single-line ASCII input:
-        // strip trailing dots/spaces/tabs/newlines exposed by the byte-boundary cut.
         const trimEndDots = (value: string) =>
           value.replace(/[. \t\r\n]+$/, '');
+        // Mirrors prepareEntityName: sanitize restricted symbols, then byte-truncate.
+        const prepareEntityName = (name: string, maxBytes = 255) =>
+          trimEndDots(
+            truncateToUtf8Bytes(
+              ExpectedConstants.replacedRestrictedCharsName(name),
+              maxBytes,
+            ),
+          );
 
         const model = ModelsUtil.getDefaultAgent()!;
         const modelReference = model.reference ?? model.id;
@@ -1631,8 +1637,9 @@ dialTest(
           ExpectedConstants.maxEntityNameLength -
           utf8Length(modelApiKeyPrefix) +
           1;
-        const expectedConversationName = trimEndDots(
-          truncateToUtf8Bytes(longRequest, availableBytes),
+        // Same pipeline as getStorageSafeUniqueConversationName / buildByteAwareFitBaseName.
+        const expectedConversationName = prepareEntityName(
+          truncateToUtf8Bytes(prepareEntityName(longRequest), availableBytes),
         );
 
         await localStorageManager.setShowSideBarPanels();
