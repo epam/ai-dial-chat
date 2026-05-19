@@ -29,7 +29,7 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
     `
     object-src 'none';
     base-uri 'self';
-    script-src ${allowedScriptsSrc} 'nonce-${nonce}' https://cdn.jsdelivr.net ${isDev ? "'unsafe-eval'" : ''};
+    script-src ${allowedScriptsSrc} https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/ 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ''};
     worker-src 'self' blob:;
     frame-ancestors ${ancestorsDirective};
     frame-src ${frameSrcDirective};

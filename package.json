@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "nx": "nx",
-    "postinstall": "patch-package && node tools/patch-nextjs.js",
+    "postinstall": "patch-package && node tools/patch-nextjs.js && node tools/copy-monaco.js",
     "graph": "nx graph",
     "build": "nx run-many -t build --projects=tag:production",
     "build:all": "nx run-many -t build",
