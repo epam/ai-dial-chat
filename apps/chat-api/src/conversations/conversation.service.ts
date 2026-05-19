@@ -23,7 +23,7 @@ export class ConversationService extends AppService {
     const uuid = crypto.randomUUID();
     const name = getConversationName(firstMessage);
     const conversationPath = `${uuid}__${name}`;
-    const folderId = `conversations/${bucket}`; // TODO: check
+    const folderId = `${bucket}`; // TODO: check
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -62,8 +62,8 @@ export class ConversationService extends AppService {
         return handleDialError(error);
       }
 
-      console.log('Conversation saved successfully', data);
-      return conversation;
+
+      return { ...data, ...conversation } as Conversation;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);

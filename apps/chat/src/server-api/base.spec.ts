@@ -147,8 +147,14 @@ describe('get', () => {
   });
 
   it('throws for non-ok response', async () => {
-    mockFetch({ ok: false, status: 500, text: vi.fn().mockResolvedValue('err') });
-    await expect(get('/api/test')).rejects.toThrow('Request failed with status 500');
+    mockFetch({
+      ok: false,
+      status: 500,
+      text: vi.fn().mockResolvedValue('err'),
+    });
+    await expect(get('/api/test')).rejects.toThrow(
+      'Request failed with status 500',
+    );
   });
 
   it('returns text when content-type is not JSON', async () => {

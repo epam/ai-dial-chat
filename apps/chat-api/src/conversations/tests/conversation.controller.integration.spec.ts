@@ -122,9 +122,10 @@ describe('ConversationController (integration)', () => {
       );
       await realApp.init();
 
-      vi.spyOn(realApp.get(ConversationService)['client'], 'saveConversation').mockResolvedValue(
-        { data: {} } as never,
-      );
+      vi.spyOn(
+        realApp.get(ConversationService)['client'],
+        'saveConversation',
+      ).mockResolvedValue({ data: {} } as never);
 
       const result = await request(realApp.getHttpServer())
         .post('/conversations')
