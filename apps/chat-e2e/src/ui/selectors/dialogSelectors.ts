@@ -1,3 +1,4 @@
+import { ErrorLabelSelectors } from '@/src/ui/selectors/chatSelectors';
 import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
 
 export const ConfirmationDialogSelectors = {
@@ -343,6 +344,9 @@ export const AddToolsetSettingsFormSelector = {
   authLoginForm: '[data-qa="login-form"]',
   clientIdFieldContainer: '[data-qa="clientId"]',
   clientSecretFieldContainer: '[data-qa="clientSecret"]',
+  apiKeyParameterNameFieldContainer: '[data-qa="keyHeader"]',
+  apiKeyParameterNameFieldErrorMessage: () =>
+    `${AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer} + ${ErrorLabelSelectors.fieldError}`,
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',
