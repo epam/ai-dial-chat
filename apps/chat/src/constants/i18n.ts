@@ -822,6 +822,7 @@ export enum ChatI18nKeys {
   AttachFoldersAndUploadedFiles = 'Attach folders and uploaded files',
   AttachUploadedFiles = 'Attach uploaded files',
   Attach = 'Attach',
+  AttachingHiddenFilesIsNotAllowed = 'Attaching hidden files is not allowed.',
   Address = 'Address',
   PasteLink = 'Paste link',
   Title = 'Title',
