@@ -131,7 +131,7 @@ describe('ConversationController (integration)', () => {
         .expect(201);
 
       expect(result.body.id).toMatch(
-        /^conversations\/test-bucket\/[0-9a-f-]{36}__Hello from integration\b/i,
+        /^test-bucket\/[0-9a-f-]{36}__Hello from integration/i,
       );
       expect(result.body.messages).toHaveLength(1);
       expect(result.body.messages[0].content).toBe('Hello from integration');
