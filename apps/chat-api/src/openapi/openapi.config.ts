@@ -1,0 +1,18 @@
+import { DocumentBuilder } from '@nestjs/swagger';
+
+export const createOpenApiConfig = (port: string | number) =>
+  new DocumentBuilder()
+    .setTitle('Chat API')
+    .setDescription(
+      'REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. ' +
+        'All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.',
+    )
+    .setVersion('1.0.0')
+    .addServer(`http://localhost:${port}`, 'Local development')
+    .addTag('health', 'Health check and application status')
+    .addTag('themes', 'Theme configuration and icon management')
+    .addTag('auth', 'Authentication and session management')
+    .addTag('deployments', 'List and inspect available AI DIAL deployments')
+    .addTag('chat', 'Chat completion proxy to DIAL Core')
+    .addCookieAuth('session')
+    .build();

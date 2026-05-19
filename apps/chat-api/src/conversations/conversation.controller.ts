@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ConversationResponseDto } from '../openapi/openapi-response.dto';
 import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 
@@ -22,6 +23,7 @@ export class ConversationController {
   @ApiResponse({
     status: 201,
     description: 'Conversation created successfully',
+    type: ConversationResponseDto,
   })
   @ApiResponse({
     status: 400,

@@ -2,6 +2,7 @@ import { Controller, Get, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { DialDeploymentDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 
 @ApiTags('deployments')
@@ -14,6 +15,7 @@ export class DeploymentsController {
   @ApiResponse({
     status: 200,
     description: 'Array of deployment objects from DIAL Core',
+    type: [DialDeploymentDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -29,7 +31,11 @@ export class DeploymentsController {
 
   @Get(':deployment')
   @ApiOperation({ summary: 'Get a single deployment by name' })
-  @ApiResponse({ status: 200, description: 'Deployment object' })
+  @ApiResponse({
+    status: 200,
+    description: 'Deployment object',
+    type: DialDeploymentDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Deployment not found' })

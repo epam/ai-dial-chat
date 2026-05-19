@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   ApiCookieAuth,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -86,6 +87,12 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Start OIDC login flow' })
+  @ApiParam({
+    name: 'providerId',
+    description: 'Configured identity provider ID',
+    type: String,
+    example: 'local',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to identity provider' })
   @ApiResponse({ status: 400, description: 'Unsafe callback URL' })
   @ApiResponse({ status: 404, description: 'Unknown provider' })
@@ -155,6 +162,12 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'OIDC authorization callback' })
+  @ApiParam({
+    name: 'providerId',
+    description: 'Configured identity provider ID',
+    type: String,
+    example: 'local',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to app after login' })
   @ApiResponse({
     status: 400,
