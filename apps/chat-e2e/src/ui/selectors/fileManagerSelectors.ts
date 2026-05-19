@@ -29,3 +29,8 @@ export const FileManagerSidebarSelectors = {
 export const FileManagerNavigationPanelSelectors = {
   navigationPanelContainer: '[aria-label="navigation-panel"]',
 };
+
+export const SelectFolderManagerModalSelectors = {
+  selectFolderButtonLabel: 'Select folder',
+  addFolderButtonLabel: 'Add folder',
+};

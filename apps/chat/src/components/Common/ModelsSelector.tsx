@@ -112,7 +112,7 @@ export const ModelsSelector = memo(function ModelsSelector({
           panelClassName={panelClassName}
           indexSeparator={indexSeparator}
           items={displayedModels}
-          initialSelectedItem={
+          selectedItem={
             model || {
               name: value,
               isDefault: false,
