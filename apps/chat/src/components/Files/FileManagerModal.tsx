@@ -12,6 +12,7 @@ import {
   isAllowedMimeType,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
+import { isHiddenPath } from '@/src/utils/app/search';
 
 import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -117,11 +118,6 @@ export const FileManagerModal = memo(
       [dispatch, onClose],
     );
 
-    const isHiddenPath = useCallback(
-      (id: string) => id.split('/').some((segment) => segment.startsWith('.')),
-      [],
-    );
-
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
         const prev = prevSelectionRef.current;
@@ -157,7 +153,7 @@ export const FileManagerModal = memo(
           }
         }
       },
-      [dispatch, folderPaths, isHiddenPath],
+      [dispatch, folderPaths],
     );
 
     const allowedTypesArray = useMemo(
@@ -188,10 +184,7 @@ export const FileManagerModal = memo(
 
     const getDisabledTooltip = useCallback(
       (row: FileManagerGridRow) => {
-        const isHiddenOrInHiddenFolder = row.path
-          .split('/')
-          .some((segment) => segment.startsWith('.'));
-        return isHiddenOrInHiddenFolder
+        return isHiddenPath(row.path)
           ? t(ChatI18nKeys.AttachingHiddenFilesNotAllowed)
           : undefined;
       },
@@ -224,9 +217,7 @@ export const FileManagerModal = memo(
       );
       const hiddenFilesIds = new Set(
         selectedFiles
-          .filter((file) =>
-            file.id.split('/').some((segment) => segment.startsWith('.')),
-          )
+          .filter((file) => isHiddenPath(file.id))
           .map(({ id }) => id),
       );
 
@@ -385,8 +376,7 @@ export const FileManagerModal = memo(
               if (!row) return true;
 
               // Disable hidden files/folders and items inside hidden folders.
-              if (row.path.split('/').some((seg) => seg.startsWith('.')))
-                return false;
+              if (isHiddenPath(row.path)) return false;
 
               // Replicate the UI kit's internal type/size disabled check so
               // those rows stay non-selectable when we override rowSelection.

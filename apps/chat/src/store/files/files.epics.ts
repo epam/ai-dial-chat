@@ -23,6 +23,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
+import { DataService } from '@/src/utils/app/data/data-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
@@ -92,34 +93,35 @@ const initEpic: AppEpic = (action$, state$) =>
 const initFileSizeCacheEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.init.type),
-    map(() => {
-      const cache: Record<string, number> = {};
-      if (typeof window !== 'undefined') {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key?.startsWith('dial_file_size_')) {
-            const id = key.replace('dial_file_size_', '');
-            cache[id] = Number(localStorage.getItem(key));
-          }
-        }
-      }
-      return FilesActions.initFileSizeCache(cache);
-    }),
+    switchMap(() =>
+      DataService.getFileSizeCache().pipe(
+        map((cache) => FilesActions.initFileSizeCache(cache)),
+      ),
+    ),
   );
 
 const syncFileSizeCacheEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFilesSuccess.type),
-    tap(({ payload }) => {
-      if (typeof window !== 'undefined') {
-        payload.files.forEach((file) => {
-          if (file.contentLength) {
-            localStorage.removeItem(`dial_file_size_${file.id}`);
-          }
-        });
-      }
+    switchMap(({ payload }) => {
+      const resolvedIds = new Set(
+        payload.files
+          .filter((file) => file.contentLength)
+          .map((file) => file.id),
+      );
+
+      if (!resolvedIds.size) return EMPTY;
+
+      return DataService.getFileSizeCache().pipe(
+        switchMap((cache) => {
+          const updatedCache = Object.fromEntries(
+            Object.entries(cache).filter(([id]) => !resolvedIds.has(id)),
+          );
+          return DataService.setFileSizeCache(updatedCache);
+        }),
+        ignoreElements(),
+      );
     }),
-    ignoreElements(),
   );
 
 const uploadFileEpic: AppEpic = (action$) =>
@@ -844,11 +846,17 @@ const uploadFilesEpic: AppEpic = (action$) =>
           ),
           map(({ percent, result }) => {
             if (result) {
-              if (typeof window !== 'undefined' && file.fileContent.size) {
-                localStorage.setItem(
-                  `dial_file_size_${result.id}`,
-                  String(file.fileContent.size),
-                );
+              if (file.fileContent.size) {
+                DataService.getFileSizeCache()
+                  .pipe(
+                    switchMap((cache) =>
+                      DataService.setFileSizeCache({
+                        ...cache,
+                        [result.id]: file.fileContent.size,
+                      }),
+                    ),
+                  )
+                  .subscribe();
               }
               return FilesActions.uploadFileSuccess({
                 apiResult: result,
