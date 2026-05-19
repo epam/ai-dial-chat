@@ -125,6 +125,9 @@ export const overlaySlice = createSlice({
     ) => {
       state.hostDomain = payload.hostDomain;
       state.newConversationsFolder = payload.newConversationsFolderId ?? null;
+      if (payload.theme) {
+        state.requestedOverlayTheme = payload.theme;
+      }
     },
     setOverlayOptionsSuccess: (
       state,

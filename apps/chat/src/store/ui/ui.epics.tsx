@@ -47,12 +47,14 @@ const initEpic: AppEpic = (action$, state$) =>
 
       return forkJoin({
         showChatbar: DataService.getShowChatbar(
-          enabledFeatures.has(Feature.ShowConversationsSectionByDefault) && (
-            !isTabletScreenOrMobile() || process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT === 'true'),
+          enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
+            (!isTabletScreenOrMobile() ||
+              process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT ===
+                'true'),
         ),
         showPromptbar: DataService.getShowPromptbar(
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
-          !isTabletScreenOrMobile(),
+            !isTabletScreenOrMobile(),
         ),
         showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(
           enabledFeatures.has(Feature.Marketplace) && !isTabletScreenOrMobile(),
@@ -175,6 +177,27 @@ const initThemeEpic: AppEpic = (action$, state$) =>
           : of(FALLBACK_THEME_CONFIG),
       }).pipe(
         switchMap(({ savedTheme, themesConfig }) => {
+          const isOverlay = SettingsSelectors.selectIsOverlay(state);
+
+          // In overlay, host theme is applied after listing loads (applyOverlayThemeEpic).
+          // Only restore a theme already saved in local storage (repeat visits).
+          if (isOverlay) {
+            const actions: Observable<AppAction>[] = [
+              of(UIActions.setAvailableThemes(themesConfig)),
+            ];
+
+            if (
+              savedTheme &&
+              themesConfig.themes.some(
+                (availableTheme) => availableTheme.id === savedTheme,
+              )
+            ) {
+              actions.unshift(of(UIActions.setTheme(savedTheme)));
+            }
+
+            return concat(...actions);
+          }
+
           const actions: Observable<AppAction>[] = [];
           // if no saved theme, take the first available theme (dark) - new users
           const theme = savedTheme || themesConfig.themes[0]?.id;
