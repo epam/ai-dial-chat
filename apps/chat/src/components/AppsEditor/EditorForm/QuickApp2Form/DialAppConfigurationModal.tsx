@@ -104,6 +104,7 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
             onChange={handleSelect}
             containerClassName="mb-4"
             fieldTitle={t(MarketplaceI18nKeys.ConnectVia)}
+            groupLabelClassName="mb-2"
           />
 
           <div className="flex justify-end">

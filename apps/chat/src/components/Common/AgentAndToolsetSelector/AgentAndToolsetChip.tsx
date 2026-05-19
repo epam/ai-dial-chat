@@ -43,7 +43,7 @@ const ChipWrapper: React.FC<ChipWrapperProps> = ({
 }) => (
   <div
     className={classNames(
-      'group flex h-[34px] items-center rounded',
+      'group relative flex h-[34px] items-center rounded',
       isCustomTool
         ? 'bg-layer-4'
         : isError
@@ -104,7 +104,7 @@ const ChipConfigureButton: React.FC<ChipConfigureButtonProps> = ({
       name="Configure"
       icon={<IconSettings size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
       size={ElementSize.Small}
-      className="invisible group-hover:visible"
+      className="invisible absolute right-[30px] top-1/2 -translate-y-1/2 group-hover:visible"
       onClick={handleClick}
     />
   );
@@ -138,6 +138,9 @@ const ChipBody: React.FC<ChipBodyProps> = ({
 
   const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
 
+  const isConfigurable =
+    !readonly && item && isDialAiEntityModel(item) && doesAgentSupportMcp(item);
+
   return (
     <div
       className={classNames(
@@ -153,7 +156,10 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         name={name}
         version={version}
         isError={isError}
-        className="max-w-[220px]"
+        className={classNames(
+          'max-w-[220px]',
+          isConfigurable && 'group-hover:pr-[30px]',
+        )}
         isCustomTool={isCustomTool}
       />
     </div>
