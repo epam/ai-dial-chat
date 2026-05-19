@@ -50,6 +50,8 @@ export class ConfirmationPopup extends Popup {
       }
       await this.confirmButton.click();
       await Promise.all(responsePromises);
+    } else {
+      await this.confirmButton.click();
     }
   }
 }
