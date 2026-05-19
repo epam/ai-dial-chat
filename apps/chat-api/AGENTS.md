@@ -57,6 +57,7 @@ Reference files (read these before adding new code):
 
 - Controller pattern → `apps/chat-api/src/themes/theme.controller.ts`
 - Service pattern → `apps/chat-api/src/themes/theme.service.ts`
+- DIAL SDK client pattern → `apps/chat-api/src/app/app.service.ts`
 - DTO pattern → `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`
 - Env validation → `apps/chat-api/src/config/environment.config.ts` + `validation.ts`
 - Health check → `apps/chat-api/src/health/health.controller.ts`
@@ -219,15 +220,22 @@ Services MUST:
 
   Never cast with `as string`; rely on the validated env schema.
 
-- For outbound HTTP, use `fetch` with an `AbortController` and the configurable timeout
-  env var (e.g. `THEMES_SERVICE_TIMEOUT_MS`). Always `clearTimeout` in both branches.
+- For DIAL Core integrations, prefer `@epam/ai-dial-typescript-sdk` through the shared
+  SDK client on `AppService` (`createSDK({ baseUrl })`). Pass per-request auth headers
+  from the BFF session for user-scoped data, and handle the SDK's success/error response
+  shape explicitly.
+- Use raw `fetch` only for non-DIAL upstreams or when the SDK does not expose the required
+  DIAL operation. In those cases, use an `AbortController` and the configurable timeout
+  env var (e.g. `THEMES_SERVICE_TIMEOUT_MS`). Always `clearTimeout` in both branches and
+  document why the SDK is not used.
 - Translate failures into proper Nest HTTP exceptions (see §6). Never return `null`,
   `undefined`, or a swallowed error from a service method.
 - Cache repeatable external lookups via `@Inject(CACHE_MANAGER) cacheManager: Cache`
   (`@nestjs/cache-manager`). Cache key naming: `<domain>:<resource>[:<param>]`
   (e.g. `themes:config`, `themes:icon:<name>`).
 
-Follow `ThemeService` as the reference for fetch + timeout + cache + error mapping.
+Follow `AppService` as the reference for DIAL SDK client setup. Follow `ThemeService` only
+for non-DIAL fetch + timeout + cache + error mapping.
 
 Bad:
 
@@ -368,7 +376,7 @@ parseInt(value, 10))` + `@IsNumber()`.
   - Each thrown HTTP exception path (404 / 502 / 503 / …)
   - Security checks: path-traversal attempts, oversized inputs, missing required fields,
     rate-limit (one hit beyond `@Throttle` limit).
-- Mock `fetch` (or any outbound client) — never hit live services in unit tests.
+- Mock SDK methods, `fetch`, or any other outbound client — never hit live services in unit tests.
 - Test names describe observable behaviour ("returns 404 when icon is missing"), not
   implementation details ("calls fetch with url").
 
@@ -398,6 +406,7 @@ Do not move to the next slice while any of these is red for the project you touc
 - Inlining anonymous types in controllers instead of DTO classes.
 - Returning `null` / `undefined` from a service to signal failure.
 - `console.log` instead of `Logger`.
+- Raw `fetch` for DIAL Core endpoints when `@epam/ai-dial-typescript-sdk` supports the operation.
 - Reading `process.env` directly inside a service.
 - Casting env vars (`as string`) instead of typing through `EnvironmentVariables`.
 - Missing `@ApiResponse` entries for thrown exceptions.

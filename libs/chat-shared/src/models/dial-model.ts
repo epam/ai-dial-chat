@@ -8,5 +8,4 @@ export interface DialModel {
 
 export interface DialModelListResponse {
   data: DialModel[];
-  object?: string;
 }

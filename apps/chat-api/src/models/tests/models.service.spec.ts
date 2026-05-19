@@ -19,11 +19,16 @@ const mockModel: DialModel = {
 };
 const mockList: DialModelListResponse = { data: [mockModel] };
 
+const okResponse = (data: unknown) =>
+  ({ data, response: {} as Response }) as never;
+
+const errResponse = (status: number) =>
+  ({ error: {}, response: { status } as Response }) as never;
+
 function makeDeps() {
   const configService = {
     get: vi.fn((key: string) => {
       if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      if (key === 'DIAL_CORE_TIMEOUT_MS') return 5000;
       return undefined;
     }),
   } as unknown as ConfigService<EnvironmentVariables>;
@@ -42,20 +47,6 @@ function makeService() {
   return { service, cacheManager };
 }
 
-function mockFetchOk(body: unknown) {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-    ok: true,
-    json: vi.fn().mockResolvedValue(body),
-  } as unknown as Response);
-}
-
-function mockFetchStatus(status: number) {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-    ok: false,
-    status,
-  } as unknown as Response);
-}
-
 describe('ModelsService', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -64,7 +55,10 @@ describe('ModelsService', () => {
   describe('listModels', () => {
     it('returns list from upstream on cache miss', async () => {
       const { service } = makeService();
-      mockFetchOk(mockList);
+      const upstreamList = { ...mockList, object: 'list' };
+      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+        okResponse(upstreamList),
+      );
 
       const result = await service.listModels('user1', 'token-abc');
       expect(result).toEqual(mockList);
@@ -77,7 +71,9 @@ describe('ModelsService', () => {
         set: vi.fn(),
       };
       const service = new ModelsService(configService, cacheManager as never);
-      const spy = mockFetchOk(mockList);
+      const spy = vi
+        .spyOn(service['client'], 'getModels')
+        .mockResolvedValue(okResponse(mockList));
 
       const result = await service.listModels('user1', 'token-abc');
       expect(result).toEqual(mockList);
@@ -95,7 +91,9 @@ describe('ModelsService', () => {
         }),
       };
       const service = new ModelsService(configService, cacheManager as never);
-      mockFetchOk(mockList);
+      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+        okResponse(mockList),
+      );
 
       await service.listModels('user1', 'token1');
       await service.listModels('user2', 'token2');
@@ -106,20 +104,25 @@ describe('ModelsService', () => {
 
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
-      const spy = mockFetchOk(mockList);
+      const spy = vi
+        .spyOn(service['client'], 'getModels')
+        .mockResolvedValue(okResponse(mockList));
 
       await service.listModels('user1', 'my-token');
       expect(spy).toHaveBeenCalledWith(
-        'http://dial-core/openai/models',
         expect.objectContaining({
-          headers: { Authorization: 'Bearer my-token' },
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
         }),
       );
     });
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      mockFetchStatus(401);
+      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+        errResponse(401),
+      );
       await expect(service.listModels('u', 't')).rejects.toThrow(
         UnauthorizedException,
       );
@@ -127,7 +130,9 @@ describe('ModelsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      mockFetchStatus(403);
+      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+        errResponse(403),
+      );
       await expect(service.listModels('u', 't')).rejects.toThrow(
         ForbiddenException,
       );
@@ -135,27 +140,26 @@ describe('ModelsService', () => {
 
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
-      mockFetchStatus(429);
+      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+        errResponse(429),
+      );
       await expect(service.listModels('u', 't')).rejects.toThrow(HttpException);
     });
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      mockFetchStatus(500);
+      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+        errResponse(500),
+      );
       await expect(service.listModels('u', 't')).rejects.toThrow(
         BadGatewayException,
       );
     });
 
-    it('throws ServiceUnavailableException on timeout', async () => {
+    it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(globalThis, 'fetch').mockImplementation(
-        () =>
-          new Promise((_, reject) => {
-            const err = new Error('The operation was aborted');
-            (err as NodeJS.ErrnoException).name = 'AbortError';
-            reject(err);
-          }),
+      vi.spyOn(service['client'], 'getModels').mockRejectedValue(
+        new TypeError('fetch failed'),
       );
       await expect(service.listModels('u', 't')).rejects.toThrow(
         ServiceUnavailableException,
@@ -166,7 +170,9 @@ describe('ModelsService', () => {
   describe('getModel', () => {
     it('returns model from upstream on cache miss', async () => {
       const { service } = makeService();
-      mockFetchOk(mockModel);
+      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+        okResponse(mockModel),
+      );
 
       const result = await service.getModel('user1', 'token-abc', 'gpt-4o');
       expect(result).toEqual(mockModel);
@@ -179,7 +185,9 @@ describe('ModelsService', () => {
         set: vi.fn(),
       };
       const service = new ModelsService(configService, cacheManager as never);
-      const spy = mockFetchOk(mockModel);
+      const spy = vi
+        .spyOn(service['client'], 'getModel')
+        .mockResolvedValue(okResponse(mockModel));
 
       const result = await service.getModel('user1', 'token-abc', 'gpt-4o');
       expect(result).toEqual(mockModel);
@@ -188,7 +196,9 @@ describe('ModelsService', () => {
 
     it('uses per-user per-model cache key', async () => {
       const { service, cacheManager } = makeService();
-      mockFetchOk(mockModel);
+      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+        okResponse(mockModel),
+      );
 
       await service.getModel('user1', 'token', 'gpt-4o');
       expect(cacheManager.get).toHaveBeenCalledWith(
@@ -196,9 +206,28 @@ describe('ModelsService', () => {
       );
     });
 
+    it('forwards model name and Authorization header to upstream', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['client'], 'getModel')
+        .mockResolvedValue(okResponse(mockModel));
+
+      await service.getModel('user1', 'my-token', 'gpt-4o');
+      expect(spy).toHaveBeenCalledWith(
+        'gpt-4o',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeService();
-      mockFetchStatus(404);
+      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+        errResponse(404),
+      );
       await expect(service.getModel('u', 't', 'unknown')).rejects.toThrow(
         NotFoundException,
       );
@@ -206,7 +235,9 @@ describe('ModelsService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      mockFetchStatus(401);
+      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+        errResponse(401),
+      );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
         UnauthorizedException,
       );
@@ -214,7 +245,9 @@ describe('ModelsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      mockFetchStatus(403);
+      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+        errResponse(403),
+      );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
         ForbiddenException,
       );
@@ -222,21 +255,18 @@ describe('ModelsService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      mockFetchStatus(502);
+      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+        errResponse(502),
+      );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
         BadGatewayException,
       );
     });
 
-    it('throws ServiceUnavailableException on timeout', async () => {
+    it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(globalThis, 'fetch').mockImplementation(
-        () =>
-          new Promise((_, reject) => {
-            const err = new Error('The operation was aborted');
-            (err as NodeJS.ErrnoException).name = 'AbortError';
-            reject(err);
-          }),
+      vi.spyOn(service['client'], 'getModel').mockRejectedValue(
+        new TypeError('fetch failed'),
       );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
         ServiceUnavailableException,

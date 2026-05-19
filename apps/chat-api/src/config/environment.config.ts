@@ -28,10 +28,6 @@ export class EnvironmentVariables {
   DIAL_CORE_URL!: string;
 
   @IsOptional()
-  @IsString()
-  DIAL_API_KEY?: string;
-
-  @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;
 
@@ -39,11 +35,6 @@ export class EnvironmentVariables {
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
   THEMES_SERVICE_TIMEOUT_MS?: number = 5000;
-
-  @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsNumber()
-  DIAL_CORE_TIMEOUT_MS?: number = 10000;
 
   // Auth / session
   @IsNotEmpty()

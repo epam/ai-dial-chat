@@ -1,22 +1,22 @@
 ## 1. Shared Types
 
-- [x] 1.1 Create `libs/chat-shared/src/models.ts` — define and export `DialModel` (with `[key: string]: unknown` index signature) and `DialModelListResponse`
+- [x] 1.1 Create `libs/chat-shared/src/models/dial-model.ts` — define and export `DialModel` (with `[key: string]: unknown` index signature) and `DialModelListResponse`
 - [x] 1.2 Re-export `DialModel` and `DialModelListResponse` from `libs/chat-shared/src/index.ts`
 
 ## 2. Backend — Config
 
-- [x] 2.1 Add `DIAL_CORE_TIMEOUT_MS` optional field (`@IsOptional`, `@Transform parseInt`, `@IsNumber`, default `10000`) to `apps/chat-api/src/config/environment.config.ts`
+- [x] 2.1 Remove `DIAL_API_KEY` from `apps/chat-api/src/config/environment.config.ts`; no `DIAL_CORE_TIMEOUT_MS` needed (SDK does not expose per-call timeout)
 
 ## 3. Backend — DTOs
 
-- [x] 3.1 Create `apps/chat-api/src/models/dto/get-model.dto.ts` — `GetModelDto` with `modelName: string` validated by `@IsString`, `@Matches(/^[a-zA-Z0-9_\-.:@/]+$/, { message: '...' })`, and `@ApiProperty`
+- [x] 3.1 Create `apps/chat-api/src/models/dto/get-model.dto.ts` — `GetModelDto` with `modelName: string` validated by `@IsString`, `@Matches(/^[a-zA-Z0-9_\-.:@]+$/, { message: '...' })` (no slash — slashes split Express routing; callers must URL-encode `/` as `%2F`), and `@ApiProperty`
 
 ## 4. Backend — Service
 
-- [x] 4.1 Create `apps/chat-api/src/models/models.service.ts` — `ModelsService` with `private readonly logger = new Logger(ModelsService.name)`, injecting `ConfigService<EnvironmentVariables>` and `CACHE_MANAGER`
-- [x] 4.2 Implement `listModels(userSub: string, accessToken: string): Promise<DialModelListResponse>` — cache key `models:list:<userSub>`, TTL 30 s, proxies `GET <DIAL_CORE_URL>/openai/models` with `Authorization: Bearer <accessToken>`, AbortController + `DIAL_CORE_TIMEOUT_MS` timeout
-- [x] 4.3 Implement `getModel(userSub: string, accessToken: string, modelName: string): Promise<DialModel>` — cache key `models:single:<userSub>:<modelName>`, TTL 60 s, proxies `GET <DIAL_CORE_URL>/openai/models/<modelName>`
-- [x] 4.4 Map upstream HTTP errors to Nest exceptions in both methods: `401` → `UnauthorizedException`, `403` → `ForbiddenException`, `404` → `NotFoundException`, `429` → `HttpException(429)`, `5xx` → `BadGatewayException`, timeout/unreachable → `ServiceUnavailableException`; rethrow Nest exceptions untouched
+- [x] 4.1 Create `apps/chat-api/src/models/models.service.ts` — `ModelsService extends AppService` with `protected logger = new Logger(ModelsService.name)`, injecting `CACHE_MANAGER`; uses `this.client` from `AppService`
+- [x] 4.2 Implement `listModels(userSub: string, accessToken: string): Promise<DialModelListResponse>` — cache key `models:list:<userSub>`, TTL 30 s, calls `this.client.getModels({ headers: { Authorization: 'Bearer <accessToken>' } })`, handles `SDKResponse` error via `mapDialHttpStatus`
+- [x] 4.3 Implement `getModel(userSub: string, accessToken: string, modelName: string): Promise<DialModel>` — cache key `models:single:<userSub>:<modelName>`, TTL 60 s, calls `this.client.getModel(modelName, { headers: ... })`, handles `SDKResponse` error via `mapDialHttpStatus`
+- [x] 4.4 Map upstream HTTP errors via `mapDialHttpStatus` (from `common/utils/dial-fetch-error`): `401` → `UnauthorizedException`, `403` → `ForbiddenException`, `404` → `NotFoundException`, `429` → `HttpException(429)`, `5xx` → `BadGatewayException`; network errors via `handleDialFetchError` → `ServiceUnavailableException`
 
 ## 5. Backend — Controller
 
@@ -32,16 +32,23 @@
 
 ## 7. Backend — Tests
 
-- [x] 7.1 Create `apps/chat-api/src/models/tests/models.service.spec.ts` — unit tests for `ModelsService`: happy path list (cache miss and hit), happy path single (cache miss and hit), each error mapping (401, 403, 404, 429, 5xx, timeout), cache key isolation between users
-- [x] 7.2 Create `apps/chat-api/src/models/tests/models.controller.spec.ts` — supertest integration tests against the bootstrapped app: `GET /api/v1/models` returns 200 with `{ data: [...] }` for authenticated user; `GET /api/v1/models/gpt-4o` returns 200 with a `DialModel`; unauthenticated requests return 401; invalid `:modelName` returns 400; missing session returns 401; upstream 404 returns 404; rate limit returns 429 after limit exceeded
+- [x] 7.1 Create `apps/chat-api/src/models/tests/models.service.spec.ts` — unit tests for `ModelsService`: happy path list (cache miss and hit), happy path single (cache miss and hit), each error mapping (401, 403, 404, 429, 5xx, network error), cache key isolation between users; mocks via `vi.spyOn(service['client'], 'getModels')`
+- [x] 7.2 Create `apps/chat-api/src/models/tests/models.controller.spec.ts` — supertest integration tests against the bootstrapped app with `req.user` middleware: `GET /api/v1/models` returns 200; `GET /api/v1/models/gpt-4o` returns 200; invalid `:modelName` returns 400; error propagation for 401/404/503
 
-## 8. Frontend — Server-API Helper
+## 8. Backend — Deployments refactor
 
-- [x] 8.1 Create `apps/chat/src/server-api/models.ts` — export `getModels(): Promise<DialModelListResponse>` and `getModel(modelName: string): Promise<DialModel>` using the `get` typed helper from `server-api/base.ts`; import types from `@epam/chat-shared`
+- [x] 8.1 Remove `apiKey` from `AppService.createSDK` call — all services now use per-user session tokens
+- [x] 8.2 Rewrite `DeploymentsService.getDeployments` and `getDeployment` to accept `accessToken: string`, pass via `Authorization: Bearer` header, and use `SDKResponse` + `mapDialHttpStatus` pattern
+- [x] 8.3 Update `DeploymentsController` to read `req.user.at` via `@Req()` and pass to service methods
+- [x] 8.4 Update all three deployments test files to match new signatures and SDKResponse mock pattern
 
-## 9. Verification
+## 9. Frontend — Server-API Helper
 
-- [x] 9.1 Run `pnpm nx test chat-api` — all models tests pass (1 pre-existing failure in conversation.controller.integration.spec.ts unrelated to this change)
-- [x] 9.2 Run `pnpm nx lint chat-api` — no lint errors (11 pre-existing warnings only)
-- [x] 9.3 Run `pnpm nx build chat-api` — build succeeds
-- [x] 9.4 Run `pnpm nx affected --target=typecheck --base=origin/development` — pre-existing failures in chat-shared and chat.service only; no new type errors introduced
+- [x] 9.1 Create `apps/chat/src/server-api/models.ts` — export `getModels(): Promise<DialModelListResponse>` and `getModel(modelName: string): Promise<DialModel>` using the `get` typed helper from `server-api/base.ts`; import types from `@epam/chat-shared`
+
+## 10. Verification
+
+- [x] 10.1 Run `pnpm nx test chat-api` — all models and deployments tests pass
+- [x] 10.2 Run `pnpm nx lint chat-api` — no lint errors
+- [x] 10.3 Run `pnpm nx build chat-api` — build succeeds
+- [x] 10.4 Run `pnpm nx affected --target=typecheck --base=origin/development` — no new type errors introduced

@@ -1,5 +1,5 @@
 ---
-description: NestJS conventions for apps/chat-api — controllers thin + Swagger, services use Logger/ConfigService, DTOs validated, errors as HTTP exceptions. Source of truth lives in apps/chat-api/AGENTS.md.
+description: NestJS conventions for apps/chat-api — controllers thin + Swagger, services use Logger/ConfigService, DIAL Core calls prefer @epam/ai-dial-typescript-sdk, DTOs validated, errors as HTTP exceptions. Source of truth lives in apps/chat-api/AGENTS.md.
 globs: apps/chat-api/**/*.ts
 alwaysApply: false
 ---
@@ -17,9 +17,11 @@ alwaysApply: false
   `@ApiResponse` for **every** status code, `@Throttle` per public endpoint, delegate to a
   service. Reference: `apps/chat-api/src/themes/theme.controller.ts`.
 - **Services use Logger + ConfigService**: `private readonly logger = new Logger(X.name)`,
-  `configService.get('VAR', { infer: true })`, `AbortController` for outbound fetch
-  with the configurable timeout. No `console.log`, no `process.env` reads, no `as string`.
-  Reference: `apps/chat-api/src/themes/theme.service.ts`.
+  `configService.get('VAR', { infer: true })`. DIAL Core integrations prefer
+  `@epam/ai-dial-typescript-sdk` through `apps/chat-api/src/app/app.service.ts`; use raw
+  `fetch` only for non-DIAL upstreams or SDK gaps. No `console.log`, no `process.env`
+  reads, no `as string`.
+  References: `apps/chat-api/src/app/app.service.ts`, `apps/chat-api/src/themes/theme.service.ts`.
 - **DTOs are mandatory**: `class-validator` + `@ApiProperty` on every field; `@Matches`
   with an allowlist regex for any string that hits a path / URL / log line.
   Reference: `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`.

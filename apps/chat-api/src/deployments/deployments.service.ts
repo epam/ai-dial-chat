@@ -1,26 +1,58 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
-import { handleDialError } from '../common/utils/dial-error';
+import {
+  handleDialFetchError,
+  mapDialHttpStatus,
+} from '../common/utils/dial-fetch-error';
+import type { EnvironmentVariables } from '../config/environment.config';
 
 @Injectable()
 export class DeploymentsService extends AppService {
   protected logger = new Logger(DeploymentsService.name);
 
-  async getDeployments() {
+  constructor(configService: ConfigService<EnvironmentVariables>) {
+    super(configService);
+  }
+
+  async getDeployments(accessToken: string) {
     try {
-      return await this.client.getDeployments();
-    } catch (error) {
-      this.logger.error('DIAL Core rejected getDeployments', error);
-      return handleDialError(error);
+      const result = await this.client.getDeployments({
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          'get deployments',
+          this.logger,
+        );
+      }
+      return result.data;
+    } catch (err) {
+      return handleDialFetchError(err, 'get deployments', this.logger, 0);
     }
   }
 
-  async getDeployment(name: string) {
+  async getDeployment(name: string, accessToken: string) {
     try {
-      return await this.client.getDeployment(name);
-    } catch (error) {
-      this.logger.error('DIAL Core rejected getDeployment', error);
-      return handleDialError(error);
+      const result = await this.client.getDeployment(name, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          `get deployment "${name}"`,
+          this.logger,
+        );
+      }
+      return result.data;
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `get deployment "${name}"`,
+        this.logger,
+        0,
+      );
     }
   }
 }

@@ -15,9 +15,6 @@ export class AppService {
       infer: true,
     }) as string;
 
-    this.client = createSDK({
-      baseUrl: this.baseUrl,
-      apiKey: configService.get('DIAL_API_KEY', { infer: true }),
-    });
+    this.client = createSDK({ baseUrl: this.baseUrl });
   }
 }

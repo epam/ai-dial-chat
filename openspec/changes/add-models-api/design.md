@@ -29,16 +29,16 @@ The BFF must forward the authenticated user's access token (`req.user.at`) as `A
 
 ## Decisions
 
-### D1 — Plain `fetch` over an HTTP client library
+### D1 — `@epam/ai-dial-typescript-sdk` via `AppService` inheritance
 
-**Decision**: Use the same `fetch` + `AbortController` + timeout pattern as `ThemeService`, not an SDK wrapper.
+**Decision**: `ModelsService` extends `AppService` and uses `this.client` (created by `createSDK({ baseUrl })`) for all DIAL Core calls. Per-request auth is passed via `headers: { Authorization: 'Bearer <at>' }` on each SDK call. The SDK's `SDKResponse<T>` discriminated union (`{ data } | { error, response }`) is used for error handling instead of try/catch on HTTP errors.
 
-**Rationale**: DIAL Core's OpenAI-compatible endpoints are straightforward JSON GET requests. The `ThemeService` pattern is already reviewed, tested, and understood by the team. Adding `@ai-sdk/openai` or a DIAL SDK for two read-only list endpoints introduces a new dependency with no proportional benefit — and the DIAL SDK's current TypeScript surface for deployment listing is not stable enough to rely on. If the SDK matures and is adopted project-wide, migration is a one-file change.
+**Rationale**: The project-wide pattern is `AppService` + DIAL SDK (`createSDK`). Using it for `ModelsService` gives typed responses, consistent client setup, and removes the need for `AbortController` / timeout boilerplate. The SDK's `openapi-fetch` layer returns `{ error, response }` on non-2xx responses rather than throwing, which is handled by `mapDialHttpStatus` from `common/utils/dial-fetch-error`. The global `DIAL_API_KEY` has been removed — all DIAL Core calls now use the authenticated user's session access token.
 
 **Alternatives considered**:
 
-- `@ai-sdk/openai`: Covers chat completions well but wraps deployment listing awkwardly; not the right tool.
-- Axios: No advantage over `fetch` with `AbortController` in Node 18+; avoids a dependency.
+- Plain `fetch` + `AbortController`: Considered initially; removed after SDK adoption was confirmed project-wide and `DIAL_API_KEY` was deprecated.
+- Separate `createSDK` per service without `AppService`: Creates duplicated setup; extending `AppService` keeps client construction in one place.
 
 ### D2 — Per-user cache keys
 
@@ -61,11 +61,11 @@ The BFF must forward the authenticated user's access token (`req.user.at`) as `A
 
 - Define locally in the `models` domain: Simpler but forces the frontend helper to redefine or use `any`.
 
-### D4 — `:modelName` path param validated with allowlist `@Matches`
+### D4 — `:modelName` path param validated with allowlist `@Matches` (no slash)
 
-**Decision**: `GetModelDto` validates `modelName` with `@Matches(/^[a-zA-Z0-9_\-.:@/]+$/)`.
+**Decision**: `GetModelDto` validates `modelName` with `@Matches(/^[a-zA-Z0-9_\-.:@]+$/)` — slash (`/`) is intentionally excluded.
 
-**Rationale**: The param is forwarded into a URL segment sent to an upstream service. An overly permissive param could allow path-traversal or header-injection. The allowlist covers all known DIAL deployment name formats (e.g. `gpt-4o`, `anthropic.claude-3-5`, `@org/model:tag`) while blocking `../`, `%2F`, and whitespace.
+**Rationale**: The param is forwarded into a URL segment sent to an upstream service. An overly permissive param could allow path-traversal or header-injection. Slash is excluded because NestJS/Express splits the URL path on `/`, so a literal slash in the param would create extra route segments and never match `GET /models/:modelName`. Callers with slash-containing model names (e.g. `@org/model`) must URL-encode the slash as `%2F` before sending. The allowlist covers all other known DIAL deployment name formats (`gpt-4o`, `anthropic.claude-3-5`, `@model:tag`) while blocking `../`, `%00`, and whitespace.
 
 ### D5 — `SessionGuard` is already global via `APP_GUARD`
 
@@ -77,5 +77,7 @@ The BFF must forward the authenticated user's access token (`req.user.at`) as `A
 
 - **DIAL Core permission granularity** → The BFF caches model lists per user `sub`, but sub-user permission changes (e.g. a model removed mid-session) won't be visible for up to 30 s. Mitigation: keep cache TTL short and document the eventual-consistency window.
 - **Access token expiry during cache window** → The cached response was fetched with a token that might be rotated before the cache entry expires. Mitigation: The cache entry stores the model list, not the token; a fresh request will use the refreshed token from the session. The worst case is a 30 s stale list, not a leaked credential.
-- **DIAL Core model name format changes** → The allowlist regex in `GetModelDto` must be updated if DIAL Core introduces characters outside `[a-zA-Z0-9_\-.:@/]`. Mitigation: the regex is documented and test-covered so failures are caught early.
-- **Shared `DialModel` type drift** → If DIAL Core adds fields, `DialModel` in `chat-shared` must be updated. Mitigation: type the response with `Partial` guards where fields are optional; treat unknown fields as pass-through to avoid breaking clients.
+- **DIAL Core model name format changes** → The allowlist regex in `GetModelDto` must be updated if DIAL Core introduces characters outside `[a-zA-Z0-9_\-.:@]`. Mitigation: the regex is documented and test-covered so failures are caught early.
+- **Slash-containing model names** → Callers must URL-encode `/` as `%2F` in the path param. This is a known limitation of Express routing and is documented in the spec.
+- **Shared `DialModel` type drift** → If DIAL Core adds fields, `DialModel` in `chat-shared` must be updated. Mitigation: the `[key: string]: unknown` index signature allows pass-through of unknown fields without breaking clients.
+- **No upstream timeout** → The SDK does not expose an `AbortController`/timeout option on individual calls. A hung DIAL Core connection will hold the request until the Node.js default socket timeout. Mitigation: accept this trade-off for now; a global HTTP agent timeout can be configured at the SDK level if needed.
