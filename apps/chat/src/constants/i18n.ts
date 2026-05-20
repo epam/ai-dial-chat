@@ -1120,4 +1120,5 @@ export enum MarketplaceI18nKeys {
   AgentSettings = 'Agent settings',
   AgentSettingsDescription = 'Agent-wide behavior switches that apply to every conversation.',
   TimeAwareness = 'Time awareness',
+  NoLimitsApplied = 'No limits applied',
 }
