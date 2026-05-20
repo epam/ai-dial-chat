@@ -132,7 +132,7 @@ dialTest(
           await baseAssertion.assertElementState(
             entityEditorGeneralForm.getRequiredIndicator(field),
             'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+            ExpectedMessages.entityFormFieldShouldHaveAsterisk,
           );
         }
         for (const field of [
@@ -199,7 +199,7 @@ dialTest(
             EntityEditorViewFormFields.externalUrl,
           ),
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
         await externalAppEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           {

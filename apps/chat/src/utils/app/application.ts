@@ -26,6 +26,7 @@ import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import {
+  DialAppToolset,
   DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
@@ -526,7 +527,7 @@ export const migrateMCPToolsetIdName = (
 };
 
 export const getQuickAppItemNameFromConfig = (
-  item: MCPToolset | DialDeploymentSimpleTool,
+  item: MCPToolset | DialAppToolset | DialDeploymentSimpleTool,
 ): string => {
   if ('deployment_id' in item && 'name' in item) {
     return (

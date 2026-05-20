@@ -168,7 +168,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
         )}
       </div>
       {isExpanded && (
-        <div className="whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
+        <div className="max-h-[160px] overflow-auto whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
           {prompt?.content}
         </div>
       )}

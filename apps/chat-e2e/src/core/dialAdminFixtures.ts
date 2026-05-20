@@ -10,10 +10,12 @@ import {
   EntityDetailsModal,
   FileDropArea,
   FileManager,
+  FileManagerCollapsibleSidebar,
   FileManagerContainer,
   FileManagerGrid,
   FileManagerModal,
   FileManagerToolbar,
+  FoldersTree,
   InformationModal,
   Marketplace,
   MarketplaceContainer,
@@ -25,6 +27,7 @@ import {
   PublishingApprovalModal,
   PublishingRequestDialog,
   PublishingRules,
+  SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
   TalkToAgentDialog,
@@ -42,6 +45,7 @@ import {
   ConversationAssertion,
   ConversationInfoTooltipAssertion,
   FileManagerGridAssertion,
+  FoldersTreeAssertion,
   MenuAssertion,
   PublicationReviewControlAssertion,
   PublishEntityAssertion,
@@ -187,6 +191,13 @@ const dialAdminTest = dialTest.extend<{
   adminFileManagerModalGrid: FileManagerGrid;
   adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
+  adminSelectFolderManagerModal: SelectFolderManagerModal;
+  adminSelectFolderManagerModalManager: FileManager;
+  adminSelectFolderManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  adminSelectFolderManagerModalFoldersTree: FoldersTree;
+  adminSelectFolderManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
+  adminSelectFolderManagerModalGrid: FileManagerGrid;
+  adminSelectFolderManagerModalGridAssertion: FileManagerGridAssertion;
   adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
   adminEntityDetailsModalAssertion: EntityDetailsModalAssertion;
@@ -767,6 +778,60 @@ const dialAdminTest = dialTest.extend<{
   adminSelectFolderModal: async ({ adminPage }, use) => {
     const adminSelectFolderModal = new SelectFolderModal(adminPage);
     await use(adminSelectFolderModal);
+  },
+  adminSelectFolderManagerModal: async ({ adminPage }, use) => {
+    const adminSelectFolderManagerModal = new SelectFolderManagerModal(
+      adminPage,
+    );
+    await use(adminSelectFolderManagerModal);
+  },
+  adminSelectFolderManagerModalManager: async (
+    { adminSelectFolderManagerModal },
+    use,
+  ) => {
+    const adminSelectFolderManagerModalManager =
+      adminSelectFolderManagerModal.getFileManager();
+    await use(adminSelectFolderManagerModalManager);
+  },
+  adminSelectFolderManagerModalCollapsibleSidebar: async (
+    { adminSelectFolderManagerModalManager },
+    use,
+  ) => {
+    const adminSelectFolderManagerModalCollapsibleSidebar =
+      adminSelectFolderManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(adminSelectFolderManagerModalCollapsibleSidebar);
+  },
+  adminSelectFolderManagerModalFoldersTree: async (
+    { adminSelectFolderManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const adminSelectFolderManagerModalFoldersTree =
+      adminSelectFolderManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(adminSelectFolderManagerModalFoldersTree);
+  },
+  adminSelectFolderManagerModalFoldersTreeAssertion: async (
+    { adminSelectFolderManagerModalFoldersTree },
+    use,
+  ) => {
+    const adminSelectFolderManagerModalFoldersTreeAssertion =
+      new FoldersTreeAssertion(adminSelectFolderManagerModalFoldersTree);
+    await use(adminSelectFolderManagerModalFoldersTreeAssertion);
+  },
+  adminSelectFolderManagerModalGrid: async (
+    { adminSelectFolderManagerModalManager },
+    use,
+  ) => {
+    const adminSelectFolderManagerModalGrid =
+      adminSelectFolderManagerModalManager.getFileManagerGrid();
+    await use(adminSelectFolderManagerModalGrid);
+  },
+  adminSelectFolderManagerModalGridAssertion: async (
+    { adminSelectFolderManagerModalGrid },
+    use,
+  ) => {
+    const adminSelectFolderManagerModalGridAssertion =
+      new FileManagerGridAssertion(adminSelectFolderManagerModalGrid);
+    await use(adminSelectFolderManagerModalGridAssertion);
   },
   adminEntityDetailsModalAssertion: async (
     { adminEntityDetailsModal },

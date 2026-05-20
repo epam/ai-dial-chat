@@ -31,11 +31,19 @@ interface Props {
   isLastMessageError: boolean;
   tooltip?: string;
   isLoading?: boolean;
+  microphoneButtonHidden?: boolean;
 }
 
 export const SendMessageButton = Inversify.register(
   'SendMessageButton',
-  ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
+  ({
+    isLastMessageError,
+    onSend,
+    isDisabled,
+    tooltip,
+    isLoading,
+    microphoneButtonHidden,
+  }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
     const areModelsLoading = useAppSelector(
@@ -56,7 +64,7 @@ export const SendMessageButton = Inversify.register(
     );
 
     const rightClass =
-      canRecordAudio && !isLastMessageError
+      canRecordAudio && !isLastMessageError && !microphoneButtonHidden
         ? isOverlay
           ? 'right-10'
           : 'right-11'

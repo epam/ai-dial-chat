@@ -115,7 +115,7 @@ dialTest(
     );
 
     await dialTest.step('Verify OAuth redirect query', async () => {
-      const state = oauthMockHelper.getState();
+      const state = oauthMockHelper.getOAuthState();
       const mockConfig = oauthMockHelper.getMockConfig();
       toolsetApiAuthenticationAssertion.assertOAuthRedirectRequest(
         state,

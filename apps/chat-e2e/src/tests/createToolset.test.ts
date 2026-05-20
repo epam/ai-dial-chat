@@ -190,7 +190,7 @@ dialTest(
           await baseAssertion.assertElementState(
             fieldRequiredIndicator,
             'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+            ExpectedMessages.entityFormFieldShouldHaveAsterisk,
           );
         }
       },
@@ -304,7 +304,7 @@ dialTest(
         await baseAssertion.assertElementState(
           fieldRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
       },
     );
@@ -805,7 +805,7 @@ dialTest(
           page,
           initialToolset,
           toolsetEntity.endpoint,
-          { expectedStatusCodes: { updateToolsetCode: 400 } },
+          { updateToolsetCode: 400 },
         );
         await oauthMockHelper.setupToolsetRoutes();
         oauthMockHelper.enableMocking();

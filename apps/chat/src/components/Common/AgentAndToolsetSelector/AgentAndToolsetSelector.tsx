@@ -38,6 +38,7 @@ interface AgentAndToolsetSelectorProps {
   tooltip?: string;
   onItemClick?: (id: string) => void;
   onJsonSwitchClick?: () => void;
+  onConfigureClick?: (item: MarketplaceEntity) => void;
 }
 
 export const AgentAndToolsetSelector: React.FC<
@@ -51,6 +52,7 @@ export const AgentAndToolsetSelector: React.FC<
   onChange,
   onItemClick,
   onJsonSwitchClick,
+  onConfigureClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -131,6 +133,7 @@ export const AgentAndToolsetSelector: React.FC<
                 onRemove={readonly ? undefined : handleRemoveItem}
                 readonly={readonly}
                 onItemClick={onItemClick}
+                onConfigure={onConfigureClick}
               />
             ))}
           </div>

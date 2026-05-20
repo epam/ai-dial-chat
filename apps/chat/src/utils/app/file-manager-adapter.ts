@@ -13,6 +13,7 @@ import {
   DialFileResourceType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
+import { sortBy } from 'lodash-es';
 
 export interface DialRootFolder extends UIKitDialFile {
   label: string;
@@ -122,6 +123,11 @@ export const convertToUIKitFolder = (
     permissions: folder.permissions?.map((p) => PermissionMap[p]),
   };
 };
+
+const sortItemsByName = (items: UIKitDialFile[]): UIKitDialFile[] =>
+  sortBy(items, (item) => item.name.toLowerCase()).map((item) =>
+    item.items ? { ...item, items: sortItemsByName(item.items) } : item,
+  );
 
 export const buildFileTree = (
   files: DialFile[],
@@ -259,7 +265,7 @@ export const buildFileTree = (
     path: effectiveRootId,
     folderId: '',
     nodeType: DialFileNodeType.FOLDER,
-    items: rootItems,
+    items: sortItemsByName(rootItems),
     parentPath: null,
     label: pathRootAlias || 'Files',
     permissions:
