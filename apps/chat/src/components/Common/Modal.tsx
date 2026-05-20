@@ -130,6 +130,7 @@ function ModalView({
                     'mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold',
                     headingClassName,
                   )}
+                  data-qa="modal-entity-name"
                 >
                   <DialEllipsisTooltip
                     text={heading}
