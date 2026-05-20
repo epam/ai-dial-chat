@@ -21,7 +21,7 @@ import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
   addGeneratedFolderId,
-  generateNextName,
+  fitFolderNameToStorageLimits,
   getFolderFromId,
   getParentFolderIdsFromFolderId,
   updateChildAndCurrentFoldersIds,
@@ -31,6 +31,7 @@ import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   getPromptInfoFromId,
+  getStorageSafeUniquePromptName,
   parseVariablesFromContent,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
@@ -55,7 +56,6 @@ import {
 } from '@/src/store/actions';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
-import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { CommonI18nKeys } from '@/src/constants/i18n';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
@@ -406,7 +406,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
+      const newFolder = addGeneratedFolderId(
+        fitFolderNameToStorageLimits({ ...folder, ...payload.values }),
+      );
 
       if (payload.folderId === newFolder.id) {
         return of(
@@ -572,11 +574,13 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ...omit(prompt, ['publicationInfo']),
         ...getDefaultEntityProps(),
         folderId: promptFolderId,
-        name: generateNextName(
-          DEFAULT_PROMPT_NAME,
-          prompt.name,
-          prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
-        ),
+        name: getStorageSafeUniquePromptName({
+          prompt: { ...prompt, folderId: promptFolderId },
+          desiredName: prompt.name,
+          existingNames: prompts
+            .filter((p) => p.folderId === promptFolderId)
+            .map((p) => p.name),
+        }),
       });
 
       return concat(
