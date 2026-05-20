@@ -24,7 +24,8 @@ import { ModalState } from '@/src/types/modal';
 
 import { CloseButtonSmall } from './CloseButtons';
 import { Spinner } from './Spinner';
-import { Tooltip } from './Tooltip';
+
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
@@ -130,14 +131,10 @@ function ModalView({
                     headingClassName,
                   )}
                 >
-                  <Tooltip tooltip={heading} hideTooltip={!showHeadingTooltip}>
-                    <div
-                      className="w-full truncate"
-                      data-qa="modal-entity-name"
-                    >
-                      {heading}
-                    </div>
-                  </Tooltip>
+                  <DialEllipsisTooltip
+                    text={heading}
+                    hideTooltip={!showHeadingTooltip}
+                  />
                 </h4>
               ) : (
                 heading
