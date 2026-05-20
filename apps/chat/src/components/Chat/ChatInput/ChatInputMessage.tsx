@@ -11,6 +11,7 @@ import React, {
 import classNames from 'classnames';
 
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
@@ -204,18 +205,6 @@ export const ChatInputMessage = Inversify.register(
       clearAudioBlob,
     } = useVoiceRecorder(supportedAudioTypes);
 
-    useEffect(() => {
-      if (!audioBlob) return;
-
-      dispatch(
-        ChatActions.handleVoiceRecording({
-          audioBlob,
-          fileExtension: voiceFileExtension,
-        }),
-      );
-      clearAudioBlob();
-    }, [audioBlob, voiceFileExtension, dispatch, clearAudioBlob]);
-
     const shouldRegenerate =
       isLastMessageError ||
       (isLastAssistantMessageEmpty && !messageIsStreaming);
@@ -281,6 +270,34 @@ export const ChatInputMessage = Inversify.register(
       isLoading,
       selectedPrompt,
     } = usePromptSelection(maxTokensLength, modelTokenizer, '');
+
+    const { getCursorPosition } = useTextareaInsertInPosition(
+      textareaRef,
+      content,
+      setContent,
+    );
+
+    useEffect(() => {
+      if (!audioBlob) return;
+
+      const selection = isAsrMode ? getCursorPosition() : undefined;
+
+      dispatch(
+        ChatActions.handleVoiceRecording({
+          audioBlob,
+          fileExtension: voiceFileExtension,
+          selection,
+        }),
+      );
+      clearAudioBlob();
+    }, [
+      audioBlob,
+      voiceFileExtension,
+      dispatch,
+      clearAudioBlob,
+      isAsrMode,
+      getCursorPosition,
+    ]);
 
     const isSchemaValueValid = useMemo(() => {
       const schema =
@@ -546,6 +563,13 @@ export const ChatInputMessage = Inversify.register(
       );
     }, []);
 
+    const handleStopRecording = useCallback(() => {
+      if (isAsrMode) {
+        dispatch(ChatActions.setIsTranscribing(true));
+      }
+      stopRecording();
+    }, [isAsrMode, stopRecording, dispatch]);
+
     const tooltipContent = (): string => {
       if (isDisabledInputFeature && disabledInputFeatureData?.description) {
         return disabledInputFeatureData.description;
@@ -677,7 +701,7 @@ export const ChatInputMessage = Inversify.register(
               ref={micButtonRef}
               isRecording={isRecording}
               onStartRecording={startRecording}
-              onStopRecording={stopRecording}
+              onStopRecording={handleStopRecording}
               error={voiceError}
               disabled={isMicDisabled}
             />
