@@ -8,15 +8,17 @@ import {
   constructPath,
   getFileWithType,
   getNestedEmptyFolderIdsForChosenParent,
+  isPathUnderPrefix,
+  removeTrailingSlash,
 } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getEmptyLeafFolderIds,
   getFolderFromId,
-  getNextDefaultName,
   getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
   getSelectedEntitiesByFolderId,
+  getStorageSafeUniqueFolderName,
   renameFolderAndMoveEntity,
   updateMovedEntityId,
   updateMovedFolderId,
@@ -38,7 +40,6 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { FilesState } from './files.types';
 
@@ -541,16 +542,13 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       const rootFileId = getFileRootId();
-      const folderName = getNextDefaultName(
-        DEFAULT_FOLDER_NAME,
-        state.folders.filter(
-          (folder) => folder.folderId === (payload.parentId ?? rootFileId), // only folders on the same level
-        ),
-        0,
-        false,
-        false,
-        payload.parentId,
-      );
+      const parentId = payload.parentId ?? rootFileId;
+      const folderName = getStorageSafeUniqueFolderName({
+        folderId: parentId,
+        existingNames: state.folders
+          .filter((folder) => folder.folderId === parentId) // only folders on the same level
+          .map((folder) => folder.name),
+      });
 
       const newAddedFolderId = constructPath(payload.parentId, folderName);
       state.folders.push(
@@ -1101,6 +1099,72 @@ export const filesSlice = createSlice({
       payload.deletedItems.forEach((file) => {
         invalidateSearchCacheForFile(state, file.sourceUrl);
       });
+
+      const succeededFileIds = new Set(
+        payload.result.results.map((r) => removeTrailingSlash(r.data)),
+      );
+      const deletedFolderPrefixes = payload.request.files
+        .filter((item) => item.nodeType === DialFileNodeType.FOLDER)
+        .map((item) => removeTrailingSlash(item.sourceUrl));
+      const fullBatchSuccess = payload.result.failed === 0;
+
+      const isUnderDeletedFolderTree = (entityId: string) => {
+        const id = removeTrailingSlash(entityId);
+        if (!fullBatchSuccess || deletedFolderPrefixes.length === 0) {
+          return false;
+        }
+        return deletedFolderPrefixes.some((p) => isPathUnderPrefix(id, p));
+      };
+
+      const fileShouldBeRemoved = (file: DialFile) => {
+        const id = removeTrailingSlash(file.id);
+        const folderId = removeTrailingSlash(file.folderId);
+        if (succeededFileIds.has(id)) {
+          return true;
+        }
+        if (!fullBatchSuccess) {
+          return false;
+        }
+        return deletedFolderPrefixes.some(
+          (p) => isPathUnderPrefix(id, p) || isPathUnderPrefix(folderId, p),
+        );
+      };
+
+      const folderShouldBeRemoved = (folder: FileFolderInterface) => {
+        const id = removeTrailingSlash(folder.id);
+        const parentFolderId = removeTrailingSlash(folder.folderId);
+        if (succeededFileIds.has(id)) {
+          return true;
+        }
+        if (!fullBatchSuccess) {
+          return false;
+        }
+        return deletedFolderPrefixes.some(
+          (p) =>
+            isPathUnderPrefix(id, p) || isPathUnderPrefix(parentFolderId, p),
+        );
+      };
+
+      state.files = state.files.filter((f) => !fileShouldBeRemoved(f));
+      state.folders = state.folders.filter((f) => !folderShouldBeRemoved(f));
+
+      const selectionIdRemoved = (rawId: string) => {
+        const id = removeTrailingSlash(rawId);
+        if (succeededFileIds.has(id)) {
+          return true;
+        }
+        return isUnderDeletedFolderTree(id);
+      };
+
+      state.chosenFileIds = state.chosenFileIds.filter(
+        (id) => !selectionIdRemoved(id),
+      );
+      state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.filter(
+        (id) => !selectionIdRemoved(id),
+      );
+      state.selectedFilesIds = state.selectedFilesIds.filter(
+        (id) => !selectionIdRemoved(id),
+      );
     },
     deleteFilesFail: (
       state,

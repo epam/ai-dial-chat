@@ -82,9 +82,10 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
   }
 
   const { path: folderPath } = getPathToFolderById(folders, prompt?.folderId);
+  const isMyPrompt = isMyEntity({ id: promptId });
   const resultFolderPath = isEntityIdPublic({ id: promptId })
     ? constructPath(ORGANIZATION_SECTION_NAME, folderPath)
-    : isMyEntity({ id: promptId })
+    : isMyPrompt
       ? promptId.split('/').length > 3
         ? constructPath(PINNED_PROMPTS_SECTION_NAME, folderPath)
         : RECENT_PROMPTS_SECTION_NAME
@@ -128,14 +129,16 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
 
           {!readonly && (
             <div className="flex gap-2 text-secondary">
-              <IconButton
-                className="size-6"
-                Icon={IconPencilMinus}
-                name={MarketplaceI18nKeys.EditMarketplace}
-                dataQa="edit-skill"
-                size={16}
-                onClick={() => onEdit(promptId)}
-              />
+              {isMyPrompt && (
+                <IconButton
+                  className="size-6"
+                  Icon={IconPencilMinus}
+                  name={MarketplaceI18nKeys.EditMarketplace}
+                  dataQa="edit-skill"
+                  size={16}
+                  onClick={() => onEdit(promptId)}
+                />
+              )}
               <IconButton
                 className="size-6"
                 Icon={IconTrashX}
@@ -165,7 +168,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
         )}
       </div>
       {isExpanded && (
-        <div className="whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
+        <div className="max-h-[160px] overflow-auto whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
           {prompt?.content}
         </div>
       )}

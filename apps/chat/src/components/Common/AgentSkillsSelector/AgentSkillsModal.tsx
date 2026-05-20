@@ -42,9 +42,9 @@ interface SkillsSectionProps {
   allFolders: FolderInterface[];
   selectedIds: string[];
   openedFoldersIds: string[];
-  displayRootFiles?: boolean;
   openByDefault?: boolean;
   skipFolders?: boolean;
+  skipRootPrompts?: boolean;
   onToggle: (id: string) => void;
   onToggleFolder: (descendantIds: string[]) => void;
   onClickFolder: (folderId: string) => void;
@@ -57,9 +57,9 @@ const SkillsSection = ({
   allFolders,
   selectedIds,
   openedFoldersIds,
-  displayRootFiles,
-  openByDefault,
-  skipFolders,
+  skipFolders = false,
+  openByDefault = true,
+  skipRootPrompts = false,
   onToggle,
   onToggleFolder,
   onClickFolder,
@@ -88,8 +88,8 @@ const SkillsSection = ({
   const treePrompts = useAppSelector(treePromptsSelector);
 
   if (
-    rootFolders.length === 0 &&
-    (!displayRootFiles || rootPrompts.length === 0)
+    (rootFolders.length === 0 || skipFolders) &&
+    (skipRootPrompts || rootPrompts.length === 0)
   ) {
     return null;
   }
@@ -115,7 +115,7 @@ const SkillsSection = ({
           ))}
         </div>
       )}
-      {displayRootFiles && rootPrompts.length > 0 && (
+      {!skipRootPrompts && rootPrompts.length > 0 && (
         <div className="flex flex-col gap-0.5">
           {rootPrompts.map((p) => (
             <PromptRow
@@ -225,14 +225,15 @@ export const AgentSkillsModal = ({
           sectionName: PINNED_PROMPTS_SECTION_NAME,
           filters: myItemsFilters,
           openByDefault: true,
-          displayRootFiles: false,
+          skipRootPrompts: true,
+          hidden: false,
         },
         {
           sectionName: RECENT_PROMPTS_SECTION_NAME,
           filters: myItemsFilters,
           openByDefault: true,
-          displayRootFiles: true,
           skipFolders: true,
+          hidden: false,
         },
       ].filter((section) => !section.hidden),
     [myItemsFilters, isPublishingEnabled, isSharingEnabled],

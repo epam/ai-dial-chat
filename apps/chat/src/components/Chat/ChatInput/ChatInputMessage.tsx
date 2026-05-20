@@ -690,6 +690,7 @@ export const ChatInputMessage = Inversify.register(
               isLastMessageError={isLastMessageError}
               isLoading={isLoading}
               isSendDisabled={isSendDisabled}
+              microphoneButtonHidden={isMicHidden}
             />
           )}
           {canAttach && (

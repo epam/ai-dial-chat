@@ -391,8 +391,8 @@ export const ExpectedMessages = {
   noData: 'No data in the conversation section',
   agentNameIsValid: 'Agent name is valid',
   agentIsVisible: 'Agent is visible',
-  applicationFormFieldShouldHaveAsterisk:
-    'Application form field should be marked as required',
+  entityFormFieldShouldHaveAsterisk:
+    'Entity form field should be marked as required',
   FormFieldShouldRetainUpdatedValue:
     'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden: 'The dropdown menu is hidden',
@@ -505,6 +505,7 @@ export const MarketplaceExpectedMessages = {
   toolsetSignInCredentialsLevelIsValid:
     'Toolset Sign-in request credentials level is valid',
   toolsetSignInCodeIsValid: 'Toolset Sign-in request code is valid',
+  toolsetSignInApiKeyIsValid: 'Toolset Sign-in request api key is valid',
   toolsetSignOutUrlValid: 'Toolset Sign-out request URL is valid',
   toolsetSignOutAuthTypeIsValid:
     'Toolset Sign-out request authentication type is valid',

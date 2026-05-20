@@ -324,6 +324,7 @@ export enum CommonI18nKeys {
   LimitExceeded = 'Limit exceeded',
   ShareLimitExceeded = '"{{name}}" has already been shared with the maximum specified number of users.',
   ShareLimitExceededWithVersion = '"{{name}}" version {{version}} has already been shared with the maximum specified number of users.',
+  ShareApplicationWithPublicResourcesFailed = 'Sharing failed. You are only allowed to share applications with resources from "My files"',
 }
 
 // errors.json
@@ -507,7 +508,10 @@ export enum PromptBarI18nKeys {
   VersionPrefix = 'v.',
   AddAgentSkill = 'Add Agent Skill',
   ValidAgentSkill = 'Valid Agent Skill',
-  AgentSkillHint = 'Agent Skills allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
+  AgentSkills = 'Agent Skills',
+  AgentSkillHintBody = 'allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
+  AgentSkillHintSeeExamples = 'See examples',
+  AgentSkillHintHere = 'here',
 }
 
 //chat.json
@@ -1106,4 +1110,9 @@ export enum MarketplaceI18nKeys {
   Weekly = 'Weekly',
   Daily = 'Daily',
   Monthly = 'Monthly',
+  AdvancedSettings = 'Advanced settings',
+  ConnectVia = 'Connect via',
+  ApplyChanges = 'Apply changes',
+  MCP = 'MCP',
+  ChatCompletion = 'Chat Completion',
 }

@@ -24,8 +24,9 @@ dialAdminTest(
       customApplicationBuilder,
       applicationApiHelper,
       publishingRequestDialog,
-      selectFolderModal,
-      selectFolders,
+      selectFolderManagerModal,
+      selectFolderManagerModalGrid,
+      selectFolderManagerModalFoldersTree,
       publishingRequestDialogAssertion,
       fileApiHelper,
       adminDialHomePage,
@@ -48,8 +49,9 @@ dialAdminTest(
       adminConversations,
       adminConversationDropdownMenu,
       adminPublishingRequestDialog,
-      adminSelectFolderModal,
-      adminSelectFoldersAssertion,
+      adminSelectFolderManagerModal,
+      adminSelectFolderManagerModalFoldersTree,
+      adminSelectFolderManagerModalFoldersTreeAssertion,
     },
     testInfo,
   ) => {
@@ -135,14 +137,17 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Click on "Change" link, create a new folder, rename it and select',
+      'Click on "Change" link, create a new folder and select',
       async () => {
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(orgFolder);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(orgFolder, false);
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(orgFolder)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRequestDialogAssertion.assertElementText(
@@ -277,12 +282,14 @@ dialAdminTest(
         await adminPublishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await adminSelectFoldersAssertion.assertFolderState(
-          { name: orgFolder },
+        await adminSelectFolderManagerModalFoldersTreeAssertion.assertFolderState(
           'visible',
+          orgFolder,
         );
-        await adminSelectFolderModal.selectFolder(orgFolder);
-        await adminSelectFolderModal.clickSelectFolderButton({
+        await adminSelectFolderManagerModalFoldersTree
+          .folderByPath(orgFolder)
+          .click();
+        await adminSelectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await adminPublishingRequestDialog.requestName.fillInInput(requestName);

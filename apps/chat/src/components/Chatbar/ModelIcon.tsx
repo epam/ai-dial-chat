@@ -180,7 +180,7 @@ const ModelIconTemplate = memo(
         data-qa="entity-icon"
       >
         <div
-          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon"
+          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon [-webkit-background-clip:padding-box]"
           style={{ height: `${size}px`, width: `${size}px` }}
         ></div>
         {showFallback ? (

@@ -78,4 +78,8 @@ export class ItemUtil {
     }
     return relativePath;
   }
+
+  public static getUtf8ByteLength(str: string): number {
+    return new TextEncoder().encode(str).byteLength;
+  }
 }

@@ -6,6 +6,7 @@ import {
   autoUpdate,
   flip,
   offset,
+  safePolygon,
   shift,
   useClick,
   useDismiss,
@@ -38,6 +39,7 @@ interface TooltipContainerOptions {
   placement?: Placement;
   isTriggerClickable?: boolean;
   isHoverDisabled?: boolean;
+  interactive?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -47,6 +49,7 @@ function useTooltip({
   placement = 'bottom',
   isTriggerClickable = false,
   isHoverDisabled = false,
+  interactive = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: TooltipContainerOptions = {}) {
@@ -88,8 +91,9 @@ function useTooltip({
     mouseOnly: isTriggerClickable,
     delay: {
       open: 500,
-      close: 0,
+      close: interactive ? 150 : 0,
     },
+    handleClose: interactive ? safePolygon() : null,
   });
 
   const focus = useFocus(context, {
@@ -210,7 +214,7 @@ const TooltipContent = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
           }}
           {...context.getFloatingProps(props)}
           className={classNames(
-            'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+            '!z-[10000] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
             context.getFloatingProps(props).className as string,
           )}
           data-qa="tooltip"
@@ -266,7 +270,7 @@ export function Tooltip({
       </TooltipTrigger>
       <TooltipContent
         className={classNames(
-          'max-w-[250px] break-words sm:max-w-[400px]',
+          '!z-[10000] max-w-[250px] break-words sm:max-w-[400px]',
           contentClassName,
         )}
       >

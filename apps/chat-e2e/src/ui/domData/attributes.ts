@@ -3,6 +3,7 @@ export enum Attributes {
   class = 'class',
   hidden = 'hidden',
   placeholder = 'placeholder',
+  type = 'type',
   name = 'name',
   alt = 'alt',
   src = 'src',
@@ -43,4 +44,6 @@ export enum AttributeValues {
   aspectAuto = 'aspect-auto',
   maxHFull = 'max-h-full',
   maxWFull = 'max-w-full',
+  password = 'password',
+  text = 'text',
 }

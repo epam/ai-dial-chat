@@ -54,6 +54,7 @@ import {
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginModal,
   TooltipPortal,
   TopicsTooltip,
   UploadProgressDialog,
@@ -98,6 +99,7 @@ import {
   ToastAssertion,
   ToolsetApiAuthenticationAssertion,
   ToolsetAuthAssertion,
+  ToolsetLoginModalAssertion,
   TooltipAssertion,
   TooltipPortalAssertion,
   VariableModalAssertion,
@@ -454,6 +456,9 @@ const dialTest = test.extend<{
   selectFolderManagerModalFoldersTree: FoldersTree;
   selectFolderManagerModalGrid: FileManagerGrid;
   selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
+  selectFolderManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
+  selectFolderManagerModalNavigationPanel: FileManagerNavigationPanel;
+  selectFolderManagerModalBreadcrumb: Breadcrumb;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
@@ -464,6 +469,8 @@ const dialTest = test.extend<{
   tooltipPortal: TooltipPortal;
   tooltipPortalAssertion: TooltipPortalAssertion;
   toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
+  toolsetLoginModal: ToolsetLoginModal;
+  toolsetLoginModalAssertion: ToolsetLoginModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1219,6 +1226,30 @@ const dialTest = test.extend<{
     );
     await use(selectFolderManagerModalGridAssertion);
   },
+  selectFolderManagerModalFoldersTreeAssertion: async (
+    { selectFolderManagerModalFoldersTree },
+    use,
+  ) => {
+    const selectFolderManagerModalFoldersTreeAssertion =
+      new FoldersTreeAssertion(selectFolderManagerModalFoldersTree);
+    await use(selectFolderManagerModalFoldersTreeAssertion);
+  },
+  selectFolderManagerModalNavigationPanel: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalNavigationPanel =
+      selectFolderManagerModalManager.getFileManagerNavigationPanel();
+    await use(selectFolderManagerModalNavigationPanel);
+  },
+  selectFolderManagerModalBreadcrumb: async (
+    { selectFolderManagerModalNavigationPanel },
+    use,
+  ) => {
+    const selectFolderManagerModalBreadcrumb =
+      selectFolderManagerModalNavigationPanel.getBreadcrumb();
+    await use(selectFolderManagerModalBreadcrumb);
+  },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();
     await use(selectUploadFolder);
@@ -1920,6 +1951,16 @@ const dialTest = test.extend<{
     const toolsetApiAuthenticationAssertion =
       new ToolsetApiAuthenticationAssertion();
     await use(toolsetApiAuthenticationAssertion);
+  },
+  toolsetLoginModal: async ({ page }, use) => {
+    const toolsetLoginModal = new ToolsetLoginModal(page);
+    await use(toolsetLoginModal);
+  },
+  toolsetLoginModalAssertion: async ({ toolsetLoginModal }, use) => {
+    const toolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      toolsetLoginModal,
+    );
+    await use(toolsetLoginModalAssertion);
   },
 });
 

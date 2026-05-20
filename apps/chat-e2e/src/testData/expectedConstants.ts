@@ -199,7 +199,7 @@ export const ExpectedConstants = {
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
-  maxEntityNameLength: 160,
+  maxEntityNameLength: 255,
   selectAllTooltip: 'Select all',
   unselectAllTooltip: 'Unselect all',
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
@@ -310,7 +310,7 @@ export const ExpectedConstants = {
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
-    'Request name should be at most 160 characters long',
+    'Request name should be at most 255 bytes (UTF-8) long',
   publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
@@ -368,6 +368,9 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
+  apiKeyParameterNameLabel: 'API Key parameter name',
+  apiKeyFieldLabel: 'API Key',
+  apiKeyFieldRequiredError: 'Key name is required',
   fileManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
