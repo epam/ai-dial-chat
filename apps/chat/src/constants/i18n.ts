@@ -1112,4 +1112,7 @@ export enum MarketplaceI18nKeys {
   ApplyChanges = 'Apply changes',
   MCP = 'MCP',
   ChatCompletion = 'Chat Completion',
+  AgentSettings = 'Agent settings',
+  AgentSettingsDescription = 'Agent-wide behavior switches that apply to every conversation.',
+  TimeAwareness = 'Time awareness',
 }
