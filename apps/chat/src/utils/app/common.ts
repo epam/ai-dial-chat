@@ -403,6 +403,38 @@ export const replaceStringRange = (
   return currentString.slice(0, start) + value + currentString.slice(end);
 };
 
+export const getTranscriptTextToInsert = (
+  beforeCursor: string,
+  transcript: string,
+) => {
+  const trimmedTranscript = transcript.trim();
+
+  if (!trimmedTranscript) {
+    return '';
+  }
+
+  const needsLeadingSpace =
+    beforeCursor.trim().length > 0 && !beforeCursor.endsWith(' ');
+
+  return needsLeadingSpace ? ` ${trimmedTranscript}` : trimmedTranscript;
+};
+
+export const buildContentWithTranscriptAtSelection = (
+  input: string,
+  transcript: string,
+  selection: { start: number; end: number },
+) => {
+  const clampedStart = Math.max(0, Math.min(selection.start, input.length));
+  const clampedEnd = Math.max(
+    clampedStart,
+    Math.min(selection.end, input.length),
+  );
+  const beforeCursor = input.substring(0, clampedStart);
+  const textToInsert = getTranscriptTextToInsert(beforeCursor, transcript);
+
+  return replaceStringRange(input, textToInsert, clampedStart, clampedEnd);
+};
+
 export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
 
 export const addTrailingSlashIfAbsent = (id: string) =>
