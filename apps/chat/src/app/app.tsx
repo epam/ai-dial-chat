@@ -14,7 +14,6 @@ const ConversationPage = lazy(() =>
   })),
 );
 
-console.log('App component rendered', ConversationPage);
 function App() {
   return (
     <div className="flex size-full flex-row">
