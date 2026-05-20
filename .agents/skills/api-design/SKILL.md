@@ -30,6 +30,8 @@ For every new or changed endpoint, define these before coding:
 - Rate limiting requirements. Public unauthenticated endpoints should usually tighten the global default.
 - Cache behavior when applicable: TTL, invalidation, and key naming (`<domain>:<resource>[:<param>]`).
 - Frontend impact: typed client helper in `apps/chat/src/server-api/`, shared type in `libs/chat-shared/` if needed, and user-visible i18n strings if errors surface in UI.
+- Generated client impact: expected SDK class, method name, request type, response type, and whether callers need `Raw` access for headers/status. The SDK method name comes from the controller handler name via `operationIdFactory`.
+- OpenAPI annotation plan: request DTO class, response DTO class, path/query param metadata, and success/error `@ApiResponse` coverage.
 
 ## URL And Method Rules
 
@@ -66,6 +68,8 @@ For every new or changed endpoint, define these before coding:
 - For new list endpoints, define pagination explicitly. Prefer cursor pagination for large or append-heavy datasets; offset pagination is acceptable for small admin-style lists or search-like flows.
 - Response bodies must not leak tokens, cookies, stack traces, upstream internals, or persistence-only fields.
 - Add or update Swagger decorators in NestJS controllers for every success and error status.
+- JSON success responses need `type` or `schema`; description-only `@ApiResponse` entries generate weak SDK methods.
+- Use DTO classes for request/response schemas. TypeScript interfaces and anonymous object types are erased at runtime and do not produce useful Swagger metadata.
 
 ## Versioning And Compatibility
 
@@ -80,7 +84,7 @@ When writing or reviewing an OpenSpec change that touches API behavior:
 
 - Specs must include method, full versioned path, request body, response body, and error codes.
 - Tasks must name concrete files, not vague "update API" wording.
-- Include dedicated tasks for backend controller/service tests and frontend API helper updates when applicable.
+- Include dedicated tasks for Swagger DTO/annotation updates, `npm run openapi`, `npm run openapi:check`, backend controller/service tests, and frontend generated-client usage when applicable.
 - Include rate-limit and cache requirements when relevant.
 - Reference `apps/chat-api/AGENTS.md` instead of duplicating NestJS implementation rules.
 

@@ -15,6 +15,7 @@
     "lint:fix": "nx run-many --target=lint --all --fix",
     "lint:affected": "nx affected --target=lint",
     "openapi": "nx run chat-api:openapi",
+    "openapi:check": "node tools/openapi/check-client.mjs",
     "openapi:sdk": "nx run chat-api:openapi-sdk",
     "openapi:spec": "nx run chat-api:openapi-spec",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
