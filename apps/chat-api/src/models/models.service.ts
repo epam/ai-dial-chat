@@ -4,6 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
@@ -34,7 +35,7 @@ export class ModelsService extends AppService {
 
     try {
       const result = await this.client.getModels({
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
         return mapDialHttpStatus(
@@ -66,7 +67,7 @@ export class ModelsService extends AppService {
 
     try {
       const result = await this.client.getModel(modelName, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
         return mapDialHttpStatus(
