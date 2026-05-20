@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { replaceDefaultValuesFromContent } from '../prompts';
+import {
+  getStorageSafeUniquePromptName,
+  replaceDefaultValuesFromContent,
+} from '../prompts';
 
 describe('Prompt utility methods', () => {
   it.each([
@@ -22,4 +25,15 @@ describe('Prompt utility methods', () => {
       expect(replaceDefaultValuesFromContent(content, template)).toBe(expected);
     },
   );
+
+  it('adds numeric suffix and keeps it within byte limit', () => {
+    expect(
+      getStorageSafeUniquePromptName({
+        prompt: { id: 'prompts/test', folderId: 'prompts', name: 'Prompt' },
+        desiredName: 'abcdef',
+        existingNames: ['abcdef'],
+        limits: { maxSegmentBytes: 7 },
+      }),
+    ).toBe('abcde 1');
+  });
 });

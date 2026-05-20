@@ -233,7 +233,7 @@ dialAdminTest(
 
 dialAdminTest(
   'Publish chat: add, rename and delete options for new folder in Organization.\n' +
-    'Max length of folder name in Publish to path should be 160 symbols .\n' +
+    'Max length of folder name in Publish to path should be 255 bytes (UTF-8).\n' +
     'Publish chat: add new folder inside nested folder structure with depth 4.\n' +
     'Change path: create nested folder structure and delete nested folder.\n' +
     'Change path: select folder of different levels.\n' +
@@ -280,8 +280,9 @@ dialAdminTest(
       response: Publication;
     };
     let conversationToPublish: Conversation;
-    const maxNameLength = 160;
-    const newFolderName = 'a' + GeneratorUtil.randomString(maxNameLength * 1.5);
+    const newFolderName =
+      'a' +
+      GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength + 50);
     // Each nested level uses a unique name ("New folder 1" → "New folder 4")
     // so FoldersTree.folderByPath can address every level unambiguously
     // (same-name nesting is filtered out by `folderByPath`'s `hasNot` filter).

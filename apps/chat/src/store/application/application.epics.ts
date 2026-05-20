@@ -27,6 +27,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import {
+  fitApplicationNameToStorageLimits,
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
@@ -124,7 +125,12 @@ const createApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.create(
-        regenerateApplicationId({ ...applicationData, reference: '' }),
+        regenerateApplicationId(
+          fitApplicationNameToStorageLimits({
+            ...applicationData,
+            reference: '',
+          }),
+        ),
         schema,
       ).pipe(
         switchMap((application) =>
@@ -255,7 +261,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
       }
 
       const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
+        fitApplicationNameToStorageLimits(payload.applicationData),
       ) as CustomApplicationModel;
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
