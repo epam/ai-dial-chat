@@ -4,6 +4,8 @@ export interface OverlayState {
   // Special property to check against when comparing new overlay options
   // Do not use for regular usage
   _savedOverlayOptions: ChatOverlayOptions | undefined;
+  /** Latest theme from host setOverlayOptions; applied when theme listing loads. */
+  requestedOverlayTheme?: string;
 
   hostDomain: string;
 
