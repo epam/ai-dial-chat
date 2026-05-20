@@ -289,8 +289,6 @@ export const FileManagerModal = memo(
       t,
     ]);
 
-
-
     const availableTabs = useMemo(() => {
       if (!sourceFilters) return undefined;
 
