@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentsController } from '../deployments.controller';
 import { DeploymentsService } from '../deployments.service';
 
+const TEST_USER = { at: 'test-access-token' };
+
 describe('DeploymentsController (integration)', () => {
   let app: INestApplication;
   let service: {
@@ -24,6 +26,16 @@ describe('DeploymentsController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
+    app.use(
+      (
+        req: Express.Request & { user?: unknown },
+        _res: unknown,
+        next: () => void,
+      ) => {
+        req.user = TEST_USER;
+        next();
+      },
+    );
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -48,6 +60,7 @@ describe('DeploymentsController (integration)', () => {
         .get('/deployments')
         .expect(200);
       expect(response.body).toEqual(deployments);
+      expect(service.getDeployments).toHaveBeenCalledWith(TEST_USER.at);
     });
 
     it('returns 503 when SDK throws network error', async () => {
@@ -69,7 +82,7 @@ describe('DeploymentsController (integration)', () => {
         .get('/deployments/gpt-4')
         .expect(200);
       expect(response.body).toEqual(deployment);
-      expect(service.getDeployment).toHaveBeenCalledWith('gpt-4');
+      expect(service.getDeployment).toHaveBeenCalledWith('gpt-4', TEST_USER.at);
     });
 
     it('returns 404 for unknown deployment', async () => {

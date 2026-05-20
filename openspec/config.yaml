@@ -18,6 +18,7 @@ context: |
   - Commits: Conventional commits — feat/fix/chore/refactor/test/docs with optional scope
 
   ## Libraries
+  - @epam/ai-dial-typescript-sdk: Preferred server-side DIAL Core client in apps/chat-api
   - @epam/ai-dial-ui-kit: Design system base components
   - @tabler/icons-react: Icon set — use for all icons, no inline SVGs
   - react-i18next / i18next: Internationalisation
@@ -127,6 +128,9 @@ rules:
       truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
       DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).
       Do NOT duplicate or paraphrase those rules in the design — reference the section.
+    - For DIAL Core integrations in apps/chat-api/**, prefer @epam/ai-dial-typescript-sdk
+      via the shared AppService SDK client. Use raw fetch only for non-DIAL upstreams or
+      SDK gaps, and document why the exception is needed.
     - Name handler functions with the handle prefix in React components
       (e.g. handleSend, handleScroll, handleKeyDown)
     - Use semantic HTML elements (button, nav, main, section) before div/span

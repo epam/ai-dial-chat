@@ -12,6 +12,7 @@ import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { HealthController } from '../health/health.controller';
+import { ModelsModule } from '../models/models.module';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
 import { AppController } from './app.controller';
@@ -41,6 +42,7 @@ import { AppService } from './app.service';
       exclude: ['/api{/*splat}'],
     }),
     DeploymentsModule,
+    ModelsModule,
     ChatModule,
     ConversationModule,
   ],

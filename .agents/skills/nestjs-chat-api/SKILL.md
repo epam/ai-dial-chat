@@ -1,6 +1,6 @@
 ---
 name: nestjs-chat-api
-description: Build, review, or modify the NestJS backend in apps/chat-api. Use when working on NestJS controllers, services, DTOs, guards, auth, cookies, config, Swagger, rate limiting, backend tests, or any files under apps/chat-api/**.
+description: Build, review, or modify the NestJS backend in apps/chat-api. Use when working on NestJS controllers, services, DTOs, guards, auth, cookies, config, Swagger, rate limiting, DIAL Core integrations, backend tests, or any files under apps/chat-api/**. Prefer @epam/ai-dial-typescript-sdk for DIAL Core calls.
 ---
 
 # NestJS Chat API
@@ -15,6 +15,7 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
 4. Read the nearest reference implementation before editing:
    - Controller pattern: `apps/chat-api/src/themes/theme.controller.ts`
    - Service pattern: `apps/chat-api/src/themes/theme.service.ts`
+   - DIAL SDK client pattern: `apps/chat-api/src/app/app.service.ts`
    - DTO pattern: `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`
    - Env validation: `apps/chat-api/src/config/environment.config.ts` and `apps/chat-api/src/config/validation.ts`
    - Cross-cutting interceptor: `apps/chat-api/src/common/interceptors/metrics.interceptor.ts`
@@ -28,14 +29,16 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
 - Controllers stay thin, use DTOs, include Swagger annotations for every response status, and delegate business logic to services.
 - DTOs use `class-validator` plus Swagger metadata. Apply allowlist `@Matches` validation for values used in paths, URL segments, headers, logs, cookies, or response content.
 - Services use Nest `Logger`, typed `ConfigService<EnvironmentVariables>`, typed HTTP exceptions, timeout-aware outbound calls, and cache keys in the documented format.
+- DIAL Core integrations should use `@epam/ai-dial-typescript-sdk` through the shared `AppService` SDK client. Use raw `fetch` only for non-DIAL upstreams or when the SDK does not expose the required DIAL operation, and document that exception.
 - Cookie and auth changes must preserve `HttpOnly`, `Secure`, `SameSite`, token secrecy, CSRF requirements, and log redaction rules from `apps/chat-api/AGENTS.md`.
 
 ## Implementation Workflow
 
 1. Keep changes in thin slices. Prefer one endpoint, guard, service behavior, or DTO contract at a time.
 2. If adding or changing env vars, update `EnvironmentVariables`, validation, docs, and examples as required by `apps/chat-api/AGENTS.md`.
-3. If adding public API behavior, add or update controller/service tests. Use `supertest` for request-level behavior and mock outbound clients.
-4. Use Nx for verification:
+3. If adding DIAL Core calls, prefer SDK methods and handle `SDKResponse<T>` success/error branches explicitly. Pass per-request auth headers from the BFF session when user-scoped data is required; do not expose DIAL credentials to the browser.
+4. If adding public API behavior, add or update controller/service tests. Use `supertest` for request-level behavior and mock outbound clients or SDK methods.
+5. Use Nx for verification:
    - `pnpm nx test chat-api`
    - `pnpm nx lint chat-api`
    - `pnpm nx build chat-api` when Nest startup, bundling, config, or module wiring is affected
@@ -43,6 +46,7 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
 ## Avoid
 
 - Generic NestJS examples that conflict with this repo's layout or versioning.
+- Using raw `fetch` for DIAL Core endpoints when `@epam/ai-dial-typescript-sdk` supports the operation.
 - Reading `process.env` directly in services.
 - Returning `null` or `undefined` to signal service failures.
 - Missing `@ApiResponse` entries for thrown exceptions.
