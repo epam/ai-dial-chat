@@ -33,12 +33,15 @@ import { combineEpics, ofType } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { getDefaultConversationProps } from '@/src/utils/app/common';
 import {
+  type ExistingConversationNamesForNamingOptions,
   addPausedError,
   excludeSystemMessages,
   getConversationInfoFromId,
   getConversationModelParams,
   getDefaultModelReference,
+  getExistingConversationNamesForNaming,
   getNewConversationName,
+  getStorageSafeUniqueConversationName,
   isChosenConversationValidForCompare,
   isReplayAsIsConversation,
   isReplayConversation,
@@ -54,9 +57,8 @@ import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  generateNextName,
+  fitFolderNameToStorageLimits,
   getFolderFromId,
-  getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
   updateChildAndCurrentFoldersIds,
@@ -93,9 +95,9 @@ import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { EntityType, FeatureType, PartialBy } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
-import { AppAction, AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic, RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -146,6 +148,35 @@ import {
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+
+const getExistingConversationNamesForNamingFromState = (
+  state: RootState,
+  targetConversation: Pick<ConversationInfo, 'id' | 'folderId'>,
+  options: ExistingConversationNamesForNamingOptions,
+): string[] => {
+  const sharedFolderId =
+    options.isOverlay && options.overlayNewConversationsFolder
+      ? options.overlayNewConversationsFolder
+      : options.conversationRootFolderId;
+
+  const folderIds =
+    targetConversation.folderId === sharedFolderId
+      ? [targetConversation.folderId]
+      : [targetConversation.folderId, sharedFolderId];
+
+  const conversations = folderIds.flatMap((folderId) =>
+    ConversationsSelectors.selectConversationsByFolderId(
+      state,
+      folderId,
+    ).filter((conversation) => conversation.folderId === folderId),
+  );
+
+  return getExistingConversationNamesForNaming(
+    conversations,
+    targetConversation,
+    options,
+  );
+};
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -502,19 +533,29 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             const defaultFolderId =
               folderId ?? getConversationRootId(LOCAL_BUCKET);
 
-            const newConversations: Conversation[] = names.map((name, index) =>
-              regenerateConversationId({
+            const siblingConversations = nonLocalConversations.filter(
+              (conv) => conv.folderId === conversationFolderId,
+            );
+            const newConversations: Conversation[] = names.reduce<
+              Conversation[]
+            >((acc, name) => {
+              const resolvedName =
+                name !== DEFAULT_CONVERSATION_NAME
+                  ? name
+                  : getStorageSafeUniqueConversationName({
+                      conversation: {
+                        folderId: defaultFolderId,
+                        name: DEFAULT_CONVERSATION_NAME,
+                        model: { id: modelReference },
+                      },
+                      existingNames: [
+                        ...siblingConversations.map((conv) => conv.name),
+                        ...acc.map((conv) => conv.name),
+                      ],
+                    });
+              const newConversationProps: PartialBy<Conversation, 'id'> = {
                 ...getDefaultConversationProps(),
-                name:
-                  name !== DEFAULT_CONVERSATION_NAME
-                    ? name
-                    : getNextDefaultName(
-                        DEFAULT_CONVERSATION_NAME,
-                        nonLocalConversations.filter(
-                          (conv) => conv.folderId === conversationFolderId,
-                        ),
-                        index,
-                      ),
+                name: resolvedName,
                 messages: [],
                 model: {
                   id: modelReference,
@@ -524,8 +565,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
-              }),
-            );
+              };
+              return acc.concat(regenerateConversationId(newConversationProps));
+            }, []);
             const selectedConversationsIds =
               ConversationsSelectors.selectSelectedConversationsIds(
                 state$.value,
@@ -623,12 +665,14 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         ? getConversationRootId()
         : conversation.folderId;
 
-      const newConversationName = getNextDefaultName(
-        `[Replay] ${conversation.name}`,
-        conversations.filter((conv) => conv.folderId === folderId), //only conversations in the same folder
-        0,
-        true,
-      );
+      const replaySiblingNames = conversations
+        .filter((conv) => conv.folderId === folderId)
+        .map((conv) => conv.name);
+      const newConversationName = getStorageSafeUniqueConversationName({
+        conversation: { ...conversation, folderId },
+        desiredName: `[Replay] ${conversation.name}`,
+        existingNames: replaySiblingNames,
+      });
 
       const userMessages = conversation.messages.filter(
         ({ role }) => role === Role.User,
@@ -687,12 +731,14 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
             ? getConversationRootId()
             : conversation.folderId;
 
-      const newConversationName = getNextDefaultName(
-        `[Playback] ${conversation.name}`,
-        conversations.filter((conv) => conv.folderId === folderId), //only conversations in the same folder
-        0,
-        true,
-      );
+      const playbackSiblingNames = conversations
+        .filter((conv) => conv.folderId === folderId)
+        .map((conv) => conv.name);
+      const newConversationName = getStorageSafeUniqueConversationName({
+        conversation: { ...conversation, folderId },
+        desiredName: `[Playback] ${conversation.name}`,
+        existingNames: playbackSiblingNames,
+      });
 
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
@@ -753,11 +799,13 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ...omit(conversation, ['publicationInfo']),
         ...getDefaultConversationProps(),
         folderId: conversationFolderId,
-        name: generateNextName(
-          DEFAULT_CONVERSATION_NAME,
-          conversation.name,
-          conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
-        ),
+        name: getStorageSafeUniqueConversationName({
+          conversation: { ...conversation, folderId: conversationFolderId },
+          desiredName: conversation.name,
+          existingNames: conversations
+            .filter((c) => c.folderId === conversationFolderId)
+            .map((c) => c.name),
+        }),
       });
 
       return concat(
@@ -883,7 +931,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
+      const newFolder = addGeneratedFolderId(
+        fitFolderNameToStorageLimits({ ...folder, ...payload.values }),
+      );
 
       if (payload.folderId === newFolder.id) {
         return of(
@@ -1340,13 +1390,60 @@ const rateMessageFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const sendMessagesEpic: AppEpic = (action$) =>
+const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
     switchMap(({ payload }) => {
+      const isCompareMode = payload.conversations.length > 1;
+
+      let precomputedNames: (string | undefined)[] = payload.conversations.map(
+        () => undefined,
+      );
+
+      if (isCompareMode) {
+        const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+        const overlayNewConversationsFolder = isOverlay
+          ? state$.value.overlay.newConversationsFolder
+          : undefined;
+        const conversationRootFolderId = getConversationRootId();
+        const namingOptions: ExistingConversationNamesForNamingOptions = {
+          isOverlay,
+          overlayNewConversationsFolder,
+          conversationRootFolderId,
+        };
+
+        const existingNames: string[] = [];
+
+        precomputedNames = payload.conversations.map((conv) => {
+          if (
+            isReplayConversation(conv) ||
+            conv.messages.filter((m) => m.role === Role.User).length > 0 ||
+            !isEntityIdLocal(conv)
+          ) {
+            return undefined;
+          }
+
+          const name = getStorageSafeUniqueConversationName({
+            conversation: conv,
+            desiredName: getNewConversationName(conv, payload.message),
+            existingNames: [
+              ...getExistingConversationNamesForNamingFromState(
+                state$.value,
+                conv,
+                namingOptions,
+              ),
+              ...existingNames,
+            ],
+          });
+
+          if (name) existingNames.push(name);
+          return name;
+        });
+      }
+
       return concat(
         of(ConversationsActions.createAbortController()),
-        ...payload.conversations.map((conv) => {
+        ...payload.conversations.map((conv, index) => {
           return of(
             ConversationsActions.sendMessage({
               conversation: conv,
@@ -1354,6 +1451,7 @@ const sendMessagesEpic: AppEpic = (action$) =>
               deleteCount: payload.deleteCount,
               activeReplayIndex: payload.activeReplayIndex,
               skipRecentModelsUpdate: payload.skipRecentModelsUpdate,
+              precomputedName: precomputedNames[index],
             }),
           );
         }),
@@ -1368,9 +1466,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
       installedModelIds: ModelsSelectors.selectInstalledModelIds(state$.value),
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-      selectedConversationIds:
-        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
       overlaySystemPrompt: OverlaySelectors.selectOverlaySystemPrompt(
         state$.value,
       ),
@@ -1381,8 +1476,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         payload,
         modelsMap,
         installedModelIds,
-        conversations,
-        selectedConversationIds,
         overlaySystemPrompt,
         isOverlay,
       }) => {
@@ -1447,31 +1540,32 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         );
 
         const conversationRootFolderId = getConversationRootId();
-        const overlayNewConversationsFolder =
-          isOverlay && state$.value.overlay.newConversationsFolder;
+        const overlayNewConversationsFolder = isOverlay
+          ? state$.value.overlay.newConversationsFolder
+          : undefined;
 
         const newConversationName =
-          isReplayConversation(payload.conversation) ||
+          payload.precomputedName ??
+          (isReplayConversation(payload.conversation) ||
           updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
           !isEntityIdLocal(payload.conversation)
             ? payload.conversation.name
-            : getNextDefaultName(
-                getNewConversationName(payload.conversation, payload.message),
-                conversations.filter(
-                  (conv) =>
-                    (conv.folderId === payload.conversation.folderId ||
-                      (isEntityIdLocal(payload.conversation) &&
-                        (isOverlay && overlayNewConversationsFolder
-                          ? conv.folderId === overlayNewConversationsFolder
-                          : conv.folderId === conversationRootFolderId))) &&
-                    !selectedConversationIds.includes(conv.id),
+            : getStorageSafeUniqueConversationName({
+                conversation: payload.conversation,
+                desiredName: getNewConversationName(
+                  payload.conversation,
+                  payload.message,
                 ),
-                Math.max(
-                  selectedConversationIds.indexOf(payload.conversation.id),
-                  0,
+                existingNames: getExistingConversationNamesForNamingFromState(
+                  state$.value,
+                  payload.conversation,
+                  {
+                    isOverlay,
+                    overlayNewConversationsFolder,
+                    conversationRootFolderId,
+                  },
                 ),
-                true,
-              );
+              }));
 
         const updatedConversation = regenerateConversationId<Conversation>({
           ...payload.conversation,
@@ -2900,9 +2994,31 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
             : getConversationRootId()))
         : getConversationRootId(LOCAL_BUCKET);
 
+      const siblingConversationsNames = saveInStorage
+        ? ConversationsSelectors.selectConversations(state)
+            .filter(
+              (conv) =>
+                conv.id !== conversation.id && conv.folderId === folderId,
+            )
+            .map((conv) => conv.name)
+        : [];
+
+      const storageSafeName: string | undefined = saveInStorage
+        ? getStorageSafeUniqueConversationName({
+            conversation: {
+              ...(conversation as Conversation),
+              ...values,
+              folderId,
+            },
+            desiredName: values.name ?? conversation.name,
+            existingNames: siblingConversationsNames,
+          })
+        : values.name;
+
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
+        ...(storageSafeName !== undefined && { name: storageSafeName }),
         folderId,
         updatedAt: Date.now(),
       });

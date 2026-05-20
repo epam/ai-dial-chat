@@ -32,6 +32,7 @@ export const PdfPreviewModal = ({ url, title, isOpen, onClose }: Props) => {
       containerClassName="flex flex-col w-full h-full max-w-[1200px] max-h-[95vh] p-3 md:p-4"
       heading={title || t(ChatI18nKeys.Attachment)}
       headingClassName="mb-3"
+      showHeadingTooltip
     >
       <div className="min-h-0 grow overflow-hidden">
         <PdfHighlightViewerLazy url={url} />
