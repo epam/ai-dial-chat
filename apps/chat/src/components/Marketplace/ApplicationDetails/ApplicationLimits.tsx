@@ -1,13 +1,9 @@
 import { IconInfinity } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  AgentUsageStats,
-  DialAIEntityModel,
-  LimitUsage,
-} from '@/src/types/models';
+import { DialAIEntityModel, LimitUsage } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -61,43 +57,27 @@ const LimitItem: FC<LimitItemProps> = ({ limit, title }) => {
   );
 };
 
-interface ApplicationLimitsProps {
-  entity: DialAIEntityModel;
-  limits: AgentUsageStats;
+interface ApplicationLimitsViewProps {
+  limits: (LimitUsage & { title: string })[];
 }
 
-const ApplicationLimitsView: FC<Omit<ApplicationLimitsProps, 'entity'>> = ({
-  limits,
-}) => {
-  const { t } = useTranslation(Translation.Marketplace);
-
+const ApplicationLimitsView: FC<ApplicationLimitsViewProps> = ({ limits }) => {
   return (
     <div className="flex flex-col gap-5 pl-7">
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-        <LimitItem
-          limit={limits.minuteTokenStats}
-          title={t(MarketplaceI18nKeys.Minute)}
-        />
-        <LimitItem
-          limit={limits.weekTokenStats}
-          title={t(MarketplaceI18nKeys.Weekly)}
-        />
-        <LimitItem
-          limit={limits.dayTokenStats}
-          title={t(MarketplaceI18nKeys.Daily)}
-        />
-        <LimitItem
-          limit={limits.monthTokenStats}
-          title={t(MarketplaceI18nKeys.Monthly)}
-        />
+        {limits.map((limit) => (
+          <LimitItem key={limit.title} limit={limit} title={limit.title} />
+        ))}
       </div>
     </div>
   );
 };
 
-export const ApplicationLimits: FC<Omit<ApplicationLimitsProps, 'limits'>> = ({
-  entity,
-}) => {
+interface ApplicationLimitsProps {
+  entity: DialAIEntityModel;
+}
+
+export const ApplicationLimits: FC<ApplicationLimitsProps> = ({ entity }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const isLimitsLoading = useAppSelector(
@@ -105,6 +85,31 @@ export const ApplicationLimits: FC<Omit<ApplicationLimitsProps, 'limits'>> = ({
   );
   const limits = useAppSelector((state) =>
     ModelsSelectors.selectUsageStatsById(state, entity.id),
+  );
+
+  const filteredLimits = useMemo(
+    () =>
+      limits
+        ? [
+            {
+              ...limits.minuteTokenStats,
+              title: t(MarketplaceI18nKeys.Minute),
+            },
+            {
+              ...limits.weekTokenStats,
+              title: t(MarketplaceI18nKeys.Weekly),
+            },
+            {
+              ...limits.dayTokenStats,
+              title: t(MarketplaceI18nKeys.Daily),
+            },
+            {
+              ...limits.monthTokenStats,
+              title: t(MarketplaceI18nKeys.Monthly),
+            },
+          ].filter((limit) => !isUnlimitedUsage(limit))
+        : [],
+    [limits, t],
   );
 
   if (!isLimitsLoading && !limits) return null;
@@ -119,7 +124,15 @@ export const ApplicationLimits: FC<Omit<ApplicationLimitsProps, 'limits'>> = ({
       caretIconArrowView
       caretIconSize={20}
     >
-      {isLimitsLoading ? <Loader /> : <ApplicationLimitsView limits={limits} />}
+      {isLimitsLoading ? (
+        <Loader />
+      ) : filteredLimits.length ? (
+        <ApplicationLimitsView limits={filteredLimits} />
+      ) : (
+        <span className="pl-7 text-base text-secondary">
+          {t(MarketplaceI18nKeys.NoLimitsApplied)}
+        </span>
+      )}
     </CollapsibleSection>
   );
 };

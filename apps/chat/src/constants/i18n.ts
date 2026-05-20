@@ -1116,4 +1116,5 @@ export enum MarketplaceI18nKeys {
   ApplyChanges = 'Apply changes',
   MCP = 'MCP',
   ChatCompletion = 'Chat Completion',
+  NoLimitsApplied = 'No limits applied',
 }
