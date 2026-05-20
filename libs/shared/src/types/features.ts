@@ -35,6 +35,7 @@ export enum Feature {
   EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
 
   // Edit user message
+  UserMessageAlignEnd = 'user-message-align-end', // Align user messages to the inline end (right in LTR)
   HideEditUserMessage = 'hide-edit-user-message', // Hide editing button of user message
 
   // Regenerate assistant message
