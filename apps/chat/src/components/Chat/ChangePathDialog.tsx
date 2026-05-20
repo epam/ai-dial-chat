@@ -13,7 +13,7 @@ import {
 
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions, FoldersActions, UIActions } from '@/src/store/actions';
+import { FilesActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -49,6 +49,7 @@ interface Props {
   initiallySelectedFolderId?: string;
   depth?: number;
   onClose: (path: string | false) => void;
+  onRenamePath?: (newPath: string) => void;
 }
 
 export const ChangePathDialog = ({
@@ -56,6 +57,7 @@ export const ChangePathDialog = ({
   initiallySelectedFolderId,
   depth = 0,
   onClose,
+  onRenamePath,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -228,6 +230,12 @@ export const ChangePathDialog = ({
 
   useEffect(() => {
     if (isOpen) {
+      for (const folder of filesFoldersRef.current) {
+        if (folder.temporary && !addedTempFolderIdsRef.current.has(folder.id)) {
+          addedTempFolderIdsRef.current.add(folder.id);
+        }
+      }
+
       setCurrentPath(resolvedInitialFolderId);
     }
   }, [isOpen, resolvedInitialFolderId, setCurrentPath]);
@@ -237,6 +245,18 @@ export const ChangePathDialog = ({
 
     const { oldId, newId } = lastRenamedParentFolder;
     if (!newId || !oldId) return;
+
+    const initialPath = initiallySelectedFolderId ?? PUBLIC_URL_PREFIX;
+    let newInitialPath = initialPath;
+    if (initialPath === oldId) newInitialPath = newId;
+    else if (initialPath.startsWith(`${oldId}/`))
+      newInitialPath = updateMovedFolderId(oldId, newId, initialPath);
+
+    if (newInitialPath !== initialPath) {
+      onRenamePath?.(
+        organizationFolderIdToPublishPathSuffix(newInitialPath) ?? '',
+      );
+    }
 
     setCurrentPath((prevPath) => {
       if (!prevPath) return prevPath;
@@ -248,7 +268,13 @@ export const ChangePathDialog = ({
     });
 
     dispatch(FilesActions.resetLastRenamedParentFolder());
-  }, [dispatch, lastRenamedParentFolder, setCurrentPath]);
+  }, [
+    dispatch,
+    lastRenamedParentFolder,
+    setCurrentPath,
+    initiallySelectedFolderId,
+    onRenamePath,
+  ]);
 
   useEffect(() => {
     if (isOpen) {
@@ -259,19 +285,6 @@ export const ChangePathDialog = ({
   useEffect(() => {
     if (!isOpen) {
       dispatch(FilesActions.resetNewFolderId());
-      dispatch(FoldersActions.clearTemporaryFolders());
-
-      const idsToRemove = addedTempFolderIdsRef.current;
-      if (idsToRemove.size) {
-        dispatch(
-          FilesActions.setFolders({
-            folders: filesFoldersRef.current.filter(
-              (f) => !idsToRemove.has(f.id),
-            ),
-          }),
-        );
-        addedTempFolderIdsRef.current = new Set();
-      }
     }
   }, [dispatch, isOpen]);
 
@@ -301,6 +314,17 @@ export const ChangePathDialog = ({
       );
     },
     [dispatch],
+  );
+
+  const handleCreateFolderValidate = useCallback(
+    (name: string, parentFolder: DialFile) => {
+      const pathDepth = getOrganizationPublishPathDepth(parentFolder.id);
+      if (pathDepth + 1 + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
+        return t(ChatI18nKeys.NotAllowedMoreNestedFolders);
+      }
+      return handleRenameValidation(name, parentFolder);
+    },
+    [depth, handleRenameValidation, t],
   );
 
   const handleClose = useCallback(() => onClose(false), [onClose]);
@@ -362,7 +386,7 @@ export const ChangePathDialog = ({
       actionsRef={fileManagerActionRef}
       onCreateFolder={handleCreateOrganizationFolder}
       onMoveToFiles={handleOrganizationMoveFiles}
-      onCreateFolderValidate={handleRenameValidation}
+      onCreateFolderValidate={handleCreateFolderValidate}
       onRenameValidate={handleOrganizationRenameValidation}
       onDeleteFiles={handleDeleteTempFolders}
       uploadEnabled={false}

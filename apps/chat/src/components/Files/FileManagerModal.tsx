@@ -9,9 +9,10 @@ import {
   formatFileSize,
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
+  isAllowedMimeType,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
-import { isHiddenEntity } from '@/src/utils/app/search';
+import { isHiddenPath } from '@/src/utils/app/search';
 
 import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -38,8 +39,10 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  DialFileNodeType,
   DialLoader,
   DialPrimaryButton,
+  FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -123,9 +126,14 @@ export const FileManagerModal = memo(
         const added = [...next].filter((id) => !prev.has(id));
         const removed = [...prev].filter((id) => !next.has(id));
 
-        prevSelectionRef.current = next;
+        const filteredNext = new Set(
+          [...next].filter((id) => !isHiddenPath(id)),
+        );
+        prevSelectionRef.current = filteredNext;
 
         for (const id of added) {
+          if (isHiddenPath(id)) continue;
+
           if (folderPaths.has(id)) {
             dispatch(
               FilesActions.addChosenFolder({
@@ -174,6 +182,15 @@ export const FileManagerModal = memo(
       }
     }, [allowedTypesArray, allowedTypesLabel, t]);
 
+    const getDisabledTooltip = useCallback(
+      (row: FileManagerGridRow) => {
+        return isHiddenPath(row.path)
+          ? t(ChatI18nKeys.AttachingHiddenFilesNotAllowed)
+          : undefined;
+      },
+      [t],
+    );
+
     useEffect(() => {
       if (isOpen) {
         dispatch(FilesActions.resetAllFoldersStatus());
@@ -199,7 +216,9 @@ export const FileManagerModal = memo(
         ),
       );
       const hiddenFilesIds = new Set(
-        selectedFiles.filter(isHiddenEntity).map(({ id }) => id),
+        selectedFiles
+          .filter((file) => isHiddenPath(file.id))
+          .map(({ id }) => id),
       );
 
       if (invalidFileIds.size > 0) {
@@ -270,15 +289,6 @@ export const FileManagerModal = memo(
       t,
     ]);
 
-    const getDisabledTooltip = useCallback(
-      (row: { name?: string; path?: string }) => {
-        if (isHiddenEntity(row)) {
-          return t(ChatI18nKeys.AttachingHiddenFilesIsNotAllowed);
-        }
-      },
-      [t],
-    );
-
     const availableTabs = useMemo(() => {
       if (!sourceFilters) return undefined;
 
@@ -318,7 +328,6 @@ export const FileManagerModal = memo(
       treeOptions,
       fileMetadataPopupOptions,
       navigationPanelOptions,
-      gridOptions,
       toolbarOptions,
       deleteConfirmationOptions,
 
@@ -334,6 +343,7 @@ export const FileManagerModal = memo(
       sharedWithMeIds,
 
       uploadEnabled,
+      gridOptions,
     } = useFileManager({
       actionLabelsOptions: {
         actionsByTab: {
@@ -354,6 +364,47 @@ export const FileManagerModal = memo(
       reviewBucket,
       additionalFilesAndFolders,
     });
+
+    const mergedGridOptions = useMemo(
+      () => ({
+        ...gridOptions,
+        additionalGridOptions: {
+          rowSelection: {
+            mode: 'multiRow' as const,
+            isRowSelectable: (node: { data?: FileManagerGridRow | null }) => {
+              const row = node.data;
+              if (!row) return true;
+
+              // Disable hidden files/folders and items inside hidden folders.
+              if (isHiddenPath(row.path)) return false;
+
+              // Replicate the UI kit's internal type/size disabled check so
+              // those rows stay non-selectable when we override rowSelection.
+              if (row.nodeType !== DialFileNodeType.FOLDER) {
+                if (
+                  row.contentType &&
+                  !allowedTypes.includes('*/*') &&
+                  allowedTypes.length > 0 &&
+                  !isAllowedMimeType(allowedTypes, row.contentType)
+                ) {
+                  return false;
+                }
+                if (
+                  maxSelectableFileSize != null &&
+                  row.contentLength != null &&
+                  row.contentLength > maxSelectableFileSize
+                ) {
+                  return false;
+                }
+              }
+
+              return true;
+            },
+          },
+        },
+      }),
+      [allowedTypes, gridOptions, maxSelectableFileSize],
+    );
 
     return (
       <Modal
@@ -419,7 +470,7 @@ export const FileManagerModal = memo(
               treeOptions={treeOptions}
               fileMetadataPopupOptions={fileMetadataPopupOptions}
               navigationPanelOptions={navigationPanelOptions}
-              gridOptions={gridOptions}
+              gridOptions={mergedGridOptions}
               toolbarOptions={toolbarOptions}
               onDeleteFiles={handleDeleteFiles}
               onDownloadFiles={handleDownloadFiles}
