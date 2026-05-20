@@ -18,7 +18,12 @@ import { AssistantMessage } from '@/src/components/Chat/ChatMessage/ChatMessageC
 import { UserMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/UserMessage';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
-import { Message, Role, onLikeMessageHandler } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  Message,
+  Role,
+  onLikeMessageHandler,
+} from '@epam/ai-dial-shared';
 
 interface Props {
   message: Message;
@@ -77,13 +82,17 @@ export function ChatMessageContent({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
+  const isUserMessageAlignEndEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.UserMessageAlignEnd),
+  );
   const messageRef = useRef<HTMLDivElement>(null);
 
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
     !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
+  const alignUserMessageEnd =
+    isUser && !isEditing && isUserMessageAlignEndEnabled;
 
   const chatIconSize = isOverlay
     ? OVERLAY_ICON_SIZE
@@ -112,13 +121,18 @@ export function ChatMessageContent({
           'm-auto flex h-full md:gap-6 md:py-6 lg:px-0',
           !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
           isMobileOrOverlay ? 'p-3' : 'p-4',
+          alignUserMessageEnd && 'flex-row-reverse justify-end',
         )}
       >
         <div className="font-bold" data-qa="message-icon">
           <div
             className={classNames(
               'flex justify-center',
-              isMobileOrOverlay ? 'mr-2.5' : 'mx-2.5',
+              alignUserMessageEnd
+                ? 'ms-2.5'
+                : isMobileOrOverlay
+                  ? 'mr-2.5'
+                  : 'mx-2.5',
             )}
           >
             {isAssistant ? (
@@ -138,7 +152,10 @@ export function ChatMessageContent({
         </div>
 
         <div
-          className="mt-[-2px] w-full min-w-0 shrink"
+          className={classNames(
+            'mt-[-2px] w-full min-w-0 shrink',
+            alignUserMessageEnd && 'text-end',
+          )}
           data-qa="message-content"
         >
           {isUser ? (
@@ -150,6 +167,7 @@ export function ChatMessageContent({
               conversation={conversation}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
+              isAlignedToEnd={alignUserMessageEnd}
               withButtons={withButtons}
               editDisabled={editDisabled}
               onToggleEditing={onToggleEditing}

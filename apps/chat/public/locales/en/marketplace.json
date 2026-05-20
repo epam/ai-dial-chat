@@ -179,5 +179,9 @@
   "Connect via": "Connect via",
   "Apply changes": "Apply changes",
   "MCP": "MCP",
-  "Chat Completion": "Chat Completion"
+  "Chat Completion": "Chat Completion",
+  "Agent settings": "Agent settings",
+  "Agent-wide behavior switches that apply to every conversation.": "Agent-wide behavior switches that apply to every conversation.",
+  "Time awareness": "Time awareness",
+  "No limits applied": "No limits applied"
 }
