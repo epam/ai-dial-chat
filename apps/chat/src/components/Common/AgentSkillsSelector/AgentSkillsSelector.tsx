@@ -5,8 +5,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
@@ -36,9 +37,20 @@ export const AgentSkillsSelector: React.FC<AgentSkillsSelectorProps> = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const quickAppUpdatedPrompt = useAppSelector(
+    PromptsSelectors.selectQuickAppUpdatedPrompt,
+  );
+
   useEffect(() => {
     dispatch(PromptsActions.uploadPromptsWithFoldersRecursive());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!quickAppUpdatedPrompt) return;
+    const { oldId, newId } = quickAppUpdatedPrompt;
+    if (!value.includes(oldId)) return;
+    onChange(value.map((id) => (id === oldId ? newId : id)));
+  }, [quickAppUpdatedPrompt, onChange, value]);
 
   const handleRemoveSkill = useCallback(
     (promptId: string) => {
@@ -53,7 +65,7 @@ export const AgentSkillsSelector: React.FC<AgentSkillsSelectorProps> = ({
         PromptsActions.selectPrompt({
           promptId,
           selectInEditMode: true,
-          isSkillPrompt: true,
+          isQuickAppEditPrompt: true,
         }),
       );
     },
