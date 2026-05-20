@@ -825,6 +825,7 @@ export enum ChatI18nKeys {
   AttachFoldersAndUploadedFiles = 'Attach folders and uploaded files',
   AttachUploadedFiles = 'Attach uploaded files',
   Attach = 'Attach',
+  AttachingHiddenFilesIsNotAllowed = 'Attaching hidden files is not allowed.',
   Address = 'Address',
   PasteLink = 'Paste link',
   Title = 'Title',
@@ -1115,4 +1116,7 @@ export enum MarketplaceI18nKeys {
   ApplyChanges = 'Apply changes',
   MCP = 'MCP',
   ChatCompletion = 'Chat Completion',
+  AgentSettings = 'Agent settings',
+  AgentSettingsDescription = 'Agent-wide behavior switches that apply to every conversation.',
+  TimeAwareness = 'Time awareness',
 }

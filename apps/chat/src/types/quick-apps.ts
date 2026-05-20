@@ -109,6 +109,11 @@ export interface QuickApp2Config {
   input_attachment_types?: string[];
   max_input_attachments?: number;
   skills?: DialPromptSkill[];
+  features?: {
+    timestamp?: {
+      injection_strategy: 'tool_call';
+    } | null;
+  };
 }
 
 export function isDialDeploymentToolset(

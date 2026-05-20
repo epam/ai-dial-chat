@@ -468,6 +468,27 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         </div>
       </FormCollapsibleSection>
 
+      <FormCollapsibleSection
+        name={t(MarketplaceI18nKeys.AgentSettings)}
+        description={t(MarketplaceI18nKeys.AgentSettingsDescription)}
+        dataQa="agent-settings-section"
+      >
+        <Controller
+          name="timestamp"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitch
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              additionalText={t(MarketplaceI18nKeys.TimeAwareness)}
+              className="flex items-center gap-2"
+            />
+          )}
+        />
+      </FormCollapsibleSection>
+
       {doesAgentSupportMcp(appDetails) && !!dialCoreExternalUrl && (
         <div className="flex flex-col gap-4 px-5 py-4">
           <h5 className="text-base font-semibold text-primary">
