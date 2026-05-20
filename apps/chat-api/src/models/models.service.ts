@@ -1,4 +1,7 @@
-import type { DialModel, DialModelListResponse } from '@epam/chat-shared';
+import type {
+  DialModel,
+  DialModelListResponse,
+} from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

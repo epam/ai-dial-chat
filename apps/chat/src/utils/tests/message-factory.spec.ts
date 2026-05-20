@@ -1,4 +1,4 @@
-import { MessageRole } from '@epam/chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { createMessagePair } from '../message-factory';
 

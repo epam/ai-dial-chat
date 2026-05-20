@@ -1,4 +1,4 @@
-import { mergeClasses, MessageRole } from '@epam/chat-shared';
+import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
 import { CSSProperties, FC } from 'react';
 import type { MessageBubbleProps } from '../../models/MessageBubble.js';
 import { BubblePosition } from '../../types/bubble-position.js';

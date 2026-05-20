@@ -2,7 +2,7 @@
 
 ## Overview
 
-`@epam/conversation-messages` is a React component library containing two components:
+`@epam/ai-dial-conversation-messages` is a React component library containing two components:
 
 - **`MessageBubble`** — renders a styled bubble for user messages with position-aware rounded corners
 - **`MessageActions`** — renders a row of icon buttons for message actions, with different buttons per source (User/Agent)
@@ -53,9 +53,9 @@ Used to indicate whether the bubble sits at the top or bottom of a multi-message
 ### Exports
 
 ```ts
-export { MessageBubble } from '@epam/conversation-messages';
-export type { MessageBubbleProps } from '@epam/conversation-messages'; // add once interface is exported
-export { BubblePosition } from '@epam/conversation-messages';
+export { MessageBubble } from '@epam/ai-dial-conversation-messages';
+export type { MessageBubbleProps } from '@epam/ai-dial-conversation-messages'; // add once interface is exported
+export { BubblePosition } from '@epam/ai-dial-conversation-messages';
 ```
 
 ---

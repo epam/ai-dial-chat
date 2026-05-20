@@ -1,4 +1,4 @@
-import { UserProfile } from '@epam/chat-shared';
+import { UserProfile } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';

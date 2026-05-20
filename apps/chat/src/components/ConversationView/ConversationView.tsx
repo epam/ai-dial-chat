@@ -1,6 +1,9 @@
+import {
+  MessageRole,
+  type Message as MessageType,
+} from '@epam/ai-dial-chat-shared';
+import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
-import { MessageRole, type Message as MessageType } from '@epam/chat-shared';
-import { MessageBubble } from '@epam/conversation-messages';
 import {
   FC,
   lazy,
@@ -13,7 +16,7 @@ import {
 } from 'react';
 
 const ConversationInput = lazy(() =>
-  import('@epam/conversation-input').then((module) => ({
+  import('@epam/ai-dial-conversation-input').then((module) => ({
     default: module.ConversationInput,
   })),
 );

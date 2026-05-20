@@ -1,6 +1,6 @@
 # Tasks: conversation-input-spec
 
-## Spec-driven improvements to `@epam/conversation-input`
+## Spec-driven improvements to `@epam/ai-dial-conversation-input`
 
 These tasks resolve the gaps identified in `design.md` and bring the implementation and tests into alignment with the specification.
 

@@ -50,7 +50,7 @@ Rules:
 - When a source folder would contain more than one spec, keep those specs in a
   local `tests/` subfolder instead of mixing multiple test files with
   implementation files.
-- Shared types live in `libs/chat-shared` and are imported as `@epam/chat-shared`. Do not
+- Shared types live in `libs/chat-shared` and are imported as `@epam/ai-dial-chat-shared`. Do not
   duplicate them in the app.
 
 Reference files (read these before adding new code):

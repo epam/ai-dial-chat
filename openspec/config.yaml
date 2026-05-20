@@ -31,8 +31,8 @@ context: |
 
   ## Path Aliases
   - @/*        → apps/chat/*
-  - @epam/conversation-input/* → libs/conversation-input/*
-  - @epam/chat-shared/*        → libs/chat-shared/*
+  - @epam/ai-dial-conversation-input/* → libs/conversation-input/*
+  - @epam/ai-dial-chat-shared/*        → libs/chat-shared/*
 
   ## Commands
   - Frontend dev: `pnpm start` (localhost:4207, proxies /api → localhost:3005)

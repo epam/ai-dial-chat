@@ -2,7 +2,7 @@
 
 - [x] 1.1 Create `libs/chat-shared/src/models/chat.ts` — declare `Message` (`id`, `role`, `content`, `timestamp`) and `Conversation` (`id`, `messages`, `createdAt`) interfaces
 - [x] 1.2 Add `export * from './models/chat.js';` to `libs/chat-shared/src/index.ts`
-- [x] 1.3 Remove the duplicate `Message` type from `apps/chat/src/types/index.ts` and import it from `@epam/chat-shared`
+- [x] 1.3 Remove the duplicate `Message` type from `apps/chat/src/types/index.ts` and import it from `@epam/ai-dial-chat-shared`
 
 ## 2. Backend — conversations domain
 

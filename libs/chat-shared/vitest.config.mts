@@ -4,7 +4,7 @@ export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-shared',
   test: {
-    name: '@epam/chat-shared',
+    name: '@epam/ai-dial-chat-shared',
     watch: false,
     globals: true,
     environment: 'node',

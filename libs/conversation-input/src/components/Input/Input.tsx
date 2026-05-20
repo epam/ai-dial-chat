@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { CSSProperties, type FC, KeyboardEvent, useState } from 'react';
 import type { InputProps } from '../../models/Input.js';
 import styles from './Input.module.scss';

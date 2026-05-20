@@ -28,7 +28,7 @@ export default defineConfig(() => ({
     lib: {
       // Could also be a dictionary or array of multiple entry points.
       entry: 'src/index.ts',
-      name: '@epam/conversation-messages',
+      name: '@epam/ai-dial-conversation-messages',
       fileName: 'index',
       // Change this to the formats you want to support.
       // Don't forget to update your package.json as well.
@@ -40,7 +40,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@epam/conversation-messages',
+    name: '@epam/ai-dial-conversation-messages',
     watch: false,
     globals: true,
     environment: 'jsdom',

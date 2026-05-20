@@ -1,4 +1,4 @@
-import { Conversation } from '@epam/chat-shared';
+import { Conversation } from '@epam/ai-dial-chat-shared';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';

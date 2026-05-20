@@ -1,4 +1,4 @@
-import { ThemeConfiguration } from '@epam/chat-shared';
+import { ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as useFaviconModule from '../../hooks/favicon/useFavicon';

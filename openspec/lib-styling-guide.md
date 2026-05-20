@@ -152,10 +152,10 @@ Apply it alongside the SCSS class. The SCSS class handles color; the font class 
 
 ## Class merging
 
-Use `mergeClasses` from `@epam/chat-shared` (wraps `classnames`):
+Use `mergeClasses` from `@epam/ai-dial-chat-shared` (wraps `classnames`):
 
 ```tsx
-import { mergeClasses } from '@epam/chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 
 className={mergeClasses(styles.wrapper, 'flex w-full gap-2', className)}
 ```
@@ -167,8 +167,8 @@ className={mergeClasses(styles.wrapper, 'flex w-full gap-2', className)}
 ### With this app's theme (CSS vars already defined)
 
 ```tsx
-import { ConversationInput } from '@epam/conversation-input';
-import '@epam/conversation-input/styles.css';
+import { ConversationInput } from '@epam/ai-dial-conversation-input';
+import '@epam/ai-dial-conversation-input/styles.css';
 
 // Theme CSS vars resolve automatically — no extra config needed
 <ConversationInput onSend={handleSend} />;

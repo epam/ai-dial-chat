@@ -1,9 +1,9 @@
+import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { mergeClasses, MessageRole } from '@epam/chat-shared';
 import {
   IconCopy,
   IconMarkdown,

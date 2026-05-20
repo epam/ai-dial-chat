@@ -1,4 +1,7 @@
-import type { DialModel, DialModelListResponse } from '@epam/chat-shared';
+import type {
+  DialModel,
+  DialModelListResponse,
+} from '@epam/ai-dial-chat-shared';
 import {
   BadGatewayException,
   ForbiddenException,

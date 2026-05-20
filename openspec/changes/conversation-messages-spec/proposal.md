@@ -2,7 +2,7 @@
 
 ## What
 
-Add a formal specification and unit test coverage for the `@epam/conversation-messages` library — a React component library that provides `MessageBubble` and `MessageActions` components used to render individual chat messages in the DIAL chat application.
+Add a formal specification and unit test coverage for the `@epam/ai-dial-conversation-messages` library — a React component library that provides `MessageBubble` and `MessageActions` components used to render individual chat messages in the DIAL chat application.
 
 ## Why
 

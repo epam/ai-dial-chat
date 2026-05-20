@@ -1,5 +1,5 @@
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { render } from '@testing-library/react';
-import { MessageRole } from '@epam/chat-shared';
 import { describe, expect, it } from 'vitest';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { MessageBubble } from './MessageBubble.js';

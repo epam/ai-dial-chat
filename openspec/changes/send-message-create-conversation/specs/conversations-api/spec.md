@@ -12,7 +12,7 @@ Request body (`CreateConversationDto`):
 { "firstMessage": "<string, @IsString, @MinLength(1), @MaxLength(4000)>" }
 ```
 
-Response body (201 Created) — shape matches the `Conversation` type from `@epam/chat-shared`:
+Response body (201 Created) — shape matches the `Conversation` type from `@epam/ai-dial-chat-shared`:
 
 ```
 {
@@ -53,7 +53,7 @@ Error codes:
 
 ### Requirement: Shared Conversation and Message types live in libs/chat-shared
 
-The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shared/src/models/chat.ts` and re-exported from `libs/chat-shared/src/index.ts`. Both `apps/chat` (via `@epam/chat-shared`) and `apps/chat-api` (same import) MUST import these types from the shared lib. No duplicate type definitions are permitted in app-level files.
+The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shared/src/models/chat.ts` and re-exported from `libs/chat-shared/src/index.ts`. Both `apps/chat` (via `@epam/ai-dial-chat-shared`) and `apps/chat-api` (same import) MUST import these types from the shared lib. No duplicate type definitions are permitted in app-level files.
 
 `Message` shape:
 
@@ -78,12 +78,12 @@ interface Conversation {
 
 #### Scenario: Shared types are importable in both apps
 
-- **WHEN** `apps/chat` imports `Conversation` from `@epam/chat-shared`
+- **WHEN** `apps/chat` imports `Conversation` from `@epam/ai-dial-chat-shared`
 - **THEN** TypeScript resolves the type without error
 
 #### Scenario: Shared types are importable in chat-api
 
-- **WHEN** `apps/chat-api` imports `Conversation` from `@epam/chat-shared`
+- **WHEN** `apps/chat-api` imports `Conversation` from `@epam/ai-dial-chat-shared`
 - **THEN** TypeScript resolves the type without error
 
 ---

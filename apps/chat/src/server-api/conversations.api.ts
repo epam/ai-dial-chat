@@ -1,4 +1,4 @@
-import { Conversation, ConversationMetadata } from '@epam/chat-shared';
+import { Conversation, ConversationMetadata } from '@epam/ai-dial-chat-shared';
 import { ApiEndpoints, del, get, post, put } from './base';
 
 export const createConversation = (

@@ -1,6 +1,6 @@
 # Tasks: conversation-messages-spec
 
-## Spec-driven improvements to `@epam/conversation-messages`
+## Spec-driven improvements to `@epam/ai-dial-conversation-messages`
 
 These tasks bring the implementation and tests into alignment with the specification in `design.md`.
 

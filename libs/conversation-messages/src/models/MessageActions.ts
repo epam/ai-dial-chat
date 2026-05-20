@@ -1,4 +1,4 @@
-import { MessageRole } from '@epam/chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 
 /** Props accepted by the `MessageActions` component. */
 export interface MessageActionsProps {

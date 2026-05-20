@@ -2,7 +2,7 @@
 
 ## What
 
-Add a formal specification for the `@epam/conversation-input` library — a React component that provides the chat message input interface for the chat application. The specification covers the component's public API, behavior contract, styling, and testing expectations.
+Add a formal specification for the `@epam/ai-dial-conversation-input` library — a React component that provides the chat message input interface for the chat application. The specification covers the component's public API, behavior contract, styling, and testing expectations.
 
 ## Why
 

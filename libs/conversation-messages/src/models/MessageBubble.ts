@@ -1,4 +1,4 @@
-import type { MessageRole } from '@epam/chat-shared';
+import type { MessageRole } from '@epam/ai-dial-chat-shared';
 import type { BubblePosition } from '../types/bubble-position.js';
 
 /** CSS custom-property overrides for the `MessageBubble` component. */

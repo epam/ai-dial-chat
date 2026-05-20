@@ -1,4 +1,4 @@
-import { Message, MessageRole } from '@epam/chat-shared';
+import { Message, MessageRole } from '@epam/ai-dial-chat-shared';
 
 interface MessagePair {
   userMessage: Message;

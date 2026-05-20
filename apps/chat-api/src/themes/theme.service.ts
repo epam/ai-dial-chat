@@ -1,4 +1,4 @@
-import { ThemeConfiguration } from '@epam/chat-shared';
+import { ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,

@@ -3,7 +3,7 @@ import {
   ConversationMetadata,
   MessageRole,
   Message,
-} from '@epam/chat-shared';
+} from '@epam/ai-dial-chat-shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';

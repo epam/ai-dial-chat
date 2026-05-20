@@ -44,7 +44,7 @@
 
 ## 9. Frontend — Server-API Helper
 
-- [x] 9.1 Create `apps/chat/src/server-api/models.ts` — export `getModels(): Promise<DialModelListResponse>` and `getModel(modelName: string): Promise<DialModel>` using the `get` typed helper from `server-api/base.ts`; import types from `@epam/chat-shared`
+- [x] 9.1 Create `apps/chat/src/server-api/models.ts` — export `getModels(): Promise<DialModelListResponse>` and `getModel(modelName: string): Promise<DialModel>` using the `get` typed helper from `server-api/base.ts`; import types from `@epam/ai-dial-chat-shared`
 
 ## 10. Verification
 

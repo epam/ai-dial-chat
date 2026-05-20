@@ -24,9 +24,9 @@ The app currently manages all conversation messages as local state inside `Conve
 
 ### 1. Shared types in `libs/chat-shared`
 
-**Decision:** Add `libs/chat-shared/src/models/chat.ts` with `Message` and `Conversation` interfaces, export from `libs/chat-shared/src/index.ts`. Both `apps/chat` (via `@epam/chat-shared`) and `apps/chat-api` (same import path) use these types.
+**Decision:** Add `libs/chat-shared/src/models/chat.ts` with `Message` and `Conversation` interfaces, export from `libs/chat-shared/src/index.ts`. Both `apps/chat` (via `@epam/ai-dial-chat-shared`) and `apps/chat-api` (same import path) use these types.
 
-**Rationale:** AGENTS.md §1 mandates: "Shared types live in `libs/chat-shared` and are imported as `@epam/chat-shared`. Do not duplicate them in the app." Moving types here eliminates duplication between the frontend `types/index.ts` `Message` type and the new backend DTO.
+**Rationale:** AGENTS.md §1 mandates: "Shared types live in `libs/chat-shared` and are imported as `@epam/ai-dial-chat-shared`. Do not duplicate them in the app." Moving types here eliminates duplication between the frontend `types/index.ts` `Message` type and the new backend DTO.
 
 ### 2. Backend: new `conversations` domain
 

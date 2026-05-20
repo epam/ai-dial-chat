@@ -20,11 +20,11 @@
 
 ```ts
 // Main component
-export { ConversationInput } from '@epam/conversation-input';
-export type { ConversationInputProps } from '@epam/conversation-input';
+export { ConversationInput } from '@epam/ai-dial-conversation-input';
+export type { ConversationInputProps } from '@epam/ai-dial-conversation-input';
 
 // Styles (import separately)
-import '@epam/conversation-input/styles.css';
+import '@epam/ai-dial-conversation-input/styles.css';
 ```
 
 ## Component Structure

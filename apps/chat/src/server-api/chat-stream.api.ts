@@ -1,4 +1,4 @@
-import { StreamChunk } from '@epam/chat-shared';
+import { StreamChunk } from '@epam/ai-dial-chat-shared';
 import { ApiEndpoints, getCsrfToken } from './base';
 
 export interface StreamCompletionOptions {

@@ -1,4 +1,4 @@
-import { ProviderInfo } from '@epam/chat-shared';
+import { ProviderInfo } from '@epam/ai-dial-chat-shared';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';

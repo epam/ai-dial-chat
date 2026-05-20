@@ -51,7 +51,7 @@ Layout (flex, gap, padding, rounded, border) uses Tailwind utility classes. Visu
 
 **Why:** Consistent with `openspec/lib-styling-guide.md` — Tailwind handles structure, SCSS handles dynamic variable-driven visuals.
 
-### 5. `mergeClasses` (from `@epam/chat-shared`) for class composition
+### 5. `mergeClasses` (from `@epam/ai-dial-chat-shared`) for class composition
 
 Used instead of `clsx` because `mergeClasses` is already the shared utility in this library.
 

@@ -1,4 +1,4 @@
-import { UserProfile } from '@epam/chat-shared';
+import { UserProfile } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   ReactNode,

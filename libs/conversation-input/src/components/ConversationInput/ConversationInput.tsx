@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { CSSProperties, type FC } from 'react';
 import type { ConversationInputProps } from '../../models/ConversationInput.js';
 import { Input } from '../Input/Input.js';

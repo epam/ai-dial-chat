@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { CSSProperties, FC } from 'react';
 import type { MessageSourceProps } from '../../models/MessageSource.js';
 import styles from './MessageSource.module.scss';

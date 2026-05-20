@@ -15,7 +15,7 @@ import { ChatI18nKeys } from '../../constants/translation-keys';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 
 const ConversationInput = lazy(() =>
-  import('@epam/conversation-input').then((module) => ({
+  import('@epam/ai-dial-conversation-input').then((module) => ({
     default: module.ConversationInput,
   })),
 );

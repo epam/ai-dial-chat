@@ -28,7 +28,7 @@ apps/chat-api/src/
 - `@nestjs/serve-static` - Static file serving
 - `@nestjs/swagger` - OpenAPI documentation
 - `@epam/ai-dial-typescript-sdk` - AI DIAL integration
-- `@epam/chat-shared` - Shared types and models
+- `@epam/ai-dial-chat-shared` - Shared types and models
 
 ## API Endpoints
 

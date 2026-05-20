@@ -14,7 +14,7 @@ The chat application is a React-based single-page application built with Vite an
 - **State Management**: React Context API + useState hooks
 - **i18n**: react-i18next
 - **HTTP Client**: Fetch API
-- **Component Library**: @epam/conversation-input
+- **Component Library**: @epam/ai-dial-conversation-input
 
 ### Application Structure
 

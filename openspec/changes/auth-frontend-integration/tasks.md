@@ -33,7 +33,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - Wrap the context value in `useMemo`.
   - Register a single `onUnauthorized` listener inside `useEffect` that calls `reset()`; return the cleanup callback.
 - [x] 2.2 Export `useUser(): UserContextType` from the same file; throw `Error('useUser must be used within a UserProvider')` when the context is `undefined`.
-- [x] 2.3 Import `UserProfile` from `@epam/chat-shared` — do not redefine it locally.
+- [x] 2.3 Import `UserProfile` from `@epam/ai-dial-chat-shared` — do not redefine it locally.
 - [x] 2.4 In `apps/chat/src/main.tsx`, wrap the existing `<ThemeProvider>` with `<UserProvider>` so the tree becomes `<BrowserRouter><UserProvider><ThemeProvider>…</ThemeProvider></UserProvider></BrowserRouter>`. Do **not** add `<Routes>` yet (that lands in slice 3).
 - [x] 2.5 Add `apps/chat/src/context/auth/UserContext.spec.tsx` with Vitest + `@testing-library/react`. Use role/label/text queries only. Cover:
   - 2.5.a 200 path → `status` transitions to `'authenticated'` and `user` equals the mocked profile.
