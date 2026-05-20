@@ -61,6 +61,8 @@ interface BaseSendMessagePayload {
 
 export interface SendMessagePayload extends BaseSendMessagePayload {
   conversation: Conversation;
+  /** Pre-computed new name when dispatched as part of a multi-conversation batch (compare mode). */
+  precomputedName?: string;
 }
 
 export interface SendMessagesPayload extends BaseSendMessagePayload {

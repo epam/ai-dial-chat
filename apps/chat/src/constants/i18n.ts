@@ -508,7 +508,10 @@ export enum PromptBarI18nKeys {
   VersionPrefix = 'v.',
   AddAgentSkill = 'Add Agent Skill',
   ValidAgentSkill = 'Valid Agent Skill',
-  AgentSkillHint = 'Agent Skills allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
+  AgentSkills = 'Agent Skills',
+  AgentSkillHintBody = 'allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
+  AgentSkillHintSeeExamples = 'See examples',
+  AgentSkillHintHere = 'here',
 }
 
 //chat.json
@@ -822,6 +825,7 @@ export enum ChatI18nKeys {
   AttachFoldersAndUploadedFiles = 'Attach folders and uploaded files',
   AttachUploadedFiles = 'Attach uploaded files',
   Attach = 'Attach',
+  AttachingHiddenFilesIsNotAllowed = 'Attaching hidden files is not allowed.',
   Address = 'Address',
   PasteLink = 'Paste link',
   Title = 'Title',
@@ -1108,4 +1112,12 @@ export enum MarketplaceI18nKeys {
   Weekly = 'Weekly',
   Daily = 'Daily',
   Monthly = 'Monthly',
+  AdvancedSettings = 'Advanced settings',
+  ConnectVia = 'Connect via',
+  ApplyChanges = 'Apply changes',
+  MCP = 'MCP',
+  ChatCompletion = 'Chat Completion',
+  AgentSettings = 'Agent settings',
+  AgentSettingsDescription = 'Agent-wide behavior switches that apply to every conversation.',
+  TimeAwareness = 'Time awareness',
 }
