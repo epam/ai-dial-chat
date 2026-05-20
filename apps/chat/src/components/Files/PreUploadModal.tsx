@@ -350,14 +350,14 @@ export const PreUploadDialog = ({
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <div
-              className="flex grow cursor-default items-center justify-between min-w-0 rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+              className="flex min-w-0 grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="change-path-container"
             >
-              <span className="truncate min-w-0" data-qa="path">
+              <span className="min-w-0 truncate" data-qa="path">
                 {visiblePath}
               </span>
               <DialLinkButton
-                className="px-0 shrink-0"
+                className="shrink-0 px-0"
                 onClick={handleFolderChange}
                 data-qa="change-button"
                 label={t(ChatI18nKeys.Change)}

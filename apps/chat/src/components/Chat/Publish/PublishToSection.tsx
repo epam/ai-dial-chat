@@ -3,18 +3,18 @@ import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { publishToUrlToOrganizationFolderId } from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
-
-import { useAppSelector } from '@/src/store/hooks';
-import { FilesSelectors } from '@/src/store/selectors';
-import { publishToUrlToOrganizationFolderId } from '@/src/utils/app/publications';
 
 import { ChangePathDialog } from '../ChangePathDialog';
 import { PublicationRequestFormData, PublishRequestFieldsNames } from './form';
@@ -95,7 +95,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
         data-qa="change-path-container"
       >
-        <div className="flex w-full items-center justify-between min-w-0">
+        <div className="flex w-full min-w-0 items-center justify-between">
           <Tooltip
             tooltip={displayPublishToUrl}
             triggerClassName="truncate whitespace-pre block min-w-0 text-left"
