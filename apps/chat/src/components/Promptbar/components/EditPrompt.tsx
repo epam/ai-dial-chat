@@ -60,10 +60,6 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
-  const { isSelectedPromptIsSkill } = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
-  );
-
   const [name, setName] = useState<string>(prompt.name ?? '');
   const [description, setDescription] = useState(prompt?.description ?? '');
   const [content, setContent] = useState(prompt?.content ?? '');
@@ -278,29 +274,52 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
               {t(PromptBarI18nKeys.Prompt)}
               <span className="ml-1 inline text-accent-primary">*</span>
             </label>
-            {isSelectedPromptIsSkill && (
-              <span className="flex items-center">
-                {isValidSkillContent(content) ? (
-                  <span className="mr-2 flex items-center gap-2 text-accent-secondary">
-                    <IconCircleCheckFilled size={16} />
-                    {t(PromptBarI18nKeys.ValidAgentSkill)}
+            <span className="flex items-center">
+              {isValidSkillContent(content) ? (
+                <span className="mr-2 flex items-center gap-2 text-accent-secondary">
+                  <IconCircleCheckFilled size={16} />
+                  {t(PromptBarI18nKeys.ValidAgentSkill)}
+                </span>
+              ) : (
+                <DialLinkButton
+                  className="flex items-center gap-2 text-accent-primary hover:opacity-70"
+                  onClick={handleAddAgentSkill}
+                  iconBefore={<IconClipboardCopy size={20} />}
+                  label={t(PromptBarI18nKeys.AddAgentSkill)}
+                />
+              )}
+              <Tooltip
+                interactive
+                tooltip={
+                  <span>
+                    <a
+                      href="https://agentskills.io/home"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="underline"
+                    >
+                      {t(PromptBarI18nKeys.AgentSkills)}
+                    </a>{' '}
+                    {t(PromptBarI18nKeys.AgentSkillHintBody)}{' '}
+                    {t(PromptBarI18nKeys.AgentSkillHintSeeExamples)}{' '}
+                    <a
+                      href="https://agentskills.io/specification#skill-md-format"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="underline"
+                    >
+                      {t(PromptBarI18nKeys.AgentSkillHintHere)}
+                    </a>
+                    .
                   </span>
-                ) : (
-                  <DialLinkButton
-                    className="flex items-center gap-2 text-accent-primary hover:opacity-70"
-                    onClick={handleAddAgentSkill}
-                    iconBefore={<IconClipboardCopy size={20} />}
-                    label={t(PromptBarI18nKeys.AddAgentSkill)}
-                  />
-                )}
-                <Tooltip tooltip={t(PromptBarI18nKeys.AgentSkillHint)}>
-                  <IconHelpCircle
-                    size={16}
-                    className="cursor-help text-secondary"
-                  />
-                </Tooltip>
-              </span>
-            )}
+                }
+              >
+                <IconHelpCircle
+                  size={16}
+                  className="cursor-help text-secondary"
+                />
+              </Tooltip>
+            </span>
           </div>
           <textarea
             name="content"

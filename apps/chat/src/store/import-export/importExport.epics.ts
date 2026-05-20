@@ -25,7 +25,10 @@ import {
   filterOnlyMyEntities,
   isImportEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
-import { regenerateConversationId } from '@/src/utils/app/conversation';
+import {
+  getStorageSafeUniqueConversationName,
+  regenerateConversationId,
+} from '@/src/utils/app/conversation';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
@@ -41,7 +44,6 @@ import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
-  generateNextName,
   getConversationAttachmentWithPath,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
@@ -60,7 +62,10 @@ import {
   triggerExportConversation,
   updateMessageAttachments,
 } from '@/src/utils/app/import-export';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  getStorageSafeUniquePromptName,
+  regeneratePromptId,
+} from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import {
   compressConversationInZip,
@@ -94,10 +99,6 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_PROMPT_NAME,
-} from '@/src/constants/default-ui-settings';
 import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import {
@@ -721,11 +722,11 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
             const siblingConversations = conversations
               .concat(conversationsToPostfix)
               .filter((sibling) => sibling.folderId === conversation.folderId);
-            const newName = generateNextName(
-              DEFAULT_CONVERSATION_NAME,
-              conversation.name,
-              siblingConversations,
-            );
+            const newName = getStorageSafeUniqueConversationName({
+              conversation,
+              desiredName: conversation.name,
+              existingNames: siblingConversations.map((s) => s.name),
+            });
 
             conversationsToPostfix.push(
               regenerateConversationId({
@@ -785,11 +786,11 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
             const siblingPrompts = prompts
               .concat(promptsToPostfix)
               .filter((sibling) => prompt.folderId === sibling.folderId);
-            const newName = generateNextName(
-              DEFAULT_PROMPT_NAME,
-              prompt.name,
-              siblingPrompts,
-            );
+            const newName = getStorageSafeUniquePromptName({
+              prompt,
+              desiredName: prompt.name,
+              existingNames: siblingPrompts.map((s) => s.name),
+            });
 
             promptsToPostfix.push(
               regeneratePromptId({
@@ -1445,11 +1446,11 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
           const siblingConversations = conversations.filter(
             (sibling) => sibling.folderId === conversationToUpload.folderId,
           );
-          const newName = generateNextName(
-            DEFAULT_CONVERSATION_NAME,
-            conversationToUpload.name,
-            siblingConversations,
-          );
+          const newName = getStorageSafeUniqueConversationName({
+            conversation: conversationToUpload,
+            desiredName: conversationToUpload.name,
+            existingNames: siblingConversations.map((s) => s.name),
+          });
 
           conversationToUpload = regenerateConversationId({
             ...conversationToUpload,
