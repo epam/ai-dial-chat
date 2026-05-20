@@ -86,6 +86,7 @@ export const PreUploadDialog = ({
   const { t } = useTranslation(Translation.Chat);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -236,10 +237,10 @@ export const PreUploadDialog = ({
           files.map((file, i) =>
             i === changedFileIndex
               ? {
-                  ...file,
-                  name: newName,
-                  id: constructPath(getFileRootId(), folderPath, newName),
-                }
+                ...file,
+                name: newName,
+                id: constructPath(getFileRootId(), folderPath, newName),
+              }
               : file,
           ),
         );
@@ -349,14 +350,14 @@ export const PreUploadDialog = ({
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <div
-              className="flex grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+              className="flex grow cursor-default items-center justify-between min-w-0 rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="change-path-container"
             >
-              <span className="truncate" data-qa="path">
+              <span className="truncate min-w-0" data-qa="path">
                 {visiblePath}
               </span>
               <DialLinkButton
-                className="px-0"
+                className="px-0 shrink-0"
                 onClick={handleFolderChange}
                 data-qa="change-button"
                 label={t(ChatI18nKeys.Change)}
@@ -444,6 +445,14 @@ export const PreUploadDialog = ({
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);
+          } else {
+            const root = rootFolderId ?? getFileRootId(bucket);
+            if (selectedFolderId && selectedFolderId !== root) {
+              const exists = folders.some((f) => f.id === selectedFolderId);
+              if (!exists) {
+                setSelectedFolderId(root);
+              }
+            }
           }
           setIsChangeFolderModalOpened(false);
         }}

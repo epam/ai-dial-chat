@@ -109,12 +109,12 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2 hover:border-primary"
         data-qa="change-source-files-path-container"
       >
-        <div className="flex w-full justify-between truncate whitespace-pre break-all">
+        <div className="flex w-full items-center justify-between min-w-0">
           <Tooltip
             tooltip={getIdWithoutRootPathSegments(value ?? '')}
             contentClassName="break-all"
             triggerClassName={classNames(
-              'flex items-center truncate whitespace-pre',
+              'truncate whitespace-pre block min-w-0 text-left',
               !value && 'text-secondary',
             )}
             hideTooltip={!value}
@@ -124,8 +124,8 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
               ? getIdWithoutRootPathSegments(value)
               : t(MarketplaceI18nKeys.NoFolder)}
           </Tooltip>
-          <Tooltip tooltip={tooltip}>
-            <div className="flex items-center gap-3">
+          <Tooltip tooltip={tooltip} triggerClassName="shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
               <DialLinkButton
                 data-qa="change-button"
                 disabled={disabled}
