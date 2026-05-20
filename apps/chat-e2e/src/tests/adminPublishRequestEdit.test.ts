@@ -197,7 +197,7 @@ dialAdminTest(
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await adminInformationModal.cancelButton.click();
+        await adminInformationModal.getCancelButton().click();
         await adminChatAssertion.assertAddAgentButtonState('hidden');
         await baseAssertion.assertElementState(
           adminPublicationReviewControl.backToPublicationRequestButton,
@@ -1346,7 +1346,7 @@ dialAdminTest(
           createdDate: currentDate,
           author: publicAuthorName,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
   },

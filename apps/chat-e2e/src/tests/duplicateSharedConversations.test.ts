@@ -91,7 +91,7 @@ dialSharedWithMeTest(
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
-        await additionalShareUserInformationModal.cancelButton.click();
+        await additionalShareUserInformationModal.getCloseButton().click();
       },
     );
 

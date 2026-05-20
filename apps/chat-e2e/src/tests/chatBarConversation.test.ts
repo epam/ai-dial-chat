@@ -430,7 +430,7 @@ dialTest(
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
 
