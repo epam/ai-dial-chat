@@ -143,7 +143,7 @@ export const replaceTemplates = (
 
 export const isValidSkillContent = (content: string): boolean => {
   const trimmed = content.trim();
-  if (!trimmed.startsWith('---')) return false;
+  if (!trimmed.startsWith('---') || !trimmed.endsWith('---')) return false;
   const nameMatch = /^name:\s*\S/m.test(trimmed);
   const descMatch = /^description:\s*\S/m.test(trimmed);
   return nameMatch && descMatch;
@@ -152,7 +152,7 @@ export const isValidSkillContent = (content: string): boolean => {
 export const generateSkillContent = (): string => {
   const slugName = 'skill-name';
   const desc = 'A description of what this skill does and when to use it.';
-  return `---\nname: ${slugName}\ndescription: ${desc}\n---\n`;
+  return `---\nname: ${slugName}\ndescription: ${desc}\n---`;
 };
 
 export const areSomePromptsFieldsChanged = (
