@@ -834,7 +834,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
 const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.uploadPrompt.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const originalPrompt = PromptsSelectors.selectPrompt(
         state$.value,
         payload.promptId,
@@ -1040,7 +1040,7 @@ const selectPromptEpic: AppEpic = (action$, state$) =>
           PromptsActions.setSelectedPrompt({
             promptId: payload.promptId,
             isApproveRequiredResource: payload.isApproveRequiredResource,
-            isSkillPrompt: payload.isSkillPrompt,
+            isQuickAppEditPrompt: payload.isQuickAppEditPrompt,
           }),
         ),
         of(

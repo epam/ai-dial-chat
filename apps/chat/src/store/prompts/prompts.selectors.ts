@@ -189,7 +189,7 @@ const selectSelectedPromptId = createSelector([rootSelector], (state) => {
     selectedPromptId: state.selectedPromptId,
     isSelectedPromptApproveRequiredResource:
       state.isSelectedPromptApproveRequiredResource,
-    isSelectedPromptIsSkill: state.isSelectedPromptIsSkill,
+    isQuickAppEditPrompt: state.isQuickAppEditPrompt,
   };
 });
 
@@ -355,6 +355,9 @@ const selectDeletingPromptId = (state: RootState) =>
 const selectMoveToPromptId = (state: RootState) =>
   rootSelector(state).moveToPromptId;
 
+const selectQuickAppUpdatedPrompt = (state: RootState) =>
+  rootSelector(state).quickAppUpdatedPrompt;
+
 export const PromptsSelectors = {
   selectPrompts,
   selectSearchTerm,
@@ -396,4 +399,5 @@ export const PromptsSelectors = {
   selectPromptWithVariablesForApply,
   selectDeletingPromptId,
   selectMoveToPromptId,
+  selectQuickAppUpdatedPrompt,
 };
