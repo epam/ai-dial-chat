@@ -56,6 +56,7 @@ export enum UIStorageKeys {
   EnterType = 'enterType',
   AgentsFilterPanelCollapseState = 'agentsFilterPanelCollapseState',
   ToolsetFilterPanelCollapseState = 'toolsetFilterPanelCollapseState',
+  FileSizeCache = 'dialFilesSizeCache',
 }
 
 export enum MigrationStorageKeys {

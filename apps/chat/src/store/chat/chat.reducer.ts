@@ -6,7 +6,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { EntityInfo, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
-import { ChatState } from './chat.types';
+import { ChatState, TextSelection } from './chat.types';
 
 import { MessageFormSchema, MessageFormValueType } from '@epam/ai-dial-shared';
 
@@ -170,8 +170,21 @@ export const chatSlice = createSlice({
     },
     handleVoiceRecording: (
       state,
-      _action: PayloadAction<{ audioBlob: Blob; fileExtension: string }>,
-    ) => state,
+      {
+        payload,
+      }: PayloadAction<{
+        audioBlob: Blob;
+        fileExtension: string;
+        selection?: TextSelection;
+      }>,
+    ) => {
+      state.asrInsertionContext = payload.selection
+        ? {
+            inputSnapshot: state.inputContent,
+            selection: payload.selection,
+          }
+        : undefined;
+    },
     handleUserMessageVoiceRecording: (
       state,
       _action: PayloadAction<{ audioBlob: Blob; fileExtension: string }>,
@@ -214,9 +227,17 @@ export const chatSlice = createSlice({
     transcriptionFailed: (state) => {
       state.isTranscribing = false;
       state.isAsrFlowActive = false;
+      state.asrInsertionContext = undefined;
     },
     clearAsrFlow: (state) => {
       state.isAsrFlowActive = false;
+      state.asrInsertionContext = undefined;
+    },
+    clearAsrInsertionContext: (state) => {
+      state.asrInsertionContext = undefined;
+    },
+    setIsTranscribing: (state, { payload }: PayloadAction<boolean>) => {
+      state.isTranscribing = payload;
     },
   },
 });
