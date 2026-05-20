@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiEndpoints,
   UnauthorizedError,
@@ -288,6 +288,8 @@ describe('ApiEndpoints', () => {
   it('exposes expected endpoint values', () => {
     expect(ApiEndpoints.THEMES).toBe('/api/themes');
     expect(ApiEndpoints.CONVERSATIONS).toBe('/api/v1/conversations');
+    expect(ApiEndpoints.DEPLOYMENTS).toBe('/api/deployments');
+    expect(ApiEndpoints.MODELS).toBe('/api/v1/models');
     expect(ApiEndpoints.AUTH_ME).toBe('/api/v1/auth/me');
   });
 });

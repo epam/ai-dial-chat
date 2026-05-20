@@ -61,3 +61,4 @@ Default behavior:
 - In `apps/*` React component files, prefer `export default` for component exports.
 - In `libs/*` React component files, always use `FC<Props>` syntax: `export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... }`.
 - Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.
+- Every exported symbol in `libs/*` (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.

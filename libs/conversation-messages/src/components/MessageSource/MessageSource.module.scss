@@ -1,0 +1,14 @@
+.button {
+  background: var(--cm-source-bg, var(--bg-neutral, #1d2439));
+  border-color: var(--cm-source-border, var(--stroke-secondary, #242c42));
+  color: var(--cm-source-text, var(--text-primary, #eef1f7));
+  font-size: var(--cm-source-font-size, 10px);
+  font-weight: var(--cm-source-font-weight, 400);
+  line-height: var(--cm-source-line-height, 0.75rem);
+
+  &:hover,
+  &:active {
+    background: var(--cm-source-bg-hover, var(--bg-accent-primary-alpha, #7da4ff26));
+    border-color: var(--cm-source-border-hover, var(--stroke-accent-primary, #7da4ff));
+  }
+}

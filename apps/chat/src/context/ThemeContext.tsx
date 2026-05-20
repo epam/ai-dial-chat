@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useFavicon } from '../hooks/useFavicon';
+import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
 import { applyThemeColors } from '../utils/apply-theme-colors';
 import { getFromLocalStorage } from '../utils/local-storage';

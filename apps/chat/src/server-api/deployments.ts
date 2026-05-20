@@ -1,4 +1,4 @@
-import { get } from './base';
+import { ApiEndpoints, get } from './base';
 
 export interface Deployment {
   id: string;
@@ -11,7 +11,9 @@ export interface DeploymentListResponse {
 }
 
 export const getDeployments = (): Promise<DeploymentListResponse> =>
-  get<DeploymentListResponse>('/api/deployments');
+  get<DeploymentListResponse>(ApiEndpoints.DEPLOYMENTS);
 
 export const getDeployment = (deploymentName: string): Promise<Deployment> =>
-  get<Deployment>(`/api/deployments/${encodeURIComponent(deploymentName)}`);
+  get<Deployment>(
+    `${ApiEndpoints.DEPLOYMENTS}/${encodeURIComponent(deploymentName)}`,
+  );

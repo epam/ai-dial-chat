@@ -502,7 +502,10 @@ describe('AuthController (integration)', () => {
         c.startsWith(COOKIE_NAME),
       );
       expect(sessCookieHeader).toBeDefined();
-      const cookieValue = sessCookieHeader!.split(';')[0].split('=')[1];
+      if (!sessCookieHeader) {
+        throw new Error('Expected session cookie header to be present');
+      }
+      const cookieValue = sessCookieHeader.split(';')[0].split('=')[1];
       const payload = await app.get(SessionService).decrypt(cookieValue);
 
       expect(payload.claims['email']).toBe('u@example.com');

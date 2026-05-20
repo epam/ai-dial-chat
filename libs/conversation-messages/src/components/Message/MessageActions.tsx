@@ -1,5 +1,9 @@
-import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
-import { mergeClasses } from '@epam/chat-shared';
+import {
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
+import { mergeClasses, MessageRole } from '@epam/chat-shared';
 import {
   IconCopy,
   IconMarkdown,
@@ -10,25 +14,10 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { FC } from 'react';
-
-export type MessageSource = 'User' | 'Agent';
-
-interface MessageActionsProps {
-  source?: MessageSource;
-  className?: string;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onRegenerate?: () => void;
-  onCopy?: () => void;
-  onToggleMarkdown?: () => void;
-  onLike?: () => void;
-  onDislike?: () => void;
-}
-
-const ICON_SIZE = 16;
+import type { MessageActionsProps } from '../../models/MessageActions.js';
 
 export const MessageActions: FC<MessageActionsProps> = ({
-  source = 'User',
+  source = MessageRole.User,
   onEdit,
   onDelete,
   onRegenerate,
@@ -45,16 +34,16 @@ export const MessageActions: FC<MessageActionsProps> = ({
         className,
       )}
     >
-      {source === 'User' ? (
+      {source === MessageRole.User ? (
         <>
           <DialGhostIconButton
-            icon={<IconPencil size={ICON_SIZE} />}
+            icon={<IconPencil size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Edit message"
             onClick={onEdit}
           />
           <DialGhostIconButton
-            icon={<IconTrash size={ICON_SIZE} />}
+            icon={<IconTrash size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Delete message"
             onClick={onDelete}
@@ -63,31 +52,31 @@ export const MessageActions: FC<MessageActionsProps> = ({
       ) : (
         <>
           <DialGhostIconButton
-            icon={<IconRefresh size={ICON_SIZE} />}
+            icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Regenerate response"
             onClick={onRegenerate}
           />
           <DialGhostIconButton
-            icon={<IconCopy size={ICON_SIZE} />}
+            icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Copy response"
             onClick={onCopy}
           />
           <DialGhostIconButton
-            icon={<IconMarkdown size={ICON_SIZE} />}
+            icon={<IconMarkdown size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Toggle markdown"
             onClick={onToggleMarkdown}
           />
           <DialGhostIconButton
-            icon={<IconThumbUp size={ICON_SIZE} />}
+            icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Like response"
             onClick={onLike}
           />
           <DialGhostIconButton
-            icon={<IconThumbDown size={ICON_SIZE} />}
+            icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Dislike response"
             onClick={onDislike}

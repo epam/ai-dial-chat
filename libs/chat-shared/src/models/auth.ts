@@ -1,10 +1,17 @@
+/** Authenticated user's profile as returned by the identity provider. */
 export interface UserProfile {
+  /** Subject identifier — unique, stable ID for the user within the provider. */
   sub: string;
+  /** ID of the identity provider that authenticated the user. */
   providerId: string;
+  /** Raw claims from the ID token, keyed by claim name. */
   claims: Record<string, unknown>;
 }
 
+/** Describes an available identity provider. */
 export interface ProviderInfo {
+  /** Unique provider identifier used in API calls. */
   id: string;
+  /** Human-readable display name shown in the UI. */
   label: string;
 }

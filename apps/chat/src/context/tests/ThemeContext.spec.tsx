@@ -1,7 +1,7 @@
 import { ThemeConfiguration } from '@epam/chat-shared';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as useFaviconModule from '../../hooks/useFavicon';
+import * as useFaviconModule from '../../hooks/favicon/useFavicon';
 import * as serverApi from '../../server-api/base';
 import * as applyThemeColors from '../../utils/apply-theme-colors';
 import * as localStorage from '../../utils/local-storage';
@@ -11,7 +11,7 @@ import { ThemeProvider, useTheme } from '../ThemeContext';
 vi.mock('../../server-api/base');
 vi.mock('../../utils/local-storage');
 vi.mock('../../utils/apply-theme-colors');
-vi.mock('../../hooks/useFavicon');
+vi.mock('../../hooks/favicon/useFavicon');
 
 describe('ThemeContext', () => {
   const mockGet = vi.mocked(serverApi.get);

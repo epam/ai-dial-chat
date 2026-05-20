@@ -78,7 +78,7 @@ describe('ThemeService', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue(mockThemeConfig),
-      } as any);
+      } as Response);
 
       const result = await service.getThemes();
 
@@ -94,7 +94,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as any);
+      } as Response);
 
       await expect(service.getThemes()).rejects.toThrow(NotFoundException);
       await expect(service.getThemes()).rejects.toThrow(
@@ -107,7 +107,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-      } as any);
+      } as Response);
 
       await expect(service.getThemes()).rejects.toThrow(BadGatewayException);
       await expect(service.getThemes()).rejects.toThrow(
@@ -149,7 +149,7 @@ describe('ThemeService', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
-      } as any);
+      } as Response);
 
       await expect(service.getThemes()).rejects.toThrow(
         ServiceUnavailableException,
@@ -164,7 +164,7 @@ describe('ThemeService', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         text: vi.fn().mockResolvedValue(mockSvgContent),
-      } as any);
+      } as Response);
 
       const result = await service.getThemeIcon('icon-light.svg');
 
@@ -180,7 +180,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as any);
+      } as Response);
 
       await expect(service.getThemeIcon('missing-icon.svg')).rejects.toThrow(
         NotFoundException,
@@ -195,7 +195,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-      } as any);
+      } as Response);
 
       await expect(service.getThemeIcon('icon.svg')).rejects.toThrow(
         BadGatewayException,
