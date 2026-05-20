@@ -535,6 +535,7 @@ dialAdminTest(
             'visible',
           );
         }
+        await selectFolderManagerModalBreadcrumb.click();
         // Navigate to published folder row (handles scrolling), hover to close dropdown,
         // then verify it has no dots menu
         const publishedFolderRow =

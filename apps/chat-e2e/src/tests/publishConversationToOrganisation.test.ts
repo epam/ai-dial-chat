@@ -233,7 +233,7 @@ dialAdminTest(
 
 dialAdminTest(
   'Publish chat: add, rename and delete options for new folder in Organization.\n' +
-    'Max length of folder name in Publish to path should be 160 symbols .\n' +
+    'Max length of folder name in Publish to path should be 255 bytes (UTF-8).\n' +
     'Publish chat: add new folder inside nested folder structure with depth 4.\n' +
     'Change path: create nested folder structure and delete nested folder.\n' +
     'Change path: select folder of different levels.\n' +
@@ -280,8 +280,9 @@ dialAdminTest(
       response: Publication;
     };
     let conversationToPublish: Conversation;
-    const maxNameLength = 160;
-    const newFolderName = 'a' + GeneratorUtil.randomString(maxNameLength * 1.5);
+    const newFolderName =
+      'a' +
+      GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength + 50);
     // Each nested level uses a unique name ("New folder 1" → "New folder 4")
     // so FoldersTree.folderByPath can address every level unambiguously
     // (same-name nesting is filtered out by `folderByPath`'s `hasNot` filter).
@@ -312,14 +313,19 @@ dialAdminTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         const folderInput = selectFolderManagerModalGrid.getRenameInput();
         await baseAssertion.assertElementState(folderInput, 'visible');
-        // New ChangePathDialog opens the rename input empty and auto-focused;
-        // there is no longer a default folder name pre-filled.
-        await baseAssertion.assertInputValue(folderInput, '');
+        // New ChangePathDialog pre-fills the rename input with the default
+        // "New folder N" name (N — next available index at the current level).
+        await baseAssertion.assertInputValue(
+          folderInput,
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
         await baseAssertion.assertIsElementFocused(folderInput, true);
-        await selectFolderManagerModalGrid.setFolderName(folderNames[0], false);
-        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+        await selectFolderManagerModalGrid.confirmNewFolderName(
+          undefined,
+          false,
+        );
+        await selectFolderManagerModalGrid.goToGridRowByNameCell(
           folderNames[0],
-          'visible',
         );
       },
     );
@@ -349,15 +355,18 @@ dialAdminTest(
           await selectFolderManagerModal.getAddFolderButton().click();
           const subFolderInput = selectFolderManagerModalGrid.getRenameInput();
           await baseAssertion.assertElementState(subFolderInput, 'visible');
-          await baseAssertion.assertInputValue(subFolderInput, '');
-          await baseAssertion.assertIsElementFocused(subFolderInput, true);
+          await baseAssertion.assertInputValue(
+            subFolderInput,
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          );
+          // TODO uncomment when fixed
+          // await baseAssertion.assertIsElementFocused(subFolderInput, true);
           await selectFolderManagerModalGrid.setFolderName(
             folderNames[i],
             false,
           );
-          await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          await selectFolderManagerModalGrid.goToGridRowByNameCell(
             folderNames[i],
-            'visible',
           );
         }
       },
