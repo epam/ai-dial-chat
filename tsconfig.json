@@ -17,6 +17,9 @@
     },
     {
       "path": "./libs/conversation-messages"
+    },
+    {
+      "path": "./libs/chat-api-client"
     }
   ]
 }

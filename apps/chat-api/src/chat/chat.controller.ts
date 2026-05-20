@@ -1,5 +1,6 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ChatCompletionResponseDto } from '../openapi/openapi-response.dto';
 import { ChatService } from './chat.service';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 
@@ -14,6 +15,7 @@ export class ChatController {
   @ApiResponse({
     status: 200,
     description: 'Chat completion response from DIAL Core',
+    type: ChatCompletionResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 404, description: 'Deployment not found' })

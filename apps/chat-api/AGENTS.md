@@ -152,6 +152,16 @@ Controllers MUST:
 - Annotate every endpoint with `@ApiOperation({ summary, description })` and **every
   possible response status** as a separate `@ApiResponse({ status, description, schema? })`
   (200/201, plus each thrown HTTP exception → 400/404/502/503/...).
+- Treat generated client names as public API: `operationIdFactory` uses the controller
+  handler name, so handlers MUST be named as the desired SDK method (`listModels`,
+  `getCurrentUser`, `createConversation`). Use `@ApiOperation({ operationId })` only for
+  exceptional overrides.
+- For every JSON success response, `@ApiResponse` MUST include `type` or `schema`.
+  Do not leave success responses as description-only annotations; that generates
+  `void`/`any` client methods.
+- For every path/query parameter, use a DTO with Swagger metadata or explicit
+  `@ApiParam`/`@ApiQuery` metadata. Parameters without Swagger types generate weak
+  client request types.
 - Apply `@Throttle({ default: { limit, ttl } })` per endpoint when the global throttler
   default (100 req/min) needs tightening. Public unauthenticated endpoints SHOULD have
   a stricter per-route limit.
@@ -258,15 +268,17 @@ Every endpoint that accepts user input MUST use a DTO class with:
 
 - `class-validator` decorators on each field (`@IsString`, `@IsEnum`, `@IsUrl`, `@IsInt`,
   `@Min`, `@Max`, …).
-- `@ApiProperty({ description, example })` on each field so Swagger documents it.
+- `@ApiProperty({ description, example })` or `@ApiPropertyOptional(...)` on each field so
+  Swagger documents it and the generated client gets strong request types.
 - For string fields that may end up in a filesystem path, URL segment, header, log line,
   cookie name, etc. — apply `@Matches(<allowlist regex>, { message })`. Reject everything
   not on the allowlist (anti path-traversal, anti-injection). See `GetThemeIconDto`.
 - Optional fields use `@IsOptional()` + a default in the calling code, not optional
   chaining everywhere.
 
-DTOs live in `<domain>/dto/<action>.dto.ts`. Do **not** inline anonymous types in
-controllers — they break Swagger and validation.
+DTOs live in `<domain>/dto/<action>.dto.ts`. Response DTOs that exist only to document
+proxied upstream shapes may live in `src/openapi/`. Do **not** inline anonymous types or
+use TypeScript interfaces in controllers — they break Swagger runtime metadata.
 
 Global `ValidationPipe` is already configured in `main.ts` with `whitelist`,
 `forbidNonWhitelisted`, `transform`. Do not remove these flags; they are the reason
@@ -392,6 +404,19 @@ pnpm nx lint  chat-api
 pnpm nx build chat-api      # when bundling/Nest startup is affected
 ```
 
+When adding or changing HTTP endpoints, also run:
+
+```sh
+npm run openapi
+npm run openapi:check
+npm exec nx build chat-api-client -- --skip-nx-cache
+npm exec nx lint chat-api-client
+```
+
+Inspect `libs/chat-api-client/src/generated/src/apis` after generation: method names should
+be clean (`getModel`, not `ModelsController_getModel_v1`) and endpoint-level `any` should
+not appear outside the generator's `runtime.ts`.
+
 Do not move to the next slice while any of these is red for the project you touched.
 
 ---
@@ -410,6 +435,10 @@ Do not move to the next slice while any of these is red for the project you touc
 - Reading `process.env` directly inside a service.
 - Casting env vars (`as string`) instead of typing through `EnvironmentVariables`.
 - Missing `@ApiResponse` entries for thrown exceptions.
+- Description-only success `@ApiResponse` entries that generate `void`/`any` SDK methods.
+- Handler names like `handle`, `me`, or `doThing` that become unclear generated SDK method
+  names.
+- Path/query params without DTO Swagger metadata or `@ApiParam`/`@ApiQuery`.
 - Catching errors with no logging and no re-throw.
 - `origin: '*'` CORS when cookies are in use.
 - Stashing tokens, secrets, or full request bodies in logs.

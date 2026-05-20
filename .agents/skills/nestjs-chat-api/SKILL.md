@@ -37,11 +37,18 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
 1. Keep changes in thin slices. Prefer one endpoint, guard, service behavior, or DTO contract at a time.
 2. If adding or changing env vars, update `EnvironmentVariables`, validation, docs, and examples as required by `apps/chat-api/AGENTS.md`.
 3. If adding DIAL Core calls, prefer SDK methods and handle `SDKResponse<T>` success/error branches explicitly. Pass per-request auth headers from the BFF session when user-scoped data is required; do not expose DIAL credentials to the browser.
-4. If adding public API behavior, add or update controller/service tests. Use `supertest` for request-level behavior and mock outbound clients or SDK methods.
-5. Use Nx for verification:
+4. If adding or changing a controller endpoint, treat OpenAPI as part of the implementation:
+   - Use request DTO classes with `class-validator` and `@ApiProperty`/`@ApiPropertyOptional` on every field.
+   - Use response DTO classes for JSON success responses; do not rely on TypeScript interfaces or description-only `@ApiResponse`.
+   - Add `@ApiOperation`, `@ApiResponse` for every status, and `@ApiParam`/`@ApiQuery` when a param is not fully described by a DTO.
+   - Name the controller handler as the desired generated SDK method (`listModels`, `getCurrentUser`, `createConversation`).
+   - Run `npm run openapi`, inspect generated method/type names, then run `npm run openapi:check`.
+5. If adding public API behavior, add or update controller/service tests. Use `supertest` for request-level behavior and mock outbound clients or SDK methods.
+6. Use Nx for verification:
    - `pnpm nx test chat-api`
    - `pnpm nx lint chat-api`
    - `pnpm nx build chat-api` when Nest startup, bundling, config, or module wiring is affected
+   - `pnpm nx build chat-api-client -- --skip-nx-cache` and `pnpm nx lint chat-api-client` when endpoint contracts changed
 
 ## Avoid
 
@@ -50,4 +57,6 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
 - Reading `process.env` directly in services.
 - Returning `null` or `undefined` to signal service failures.
 - Missing `@ApiResponse` entries for thrown exceptions.
+- Description-only success `@ApiResponse` entries that generate `void`/`any` client methods.
+- Anonymous request/response types or interfaces in controller contracts; Swagger needs classes.
 - Logging tokens, cookies, API keys, passwords, request bodies from auth flows, or other secrets.
