@@ -31,6 +31,9 @@ export const isHiddenEntity = (entity: { name?: string; path?: string }) => {
   return !!entity?.name?.startsWith('.');
 };
 
+export const isHiddenPath = (path: string) =>
+  path.split('/').some((segment) => segment.startsWith('.'));
+
 export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
   !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
 
