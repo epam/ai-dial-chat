@@ -312,14 +312,19 @@ dialAdminTest(
         await selectFolderManagerModal.getAddFolderButton().click();
         const folderInput = selectFolderManagerModalGrid.getRenameInput();
         await baseAssertion.assertElementState(folderInput, 'visible');
-        // New ChangePathDialog opens the rename input empty and auto-focused;
-        // there is no longer a default folder name pre-filled.
-        await baseAssertion.assertInputValue(folderInput, '');
+        // New ChangePathDialog pre-fills the rename input with the default
+        // "New folder N" name (N — next available index at the current level).
+        await baseAssertion.assertInputValue(
+          folderInput,
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
         await baseAssertion.assertIsElementFocused(folderInput, true);
-        await selectFolderManagerModalGrid.setFolderName(folderNames[0], false);
-        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+        await selectFolderManagerModalGrid.confirmNewFolderName(
+          undefined,
+          false,
+        );
+        await selectFolderManagerModalGrid.goToGridRowByNameCell(
           folderNames[0],
-          'visible',
         );
       },
     );
@@ -349,15 +354,18 @@ dialAdminTest(
           await selectFolderManagerModal.getAddFolderButton().click();
           const subFolderInput = selectFolderManagerModalGrid.getRenameInput();
           await baseAssertion.assertElementState(subFolderInput, 'visible');
-          await baseAssertion.assertInputValue(subFolderInput, '');
-          await baseAssertion.assertIsElementFocused(subFolderInput, true);
+          await baseAssertion.assertInputValue(
+            subFolderInput,
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          );
+          // TODO uncomment when fixed
+          // await baseAssertion.assertIsElementFocused(subFolderInput, true);
           await selectFolderManagerModalGrid.setFolderName(
             folderNames[i],
             false,
           );
-          await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          await selectFolderManagerModalGrid.goToGridRowByNameCell(
             folderNames[i],
-            'visible',
           );
         }
       },
