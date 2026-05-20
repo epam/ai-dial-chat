@@ -174,5 +174,10 @@
   "Minute": "Minute",
   "Weekly": "Weekly",
   "Daily": "Daily",
-  "Monthly": "Monthly"
+  "Monthly": "Monthly",
+  "Advanced settings": "Advanced settings",
+  "Connect via": "Connect via",
+  "Apply changes": "Apply changes",
+  "MCP": "MCP",
+  "Chat Completion": "Chat Completion"
 }

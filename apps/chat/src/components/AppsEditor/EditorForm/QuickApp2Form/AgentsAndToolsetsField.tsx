@@ -19,7 +19,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { AnyToolset } from '@/src/types/quick-apps';
+import { AnyToolset, DialAppToolset } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/actions';
@@ -33,6 +33,7 @@ import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetTypes } from '@/src/constants/quick-apps';
 
+import { DialAppConfigurationModal } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/DialAppConfigurationModal';
 import {
   AgentOrToolsetSchemaKeys,
   QuickApp2Form as QuickApp2FormType,
@@ -93,6 +94,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [isDiscardingJson, setIsDiscardingJson] = useState(false);
+  const [configuredToolset, setConfiguredToolset] = useState<
+    DialAppToolset | undefined
+  >(undefined);
 
   const { control, setValue, getValues, resetField } =
     useFormContext<QuickApp2FormType>();
@@ -321,6 +325,40 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     ],
   );
 
+  const handleConfigureClick = useCallback(
+    (entity: MarketplaceEntity) => {
+      const option = agentsAndToolsetsOptions.find(
+        (option) => option[AgentOrToolsetSchemaKeys.id] === entity.id,
+      );
+      const dialAppToolset = option?.[
+        AgentOrToolsetSchemaKeys.tool
+      ] as DialAppToolset;
+
+      if (dialAppToolset) {
+        setConfiguredToolset(dialAppToolset);
+      }
+    },
+    [agentsAndToolsetsOptions],
+  );
+
+  const handleApplyAppToolsetConfig = useCallback(
+    (toolset: DialAppToolset) => {
+      setValue(
+        'agentsAndToolsets',
+        agentsAndToolsetsOptions.map((option) =>
+          option[AgentOrToolsetSchemaKeys.id] === toolset.deployment_id
+            ? {
+                ...option,
+                [AgentOrToolsetSchemaKeys.tool]: toolset,
+              }
+            : option,
+        ),
+        { shouldDirty: true, shouldValidate: true, shouldTouch: true },
+      );
+    },
+    [agentsAndToolsetsOptions, setValue],
+  );
+
   return (
     <>
       <Controller
@@ -385,6 +423,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
                   onItemClick={handleItemClick}
                   onJsonSwitchClick={handleJsonViewChange}
+                  onConfigureClick={handleConfigureClick}
                 />
               </div>
               {detailedViewEntity &&
@@ -422,6 +461,14 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         onCancel={() => handleCloseDiscard(false)}
         onClose={() => handleCloseDiscard(false)}
       />
+
+      {configuredToolset && (
+        <DialAppConfigurationModal
+          onClose={() => setConfiguredToolset(undefined)}
+          toolset={configuredToolset}
+          onApply={handleApplyAppToolsetConfig}
+        />
+      )}
     </>
   );
 };
