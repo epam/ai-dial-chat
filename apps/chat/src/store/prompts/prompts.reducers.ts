@@ -30,7 +30,7 @@ const initialState: PromptsState = {
   isSelectedPromptApproveRequiredResource: false,
   isPromptModalOpen: false,
   isPromptModalInitModeEdit: false,
-  isSelectedPromptIsSkill: false,
+  isQuickAppEditPrompt: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -41,6 +41,7 @@ const initialState: PromptsState = {
 
   deletingPromptId: undefined,
   moveToPromptId: undefined,
+  quickAppUpdatedPrompt: null,
 };
 
 export const promptsSlice = createSlice({
@@ -176,6 +177,13 @@ export const promptsSlice = createSlice({
             ? payload.prompt.id
             : payload.id;
       }
+
+      state.quickAppUpdatedPrompt =
+        state.isQuickAppEditPrompt &&
+        payload.prompt.id &&
+        payload.id !== payload.prompt.id
+          ? { oldId: payload.id, newId: payload.prompt.id }
+          : null;
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
@@ -309,14 +317,14 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         promptId: string | undefined;
         isApproveRequiredResource?: boolean;
-        isSkillPrompt?: boolean;
+        isQuickAppEditPrompt?: boolean;
       }>,
     ) => {
       state.selectedPromptId = payload.promptId;
       state.isSelectedPromptApproveRequiredResource =
         !!payload.isApproveRequiredResource;
       state.isPromptLoading = !!payload.promptId;
-      state.isSelectedPromptIsSkill = !!payload.isSkillPrompt;
+      state.isQuickAppEditPrompt = !!payload.isQuickAppEditPrompt;
     },
     uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
       state.isPromptLoading = true;
@@ -444,7 +452,7 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         promptId: string | undefined;
         selectInEditMode?: boolean;
-        isSkillPrompt?: boolean;
+        isQuickAppEditPrompt?: boolean;
         isApproveRequiredResource?: boolean;
       }>,
     ) => {
