@@ -4,7 +4,7 @@
     "/api/themes": {
       "get": {
         "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.",
-        "operationId": "ThemeController_getThemes",
+        "operationId": "getThemes",
         "parameters": [],
         "responses": {
           "200": {
@@ -36,7 +36,7 @@
     "/api/themes/icon": {
       "get": {
         "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.",
-        "operationId": "ThemeController_getThemeIcon",
+        "operationId": "getThemeIcon",
         "parameters": [
           {
             "name": "iconName",
@@ -96,7 +96,7 @@
     "/api/health": {
       "get": {
         "description": "Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification.",
-        "operationId": "HealthController_check",
+        "operationId": "check",
         "parameters": [],
         "responses": {
           "200": {
@@ -135,7 +135,7 @@
     },
     "/api/v1/auth/providers": {
       "get": {
-        "operationId": "AuthController_listProviders_v1",
+        "operationId": "listProviders",
         "parameters": [],
         "responses": {
           "200": {
@@ -150,7 +150,7 @@
     },
     "/api/v1/auth/login/{providerId}": {
       "get": {
-        "operationId": "AuthController_login_v1",
+        "operationId": "login",
         "parameters": [
           {
             "name": "providerId",
@@ -182,7 +182,7 @@
     },
     "/api/v1/auth/callback/{providerId}": {
       "get": {
-        "operationId": "AuthController_callback_v1",
+        "operationId": "callback",
         "parameters": [
           {
             "name": "providerId",
@@ -214,7 +214,7 @@
     },
     "/api/v1/auth/logout": {
       "post": {
-        "operationId": "AuthController_logout_v1",
+        "operationId": "logout",
         "parameters": [],
         "responses": {
           "302": {
@@ -229,7 +229,7 @@
     },
     "/api/v1/auth/me": {
       "get": {
-        "operationId": "AuthController_me_v1",
+        "operationId": "getCurrentUser",
         "parameters": [],
         "responses": {
           "200": {
@@ -252,7 +252,7 @@
     },
     "/api/deployments": {
       "get": {
-        "operationId": "DeploymentsController_getDeployments",
+        "operationId": "getDeployments",
         "parameters": [],
         "responses": {
           "200": {
@@ -289,7 +289,7 @@
     },
     "/api/deployments/{deployment}": {
       "get": {
-        "operationId": "DeploymentsController_getDeployment",
+        "operationId": "getDeployment",
         "parameters": [
           {
             "name": "deployment",
@@ -336,7 +336,7 @@
     "/api/v1/models": {
       "get": {
         "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",
-        "operationId": "ModelsController_listModels_v1",
+        "operationId": "listModels",
         "parameters": [],
         "responses": {
           "200": {
@@ -377,7 +377,7 @@
     "/api/v1/models/{modelName}": {
       "get": {
         "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model.",
-        "operationId": "ModelsController_getModel_v1",
+        "operationId": "getModel",
         "parameters": [
           {
             "name": "modelName",
@@ -434,7 +434,7 @@
     },
     "/api/chat/completions/{deployment}": {
       "post": {
-        "operationId": "ChatController_sendCompletion",
+        "operationId": "sendCompletion",
         "parameters": [
           {
             "name": "deployment",
@@ -488,7 +488,7 @@
     "/api/v1/conversations": {
       "post": {
         "description": "Creates a new conversation with an initial user message and returns it with a server-assigned ID.",
-        "operationId": "ConversationController_createConversation_v1",
+        "operationId": "createConversation",
         "parameters": [],
         "requestBody": {
           "required": true,

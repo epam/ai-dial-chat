@@ -15,7 +15,7 @@
 import * as runtime from '../runtime';
 import type { DialModelDto, DialModelListResponseDto } from '../models/index';
 
-export interface ModelsControllerGetModelV1Request {
+export interface GetModelRequest {
   modelName: string;
 }
 
@@ -27,14 +27,14 @@ export class ModelsApi extends runtime.BaseAPI {
    * Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per model.
    * Get model by name
    */
-  async modelsControllerGetModelV1Raw(
-    requestParameters: ModelsControllerGetModelV1Request,
+  async getModelRaw(
+    requestParameters: GetModelRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<DialModelDto>> {
     if (requestParameters['modelName'] == null) {
       throw new runtime.RequiredError(
         'modelName',
-        'Required parameter "modelName" was null or undefined when calling modelsControllerGetModelV1().',
+        'Required parameter "modelName" was null or undefined when calling getModel().',
       );
     }
 
@@ -65,14 +65,11 @@ export class ModelsApi extends runtime.BaseAPI {
    * Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per model.
    * Get model by name
    */
-  async modelsControllerGetModelV1(
-    requestParameters: ModelsControllerGetModelV1Request,
+  async getModel(
+    requestParameters: GetModelRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DialModelDto> {
-    const response = await this.modelsControllerGetModelV1Raw(
-      requestParameters,
-      initOverrides,
-    );
+    const response = await this.getModelRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -80,7 +77,7 @@ export class ModelsApi extends runtime.BaseAPI {
    * Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
    * List available models
    */
-  async modelsControllerListModelsV1Raw(
+  async listModelsRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<DialModelListResponseDto>> {
     const queryParameters: runtime.HTTPQuery = {};
@@ -106,10 +103,10 @@ export class ModelsApi extends runtime.BaseAPI {
    * Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
    * List available models
    */
-  async modelsControllerListModelsV1(
+  async listModels(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DialModelListResponseDto> {
-    const response = await this.modelsControllerListModelsV1Raw(initOverrides);
+    const response = await this.listModelsRaw(initOverrides);
     return await response.value();
   }
 }

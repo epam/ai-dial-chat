@@ -91,6 +91,31 @@ export interface ChatCompletionResponseDto {
 /**
  *
  * @export
+ * @interface Check200Response
+ */
+export interface Check200Response {
+  /**
+   * Health status
+   * @type {string}
+   * @memberof Check200Response
+   */
+  status?: string;
+  /**
+   * Current server time in ISO format
+   * @type {string}
+   * @memberof Check200Response
+   */
+  timestamp?: string;
+  /**
+   * Application version
+   * @type {string}
+   * @memberof Check200Response
+   */
+  version?: string;
+}
+/**
+ *
+ * @export
  * @interface ConversationMessageDto
  */
 export interface ConversationMessageDto {
@@ -297,31 +322,6 @@ export interface DialModelListResponseDto {
    * @memberof DialModelListResponseDto
    */
   data: Array<DialModelDto>;
-}
-/**
- *
- * @export
- * @interface HealthControllerCheck200Response
- */
-export interface HealthControllerCheck200Response {
-  /**
-   * Health status
-   * @type {string}
-   * @memberof HealthControllerCheck200Response
-   */
-  status?: string;
-  /**
-   * Current server time in ISO format
-   * @type {string}
-   * @memberof HealthControllerCheck200Response
-   */
-  timestamp?: string;
-  /**
-   * Application version
-   * @type {string}
-   * @memberof HealthControllerCheck200Response
-   */
-  version?: string;
 }
 /**
  *

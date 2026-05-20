@@ -15,7 +15,7 @@
 import * as runtime from '../runtime';
 import type { ThemeConfigResponseDto } from '../models/index';
 
-export interface ThemeControllerGetThemeIconRequest {
+export interface GetThemeIconRequest {
   iconName: string;
 }
 
@@ -27,14 +27,14 @@ export class ThemesApi extends runtime.BaseAPI {
    * Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.
    * Get theme icon
    */
-  async themeControllerGetThemeIconRaw(
-    requestParameters: ThemeControllerGetThemeIconRequest,
+  async getThemeIconRaw(
+    requestParameters: GetThemeIconRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<string>> {
     if (requestParameters['iconName'] == null) {
       throw new runtime.RequiredError(
         'iconName',
-        'Required parameter "iconName" was null or undefined when calling themeControllerGetThemeIcon().',
+        'Required parameter "iconName" was null or undefined when calling getThemeIcon().',
       );
     }
 
@@ -69,11 +69,11 @@ export class ThemesApi extends runtime.BaseAPI {
    * Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.
    * Get theme icon
    */
-  async themeControllerGetThemeIcon(
-    requestParameters: ThemeControllerGetThemeIconRequest,
+  async getThemeIcon(
+    requestParameters: GetThemeIconRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<string> {
-    const response = await this.themeControllerGetThemeIconRaw(
+    const response = await this.getThemeIconRaw(
       requestParameters,
       initOverrides,
     );
@@ -84,7 +84,7 @@ export class ThemesApi extends runtime.BaseAPI {
    * Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.
    * Get themes configuration
    */
-  async themeControllerGetThemesRaw(
+  async getThemesRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<ThemeConfigResponseDto>> {
     const queryParameters: runtime.HTTPQuery = {};
@@ -110,10 +110,10 @@ export class ThemesApi extends runtime.BaseAPI {
    * Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.
    * Get themes configuration
    */
-  async themeControllerGetThemes(
+  async getThemes(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ThemeConfigResponseDto> {
-    const response = await this.themeControllerGetThemesRaw(initOverrides);
+    const response = await this.getThemesRaw(initOverrides);
     return await response.value();
   }
 }

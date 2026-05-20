@@ -4,7 +4,10 @@ import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
-import { createOpenApiConfig } from './openapi/openapi.config';
+import {
+  createOpenApiConfig,
+  openApiDocumentOptions,
+} from './openapi/openapi.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -58,6 +61,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(
       app,
       createOpenApiConfig(port),
+      openApiDocumentOptions,
     );
     SwaggerModule.setup('api/docs', app, document);
     Logger.log(

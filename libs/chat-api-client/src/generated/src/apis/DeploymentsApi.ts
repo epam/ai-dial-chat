@@ -15,7 +15,7 @@
 import * as runtime from '../runtime';
 import type { DialDeploymentDto } from '../models/index';
 
-export interface DeploymentsControllerGetDeploymentRequest {
+export interface GetDeploymentRequest {
   deployment: string;
 }
 
@@ -26,14 +26,14 @@ export class DeploymentsApi extends runtime.BaseAPI {
   /**
    * Get a single deployment by name
    */
-  async deploymentsControllerGetDeploymentRaw(
-    requestParameters: DeploymentsControllerGetDeploymentRequest,
+  async getDeploymentRaw(
+    requestParameters: GetDeploymentRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<DialDeploymentDto>> {
     if (requestParameters['deployment'] == null) {
       throw new runtime.RequiredError(
         'deployment',
-        'Required parameter "deployment" was null or undefined when calling deploymentsControllerGetDeployment().',
+        'Required parameter "deployment" was null or undefined when calling getDeployment().',
       );
     }
 
@@ -63,11 +63,11 @@ export class DeploymentsApi extends runtime.BaseAPI {
   /**
    * Get a single deployment by name
    */
-  async deploymentsControllerGetDeployment(
-    requestParameters: DeploymentsControllerGetDeploymentRequest,
+  async getDeployment(
+    requestParameters: GetDeploymentRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DialDeploymentDto> {
-    const response = await this.deploymentsControllerGetDeploymentRaw(
+    const response = await this.getDeploymentRaw(
       requestParameters,
       initOverrides,
     );
@@ -77,7 +77,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   /**
    * List all available deployments
    */
-  async deploymentsControllerGetDeploymentsRaw(
+  async getDeploymentsRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<Array<DialDeploymentDto>>> {
     const queryParameters: runtime.HTTPQuery = {};
@@ -102,11 +102,10 @@ export class DeploymentsApi extends runtime.BaseAPI {
   /**
    * List all available deployments
    */
-  async deploymentsControllerGetDeployments(
+  async getDeployments(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<DialDeploymentDto>> {
-    const response =
-      await this.deploymentsControllerGetDeploymentsRaw(initOverrides);
+    const response = await this.getDeploymentsRaw(initOverrides);
     return await response.value();
   }
 }

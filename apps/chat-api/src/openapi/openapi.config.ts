@@ -1,4 +1,4 @@
-import { DocumentBuilder } from '@nestjs/swagger';
+import { DocumentBuilder, type SwaggerDocumentOptions } from '@nestjs/swagger';
 
 export const createOpenApiConfig = (port: string | number) =>
   new DocumentBuilder()
@@ -16,3 +16,7 @@ export const createOpenApiConfig = (port: string | number) =>
     .addTag('chat', 'Chat completion proxy to DIAL Core')
     .addCookieAuth('session')
     .build();
+
+export const openApiDocumentOptions: SwaggerDocumentOptions = {
+  operationIdFactory: (_controllerKey: string, methodKey: string) => methodKey,
+};

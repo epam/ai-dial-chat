@@ -409,7 +409,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
   @ApiResponse({ status: 401, description: 'No valid session' })
-  me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  getCurrentUser(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const user = req.user as SessionUser;
     res.setHeader('X-CSRF-Token', user.csrf);
     return {

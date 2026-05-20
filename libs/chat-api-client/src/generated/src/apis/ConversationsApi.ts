@@ -18,7 +18,7 @@ import type {
   CreateConversationDto,
 } from '../models/index';
 
-export interface ConversationControllerCreateConversationV1Request {
+export interface CreateConversationRequest {
   createConversationDto: CreateConversationDto;
 }
 
@@ -30,14 +30,14 @@ export class ConversationsApi extends runtime.BaseAPI {
    * Creates a new conversation with an initial user message and returns it with a server-assigned ID.
    * Create a new conversation
    */
-  async conversationControllerCreateConversationV1Raw(
-    requestParameters: ConversationControllerCreateConversationV1Request,
+  async createConversationRaw(
+    requestParameters: CreateConversationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<ConversationResponseDto>> {
     if (requestParameters['createConversationDto'] == null) {
       throw new runtime.RequiredError(
         'createConversationDto',
-        'Required parameter "createConversationDto" was null or undefined when calling conversationControllerCreateConversationV1().',
+        'Required parameter "createConversationDto" was null or undefined when calling createConversation().',
       );
     }
 
@@ -67,11 +67,11 @@ export class ConversationsApi extends runtime.BaseAPI {
    * Creates a new conversation with an initial user message and returns it with a server-assigned ID.
    * Create a new conversation
    */
-  async conversationControllerCreateConversationV1(
-    requestParameters: ConversationControllerCreateConversationV1Request,
+  async createConversation(
+    requestParameters: CreateConversationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ConversationResponseDto> {
-    const response = await this.conversationControllerCreateConversationV1Raw(
+    const response = await this.createConversationRaw(
       requestParameters,
       initOverrides,
     );

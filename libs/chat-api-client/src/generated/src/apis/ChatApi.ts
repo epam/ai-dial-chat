@@ -18,7 +18,7 @@ import type {
   ChatCompletionResponseDto,
 } from '../models/index';
 
-export interface ChatControllerSendCompletionRequest {
+export interface SendCompletionRequest {
   deployment: string;
   chatCompletionDto: ChatCompletionDto;
 }
@@ -30,21 +30,21 @@ export class ChatApi extends runtime.BaseAPI {
   /**
    * Send a chat completion request to DIAL Core
    */
-  async chatControllerSendCompletionRaw(
-    requestParameters: ChatControllerSendCompletionRequest,
+  async sendCompletionRaw(
+    requestParameters: SendCompletionRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<ChatCompletionResponseDto>> {
     if (requestParameters['deployment'] == null) {
       throw new runtime.RequiredError(
         'deployment',
-        'Required parameter "deployment" was null or undefined when calling chatControllerSendCompletion().',
+        'Required parameter "deployment" was null or undefined when calling sendCompletion().',
       );
     }
 
     if (requestParameters['chatCompletionDto'] == null) {
       throw new runtime.RequiredError(
         'chatCompletionDto',
-        'Required parameter "chatCompletionDto" was null or undefined when calling chatControllerSendCompletion().',
+        'Required parameter "chatCompletionDto" was null or undefined when calling sendCompletion().',
       );
     }
 
@@ -77,11 +77,11 @@ export class ChatApi extends runtime.BaseAPI {
   /**
    * Send a chat completion request to DIAL Core
    */
-  async chatControllerSendCompletion(
-    requestParameters: ChatControllerSendCompletionRequest,
+  async sendCompletion(
+    requestParameters: SendCompletionRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ChatCompletionResponseDto> {
-    const response = await this.chatControllerSendCompletionRaw(
+    const response = await this.sendCompletionRaw(
       requestParameters,
       initOverrides,
     );

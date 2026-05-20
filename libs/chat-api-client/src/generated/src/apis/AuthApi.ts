@@ -14,11 +14,11 @@
 
 import * as runtime from '../runtime';
 
-export interface AuthControllerCallbackV1Request {
+export interface CallbackRequest {
   providerId: string;
 }
 
-export interface AuthControllerLoginV1Request {
+export interface LoginRequest {
   providerId: string;
 }
 
@@ -29,14 +29,14 @@ export class AuthApi extends runtime.BaseAPI {
   /**
    * OIDC authorization callback
    */
-  async authControllerCallbackV1Raw(
-    requestParameters: AuthControllerCallbackV1Request,
+  async callbackRaw(
+    requestParameters: CallbackRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters['providerId'] == null) {
       throw new runtime.RequiredError(
         'providerId',
-        'Required parameter "providerId" was null or undefined when calling authControllerCallbackV1().',
+        'Required parameter "providerId" was null or undefined when calling callback().',
       );
     }
 
@@ -66,17 +66,51 @@ export class AuthApi extends runtime.BaseAPI {
   /**
    * OIDC authorization callback
    */
-  async authControllerCallbackV1(
-    requestParameters: AuthControllerCallbackV1Request,
+  async callback(
+    requestParameters: CallbackRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.authControllerCallbackV1Raw(requestParameters, initOverrides);
+    await this.callbackRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Get current user profile
+   */
+  async getCurrentUserRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/auth/me`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Get current user profile
+   */
+  async getCurrentUser(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.getCurrentUserRaw(initOverrides);
   }
 
   /**
    * List configured identity providers
    */
-  async authControllerListProvidersV1Raw(
+  async listProvidersRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     const queryParameters: runtime.HTTPQuery = {};
@@ -101,23 +135,23 @@ export class AuthApi extends runtime.BaseAPI {
   /**
    * List configured identity providers
    */
-  async authControllerListProvidersV1(
+  async listProviders(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.authControllerListProvidersV1Raw(initOverrides);
+    await this.listProvidersRaw(initOverrides);
   }
 
   /**
    * Start OIDC login flow
    */
-  async authControllerLoginV1Raw(
-    requestParameters: AuthControllerLoginV1Request,
+  async loginRaw(
+    requestParameters: LoginRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters['providerId'] == null) {
       throw new runtime.RequiredError(
         'providerId',
-        'Required parameter "providerId" was null or undefined when calling authControllerLoginV1().',
+        'Required parameter "providerId" was null or undefined when calling login().',
       );
     }
 
@@ -147,17 +181,17 @@ export class AuthApi extends runtime.BaseAPI {
   /**
    * Start OIDC login flow
    */
-  async authControllerLoginV1(
-    requestParameters: AuthControllerLoginV1Request,
+  async login(
+    requestParameters: LoginRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.authControllerLoginV1Raw(requestParameters, initOverrides);
+    await this.loginRaw(requestParameters, initOverrides);
   }
 
   /**
    * Log out and clear session cookie
    */
-  async authControllerLogoutV1Raw(
+  async logoutRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     const queryParameters: runtime.HTTPQuery = {};
@@ -182,43 +216,9 @@ export class AuthApi extends runtime.BaseAPI {
   /**
    * Log out and clear session cookie
    */
-  async authControllerLogoutV1(
+  async logout(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.authControllerLogoutV1Raw(initOverrides);
-  }
-
-  /**
-   * Get current user profile
-   */
-  async authControllerMeV1Raw(
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: runtime.HTTPQuery = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/v1/auth/me`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * Get current user profile
-   */
-  async authControllerMeV1(
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.authControllerMeV1Raw(initOverrides);
+    await this.logoutRaw(initOverrides);
   }
 }

@@ -13,7 +13,7 @@
  */
 
 import * as runtime from '../runtime';
-import type { HealthControllerCheck200Response } from '../models/index';
+import type { Check200Response } from '../models/index';
 
 /**
  *
@@ -23,9 +23,9 @@ export class HealthApi extends runtime.BaseAPI {
    * Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification.
    * Check application health status
    */
-  async healthControllerCheckRaw(
+  async checkRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<HealthControllerCheck200Response>> {
+  ): Promise<runtime.ApiResponse<Check200Response>> {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -49,10 +49,10 @@ export class HealthApi extends runtime.BaseAPI {
    * Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification.
    * Check application health status
    */
-  async healthControllerCheck(
+  async check(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<HealthControllerCheck200Response> {
-    const response = await this.healthControllerCheckRaw(initOverrides);
+  ): Promise<Check200Response> {
+    const response = await this.checkRaw(initOverrides);
     return await response.value();
   }
 }
