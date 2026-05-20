@@ -1,5 +1,7 @@
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import {
+  getStorageSafeUniqueToolsetName,
+  isToolsetSignedIn,
+} from '@/src/utils/app/toolsets';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
@@ -176,7 +178,17 @@ export const getDefaultFormData = ({
   return {
     name:
       toolset?.name ??
-      getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
+      getStorageSafeUniqueToolsetName({
+        toolset: {
+          name: '',
+          version: toolset?.version ?? DEFAULT_VERSION,
+          folderId: toolset?.folderId,
+          id: toolset?.id,
+        },
+        defaultName: DEFAULT_TOOLSET_NAME,
+        existingNames: (toolsets ?? []).map((t) => t.name),
+      }) ??
+      DEFAULT_TOOLSET_NAME,
     endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: toolset?.description ?? '',

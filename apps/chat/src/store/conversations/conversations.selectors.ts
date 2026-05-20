@@ -17,11 +17,11 @@ import {
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
-  getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
   getPartialAndFullyChosenFolders,
+  getStorageSafeUniqueFolderName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
 import {
@@ -44,7 +44,6 @@ import {
   isSearchTermMatched,
 } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, NotAllowedItem } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
@@ -59,7 +58,6 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { AudioMimeType } from '@/src/constants/audio';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import {
   ConversationInfo,
@@ -661,10 +659,11 @@ const selectNewFolderName = createSelector(
     (_state: RootState, folderId: string | undefined) => folderId,
   ],
   (folders, folderId) => {
-    return getNextDefaultName(
-      translate(DEFAULT_FOLDER_NAME),
-      folders.filter((f) => f.folderId === folderId),
-    );
+    const siblings = folders.filter((f) => f.folderId === folderId);
+    return getStorageSafeUniqueFolderName({
+      folderId: folderId ?? '',
+      existingNames: siblings.map((f) => f.name),
+    });
   },
 );
 

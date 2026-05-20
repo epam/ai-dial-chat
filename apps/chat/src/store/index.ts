@@ -6,7 +6,11 @@ import { Store, combineReducers, configureStore } from '@reduxjs/toolkit';
 
 import { EpicMiddleware, createEpicMiddleware } from 'redux-observable';
 
+import { initResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
+
 import { AppAction, RootState } from '@/src/types/store';
+
+import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
 
 import { applicationSlice } from './application/application.reducers';
 import { applicationTypesSchemasSlice } from './applicationTypeSchemas/applicationTypeSchemas.reducers';
@@ -87,6 +91,11 @@ export type AppStore = ReturnType<typeof createStore>;
 export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {
+  initResourceMaxSegmentBytes(
+    preloadedState.settings?.resourceMaxSegmentBytes ??
+      DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
+  );
+
   if (typeof window === 'undefined') {
     const epicMiddleware = createEpicMiddleware<
       AppAction,
