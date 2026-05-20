@@ -43,4 +43,6 @@ export interface FilesState {
   searchListingMetadata: Record<string, SearchListingMetadata>;
 
   sharedWithMeFilesAndFoldersIds: string[];
+
+  localFileSizeCache: Record<string, number>;
 }
