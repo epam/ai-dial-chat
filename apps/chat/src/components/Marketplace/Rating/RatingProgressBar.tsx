@@ -16,7 +16,7 @@ export const RatingProgressBar = ({
   return (
     <div
       className={classNames(
-        'h-1.5 w-full rounded bg-layer-4',
+        'h-1.5 w-full overflow-hidden rounded bg-layer-4',
         wrapperClassName,
       )}
     >
