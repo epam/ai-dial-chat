@@ -16,6 +16,11 @@ alwaysApply: false
 - **Controllers are thin**: `@ApiTags` + `@Controller({ path, version })`, `@ApiOperation` +
   `@ApiResponse` for **every** status code, `@Throttle` per public endpoint, delegate to a
   service. Reference: `apps/chat-api/src/themes/theme.controller.ts`.
+- **OpenAPI is part of endpoint implementation**: handler names become generated SDK method
+  names through `operationIdFactory`, so use names like `listModels`/`getCurrentUser`.
+  Success `@ApiResponse` entries need `type`, `schema`, or `content`; path/query params need
+  DTO Swagger metadata or `@ApiParam`/`@ApiQuery`. After endpoint changes run
+  `npm run openapi`, `npm run openapi:check`, and build/lint `chat-api-client`.
 - **Services use Logger + ConfigService**: `private readonly logger = new Logger(X.name)`,
   `configService.get('VAR', { infer: true })`. DIAL Core integrations prefer
   `@epam/ai-dial-typescript-sdk` through `apps/chat-api/src/app/app.service.ts`; use raw
@@ -24,6 +29,8 @@ alwaysApply: false
   References: `apps/chat-api/src/app/app.service.ts`, `apps/chat-api/src/themes/theme.service.ts`.
 - **DTOs are mandatory**: `class-validator` + `@ApiProperty` on every field; `@Matches`
   with an allowlist regex for any string that hits a path / URL / log line.
+  Response DTOs are required for JSON success responses; use classes, not interfaces, so
+  Swagger can emit runtime metadata.
   Reference: `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`.
 - **Errors are typed HTTP exceptions**: `NotFoundException`, `BadGatewayException`,
   `ServiceUnavailableException`, `UnauthorizedException`, `ForbiddenException`. Never
@@ -45,4 +52,5 @@ alwaysApply: false
 pnpm nx test  chat-api
 pnpm nx lint  chat-api
 pnpm nx build chat-api   # when bundling/Nest startup is affected
+npm run openapi && npm run openapi:check   # when endpoint contracts changed
 ```

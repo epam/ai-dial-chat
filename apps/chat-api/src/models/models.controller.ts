@@ -3,6 +3,10 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import {
+  DialModelDto,
+  DialModelListResponseDto,
+} from '../openapi/openapi-response.dto';
 import { GetModelDto } from './dto/get-model.dto';
 import { ModelsService } from './models.service';
 
@@ -24,11 +28,7 @@ export class ModelsController {
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved model list',
-    schema: {
-      example: {
-        data: [{ id: 'gpt-4o', object: 'model', owned_by: 'openai' }],
-      },
-    },
+    type: DialModelListResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -66,9 +66,7 @@ export class ModelsController {
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved model',
-    schema: {
-      example: { id: 'gpt-4o', object: 'model', owned_by: 'openai' },
-    },
+    type: DialModelDto,
   })
   @ApiResponse({
     status: 400,

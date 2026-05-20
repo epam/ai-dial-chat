@@ -65,6 +65,35 @@
           "command": "vitest run --config apps/chat-api/vitest.config.ts"
         }
       },
+      "openapi-spec": {
+        "executor": "nx:run-commands",
+        "outputs": [
+          "{workspaceRoot}/libs/chat-api-client/openapi.json"
+        ],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "SWC_NODE_PROJECT=apps/chat-api/tsconfig.app.json node -r @swc-node/register apps/chat-api/src/openapi-spec.ts"
+        }
+      },
+      "openapi-sdk": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "openapi-spec"
+        ],
+        "outputs": [
+          "{workspaceRoot}/libs/chat-api-client/src/generated"
+        ],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "node -e \"require('fs').rmSync('libs/chat-api-client/src/generated', { recursive: true, force: true })\" && HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= npm exec openapi-generator-cli -- generate -i libs/chat-api-client/openapi.json -g typescript-fetch -o libs/chat-api-client/src/generated --additional-properties=supportsES6=true,withoutRuntimeChecks=true,npmName=@epam/chat-api-client,npmVersion=0.0.1 && node tools/openapi/postprocess-client.mjs && npm exec prettier -- --write \"libs/chat-api-client/src/generated/src/**/*.ts\" && node tools/openapi/check-client.mjs"
+        }
+      },
+      "openapi": {
+        "executor": "nx:noop",
+        "dependsOn": [
+          "openapi-sdk"
+        ]
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",

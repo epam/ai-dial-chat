@@ -14,6 +14,10 @@
     "lint": "nx run-many --target=lint --all",
     "lint:fix": "nx run-many --target=lint --all --fix",
     "lint:affected": "nx affected --target=lint",
+    "openapi": "nx run chat-api:openapi",
+    "openapi:check": "node tools/openapi/check-client.mjs",
+    "openapi:sdk": "nx run chat-api:openapi-sdk",
+    "openapi:spec": "nx run chat-api:openapi-spec",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "graph": "nx graph"
@@ -32,6 +36,7 @@
     "@nx/vitest": "22.6.5",
     "@nx/web": "22.6.5",
     "@nx/webpack": "22.6.5",
+    "@openapitools/openapi-generator-cli": "^2.33.1",
     "@swc-node/register": "1.11.1",
     "@swc/cli": "~0.8.0",
     "@swc/core": "1.15.8",
