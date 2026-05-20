@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as iconPathModule from '../../utils/icon-path';
 import { useFavicon } from './useFavicon';
 
 // Mock getIconPath
