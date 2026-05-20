@@ -142,6 +142,11 @@ describe('utils/app/common.ts', () => {
       );
     });
 
+    it('isEntityNameValid: applies maxBytes using UTF-8 length', () => {
+      expect(isEntityNameValid('я'.repeat(3), { maxBytes: 6 })).toBe(true);
+      expect(isEntityNameValid('я'.repeat(3), { maxBytes: 5 })).toBe(false);
+    });
+
     it('hasInvalidNameInPath: checks every path segment', () => {
       expect(hasInvalidNameInPath('ok/bad,/ok')).toBe(true);
       expect(hasInvalidNameInPath('ok/ok/ok')).toBe(false);

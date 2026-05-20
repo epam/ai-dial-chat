@@ -270,6 +270,15 @@ export const FileManagerModal = memo(
       t,
     ]);
 
+    const getDisabledTooltip = useCallback(
+      (row: { name?: string; path?: string }) => {
+        if (isHiddenEntity(row)) {
+          return t(ChatI18nKeys.AttachingHiddenFilesIsNotAllowed);
+        }
+      },
+      [t],
+    );
+
     const availableTabs = useMemo(() => {
       if (!sourceFilters) return undefined;
 
@@ -424,6 +433,7 @@ export const FileManagerModal = memo(
               onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
+              getDisabledTooltip={getDisabledTooltip}
               hideSearchPathItemName
               autoSelectUploadedItems
             />

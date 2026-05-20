@@ -1,5 +1,6 @@
 import { BaseElement } from './baseElement';
 
+import { BackendEntity } from '@/chat/types/common';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -30,6 +31,7 @@ export class RenameConversationModal extends BaseElement {
     await this.nameInput.fillInInput(newName);
     if (isApiStorageType && isHttpMethodTriggered) {
       const responses = [];
+      const methodBodyMap = new Map<string, BackendEntity>();
       for (const method of ['POST', 'PUT']) {
         const respPromise = this.page.waitForResponse(
           (resp) => resp.request().method() === method,
@@ -38,8 +40,13 @@ export class RenameConversationModal extends BaseElement {
       }
       await confirmationAction();
       for (const resp of responses) {
-        await resp;
+        const resolvedResp = await resp;
+        methodBodyMap.set(
+          resolvedResp.request().method(),
+          (await resolvedResp.json()) as BackendEntity,
+        );
       }
+      return methodBodyMap;
     } else {
       await confirmationAction();
     }
@@ -49,7 +56,7 @@ export class RenameConversationModal extends BaseElement {
     newName: string,
     options?: { isHttpMethodTriggered?: boolean },
   ) {
-    await this.editConversationName(
+    return this.editConversationName(
       newName,
       () => this.saveButton.click(),
       options,
@@ -60,7 +67,7 @@ export class RenameConversationModal extends BaseElement {
     newName: string,
     options?: { isHttpMethodTriggered?: boolean },
   ) {
-    await this.editConversationName(
+    return this.editConversationName(
       newName,
       () => this.page.keyboard.press(keys.enter),
       options,

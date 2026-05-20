@@ -6,6 +6,7 @@ import {
   autoUpdate,
   flip,
   offset,
+  safePolygon,
   shift,
   useClick,
   useDismiss,
@@ -38,6 +39,7 @@ interface TooltipContainerOptions {
   placement?: Placement;
   isTriggerClickable?: boolean;
   isHoverDisabled?: boolean;
+  interactive?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -47,6 +49,7 @@ function useTooltip({
   placement = 'bottom',
   isTriggerClickable = false,
   isHoverDisabled = false,
+  interactive = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: TooltipContainerOptions = {}) {
@@ -88,8 +91,9 @@ function useTooltip({
     mouseOnly: isTriggerClickable,
     delay: {
       open: 500,
-      close: 0,
+      close: interactive ? 150 : 0,
     },
+    handleClose: interactive ? safePolygon() : null,
   });
 
   const focus = useFocus(context, {

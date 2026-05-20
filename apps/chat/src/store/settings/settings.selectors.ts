@@ -269,6 +269,9 @@ const selectHiddenEntityTag = (state: RootState) =>
 const selectStageContentLimit = (state: RootState) =>
   rootSelector(state).stageContentLimit;
 
+const selectResourceMaxSegmentBytes = (state: RootState) =>
+  rootSelector(state).resourceMaxSegmentBytes;
+
 const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
 
 const selectAudioTypesDefaultOrder = (state: RootState) =>
@@ -312,6 +315,7 @@ export const SettingsSelectors = {
   selectAttachmentsSettings,
   selectHiddenEntityTag,
   selectStageContentLimit,
+  selectResourceMaxSegmentBytes,
   selectAsrModelId,
   selectAudioTypesDefaultOrder,
 };

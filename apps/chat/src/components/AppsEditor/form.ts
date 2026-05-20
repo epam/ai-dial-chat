@@ -1,11 +1,13 @@
 import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
 
 import {
+  fitApplicationNameToStorageLimits,
   getEditorSchemaType,
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
   getQuickAppItemNameFromConfig,
+  getStorageSafeUniqueApplicationName,
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   migrateMCPToolsetIdName,
@@ -13,7 +15,6 @@ import {
 } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
-import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
@@ -239,6 +240,7 @@ export const QuickApp2Schema = zodValidation
       .array(zodValidation.string())
       .optional(),
     agentSkills: zodValidation.array(zodValidation.string()),
+    timestamp: zodValidation.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -350,7 +352,17 @@ const getBaseFormData = ({
 }): BaseAppForm => ({
   name:
     app?.name ??
-    getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
+    getStorageSafeUniqueApplicationName({
+      application: {
+        name: '',
+        version: app?.version ?? DEFAULT_VERSION,
+        folderId: app?.folderId,
+        id: app?.id,
+      },
+      defaultName: DEFAULT_APPLICATION_NAME,
+      existingNames: (models ?? []).map((m) => m.name),
+    }) ??
+    DEFAULT_APPLICATION_NAME,
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   description: app?.description ?? '',
@@ -465,6 +477,10 @@ const getQuickApp2FormData = (
       ? defaultModelId // use default quick app model
       : (toolSupportingModelIds?.[0] ?? ''); // use first from list
   }
+  const timestamp =
+    'timestamp' in (appProperties?.features ?? {})
+      ? !!appProperties?.features?.timestamp
+      : true;
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -502,6 +518,7 @@ const getQuickApp2FormData = (
     agentSkills: (appProperties?.skills ?? [])
       .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
       .map((s) => ApiUtils.decodeApiUrl(s.url)),
+    timestamp,
   };
 };
 
@@ -796,7 +813,7 @@ export const getApplicationPayload = ({
   currentApp?: CustomApplicationModel;
   keepCurrentToolsets?: boolean;
 }): CustomApplicationModel => {
-  const generalData = {
+  const generalData = fitApplicationNameToStorageLimits({
     id: '',
     reference: '',
     folderId: '',
@@ -808,7 +825,7 @@ export const getApplicationPayload = ({
     version: data.version,
     topics: data.topics,
     isDefault: false,
-  };
+  });
 
   switch (data.type) {
     case AppsEditorSchemaTypes.CodeApp:
@@ -916,6 +933,13 @@ export const getApplicationPayload = ({
               }),
             ),
           }),
+          features: {
+            timestamp: data.timestamp
+              ? {
+                  injection_strategy: 'tool_call',
+                }
+              : null,
+          },
           ...(starters.length
             ? {
                 conversation_starters: {
