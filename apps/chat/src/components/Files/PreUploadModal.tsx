@@ -237,10 +237,10 @@ export const PreUploadDialog = ({
           files.map((file, i) =>
             i === changedFileIndex
               ? {
-                ...file,
-                name: newName,
-                id: constructPath(getFileRootId(), folderPath, newName),
-              }
+                  ...file,
+                  name: newName,
+                  id: constructPath(getFileRootId(), folderPath, newName),
+                }
               : file,
           ),
         );
