@@ -14,6 +14,7 @@ import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
+import { getAvailableConversationNameBytes } from '@/src/utils/app/conversation';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 
 import { ModalState } from '@/src/types/modal';
@@ -65,9 +66,18 @@ function RenameConversationView({
     });
   }, [renamingConversation]);
 
+  const availableNameBytes = useMemo(
+    () => getAvailableConversationNameBytes(renamingConversation),
+    [renamingConversation],
+  );
+
   const newName = useMemo(
-    () => prepareEntityName(newConversationName, { forRenaming: true }),
-    [newConversationName],
+    () =>
+      prepareEntityName(newConversationName, {
+        forRenaming: true,
+        maxNameLength: availableNameBytes,
+      }),
+    [newConversationName, availableNameBytes],
   );
 
   const handleRename = useCallback(() => {

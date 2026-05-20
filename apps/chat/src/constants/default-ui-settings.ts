@@ -12,8 +12,30 @@ export const EMPTY_MODEL_ID = 'empty';
 
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
-export const MAX_ENTITY_LENGTH = 160;
 export const MIN_ENTITY_LENGTH = 1;
+export const MAX_ENTITY_NAME_NUMERATION = 1999;
+
+export const RESOURCE_MAX_ID_BYTES = 1024;
+export const DEFAULT_RESOURCE_MAX_SEGMENT_BYTES = 255;
+
+export const resolveResourceMaxSegmentBytes = (
+  value: string | undefined,
+): number => {
+  if (!value) {
+    return DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
+  }
+
+  const parsedValue = parseInt(value, 10);
+  if (
+    !Number.isFinite(parsedValue) ||
+    parsedValue <= 0 ||
+    parsedValue >= RESOURCE_MAX_ID_BYTES
+  ) {
+    return DEFAULT_RESOURCE_MAX_SEGMENT_BYTES;
+  }
+
+  return parsedValue;
+};
 
 export const FALLBACK_TEMPERATURE = 1;
 
