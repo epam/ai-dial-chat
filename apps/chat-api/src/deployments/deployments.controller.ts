@@ -2,6 +2,7 @@ import { Controller, Get, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { DialDeploymentDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 
 @ApiTags('deployments')
