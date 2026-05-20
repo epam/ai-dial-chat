@@ -25,6 +25,8 @@ const isUnlimitedUsage = ({ total }: LimitUsage) => {
   return total >= unlimitedThreshold;
 };
 
+const formatLimit = (limit: number) => Intl.NumberFormat('ru-RU').format(limit);
+
 interface LimitItemProps {
   limit: LimitUsage;
   title: string;
@@ -37,10 +39,14 @@ const LimitItem: FC<LimitItemProps> = ({ limit, title }) => {
         <h4 className="text-sm text-primary">{title}</h4>
 
         <div className="flex items-center gap-1 text-xs text-secondary">
-          <span>{limit.used}</span>
+          <span>{formatLimit(limit.used)}</span>
           <span>/</span>
           <span>
-            {isUnlimitedUsage(limit) ? <IconInfinity size={18} /> : limit.total}
+            {isUnlimitedUsage(limit) ? (
+              <IconInfinity size={18} />
+            ) : (
+              formatLimit(limit.total)
+            )}
           </span>
         </div>
       </div>
