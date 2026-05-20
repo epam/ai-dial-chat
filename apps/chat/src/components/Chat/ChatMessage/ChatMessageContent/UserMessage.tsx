@@ -87,6 +87,7 @@ interface UserMessageProps {
   allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
+  isAlignedToEnd?: boolean;
   withButtons?: boolean;
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
@@ -107,6 +108,7 @@ export const UserMessage = memo(function UserMessage({
   allMessages,
   isEditing,
   isEditingTemplates,
+  isAlignedToEnd,
   withButtons,
   editDisabled,
   onToggleEditing,
@@ -783,7 +785,12 @@ export const UserMessage = memo(function UserMessage({
 
   return (
     <>
-      <div className="relative mr-2 flex w-full flex-col gap-5">
+      <div
+        className={classNames('relative flex w-full flex-col gap-5', {
+          'me-2': isAlignedToEnd,
+          'mr-2': !isAlignedToEnd,
+        })}
+      >
         <UserSchema
           formValue={currentFormValue}
           messageIndex={messageIndex}
