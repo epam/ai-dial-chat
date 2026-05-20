@@ -24,8 +24,12 @@ export const doesEntityContainSearchTerm = (
     .includes(searchTerm.toLowerCase().trim());
 };
 
-export const isHiddenEntity = (entity: { name: string }) =>
-  entity?.name?.startsWith('.');
+export const isHiddenEntity = (entity: { name?: string; path?: string }) => {
+  if (entity.path) {
+    return entity.path.split('/').some((part) => part.startsWith('.'));
+  }
+  return !!entity?.name?.startsWith('.');
+};
 
 export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
   !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
