@@ -5,6 +5,4 @@ description: Design, review, or change HTTP API contracts for Chat 2.0. Use when
 
 # API Design
 
-This is a Claude compatibility wrapper.
-
-Read and follow the canonical skill at `.agents/skills/api-design/SKILL.md`.
+@.agents/skills/api-design/SKILL.md

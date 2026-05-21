@@ -1,6 +1,7 @@
 ---
 name: code-review-and-quality
 description: Five-axis code review before merge. Use for quality passes after implementation, before merge, and when asked to review a diff.
+context: fork
 ---
 
 # Code review and quality
