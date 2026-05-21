@@ -158,6 +158,79 @@ export type ConversationMessageDtoRoleEnum =
 /**
  *
  * @export
+ * @interface ConversationMetadataDto
+ */
+export interface ConversationMetadataDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  author?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  parentPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  nodeType: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  resourceType: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  etag?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationMetadataDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationMetadataDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ConversationMetadataDto
+   */
+  permissions?: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface ConversationModelDto
  */
 export interface ConversationModelDto {
@@ -357,6 +430,63 @@ export type MessageDtoRoleEnum =
 /**
  *
  * @export
+ * @interface ProviderInfoDto
+ */
+export interface ProviderInfoDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderInfoDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderInfoDto
+   */
+  label: string;
+}
+/**
+ *
+ * @export
+ * @interface SaveConversationBodyDto
+ */
+export interface SaveConversationBodyDto {
+  /**
+   * Full conversation object to persist
+   * @type {ConversationResponseDto}
+   * @memberof SaveConversationBodyDto
+   */
+  conversation: ConversationResponseDto;
+}
+/**
+ *
+ * @export
+ * @interface SendCompletionDto
+ */
+export interface SendCompletionDto {
+  /**
+   * Conversation path (uuid__name). May contain slashes.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  path: string;
+  /**
+   * The new user message to send
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  message: string;
+  /**
+   * DIAL Core deployment name to use for completion
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  model: string;
+}
+/**
+ *
+ * @export
  * @interface ThemeConfigResponseDto
  */
 export interface ThemeConfigResponseDto {
@@ -391,4 +521,35 @@ export interface ThemeDto {
    * @memberof ThemeDto
    */
   icon?: string;
+}
+/**
+ *
+ * @export
+ * @interface UserProfileDto
+ */
+export interface UserProfileDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  sub: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  providerId: string;
+  /**
+   *
+   * @type {{ [key: string]: unknown }}
+   * @memberof UserProfileDto
+   */
+  claims: { [key: string]: unknown };
+  /**
+   *
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  bucket: string;
 }

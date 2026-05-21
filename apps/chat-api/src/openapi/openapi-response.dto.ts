@@ -1,5 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ProviderInfoDto {
+  @ApiProperty({ example: 'local' })
+  id!: string;
+
+  @ApiProperty({ example: 'Local' })
+  label!: string;
+}
+
+export class UserProfileDto {
+  @ApiProperty({ example: 'user@example.com' })
+  sub!: string;
+
+  @ApiProperty({ example: 'local' })
+  providerId!: string;
+
+  @ApiProperty({ type: 'object', additionalProperties: true })
+  claims!: Record<string, unknown>;
+
+  @ApiProperty({ example: 'default-bucket' })
+  bucket!: string;
+}
+
 export class DialDeploymentDto {
   @ApiProperty({ example: 'gpt-4o' })
   id!: string;
@@ -88,6 +110,41 @@ export class ConversationMessageDto {
 export class ConversationModelDto {
   @ApiProperty({ example: 'anthropic.claude-v3-sonnet' })
   id!: string;
+}
+
+export class ConversationMetadataDto {
+  @ApiProperty({ example: 'Hello' })
+  name!: string;
+
+  @ApiPropertyOptional({ example: 'user@example.com' })
+  author?: string;
+
+  @ApiProperty({ example: 'test-bucket' })
+  parentPath!: string;
+
+  @ApiProperty({ example: 'test-bucket' })
+  bucket!: string;
+
+  @ApiProperty({ example: 'files/test-bucket/uuid__Hello' })
+  url!: string;
+
+  @ApiProperty({ example: 'ITEM' })
+  nodeType!: string;
+
+  @ApiProperty({ example: 'Conversation' })
+  resourceType!: string;
+
+  @ApiPropertyOptional({ example: 'abc123' })
+  etag?: string;
+
+  @ApiPropertyOptional({ example: 1779206400000 })
+  createdAt?: number;
+
+  @ApiPropertyOptional({ example: 1779206400000 })
+  updatedAt?: number;
+
+  @ApiPropertyOptional({ type: [String], example: ['READ', 'WRITE'] })
+  permissions?: string[];
 }
 
 export class ConversationResponseDto {

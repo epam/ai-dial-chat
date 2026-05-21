@@ -25,6 +25,10 @@ import type { Request, Response } from 'express';
 import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
+import {
+  ProviderInfoDto,
+  UserProfileDto,
+} from '../openapi/openapi-response.dto';
 import { BucketService } from './bucket/bucket.service';
 import {
   clearCookieValue,
@@ -78,7 +82,11 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'List configured identity providers' })
-  @ApiResponse({ status: 200, description: 'Array of provider descriptors' })
+  @ApiResponse({
+    status: 200,
+    description: 'Array of provider descriptors',
+    type: [ProviderInfoDto],
+  })
   listProviders() {
     return this.registry.listProviders();
   }
@@ -407,7 +415,11 @@ export class AuthController {
   @ApiCookieAuth('session')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user profile',
+    type: UserProfileDto,
+  })
   @ApiResponse({ status: 401, description: 'No valid session' })
   getCurrentUser(
     @Req() req: Request,

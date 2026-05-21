@@ -1,19 +1,10 @@
-import { ApiEndpoints, get } from './base';
+import type { DialDeploymentDto } from '@epam/chat-api-client';
+import { deploymentsApi } from './api-client';
 
-export interface Deployment {
-  id: string;
-  [key: string]: unknown;
-}
+export const getDeployments = (): Promise<DialDeploymentDto[]> =>
+  deploymentsApi.getDeployments();
 
-export interface DeploymentListResponse {
-  data: Deployment[];
-  [key: string]: unknown;
-}
-
-export const getDeployments = (): Promise<DeploymentListResponse> =>
-  get<DeploymentListResponse>(ApiEndpoints.DEPLOYMENTS);
-
-export const getDeployment = (deploymentName: string): Promise<Deployment> =>
-  get<Deployment>(
-    `${ApiEndpoints.DEPLOYMENTS}/${encodeURIComponent(deploymentName)}`,
-  );
+export const getDeployment = (
+  deploymentName: string,
+): Promise<DialDeploymentDto> =>
+  deploymentsApi.getDeployment({ deployment: deploymentName });

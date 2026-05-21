@@ -3,12 +3,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as useAuthRedirectModule from '../../hooks/auth/useAuthRedirect';
-import * as base from '../../server-api/base';
+import * as authApi from '../../server-api/auth.api';
 import LoginPage from './Login';
 
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../hooks/auth/useAuthRedirect');
-vi.mock('../../server-api/base');
+vi.mock('../../server-api/auth.api');
 
 const renderLogin = (initialPath = '/login') =>
   render(
@@ -20,7 +20,7 @@ const renderLogin = (initialPath = '/login') =>
 describe('LoginPage', () => {
   const mockUseUser = vi.mocked(UserContextModule.useUser);
   const mockUseAuthRedirect = vi.mocked(useAuthRedirectModule.useAuthRedirect);
-  const mockGet = vi.mocked(base.get);
+  const mockGetProviders = vi.mocked(authApi.getProviders);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +34,7 @@ describe('LoginPage', () => {
   });
 
   it('renders provider links with callbackUrl forwarded to BFF login', async () => {
-    mockGet.mockResolvedValue([
+    mockGetProviders.mockResolvedValue([
       { id: 'keycloak', label: 'Keycloak' },
       { id: 'auth0', label: 'Auth0' },
     ]);
@@ -58,7 +58,7 @@ describe('LoginPage', () => {
   });
 
   it('defaults callbackUrl to application root when it is absent', async () => {
-    mockGet.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
+    mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
 
     renderLogin();
 
