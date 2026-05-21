@@ -46,10 +46,7 @@ export const getEntityNameSchema = (options: {
         options.skipMaxBytesCheck ||
         getUtf8BytesLength(options.buildNameForByteValidation?.(str) ?? str) <=
           (options.maxBytes ?? getResourceMaxSegmentBytes()),
-      formErrors.tooLong(
-        options.name,
-        options.maxBytes ?? getResourceMaxSegmentBytes(),
-      ),
+      formErrors.tooLong(options.name),
     )
     .refine(
       (str) =>
@@ -92,7 +89,7 @@ export const MarketplaceEntityBaseSchema = zodValidation
       ctx.addIssue({
         code: 'custom',
         path: ['name'],
-        message: formErrors.tooLong('Name', maxSegmentBytes),
+        message: formErrors.tooLong('Name'),
       });
     }
   });
