@@ -103,7 +103,7 @@ export class ThemesApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<ThemeConfigResponseDto>(response);
   }
 
   /**

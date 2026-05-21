@@ -4,8 +4,6 @@ export enum ApiEndpoints {
   CONVERSATIONS = '/api/v1/conversations',
   DEPLOYMENTS = '/api/deployments',
   MODELS = '/api/v1/models',
-  AUTH_ME = '/api/v1/auth/me',
-  AUTH_PROVIDERS = '/api/v1/auth/providers',
   AUTH_LOGOUT = '/api/v1/auth/logout',
 }
 
@@ -24,6 +22,10 @@ export const onUnauthorized = (
 ): (() => void) => {
   listeners.add(listener);
   return () => listeners.delete(listener);
+};
+
+export const notifyUnauthorized = (url: string): void => {
+  listeners.forEach((l) => l(url));
 };
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';

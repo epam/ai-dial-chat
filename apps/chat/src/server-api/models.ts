@@ -1,11 +1,11 @@
 import type {
-  DialModel,
-  DialModelListResponse,
-} from '@epam/ai-dial-chat-shared';
-import { ApiEndpoints, get } from './base';
+  DialModelDto,
+  DialModelListResponseDto,
+} from '@epam/chat-api-client';
+import { modelsApi } from './api-client';
 
-export const getModels = (): Promise<DialModelListResponse> =>
-  get<DialModelListResponse>(ApiEndpoints.MODELS);
+export const getModels = (): Promise<DialModelListResponseDto> =>
+  modelsApi.listModels();
 
-export const getModel = (modelName: string): Promise<DialModel> =>
-  get<DialModel>(`${ApiEndpoints.MODELS}/${encodeURIComponent(modelName)}`);
+export const getModel = (modelName: string): Promise<DialModelDto> =>
+  modelsApi.getModel({ modelName });

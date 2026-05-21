@@ -13,6 +13,7 @@
  */
 
 import * as runtime from '../runtime';
+import type { ProviderInfoDto, UserProfileDto } from '../models/index';
 
 export interface CallbackRequest {
   providerId: string;
@@ -78,7 +79,7 @@ export class AuthApi extends runtime.BaseAPI {
    */
   async getCurrentUserRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
+  ): Promise<runtime.ApiResponse<UserProfileDto>> {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -95,7 +96,7 @@ export class AuthApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse<UserProfileDto>(response);
   }
 
   /**
@@ -103,8 +104,9 @@ export class AuthApi extends runtime.BaseAPI {
    */
   async getCurrentUser(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.getCurrentUserRaw(initOverrides);
+  ): Promise<UserProfileDto> {
+    const response = await this.getCurrentUserRaw(initOverrides);
+    return await response.value();
   }
 
   /**
@@ -112,7 +114,7 @@ export class AuthApi extends runtime.BaseAPI {
    */
   async listProvidersRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
+  ): Promise<runtime.ApiResponse<Array<ProviderInfoDto>>> {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -129,7 +131,7 @@ export class AuthApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse<Array<ProviderInfoDto>>(response);
   }
 
   /**
@@ -137,8 +139,9 @@ export class AuthApi extends runtime.BaseAPI {
    */
   async listProviders(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.listProvidersRaw(initOverrides);
+  ): Promise<Array<ProviderInfoDto>> {
+    const response = await this.listProvidersRaw(initOverrides);
+    return await response.value();
   }
 
   /**

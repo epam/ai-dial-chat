@@ -14,12 +14,37 @@
 
 import * as runtime from '../runtime';
 import type {
+  ConversationMetadataDto,
   ConversationResponseDto,
   CreateConversationDto,
+  SaveConversationBodyDto,
+  SendCompletionDto,
 } from '../models/index';
 
 export interface CreateConversationRequest {
   createConversationDto: CreateConversationDto;
+}
+
+export interface DeleteConversationRequest {
+  path: string;
+}
+
+export interface GetConversationRequest {
+  path: string;
+}
+
+export interface GetConversationMetadataRequest {
+  path: string;
+  permissions?: boolean;
+}
+
+export interface SaveConversationRequest {
+  path: string;
+  saveConversationBodyDto: SaveConversationBodyDto;
+}
+
+export interface StreamCompletionRequest {
+  sendCompletionDto: SendCompletionDto;
 }
 
 /**
@@ -60,7 +85,7 @@ export class ConversationsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<ConversationResponseDto>(response);
   }
 
   /**
@@ -76,5 +101,267 @@ export class ConversationsApi extends runtime.BaseAPI {
       initOverrides,
     );
     return await response.value();
+  }
+
+  /**
+   * Delete a conversation by path
+   */
+  async deleteConversationRaw(
+    requestParameters: DeleteConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling deleteConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Delete a conversation by path
+   */
+  async deleteConversation(
+    requestParameters: DeleteConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteConversationRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Get a conversation by path
+   */
+  async getConversationRaw(
+    requestParameters: GetConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationResponseDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationResponseDto>(response);
+  }
+
+  /**
+   * Get a conversation by path
+   */
+  async getConversation(
+    requestParameters: GetConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationResponseDto> {
+    const response = await this.getConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Get metadata for a conversation
+   */
+  async getConversationMetadataRaw(
+    requestParameters: GetConversationMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationMetadataDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getConversationMetadata().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['permissions'] != null) {
+      queryParameters['permissions'] = requestParameters['permissions'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/metadata`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationMetadataDto>(response);
+  }
+
+  /**
+   * Get metadata for a conversation
+   */
+  async getConversationMetadata(
+    requestParameters: GetConversationMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationMetadataDto> {
+    const response = await this.getConversationMetadataRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Save (overwrite) a conversation by path
+   */
+  async saveConversationRaw(
+    requestParameters: SaveConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationResponseDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling saveConversation().',
+      );
+    }
+
+    if (requestParameters['saveConversationBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'saveConversationBodyDto',
+        'Required parameter "saveConversationBodyDto" was null or undefined when calling saveConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['saveConversationBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationResponseDto>(response);
+  }
+
+  /**
+   * Save (overwrite) a conversation by path
+   */
+  async saveConversation(
+    requestParameters: SaveConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationResponseDto> {
+    const response = await this.saveConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.
+   * Stream a chat completion
+   */
+  async streamCompletionRaw(
+    requestParameters: StreamCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['sendCompletionDto'] == null) {
+      throw new runtime.RequiredError(
+        'sendCompletionDto',
+        'Required parameter "sendCompletionDto" was null or undefined when calling streamCompletion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/completions`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['sendCompletionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.
+   * Stream a chat completion
+   */
+  async streamCompletion(
+    requestParameters: StreamCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.streamCompletionRaw(requestParameters, initOverrides);
   }
 }

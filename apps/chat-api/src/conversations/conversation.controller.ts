@@ -14,7 +14,10 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
-import { ConversationResponseDto } from '../openapi/openapi-response.dto';
+import {
+  ConversationMetadataDto,
+  ConversationResponseDto,
+} from '../openapi/openapi-response.dto';
 import { ConversationService } from './conversation.service';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
@@ -62,7 +65,11 @@ export class ConversationController {
 
   @Get('metadata')
   @ApiOperation({ summary: 'Get metadata for a conversation' })
-  @ApiResponse({ status: 200, description: 'Conversation metadata' })
+  @ApiResponse({
+    status: 200,
+    description: 'Conversation metadata',
+    type: ConversationMetadataDto,
+  })
   @ApiResponse({ status: 400, description: 'Missing or invalid path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
@@ -83,7 +90,11 @@ export class ConversationController {
 
   @Get()
   @ApiOperation({ summary: 'Get a conversation by path' })
-  @ApiResponse({ status: 200, description: 'Conversation retrieved' })
+  @ApiResponse({
+    status: 200,
+    description: 'Conversation retrieved',
+    type: ConversationResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Missing or invalid path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
@@ -96,7 +107,11 @@ export class ConversationController {
 
   @Put()
   @ApiOperation({ summary: 'Save (overwrite) a conversation by path' })
-  @ApiResponse({ status: 200, description: 'Conversation saved' })
+  @ApiResponse({
+    status: 200,
+    description: 'Conversation saved',
+    type: ConversationResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Missing or invalid path or body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })

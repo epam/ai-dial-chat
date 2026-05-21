@@ -58,7 +58,7 @@ export class ModelsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<DialModelDto>(response);
   }
 
   /**
@@ -96,7 +96,7 @@ export class ModelsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<DialModelListResponseDto>(response);
   }
 
   /**

@@ -57,7 +57,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<DialDeploymentDto>(response);
   }
 
   /**
@@ -96,7 +96,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<Array<DialDeploymentDto>>(response);
   }
 
   /**
