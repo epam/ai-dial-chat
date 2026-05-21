@@ -512,6 +512,9 @@ export enum PromptBarI18nKeys {
   AgentSkillHintBody = 'allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
   AgentSkillHintSeeExamples = 'See examples',
   AgentSkillHintHere = 'here',
+  AgentSkillStaleHint = 'Save to re-validate against the latest content.',
+  AgentSkillValidationPending = 'Validation pending',
+  AgentSkillValidationPendingHint = 'Open inside an agent editor to validate this prompt as a skill.',
 }
 
 //chat.json

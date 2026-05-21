@@ -18,6 +18,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
+import { SkillValidationService } from '@/src/utils/app/data/skill-validation-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
   addGeneratedFolderId,
@@ -54,7 +55,11 @@ import {
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
-import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  PromptsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { CommonI18nKeys } from '@/src/constants/i18n';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
@@ -205,22 +210,41 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const savePromptEpic: AppEpic = (action$) =>
+const savePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.savePrompt.type),
     concatMap(({ payload }) =>
       PromptService.updatePrompt(payload.prompt).pipe(
         switchMap(() => {
-          if (payload.selectSaved) {
-            return of(
-              PromptsActions.selectPrompt({
-                promptId: payload.prompt.id,
-                isApproveRequiredResource: !!payload.prompt.publicationInfo,
-              }),
+          const appDetails = ApplicationSelectors.selectApplicationDetail(
+            state$.value,
+          );
+          const followUps: Observable<AppAction>[] = [];
+
+          if (appDetails?.id && payload.prompt.id && payload.prompt.content) {
+            followUps.push(
+              of(
+                PromptsActions.validateSkill({
+                  promptId: payload.prompt.id,
+                  deploymentId: appDetails.id,
+                  content: payload.prompt.content,
+                }),
+              ),
             );
           }
 
-          return EMPTY;
+          if (payload.selectSaved) {
+            followUps.push(
+              of(
+                PromptsActions.selectPrompt({
+                  promptId: payload.prompt.id,
+                  isApproveRequiredResource: !!payload.prompt.publicationInfo,
+                }),
+              ),
+            );
+          }
+
+          return followUps.length ? concat(...followUps) : EMPTY;
         }),
         catchError((err) => {
           console.error(err);
@@ -1068,6 +1092,59 @@ const hidePromptbarEpic: AppEpic = (action$) =>
     ),
   );
 
+const autoValidateSkillEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PromptsActions.uploadPromptSuccess.type),
+    mergeMap(({ payload }) => {
+      const { prompt } = payload;
+      if (!prompt?.id || !prompt?.content) {
+        return EMPTY;
+      }
+
+      const appDetails = ApplicationSelectors.selectApplicationDetail(
+        state$.value,
+      );
+      if (!appDetails?.id) {
+        return EMPTY;
+      }
+
+      return of(
+        PromptsActions.validateSkill({
+          promptId: prompt.id,
+          deploymentId: appDetails.id,
+          content: prompt.content,
+        }),
+      );
+    }),
+  );
+
+const validateSkillEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(PromptsActions.validateSkill.type),
+    mergeMap(({ payload }) =>
+      SkillValidationService.validate(
+        payload.deploymentId,
+        payload.promptId,
+      ).pipe(
+        map((result) =>
+          PromptsActions.validateSkillSuccess({
+            promptId: payload.promptId,
+            isValid: !!result.valid,
+            validatedContent: payload.content,
+            deploymentId: payload.deploymentId,
+            message: result.message,
+          }),
+        ),
+        catchError((err) => {
+          console.warn('Skill validation failed:', err);
+          return of(
+            PromptsActions.validateSkillFail({ promptId: payload.promptId }),
+          );
+        }),
+      ),
+    ),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsFromMultipleFoldersEpic,
@@ -1095,4 +1172,6 @@ export const PromptsEpics = combineEpics(
   getPromptMetadataEpic,
   selectPromptEpic,
   hidePromptbarEpic,
+  autoValidateSkillEpic,
+  validateSkillEpic,
 );
