@@ -14,7 +14,7 @@ import { RootState } from '@/src/types/store';
 
 import { PromptsSelectors } from '@/src/store/selectors';
 
-import { PromptsState } from './prompts.types';
+import { PromptsState, SkillValidationStatus } from './prompts.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash-es/xor';
@@ -42,6 +42,7 @@ const initialState: PromptsState = {
   deletingPromptId: undefined,
   moveToPromptId: undefined,
   quickAppUpdatedPrompt: null,
+  skillValidationByPromptId: {},
 };
 
 export const promptsSlice = createSlice({
@@ -97,6 +98,9 @@ export const promptsSlice = createSlice({
         (prompt) => !payload.promptIds.has(prompt.id),
       );
       state.promptsLoaded = true;
+      payload.promptIds.forEach((id) => {
+        delete state.skillValidationByPromptId[id];
+      });
     },
     deletePrompt: (
       state,
@@ -471,6 +475,54 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<string | undefined>,
     ) => {
       state.moveToPromptId = payload;
+    },
+    validateSkill: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string;
+        deploymentId: string;
+        content: string;
+      }>,
+    ) => {
+      state.skillValidationByPromptId[payload.promptId] = {
+        ...state.skillValidationByPromptId[payload.promptId],
+        status: SkillValidationStatus.Validating,
+        deploymentId: payload.deploymentId,
+      };
+    },
+    validateSkillSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string;
+        isValid: boolean;
+        validatedContent: string;
+        deploymentId: string;
+        message?: string;
+      }>,
+    ) => {
+      state.skillValidationByPromptId[payload.promptId] = {
+        status: payload.isValid
+          ? SkillValidationStatus.Valid
+          : SkillValidationStatus.Invalid,
+        validatedContent: payload.validatedContent,
+        deploymentId: payload.deploymentId,
+        message: payload.message,
+      };
+    },
+    validateSkillFail: (
+      state,
+      { payload }: PayloadAction<{ promptId: string }>,
+    ) => {
+      state.skillValidationByPromptId[payload.promptId] = {
+        status: SkillValidationStatus.Unknown,
+      };
+    },
+    clearSkillValidations: (state) => {
+      state.skillValidationByPromptId = {};
     },
   },
 });
