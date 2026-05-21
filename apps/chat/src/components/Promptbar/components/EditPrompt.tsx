@@ -228,6 +228,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       <CloseButtonSmall
         className="absolute right-2 top-2"
         onClick={handleEditClose}
+        aria-label="Close dialog"
       />
 
       <div className="flex flex-col gap-4 overflow-y-auto px-3 md:px-6">
