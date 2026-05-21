@@ -14,6 +14,8 @@ export interface ConversationInputColors {
 export interface ConversationInputTypography {
   /** Tailwind (or custom) class applied to the welcome heading — takes precedence over the individual font properties below. */
   welcomeClassName?: string;
+  /** Font family of the welcome heading (CSS value, e.g. `"'Inter', sans-serif"`). Ignored when `welcomeClassName` is set. */
+  welcomeFontFamily?: string;
   /** Font size of the welcome heading (CSS value, e.g. `'24px'`). Ignored when `welcomeClassName` is set. */
   welcomeFontSize?: string;
   /** Font weight of the welcome heading. Ignored when `welcomeClassName` is set. */

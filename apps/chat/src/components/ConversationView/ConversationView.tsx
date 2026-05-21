@@ -134,6 +134,7 @@ const ConversationView: FC<Props> = ({
               key={msg.id}
               role={msg.role}
               text={msg.content}
+              alwaysVisibleActions
               className={
                 msg.role === MessageRole.User ? 'justify-end' : 'justify-start'
               }

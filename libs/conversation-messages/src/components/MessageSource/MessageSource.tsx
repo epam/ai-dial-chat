@@ -53,5 +53,3 @@ export const MessageSource: FC<MessageSourceProps> = ({
     </button>
   );
 };
-
-export default MessageSource;

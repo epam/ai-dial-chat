@@ -3,9 +3,11 @@ import { MessageRole } from '@epam/ai-dial-chat-shared';
 /** Props accepted by the `MessageActions` component. */
 export interface MessageActionsProps {
   /** Which action set to render — `'User'` shows Edit/Delete, `'Agent'` shows Regenerate/Copy/Markdown/Like/Dislike. Defaults to `'User'`. */
-  source?: MessageRole;
+  role?: MessageRole;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** When `true`, actions are always visible instead of appearing only on group hover. */
+  alwaysVisible?: boolean;
   /** Called when the user clicks the Edit button (User source only). */
   onEdit?: () => void;
   /** Called when the user clicks the Delete button (User source only). */

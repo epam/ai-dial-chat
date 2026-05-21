@@ -53,7 +53,7 @@ describe('MessageActions', () => {
 
   describe('source="Agent"', () => {
     it('renders Regenerate, Copy, Markdown, Like, and Dislike buttons', () => {
-      render(<MessageActions source="Agent" />);
+      render(<MessageActions role="Agent" />);
       expect(
         screen.getByRole('button', { name: 'Regenerate response' }),
       ).toBeTruthy();
@@ -72,7 +72,7 @@ describe('MessageActions', () => {
     });
 
     it('does not render User action buttons', () => {
-      render(<MessageActions source="Agent" />);
+      render(<MessageActions role="Agent" />);
       expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
       expect(
         screen.queryByRole('button', { name: 'Delete message' }),
@@ -81,7 +81,7 @@ describe('MessageActions', () => {
 
     it('calls onRegenerate when Regenerate button is clicked', async () => {
       const onRegenerate = vi.fn();
-      render(<MessageActions source="Agent" onRegenerate={onRegenerate} />);
+      render(<MessageActions role="Agent" onRegenerate={onRegenerate} />);
       await userEvent.click(
         screen.getByRole('button', { name: 'Regenerate response' }),
       );
@@ -90,7 +90,7 @@ describe('MessageActions', () => {
 
     it('calls onCopy when Copy button is clicked', async () => {
       const onCopy = vi.fn();
-      render(<MessageActions source="Agent" onCopy={onCopy} />);
+      render(<MessageActions role="Agent" onCopy={onCopy} />);
       await userEvent.click(
         screen.getByRole('button', { name: 'Copy response' }),
       );
@@ -100,7 +100,7 @@ describe('MessageActions', () => {
     it('calls onToggleMarkdown when Markdown button is clicked', async () => {
       const onToggleMarkdown = vi.fn();
       render(
-        <MessageActions source="Agent" onToggleMarkdown={onToggleMarkdown} />,
+        <MessageActions role="Agent" onToggleMarkdown={onToggleMarkdown} />,
       );
       await userEvent.click(
         screen.getByRole('button', { name: 'Toggle markdown' }),
@@ -110,7 +110,7 @@ describe('MessageActions', () => {
 
     it('calls onLike when Like button is clicked', async () => {
       const onLike = vi.fn();
-      render(<MessageActions source="Agent" onLike={onLike} />);
+      render(<MessageActions role="Agent" onLike={onLike} />);
       await userEvent.click(
         screen.getByRole('button', { name: 'Like response' }),
       );
@@ -119,7 +119,7 @@ describe('MessageActions', () => {
 
     it('calls onDislike when Dislike button is clicked', async () => {
       const onDislike = vi.fn();
-      render(<MessageActions source="Agent" onDislike={onDislike} />);
+      render(<MessageActions role="Agent" onDislike={onDislike} />);
       await userEvent.click(
         screen.getByRole('button', { name: 'Dislike response' }),
       );
@@ -132,5 +132,15 @@ describe('MessageActions', () => {
       <MessageActions className="my-custom-class" />,
     );
     expect(container.firstElementChild?.className).toContain('my-custom-class');
+  });
+
+  it('hides actions by default (opacity-0)', () => {
+    const { container } = render(<MessageActions />);
+    expect(container.firstElementChild?.className).toContain('opacity-0');
+  });
+
+  it('does not apply opacity-0 when alwaysVisible is true', () => {
+    const { container } = render(<MessageActions alwaysVisible />);
+    expect(container.firstElementChild?.className).not.toContain('opacity-0');
   });
 });

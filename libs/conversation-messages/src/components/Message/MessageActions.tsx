@@ -7,7 +7,7 @@ import {
 import {
   IconCopy,
   IconMarkdown,
-  IconPencil,
+  IconPencilMinus,
   IconRefresh,
   IconThumbDown,
   IconThumbUp,
@@ -17,7 +17,7 @@ import { FC } from 'react';
 import type { MessageActionsProps } from '../../models/MessageActions.js';
 
 export const MessageActions: FC<MessageActionsProps> = ({
-  source = MessageRole.User,
+  role = MessageRole.User,
   onEdit,
   onDelete,
   onRegenerate,
@@ -25,19 +25,21 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onToggleMarkdown,
   onLike,
   onDislike,
+  alwaysVisible,
   className,
 }) => {
   return (
     <div
       className={mergeClasses(
-        'flex gap-1 opacity-0 group-hover:opacity-100',
+        'flex gap-1',
+        !alwaysVisible && 'opacity-0 group-hover:opacity-100',
         className,
       )}
     >
-      {source === MessageRole.User ? (
+      {role === MessageRole.User ? (
         <>
           <DialGhostIconButton
-            icon={<IconPencil size={DIAL_ICON_SIZE.SM} />}
+            icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Edit message"
             onClick={onEdit}
@@ -86,5 +88,3 @@ export const MessageActions: FC<MessageActionsProps> = ({
     </div>
   );
 };
-
-export default MessageActions;
