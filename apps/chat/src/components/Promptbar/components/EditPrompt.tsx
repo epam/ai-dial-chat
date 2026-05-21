@@ -74,8 +74,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const skillValidation = useAppSelector((state) =>
     PromptsSelectors.selectSkillValidation(state, prompt.id),
   );
-  const skillStatus =
-    skillValidation?.status ?? SkillValidationStatus.Unknown;
+  const skillStatus = skillValidation?.status ?? SkillValidationStatus.Unknown;
   const isSkillStale =
     skillValidation?.validatedContent !== undefined &&
     skillValidation.validatedContent !== content;
