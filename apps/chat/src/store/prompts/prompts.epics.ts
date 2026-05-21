@@ -219,10 +219,10 @@ const savePromptEpic: AppEpic = (action$, state$) =>
           const appDetails = ApplicationSelectors.selectApplicationDetail(
             state$.value,
           );
-          const followUps: Observable<AppAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
           if (appDetails?.id && payload.prompt.id && payload.prompt.content) {
-            followUps.push(
+            actions.push(
               of(
                 PromptsActions.validateSkill({
                   promptId: payload.prompt.id,
@@ -234,7 +234,7 @@ const savePromptEpic: AppEpic = (action$, state$) =>
           }
 
           if (payload.selectSaved) {
-            followUps.push(
+            actions.push(
               of(
                 PromptsActions.selectPrompt({
                   promptId: payload.prompt.id,
@@ -244,7 +244,7 @@ const savePromptEpic: AppEpic = (action$, state$) =>
             );
           }
 
-          return followUps.length ? concat(...followUps) : EMPTY;
+          return concat(...actions);
         }),
         catchError((err) => {
           console.error(err);
