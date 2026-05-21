@@ -5,6 +5,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconCheck,
   IconCopy,
   IconMarkdown,
   IconPencilMinus,
@@ -13,8 +14,10 @@ import {
   IconThumbUp,
   IconTrashX,
 } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, useCallback, useState } from 'react';
 import type { MessageActionsProps } from '../../models/MessageActions.js';
+
+const COPIED_RESET_MS = 2000;
 
 export const MessageActions: FC<MessageActionsProps> = ({
   role = MessageRole.User,
@@ -22,12 +25,26 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onDelete,
   onRegenerate,
   onCopy,
-  onToggleMarkdown,
+  onCopyMarkdown,
   onLike,
   onDislike,
   alwaysVisible,
   className,
 }) => {
+  const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
+
+  const handleCopy = useCallback(() => {
+    onCopy?.();
+    setCopied('copy');
+    setTimeout(() => setCopied(null), COPIED_RESET_MS);
+  }, [onCopy]);
+
+  const handleCopyMarkdown = useCallback(() => {
+    onCopyMarkdown?.();
+    setCopied('markdown');
+    setTimeout(() => setCopied(null), COPIED_RESET_MS);
+  }, [onCopyMarkdown]);
+
   return (
     <div
       className={mergeClasses(
@@ -60,16 +77,28 @@ export const MessageActions: FC<MessageActionsProps> = ({
             onClick={onRegenerate}
           />
           <DialGhostIconButton
-            icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
+            icon={
+              copied === 'copy' ? (
+                <IconCheck size={DIAL_ICON_SIZE.SM} />
+              ) : (
+                <IconCopy size={DIAL_ICON_SIZE.SM} />
+              )
+            }
             size={ElementSize.Small}
             aria-label="Copy response"
-            onClick={onCopy}
+            onClick={handleCopy}
           />
           <DialGhostIconButton
-            icon={<IconMarkdown size={DIAL_ICON_SIZE.SM} />}
+            icon={
+              copied === 'markdown' ? (
+                <IconCheck size={DIAL_ICON_SIZE.SM} />
+              ) : (
+                <IconMarkdown size={DIAL_ICON_SIZE.SM} />
+              )
+            }
             size={ElementSize.Small}
-            aria-label="Toggle markdown"
-            onClick={onToggleMarkdown}
+            aria-label="Copy as markdown"
+            onClick={handleCopyMarkdown}
           />
           <DialGhostIconButton
             icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}

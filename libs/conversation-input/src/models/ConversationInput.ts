@@ -36,6 +36,10 @@ export interface ConversationInputProps {
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). */
   onSend?: (message: string) => void;
+  /** Called when the user clicks the stop button during streaming. */
+  onStop?: () => void;
+  /** When `true`, shows a stop button instead of the send button and blocks Enter. */
+  isStreaming?: boolean;
   /** Color overrides applied as CSS custom properties. */
   colors?: ConversationInputColors;
   /** Typography overrides for the welcome heading and input. */
