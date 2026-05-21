@@ -11,6 +11,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { buildContentWithTranscriptAtSelection } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import {
   createVoiceQuickAttachment,
@@ -370,10 +371,13 @@ const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const { transcript } = payload;
       if (!transcript.trim()) {
-        return of(
-          UIActions.showErrorToast({
-            message: translate(errorsMessages.transcriptionFailed),
-          }),
+        return concat(
+          of(ChatActions.clearAsrInsertionContext()),
+          of(
+            UIActions.showErrorToast({
+              message: translate(errorsMessages.transcriptionFailed),
+            }),
+          ),
         );
       }
 
@@ -381,24 +385,38 @@ const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
         ConversationsSelectors.selectSelectedConversations(state$.value);
 
       if (!selectedConversations.length) {
-        return EMPTY;
+        return of(ChatActions.clearAsrInsertionContext());
       }
 
-      const existingInput = ChatSelectors.selectInputContent(state$.value);
-      const combinedContent = existingInput.trim()
-        ? `${existingInput.trim()} ${transcript.trim()}`
-        : transcript.trim();
+      const asrInsertionContext = ChatSelectors.selectAsrInsertionContext(
+        state$.value,
+      );
+      const baseInput =
+        asrInsertionContext?.inputSnapshot ??
+        ChatSelectors.selectInputContent(state$.value);
+      const selection = asrInsertionContext?.selection ?? {
+        start: baseInput.length,
+        end: baseInput.length,
+      };
+      const combinedContent = buildContentWithTranscriptAtSelection(
+        baseInput,
+        transcript,
+        selection,
+      );
 
       const selectedFiles = FilesSelectors.selectSelectedFiles(state$.value);
       const selectedFolders = FilesSelectors.selectSelectedFolders(
         state$.value,
       );
 
-      return sendMessage(selectedConversations, {
-        role: Role.User,
-        content: combinedContent,
-        custom_content: getUserCustomContent(selectedFiles, selectedFolders),
-      });
+      return concat(
+        of(ChatActions.clearAsrInsertionContext()),
+        sendMessage(selectedConversations, {
+          role: Role.User,
+          content: combinedContent,
+          custom_content: getUserCustomContent(selectedFiles, selectedFolders),
+        }),
+      );
     }),
   );
 
