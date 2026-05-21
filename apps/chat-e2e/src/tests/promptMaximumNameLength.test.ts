@@ -94,7 +94,7 @@ dialTest(
       expect
         .soft(promptNameOverflow[0], ExpectedMessages.entityNameIsTruncated)
         .toBe(Overflow.ellipsis);
-      await promptPreviewModal.getCancelButton().click();
+      await promptPreviewModal.getCloseButton().click();
     });
 
     await dialTest.step(
