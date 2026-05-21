@@ -190,7 +190,15 @@ export class ConversationService extends AppService {
       timestamp: new Date().toISOString(),
     };
 
-    const messages = [...conversation.messages, userMessage].map((m) => ({
+    // If the conversation already ends with a user turn (e.g. first-message auto-stream),
+    // don't append again — the message is already in the persisted history.
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    const messagesForCompletion =
+      lastMessage?.role === MessageRole.User
+        ? conversation.messages
+        : [...conversation.messages, userMessage];
+
+    const messages = messagesForCompletion.map((m) => ({
       role: m.role,
       content: m.content,
     }));

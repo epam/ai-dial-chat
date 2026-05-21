@@ -3,10 +3,13 @@ import { CSSProperties, type FC, KeyboardEvent, useState } from 'react';
 import type { InputProps } from '../../models/Input.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
+import { StopButton } from './StopButton.js';
 
 export const Input: FC<InputProps> = ({
   initialMessage = '',
   onSend,
+  onStop,
+  isStreaming = false,
   onChange,
   placeholder = 'Type a message...',
   ariaLabel,
@@ -39,8 +42,10 @@ export const Input: FC<InputProps> = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend?.(message);
-      setMessage('');
+      if (!isStreaming) {
+        onSend?.(message);
+        setMessage('');
+      }
     }
   };
 
@@ -68,7 +73,11 @@ export const Input: FC<InputProps> = ({
         aria-label={ariaLabel}
         rows={1}
       />
-      {message.trim() && <SendButton onSend={() => onSend?.(message)} />}
+      {isStreaming ? (
+        <StopButton onStop={onStop} />
+      ) : (
+        message.trim() && <SendButton onSend={() => onSend?.(message)} />
+      )}
     </div>
   );
 };

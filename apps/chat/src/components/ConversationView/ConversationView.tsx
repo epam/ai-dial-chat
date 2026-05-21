@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(() =>
   import('@epam/ai-dial-conversation-input').then((module) => ({
@@ -24,6 +25,9 @@ const ConversationInput = lazy(() =>
 interface Props {
   messages: MessageType[];
   onSend: (message: string) => void;
+  onStop?: () => void;
+  onDeleteMessage?: (messageId: string) => void;
+  onRegenerateMessage?: (messageId: string) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
 }
@@ -33,6 +37,9 @@ const NEAR_BOTTOM_THRESHOLD = 80;
 const ConversationView: FC<Props> = ({
   messages,
   onSend,
+  onStop,
+  onDeleteMessage,
+  onRegenerateMessage,
   placeholder,
   isAssistantTyping = false,
 }) => {
@@ -129,17 +136,29 @@ const ConversationView: FC<Props> = ({
           aria-relevant="additions"
           className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-8"
         >
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              role={msg.role}
-              text={msg.content}
-              alwaysVisibleActions
-              className={
-                msg.role === MessageRole.User ? 'justify-end' : 'justify-start'
-              }
-            />
-          ))}
+          {messages.map((msg, index) => {
+            const isStreaming =
+              isAssistantTyping &&
+              index === messages.length - 1 &&
+              msg.role === MessageRole.Assistant;
+            return (
+              <MessageBubble
+                key={msg.id}
+                role={msg.role}
+                text={msg.content}
+                alwaysVisibleActions={!isStreaming}
+                actions={buildMessageActions(msg, {
+                  onDelete: onDeleteMessage,
+                  onRegenerate: onRegenerateMessage,
+                })}
+                className={
+                  msg.role === MessageRole.User
+                    ? 'justify-end'
+                    : 'justify-start'
+                }
+              />
+            );
+          })}
           <div ref={endRef} />
         </div>
 
@@ -155,7 +174,12 @@ const ConversationView: FC<Props> = ({
 
       <div role="region" aria-label="Message input" className="w-full">
         <Suspense fallback={null}>
-          <ConversationInput onSend={onSend} placeholder={placeholder} />
+          <ConversationInput
+            onSend={onSend}
+            onStop={onStop}
+            isStreaming={isAssistantTyping}
+            placeholder={placeholder}
+          />
         </Suspense>
       </div>
     </>

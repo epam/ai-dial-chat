@@ -6,6 +6,8 @@ import styles from './ConversationInput.module.scss';
 
 export const ConversationInput: FC<ConversationInputProps> = ({
   onSend,
+  onStop,
+  isStreaming = false,
   initialMessage = '',
   placeholder = 'Type a new prompt or use "/" to select one',
   welcomeText,
@@ -56,6 +58,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       <Input
         initialMessage={initialMessage}
         onSend={onSend}
+        onStop={onStop}
+        isStreaming={isStreaming}
         placeholder={placeholder}
         colors={colors?.input}
         typography={typography?.input}

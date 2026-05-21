@@ -16,8 +16,8 @@ export interface MessageActionsProps {
   onRegenerate?: () => void;
   /** Called when the user clicks the Copy button (Agent source only). */
   onCopy?: () => void;
-  /** Called when the user clicks the Toggle Markdown button (Agent source only). */
-  onToggleMarkdown?: () => void;
+  /** Called when the user clicks the Copy Markdown button (Agent source only). */
+  onCopyMarkdown?: () => void;
   /** Called when the user clicks the Like button (Agent source only). */
   onLike?: () => void;
   /** Called when the user clicks the Dislike button (Agent source only). */

@@ -36,6 +36,10 @@ export interface InputProps {
   onChange?: (message: string) => void;
   /** Called when the user submits a message (Enter or send button). */
   onSend?: (message: string) => void;
+  /** Called when the user clicks the stop button during streaming. */
+  onStop?: () => void;
+  /** When `true`, shows a stop button instead of the send button. */
+  isStreaming?: boolean;
   /** Placeholder text shown when the textarea is empty. */
   placeholder?: string;
   /** `aria-label` applied to the textarea for screen readers. */
