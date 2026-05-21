@@ -17,7 +17,9 @@ export const buildMessageActions = (
   }
 
   const copyToClipboard = () =>
-    navigator.clipboard.writeText(msg.content).catch(() => {});
+    navigator.clipboard.writeText(msg.content).catch(() => {
+      console.error('Failed to copy message content to clipboard');
+    });
 
   return {
     onRegenerate: handlers.onRegenerate
