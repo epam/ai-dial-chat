@@ -17,6 +17,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
     ...(colors?.background && { '--ci-root-bg': colors.background }),
     ...(colors?.welcomeText && { '--ci-welcome-color': colors.welcomeText }),
     ...(!typography?.welcomeClassName &&
+      typography?.welcomeFontFamily && {
+        '--ci-welcome-font-family': typography.welcomeFontFamily,
+      }),
+    ...(!typography?.welcomeClassName &&
       typography?.welcomeFontSize && {
         '--ci-welcome-font-size': typography.welcomeFontSize,
       }),
