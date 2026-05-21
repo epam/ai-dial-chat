@@ -286,7 +286,7 @@ dialAdminTest(
           lastUpdatedDate: currentDate,
           author: author,
         });
-        await adminInformationModal.cancelButton.click();
+        await adminInformationModal.getCloseButton().click();
       },
     );
 
@@ -795,7 +795,7 @@ dialAdminTest(
           createdDate: currentDate,
           author: publicAuthor,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
   },
@@ -880,7 +880,7 @@ dialAdminTest(
           createdDate: currentDate,
           author: author,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
 
@@ -969,8 +969,8 @@ dialAdminTest(
           createdDate: currentDate,
           author: author,
         });
-        await informationModal.cancelButton.click();
-        await promptPreviewModal.closeButton.click();
+        await informationModal.getCloseButton().click();
+        await promptPreviewModal.getCloseButton().click();
       },
     );
 

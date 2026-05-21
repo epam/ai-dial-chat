@@ -36,7 +36,7 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const [transportType, setTransportType] = useState(
-    toolset.transport ?? DialAppTransportType.Auto,
+    toolset.transport ?? DialAppTransportType.MCP,
   );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
