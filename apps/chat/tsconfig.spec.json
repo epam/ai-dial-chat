@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./out-tsc/vitest",
-    "lib": ["es2022", "dom", "dom.iterable"],
+    "lib": ["es2022", "dom"],
     "types": [
       "vitest/globals",
       "vitest/importMeta",
@@ -31,9 +31,5 @@
     "src/**/*.spec.jsx",
     "src/**/*.d.ts"
   ],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    }
-  ]
+  "references": [{ "path": "./tsconfig.app.json" }]
 }
