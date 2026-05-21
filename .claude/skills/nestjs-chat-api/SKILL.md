@@ -5,6 +5,4 @@ description: Build, review, or modify the NestJS backend in apps/chat-api. Use w
 
 # NestJS Chat API
 
-This is a Claude compatibility wrapper.
-
-Read and follow the canonical skill at `.agents/skills/nestjs-chat-api/SKILL.md`.
+@.agents/skills/nestjs-chat-api/SKILL.md

@@ -22,4 +22,43 @@
 
 <!-- nx configuration end-->
 
-For coding conventions, skill routing, and feature research workflows, see [CLAUDE.md](./CLAUDE.md).
+## Architecture context
+
+Full tech stack, path aliases, commands, and architecture layout live in `openspec/config.yaml` — read it before designing or implementing features. The `opsx:*` skills use it as their primary context.
+
+For lib styling conventions (CSS vars, SCSS modules, Tailwind split, `colors`/`typography` props pattern) — read `openspec/lib-styling-guide.md` before implementing or reviewing any `libs/*` component.
+
+## Cross-agent feature research
+
+For broad "global feature" research (best practices, architecture alternatives, trade-offs), use `./.claude/skills/feature-research/SKILL.md` as the default workflow before implementation.
+
+Expected output:
+
+- Context and constraints
+- 2-4 options with trade-offs
+- Recommended approach
+- Risks and rollback notes
+- Thin-slice implementation draft with Nx verification steps
+
+## Skill routing
+
+Use these local skills directly:
+
+- `./.claude/skills/incremental-implementation/SKILL.md` for multi-file implementation and refactors
+- `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
+- `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
+- `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
+
+Default behavior:
+
+- Implementation work should follow incremental slices with per-slice verification.
+- Before merge (or on explicit review requests), run the five-axis quality review.
+
+## Local coding conventions
+
+- In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
+- In `apps/*` React component files, name the component props type/interface `Props`.
+- In `apps/*` React component files, prefer `export default` for component exports.
+- In `libs/*` React component files, always use `FC<Props>` syntax: `export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... }`.
+- Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.
+- Every exported symbol in `libs/*` (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.
