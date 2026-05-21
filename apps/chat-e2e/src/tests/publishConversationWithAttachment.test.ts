@@ -331,7 +331,7 @@ dialAdminTest(
           createdDate: currentDate,
           author: author,
         });
-        await informationModal.getCancelButton().click();
+        await informationModal.getCloseButton().click();
       },
     );
 

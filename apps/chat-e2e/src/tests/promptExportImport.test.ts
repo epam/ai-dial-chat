@@ -559,7 +559,7 @@ dialTest(
         newDescr,
         newValue,
       );
-      await promptPreviewModal.getCancelButton().click();
+      await promptPreviewModal.getCloseButton().click();
     });
 
     await dialTest.step(

@@ -86,7 +86,7 @@ dialTest(
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await promptPreviewModal.getCancelButton().click();
+        await promptPreviewModal.getCloseButton().click();
       },
     );
 

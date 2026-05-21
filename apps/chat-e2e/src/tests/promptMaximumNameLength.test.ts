@@ -61,7 +61,7 @@ dialTest(
 
     await dialTest.step('Save the prompt', async () => {
       await promptModalDialog.saveButton.click();
-      await promptPreviewModal.getCancelButton().click();
+      await promptPreviewModal.getCloseButton().click();
     });
 
     await dialTest.step(

@@ -197,7 +197,7 @@ dialAdminTest(
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await adminInformationModal.getCancelButton().click();
+        await adminInformationModal.getCloseButton().click();
         await adminChatAssertion.assertAddAgentButtonState('hidden');
         await baseAssertion.assertElementState(
           adminPublicationReviewControl.backToPublicationRequestButton,
