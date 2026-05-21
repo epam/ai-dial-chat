@@ -48,6 +48,7 @@ import {
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
@@ -1942,6 +1943,14 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         };
       }
 
+      const deleteModels$ = modelReference
+        ? of(
+            ModelsActions.deleteModels({
+              references: [modelReference],
+            }),
+          )
+        : EMPTY;
+
       return concat(
         of(
           ConversationsActions.updateConversation({
@@ -1950,8 +1959,14 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        payload.response?.status === 404 && modelReference
-          ? of(ModelsActions.deleteModels({ references: [modelReference] }))
+        payload.response?.status === 404 && modelId && modelReference
+          ? ApplicationService.get(modelId).pipe(
+              switchMap((application) => (application ? EMPTY : deleteModels$)),
+              catchError((error) => {
+                const status = (error as { status?: number })?.status;
+                return status === 404 || status === 403 ? deleteModels$ : EMPTY;
+              }),
+            )
           : EMPTY,
 
         of(
