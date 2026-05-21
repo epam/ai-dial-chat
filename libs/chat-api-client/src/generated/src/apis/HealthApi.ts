@@ -42,7 +42,7 @@ export class HealthApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<Check200Response>(response);
   }
 
   /**

@@ -71,7 +71,7 @@ export class ChatApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response);
+    return new runtime.JSONApiResponse<ChatCompletionResponseDto>(response);
   }
 
   /**

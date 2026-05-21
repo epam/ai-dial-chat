@@ -1,14 +1,16 @@
-import { UserProfile } from '@epam/ai-dial-chat-shared';
+import type { UserProfileDto } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as base from '../../server-api/base';
+import * as authApi from '../../server-api/auth.api';
+import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
 import { UserProvider, useUser } from './UserContext';
 
-const mockProfile: UserProfile = {
+const mockProfile: UserProfileDto = {
   sub: 'user-1',
   providerId: 'keycloak',
   claims: { email: 'u@x.io' },
+  bucket: 'test-bucket',
 };
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -21,7 +23,7 @@ describe('UserContext', () => {
   });
 
   it('200 path: status becomes authenticated and user equals the mocked profile', async () => {
-    vi.spyOn(base, 'get').mockResolvedValue(mockProfile);
+    vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
 
@@ -30,8 +32,8 @@ describe('UserContext', () => {
   });
 
   it('401 path: status becomes unauthenticated and user is null', async () => {
-    vi.spyOn(base, 'get').mockRejectedValue(
-      new base.UnauthorizedError(base.ApiEndpoints.AUTH_ME),
+    vi.spyOn(authApi, 'getMe').mockRejectedValue(
+      new UnauthorizedError('/api/v1/auth/me'),
     );
 
     const { result } = renderHook(() => useUser(), { wrapper });
@@ -44,7 +46,7 @@ describe('UserContext', () => {
     const consoleSpy = vi
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
-    vi.spyOn(base, 'get').mockRejectedValue(new Error('Network error'));
+    vi.spyOn(authApi, 'getMe').mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useUser(), { wrapper });
 
@@ -57,7 +59,7 @@ describe('UserContext', () => {
   });
 
   it('reset() clears state without re-fetching', async () => {
-    vi.spyOn(base, 'get').mockResolvedValue(mockProfile);
+    vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() => expect(result.current.status).toBe('authenticated'));
@@ -71,11 +73,9 @@ describe('UserContext', () => {
   });
 
   it('refresh() re-runs the fetch and updates state', async () => {
-    const getSpy = vi
-      .spyOn(base, 'get')
-      .mockRejectedValueOnce(
-        new base.UnauthorizedError(base.ApiEndpoints.AUTH_ME),
-      )
+    const getMeSpy = vi
+      .spyOn(authApi, 'getMe')
+      .mockRejectedValueOnce(new UnauthorizedError('/api/v1/auth/me'))
       .mockResolvedValueOnce(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
@@ -87,7 +87,7 @@ describe('UserContext', () => {
 
     expect(result.current.status).toBe('authenticated');
     expect(result.current.user).toEqual(mockProfile);
-    expect(getSpy).toHaveBeenCalledTimes(2);
+    expect(getMeSpy).toHaveBeenCalledTimes(2);
   });
 
   it('useUser() outside UserProvider throws a descriptive Error', () => {
@@ -97,14 +97,14 @@ describe('UserContext', () => {
   });
 
   it('onUnauthorized listener from any subsequent call resets context', async () => {
-    vi.spyOn(base, 'get').mockResolvedValue(mockProfile);
+    vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() => expect(result.current.status).toBe('authenticated'));
 
     // Simulate a 401 from any API call via the listener mechanism
     act(() => {
-      base.onUnauthorized(() => undefined)('/api/some-protected');
+      onUnauthorized(() => undefined)('/api/some-protected');
       result.current.reset();
     });
 
