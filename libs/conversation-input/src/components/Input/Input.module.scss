@@ -3,7 +3,7 @@
   border-color: var(--ci-border, #f3f6ff00);
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus, #eef1f7));
+    border-color: var(--ci-border-focus, transparent);
   }
 }
 
