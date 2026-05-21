@@ -1,5 +1,4 @@
 import { notAllowedSymbols } from '@/src/utils/app/file';
-import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import { translate } from '@/src/utils/app/translation';
 
 import { Translation } from '@/src/types/translation';
@@ -8,9 +7,9 @@ import { MIN_ENTITY_LENGTH } from './default-ui-settings';
 
 export const formErrors = {
   required: translate('This field is required'),
-  notValidString: (name = 'Name', maxBytes?: number) =>
+  notValidString: (name = 'Name') =>
     translate(
-      `${name} should be ${MIN_ENTITY_LENGTH} to ${maxBytes ?? getResourceMaxSegmentBytes()} bytes (UTF-8) long and should not contain special characters`,
+      `${name} cannot be empty, too long, or contain special characters.`,
     ),
   hasSpecialCharacters: (name = 'Name') =>
     translate(
@@ -18,10 +17,8 @@ export const formErrors = {
     ),
   tooShort: (name = 'Name', minLength = MIN_ENTITY_LENGTH) =>
     translate(`${name} should be at least ${minLength} characters long`),
-  tooLong: (name = 'Name', maxBytes?: number) =>
-    translate(
-      `${name} should be at most ${maxBytes ?? getResourceMaxSegmentBytes()} bytes (UTF-8) long`,
-    ),
+  tooLong: (name = 'Name') =>
+    translate(`The ${name} is too long. Please shorten it and try again.`),
   noDotInTheEnd: (name = 'Name') =>
     translate(`Using a dot at the end of a ${name} is not permitted.`),
   noDotInTheStart: (name = 'Name') =>
