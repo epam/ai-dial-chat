@@ -1924,7 +1924,8 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
 
       const messages = [...payload.conversation.messages];
       const modelId = messages[messages.length - 1].model?.id;
-      const modelReference = modelId && modelsMap[modelId]?.reference;
+      const lastModel = modelId ? modelsMap[modelId] : undefined;
+      const modelReference = lastModel ? lastModel.reference : undefined;
 
       messages[messages.length - 1] = {
         ...messages[messages.length - 1],
@@ -1959,8 +1960,8 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        payload.response?.status === 404 && modelId && modelReference
-          ? ApplicationService.get(modelId).pipe(
+        payload.response?.status === 404 && lastModel?.id
+          ? ApplicationService.get(lastModel.id).pipe(
               switchMap((application) => (application ? EMPTY : deleteModels$)),
               catchError((error) => {
                 const status = (error as { status?: number })?.status;
