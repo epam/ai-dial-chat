@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "rootDir": "src",
     "outDir": "../../dist/libs/conversation-input",
 
@@ -32,9 +31,5 @@
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx"
   ],
-  "references": [
-    {
-      "path": "../chat-shared/tsconfig.lib.json"
-    }
-  ]
+  "references": [{ "path": "../chat-shared/tsconfig.lib.json" }]
 }

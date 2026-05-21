@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "../../",
     "outDir": "dist",
     "types": ["node"],
     "rootDir": "src",
@@ -20,9 +19,5 @@
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
   ],
-  "references": [
-    {
-      "path": "../../libs/chat-shared/tsconfig.lib.json"
-    }
-  ]
+  "references": [{ "path": "../../libs/chat-shared/tsconfig.lib.json" }]
 }
