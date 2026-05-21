@@ -36,7 +36,14 @@ export default defineConfig(() => ({
     },
     rollupOptions: {
       // External packages that should not be bundled into your library.
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        '@epam/ai-dial-chat-shared',
+        '@epam/ai-dial-ui-kit',
+        '@tabler/icons-react',
+      ],
     },
   },
   test: {
