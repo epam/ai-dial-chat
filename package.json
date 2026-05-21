@@ -26,16 +26,16 @@
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
-    "@nx/eslint": "22.6.5",
-    "@nx/eslint-plugin": "22.6.5",
-    "@nx/js": "22.6.5",
-    "@nx/nest": "^22.6.5",
-    "@nx/node": "22.6.5",
-    "@nx/react": "^22.6.5",
-    "@nx/vite": "22.6.5",
-    "@nx/vitest": "22.6.5",
-    "@nx/web": "22.6.5",
-    "@nx/webpack": "22.6.5",
+    "@nx/eslint": "22.7.2",
+    "@nx/eslint-plugin": "22.7.2",
+    "@nx/js": "22.7.2",
+    "@nx/nest": "22.7.2",
+    "@nx/node": "22.7.2",
+    "@nx/react": "22.7.2",
+    "@nx/vite": "22.7.2",
+    "@nx/vitest": "22.7.2",
+    "@nx/web": "22.7.2",
+    "@nx/webpack": "22.7.2",
     "@openapitools/openapi-generator-cli": "^2.33.1",
     "@swc-node/register": "1.11.1",
     "@swc/cli": "~0.8.0",
@@ -65,7 +65,7 @@
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
     "jsonc-eslint-parser": "^2.1.0",
-    "nx": "22.6.5",
+    "nx": "22.7.2",
     "postcss": "^8.5.10",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.2",
@@ -116,6 +116,8 @@
     "tailwind-merge": "^3.6.0"
   },
   "overrides": {
-    "axios": "1.16.0"
+    "axios": "1.16.0",
+    "yaml": "2.8.3",
+    "dompurify": "3.4.0"
   }
 }
