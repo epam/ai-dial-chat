@@ -11,7 +11,7 @@ import {
   IconRefresh,
   IconThumbDown,
   IconThumbUp,
-  IconTrash,
+  IconTrashX,
 } from '@tabler/icons-react';
 import { FC } from 'react';
 import type { MessageActionsProps } from '../../models/MessageActions.js';
@@ -45,7 +45,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             onClick={onEdit}
           />
           <DialGhostIconButton
-            icon={<IconTrash size={DIAL_ICON_SIZE.SM} />}
+            icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Delete message"
             onClick={onDelete}
