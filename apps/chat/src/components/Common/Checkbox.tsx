@@ -17,6 +17,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         <input
           className={classNames(
             'checkbox peer size-[18px] bg-layer-3',
+            isPartialChecked && 'border-accent-primary',
             className,
           )}
           type="checkbox"
