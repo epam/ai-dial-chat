@@ -135,7 +135,7 @@ export const getStringValidationErrors = ({
       buildNameForByteValidation?.(trimmedValue) ?? trimmedValue,
     ) > resolvedMaxBytes
   ) {
-    errors.push(formErrors.tooLong(label, resolvedMaxBytes));
+    errors.push(formErrors.tooLong(label));
   }
 
   if (doesHaveNotAllowedSymbols(trimmedValue)) {
