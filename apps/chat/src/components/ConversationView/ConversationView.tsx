@@ -16,11 +16,10 @@ import {
 } from 'react';
 import { buildMessageActions } from './buildMessageActions.js';
 
-const ConversationInput = lazy(() =>
-  import('@epam/ai-dial-conversation-input').then((module) => ({
-    default: module.ConversationInput,
-  })),
-);
+const ConversationInput = lazy(async () => {
+  const module = await import('@epam/ai-dial-conversation-input');
+  return { default: module.ConversationInput };
+});
 
 interface Props {
   messages: MessageType[];

@@ -48,6 +48,7 @@ Grep("ComponentName", path="libs/")
 ### Step 3 — Implement
 
 - Write TypeScript + JSX; no plain JS
+- Use `async`/`await` with `try`/`catch`/`finally` for frontend async flows; avoid Promise chains with `.then()`/`.catch()`
 - Use Tailwind for all styling — no inline styles, no CSS modules unless they already exist in the target file
 - Do not copy raw hex colors from Figma; map to Tailwind tokens or CSS variables already in the project
 - Match the naming conventions of surrounding files (PascalCase components, kebab-case files)

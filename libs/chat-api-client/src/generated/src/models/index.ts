@@ -355,6 +355,49 @@ export interface DialDeploymentDto {
 /**
  *
  * @export
+ * @interface DialModelCapabilitiesDto
+ */
+export interface DialModelCapabilitiesDto {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelCapabilitiesDto
+   */
+  scaleTypes?: Array<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  completion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  chatCompletion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  embeddings?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  fineTune?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  inference?: boolean;
+}
+/**
+ *
+ * @export
  * @interface DialModelDto
  */
 export interface DialModelDto {
@@ -372,16 +415,276 @@ export interface DialModelDto {
   object: string;
   /**
    *
-   * @type {number}
+   * @type {string}
    * @memberof DialModelDto
    */
-  created?: number;
+  model?: string;
   /**
    *
    * @type {string}
    * @memberof DialModelDto
    */
-  ownedBy?: string;
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {DialModelFeaturesDto}
+   * @memberof DialModelDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  maxInputAttachments?: number;
+  /**
+   *
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  defaults?: { [key: string]: unknown };
+  /**
+   *
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  responsesDefaults?: { [key: string]: unknown };
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  maxRetryAttempts?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  lifecycleStatus?: string;
+  /**
+   *
+   * @type {DialModelCapabilitiesDto}
+   * @memberof DialModelDto
+   */
+  capabilities?: DialModelCapabilitiesDto;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  tokenizerModel?: string;
+  /**
+   *
+   * @type {DialModelLimitsDto}
+   * @memberof DialModelDto
+   */
+  limits?: DialModelLimitsDto;
+  /**
+   *
+   * @type {DialModelPricingDto}
+   * @memberof DialModelDto
+   */
+  pricing?: DialModelPricingDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelDto
+   */
+  interfaces?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface DialModelFeaturesDto
+ */
+export interface DialModelFeaturesDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  rate?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  tokenize?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  truncatePrompt?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  _configuration?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  systemPrompt?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  tools?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  seed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  urlAttachments?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  folderAttachments?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  allowResume?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  accessibleByPerRequestKey?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  contentParts?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  temperature?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  cache?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  autoCaching?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  parallelToolCalls?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  assistantAttachmentsInRequest?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  mcp?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DialModelLimitsDto
+ */
+export interface DialModelLimitsDto {
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelLimitsDto
+   */
+  maxPromptTokens?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelLimitsDto
+   */
+  maxCompletionTokens?: number;
 }
 /**
  *
@@ -395,6 +698,31 @@ export interface DialModelListResponseDto {
    * @memberof DialModelListResponseDto
    */
   data: Array<DialModelDto>;
+}
+/**
+ *
+ * @export
+ * @interface DialModelPricingDto
+ */
+export interface DialModelPricingDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelPricingDto
+   */
+  unit?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelPricingDto
+   */
+  prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelPricingDto
+   */
+  completion?: string;
 }
 /**
  *

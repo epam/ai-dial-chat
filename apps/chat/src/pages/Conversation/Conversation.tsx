@@ -64,14 +64,16 @@ export const ConversationPage: FC = () => {
             return next;
           });
         },
-        onComplete: () => {
+        onComplete: async () => {
           setIsStreaming(false);
           abortRef.current = null;
           const final = conversationRef.current;
           if (final) {
-            saveConversation(conversationPath, final).catch(
-              (err: unknown) => void err,
-            );
+            try {
+              await saveConversation(conversationPath, final);
+            } catch (err: unknown) {
+              void err;
+            }
           }
         },
         onError: () => {

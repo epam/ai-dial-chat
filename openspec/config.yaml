@@ -58,7 +58,7 @@ context: |
       useMemo on context value, guard hook throws if used outside provider
   - Hooks: apps/chat/src/hooks/ — custom hooks co-located by concern
     - useFavicon.ts is the reference pattern: JSDoc, AbortController/cleanup in useEffect,
-      cancelled flag for async operations
+      cancelled flag for async operations, and async/await instead of Promise chains
   - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
     - Folder name must be PascalCase and match the component name exactly (e.g. RequireAuth/RequireAuth.tsx)
     - Tests go in a tests/ subfolder inside the component folder (e.g. RequireAuth/tests/RequireAuth.spec.tsx)
@@ -115,6 +115,11 @@ rules:
     - 'All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}'
     - Use the existing typed API helpers (get, post) from server-api/base.ts — do not call
       fetch directly in components or hooks
+    - Use async/await with try/catch/finally for frontend async code — avoid Promise chains
+      with `.then()`/`.catch()`.
+    - Use the void operator before Promise-returning calls only for intentional
+      fire-and-forget work where errors are handled; do not add it as a routine prefix
+      for local async helpers in useEffect.
     - Fetch inside useEffect with a cancelled flag to prevent setState-on-unmount warnings
     - Context value must be wrapped in useMemo — prevents all consumers re-rendering on
       every parent render
@@ -123,7 +128,8 @@ rules:
       with components
     - Custom hooks go in apps/chat/src/hooks/ — one hook per file, JSDoc required explaining WHY
     - Lazy-load every route component with React.lazy + Suspense — always provide a fallback
-    - 'For named exports from lazy-loaded libs: import the module then return { default: module.X }'
+    - 'For named exports from lazy-loaded libs: use async React.lazy loaders, await the import,
+      then return { default: module.X }'
     - For anything under apps/chat-api/**, follow apps/chat-api/AGENTS.md as the source of
       truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
       DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).

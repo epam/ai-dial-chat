@@ -33,18 +33,184 @@ export class DialDeploymentDto {
   type?: string;
 }
 
+export class DialModelFeaturesDto {
+  @ApiPropertyOptional({ example: false })
+  rate?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  tokenize?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  truncate_prompt?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  configuration?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  system_prompt?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  tools?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  seed?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  url_attachments?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  folder_attachments?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  allow_resume?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  accessible_by_per_request_key?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  content_parts?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  temperature?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  cache?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  auto_caching?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  parallel_tool_calls?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  assistant_attachments_in_request?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  mcp?: boolean;
+}
+
+export class DialModelCapabilitiesDto {
+  @ApiPropertyOptional({ type: [String], example: ['standard'] })
+  scale_types?: string[];
+
+  @ApiPropertyOptional({ example: false })
+  completion?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  chat_completion?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  embeddings?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  fine_tune?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  inference?: boolean;
+}
+
+export class DialModelLimitsDto {
+  @ApiPropertyOptional({ example: 1048576 })
+  max_prompt_tokens?: number;
+
+  @ApiPropertyOptional({ example: 65535 })
+  max_completion_tokens?: number;
+}
+
+export class DialModelPricingDto {
+  @ApiPropertyOptional({ example: 'char_without_whitespace' })
+  unit?: string;
+
+  @ApiPropertyOptional({ example: '0.0000005' })
+  prompt?: string;
+
+  @ApiPropertyOptional({ example: '0.000003' })
+  completion?: string;
+}
+
 export class DialModelDto {
-  @ApiProperty({ example: 'gpt-4o' })
+  @ApiProperty({ example: 'dial.gemini-3-flash-preview' })
   id!: string;
 
   @ApiProperty({ example: 'model' })
   object!: string;
 
-  @ApiPropertyOptional({ example: 1712345678 })
-  created?: number;
+  @ApiPropertyOptional({ example: 'dial.gemini-3-flash-preview' })
+  model?: string;
 
-  @ApiPropertyOptional({ example: 'openai' })
-  owned_by?: string;
+  @ApiPropertyOptional({ example: 'Gemini 3 Flash' })
+  display_name?: string;
+
+  @ApiPropertyOptional({ example: 'test' })
+  display_version?: string;
+
+  @ApiPropertyOptional({ example: 'Gemini.svg' })
+  icon_url?: string;
+
+  @ApiPropertyOptional({
+    example: 'A multimodal model combining reasoning and efficiency.',
+  })
+  description?: string;
+
+  @ApiPropertyOptional({ example: 'dial.gemini-3-flash-preview' })
+  reference?: string;
+
+  @ApiPropertyOptional({ example: 'organization-owner' })
+  owner?: string;
+
+  @ApiPropertyOptional({ example: 'succeeded' })
+  status?: string;
+
+  @ApiPropertyOptional({ example: 1779372048383 })
+  created_at?: number;
+
+  @ApiPropertyOptional({ example: 1779372138434 })
+  updated_at?: number;
+
+  @ApiPropertyOptional({ type: () => DialModelFeaturesDto })
+  features?: DialModelFeaturesDto;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['image/png', 'application/pdf'],
+  })
+  input_attachment_types?: string[];
+
+  @ApiPropertyOptional({ example: 5 })
+  max_input_attachments?: number;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  defaults?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  responses_defaults?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['Text Generation', 'Image Recognition'],
+  })
+  description_keywords?: string[];
+
+  @ApiPropertyOptional({ example: 1 })
+  max_retry_attempts?: number;
+
+  @ApiPropertyOptional({ example: 'generally-available' })
+  lifecycle_status?: string;
+
+  @ApiPropertyOptional({ type: () => DialModelCapabilitiesDto })
+  capabilities?: DialModelCapabilitiesDto;
+
+  @ApiPropertyOptional({ example: 'gpt-4' })
+  tokenizer_model?: string;
+
+  @ApiPropertyOptional({ type: () => DialModelLimitsDto })
+  limits?: DialModelLimitsDto;
+
+  @ApiPropertyOptional({ type: () => DialModelPricingDto })
+  pricing?: DialModelPricingDto;
+
+  @ApiPropertyOptional({ type: [String], example: [] })
+  interfaces?: string[];
 }
 
 export class DialModelListResponseDto {
