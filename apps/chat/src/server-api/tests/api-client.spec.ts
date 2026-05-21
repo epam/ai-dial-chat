@@ -24,6 +24,14 @@ const setupFetch = (status: number) => {
 const getLastRequestHeaders = (fetchSpy: ReturnType<typeof setupFetch>) =>
   new Headers(fetchSpy.mock.calls[0]?.[1]?.headers);
 
+const ignoreRejection = async (promise: Promise<unknown>): Promise<void> => {
+  try {
+    await promise;
+  } catch {
+    // These tests only inspect request headers; response shape is irrelevant.
+  }
+};
+
 afterEach(() => {
   setCsrfToken(null);
   vi.restoreAllMocks();
@@ -39,9 +47,9 @@ describe('csrfMiddleware', () => {
     const fetchSpy = setupFetch(200);
     const api = new ConversationsApi(createApiConfiguration());
 
-    await api
-      .createConversation({ createConversationDto: { firstMessage: 'hi' } })
-      .catch(() => undefined);
+    await ignoreRejection(
+      api.createConversation({ createConversationDto: { firstMessage: 'hi' } }),
+    );
 
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBe(
       'test-token',
@@ -53,7 +61,7 @@ describe('csrfMiddleware', () => {
     const fetchSpy = setupFetch(200);
     const api = new ModelsApi(createApiConfiguration());
 
-    await api.listModels().catch(() => undefined);
+    await ignoreRejection(api.listModels());
 
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBeNull();
   });
@@ -62,9 +70,9 @@ describe('csrfMiddleware', () => {
     const fetchSpy = setupFetch(200);
     const api = new ConversationsApi(createApiConfiguration());
 
-    await api
-      .createConversation({ createConversationDto: { firstMessage: 'hi' } })
-      .catch(() => undefined);
+    await ignoreRejection(
+      api.createConversation({ createConversationDto: { firstMessage: 'hi' } }),
+    );
 
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBeNull();
   });

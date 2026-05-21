@@ -49,6 +49,12 @@ Rules:
 - Static `/api/v1/auth/*` endpoints belong in `server-api/base.ts` via
   `ApiEndpoints`. Dynamic login URLs may be built at the auth call site because
   they include runtime provider ids and callback URLs.
+- Use `async`/`await` with `try`/`catch`/`finally` for frontend async flows
+  instead of Promise chains with `.then()`/`.catch()`. For `React.lazy` named
+  exports, use an async loader that awaits the import and returns `{ default }`.
+- Use `void` before Promise-returning calls only for intentional fire-and-forget
+  work where errors are handled. Do not add it as a routine prefix for local
+  async helpers in `useEffect`.
 
 ## 3. Testing
 

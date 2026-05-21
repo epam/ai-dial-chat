@@ -14,11 +14,10 @@ import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 
-const ConversationInput = lazy(() =>
-  import('@epam/ai-dial-conversation-input').then((module) => ({
-    default: module.ConversationInput,
-  })),
-);
+const ConversationInput = lazy(async () => {
+  const module = await import('@epam/ai-dial-conversation-input');
+  return { default: module.ConversationInput };
+});
 
 // TODO: rename page and component
 // TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component

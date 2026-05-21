@@ -35,26 +35,28 @@ export const ModelsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const signal = { cancelled: false };
 
-    setIsLoading(true);
-    setError(null);
+    const loadModels = async () => {
+      setIsLoading(true);
+      setError(null);
 
-    getModels()
-      .then((response) => {
+      try {
+        const response = await getModels();
         if (!signal.cancelled) {
           setModels(response.data);
           setSelectedModelId(response.data[0]?.id ?? null);
         }
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!signal.cancelled) {
           setError(err instanceof Error ? err : new Error(String(err)));
         }
-      })
-      .finally(() => {
+      } finally {
         if (!signal.cancelled) {
           setIsLoading(false);
         }
-      });
+      }
+    };
+
+    loadModels();
 
     return () => {
       signal.cancelled = true;

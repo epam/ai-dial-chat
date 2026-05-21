@@ -59,6 +59,8 @@ Default behavior:
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
 - In `apps/*` React component files, name the component props type/interface `Props`.
 - In `apps/*` React component files, prefer `export default` for component exports.
+- In frontend code, prefer `async`/`await` with `try`/`catch`/`finally` over Promise chains with `.then()`/`.catch()`; use async dynamic imports for `React.lazy` wrappers too.
+- In frontend code, use the `void` operator before Promise-returning calls only for intentional fire-and-forget work where errors are handled; do not add it as a routine prefix for local async helpers.
 - In `libs/*` React component files, always use `FC<Props>` syntax: `export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... }`.
 - Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.
 - Every exported symbol in `libs/*` (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.

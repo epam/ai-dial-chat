@@ -113,7 +113,12 @@ const request = async <TResponse>(
       listeners.forEach((l) => l(url));
       throw new UnauthorizedError(url);
     }
-    const errorBody = await response.text().catch(() => '');
+    let errorBody = '';
+    try {
+      errorBody = await response.text();
+    } catch {
+      errorBody = '';
+    }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,
     );

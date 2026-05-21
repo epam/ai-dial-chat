@@ -8,11 +8,10 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
-const ConversationPage = lazy(() =>
-  import('../pages/Conversation/Conversation').then((m) => ({
-    default: m.ConversationPage,
-  })),
-);
+const ConversationPage = lazy(async () => {
+  const module = await import('../pages/Conversation/Conversation');
+  return { default: module.ConversationPage };
+});
 
 function App() {
   return (
