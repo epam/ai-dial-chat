@@ -1943,6 +1943,14 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         };
       }
 
+      const deleteModels$ = modelReference
+        ? of(
+            ModelsActions.deleteModels({
+              references: [modelReference],
+            }),
+          )
+        : EMPTY;
+
       return concat(
         of(
           ConversationsActions.updateConversation({
@@ -1953,16 +1961,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
         payload.response?.status === 404 && modelId && modelReference
           ? ApplicationService.get(modelId).pipe(
-              switchMap((application) =>
-                application
-                  ? EMPTY
-                  : of(
-                      ModelsActions.deleteModels({
-                        references: [modelReference],
-                      }),
-                    ),
-              ),
-              catchError(() => EMPTY),
+              switchMap((application) => (application ? EMPTY : deleteModels$)),
+              catchError((error) => {
+                const status = (error as { status?: number })?.status;
+                return status === 404 || status === 403 ? deleteModels$ : EMPTY;
+              }),
             )
           : EMPTY,
 
