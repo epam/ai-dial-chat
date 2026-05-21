@@ -930,24 +930,260 @@
           "id"
         ]
       },
+      "DialModelFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "boolean",
+            "example": false
+          },
+          "tokenize": {
+            "type": "boolean",
+            "example": false
+          },
+          "truncate_prompt": {
+            "type": "boolean",
+            "example": false
+          },
+          "configuration": {
+            "type": "boolean",
+            "example": false
+          },
+          "system_prompt": {
+            "type": "boolean",
+            "example": true
+          },
+          "tools": {
+            "type": "boolean",
+            "example": true
+          },
+          "seed": {
+            "type": "boolean",
+            "example": false
+          },
+          "url_attachments": {
+            "type": "boolean",
+            "example": false
+          },
+          "folder_attachments": {
+            "type": "boolean",
+            "example": false
+          },
+          "allow_resume": {
+            "type": "boolean",
+            "example": true
+          },
+          "accessible_by_per_request_key": {
+            "type": "boolean",
+            "example": true
+          },
+          "content_parts": {
+            "type": "boolean",
+            "example": false
+          },
+          "temperature": {
+            "type": "boolean",
+            "example": true
+          },
+          "cache": {
+            "type": "boolean",
+            "example": false
+          },
+          "auto_caching": {
+            "type": "boolean",
+            "example": false
+          },
+          "parallel_tool_calls": {
+            "type": "boolean",
+            "example": true
+          },
+          "assistant_attachments_in_request": {
+            "type": "boolean",
+            "example": true
+          },
+          "mcp": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "DialModelCapabilitiesDto": {
+        "type": "object",
+        "properties": {
+          "scale_types": {
+            "example": [
+              "standard"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "completion": {
+            "type": "boolean",
+            "example": false
+          },
+          "chat_completion": {
+            "type": "boolean",
+            "example": true
+          },
+          "embeddings": {
+            "type": "boolean",
+            "example": false
+          },
+          "fine_tune": {
+            "type": "boolean",
+            "example": false
+          },
+          "inference": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "DialModelLimitsDto": {
+        "type": "object",
+        "properties": {
+          "max_prompt_tokens": {
+            "type": "number",
+            "example": 1048576
+          },
+          "max_completion_tokens": {
+            "type": "number",
+            "example": 65535
+          }
+        }
+      },
+      "DialModelPricingDto": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string",
+            "example": "char_without_whitespace"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "0.0000005"
+          },
+          "completion": {
+            "type": "string",
+            "example": "0.000003"
+          }
+        }
+      },
       "DialModelDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "example": "gpt-4o"
+            "example": "dial.gemini-3-flash-preview"
           },
           "object": {
             "type": "string",
             "example": "model"
           },
-          "created": {
-            "type": "number",
-            "example": 1712345678
-          },
-          "owned_by": {
+          "model": {
             "type": "string",
-            "example": "openai"
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "Gemini 3 Flash"
+          },
+          "display_version": {
+            "type": "string",
+            "example": "test"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": "Gemini.svg"
+          },
+          "description": {
+            "type": "string",
+            "example": "A multimodal model combining reasoning and efficiency."
+          },
+          "reference": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "owner": {
+            "type": "string",
+            "example": "organization-owner"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded"
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1779372048383
+          },
+          "updated_at": {
+            "type": "number",
+            "example": 1779372138434
+          },
+          "features": {
+            "$ref": "#/components/schemas/DialModelFeaturesDto"
+          },
+          "input_attachment_types": {
+            "example": [
+              "image/png",
+              "application/pdf"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_input_attachments": {
+            "type": "number",
+            "example": 5
+          },
+          "defaults": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "responses_defaults": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description_keywords": {
+            "example": [
+              "Text Generation",
+              "Image Recognition"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_retry_attempts": {
+            "type": "number",
+            "example": 1
+          },
+          "lifecycle_status": {
+            "type": "string",
+            "example": "generally-available"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/DialModelCapabilitiesDto"
+          },
+          "tokenizer_model": {
+            "type": "string",
+            "example": "gpt-4"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/DialModelLimitsDto"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/DialModelPricingDto"
+          },
+          "interfaces": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [

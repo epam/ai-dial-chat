@@ -31,13 +31,32 @@ export const ConversationPage: FC = () => {
     const conversationPath = conversationId.substring(
       conversationId.indexOf('/') + 1,
     );
-    setIsFetching(true);
-    apiGetConversation(conversationPath)
-      .then((result: Conversation) => {
-        setConversation(result);
-      })
-      .catch(() => navigate(ROUTES.ROOT))
-      .finally(() => setIsFetching(false));
+    let cancelled = false;
+
+    const loadConversation = async () => {
+      setIsFetching(true);
+
+      try {
+        const result = await apiGetConversation(conversationPath);
+        if (!cancelled) {
+          setConversation(result);
+        }
+      } catch {
+        if (!cancelled) {
+          navigate(ROUTES.ROOT);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    loadConversation();
+
+    return () => {
+      cancelled = true;
+    };
   }, [conversationId, navigate]);
 
   useEffect(() => {
@@ -94,14 +113,16 @@ export const ConversationPage: FC = () => {
             return next;
           });
         },
-        onComplete: () => {
+        onComplete: async () => {
           setIsStreaming(false);
           abortRef.current = null;
           const final = conversationRef.current;
           if (final) {
-            saveConversation(conversationPath, final).catch(
-              (err: unknown) => void err,
-            );
+            try {
+              await saveConversation(conversationPath, final);
+            } catch (err: unknown) {
+              void err;
+            }
           }
         },
         onError: () => {

@@ -48,18 +48,29 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!config) {
-      setIsLoading(true);
+      let cancelled = false;
 
-      get<ThemeConfiguration>(ApiEndpoints.THEMES)
-        .then((data) => {
+      const loadThemeConfiguration = async () => {
+        setIsLoading(true);
+
+        try {
+          const data = await get<ThemeConfiguration>(ApiEndpoints.THEMES);
+          if (cancelled) return;
           setConfig(data);
-        })
-        .catch((err) => {
+        } catch (err) {
           console.error('Failed to fetch theme configuration:', err);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+        } finally {
+          if (!cancelled) {
+            setIsLoading(false);
+          }
+        }
+      };
+
+      loadThemeConfiguration();
+
+      return () => {
+        cancelled = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
