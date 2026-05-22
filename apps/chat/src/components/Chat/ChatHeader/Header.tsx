@@ -206,7 +206,7 @@ export const ChatHeader = Inversify.register(
               <Tooltip
                 tooltip={conversation.name}
                 triggerClassName={classNames(
-                  'flex-1 truncate text-center sm:flex-none',
+                  'truncate text-center',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
                   isUnpublishing && 'text-error',
@@ -225,7 +225,7 @@ export const ChatHeader = Inversify.register(
                 </span>
               </Tooltip>
               {publicVersionGroupId && (
-                <span className="h-[18px] border-l border-l-primary pl-2">
+                <span className="h-[18px] min-w-fit border-l border-l-primary pl-2">
                   {!isApproveRequiredEntitySelected ? (
                     <PublicVersionSelector
                       publicVersionGroupId={publicVersionGroupId}
