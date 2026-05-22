@@ -14,6 +14,8 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActionsI18nKeys } from '../../constants/translation-keys.js';
 import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(async () => {
@@ -42,6 +44,19 @@ const ConversationView: FC<Props> = ({
   placeholder,
   isAssistantTyping = false,
 }) => {
+  const { t } = useTranslation();
+  const tooltips = {
+    edit: t(ActionsI18nKeys.Edit),
+    delete: t(ActionsI18nKeys.Delete),
+    regenerate: t(ActionsI18nKeys.Regenerate),
+    copy: t(ActionsI18nKeys.Copy),
+    copied: t(ActionsI18nKeys.Copied),
+    copyMarkdown: t(ActionsI18nKeys.Copy),
+    copiedMarkdown: t(ActionsI18nKeys.Copied),
+    like: t(ActionsI18nKeys.Like),
+    dislike: t(ActionsI18nKeys.Dislike),
+  };
+
   const [showScrollButton, setShowScrollButton] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -146,10 +161,14 @@ const ConversationView: FC<Props> = ({
                 role={msg.role}
                 text={msg.content}
                 alwaysVisibleActions={!isStreaming}
-                actions={buildMessageActions(msg, {
-                  onDelete: onDeleteMessage,
-                  onRegenerate: onRegenerateMessage,
-                })}
+                actions={buildMessageActions(
+                  msg,
+                  {
+                    onDelete: onDeleteMessage,
+                    onRegenerate: onRegenerateMessage,
+                  },
+                  tooltips,
+                )}
                 className={
                   msg.role === MessageRole.User
                     ? 'justify-end'

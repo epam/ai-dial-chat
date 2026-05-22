@@ -11,6 +11,12 @@ export enum ActionsI18nKeys {
   Delete = 'actions.delete',
   Cancel = 'actions.cancel',
   Confirm = 'actions.confirm',
+  Edit = 'actions.edit',
+  Regenerate = 'actions.regenerate',
+  Copy = 'actions.copy',
+  Copied = 'actions.copied',
+  Like = 'actions.like',
+  Dislike = 'actions.dislike',
 }
 
 export enum NavigationI18nKeys {

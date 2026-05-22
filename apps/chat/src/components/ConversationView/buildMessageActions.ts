@@ -1,5 +1,8 @@
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
-import type { MessageActionsProps } from '@epam/ai-dial-conversation-messages';
+import type {
+  MessageActionTooltips,
+  MessageActionsProps,
+} from '@epam/ai-dial-conversation-messages';
 
 export interface MessageActionHandlers {
   onDelete?: (messageId: string) => void;
@@ -9,10 +12,12 @@ export interface MessageActionHandlers {
 export const buildMessageActions = (
   msg: Message,
   handlers: MessageActionHandlers,
+  tooltips?: MessageActionTooltips,
 ): MessageActionsProps => {
   if (msg.role === MessageRole.User) {
     return {
       onDelete: handlers.onDelete ? () => handlers.onDelete?.(msg.id) : void 0,
+      tooltips,
     };
   }
 
@@ -27,5 +32,6 @@ export const buildMessageActions = (
       : void 0,
     onCopy: copyToClipboard,
     onCopyMarkdown: copyToClipboard, // TODO: add implementation for markdown formatting
+    tooltips,
   };
 };
