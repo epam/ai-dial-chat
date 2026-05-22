@@ -127,7 +127,7 @@ module.exports = {
         large_desktop: { min: '2560px' },
       },
       boxShadow: {
-        DEFAULT: '0 0 4px 0 var(--bg-blackout, #0C101DB3)',
+        DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
       },
       borderRadius: {
         DEFAULT: '3px',

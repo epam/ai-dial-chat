@@ -152,6 +152,7 @@ export const Input: FC<InputProps> = ({
         <DialDropdown
           matchReferenceWidth={false}
           placement="bottom-start"
+          listClassName="!w-[240px]"
           menu={{
             items: [
               {

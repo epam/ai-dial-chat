@@ -151,35 +151,37 @@ const ConversationView: FC<Props> = ({
           aria-label="Conversation messages"
           aria-live="polite"
           aria-relevant="additions"
-          className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-8"
+          className="flex flex-1 flex-col overflow-y-auto px-4 py-8"
         >
-          {messages.map((msg, index) => {
-            const isStreaming =
-              isAssistantTyping &&
-              index === messages.length - 1 &&
-              msg.role === MessageRole.Assistant;
-            return (
-              <MessageBubble
-                key={msg.id}
-                role={msg.role}
-                text={msg.content}
-                alwaysVisibleActions={!isStreaming}
-                actions={buildMessageActions(
-                  msg,
-                  {
-                    onDelete: onDeleteMessage,
-                    onRegenerate: onRegenerateMessage,
-                  },
-                  tooltips,
-                )}
-                className={
-                  msg.role === MessageRole.User
-                    ? 'justify-end'
-                    : 'justify-start'
-                }
-              />
-            );
-          })}
+          <div className="flex flex-1 flex-col gap-6">
+            {messages.map((msg, index) => {
+              const isStreaming =
+                isAssistantTyping &&
+                index === messages.length - 1 &&
+                msg.role === MessageRole.Assistant;
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.content}
+                  alwaysVisibleActions={!isStreaming}
+                  actions={buildMessageActions(
+                    msg,
+                    {
+                      onDelete: onDeleteMessage,
+                      onRegenerate: onRegenerateMessage,
+                    },
+                    tooltips,
+                  )}
+                  className={
+                    msg.role === MessageRole.User
+                      ? 'justify-end'
+                      : 'justify-start'
+                  }
+                />
+              );
+            })}
+          </div>
           <div ref={endRef} />
         </div>
 
