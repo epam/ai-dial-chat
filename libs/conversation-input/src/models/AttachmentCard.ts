@@ -10,8 +10,6 @@ export interface AttachmentCardColors {
   nameText?: string;
   /** Meta (type / label) text color. */
   metaText?: string;
-  /** Border radius applied to the card (e.g. `'0.25rem'`, `'8px'`). */
-  borderRadius?: string;
 }
 
 /** Typography overrides for the `AttachmentCard` component. */
@@ -40,6 +38,8 @@ export interface AttachmentCardProps {
   colors?: AttachmentCardColors;
   /** Typography overrides for text elements inside the card. */
   typography?: AttachmentCardTypography;
+  /** Tailwind border-radius utility class applied to the card and its inner layers (e.g. `'rounded'`, `'rounded-lg'`). */
+  roundedClassName?: string;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

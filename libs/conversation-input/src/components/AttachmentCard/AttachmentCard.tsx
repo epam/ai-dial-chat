@@ -22,6 +22,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   retryLabel = 'Retry upload',
   colors,
   typography,
+  roundedClassName = 'rounded',
   className,
 }) => {
   const { id, name } = attachment;
@@ -31,7 +32,6 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     ...(colors?.background && { '--ci-card-bg': colors.background }),
     ...(colors?.nameText && { '--ci-card-name': colors.nameText }),
     ...(colors?.metaText && { '--ci-card-meta': colors.metaText }),
-    borderRadius: colors?.borderRadius ?? '0.25rem',
   } as CSSProperties;
 
   const {
@@ -58,6 +58,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       style={cssVars}
       className={mergeClasses(
         'group relative flex h-[100px] w-[100px] flex-shrink-0 border focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
+        roundedClassName,
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
         className,
@@ -67,7 +68,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         <img
           src={attachment.previewUrl}
           alt={name}
-          className="h-full w-full rounded object-cover"
+          className={mergeClasses(
+            'h-full w-full object-cover',
+            roundedClassName,
+          )}
         />
       ) : (
         <>
@@ -106,7 +110,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       {isLoading && (
         <span
           className={mergeClasses(
-            'absolute inset-0 flex items-center justify-center rounded',
+            'absolute inset-0 flex items-center justify-center',
+            roundedClassName,
             styles.loadingOverlay,
           )}
         >
@@ -132,7 +137,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             <DialGhostIconButton
               icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
-              className={mergeClasses('h-6 w-6 rounded bg-transparent', styles.actionBtn)}
+              className={mergeClasses(
+                'h-6 w-6 rounded bg-transparent',
+                styles.actionBtn,
+              )}
               aria-label={retryLabel}
               onClick={() => onRetry(id)}
             />
