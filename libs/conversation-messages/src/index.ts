@@ -11,7 +11,10 @@ export type {
   MessageBubbleColors,
   MessageBubbleTypography,
 } from './models/MessageBubble.js';
-export type { MessageActionsProps } from './models/MessageActions.js';
+export type {
+  MessageActionsProps,
+  MessageActionTooltips,
+} from './models/MessageActions.js';
 export type {
   MessageSourceProps,
   MessageSourceColors,

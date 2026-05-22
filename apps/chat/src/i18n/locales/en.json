@@ -20,7 +20,13 @@
     "add": "Add",
     "delete": "Delete",
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "regenerate": "Regenerate",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "like": "Like",
+    "dislike": "Dislike"
   },
   "errors": {
     "generic": "Something went wrong",

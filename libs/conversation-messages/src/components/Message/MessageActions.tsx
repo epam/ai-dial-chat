@@ -30,6 +30,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onDislike,
   alwaysVisible,
   className,
+  tooltips,
 }) => {
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
 
@@ -59,12 +60,14 @@ export const MessageActions: FC<MessageActionsProps> = ({
             icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Edit message"
+            tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
             onClick={onEdit}
           />
           <DialGhostIconButton
             icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Delete message"
+            tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
             onClick={onDelete}
           />
         </>
@@ -74,6 +77,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Regenerate response"
+            tooltipProps={{ tooltip: tooltips?.regenerate ?? 'Regenerate' }}
             onClick={onRegenerate}
           />
           <DialGhostIconButton
@@ -86,6 +90,12 @@ export const MessageActions: FC<MessageActionsProps> = ({
             }
             size={ElementSize.Small}
             aria-label="Copy response"
+            tooltipProps={{
+              tooltip:
+                copied === 'copy'
+                  ? (tooltips?.copied ?? 'Copied!')
+                  : (tooltips?.copy ?? 'Copy'),
+            }}
             onClick={handleCopy}
           />
           <DialGhostIconButton
@@ -98,18 +108,26 @@ export const MessageActions: FC<MessageActionsProps> = ({
             }
             size={ElementSize.Small}
             aria-label="Copy as markdown"
+            tooltipProps={{
+              tooltip:
+                copied === 'markdown'
+                  ? (tooltips?.copiedMarkdown ?? 'Copied!')
+                  : (tooltips?.copyMarkdown ?? 'Copy as Markdown'),
+            }}
             onClick={handleCopyMarkdown}
           />
           <DialGhostIconButton
             icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Like response"
+            tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
             onClick={onLike}
           />
           <DialGhostIconButton
             icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Dislike response"
+            tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
             onClick={onDislike}
           />
         </>
