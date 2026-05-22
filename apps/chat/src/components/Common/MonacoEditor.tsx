@@ -1,4 +1,5 @@
 import { EditorProps } from '@monaco-editor/react';
+import type * as monacoEditor from 'monaco-editor';
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
@@ -41,7 +42,9 @@ const MonacoEditorNoSSR = dynamic(
       import('monaco-editor'),
     ]);
 
-    (self as unknown as { MonacoEnvironment: monaco.Environment }).MonacoEnvironment =
+    (
+      self as unknown as { MonacoEnvironment: monacoEditor.Environment }
+    ).MonacoEnvironment =
       {
         getWorker(_workerId: string, label: string) {
           switch (label) {
