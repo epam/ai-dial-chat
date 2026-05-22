@@ -37,16 +37,12 @@ describe('AttachmentCard', () => {
   it('hides remove button during loading state', () => {
     const attachment = makeAttachment({ status: RequestStatus.Loading });
     render(<AttachmentCard attachment={attachment} onRemove={vi.fn()} />);
-    expect(
-      screen.queryByLabelText('Remove attachment'),
-    ).toBeNull();
+    expect(screen.queryByLabelText('Remove attachment')).toBeNull();
   });
 
   it('shows remove button in idle state', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
-    expect(
-      screen.getByLabelText('Remove attachment'),
-    ).toBeTruthy();
+    expect(screen.getByLabelText('Remove attachment')).toBeTruthy();
   });
 
   it('shows retry button in error state', () => {
@@ -58,9 +54,7 @@ describe('AttachmentCard', () => {
         onRetry={vi.fn()}
       />,
     );
-    expect(
-      screen.getByLabelText('Retry upload'),
-    ).toBeTruthy();
+    expect(screen.getByLabelText('Retry upload')).toBeTruthy();
   });
 
   it('calls onRemove with attachment id when remove is clicked', () => {
@@ -68,9 +62,7 @@ describe('AttachmentCard', () => {
     render(
       <AttachmentCard attachment={makeAttachment()} onRemove={onRemove} />,
     );
-    fireEvent.click(
-      screen.getByLabelText('Remove attachment'),
-    );
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
     expect(onRemove).toHaveBeenCalledWith('a1');
   });
 
@@ -95,9 +87,7 @@ describe('AttachmentCard', () => {
         onRetry={onRetry}
       />,
     );
-    fireEvent.click(
-      screen.getByLabelText('Retry upload'),
-    );
+    fireEvent.click(screen.getByLabelText('Retry upload'));
     expect(onRetry).toHaveBeenCalledWith('a1');
   });
 });

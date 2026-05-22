@@ -147,9 +147,7 @@ describe('Input', () => {
     ) as HTMLInputElement;
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    fireEvent.click(
-      screen.getByLabelText('Remove attachment'),
-    );
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
     expect(screen.queryByText('doc.pdf')).toBeNull();
   });
 
