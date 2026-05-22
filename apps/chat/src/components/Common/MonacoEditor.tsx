@@ -31,15 +31,67 @@ import omit from 'lodash-es/omit';
 import { nanoid } from 'nanoid';
 
 // Use dynamic import to prevent SSR issues with Monaco Editor.
-// Worker setup and language registrations are handled by monaco-editor-webpack-plugin
-// (configured in next.config.js); here we only redirect @monaco-editor/react
-// to the locally bundled copy instead of the default CDN AMD loader.
+// Also: bypass @monaco-editor/react's default CDN AMD loader (which injects an
+// inline bootstrap <script> that violates our CSP) by handing it the locally
+// bundled monaco-editor copy, and spin language workers from same-origin URLs
+// via webpack 5's native worker support.
 const MonacoEditorNoSSR = dynamic(
   async () => {
     const [{ Editor, loader }, monaco] = await Promise.all([
       import('@monaco-editor/react'),
       import('monaco-editor'),
     ]);
+
+    (
+      self as unknown as {
+        MonacoEnvironment: import('monaco-editor').Environment;
+      }
+    ).MonacoEnvironment = {
+      getWorker(_workerId: string, label: string) {
+        switch (label) {
+          case 'json':
+            return new Worker(
+              new URL(
+                'monaco-editor/esm/vs/language/json/json.worker.js',
+                import.meta.url,
+              ),
+            );
+          case 'css':
+          case 'scss':
+          case 'less':
+            return new Worker(
+              new URL(
+                'monaco-editor/esm/vs/language/css/css.worker.js',
+                import.meta.url,
+              ),
+            );
+          case 'html':
+          case 'handlebars':
+          case 'razor':
+            return new Worker(
+              new URL(
+                'monaco-editor/esm/vs/language/html/html.worker.js',
+                import.meta.url,
+              ),
+            );
+          case 'typescript':
+          case 'javascript':
+            return new Worker(
+              new URL(
+                'monaco-editor/esm/vs/language/typescript/ts.worker.js',
+                import.meta.url,
+              ),
+            );
+          default:
+            return new Worker(
+              new URL(
+                'monaco-editor/esm/vs/editor/editor.worker.js',
+                import.meta.url,
+              ),
+            );
+        }
+      },
+    };
 
     loader.config({ monaco });
 
