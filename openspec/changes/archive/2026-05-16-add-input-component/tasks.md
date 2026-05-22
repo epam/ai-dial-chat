@@ -30,6 +30,6 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run `pnpm nx lint conversation-input` — fix any reported issues
-- [ ] 5.2 Run `pnpm nx typecheck conversation-input` (or `pnpm nx build conversation-input`) — fix any type errors
-- [ ] 5.3 Run `pnpm nx test conversation-input` — all tests must pass
+- [ ] 5.1 Run `npm exec nx lint conversation-input` — fix any reported issues
+- [ ] 5.2 Run `npm exec nx typecheck conversation-input` (or `npm exec nx build conversation-input`) — fix any type errors
+- [ ] 5.3 Run `npm exec nx test conversation-input` — all tests must pass

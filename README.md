@@ -60,7 +60,7 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 ## Prerequisites
 
 - **Node.js**: 24 or higher
-- **npm**: v9 or higher (or pnpm)
+- **npm**: v9 or higher
 - **Git**: Latest version
 
 ## Quick Start

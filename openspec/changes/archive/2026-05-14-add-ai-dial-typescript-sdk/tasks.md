@@ -10,7 +10,7 @@
 - [x] Uncomment `import { createSDK } from '@epam/ai-dial-typescript-sdk'`
 - [x] Uncomment `protected client: ReturnType<typeof createSDK>`
 - [x] Uncomment the `this.client = createSDK({ ... })` constructor body
-- [x] Verify TypeScript compiles with no errors: `pnpm nx build chat-api --skip-nx-cache`
+- [x] Verify TypeScript compiles with no errors: `npm exec nx build chat-api --skip-nx-cache`
 
 ---
 
@@ -24,7 +24,7 @@
   - Remove the TODO comment above these fields
 - [x] Update any downstream `configService.get(...)` calls that used `as string` casts for these two variables — cast is kept because ConfigService<T>.get() returns `T[key] | undefined` regardless of the required assertion
 - [x] Ensure `.env.local` or `.env` in the repo's dev setup documents these two variables — documented in `apps/chat-api/.env.template`
-- [x] Run validation test to confirm startup fails without `DIAL_CORE_URL`: `pnpm nx test chat-api`
+- [x] Run validation test to confirm startup fails without `DIAL_CORE_URL`: `npm exec nx test chat-api`
 
 ---
 
@@ -108,9 +108,9 @@
 
 ### 8. Build and lint verification
 
-- [x] Run `pnpm nx lint chat-api` — passes with 0 errors (11 pre-existing warnings)
-- [x] Run `pnpm nx test chat-api` — 7/9 test files pass (31 tests); 2 pre-existing theme test files fail due to missing `CACHE_MANAGER` mock setup (not caused by this change). Tests run with: `vitest run --config apps/chat-api/vitest.config.ts` from workspace root. `nx test` target exists but has an issue with Nx child-process environment vs direct vitest invocation.
-- [ ] Run `pnpm nx build chat-api` — build not yet verified
+- [x] Run `npm exec nx lint chat-api` — passes with 0 errors (11 pre-existing warnings)
+- [x] Run `npm exec nx test chat-api` — 7/9 test files pass (31 tests); 2 pre-existing theme test files fail due to missing `CACHE_MANAGER` mock setup (not caused by this change). Tests run with: `vitest run --config apps/chat-api/vitest.config.ts` from workspace root. `nx test` target exists but has an issue with Nx child-process environment vs direct vitest invocation.
+- [ ] Run `npm exec nx build chat-api` — build not yet verified
 
 ---
 

@@ -45,10 +45,10 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
    - Run `npm run openapi`, inspect generated method/type names, then run `npm run openapi:check`.
 5. If adding public API behavior, add or update controller/service tests. Use `supertest` for request-level behavior and mock outbound clients or SDK methods.
 6. Use Nx for verification:
-   - `pnpm nx test chat-api`
-   - `pnpm nx lint chat-api`
-   - `pnpm nx build chat-api` when Nest startup, bundling, config, or module wiring is affected
-   - `pnpm nx build chat-api-client -- --skip-nx-cache` and `pnpm nx lint chat-api-client` when endpoint contracts changed
+   - `npm exec nx test chat-api`
+   - `npm exec nx lint chat-api`
+   - `npm exec nx build chat-api` when Nest startup, bundling, config, or module wiring is affected
+   - `npm exec nx build chat-api-client -- --skip-nx-cache` and `npm exec nx lint chat-api-client` when endpoint contracts changed
 
 ## Avoid
 

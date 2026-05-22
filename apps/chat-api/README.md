@@ -24,7 +24,7 @@ NestJS backend application for the chat platform. Provides REST API endpoints fo
 ## Prerequisites
 
 - Node.js 18+
-- npm or pnpm
+- npm
 - Access to AI DIAL core service
 - Access to themes configuration service
 

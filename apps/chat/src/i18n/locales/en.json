@@ -17,6 +17,7 @@
     "comingSoon": "Catalog coming soon"
   },
   "actions": {
+    "add": "Add",
     "delete": "Delete",
     "cancel": "Cancel",
     "confirm": "Confirm",
@@ -34,6 +35,11 @@
     "tryAgain": "Try again",
     "failedToLoadTheme": "Failed to load themes. Using default theme.",
     "failedToLoadLogo": "Failed to load logo"
+  },
+  "conversationInput": {
+    "attach": { "label": "Attach file" },
+    "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
+    "attachmentTray": { "label": "Attached files" }
   },
   "auth": {
     "signOut": "Sign out",
