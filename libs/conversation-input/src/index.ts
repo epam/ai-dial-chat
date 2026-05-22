@@ -1,5 +1,7 @@
 export { ConversationInput } from './components/ConversationInput/ConversationInput.js';
 export { Input } from './components/Input/Input.js';
+export { AttachmentCard } from './components/AttachmentCard/AttachmentCard.js';
+export { AttachmentTray } from './components/AttachmentTray/AttachmentTray.js';
 export type {
   ConversationInputProps,
   ConversationInputColors,

@@ -1,3 +1,5 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
+
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
   /** Input area background color. */
@@ -40,6 +42,8 @@ export interface InputProps {
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
   isStreaming?: boolean;
+  /** Called whenever the attachment list changes. */
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
   /** Placeholder text shown when the textarea is empty. */
   placeholder?: string;
   /** `aria-label` applied to the textarea for screen readers. */

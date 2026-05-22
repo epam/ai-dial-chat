@@ -45,6 +45,7 @@ export default defineConfig(() => ({
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',
+        'react-i18next',
       ],
     },
   },
@@ -53,6 +54,7 @@ export default defineConfig(() => ({
     watch: false,
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {

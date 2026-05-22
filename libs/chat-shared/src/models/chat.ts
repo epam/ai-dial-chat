@@ -67,6 +67,46 @@ export interface StreamChunk {
   }>;
 }
 
+/** Discriminates the kind of content an attachment carries. */
+export enum AttachmentType {
+  /** Generic file attachment (non-image). */
+  File = 'file',
+  /** Raster or vector image. */
+  Image = 'image',
+  /** A saved prompt snippet. */
+  Prompt = 'prompt',
+  /** Text pasted directly by the user. */
+  Pasted = 'pasted',
+}
+
+/** Generic async-operation status, reusable for any request lifecycle. */
+export enum RequestStatus {
+  /** No request has been made yet. */
+  Idle = 'idle',
+  /** A request is in-flight. */
+  Loading = 'loading',
+  /** The most recent request failed. */
+  Error = 'error',
+}
+
+/** Represents a file or content item the user has attached to a message. */
+export interface Attachment {
+  /** Unique client-side identifier. */
+  id: string;
+  /** Display name (usually the original filename). */
+  name: string;
+  /** MIME type of the attachment (e.g. `'image/png'`, `'application/pdf'`). */
+  contentType: string;
+  /** The underlying `File` object selected by the user. */
+  file: File;
+  /** Content category used to select the correct icon and thumbnail. */
+  type: AttachmentType;
+  /** Upload / processing lifecycle state. */
+  status: RequestStatus;
+  /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
+  previewUrl?: string;
+}
+
 /** A full conversation including its messages and configuration. */
 export interface Conversation {
   /** Unique conversation identifier. */

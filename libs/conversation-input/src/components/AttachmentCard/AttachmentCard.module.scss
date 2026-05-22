@@ -1,0 +1,62 @@
+// Colors only — no layout, spacing, border-radius (those live in Tailwind)
+
+.card {
+  border-color: var(--ci-card-border, var(--stroke-secondary, #242c42));
+  background: var(--ci-card-bg, var(--bg-layer-0, #000000));
+}
+
+.cardError {
+  border-color: var(--ci-card-border-error, var(--stroke-error, #f76464));
+}
+
+.cardSelected {
+  border-color: var(
+    --ci-card-border-selected,
+    var(--stroke-accent-primary, #7da4ff)
+  );
+  background: var(
+    --ci-card-bg-selected,
+    var(--bg-accent-primary-alpha, #7da4ff26)
+  );
+}
+
+.cardPrompt,
+.cardPasted {
+  &:hover {
+    background: var(
+      --ci-card-bg-hover,
+      var(--controls-bg-neutral-hover, #242c42)
+    );
+  }
+}
+
+.name {
+  color: var(--ci-card-name, var(--text-primary, #eef1f7));
+}
+
+.meta {
+  color: var(--ci-card-meta, var(--text-secondary, #9fa6bd));
+}
+
+.loadingOverlay {
+  background: rgb(0 0 0 / 0.3);
+}
+
+.actionBtn {
+  background: transparent;
+  color: var(--ci-card-action-color, var(--text-primary, #eef1f7));
+}
+
+.card:focus-within {
+  outline: 1px solid var(--ci-card-focus-outline, var(--stroke-focus, #7da4ff));
+  outline-offset: 1px;
+}
+
+.removeBtnImage {
+  background: var(--ci-card-remove-bg, var(--bg-layer-2, #161b2d));
+  color: #fff;
+
+  &:hover {
+    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #1d2439));
+  }
+}

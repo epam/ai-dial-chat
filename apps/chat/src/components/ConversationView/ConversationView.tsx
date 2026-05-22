@@ -1,5 +1,6 @@
 import {
   MessageRole,
+  type Attachment,
   type Message as MessageType,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -27,6 +28,7 @@ interface Props {
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
 }
@@ -39,6 +41,7 @@ const ConversationView: FC<Props> = ({
   onStop,
   onDeleteMessage,
   onRegenerateMessage,
+  onAttachmentsChange,
   placeholder,
   isAssistantTyping = false,
 }) => {
@@ -177,6 +180,7 @@ const ConversationView: FC<Props> = ({
             onSend={onSend}
             onStop={onStop}
             isStreaming={isAssistantTyping}
+            onAttachmentsChange={onAttachmentsChange}
             placeholder={placeholder}
           />
         </Suspense>
