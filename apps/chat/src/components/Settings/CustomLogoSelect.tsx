@@ -136,7 +136,7 @@ export const CustomLogoSelect = ({
       >
         <div
           className={classNames(
-            'block w-full max-w-full truncate',
+            'block w-full max-w-full truncate text-start',
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >

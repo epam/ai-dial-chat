@@ -12,8 +12,13 @@ function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
 
+  const rtlLanguages = process.env.RTL_LANGUAGES
+    ? process.env.RTL_LANGUAGES.split(',').map((lang) => lang.trim())
+    : ['ar'];
+  const dir = rtlLanguages.includes(currentLocale) ? 'rtl' : 'ltr';
+
   return (
-    <Html lang={currentLocale}>
+    <Html lang={currentLocale} dir={dir}>
       <Head nonce={props.nonce}>
         {!!process.env.APP_BASE_ORIGIN && !!process.env.APP_BASE_PATH && (
           <base

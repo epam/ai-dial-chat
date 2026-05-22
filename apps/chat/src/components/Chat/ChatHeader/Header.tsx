@@ -225,7 +225,7 @@ export const ChatHeader = Inversify.register(
                 </span>
               </Tooltip>
               {publicVersionGroupId && (
-                <span className="h-[18px] border-l border-l-primary pl-2">
+                <span className="h-[18px] border-s border-s-primary ps-2">
                   {!isApproveRequiredEntitySelected ? (
                     <PublicVersionSelector
                       publicVersionGroupId={publicVersionGroupId}
@@ -246,7 +246,7 @@ export const ChatHeader = Inversify.register(
               )}
             </>
           )}
-          <div className="flex lg:[&>*:first-child]:border-l lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-s lg:[&>*:not(:first-child)]:ps-2 [&>*:not(:last-child)]:border-e [&>*:not(:last-child)]:pe-2 [&>*]:border-x-primary [&>*]:ps-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">
@@ -279,7 +279,7 @@ export const ChatHeader = Inversify.register(
                 </span>
               </>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center [&>*:not(:first-child)]:ps-2 [&>*:not(:last-child)]:border-e [&>*:not(:last-child)]:pe-2 [&>*]:border-e-primary">
               {isTopChatModelSettingsEnabled && !isConversationInvalid && (
                 <Tooltip
                   isTriggerClickable={
