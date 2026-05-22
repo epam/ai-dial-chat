@@ -161,7 +161,7 @@ export const Input: FC<InputProps> = ({
         >
           <DialGhostIconButton
             icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-            aria-label={t('conversationInput.addMenu.ariaLabel')}
+            aria-label={t('actions.add')}
             className="size-10 flex-shrink-0"
           />
         </DialDropdown>

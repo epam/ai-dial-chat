@@ -127,9 +127,7 @@ describe('Input', () => {
 
   it('should render the add menu button', () => {
     render(<Input />);
-    expect(
-      screen.getByLabelText('conversationInput.addMenu.ariaLabel'),
-    ).toBeTruthy();
+    expect(screen.getByLabelText('actions.add')).toBeTruthy();
   });
 
   it('should show an attachment card after a file is picked', () => {
