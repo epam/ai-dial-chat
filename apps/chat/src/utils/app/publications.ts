@@ -101,9 +101,8 @@ export const createFoldersFilesTargetUrl = (id: string) => {
 export const buildDedupedPublicationFileTargetsFromConversations = (
   conversations: Conversation[],
   entityFolderId: string,
-  options: { isFolder: boolean },
+  isFolder = false,
 ): { sourceUrl: string; newUrl: string }[] => {
-  const { isFolder } = options;
   const bySourceUrl = new Map<string, { sourceUrl: string; newUrl: string }>();
 
   const folderOldPathPartsRegExp = new RegExp(

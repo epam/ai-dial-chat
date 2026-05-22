@@ -177,51 +177,34 @@ const PublishDialogContainer = ({
       };
     });
 
-    let fileResources: {
-      action: PublishActions;
-      sourceUrl: string;
-      reviewUrl: string;
-      targetUrl: string;
-    }[] = [];
+    const mappedWithConversationsFiles =
+      buildDedupedPublicationFileTargetsFromConversations(
+        filteredEntities as Conversation[],
+        entity.folderId,
+        isFolder,
+      );
 
-    if (action !== PublishActions.DELETE) {
-      if (resourceType === BackendResourceType.CONVERSATION) {
-        fileResources = buildDedupedPublicationFileTargetsFromConversations(
-          filteredEntities as Conversation[],
-          entity.folderId,
-          { isFolder: !!isFolder },
-        ).map(({ sourceUrl, newUrl }) => ({
-          action: PublishActions.ADD_IF_ABSENT,
-          sourceUrl,
-          reviewUrl: sourceUrl,
-          targetUrl: replaceIdWithBucket(newUrl, PUBLIC_URL_PREFIX),
-        }));
-      } else {
-        const mappedWithConversationsFiles = transformFoldersFilesIds(
-          filteredEntities as Conversation[],
-          entity.folderId,
-        );
+    const fileResources =
+      action === PublishActions.DELETE
+        ? []
+        : filteredConversationFiles.map(({ id }) => {
+            const decodedId = ApiUtils.decodeApiUrl(id);
 
-        fileResources = filteredConversationFiles.map(({ id }) => {
-          const decodedId = ApiUtils.decodeApiUrl(id);
+            const url =
+              (isFolder
+                ? mappedWithConversationsFiles.find(
+                    (file) => file.sourceUrl === decodedId,
+                  )?.newUrl
+                : transformIdToRootEntityId(decodedId)) ??
+              transformIdToRootEntityId(decodedId);
 
-          const url =
-            (isFolder
-              ? mappedWithConversationsFiles.find(
-                  (file) => file.oldUrl === decodedId,
-                )?.newUrl
-              : transformIdToRootEntityId(decodedId)) ??
-            transformIdToRootEntityId(decodedId);
-
-          return {
-            action: PublishActions.ADD_IF_ABSENT,
-            sourceUrl: decodedId,
-            reviewUrl: decodedId,
-            targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
-          };
-        });
-      }
-    }
+            return {
+              action: PublishActions.ADD_IF_ABSENT,
+              sourceUrl: decodedId,
+              reviewUrl: decodedId,
+              targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
+            };
+          });
 
     const iconResource = [];
     if (
