@@ -27,7 +27,6 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   areSomePromptsFieldsChanged,
   generateSkillContent,
-  isValidSkillContent,
 } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -36,6 +35,7 @@ import { Translation } from '@/src/types/translation';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SkillValidationStatus } from '@/src/store/prompts/prompts.types';
 import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { PromptBarI18nKeys } from '@/src/constants/i18n';
@@ -43,6 +43,7 @@ import { PromptBarI18nKeys } from '@/src/constants/i18n';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialLinkButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
@@ -59,6 +60,9 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const dispatch = useAppDispatch();
 
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const { isQuickAppEditPrompt } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const [name, setName] = useState<string>(prompt.name ?? '');
   const [description, setDescription] = useState(prompt?.description ?? '');
@@ -66,6 +70,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const [submitted, setSubmitted] = useState(false);
   const [isDotError, setIsDotError] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+
+  const skillValidation = useAppSelector((state) =>
+    PromptsSelectors.selectSkillValidation(state, prompt.id),
+  );
+  const skillStatus = skillValidation?.status ?? SkillValidationStatus.Unknown;
+  const isSkillStale =
+    skillValidation?.validatedContent !== undefined &&
+    skillValidation.validatedContent !== content;
+  const isSkillValidating = skillStatus === SkillValidationStatus.Validating;
+  const isSkillValid = skillStatus === SkillValidationStatus.Valid;
+  const isSkillUnknown = skillStatus === SkillValidationStatus.Unknown;
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value.replaceAll(notAllowedSymbolsRegex, '');
@@ -213,6 +228,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
       <CloseButtonSmall
         className="absolute right-2 top-2"
         onClick={handleEditClose}
+        aria-label="Close dialog"
       />
 
       <div className="flex flex-col gap-4 overflow-y-auto px-3 md:px-6">
@@ -274,52 +290,79 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
               {t(PromptBarI18nKeys.Prompt)}
               <span className="ml-1 inline text-accent-primary">*</span>
             </label>
-            <span className="flex items-center">
-              {isValidSkillContent(content) ? (
-                <span className="mr-2 flex items-center gap-2 text-accent-secondary">
-                  <IconCircleCheckFilled size={16} />
-                  {t(PromptBarI18nKeys.ValidAgentSkill)}
-                </span>
-              ) : (
-                <DialLinkButton
-                  className="flex items-center gap-2 text-accent-primary hover:opacity-70"
-                  onClick={handleAddAgentSkill}
-                  iconBefore={<IconClipboardCopy size={20} />}
-                  label={t(PromptBarI18nKeys.AddAgentSkill)}
-                />
-              )}
-              <Tooltip
-                interactive
-                tooltip={
-                  <span>
-                    <a
-                      href="https://agentskills.io/home"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="underline"
+            {isQuickAppEditPrompt && (
+              <span className="flex items-center">
+                {isSkillValidating ? (
+                  <Spinner className="mr-2" size={16} />
+                ) : isSkillValid ? (
+                  <Tooltip
+                    hideTooltip={!isSkillStale}
+                    tooltip={t(PromptBarI18nKeys.AgentSkillStaleHint)}
+                  >
+                    <span
+                      className={classNames(
+                        'mr-2 flex items-center gap-2',
+                        isSkillStale
+                          ? 'text-secondary'
+                          : 'text-accent-secondary',
+                      )}
                     >
-                      {t(PromptBarI18nKeys.AgentSkills)}
-                    </a>{' '}
-                    {t(PromptBarI18nKeys.AgentSkillHintBody)}{' '}
-                    {t(PromptBarI18nKeys.AgentSkillHintSeeExamples)}{' '}
-                    <a
-                      href="https://agentskills.io/specification#skill-md-format"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="underline"
-                    >
-                      {t(PromptBarI18nKeys.AgentSkillHintHere)}
-                    </a>
-                    .
-                  </span>
-                }
-              >
-                <IconHelpCircle
-                  size={16}
-                  className="cursor-help text-secondary"
-                />
-              </Tooltip>
-            </span>
+                      <IconCircleCheckFilled size={16} />
+                      {t(PromptBarI18nKeys.ValidAgentSkill)}
+                    </span>
+                  </Tooltip>
+                ) : isSkillUnknown ? (
+                  <Tooltip
+                    tooltip={t(
+                      PromptBarI18nKeys.AgentSkillValidationPendingHint,
+                    )}
+                  >
+                    <span className="mr-2 flex items-center gap-2 text-secondary">
+                      <IconCircleCheckFilled size={16} className="opacity-50" />
+                      {t(PromptBarI18nKeys.AgentSkillValidationPending)}
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <DialLinkButton
+                    className="flex items-center gap-2 text-accent-primary hover:opacity-70"
+                    onClick={handleAddAgentSkill}
+                    iconBefore={<IconClipboardCopy size={20} />}
+                    label={t(PromptBarI18nKeys.AddAgentSkill)}
+                  />
+                )}
+                <Tooltip
+                  interactive
+                  tooltip={
+                    <span>
+                      <a
+                        href="https://agentskills.io/home"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="underline"
+                      >
+                        {t(PromptBarI18nKeys.AgentSkills)}
+                      </a>{' '}
+                      {t(PromptBarI18nKeys.AgentSkillHintBody)}{' '}
+                      {t(PromptBarI18nKeys.AgentSkillHintSeeExamples)}{' '}
+                      <a
+                        href="https://agentskills.io/specification#skill-md-format"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="underline"
+                      >
+                        {t(PromptBarI18nKeys.AgentSkillHintHere)}
+                      </a>
+                      .
+                    </span>
+                  }
+                >
+                  <IconHelpCircle
+                    size={16}
+                    className="cursor-help text-secondary"
+                  />
+                </Tooltip>
+              </span>
+            )}
           </div>
           <textarea
             name="content"

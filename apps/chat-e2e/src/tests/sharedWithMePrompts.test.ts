@@ -93,7 +93,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Create new conversation, type "/" in the request field, select shared prompt and verify it applied',
       async () => {
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
         await additionalShareUserSendMessage.messageInput.fillInInput('/');
         await additionalShareUserSendMessage
           .getPromptList()

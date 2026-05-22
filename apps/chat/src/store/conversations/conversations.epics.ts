@@ -48,6 +48,7 @@ import {
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
@@ -1923,7 +1924,8 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
 
       const messages = [...payload.conversation.messages];
       const modelId = messages[messages.length - 1].model?.id;
-      const modelReference = modelId && modelsMap[modelId]?.reference;
+      const lastModel = modelId ? modelsMap[modelId] : undefined;
+      const modelReference = lastModel ? lastModel.reference : undefined;
 
       messages[messages.length - 1] = {
         ...messages[messages.length - 1],
@@ -1942,6 +1944,14 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         };
       }
 
+      const deleteModels$ = modelReference
+        ? of(
+            ModelsActions.deleteModels({
+              references: [modelReference],
+            }),
+          )
+        : EMPTY;
+
       return concat(
         of(
           ConversationsActions.updateConversation({
@@ -1950,8 +1960,14 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        payload.response?.status === 404 && modelReference
-          ? of(ModelsActions.deleteModels({ references: [modelReference] }))
+        payload.response?.status === 404 && lastModel?.id
+          ? ApplicationService.get(lastModel.id).pipe(
+              switchMap((application) => (application ? EMPTY : deleteModels$)),
+              catchError((error) => {
+                const status = (error as { status?: number })?.status;
+                return status === 404 || status === 403 ? deleteModels$ : EMPTY;
+              }),
+            )
           : EMPTY,
 
         of(

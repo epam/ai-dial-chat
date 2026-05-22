@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useFloatingPanelTogglePadding } from '@/src/hooks/useFloatingPanelTogglePadding';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -108,6 +109,7 @@ export const ChatHeader = Inversify.register(
     const enabledFeatures = useAppSelector(
       SettingsSelectors.selectEnabledFeatures,
     );
+    const floatingPanelTogglePadding = useFloatingPanelTogglePadding();
     const selectedConversations = useAppSelector(
       ConversationsSelectors.selectSelectedConversations,
     );
@@ -195,6 +197,7 @@ export const ChatHeader = Inversify.register(
             'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
             isChatHeaderBorderEnabled && 'border-b border-secondary',
             isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
+            floatingPanelTogglePadding,
           )}
           data-qa="chat-header"
         >
@@ -203,7 +206,7 @@ export const ChatHeader = Inversify.register(
               <Tooltip
                 tooltip={conversation.name}
                 triggerClassName={classNames(
-                  'flex-1 truncate text-center sm:flex-none',
+                  'truncate text-center',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
                   isUnpublishing && 'text-error',
@@ -222,7 +225,7 @@ export const ChatHeader = Inversify.register(
                 </span>
               </Tooltip>
               {publicVersionGroupId && (
-                <span className="h-[18px] border-l border-l-primary pl-2">
+                <span className="h-[18px] min-w-fit border-l border-l-primary pl-2">
                   {!isApproveRequiredEntitySelected ? (
                     <PublicVersionSelector
                       publicVersionGroupId={publicVersionGroupId}

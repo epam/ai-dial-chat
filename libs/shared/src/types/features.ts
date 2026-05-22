@@ -4,6 +4,8 @@ export enum Feature {
   Footer = 'footer', // Display app footer
   ConversationsSection = 'conversations-section', // Display conversations sidebar
   PromptsSection = 'prompts-section', // Display prompts sidebar
+  ConversationsPanelToggle = 'conversations-panel-toggle', // Show conversations panel toggle in the corner without app header
+  PromptsPanelToggle = 'prompts-panel-toggle', // Show prompts panel toggle in the corner without app header
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
   ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
   ShowLayoutDividers = 'show-layout-dividers', // show dividers between chat and sidebars

@@ -48,7 +48,7 @@ dialTest(
             promptValue,
           );
           await promptModalDialog.savePrompt({ triggeredHttpMethod: 'POST' });
-          await promptPreviewModal.closeButton.click();
+          await promptPreviewModal.getCloseButton().click();
           await promptAssertion.assertEntityState(
             { name: ExpectedConstants.newPromptTitle(i) },
             'visible',
@@ -69,7 +69,7 @@ dialTest(
           renamedPrompt + 1,
         );
         await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState(
           { name: renamedPrompt + 1 },
           'visible',
@@ -82,7 +82,7 @@ dialTest(
           { name: ExpectedConstants.newPromptTitle(4) },
           'visible',
         );
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
 
         await prompts.openEntityDropdownMenu(
           ExpectedConstants.newPromptTitle(4),
@@ -93,7 +93,7 @@ dialTest(
           renamedPrompt + 4,
         );
         await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState(
           { name: renamedPrompt + 4 },
           'visible',
@@ -102,7 +102,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.savePrompt({ triggeredHttpMethod: 'POST' });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState(
           { name: ExpectedConstants.newPromptTitle(4) },
           'visible',
@@ -126,7 +126,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState(
           { name: ExpectedConstants.newPromptTitle(5) },
           'visible',
@@ -144,7 +144,7 @@ dialTest(
           ExpectedConstants.newPromptTitle(999),
         );
         await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
 
         for (let i = 1000; i <= 1001; i++) {
           await promptBar.createNewEntity();
@@ -153,7 +153,7 @@ dialTest(
             promptValue,
           );
           await promptModalDialog.savePrompt({ triggeredHttpMethod: 'POST' });
-          await promptPreviewModal.closeButton.click();
+          await promptPreviewModal.getCloseButton().click();
           await promptAssertion.assertEntityState(
             { name: ExpectedConstants.newPromptTitle(i) },
             'visible',
@@ -255,7 +255,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
 
         await promptBar.dragAndDropEntityToFolder(
           prompts.getEntityByName(duplicatedPromptName),
@@ -273,7 +273,7 @@ dialTest(
         await promptBar.createNewEntity();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState(
           { name: duplicatedPromptName },
           'visible',
@@ -303,7 +303,7 @@ dialTest(
           ),
           ExpectedMessages.notAllowedNameErrorShown,
         );
-        await promptModalDialog.closeButton.click();
+        await promptModalDialog.getCloseButton().click();
         await confirmationDialog.cancelButton.click();
         await toast.closeToast();
       },
