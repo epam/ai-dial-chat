@@ -5,6 +5,7 @@ const path = require('path');
 const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 if (!process.env.THEMES_CONFIG_HOST && process.env.NODE_ENV !== 'development') {
   console.warn('\x1b[33mwarn\x1b[0m  - THEMES_CONFIG_HOST is not provided. Using fallback themes.');
@@ -145,6 +146,30 @@ const nextConfig = {
         asyncFunction: true,
         module: true,
       };
+
+      // Bundle monaco-editor locally (workers + language tokenizers) so the
+      // editor does not need an external CDN allowance in our CSP and so
+      // monaco's dynamic AMD requires (e.g. 'vs/nls.messages-loader') are
+      // resolved statically by webpack.
+      config.plugins.push(
+        new MonacoWebpackPlugin({
+          languages: [
+            'python',
+            'json',
+            'yaml',
+            'markdown',
+            'shell',
+            'dockerfile',
+            'typescript',
+            'javascript',
+            'html',
+            'css',
+            'sql',
+            'xml',
+          ],
+          filename: 'static/[name].worker.[contenthash].js',
+        }),
+      );
     }
 
     //SVGR config
