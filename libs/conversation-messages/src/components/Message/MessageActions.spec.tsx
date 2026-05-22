@@ -22,7 +22,7 @@ describe('MessageActions', () => {
         screen.queryByRole('button', { name: 'Copy response' }),
       ).toBeNull();
       expect(
-        screen.queryByRole('button', { name: 'Toggle markdown' }),
+        screen.queryByRole('button', { name: 'Copy as markdown' }),
       ).toBeNull();
       expect(
         screen.queryByRole('button', { name: 'Like response' }),
@@ -61,7 +61,7 @@ describe('MessageActions', () => {
         screen.getByRole('button', { name: 'Copy response' }),
       ).toBeTruthy();
       expect(
-        screen.getByRole('button', { name: 'Toggle markdown' }),
+        screen.getByRole('button', { name: 'Copy as markdown' }),
       ).toBeTruthy();
       expect(
         screen.getByRole('button', { name: 'Like response' }),
@@ -97,15 +97,13 @@ describe('MessageActions', () => {
       expect(onCopy).toHaveBeenCalledOnce();
     });
 
-    it('calls onToggleMarkdown when Markdown button is clicked', async () => {
-      const onToggleMarkdown = vi.fn();
-      render(
-        <MessageActions role="Agent" onToggleMarkdown={onToggleMarkdown} />,
-      );
+    it('calls onCopyMarkdown when Markdown button is clicked', async () => {
+      const onCopyMarkdown = vi.fn();
+      render(<MessageActions role="Agent" onCopyMarkdown={onCopyMarkdown} />);
       await userEvent.click(
-        screen.getByRole('button', { name: 'Toggle markdown' }),
+        screen.getByRole('button', { name: 'Copy as markdown' }),
       );
-      expect(onToggleMarkdown).toHaveBeenCalledOnce();
+      expect(onCopyMarkdown).toHaveBeenCalledOnce();
     });
 
     it('calls onLike when Like button is clicked', async () => {

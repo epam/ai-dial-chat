@@ -5,7 +5,7 @@
 
 - For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
 - When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- Prefix nx commands with the workspace's package manager (e.g., `npm exec nx build`, `npm exec nx test`) - avoids using globally installed CLI
 - You have access to the Nx MCP server and its tools, use them to help the user
 - For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
 - NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
@@ -56,6 +56,9 @@ Default behavior:
 
 ## Local coding conventions
 
+- In `libs/**/*.tsx` files, **never** use `useTranslation` or `t()` from `react-i18next`. Pass all user-visible strings as props with English default values instead. i18n is the responsibility of the consuming app, not the lib.
+- In all `**/*.{ts,tsx}` files, **never** write ternary-in-ternary (nested conditional expressions). Use `if`/`else` blocks, early returns, or a `switch` statement instead.
+
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
 - In `apps/*` React component files, name the component props type/interface `Props`.
 - In `apps/*` React component files, prefer `export default` for component exports.
@@ -64,3 +67,20 @@ Default behavior:
 - In `libs/*` React component files, always use `FC<Props>` syntax: `export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... }`.
 - Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.
 - Every exported symbol in `libs/*` (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.
+
+## When working with @epam/ai-dial-ui-kit
+
+When implementing or modifying components, forms, or UI built with `@epam/ai-dial-ui-kit`, the `ai-dial-ui-kit` MCP server enables you to discover components, read exact prop signatures, access code examples, and understand design tokens and available utilities.
+
+## Component-First Development
+
+**Always prefer UI kit components over raw HTML elements.** Before reaching for native `<button>`, `<input>`, `<select>`, or other HTML elements:
+
+1. **Look for a UI kit component** — Check if a suitable `Dial*` component exists for your use case
+2. **Use raw elements only as last resort** — If and only if no UI kit component meets the requirements, use native HTML (and document why)
+
+## MCP Tools
+
+Use these two tools for all UI kit discovery and documentation needs: `searchEntity(entity, query?)` and `getEntityDetails(entity, name?)`. If you need to look up **ANYTHING** about the ui kit, use the MCP server. **Never** use rg/ls commands for the ui kit module inspection.
+
+> **Note:** Do not use `grep`, `glob`, `find`, or similar file system tools to discover components. The MCP tools provide accurate, structured metadata. File system searches miss examples, miss type information, and are slower.

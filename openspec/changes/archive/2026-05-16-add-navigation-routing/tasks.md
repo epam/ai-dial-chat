@@ -77,6 +77,6 @@
 
 ### 8. Verification
 
-- [ ] Run `pnpm nx lint chat` — fix any lint errors
-- [ ] Run `pnpm nx typecheck chat` — fix any type errors
-- [ ] Run `pnpm nx test chat` — all tests green
+- [ ] Run `npm exec nx lint chat` — fix any lint errors
+- [ ] Run `npm exec nx typecheck chat` — fix any type errors
+- [ ] Run `npm exec nx test chat` — all tests green

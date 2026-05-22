@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
     "@nx/eslint": "22.7.2",

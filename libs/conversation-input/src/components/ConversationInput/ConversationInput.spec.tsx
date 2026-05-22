@@ -25,11 +25,10 @@ describe('ConversationInput', () => {
     const { container } = render(<ConversationInput onSend={handleSend} />);
 
     const textarea = container.querySelector('textarea');
-    const button = container.querySelector('button');
 
-    if (textarea && button) {
+    if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
-      fireEvent.click(button);
+      fireEvent.click(screen.getByLabelText('Send message'));
 
       expect(handleSend).toHaveBeenCalledWith('Test message');
     }
@@ -51,14 +50,10 @@ describe('ConversationInput', () => {
 
   it('should not send empty messages', () => {
     const handleSend = vi.fn();
-    const { container } = render(<ConversationInput onSend={handleSend} />);
+    render(<ConversationInput onSend={handleSend} />);
 
-    const button = container.querySelector('button');
-
-    if (button) {
-      fireEvent.click(button);
-      expect(handleSend).not.toHaveBeenCalled();
-    }
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(handleSend).not.toHaveBeenCalled();
   });
 
   it('should hide welcome text when welcomeText prop is empty string', () => {

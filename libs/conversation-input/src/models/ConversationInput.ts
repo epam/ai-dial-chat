@@ -1,3 +1,4 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 import type { InputColors, InputTypography } from './Input.js';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -40,6 +41,8 @@ export interface ConversationInputProps {
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button and blocks Enter. */
   isStreaming?: boolean;
+  /** Called whenever the attachment list changes. */
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
   /** Color overrides applied as CSS custom properties. */
   colors?: ConversationInputColors;
   /** Typography overrides for the welcome heading and input. */
