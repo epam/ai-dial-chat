@@ -287,10 +287,10 @@ dialAdminTest(
       GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength + 50);
     // Each nested level uses a unique name so FoldersTree.folderByPath can
     // address every level unambiguously (same-name nesting is filtered out by
-    // `folderByPath`'s `hasNot` filter). startFolderIndex is computed
+    // `folderByPath`'s `hasNot` filter). rootNewFolderLastIndex is computed
     // dynamically at runtime to avoid conflicts with pre-existing folders.
     const maxNestedLevel = 4;
-    let startFolderIndex = 0;
+    let rootNewFolderLastIndex = 0;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let publicationPath: string;
 
@@ -316,20 +316,14 @@ dialAdminTest(
         // highest existing "New folder N" index at the current level.
         const existingNames =
           await selectFolderManagerModalGrid.getNameColumnValues();
-        startFolderIndex =
+        rootNewFolderLastIndex =
           Math.max(
             0,
             ...existingNames
               .map((n) => n.match(/New folder (\d+)/)?.[1])
               .filter((n): n is string => Boolean(n))
               .map(Number),
-          ) + 1;
-        publicationPath = `${PublishPath.Organization}/${Array.from(
-          { length: maxNestedLevel },
-          (_, i) =>
-            ExpectedConstants.newFolderWithIndexTitle(startFolderIndex + i),
-        ).join('/')}`;
-
+          );
         await selectFolderManagerModal.getAddFolderButton().click();
         const folderInput = selectFolderManagerModalGrid.getRenameInput();
         await baseAssertion.assertElementState(folderInput, 'visible');
@@ -337,15 +331,21 @@ dialAdminTest(
         // "New folder N" name (N — next available index at the current level).
         await baseAssertion.assertInputValue(
           folderInput,
-          ExpectedConstants.newFolderWithIndexTitle(startFolderIndex),
+          ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + 1),
         );
         await baseAssertion.assertIsElementFocused(folderInput, true);
         await selectFolderManagerModalGrid.confirmNewFolderName(
           undefined,
           false,
         );
+        rootNewFolderLastIndex++;
+        publicationPath = `${PublishPath.Organization}/${Array.from(
+          { length: maxNestedLevel },
+          (_, i) =>
+            ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + i),
+        ).join('/')}`;
         await selectFolderManagerModalGrid.goToGridRowByNameCell(
-          ExpectedConstants.newFolderWithIndexTitle(startFolderIndex),
+          ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex),
         );
       },
     );
@@ -374,10 +374,9 @@ dialAdminTest(
       async () => {
         for (let i = 1; i < maxNestedLevel; i++) {
           await selectFolderManagerModalGrid.openFolder(
-            ExpectedConstants.newFolderWithIndexTitle(startFolderIndex),
+            ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + i - 1),
             false,
           );
-          startFolderIndex++;
           await selectFolderManagerModal.getAddFolderButton().click();
           const subFolderInput = selectFolderManagerModalGrid.getRenameInput();
           await baseAssertion.assertElementState(subFolderInput, 'visible');
@@ -388,11 +387,11 @@ dialAdminTest(
           // TODO uncomment when fixed
           // await baseAssertion.assertIsElementFocused(subFolderInput, true);
           await selectFolderManagerModalGrid.setFolderName(
-            ExpectedConstants.newFolderWithIndexTitle(startFolderIndex),
+            ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + i),
             false,
           );
           await selectFolderManagerModalGrid.goToGridRowByNameCell(
-            ExpectedConstants.newFolderWithIndexTitle(startFolderIndex),
+            ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + i),
           );
         }
       },
@@ -455,8 +454,9 @@ dialAdminTest(
     await dialTest.step(
       'Delete low-level folder and verify a new one is created in edit mode in the root',
       async () => {
-        const folderToDelete =
-          ExpectedConstants.newFolderWithIndexTitle(startFolderIndex);
+        const folderToDelete = ExpectedConstants.newFolderWithIndexTitle(
+          rootNewFolderLastIndex + maxNestedLevel - 1,
+        );
         const dotsMenu =
           await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
             folderToDelete,
@@ -490,9 +490,7 @@ dialAdminTest(
         // uses aria-selected to mark the active tree node.
         for (let level = 1; level <= maxNestedLevel; level++) {
           const path = Array.from({ length: level }, (_, i) =>
-            ExpectedConstants.newFolderWithIndexTitle(
-              startFolderIndex - maxNestedLevel + 1 + i,
-            ),
+            ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + i),
           );
           await selectFolderManagerModalFoldersTree
             .folderByPath(...path)
@@ -573,7 +571,7 @@ dialAdminTest(
 
         for (let i = 0; i < maxNestedLevel; i++) {
           const folderName = ExpectedConstants.newFolderWithIndexTitle(
-            startFolderIndex - maxNestedLevel + 1 + i,
+            rootNewFolderLastIndex + i,
           );
           await adminOrganizationFolderConversationAssertions.assertFolderState(
             { name: folderName },
@@ -584,7 +582,11 @@ dialAdminTest(
           });
         }
         await adminOrganizationFolderConversationAssertions.assertFolderEntityState(
-          { name: ExpectedConstants.newFolderWithIndexTitle(startFolderIndex) },
+          {
+            name: ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + maxNestedLevel - 1,
+            ),
+          },
           { name: conversationToPublish.name },
           'visible',
         );
