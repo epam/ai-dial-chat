@@ -43,13 +43,11 @@
 }
 
 .actionBtn {
-  background: transparent;
   color: var(--ci-card-action-color, var(--text-primary, #eef1f7));
 }
 
 .card:focus-within {
-  outline: 1px solid var(--ci-card-focus-outline, var(--stroke-focus, #7da4ff));
-  outline-offset: 1px;
+  outline-color: var(--ci-card-focus-outline, var(--stroke-focus, #7da4ff));
 }
 
 .removeBtnImage {

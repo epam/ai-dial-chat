@@ -57,7 +57,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'group relative flex h-[100px] w-[100px] flex-shrink-0 border',
+        'group relative flex h-[100px] w-[100px] flex-shrink-0 border focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
         className,
@@ -132,7 +132,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             <DialGhostIconButton
               icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
-              className={mergeClasses('h-6 w-6 rounded', styles.actionBtn)}
+              className={mergeClasses('h-6 w-6 rounded bg-transparent', styles.actionBtn)}
               aria-label={retryLabel}
               onClick={() => onRetry(id)}
             />

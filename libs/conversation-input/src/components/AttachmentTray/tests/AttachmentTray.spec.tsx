@@ -39,9 +39,7 @@ describe('AttachmentTray', () => {
         onRemove={onRemove}
       />,
     );
-    fireEvent.click(
-      screen.getByLabelText('Remove attachment'),
-    );
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
     expect(onRemove).toHaveBeenCalledWith('1');
   });
 

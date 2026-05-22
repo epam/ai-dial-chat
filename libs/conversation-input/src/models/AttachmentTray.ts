@@ -10,6 +10,10 @@ export interface AttachmentTrayProps {
   onRetry?: (id: string) => void;
   /** Accessible label for the tray region. */
   ariaLabel?: string;
+  /** Accessible label for each card's remove button. */
+  removeLabel?: string;
+  /** Accessible label for each card's retry button (error state only). */
+  retryLabel?: string;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

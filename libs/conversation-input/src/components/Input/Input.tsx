@@ -35,6 +35,8 @@ export const Input: FC<InputProps> = ({
   ariaLabel,
   attachLabel = 'Attach file',
   addMenuLabel = 'Add',
+  removeLabel,
+  retryLabel,
   colors,
   typography,
   className,
@@ -132,6 +134,8 @@ export const Input: FC<InputProps> = ({
         <AttachmentTray
           attachments={attachments}
           onRemove={handleRemove}
+          removeLabel={removeLabel}
+          retryLabel={retryLabel}
           className="mb-2"
         />
       )}

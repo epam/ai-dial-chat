@@ -17,6 +17,4 @@ export type {
   AttachmentCardColors,
   AttachmentCardTypography,
 } from './models/AttachmentCard.js';
-export type {
-  AttachmentTrayProps,
-} from './models/AttachmentTray.js';
+export type { AttachmentTrayProps } from './models/AttachmentTray.js';
