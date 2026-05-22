@@ -3,7 +3,7 @@ import {
   type Message as MessageType,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
-import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
+import { DialFabButton } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   lazy,
@@ -181,9 +181,8 @@ const ConversationView: FC<Props> = ({
         </div>
 
         {showScrollButton && (
-          <DialRoundedButton
+          <DialFabButton
             aria-label="Scroll to bottom"
-            label="Scroll to bottom"
             onClick={handleScrollToBottom}
             className="absolute bottom-4 left-1/2 -translate-x-1/2"
           />
