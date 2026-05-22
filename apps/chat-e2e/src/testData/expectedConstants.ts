@@ -25,6 +25,14 @@ export const ExpectedConstants = {
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  maxNewFolderIndex: (names: string[]): number =>
+    Math.max(
+      0,
+      ...names
+        .map((n) => n.match(/New folder (\d+)/)?.[1])
+        .filter((n): n is string => Boolean(n))
+        .map(Number),
+    ),
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
   renameConversationModalTitle: 'Rename conversation',
