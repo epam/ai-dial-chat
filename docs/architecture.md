@@ -497,7 +497,7 @@ Enforced by `@nx/enforce-module-boundaries` in `eslint.config.mjs`:
 |---|----------|--------|
 | 1 | Package prefix: `@epam/*` (short form, no `ai-dial-` in package name) | ✅ Accepted |
 | 2 | Monorepo tooling: **Nx 22** | ✅ Accepted |
-| 3 | Package manager: **pnpm workspaces** | ✅ Accepted |
+| 3 | Package manager: **npm workspaces** | ✅ Accepted |
 | 4 | UI framework: **React 19** (SPA) | ✅ Accepted |
 | 5 | Backend framework: **NestJS 11** (`apps/chat-api`) | ✅ Accepted |
 | 6 | Libs styling: **Tailwind CSS + SCSS Modules** (three-tier CSS var fallback) | ✅ Accepted |

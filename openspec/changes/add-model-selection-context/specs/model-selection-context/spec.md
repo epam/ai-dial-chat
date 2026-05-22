@@ -156,7 +156,7 @@ When the user submits the initial chat input in `ConversationRoute`, the selecte
 - `modelId` validation: `@IsOptional()`, `@IsString()`, `@MaxLength(500)`.
 - No new error codes introduced; validation failures still return `400`.
 
-**Generated client note:** After the DTO change, `pnpm nx build chat-api-client --skip-nx-cache` must be run to regenerate the typed client. The wrapper `createConversation` in `apps/chat/src/server-api/conversations.api.ts` must be updated to accept and forward `modelId?: string`.
+**Generated client note:** After the DTO change, `npm exec nx build chat-api-client --skip-nx-cache` must be run to regenerate the typed client. The wrapper `createConversation` in `apps/chat/src/server-api/conversations.api.ts` must be updated to accept and forward `modelId?: string`.
 
 #### Scenario: Conversation created with a selected model
 

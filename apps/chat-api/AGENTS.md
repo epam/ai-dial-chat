@@ -399,9 +399,9 @@ parseInt(value, 10))` + `@IsNumber()`.
 Per repo rule `incremental-implementation`, after each slice run:
 
 ```sh
-pnpm nx test  chat-api
-pnpm nx lint  chat-api
-pnpm nx build chat-api      # when bundling/Nest startup is affected
+npm exec nx test  chat-api
+npm exec nx lint  chat-api
+npm exec nx build chat-api      # when bundling/Nest startup is affected
 ```
 
 When adding or changing HTTP endpoints, also run:

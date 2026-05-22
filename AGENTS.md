@@ -5,7 +5,7 @@
 
 - For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
 - When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- Prefix nx commands with the workspace's package manager (e.g., `npm exec nx build`, `npm exec nx test`) - avoids using globally installed CLI
 - You have access to the Nx MCP server and its tools, use them to help the user
 - For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
 - NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
@@ -55,6 +55,9 @@ Default behavior:
 - Before merge (or on explicit review requests), run the five-axis quality review.
 
 ## Local coding conventions
+
+- In `libs/**/*.tsx` files, **never** use `useTranslation` or `t()` from `react-i18next`. Pass all user-visible strings as props with English default values instead. i18n is the responsibility of the consuming app, not the lib.
+- In all `**/*.{ts,tsx}` files, **never** write ternary-in-ternary (nested conditional expressions). Use `if`/`else` blocks, early returns, or a `switch` statement instead.
 
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
 - In `apps/*` React component files, name the component props type/interface `Props`.

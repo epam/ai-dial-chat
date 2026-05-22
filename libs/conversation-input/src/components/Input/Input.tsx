@@ -18,7 +18,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { InputProps } from '../../models/Input.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
@@ -34,11 +33,12 @@ export const Input: FC<InputProps> = ({
   onAttachmentsChange,
   placeholder = 'Type a message...',
   ariaLabel,
+  attachLabel = 'Attach file',
+  addMenuLabel = 'Add',
   colors,
   typography,
   className,
 }) => {
-  const { t } = useTranslation();
   const cssVars = {
     ...(colors?.background && { '--ci-bg': colors.background }),
     ...(colors?.text && { '--ci-text': colors.text }),
@@ -152,7 +152,7 @@ export const Input: FC<InputProps> = ({
             items: [
               {
                 key: 'attach',
-                label: t('conversationInput.attach.label'),
+                label: attachLabel,
                 icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
                 onClick: () => fileInputRef.current?.click(),
               },
@@ -161,7 +161,7 @@ export const Input: FC<InputProps> = ({
         >
           <DialGhostIconButton
             icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-            aria-label={t('actions.add')}
+            aria-label={addMenuLabel}
             className="size-10 flex-shrink-0"
           />
         </DialDropdown>

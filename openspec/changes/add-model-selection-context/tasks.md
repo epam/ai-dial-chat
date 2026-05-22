@@ -44,7 +44,7 @@
 - [ ] 7.1 Add optional `modelId?: string` with `@IsOptional()`, `@IsString()`, and `@MaxLength(500)` decorators to `CreateConversationDto` in `apps/chat-api/src/conversations/dto/create-conversation.dto.ts`; add `@ApiPropertyOptional` for Swagger
 - [ ] 7.2 Update `ConversationService.createConversation()` in `apps/chat-api/src/conversations/conversation.service.ts` to accept and persist `modelId` on the created conversation record (field stored, not yet forwarded to DIAL Core)
 - [ ] 7.3 Update `ConversationController.createConversation()` to pass `dto.modelId` to the service call
-- [ ] 7.4 Regenerate the API client: `pnpm nx build chat-api-client --skip-nx-cache`
+- [ ] 7.4 Regenerate the API client: `npm exec nx build chat-api-client --skip-nx-cache`
 - [ ] 7.5 Update `createConversation()` in `apps/chat/src/server-api/conversations.api.ts` to accept `modelId?: string` and include it in `createConversationDto`
 
 ## 8. Add i18n keys
@@ -72,13 +72,13 @@
 
 ## 10. Final verification
 
-- [ ] 10.1 Run `pnpm nx lint conversation-input` — no lint errors in the lib after `rightControls` addition
-- [ ] 10.2 Run `pnpm nx build conversation-input` — lib builds cleanly
-- [ ] 10.3 Run `pnpm nx lint chat-api-client` — generated client passes lint after regeneration
-- [ ] 10.4 Run `pnpm nx build chat-api-client` — generated client builds cleanly
-- [ ] 10.5 Run `pnpm nx lint chat-api` — no lint errors in backend after DTO change
-- [ ] 10.6 Run `pnpm nx test chat-api` — all backend tests pass
-- [ ] 10.7 Run `pnpm nx build chat-api` — backend compiles cleanly
-- [ ] 10.8 Run `pnpm nx lint chat` — no lint errors in frontend after all changes
-- [ ] 10.9 Run `pnpm nx test chat` — all frontend tests pass
-- [ ] 10.10 Run `pnpm nx build chat` — frontend compiles cleanly
+- [ ] 10.1 Run `npm exec nx lint conversation-input` — no lint errors in the lib after `rightControls` addition
+- [ ] 10.2 Run `npm exec nx build conversation-input` — lib builds cleanly
+- [ ] 10.3 Run `npm exec nx lint chat-api-client` — generated client passes lint after regeneration
+- [ ] 10.4 Run `npm exec nx build chat-api-client` — generated client builds cleanly
+- [ ] 10.5 Run `npm exec nx lint chat-api` — no lint errors in backend after DTO change
+- [ ] 10.6 Run `npm exec nx test chat-api` — all backend tests pass
+- [ ] 10.7 Run `npm exec nx build chat-api` — backend compiles cleanly
+- [ ] 10.8 Run `npm exec nx lint chat` — no lint errors in frontend after all changes
+- [ ] 10.9 Run `npm exec nx test chat` — all frontend tests pass
+- [ ] 10.10 Run `npm exec nx build chat` — frontend compiles cleanly

@@ -36,7 +36,7 @@ A modern, responsive chat application built with React, TypeScript, and Tailwind
 ## Prerequisites
 
 - Node.js (v24 or higher)
-- npm or pnpm
+- npm
 
 ## Getting Started
 

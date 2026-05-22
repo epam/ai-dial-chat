@@ -4,7 +4,7 @@
 - [x] 1.2 Add shared `RequestStatus` enum (`idle | loading | error`) to `libs/chat-shared/src/models/chat.ts` — reusable for any async operation, not attachment-specific
 - [x] 1.3 Add `Attachment` interface (`id`, `name`, `contentType`, `file`, `type: AttachmentType`, `status: RequestStatus`, `previewUrl?`) with JSDoc to `libs/chat-shared/src/models/chat.ts`
 - [x] 1.4 Export all new symbols from `libs/chat-shared/src/index.ts`
-- [x] 1.5 Verify: `pnpm nx typecheck chat-shared`
+- [x] 1.5 Verify: `npm exec nx typecheck chat-shared`
 
 ## 2. File-type icon utility (`libs/conversation-input`)
 
@@ -24,7 +24,7 @@
 - [x] 3.9 Add i18n keys `conversationInput.attachment.remove` and `conversationInput.attachment.retry` to `apps/chat/src/i18n/locales/en.json`
 - [x] 3.10 Create `AttachmentCard.module.scss` for any states not expressible with Tailwind alone (hover show/hide of button overlay)
 - [x] 3.11 Write unit tests in `AttachmentCard/tests/AttachmentCard.spec.tsx` covering: default render, image thumbnail, loading state hides remove, error state shows retry, remove callback, keyboard remove
-- [x] 3.12 Verify: `pnpm nx test conversation-input`
+- [x] 3.12 Verify: `npm exec nx test conversation-input`
 
 ## 4. `AttachmentTray` component (`libs/conversation-input`)
 
@@ -34,7 +34,7 @@
 - [x] 4.4 Add i18n key `conversationInput.attachmentTray.label` to `apps/chat/src/i18n/locales/en.json`
 - [x] 4.5 Apply `aria-label` from i18n key `conversationInput.attachmentTray.label` to the tray container
 - [x] 4.6 Write unit tests in `AttachmentTray/tests/AttachmentTray.spec.tsx` covering: renders cards, returns null when empty, remove callback forwarded, last card removal hides tray
-- [x] 4.7 Verify: `pnpm nx test conversation-input`
+- [x] 4.7 Verify: `npm exec nx test conversation-input`
 
 ## 5. Attach button & pending state in `Input` (`libs/conversation-input`)
 
@@ -49,23 +49,23 @@
 - [x] 5.9 Add `useEffect` cleanup that calls `URL.revokeObjectURL` for all image `previewUrl`s on unmount
 - [x] 5.10 Render `<AttachmentTray>` above the textarea when list is non-empty
 - [x] 5.11 Extend existing `Input` unit tests in `Input/tests/` to cover: attach button present, file picked adds card, remove removes card, object URL revoked on remove
-- [x] 5.12 Verify: `pnpm nx test conversation-input`
+- [x] 5.12 Verify: `npm exec nx test conversation-input`
 
 ## 6. Propagate prop through `ConversationInput` (`libs/conversation-input`)
 
 - [x] 6.1 Add `onAttachmentsChange?: (attachments: Attachment[]) => void` to `ConversationInputProps` in `libs/conversation-input/src/models/ConversationInput.ts`
 - [x] 6.2 Forward `onAttachmentsChange` from `ConversationInput.tsx` down to `<Input>`
-- [x] 6.3 Verify: `pnpm nx typecheck conversation-input`
+- [x] 6.3 Verify: `npm exec nx typecheck conversation-input`
 
 ## 7. Wire-up in `apps/chat` (optional observation)
 
 - [x] 7.1 In `ConversationView`, add `onAttachmentsChange` prop to `Props` (optional, `(attachments: Attachment[]) => void`)
 - [x] 7.2 Pass it through to `<ConversationInput onAttachmentsChange={onAttachmentsChange}>` (no-op if not provided)
-- [x] 7.3 Verify: `pnpm nx typecheck chat` and `pnpm nx build chat`
+- [x] 7.3 Verify: `npm exec nx typecheck chat` and `npm exec nx build chat`
 
 ## 8. Final verification
 
-- [ ] 8.1 Run `pnpm nx test conversation-input` — all tests pass
-- [ ] 8.2 Run `pnpm nx lint conversation-input` — no lint errors
-- [ ] 8.3 Run `pnpm nx typecheck chat-shared conversation-input chat` — no type errors
+- [ ] 8.1 Run `npm exec nx test conversation-input` — all tests pass
+- [ ] 8.2 Run `npm exec nx lint conversation-input` — no lint errors
+- [ ] 8.3 Run `npm exec nx typecheck chat-shared conversation-input chat` — no type errors
 - [ ] 8.4 Smoke-test in the browser: pick files, confirm cards render, hover shows ×, clicking × removes the card, tray disappears when last card is removed

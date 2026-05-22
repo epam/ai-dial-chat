@@ -1,5 +1,25 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 
+/** CSS custom-property overrides for the `AttachmentCard` component. */
+export interface AttachmentCardColors {
+  /** Card border color in the default state. */
+  border?: string;
+  /** Card background color in the default state. */
+  background?: string;
+  /** File name text color. */
+  nameText?: string;
+  /** Meta (type / label) text color. */
+  metaText?: string;
+  /** Border radius applied to the card (e.g. `'0.25rem'`, `'8px'`). */
+  borderRadius?: string;
+}
+
+/** Typography overrides for the `AttachmentCard` component. */
+export interface AttachmentCardTypography {
+  /** Utility class applied to the file name text (e.g. `'dial-tiny-text'`, `'text-xs'`). */
+  fontClassName?: string;
+}
+
 /** Props accepted by the `AttachmentCard` component. */
 export interface AttachmentCardProps {
   /** The attachment data to display. */
@@ -12,6 +32,14 @@ export interface AttachmentCardProps {
   selected?: boolean;
   /** Forces action buttons to be always visible regardless of hover/focus state. */
   alwaysShowActions?: boolean;
+  /** Accessible label for the remove button. */
+  removeLabel?: string;
+  /** Accessible label for the retry button (error state only). */
+  retryLabel?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentCardColors;
+  /** Typography overrides for text elements inside the card. */
+  typography?: AttachmentCardTypography;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

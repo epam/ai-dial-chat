@@ -52,6 +52,10 @@ export interface InputProps {
   colors?: InputColors;
   /** Typography overrides applied as CSS custom properties. */
   typography?: InputTypography;
+  /** Label for the attach-file menu item. */
+  attachLabel?: string;
+  /** Accessible label for the add-menu trigger button. */
+  addMenuLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
 }

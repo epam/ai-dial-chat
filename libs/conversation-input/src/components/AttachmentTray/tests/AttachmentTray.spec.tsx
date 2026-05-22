@@ -40,7 +40,7 @@ describe('AttachmentTray', () => {
       />,
     );
     fireEvent.click(
-      screen.getByLabelText('conversationInput.attachment.remove'),
+      screen.getByLabelText('Remove attachment'),
     );
     expect(onRemove).toHaveBeenCalledWith('1');
   });

@@ -39,7 +39,7 @@
 }
 
 .loadingOverlay {
-  background: rgb(0 0 0 / 0.3);
+  background: var(--ci-loading-overlay-bg, var(--bg-blackout, #0c101db2));
 }
 
 .actionBtn {
@@ -54,7 +54,7 @@
 
 .removeBtnImage {
   background: var(--ci-card-remove-bg, var(--bg-layer-2, #161b2d));
-  color: #fff;
+  color: var(--ci-card-remove-color, var(--text-forced-white, #fff));
 
   &:hover {
     background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #1d2439));

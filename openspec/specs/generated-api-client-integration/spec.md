@@ -135,5 +135,5 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 `apps/chat/package.json` (or the workspace root `package.json` with appropriate Nx project boundary configuration) SHALL declare `@epam/chat-api-client` as a dependency so `nx graph` shows the correct lib → app edge.
 
 #### Scenario: Dependency graph edge
-- **WHEN** `pnpm nx graph` is run after the migration
+- **WHEN** `npm exec nx graph` is run after the migration
 - **THEN** `apps/chat` SHALL show an explicit dependency on `libs/chat-api-client`

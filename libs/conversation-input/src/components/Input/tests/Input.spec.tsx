@@ -127,7 +127,7 @@ describe('Input', () => {
 
   it('should render the add menu button', () => {
     render(<Input />);
-    expect(screen.getByLabelText('actions.add')).toBeTruthy();
+    expect(screen.getByLabelText('Add')).toBeTruthy();
   });
 
   it('should show an attachment card after a file is picked', () => {
@@ -148,7 +148,7 @@ describe('Input', () => {
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     fireEvent.click(
-      screen.getByLabelText('conversationInput.attachment.remove'),
+      screen.getByLabelText('Remove attachment'),
     );
     expect(screen.queryByText('doc.pdf')).toBeNull();
   });

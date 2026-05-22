@@ -12,3 +12,11 @@ export type {
   InputColors,
   InputTypography,
 } from './models/Input.js';
+export type {
+  AttachmentCardProps,
+  AttachmentCardColors,
+  AttachmentCardTypography,
+} from './models/AttachmentCard.js';
+export type {
+  AttachmentTrayProps,
+} from './models/AttachmentTray.js';

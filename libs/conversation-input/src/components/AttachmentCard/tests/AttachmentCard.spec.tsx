@@ -38,14 +38,14 @@ describe('AttachmentCard', () => {
     const attachment = makeAttachment({ status: RequestStatus.Loading });
     render(<AttachmentCard attachment={attachment} onRemove={vi.fn()} />);
     expect(
-      screen.queryByLabelText('conversationInput.attachment.remove'),
+      screen.queryByLabelText('Remove attachment'),
     ).toBeNull();
   });
 
   it('shows remove button in idle state', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
     expect(
-      screen.getByLabelText('conversationInput.attachment.remove'),
+      screen.getByLabelText('Remove attachment'),
     ).toBeTruthy();
   });
 
@@ -59,7 +59,7 @@ describe('AttachmentCard', () => {
       />,
     );
     expect(
-      screen.getByLabelText('conversationInput.attachment.retry'),
+      screen.getByLabelText('Retry upload'),
     ).toBeTruthy();
   });
 
@@ -69,7 +69,7 @@ describe('AttachmentCard', () => {
       <AttachmentCard attachment={makeAttachment()} onRemove={onRemove} />,
     );
     fireEvent.click(
-      screen.getByLabelText('conversationInput.attachment.remove'),
+      screen.getByLabelText('Remove attachment'),
     );
     expect(onRemove).toHaveBeenCalledWith('a1');
   });
@@ -79,7 +79,7 @@ describe('AttachmentCard', () => {
     render(
       <AttachmentCard attachment={makeAttachment()} onRemove={onRemove} />,
     );
-    const btn = screen.getByLabelText('conversationInput.attachment.remove');
+    const btn = screen.getByLabelText('Remove attachment');
     fireEvent.keyDown(btn, { key: 'Enter' });
     fireEvent.click(btn);
     expect(onRemove).toHaveBeenCalledWith('a1');
@@ -96,7 +96,7 @@ describe('AttachmentCard', () => {
       />,
     );
     fireEvent.click(
-      screen.getByLabelText('conversationInput.attachment.retry'),
+      screen.getByLabelText('Retry upload'),
     );
     expect(onRetry).toHaveBeenCalledWith('a1');
   });

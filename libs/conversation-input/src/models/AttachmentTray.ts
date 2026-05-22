@@ -8,6 +8,8 @@ export interface AttachmentTrayProps {
   onRemove: (id: string) => void;
   /** Called when the user retries a failed attachment upload. */
   onRetry?: (id: string) => void;
+  /** Accessible label for the tray region. */
+  ariaLabel?: string;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

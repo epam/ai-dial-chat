@@ -1,8 +1,4 @@
-import {
-  AttachmentType,
-  RequestStatus,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -10,17 +6,10 @@ import {
   DialLoader,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconClipboard,
-  IconPhoto,
-  IconRefresh,
-  IconTerminal2,
-  IconX,
-} from '@tabler/icons-react';
-import { type FC, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { IconRefresh, IconX } from '@tabler/icons-react';
+import { type CSSProperties, type FC, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
-import { getAttachmentIcon } from '../../utils/getAttachmentIcon.js';
+import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
 import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
@@ -29,10 +18,21 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onRetry,
   selected,
   alwaysShowActions,
+  removeLabel = 'Remove attachment',
+  retryLabel = 'Retry upload',
+  colors,
+  typography,
   className,
 }) => {
-  const { t } = useTranslation();
-  const { id, name, contentType, type, status, previewUrl } = attachment;
+  const { id, name } = attachment;
+
+  const cssVars = {
+    ...(colors?.border && { '--ci-card-border': colors.border }),
+    ...(colors?.background && { '--ci-card-bg': colors.background }),
+    ...(colors?.nameText && { '--ci-card-name': colors.nameText }),
+    ...(colors?.metaText && { '--ci-card-meta': colors.metaText }),
+    borderRadius: colors?.borderRadius ?? '0.25rem',
+  } as CSSProperties;
 
   const {
     isLoading,
@@ -43,76 +43,21 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     bottomLabel,
     cardColorClass,
     removeBtnClass,
-  } = useMemo(() => {
-    const loading = status === RequestStatus.Loading;
-    const error = status === RequestStatus.Error;
-    const image = type === AttachmentType.Image && !!previewUrl && !error;
-
-    const FileIcon = getAttachmentIcon(contentType);
-    const bottomIcon =
-      type === AttachmentType.Prompt
-        ? IconTerminal2
-        : type === AttachmentType.Pasted
-          ? IconClipboard
-          : type === AttachmentType.Image
-            ? IconPhoto
-            : FileIcon;
-
-    const ext = name.includes('.')
-      ? `.${name.slice(name.lastIndexOf('.') + 1).toLowerCase()}`
-      : contentType.split('/')[1]
-        ? `.${contentType.split('/')[1].toLowerCase()}`
-        : '';
-
-    const label =
-      type === AttachmentType.Prompt
-        ? 'Prompt'
-        : type === AttachmentType.Pasted
-          ? 'Pasted'
-          : type === AttachmentType.Image
-            ? 'Image'
-            : ext || name;
-
-    const colorClass = mergeClasses(
-      styles.card,
-      error && styles.cardError,
-      selected && styles.cardSelected,
-      !error &&
-        !selected &&
-        type === AttachmentType.Prompt &&
-        styles.cardPrompt,
-      !error &&
-        !selected &&
-        type === AttachmentType.Pasted &&
-        styles.cardPasted,
-    );
-
-    const removeBtn = image ? styles.removeBtnImage : styles.actionBtn;
-
-    return {
-      isLoading: loading,
-      isError: error,
-      isImage: image,
-      actionsVisible: error || alwaysShowActions,
-      BottomIcon: bottomIcon,
-      bottomLabel: label,
-      cardColorClass: colorClass,
-      removeBtnClass: removeBtn,
-    };
-  }, [
-    status,
-    type,
-    previewUrl,
-    contentType,
-    name,
-    selected,
-    alwaysShowActions,
-  ]);
+  } = useMemo(
+    () =>
+      getAttachmentCardState(
+        attachment,
+        selected ?? false,
+        alwaysShowActions ?? false,
+      ),
+    [attachment, selected, alwaysShowActions],
+  );
 
   return (
     <div
+      style={cssVars}
       className={mergeClasses(
-        'group relative flex h-[100px] w-[100px] flex-shrink-0 rounded border',
+        'group relative flex h-[100px] w-[100px] flex-shrink-0 border',
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
         className,
@@ -120,7 +65,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     >
       {isImage ? (
         <img
-          src={previewUrl}
+          src={attachment.previewUrl}
           alt={name}
           className="h-full w-full rounded object-cover"
         />
@@ -130,7 +75,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
           <div className="flex flex-1 items-start overflow-hidden">
             <span
               className={mergeClasses(
-                'dial-tiny-text line-clamp-3 max-w-[76px] break-words',
+                typography?.fontClassName ?? 'dial-tiny-text',
+                'line-clamp-3 max-w-[76px] break-words',
                 styles.name,
               )}
               title={name}
@@ -187,7 +133,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               className={mergeClasses('h-6 w-6 rounded', styles.actionBtn)}
-              aria-label={t('conversationInput.attachment.retry')}
+              aria-label={retryLabel}
               onClick={() => onRetry(id)}
             />
           )}
@@ -195,7 +141,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
             size={ElementSize.Small}
             className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
-            aria-label={t('conversationInput.attachment.remove')}
+            aria-label={removeLabel}
             onClick={() => onRemove(id)}
           />
         </div>

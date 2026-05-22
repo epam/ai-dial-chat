@@ -12,7 +12,7 @@ Users currently have no way to choose which AI model powers a conversation befor
 - **`ConversationRoute` updated** (`apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx`) to consume `useModels()`, pass `<ModelSelectorButton>` as `rightControls`, and forward `selectedModelId` in `handleSend`.
 - **`conversations.api.ts` updated** (`apps/chat/src/server-api/conversations.api.ts`) to accept an optional `modelId` parameter and pass it to the generated client.
 - **Backend `CreateConversationDto` extended** with optional `modelId?: string` (`apps/chat-api/src/conversations/dto/create-conversation.dto.ts`). Inspection of the DTO confirms `modelId` is absent — this is the minimum backend change required to carry model identity to the conversation record. The field is optional to remain backward-compatible.
-- **Generated client regenerated** after the DTO change (`pnpm nx build chat-api-client --skip-nx-cache`).
+- **Generated client regenerated** after the DTO change (`npm exec nx build chat-api-client --skip-nx-cache`).
 - **New i18n keys** added to `apps/chat/src/i18n/locales/en.json` under the `models` domain.
 
 ## Capabilities
