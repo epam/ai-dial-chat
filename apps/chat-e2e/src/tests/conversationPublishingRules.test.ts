@@ -70,8 +70,8 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
+    selectFolderManagerModal,
+    selectFolderManagerModalFoldersTree,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -105,8 +105,10 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolders.selectFolder(organizationFolderName);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(organizationFolderName)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRulesAssertion.assertLabels({
@@ -323,8 +325,8 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
+    selectFolderManagerModal,
+    selectFolderManagerModalFoldersTree,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -359,8 +361,10 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolders.selectFolder(organizationFolderName);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(organizationFolderName)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRules.addRuleButton.click();
@@ -489,8 +493,8 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
+    selectFolderManagerModal,
+    selectFolderManagerModalFoldersTree,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -529,8 +533,10 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolders.selectFolder(organizationFolderName);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(organizationFolderName)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
       },

@@ -5,12 +5,11 @@ import {
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { IconSelectors } from '@/src/ui/selectors';
 import { PromptPreviewModal } from '@/src/ui/selectors/dialogSelectors';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Popup } from '@/src/ui/webElements/common/popup';
 import { Page } from '@playwright/test';
 
-export class PromptPreviewModalWindow extends BaseElement {
+export class PromptPreviewModalWindow extends Popup {
   constructor(page: Page) {
     super(page, PromptPreviewModal.promptPreviewModal);
   }
@@ -76,7 +75,6 @@ export class PromptPreviewModalWindow extends BaseElement {
   public notFound = this.getChildElementBySelector(
     PromptPreviewModal.promptNotFound,
   );
-  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public async openPromptInfo(options?: { isHttpMethodTriggered?: boolean }) {
     if (options?.isHttpMethodTriggered) {

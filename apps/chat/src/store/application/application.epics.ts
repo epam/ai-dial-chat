@@ -27,6 +27,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import {
+  fitApplicationNameToStorageLimits,
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
@@ -62,6 +63,7 @@ import {
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
+  PromptsActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -124,7 +126,12 @@ const createApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.create(
-        regenerateApplicationId({ ...applicationData, reference: '' }),
+        regenerateApplicationId(
+          fitApplicationNameToStorageLimits({
+            ...applicationData,
+            reference: '',
+          }),
+        ),
         schema,
       ).pipe(
         switchMap((application) =>
@@ -255,7 +262,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
       }
 
       const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
+        fitApplicationNameToStorageLimits(payload.applicationData),
       ) as CustomApplicationModel;
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
@@ -929,7 +936,9 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const actions: Observable<AppAction>[] = [];
+      const actions: Observable<AppAction>[] = [
+        of(PromptsActions.clearSkillValidations()),
+      ];
 
       if (hasCustomEditor) {
         actions.push(

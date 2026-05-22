@@ -39,6 +39,7 @@ import {
   isConversationId,
   isEntityIdExternal,
   isFolderId,
+  isMyEntity,
   isPromptId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -88,6 +89,7 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
@@ -462,7 +464,7 @@ const shareFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const acceptInvitationEpic: AppEpic = (action$) =>
+const acceptInvitationEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitation.type),
     switchMap(({ payload }) =>
@@ -470,28 +472,81 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         invitationId: payload.invitationId,
       }).pipe(
         switchMap((data) => {
+          const acceptedIds = data.resources.filter(
+            (resource) =>
+              isPromptId(resource.url) ||
+              isConversationId(resource.url) ||
+              isApplicationId(resource.url),
+          );
+
+          const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
+          const permissions = acceptedIds[0].permissions;
+          const isFolder = isFolderId(acceptedIds[0].url);
+          const isConversation = isConversationId(acceptedId);
+          const isPrompt = isPromptId(acceptedId);
+          const isApplication = isApplicationId(acceptedId);
+
+          if (isMyEntity({ id: acceptedId })) {
+            if (isApplication) {
+              return of(
+                ApplicationActions.get({
+                  applicationId: acceptedId,
+                  showCard: true,
+                }),
+              );
+            }
+
+            void router.push('/', undefined, { shallow: true });
+
+            if (isConversation) {
+              return isFolder
+                ? of(
+                    ConversationsActions.uploadConversationsFromMultipleFolders(
+                      {
+                        paths: [acceptedId],
+                        pathToSelectFrom: acceptedId,
+                      },
+                    ),
+                  )
+                : of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: [acceptedId],
+                    }),
+                  );
+            }
+
+            if (isPrompt) {
+              return concat(
+                isFolder
+                  ? of(
+                      PromptsActions.uploadPromptsFromMultipleFolders({
+                        paths: [acceptedId],
+                        pathToSelectFrom: acceptedId,
+                      }),
+                    )
+                  : of(PromptsActions.selectPrompt({ promptId: acceptedId })),
+                of(
+                  ConversationsActions.createNewConversations({
+                    names: [DEFAULT_CONVERSATION_NAME],
+                    headerCreateNew: false,
+                  }),
+                ),
+              );
+            }
+            return EMPTY;
+          }
           return ShareService.shareAccept({
             invitationId: payload.invitationId,
           }).pipe(
             switchMap(() => {
-              const acceptedIds = data.resources.filter(
-                (resource) =>
-                  isPromptId(resource.url) ||
-                  isConversationId(resource.url) ||
-                  isApplicationId(resource.url),
-              );
-
-              const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
-              const permissions = acceptedIds[0].permissions;
-
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
                   permissions,
-                  isFolder: isFolderId(acceptedIds[0].url),
-                  isConversation: isConversationId(acceptedIds[0].url),
-                  isPrompt: isPromptId(acceptedIds[0].url),
-                  isApplication: isApplicationId(acceptedId),
+                  isFolder,
+                  isConversation,
+                  isPrompt,
+                  isApplication,
                 }),
               );
             }),

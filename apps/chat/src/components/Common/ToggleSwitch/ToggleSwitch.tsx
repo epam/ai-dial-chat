@@ -46,7 +46,7 @@ export function ToggleSwitch({
     'flex h-[22px] w-[50px] min-w-[50px] shrink-0 items-center justify-between rounded-full px-[5px] py-1 transition-all duration-200',
     isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
     disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-    disabled && isOn && '!bg-controls-disable-accent',
+    disabled && '!bg-controls-disable-accent',
   );
 
   return (

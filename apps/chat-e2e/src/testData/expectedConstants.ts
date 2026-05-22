@@ -199,7 +199,7 @@ export const ExpectedConstants = {
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
-  maxEntityNameLength: 160,
+  maxEntityNameLength: 255,
   selectAllTooltip: 'Select all',
   unselectAllTooltip: 'Unselect all',
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
@@ -310,7 +310,7 @@ export const ExpectedConstants = {
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
-    'Request name should be at most 160 characters long',
+    'The Request name is too long. Please shorten it and try again.',
   publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
