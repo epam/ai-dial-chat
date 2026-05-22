@@ -1232,7 +1232,7 @@ dialSharedWithMeTest(
           lastUpdatedDate: currentDate,
           author: author,
         });
-        await additionalShareUserInformationModal.cancelButton.click();
+        await additionalShareUserInformationModal.getCloseButton().click();
       },
     );
 

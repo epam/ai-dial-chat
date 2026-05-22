@@ -26,4 +26,19 @@ export interface PromptsState {
   deletingPromptId: string | undefined;
   moveToPromptId: string | undefined;
   quickAppUpdatedPrompt: { oldId: string; newId: string } | null;
+  skillValidationByPromptId: Record<string, SkillValidationState>;
+}
+
+export enum SkillValidationStatus {
+  Unknown = 'unknown',
+  Validating = 'validating',
+  Valid = 'valid',
+  Invalid = 'invalid',
+}
+
+export interface SkillValidationState {
+  status: SkillValidationStatus;
+  validatedContent?: string;
+  deploymentId?: string;
+  message?: string;
 }
