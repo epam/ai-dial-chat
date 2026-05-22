@@ -58,7 +58,7 @@ Grep("ComponentName", path="libs/")
 
 After implementation:
 
-1. Run `pnpm nx lint <project>` — fix any lint errors before reporting done
+1. Run `npm exec nx lint <project>` — fix any lint errors before reporting done
 2. If the component has logic, add a unit test in the same lib
 3. If the dev server is running, open the component in the browser and compare with the Figma screenshot
 

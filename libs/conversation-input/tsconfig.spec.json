@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/vitest",
     "jsx": "react-jsx",
+    "lib": ["es2022", "dom"],
     "types": [
       "vitest/globals",
       "vitest/importMeta",
@@ -27,9 +28,5 @@
     "src/**/*.spec.jsx",
     "src/**/*.d.ts"
   ],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    }
-  ]
+  "references": [{ "path": "./tsconfig.lib.json" }]
 }

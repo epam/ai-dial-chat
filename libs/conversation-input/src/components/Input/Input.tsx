@@ -1,6 +1,25 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CSSProperties, type FC, KeyboardEvent, useState } from 'react';
+import type { Attachment } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  RequestStatus,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
+import {
+  BASE_ICON_SIZE,
+  DialDropdown,
+  DialGhostIconButton,
+} from '@epam/ai-dial-ui-kit';
+import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import {
+  CSSProperties,
+  type FC,
+  KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import type { InputProps } from '../../models/Input.js';
+import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
 import { StopButton } from './StopButton.js';
@@ -11,8 +30,13 @@ export const Input: FC<InputProps> = ({
   onStop,
   isStreaming = false,
   onChange,
+  onAttachmentsChange,
   placeholder = 'Type a message...',
   ariaLabel,
+  attachLabel = 'Attach file',
+  addMenuLabel = 'Add',
+  removeLabel,
+  retryLabel,
   colors,
   typography,
   className,
@@ -38,6 +62,16 @@ export const Input: FC<InputProps> = ({
   } as CSSProperties;
 
   const [message, setMessage] = useState(initialMessage);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      attachments.forEach((a) => {
+        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      });
+    };
+  }, []);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -49,35 +83,113 @@ export const Input: FC<InputProps> = ({
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    const newAttachments: Attachment[] = files.map((file) => {
+      const isImage = file.type.startsWith('image/');
+      const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+      return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: file.name,
+        contentType: file.type,
+        file,
+        type: isImage ? AttachmentType.Image : AttachmentType.File,
+        status: RequestStatus.Idle,
+        previewUrl,
+      };
+    });
+
+    // Reset so the same file can be picked again
+    e.target.value = '';
+
+    setAttachments((prev) => {
+      const updated = [...prev, ...newAttachments];
+      onAttachmentsChange?.(updated);
+      return updated;
+    });
+  };
+
+  const handleRemove = (id: string) => {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      const updated = prev.filter((a) => a.id !== id);
+      onAttachmentsChange?.(updated);
+      return updated;
+    });
+  };
+
   return (
     <div
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
-        'flex min-h-[56px] w-full max-w-[748px] items-center gap-2 rounded border px-3 py-2',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col rounded border px-3 py-2',
         className,
       )}
     >
-      <textarea
-        className={mergeClasses(
-          styles.textarea,
-          'flex-1 resize-none bg-transparent outline-none',
-        )}
-        value={message}
-        onChange={(e) => {
-          setMessage(e.target.value);
-          onChange?.(e.target.value);
-        }}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        rows={1}
-      />
-      {isStreaming ? (
-        <StopButton onStop={onStop} />
-      ) : (
-        message.trim() && <SendButton onSend={() => onSend?.(message)} />
+      {attachments.length > 0 && (
+        <AttachmentTray
+          attachments={attachments}
+          onRemove={handleRemove}
+          removeLabel={removeLabel}
+          retryLabel={retryLabel}
+          className="mb-2"
+        />
       )}
+      <div className="flex items-center gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="sr-only"
+          aria-hidden
+          tabIndex={-1}
+          onChange={handleFileChange}
+        />
+        <DialDropdown
+          matchReferenceWidth={false}
+          placement="bottom-start"
+          menu={{
+            items: [
+              {
+                key: 'attach',
+                label: attachLabel,
+                icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+                onClick: () => fileInputRef.current?.click(),
+              },
+            ],
+          }}
+        >
+          <DialGhostIconButton
+            icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+            aria-label={addMenuLabel}
+            className="size-10 flex-shrink-0"
+          />
+        </DialDropdown>
+        <textarea
+          className={mergeClasses(
+            styles.textarea,
+            'flex-1 resize-none bg-transparent outline-none',
+          )}
+          value={message}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            onChange?.(e.target.value);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          aria-label={ariaLabel}
+          rows={1}
+        />
+        {isStreaming ? (
+          <StopButton onStop={onStop} />
+        ) : (
+          message.trim() && <SendButton onSend={() => onSend?.(message)} />
+        )}
+      </div>
     </div>
   );
 };

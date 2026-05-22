@@ -1,3 +1,5 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
+
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
   /** Input area background color. */
@@ -40,6 +42,8 @@ export interface InputProps {
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
   isStreaming?: boolean;
+  /** Called whenever the attachment list changes. */
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
   /** Placeholder text shown when the textarea is empty. */
   placeholder?: string;
   /** `aria-label` applied to the textarea for screen readers. */
@@ -48,6 +52,14 @@ export interface InputProps {
   colors?: InputColors;
   /** Typography overrides applied as CSS custom properties. */
   typography?: InputTypography;
+  /** Label for the attach-file menu item. */
+  attachLabel?: string;
+  /** Accessible label for the add-menu trigger button. */
+  addMenuLabel?: string;
+  /** Accessible label for each attachment card's remove button. */
+  removeLabel?: string;
+  /** Accessible label for each attachment card's retry button (error state only). */
+  retryLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
 }

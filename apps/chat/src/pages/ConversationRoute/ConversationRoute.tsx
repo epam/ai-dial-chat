@@ -55,7 +55,7 @@ const ConversationRoute: FC = () => {
   );
 
   return (
-    <div ref={inputRef} className="flex flex-1 flex-col overflow-hidden">
+    <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
       <Suspense fallback={<RouteFallback />}>
         <div
           className="flex h-full flex-col items-center justify-center p-8"

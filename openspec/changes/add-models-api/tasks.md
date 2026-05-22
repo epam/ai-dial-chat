@@ -48,7 +48,7 @@
 
 ## 10. Verification
 
-- [x] 10.1 Run `pnpm nx test chat-api` — all models and deployments tests pass
-- [x] 10.2 Run `pnpm nx lint chat-api` — no lint errors
-- [x] 10.3 Run `pnpm nx build chat-api` — build succeeds
-- [x] 10.4 Run `pnpm nx affected --target=typecheck --base=origin/development` — no new type errors introduced
+- [x] 10.1 Run `npm exec nx test chat-api` — all models and deployments tests pass
+- [x] 10.2 Run `npm exec nx lint chat-api` — no lint errors
+- [x] 10.3 Run `npm exec nx build chat-api` — build succeeds
+- [x] 10.4 Run `npm exec nx affected --target=typecheck --base=origin/development` — no new type errors introduced

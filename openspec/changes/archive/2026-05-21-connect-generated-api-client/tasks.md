@@ -4,7 +4,7 @@
 - [x] 1.2 Run `npm run openapi:check` and confirm it exits with zero — if not, fix OpenAPI annotations in `apps/chat-api` before proceeding (see design.md OQ-1 / backend annotation gap risk)
 - [x] 1.3 Run `npm exec nx build chat-api-client -- --skip-nx-cache` to confirm the generated client compiles cleanly
 - [x] 1.4 Run `npm exec nx lint chat-api-client` to confirm no lint errors in the generated client
-- [x] 1.5 Confirm `@epam/chat-api-client` is listed as a dependency in `apps/chat/package.json`; if not, add it and verify `pnpm nx graph` shows the `chat` → `chat-api-client` edge (resolves design.md OQ-2)
+- [x] 1.5 Confirm `@epam/chat-api-client` is listed as a dependency in `apps/chat/package.json`; if not, add it and verify `npm exec nx graph` shows the `chat` → `chat-api-client` edge (resolves design.md OQ-2)
 
 ## 2. Slice 1 — Client configuration factory
 

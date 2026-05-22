@@ -1,11 +1,11 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
 
 describe('Input', () => {
   it('should hide send button when textarea is empty', () => {
-    const { container } = render(<Input />);
-    expect(container.querySelector('button')).toBeNull();
+    render(<Input />);
+    expect(screen.queryByLabelText('Send message')).toBeNull();
   });
 
   it('should show send button when user types non-whitespace text', () => {
@@ -22,7 +22,7 @@ describe('Input', () => {
     const textarea = container.querySelector('textarea');
     if (textarea) {
       fireEvent.change(textarea, { target: { value: '   ' } });
-      expect(container.querySelector('button')).toBeNull();
+      expect(screen.queryByLabelText('Send message')).toBeNull();
     }
   });
 
@@ -70,14 +70,12 @@ describe('Input', () => {
     const handleSend = vi.fn();
     const { container } = render(<Input onSend={handleSend} />);
     const textarea = container.querySelector('textarea');
-    const button = container.querySelector('button');
     if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Click send' } });
     }
-    if (button) {
-      fireEvent.click(button);
-      expect(handleSend).toHaveBeenCalledWith('Click send');
-    }
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+    expect(handleSend).toHaveBeenCalledWith('Click send');
   });
 
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
@@ -125,5 +123,44 @@ describe('Input', () => {
     expect(
       container.querySelector('textarea')?.getAttribute('aria-label'),
     ).toBe('Message input');
+  });
+
+  it('should render the add menu button', () => {
+    render(<Input />);
+    expect(screen.getByLabelText('Add')).toBeTruthy();
+  });
+
+  it('should show an attachment card after a file is picked', () => {
+    render(<Input />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(screen.getByText('doc.pdf')).toBeTruthy();
+  });
+
+  it('should remove the card when the remove button is clicked', () => {
+    render(<Input />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
+    expect(screen.queryByText('doc.pdf')).toBeNull();
+  });
+
+  it('should call onAttachmentsChange when a file is added', () => {
+    const onAttachmentsChange = vi.fn();
+    render(<Input onAttachmentsChange={onAttachmentsChange} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(onAttachmentsChange).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
+    );
   });
 });
