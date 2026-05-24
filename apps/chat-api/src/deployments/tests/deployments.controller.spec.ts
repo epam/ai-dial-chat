@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentsController } from '../deployments.controller';
 import { DeploymentsService } from '../deployments.service';
 
-const TEST_USER = { at: 'test-access-token' };
+const TEST_USER = { at: 'test-access-token', sub: 'user-123' };
 const mockReq = { user: TEST_USER } as unknown as Request;
 
 describe('DeploymentsController', () => {
@@ -13,12 +13,14 @@ describe('DeploymentsController', () => {
   let service: {
     getDeployments: ReturnType<typeof vi.fn>;
     getDeployment: ReturnType<typeof vi.fn>;
+    getDeploymentConfiguration: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       getDeployments: vi.fn(),
       getDeployment: vi.fn(),
+      getDeploymentConfiguration: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -54,5 +56,30 @@ describe('DeploymentsController', () => {
     await expect(controller.getDeployment(mockReq, 'missing')).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it('getDeploymentConfiguration returns service result', async () => {
+    const schema = { type: 'object', title: 'Config' };
+    service.getDeploymentConfiguration.mockResolvedValue(schema);
+
+    const result = await controller.getDeploymentConfiguration(
+      mockReq,
+      'statgpt',
+    );
+    expect(result).toEqual(schema);
+    expect(service.getDeploymentConfiguration).toHaveBeenCalledWith(
+      'statgpt',
+      TEST_USER.sub,
+      TEST_USER.at,
+    );
+  });
+
+  it('getDeploymentConfiguration propagates NotFoundException', async () => {
+    service.getDeploymentConfiguration.mockRejectedValue(
+      new NotFoundException(),
+    );
+    await expect(
+      controller.getDeploymentConfiguration(mockReq, 'unknown'),
+    ).rejects.toThrow(NotFoundException);
   });
 });
