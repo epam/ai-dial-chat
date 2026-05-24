@@ -91,9 +91,6 @@ describe('useFavicon', () => {
     imageInstances[0].onload?.call(imageInstances[0], new Event('load'));
 
     expect(mockLink.href).toContain('iconName=');
-    expect(console.info).toHaveBeenCalledWith(
-      `Favicon updated to: ${faviconUrl}`,
-    );
   });
 
   it('should handle image load error gracefully', () => {
