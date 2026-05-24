@@ -67,7 +67,8 @@ context: |
 
   ### Backend (apps/chat-api)
   - Entry: apps/chat-api/src/main.ts — registers Helmet, ValidationPipe, CORS, URI versioning,
-    Swagger; serves compiled frontend static files from dist/apps/chat
+    Swagger; serves compiled frontend static files from apps/chat/dist with SPA fallback
+    for non-/api/* routes
   - Domains: apps/chat-api/src/{domain}/ — one folder per domain, NO `modules/` wrapper
     (e.g. apps/chat-api/src/themes/theme.controller.ts, theme.service.ts, theme.module.ts, dto/)
   - Business endpoints are URI-versioned at /api/v{N}/{resource}; infrastructure endpoints
