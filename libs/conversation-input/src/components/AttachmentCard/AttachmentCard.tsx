@@ -11,6 +11,7 @@ import { IconRefresh, IconX } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
+import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
 import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
@@ -27,11 +28,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   className,
 }) => {
   const { id, name } = attachment;
-
   const nameWithoutExtension = useMemo(() => {
-    const dot = name.lastIndexOf('.');
-    return dot > 0 ? name.slice(0, dot) : name;
+    return getNameWithoutExtension(name);
   }, [name]);
+
 
   const cssVars = {
     ...(colors?.border && { '--ci-card-border': colors.border }),
@@ -83,17 +83,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         <>
           {/* Top group: file name */}
           <div className="flex flex-1 items-start overflow-hidden">
-            <DialTooltip tooltip={name}>
-              <span
-                className={mergeClasses(
-                  typography?.fontClassName ?? 'dial-tiny-text',
-                  'line-clamp-3 max-w-[76px] break-words',
-                  styles.name,
-                )}
-              >
-                {nameWithoutExtension}
-              </span>
-            </DialTooltip>
+            <span
+              className={mergeClasses(
+                typography?.fontClassName ?? 'dial-tiny-text',
+                'line-clamp-3 max-w-[76px] break-words',
+                styles.name,
+              )}
+            >
+              {nameWithoutExtension}
+            </span>
           </div>
 
           {/* Bottom group: icon + label */}

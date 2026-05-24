@@ -137,7 +137,6 @@ describe('Input', () => {
     ) as HTMLInputElement;
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    // AttachmentCard shows the name without extension
     expect(screen.getByText('doc')).toBeTruthy();
   });
 
