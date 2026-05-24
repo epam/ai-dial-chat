@@ -1,4 +1,3 @@
-import { join } from 'path';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -17,6 +16,7 @@ import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { createServeStaticOptions } from './static-assets';
 
 @Module({
   imports: [
@@ -37,10 +37,7 @@ import { AppService } from './app.service';
         limit: 100, // 100 requests per minute
       },
     ]),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', '..', 'dist', 'apps', 'chat'),
-      exclude: ['/api{/*splat}'],
-    }),
+    ServeStaticModule.forRoot(createServeStaticOptions()),
     DeploymentsModule,
     ModelsModule,
     ChatModule,

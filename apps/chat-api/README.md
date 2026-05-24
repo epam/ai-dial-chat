@@ -104,7 +104,7 @@ npx nx serve chat-api
 **Production build:**
 
 ```bash
-npm run build:api
+npm run build && npm run build:api
 ```
 
 **Build and start both frontend and API:**
@@ -231,10 +231,10 @@ Default CORS settings:
 The API also serves the built React application. Static files are served from:
 
 ```
-dist/apps/chat
+apps/chat/dist
 ```
 
-All routes except those prefixed with `/api/*` will serve the React application. This enables SPA routing for the frontend.
+All routes except those prefixed with `/api/*` serve the React application's `index.html`. This enables SPA routing for frontend routes such as `/catalog` and `/conversations/:id` while API endpoints continue to be handled by NestJS.
 
 ## Logging
 
