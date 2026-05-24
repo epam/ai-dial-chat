@@ -92,12 +92,34 @@ The `Input` component SHALL include a visually-hidden `<input type="file" multip
 
 ### Requirement: AttachmentCard renders pending attachments
 
-The system SHALL render a card component for each pending attachment, displaying the file name, format label, and a type-appropriate icon. `type: image` shows a thumbnail; all other types show a file-type icon from `getAttachmentIcon`.
+The system SHALL render a card component for each pending attachment, displaying the file name **without its extension**, format label, and a type-appropriate icon. `type: image` shows a thumbnail; all other types show a file-type icon from `getAttachmentIcon`.
+
+The file name SHALL be derived by stripping everything from the last `.` to the end of `name` (using `name.lastIndexOf('.')`); if no `.` is found or it is at position 0, the full name is used. The name SHALL be wrapped in a `DialTooltip` that shows the **full name including extension** on hover. The name span SHALL use `line-clamp-3 break-words` to allow up to three lines of wrapping.
 
 #### Scenario: File card default state
 
 - **WHEN** an attachment of type `file` with status `idle` is rendered
-- **THEN** the card displays the file name, format extension, and the matching `@tabler/icons-react` file icon
+- **THEN** the card displays the file name without extension, the format extension label, and the matching `@tabler/icons-react` file icon
+
+#### Scenario: Name without extension shown
+
+- **WHEN** an attachment with name `report.final.pdf` is rendered
+- **THEN** the visible name is `report.final` (only the last extension is stripped)
+
+#### Scenario: Name with no extension unchanged
+
+- **WHEN** an attachment with name `README` (no dot) is rendered
+- **THEN** the full name `README` is displayed unchanged
+
+#### Scenario: Tooltip shows full name including extension
+
+- **WHEN** the user hovers over a file card
+- **THEN** a `DialTooltip` shows the full original name including the extension (e.g. `report.final.pdf`)
+
+#### Scenario: Name wraps up to three lines
+
+- **WHEN** the file name without extension is longer than one line at 76 px width
+- **THEN** the name wraps to up to three lines before being clipped
 
 #### Scenario: Image card shows thumbnail
 
@@ -164,3 +186,19 @@ The system SHALL render a horizontally scrollable row of `AttachmentCard` compon
 
 - **WHEN** the tray is rendered
 - **THEN** it has `role="list"` and `aria-label` sourced from i18n key `conversationInput.attachmentTray.label`
+
+---
+
+### Requirement: `Input` clears attachments after successful send
+
+After `onSend` resolves successfully, the `Input` component SHALL clear the internal attachment list, returning the tray to its empty (hidden) state.
+
+#### Scenario: Tray clears after send
+
+- **WHEN** the user sends a message with attachments and the send completes without error
+- **THEN** the `AttachmentTray` is no longer rendered and the attachment list is empty
+
+#### Scenario: Tray retained on send error
+
+- **WHEN** the send fails (e.g. `onSend` rejects or `attachmentsToDialAttachments` throws)
+- **THEN** the attachment list is unchanged so the user can retry

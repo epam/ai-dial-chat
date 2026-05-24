@@ -15,9 +15,29 @@ const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
 });
 
 describe('AttachmentCard', () => {
-  it('renders the file name', () => {
+  it('renders the file name without extension', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
-    expect(screen.getByText('report.pdf')).toBeTruthy();
+    expect(screen.getByText('report')).toBeTruthy();
+  });
+
+  it('strips only the last extension from compound names', () => {
+    render(
+      <AttachmentCard
+        attachment={makeAttachment({ name: 'my.report.2024.xlsx' })}
+        onRemove={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('my.report.2024')).toBeTruthy();
+  });
+
+  it('shows the full name when it has no extension', () => {
+    render(
+      <AttachmentCard
+        attachment={makeAttachment({ name: 'README' })}
+        onRemove={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('README')).toBeTruthy();
   });
 
   it('renders an img thumbnail for image attachments', () => {

@@ -35,6 +35,7 @@ export const ConversationPage: FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState(false);
+  const [streamError, setStreamError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
@@ -88,22 +89,10 @@ export const ConversationPage: FC = () => {
               }
             }
           },
-          onError: (err) => {
+          onError: () => {
             setIsStreaming(false);
             abortRef.current = null;
-            setConversation((prev) => {
-              if (!prev) return prev;
-              const next = {
-                ...prev,
-                messages: prev.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? { ...m, content: err.message }
-                    : m,
-                ),
-              };
-              conversationRef.current = next;
-              return next;
-            });
+            setStreamError(true);
           },
         },
         attachments,
@@ -289,6 +278,16 @@ export const ConversationPage: FC = () => {
   return (
     <>
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
+        {streamError && (
+          <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
+            <DialAlert
+              variant={AlertVariant.Error}
+              message={t(ChatI18nKeys.StreamError)}
+              closable
+              onClose={() => setStreamError(false)}
+            />
+          </div>
+        )}
         {deleteError && (
           <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
             <DialAlert

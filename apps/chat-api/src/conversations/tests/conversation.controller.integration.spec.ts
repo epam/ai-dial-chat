@@ -139,5 +139,58 @@ describe('ConversationController (integration)', () => {
 
       await realApp.close();
     });
+
+    it('returns 201 when valid attachments are provided', async () => {
+      const conversation = { id: 'test-id', messages: [] };
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Here is a file',
+          attachments: [
+            {
+              type: 'application/pdf',
+              title: 'report.pdf',
+              data: 'base64data',
+            },
+          ],
+        })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        'Here is a file',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        [
+          {
+            type: 'application/pdf',
+            title: 'report.pdf',
+            data: 'base64data',
+          },
+        ],
+      );
+    });
+
+    it('returns 400 when an attachment is missing the required type field', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Hello',
+          attachments: [{ title: 'file.pdf' }],
+        })
+        .expect(400);
+    });
+
+    it('returns 400 when an attachment is missing the required title field', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Hello',
+          attachments: [{ type: 'application/pdf' }],
+        })
+        .expect(400);
+    });
   });
 });

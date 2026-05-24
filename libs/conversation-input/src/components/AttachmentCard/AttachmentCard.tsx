@@ -4,6 +4,7 @@ import {
   DialEllipsisTooltip,
   DialGhostIconButton,
   DialLoader,
+  DialTooltip,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
@@ -26,6 +27,11 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   className,
 }) => {
   const { id, name } = attachment;
+
+  const nameWithoutExtension = useMemo(() => {
+    const dot = name.lastIndexOf('.');
+    return dot > 0 ? name.slice(0, dot) : name;
+  }, [name]);
 
   const cssVars = {
     ...(colors?.border && { '--ci-card-border': colors.border }),
@@ -77,16 +83,17 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         <>
           {/* Top group: file name */}
           <div className="flex flex-1 items-start overflow-hidden">
-            <span
-              className={mergeClasses(
-                typography?.fontClassName ?? 'dial-tiny-text',
-                'line-clamp-3 max-w-[76px] break-words',
-                styles.name,
-              )}
-              title={name}
-            >
-              {name}
-            </span>
+            <DialTooltip tooltip={name}>
+              <span
+                className={mergeClasses(
+                  typography?.fontClassName ?? 'dial-tiny-text',
+                  'line-clamp-3 max-w-[76px] break-words',
+                  styles.name,
+                )}
+              >
+                {nameWithoutExtension}
+              </span>
+            </DialTooltip>
           </div>
 
           {/* Bottom group: icon + label */}
