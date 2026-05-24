@@ -27,7 +27,7 @@ RUN npm exec nx run chat-api:prune
 # ─────────────────────────────────────────────
 # Stage 3: lean production image
 # ─────────────────────────────────────────────
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 
 ENV NODE_ENV=production
 
