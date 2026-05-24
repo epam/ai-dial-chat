@@ -4,7 +4,6 @@ import {
   DialEllipsisTooltip,
   DialGhostIconButton,
   DialLoader,
-  DialTooltip,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
@@ -31,7 +30,6 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   const nameWithoutExtension = useMemo(() => {
     return getNameWithoutExtension(name);
   }, [name]);
-
 
   const cssVars = {
     ...(colors?.border && { '--ci-card-border': colors.border }),
