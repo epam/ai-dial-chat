@@ -246,6 +246,7 @@ Configured at startup:
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
 - CORS with `credentials: true`
 - Swagger at `/api/docs` (non-production)
+- Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
 - Global prefix: `api`
 
 NestJS conventions (domain structure, thin controllers, Swagger decorators, Logger, ConfigService, DTO validation) are defined in `apps/chat-api/AGENTS.md` — read it before implementing anything in `apps/chat-api/**`.
