@@ -1,3 +1,4 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   Suspense,
@@ -41,11 +42,18 @@ const ConversationRoute: FC = () => {
   }, []);
 
   const handleSend = useCallback(
-    async (message: string) => {
+    async (message: string, attachments: Attachment[]) => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const conversation = await apiCreateConversation(message);
+        const dialAttachments = attachments.map((a) => ({
+          type: a.contentType,
+          title: a.name,
+        }));
+        const conversation = await apiCreateConversation(
+          message,
+          dialAttachments.length ? dialAttachments : undefined,
+        );
         navigate(getConversationRoute(conversation.id));
       } finally {
         setIsSending(false);

@@ -69,6 +69,7 @@ describe('ConversationController (integration)', () => {
         'Hello',
         TEST_USER.at,
         TEST_USER.bucket,
+        undefined,
       );
     });
 

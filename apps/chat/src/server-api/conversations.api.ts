@@ -1,9 +1,16 @@
+import type { DialAttachment } from '@epam/ai-dial-chat-shared';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
 
-export const createConversation = (firstMessage: string) =>
+export const createConversation = (
+  firstMessage: string,
+  attachments?: DialAttachment[],
+) =>
   conversationsApi.createConversation({
-    createConversationDto: { firstMessage },
+    createConversationDto: {
+      firstMessage,
+      ...(attachments?.length ? { attachments } : {}),
+    },
   });
 
 export const getConversation = (conversationPath: string) =>

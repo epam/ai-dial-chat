@@ -1,4 +1,4 @@
-import { StreamChunk } from '@epam/ai-dial-chat-shared';
+import { DialAttachment, StreamChunk } from '@epam/ai-dial-chat-shared';
 import { ApiEndpoints, getCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
@@ -13,6 +13,7 @@ export const streamCompletion = (
   message: string,
   model: string,
   options: StreamCompletionOptions,
+  attachments?: DialAttachment[],
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -29,7 +30,12 @@ export const streamCompletion = (
             ? { 'X-CSRF-Token': getCsrfToken() as string }
             : {}),
         },
-        body: JSON.stringify({ path, message, model }),
+        body: JSON.stringify({
+          path,
+          message,
+          model,
+          ...(attachments?.length ? { attachments } : {}),
+        }),
       });
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;

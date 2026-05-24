@@ -1,4 +1,4 @@
-import type { MessageRole } from '@epam/ai-dial-chat-shared';
+import type { DialAttachment, MessageRole } from '@epam/ai-dial-chat-shared';
 import type { BubblePosition } from '../types/bubble-position.js';
 import type { MessageActionsProps } from './MessageActions.js';
 
@@ -40,6 +40,8 @@ interface BaseMessageBubbleProps {
   actions?: MessageActionsProps;
   /** When `true`, the actions bar is always visible instead of appearing only on group hover. */
   alwaysVisibleActions?: boolean;
+  /** DIAL API attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
+  attachments?: DialAttachment[];
 }
 
 /** Props accepted by the `UserMessageBubble` component. */

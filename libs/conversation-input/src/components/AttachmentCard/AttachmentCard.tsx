@@ -150,7 +150,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             size={ElementSize.Small}
             className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
             aria-label={removeLabel}
-            onClick={() => onRemove(id)}
+            onClick={() => onRemove?.(id)}
           />
         </div>
       )}

@@ -1,4 +1,5 @@
 import { AttachmentType } from '../types/attachment.js';
+import { MIMEType } from '../types/mime-type.js';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
 export interface ConversationMetadata {
@@ -42,6 +43,15 @@ export interface Message {
   content: string;
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
+  /**
+   * Extra DIAL API payload attached to the message.
+   * Present on both user requests (uploaded files) and assistant responses
+   * (generated/referenced files).
+   */
+  custom_content?: {
+    /** Files or media items associated with this message. */
+    attachments?: DialAttachment[];
+  };
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */
@@ -86,7 +96,7 @@ export interface Attachment {
   /** Display name (usually the original filename). */
   name: string;
   /** MIME type of the attachment (e.g. `'image/png'`, `'application/pdf'`). */
-  contentType: string;
+  contentType: MIMEType | string;
   /** The underlying `File` object selected by the user. */
   file: File;
   /** Content category used to select the correct icon and thumbnail. */
@@ -95,6 +105,27 @@ export interface Attachment {
   status: RequestStatus;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
+}
+/**
+ * Attachment as returned or accepted by the DIAL Core API.
+ * Used inside `Message.custom_content.attachments` for both user requests
+ * and assistant responses.
+ */
+export interface DialAttachment {
+  /** Zero-based position in the attachment list. */
+  index?: number;
+  /** MIME type of the attachment content. */
+  type: MIMEType | string;
+  /** Display name shown in the UI. */
+  title: string;
+  /** Inline base-64 encoded content (mutually exclusive with `url`). */
+  data?: string;
+  /** Remote URL pointing to the attachment content. */
+  url?: string;
+  /** MIME type of the referenced resource (used with `reference_url`). */
+  reference_type?: MIMEType | string;
+  /** URL of an alternate reference resource (e.g. a download link). */
+  reference_url?: string;
 }
 
 /** A full conversation including its messages and configuration. */

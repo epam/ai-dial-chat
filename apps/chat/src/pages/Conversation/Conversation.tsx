@@ -1,4 +1,10 @@
-import { Conversation, Message, MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  Attachment,
+  Conversation,
+  DialAttachment,
+  Message,
+  MessageRole,
+} from '@epam/ai-dial-chat-shared';
 import {
   AlertVariant,
   ConfirmationPopupVariant,
@@ -39,48 +45,55 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
+      attachments?: DialAttachment[],
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       setIsStreaming(true);
 
-      streamCompletion(conversationPath, userContent, model, {
-        signal: controller.signal,
-        onChunk: (chunk) => {
-          const token = chunk.choices[0]?.delta?.content ?? '';
-          if (!token) return;
-          setConversation((prev) => {
-            if (!prev) return prev;
-            const next = {
-              ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === assistantMessageId
-                  ? { ...m, content: m.content + token }
-                  : m,
-              ),
-            };
-            conversationRef.current = next;
-            return next;
-          });
-        },
-        onComplete: async () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-          const final = conversationRef.current;
-          if (final) {
-            try {
-              await saveConversation(conversationPath, final);
-            } catch (err: unknown) {
-              void err;
+      streamCompletion(
+        conversationPath,
+        userContent,
+        model,
+        {
+          signal: controller.signal,
+          onChunk: (chunk) => {
+            const token = chunk.choices[0]?.delta?.content ?? '';
+            if (!token) return;
+            setConversation((prev) => {
+              if (!prev) return prev;
+              const next = {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === assistantMessageId
+                    ? { ...m, content: m.content + token }
+                    : m,
+                ),
+              };
+              conversationRef.current = next;
+              return next;
+            });
+          },
+          onComplete: async () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+            const final = conversationRef.current;
+            if (final) {
+              try {
+                await saveConversation(conversationPath, final);
+              } catch (err: unknown) {
+                void err;
+              }
             }
-          }
+          },
+          onError: () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+          },
         },
-        onError: () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-        },
-      });
+        attachments,
+      );
     },
     [],
   );
@@ -120,6 +133,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
+            lastMsg.custom_content?.attachments,
           );
         } else {
           setConversation(result);
@@ -217,11 +231,20 @@ export const ConversationPage: FC = () => {
   }, [conversationId, pendingDeleteId]);
 
   const handleSend = useCallback(
-    (message: string) => {
+    (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
+      const dialAttachments = attachments.map<DialAttachment>((a) => ({
+        type: a.contentType,
+        title: a.name,
+      }));
+
+      const dialAttachmentsArg = dialAttachments.length
+        ? dialAttachments
+        : undefined;
+
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message);
+        createMessagePair(message, dialAttachmentsArg);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -242,6 +265,7 @@ export const ConversationPage: FC = () => {
         message,
         assistantMessageId,
         conversation.model.id,
+        dialAttachmentsArg,
       );
     },
     [conversation, conversationId, startStream],

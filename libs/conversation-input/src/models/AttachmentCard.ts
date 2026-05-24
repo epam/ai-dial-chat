@@ -23,7 +23,7 @@ export interface AttachmentCardProps {
   /** The attachment data to display. */
   attachment: Attachment;
   /** Called when the user activates the remove button. */
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   /** Called when the user activates the retry button (error state only). */
   onRetry?: (id: string) => void;
   /** Renders the card in selected state (accent border + tinted background). */

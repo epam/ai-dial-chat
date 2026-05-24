@@ -1,6 +1,7 @@
 import {
   Conversation,
   ConversationMetadata,
+  DialAttachment,
   MessageRole,
   Message,
 } from '@epam/ai-dial-chat-shared';
@@ -24,6 +25,7 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
+    attachments?: DialAttachment[],
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
@@ -36,6 +38,7 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
+      ...(attachments?.length ? { custom_content: { attachments } } : {}),
     };
 
     // TODO: remove hardcoded - add model info
@@ -60,7 +63,7 @@ export class ConversationService extends AppService {
         conversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation,
+          body: conversation as never,
         },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -156,7 +159,7 @@ export class ConversationService extends AppService {
         conversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation,
+          body: conversation as never,
         },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -176,6 +179,7 @@ export class ConversationService extends AppService {
     bucket: string,
     message: string,
     model: string,
+    attachments?: DialAttachment[],
   ): Promise<ReadableStream<Uint8Array>> {
     const conversation = await this.getConversation(
       conversationPath,
@@ -188,6 +192,7 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
+      ...(attachments?.length ? { custom_content: { attachments } } : {}),
     };
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
@@ -201,6 +206,9 @@ export class ConversationService extends AppService {
     const messages = messagesForCompletion.map((m) => ({
       role: m.role,
       content: m.content,
+      ...(m.custom_content?.attachments?.length
+        ? { custom_content: { attachments: m.custom_content.attachments } }
+        : {}),
     }));
 
     try {
