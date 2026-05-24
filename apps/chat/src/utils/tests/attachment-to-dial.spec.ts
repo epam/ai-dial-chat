@@ -1,6 +1,6 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   attachmentToDialAttachment,
   attachmentsToDialAttachments,
