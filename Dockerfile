@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # ─────────────────────────────────────────────
 # Stage 1: install all workspace dependencies
 # ─────────────────────────────────────────────
@@ -5,8 +7,10 @@ FROM node:24-alpine AS deps
 
 WORKDIR /workspace
 
-# Copy manifests first to maximise layer caching
-COPY package.json package-lock.json ./
+# Copy every workspace package.json (--parents preserves directory structure)
+# so npm workspaces can create the correct symlinks before any source arrives.
+COPY --parents package.json package-lock.json apps/*/package.json libs/*/package.json ./
+
 RUN npm ci --ignore-scripts
 
 # ─────────────────────────────────────────────
