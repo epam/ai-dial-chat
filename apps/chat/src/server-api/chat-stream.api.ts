@@ -64,7 +64,7 @@ export const streamCompletion = (
         const { done, value } = await reader.read();
 
         if (done) {
-          if (buffer.trim()) parseSSELine(buffer, onChunk);
+          if (buffer.trim()) parseSSELine(buffer, onChunk, onError);
           break;
         }
 
@@ -74,7 +74,7 @@ export const streamCompletion = (
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          parseSSELine(line, onChunk);
+          parseSSELine(line, onChunk, onError);
         }
       }
       onComplete();
@@ -92,6 +92,7 @@ export const streamCompletion = (
 const parseSSELine = (
   line: string,
   onChunk: (chunk: StreamChunk) => void,
+  onError: (error: Error) => void,
 ): void => {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith(':')) return;
@@ -102,6 +103,10 @@ const parseSSELine = (
 
   try {
     const parsed = JSON.parse(data) as StreamChunk;
+    if (parsed.error) {
+      onError(new Error(parsed.error.message));
+      return;
+    }
     onChunk(parsed);
   } catch {
     // malformed chunk — skip silently

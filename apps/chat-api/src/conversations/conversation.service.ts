@@ -63,7 +63,7 @@ export class ConversationService extends AppService {
         conversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation as never,
+          body: conversation,
         },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -159,7 +159,7 @@ export class ConversationService extends AppService {
         conversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation as never,
+          body: conversation,
         },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -203,13 +203,18 @@ export class ConversationService extends AppService {
         ? conversation.messages
         : [...conversation.messages, userMessage];
 
-    const messages = messagesForCompletion.map((m) => ({
-      role: m.role,
-      content: m.content,
-      ...(m.custom_content?.attachments?.length
-        ? { custom_content: { attachments: m.custom_content.attachments } }
-        : {}),
-    }));
+    const messages = messagesForCompletion.map((m) => {
+      const validAttachments = (m.custom_content?.attachments ?? []).filter(
+        (a) => a.data ?? a.url,
+      );
+      return {
+        role: m.role,
+        content: m.content,
+        ...(validAttachments.length
+          ? { custom_content: { attachments: validAttachments } }
+          : {}),
+      };
+    });
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
@@ -228,7 +233,6 @@ export class ConversationService extends AppService {
         );
         return handleDialError({ status: result.response.status });
       }
-
       return result.response.body;
     } catch (error) {
       this.logger.error('DIAL Core streamCompletion failed', error);

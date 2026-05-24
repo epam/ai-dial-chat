@@ -77,6 +77,16 @@ export interface StreamChunk {
     /** Zero-based index of this choice. */
     index: number;
   }>;
+  /**
+   * Present when DIAL Core signals an error inside the SSE stream instead of
+   * (or in addition to) a non-2xx HTTP status.
+   */
+  error?: {
+    /** Human-readable error description. */
+    message: string;
+    /** Machine-readable error category (e.g. `'invalid_request_error'`). */
+    type?: string;
+  };
 }
 
 /** Generic async-operation status, reusable for any request lifecycle. */

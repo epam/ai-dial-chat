@@ -25,6 +25,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { attachmentsToDialAttachments } from '../../utils/attachment-to-dial';
 import { createMessagePair } from '../../utils/message-factory';
 
 export const ConversationPage: FC = () => {
@@ -59,15 +60,15 @@ export const ConversationPage: FC = () => {
         {
           signal: controller.signal,
           onChunk: (chunk) => {
-            const token = chunk.choices[0]?.delta?.content ?? '';
-            if (!token) return;
+            const content = chunk.choices[0]?.delta?.content ?? '';
+            if (!content) return;
             setConversation((prev) => {
               if (!prev) return prev;
               const next = {
                 ...prev,
                 messages: prev.messages.map((m) =>
                   m.id === assistantMessageId
-                    ? { ...m, content: m.content + token }
+                    ? { ...m, content: m.content + content }
                     : m,
                 ),
               };
@@ -87,9 +88,22 @@ export const ConversationPage: FC = () => {
               }
             }
           },
-          onError: () => {
+          onError: (err) => {
             setIsStreaming(false);
             abortRef.current = null;
+            setConversation((prev) => {
+              if (!prev) return prev;
+              const next = {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === assistantMessageId
+                    ? { ...m, content: err.message }
+                    : m,
+                ),
+              };
+              conversationRef.current = next;
+              return next;
+            });
           },
         },
         attachments,
@@ -231,17 +245,11 @@ export const ConversationPage: FC = () => {
   }, [conversationId, pendingDeleteId]);
 
   const handleSend = useCallback(
-    (message: string, attachments: Attachment[]) => {
+    async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
-      const dialAttachments = attachments.map<DialAttachment>((a) => ({
-        type: a.contentType,
-        title: a.name,
-      }));
-
-      const dialAttachmentsArg = dialAttachments.length
-        ? dialAttachments
-        : undefined;
+      const dialAttachmentsArg =
+        await attachmentsToDialAttachments(attachments);
 
       const { userMessage, assistantMessage, assistantMessageId } =
         createMessagePair(message, dialAttachmentsArg);
