@@ -1,7 +1,8 @@
+import { MessageRating } from '@epam/ai-dial-chat-shared';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RateController } from '../rate.controller';
 import { RateService } from '../rate.service';
 
@@ -13,7 +14,7 @@ const VALID_BODY = {
   conversationId: 'bucket/conv-id',
   responseId: 'msg-456',
   modelId: 'anthropic.claude-v3-sonnet',
-  rate: 'like',
+  rate: MessageRating.Like,
 };
 
 describe('RateController (integration)', () => {
@@ -76,24 +77,42 @@ describe('RateController (integration)', () => {
     });
 
     it('returns 400 when conversationId is missing', async () => {
-      const { conversationId: _omit, ...body } = VALID_BODY;
-      await request(app.getHttpServer()).post('/rate').send(body).expect(400);
+      await request(app.getHttpServer())
+        .post('/rate')
+        .send({
+          responseId: VALID_BODY.responseId,
+          modelId: VALID_BODY.modelId,
+          rate: VALID_BODY.rate,
+        })
+        .expect(400);
     });
 
     it('returns 400 when responseId is missing', async () => {
-      const { responseId: _omit, ...body } = VALID_BODY;
-      await request(app.getHttpServer()).post('/rate').send(body).expect(400);
+      await request(app.getHttpServer())
+        .post('/rate')
+        .send({
+          conversationId: VALID_BODY.conversationId,
+          modelId: VALID_BODY.modelId,
+          rate: VALID_BODY.rate,
+        })
+        .expect(400);
     });
 
     it('returns 400 when modelId is missing', async () => {
-      const { modelId: _omit, ...body } = VALID_BODY;
-      await request(app.getHttpServer()).post('/rate').send(body).expect(400);
+      await request(app.getHttpServer())
+        .post('/rate')
+        .send({
+          conversationId: VALID_BODY.conversationId,
+          responseId: VALID_BODY.responseId,
+          rate: VALID_BODY.rate,
+        })
+        .expect(400);
     });
 
     it('returns 400 when rate is an invalid value', async () => {
       await request(app.getHttpServer())
         .post('/rate')
-        .send({ ...VALID_BODY, rate: 'neutral' })
+        .send({ ...VALID_BODY, rate: 0 })
         .expect(400);
     });
 

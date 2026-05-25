@@ -1,6 +1,8 @@
-import { MessageRating } from '@epam/ai-dial-chat-shared';
+import type { MessageRating } from '@epam/ai-dial-chat-shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+const rateValues = [1, -1] as const;
 
 export class RateMessageDto {
   @ApiProperty({
@@ -30,9 +32,9 @@ export class RateMessageDto {
   @ApiProperty({
     description:
       'Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.',
-    enum: [MessageRating.Like, MessageRating.Dislike],
+    enum: rateValues,
   })
-  @IsIn([MessageRating.Like, MessageRating.Dislike])
+  @IsIn(rateValues)
   rate!: MessageRating;
 
   @ApiPropertyOptional({
