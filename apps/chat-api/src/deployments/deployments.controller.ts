@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Req } from '@nestjs/common';
+import { Controller, Get, Header, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
@@ -11,7 +11,13 @@ export class DeploymentsController {
   constructor(private readonly deploymentsService: DeploymentsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all available deployments' })
+  @Header('Deprecation', 'true')
+  @ApiOperation({
+    summary: 'List all available deployments',
+    deprecated: true,
+    description:
+      'Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Array of deployment objects from DIAL Core',
@@ -30,7 +36,13 @@ export class DeploymentsController {
   }
 
   @Get(':deployment')
-  @ApiOperation({ summary: 'Get a single deployment by name' })
+  @Header('Deprecation', 'true')
+  @ApiOperation({
+    summary: 'Get a single deployment by name',
+    deprecated: true,
+    description:
+      'Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Deployment object',

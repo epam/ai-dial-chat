@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
+import { CatalogProvider } from './context/CatalogContext';
 import { ModelsProvider } from './context/ModelsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
@@ -22,19 +23,21 @@ root.render(
       <UserProvider>
         <ThemeProvider>
           <ModelsProvider>
-            <Suspense fallback={null}>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  path="*"
-                  element={
-                    <RequireAuth>
-                      <App />
-                    </RequireAuth>
-                  }
-                />
-              </Routes>
-            </Suspense>
+            <CatalogProvider>
+              <Suspense fallback={null}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="*"
+                    element={
+                      <RequireAuth>
+                        <App />
+                      </RequireAuth>
+                    }
+                  />
+                </Routes>
+              </Suspense>
+            </CatalogProvider>
           </ModelsProvider>
         </ThemeProvider>
       </UserProvider>

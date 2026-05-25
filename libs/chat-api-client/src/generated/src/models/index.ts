@@ -3,6 +3,74 @@
 /**
  *
  * @export
+ * @interface ApplicationDto
+ */
+export interface ApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationDto
+   */
+  maxInputAttachments?: number;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationsResponseDto
+ */
+export interface ApplicationsResponseDto {
+  /**
+   *
+   * @type {Array<ApplicationDto>}
+   * @memberof ApplicationsResponseDto
+   */
+  data: Array<ApplicationDto>;
+}
+/**
+ *
+ * @export
  * @interface AttachmentDto
  */
 export interface AttachmentDto {
@@ -48,6 +116,97 @@ export interface AttachmentDto {
    * @memberof AttachmentDto
    */
   referenceUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface CatalogItemDto
+ */
+export interface CatalogItemDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CatalogItemDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CatalogItemDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CatalogItemDto
+   */
+  type: CatalogItemDtoTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof CatalogItemDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CatalogItemDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof CatalogItemDto
+   */
+  maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CatalogItemDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   * Boolean capability flags from DIAL Core (model items only). scale_types is excluded.
+   * @type {{ [key: string]: boolean; }}
+   * @memberof CatalogItemDto
+   */
+  capabilities?: { [key: string]: boolean };
+}
+
+/**
+ * @export
+ */
+export const CatalogItemDtoTypeEnum = {
+  Model: 'model',
+  Application: 'application',
+} as const;
+export type CatalogItemDtoTypeEnum =
+  (typeof CatalogItemDtoTypeEnum)[keyof typeof CatalogItemDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CatalogResponseDto
+ */
+export interface CatalogResponseDto {
+  /**
+   *
+   * @type {Array<CatalogItemDto>}
+   * @memberof CatalogResponseDto
+   */
+  data: Array<CatalogItemDto>;
+  /**
+   * Total count before filtering
+   * @type {number}
+   * @memberof CatalogResponseDto
+   */
+  total: number;
+  /**
+   * Count of items after filtering
+   * @type {number}
+   * @memberof CatalogResponseDto
+   */
+  filtered: number;
 }
 /**
  *

@@ -4,7 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
+import { CatalogModule } from '../catalog/catalog.module';
 import { ChatModule } from '../chat/chat.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
@@ -39,6 +41,8 @@ import { createServeStaticOptions } from './static-assets';
       },
     ]),
     ServeStaticModule.forRoot(createServeStaticOptions()),
+    ApplicationsModule,
+    CatalogModule,
     DeploymentsModule,
     ModelsModule,
     ChatModule,

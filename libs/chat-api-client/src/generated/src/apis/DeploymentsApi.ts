@@ -24,7 +24,9 @@ export interface GetDeploymentRequest {
  */
 export class DeploymentsApi extends runtime.BaseAPI {
   /**
+   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
    * Get a single deployment by name
+   * @deprecated
    */
   async getDeploymentRaw(
     requestParameters: GetDeploymentRequest,
@@ -61,7 +63,9 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
    * Get a single deployment by name
+   * @deprecated
    */
   async getDeployment(
     requestParameters: GetDeploymentRequest,
@@ -75,7 +79,9 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
    * List all available deployments
+   * @deprecated
    */
   async getDeploymentsRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
@@ -100,7 +106,9 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
    * List all available deployments
+   * @deprecated
    */
   async getDeployments(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
