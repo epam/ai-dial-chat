@@ -6,6 +6,11 @@ on:
       agent_name:
         required: true
         type: string
+      upstream_artifacts:
+        description: 'Comma-separated agent names whose stage-output artifacts to download into upstream/{name}/ before running.'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -26,6 +31,25 @@ jobs:
 
       - name: Install YAML parser
         run: pip install --quiet pyyaml
+
+      - name: Download upstream artifacts
+        if: inputs.upstream_artifacts != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM: ${{ inputs.upstream_artifacts }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p upstream
+          IFS=',' read -ra NAMES <<< "$UPSTREAM"
+          for name in "${NAMES[@]}"; do
+            [ -z "$name" ] && continue
+            echo "Downloading stage-output-${name} from this run..."
+            gh run download "$RUN_ID" -R "$REPO" -n "stage-output-${name}" -D "upstream/${name}/"
+          done
+          echo "Upstream payloads available at:"
+          find upstream/ -type f -name 'stage-output.json'
 
       - name: Load manifest
         id: manifest

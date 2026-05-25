@@ -18,11 +18,12 @@ the criteria.
 
 ## Output
 
-Write **`stage-output.json`** at the repo root.
+Your **final response** is a JSON object that the platform validates against
+its schema (passed via `--json-schema` to Claude). You don't write a file;
+the structured response itself is the output.
 
 Required fields:
 
-- `stage`: literal `"code-review"`
 - `status`:
   - `"passed"` if zero findings
   - `"passed_with_findings"` if all findings are severity `info`/`low`/`medium`
@@ -33,7 +34,6 @@ Optional but recommended:
 
 - `findings[]` with `{severity, file, line, message, suggested_fix}` — one per skill finding
 
-Envelope fields (`contract_version`, `agent_version`, `run_id`, `trigger`) are
-auto-injected by the platform — do not write them.
-
+The platform pins `stage` to `"code-review"` and injects envelope fields
+(`contract_version`, `agent_version`, `run_id`, `trigger`) after you exit.
 Do not post PR comments yourself; the platform handles sticky-comment posting.

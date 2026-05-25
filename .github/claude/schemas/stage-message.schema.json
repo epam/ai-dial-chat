@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "DIAL SDLC Stage Message",
-  "description": "Sticky JSON payload every SDLC stage writes to stage-output.json at the repo root. Envelope fields (contract_version, run_id, trigger, agent_version) are injected by the composite action — stages do not write them.",
+  "description": "Sticky JSON payload every SDLC stage writes to stage-output.json at the repo root. Envelope fields (contract_version, run_id, trigger, agent_version) are injected by the composite action — stages do not write them. The findings[] shape fits reviewer-type agents (code-review, security, triage, lint); non-reviewer agents (test-gen, spec-author, benchmark, migration) likely need schema evolution — see PLATFORM_NOTES.md.",
   "type": "object",
   "required": ["contract_version", "stage", "status", "summary"],
   "additionalProperties": false,

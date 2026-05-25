@@ -16,18 +16,21 @@ this is usually just:>
 
 ## Output
 
-Write **`stage-output.json`** at the repo root. Required fields:
+Your **final response** is a JSON object that the platform validates against
+its schema (passed via `--json-schema` to Claude). You don't write a file;
+the structured response itself is the output. Required fields:
 
-- `stage`: literal string matching this agent's `name:` from `agent.yml`
 - `status`: `"passed"` | `"passed_with_findings"` | `"failed"`
 - `summary`: one short human-readable line for the sticky PR comment
+
+(The `stage` field is pinned to your agent's `name:` from `agent.yml`; the
+platform enforces it — your output can omit it or set it; the platform
+injects envelope fields `contract_version`, `agent_version`, `run_id`,
+`trigger` after you exit.)
 
 Optional:
 
 - `findings[]` with `{severity, file?, line?, requirement_ref?, message, suggested_fix?}`
 - `cost_usd`: token spend, if you can compute it
-
-Envelope fields (`contract_version`, `agent_version`, `run_id`, `trigger`) are
-auto-injected by the platform — do not write them.
 
 Do not post PR comments yourself; the platform handles sticky-comment posting.

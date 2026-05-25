@@ -48,7 +48,7 @@ runs:
           exit 1
         fi
 
-    - name: Prepare prompt and Claude args
+    - name: Prepare prompt, schema, and Claude args
       id: prep
       shell: bash
       env:
@@ -58,11 +58,12 @@ runs:
         ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
         MAX_TURNS: ${{ inputs.max_turns }}
         MODEL: ${{ inputs.model }}
+        RUNNER_TEMP: ${{ runner.temp }}
       run: |
         set -euo pipefail
 
-        # Resolve prompt content. claude-code-action@v1 accepts `prompt:` (string)
-        # only — no prompt_file input — so we read the file content here.
+        # 1) Resolve prompt content. claude-code-action@v1 accepts `prompt:`
+        # (string) only — no prompt_file input — so we read the file here.
         if [ -n "${INLINE_PROMPT}" ]; then
           PROMPT_CONTENT="${INLINE_PROMPT}"
         else
@@ -78,9 +79,29 @@ runs:
           PROMPT_CONTENT="$(cat "$FILE")"
         fi
 
-        # Build claude_args. Allowed tools and model both go through the CLI
-        # via claude_args; the action exposes neither as a direct input.
-        ARGS="--max-turns ${MAX_TURNS}"
+        # 2) Build an agent-facing JSON Schema: strip envelope fields the
+        # platform injects, pin `stage` to a literal const so Claude can't
+        # write the wrong stage name. Saved to a temp file for --json-schema.
+        SCHEMA_PATH="${RUNNER_TEMP}/agent-schema.json"
+        export STAGE_NAME SCHEMA_PATH
+        python3 - <<'PY'
+        import json, os
+        with open('.github/claude/schemas/stage-message.schema.json') as f:
+            s = json.load(f)
+        # Envelope fields are injected by render-stage-comment.py; agents must not write them.
+        for k in ('contract_version', 'agent_version', 'run_id', 'trigger'):
+            s.get('properties', {}).pop(k, None)
+        s['required'] = [r for r in s.get('required', []) if r != 'contract_version']
+        # Pin the stage name so Claude can't mismatch.
+        s.setdefault('properties', {}).setdefault('stage', {'type': 'string'})['const'] = os.environ['STAGE_NAME']
+        with open(os.environ['SCHEMA_PATH'], 'w') as f:
+            json.dump(s, f)
+        PY
+        echo "Agent-facing schema written to $SCHEMA_PATH"
+
+        # 3) Build claude_args. Allowed tools, model, and json-schema all go
+        # through the CLI via claude_args; the action exposes none as direct inputs.
+        ARGS="--max-turns ${MAX_TURNS} --json-schema=${SCHEMA_PATH}"
         if [ -n "${MODEL}" ]; then
           ARGS="${ARGS} --model ${MODEL}"
         fi
@@ -97,13 +118,27 @@ runs:
         } >> "$GITHUB_OUTPUT"
 
     - name: Run Claude
+      id: claude
       uses: anthropics/claude-code-action@v1
       with:
         anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
         prompt: ${{ steps.prep.outputs.prompt }}
         claude_args: ${{ steps.prep.outputs.claude_args }}
 
-    - name: Extract and validate sticky JSON
+    - name: Materialize structured output as stage-output.json
+      shell: bash
+      env:
+        OUTPUT: ${{ steps.claude.outputs.structured_output }}
+      run: |
+        set -euo pipefail
+        if [ -z "$OUTPUT" ]; then
+          echo "::error::claude-code-action did not return structured_output. Either --json-schema was not honored, the model does not support structured outputs (requires Sonnet 4.5+ / Opus 4.5+ / Haiku 4.5+), or the agent hit error_max_structured_output_retries."
+          exit 1
+        fi
+        printf '%s' "$OUTPUT" > stage-output.json
+        echo "Wrote structured output to stage-output.json ($(wc -c < stage-output.json) bytes)"
+
+    - name: Validate and render sticky comment
       id: extract
       shell: bash
       env:

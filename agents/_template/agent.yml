@@ -28,3 +28,9 @@ cost_class: light                     # light (<$0.50/run) | medium | heavy
 # Kill switch (optional override). Default derived from name: code-review → STAGE_CODE_REVIEW_ENABLED.
 # Set the corresponding repo or org variable to "false" to disable without a revert.
 # kill_switch_var: STAGE_MY_AGENT_ENABLED
+
+# Chaining (optional). List of upstream agents whose output this agent reads.
+# The platform downloads their stage-output.json files into upstream/{name}/
+# before running. Your prompt reads upstream/<upstream-name>/stage-output.json.
+# Leave empty (or omit) if your agent runs independently — the common case.
+# needs: [scan-deps]

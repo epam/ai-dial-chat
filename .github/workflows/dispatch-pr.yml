@@ -13,7 +13,9 @@ jobs:
   discover:
     runs-on: ubuntu-latest
     outputs:
-      agents: ${{ steps.match.outputs.agents }}
+      round1: ${{ steps.match.outputs.round1 }}
+      round2: ${{ steps.match.outputs.round2 }}
+      round3: ${{ steps.match.outputs.round3 }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -26,18 +28,47 @@ jobs:
         run: |
           set -euo pipefail
           echo "$VARS_JSON" > /tmp/vars.json
-          AGENTS=$(python3 .github/claude/scripts/match-agents.py pull_request --vars /tmp/vars.json)
-          echo "agents=$AGENTS" >> "$GITHUB_OUTPUT"
-          echo "Matched agents for pull_request: $AGENTS"
+          ROUNDS=$(python3 .github/claude/scripts/match-agents.py pull_request --vars /tmp/vars.json)
+          echo "Matched rounds: $ROUNDS"
+          echo "round1=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round1", [])))')" >> "$GITHUB_OUTPUT"
+          echo "round2=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round2", [])))')" >> "$GITHUB_OUTPUT"
+          echo "round3=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round3", [])))')" >> "$GITHUB_OUTPUT"
 
-  run:
+  run-round-1:
     needs: discover
-    if: needs.discover.outputs.agents != '[]'
+    if: needs.discover.outputs.round1 != '[]'
     strategy:
       fail-fast: false
       matrix:
-        agent: ${{ fromJSON(needs.discover.outputs.agents) }}
+        agent: ${{ fromJSON(needs.discover.outputs.round1) }}
     uses: ./.github/workflows/run-agent.yml
     with:
-      agent_name: ${{ matrix.agent }}
+      agent_name: ${{ matrix.agent.name }}
+      upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
+    secrets: inherit
+
+  run-round-2:
+    needs: [discover, run-round-1]
+    if: needs.discover.outputs.round2 != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: ${{ fromJSON(needs.discover.outputs.round2) }}
+    uses: ./.github/workflows/run-agent.yml
+    with:
+      agent_name: ${{ matrix.agent.name }}
+      upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
+    secrets: inherit
+
+  run-round-3:
+    needs: [discover, run-round-2]
+    if: needs.discover.outputs.round3 != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: ${{ fromJSON(needs.discover.outputs.round3) }}
+    uses: ./.github/workflows/run-agent.yml
+    with:
+      agent_name: ${{ matrix.agent.name }}
+      upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
     secrets: inherit

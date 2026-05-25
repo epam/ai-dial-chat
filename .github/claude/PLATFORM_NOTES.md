@@ -55,6 +55,31 @@ document it as available to authors until Tier B is wired through.
 
 ---
 
+## How agents emit output — Claude `structured_output`
+
+The composite action passes a JSON Schema to Claude via
+`--json-schema=<temp-path>` in `claude_args`. The agent-facing schema is a
+runtime-derived subset of `stage-message.schema.json`:
+
+- Envelope fields (`contract_version`, `agent_version`, `run_id`, `trigger`)
+  are stripped — the platform injects them after the agent exits.
+- `stage` is pinned via `const: "<agent-name>"` so the agent can't write a
+  mismatched stage name.
+
+Claude's Agent SDK constrains generation to the schema and re-prompts on
+mismatch. The validated payload appears as the
+`structured_output` step output of `anthropics/claude-code-action@v1`. The
+composite action materializes it to `stage-output.json` for the artifact
+upload and downstream consumption. If Claude exhausts its retry budget,
+the action returns subtype `error_max_structured_output_retries` and the
+job fails — no malformed output ever reaches the renderer.
+
+**Model requirement**: Claude Sonnet 4.5+, Opus 4.5+, Haiku 4.5+ (GA 2026).
+Older models silently lack structured_output support; the composite action
+fails with a clear error if the action's output is empty.
+
+---
+
 ## Cross-run state — consuming a prior agent's artifact
 
 Every agent's `stage-output.json` is uploaded as a workflow artifact named
@@ -63,10 +88,13 @@ upload; agents don't add anything per-stage.
 
 ### Same workflow run
 
-Agents in the same dispatcher run can read each other via
-`needs.{job}.outputs.message` if a `needs:` dependency exists. Currently the
-matrix in `dispatch-pr.yml` runs agents in parallel without dependencies —
-adding inter-agent deps is a v0.2 dispatcher feature.
+Agents declare upstream dependencies via the manifest's `needs:` field. The
+matcher topologically sorts agents into rounds (capped at 3); the dispatcher
+runs each round as a separate matrix job with sequential `needs:`. Before a
+downstream agent runs, `run-agent.yml` downloads each declared upstream's
+`stage-output-{name}` artifact into `upstream/{name}/stage-output.json` —
+the downstream prompt reads them directly. See `ADDING_AN_AGENT.md` →
+*Chaining* for the author-facing recipe.
 
 ### Different workflow run
 
@@ -115,10 +143,16 @@ Touching any of these means changing platform code, not just an
 - Changing the output schema (`stage-message.schema.json`) — affects every
   agent's compliance.
 - Changing the sticky-comment format (`render-stage-comment.py`).
-- Adding inter-agent dependencies (`needs:` between matrix jobs in
-  `dispatch-pr.yml`) — not supported in v0.1; a future matcher could emit
-  topologically-ordered groups.
+- Raising `MAX_ROUNDS` past 3 in the matcher: requires adding `roundN`
+  outputs to the discover job and a matching matrix job to `dispatch-pr.yml`.
 - Wiring the reserved `sibling_repos:` manifest field (Tier B context).
+- **Adopting a non-reviewer agent type** (test-gen, spec-author, benchmark,
+  migration, doc-gen, etc.): the current schema's `findings[]` shape is
+  reviewer-flavored. First non-reviewer agent should pick one of:
+  (a) loosen `additionalProperties: false` to `true` at the top level so
+  the agent can add its own fields directly, or (b) add a `payload: object`
+  envelope for agent-specific data. Decide at adoption with the agent's
+  actual output shape in hand — not before.
 
 If your change touches any of those, update `ADDING_AN_AGENT.md` and the
 [design docs](../../docs/sdlc/orchestration-research.md) in the same PR.

@@ -99,6 +99,7 @@ cost_class: light
 | `model` | No | Claude model (e.g. `claude-sonnet-4-6`); empty uses action default |
 | `phase` | No | `sandbox` / `pilot` / `production` |
 | `cost_class` | No | `light` (<$0.50/run) / `medium` / `heavy` |
+| `needs` | No | List of upstream agent names. Platform downloads their `stage-output.json` into `upstream/{name}/` before this agent runs. See *Chaining* below |
 | `kill_switch_var` | No | Override the derived var name (rarely needed) |
 
 ### Tool tiers
@@ -131,6 +132,65 @@ derived from `name:`:
 
 When set to `"false"`, the matcher omits the agent at discovery — no runner
 time is spent. To re-enable, delete or change the variable.
+
+---
+
+## Chaining (depending on another agent)
+
+If your agent needs another agent's output as input, declare it in the
+manifest:
+
+```yaml
+# agents/triage-deps/agent.yml
+contract_version: "0.1"
+name: triage-deps
+triggers: [pull_request]
+allowed_tools: "Read,Grep,Skill"
+needs: [scan-deps]              # ← the only chaining-specific line
+```
+
+The platform handles the rest:
+
+- The matcher topologically sorts agents into rounds. Upstream agents go
+  in earlier rounds; downstream agents wait until upstream completes.
+- Before your agent runs, the platform downloads each upstream's
+  `stage-output-{name}` artifact into `upstream/{name}/stage-output.json`.
+- Your prompt reads those files like any other input.
+
+### Worked example: scan → triage
+
+```yaml
+# agents/triage-deps/prompt.md
+# Triage Dependencies Agent
+
+You triage the findings produced by the `scan-deps` agent.
+
+## Inputs
+- Upstream scan output: `upstream/scan-deps/stage-output.json`
+  (read the `findings[]` array — each entry has `severity`, `file`, etc.)
+
+## Task
+1. Read upstream/scan-deps/stage-output.json.
+2. Filter false positives. Classify remaining findings by exploitability.
+3. Write your output to stage-output.json with one finding per actionable
+   item.
+```
+
+### Rules and limits
+
+- **At most 3 rounds** of chaining (the dispatcher caps it). Round 1 →
+  Round 2 → Round 3 is enough for any realistic pipeline; chains longer
+  than that are usually a smell.
+- **Upstream killed → downstream skipped.** If `STAGE_SCAN_DEPS_ENABLED`
+  is `"false"`, the matcher drops `triage-deps` too (with a warning).
+  Triage of nothing is nonsense.
+- **Cycles fail loudly.** If A needs B and B needs A, the dispatcher
+  aborts at discovery with `::error::Cycle detected in agent needs:`.
+- **Same-run only.** The downloaded artifacts are from *this* dispatcher
+  run, not historical. The current commit's output feeds the current
+  commit's triage.
+- **Upstream must be in the matched set.** Agent in `needs:` must match
+  the same trigger (e.g., both `pull_request`) and not be filtered out.
 
 ---
 
@@ -171,8 +231,16 @@ triggers: [pull_request]
 
 ## Output contract — what the agent must write
 
-Every manifest-driven agent writes **`stage-output.json`** at the repo root.
-Schema: `.github/claude/schemas/stage-message.schema.json`.
+The agent's **final response** is a JSON object validated against the
+schema at `.github/claude/schemas/stage-message.schema.json`. The platform
+passes the schema to Claude via `--json-schema`, so the model is
+constitutionally constrained to match it — there is no separate "write a
+file" step. The platform materializes the validated response to
+`stage-output.json` for the artifact upload.
+
+Failure mode: if Claude can't satisfy the schema within its retry budget,
+the action emits `error_max_structured_output_retries` and the job fails.
+No partial / malformed output ever reaches downstream.
 
 Minimum payload:
 
@@ -204,8 +272,9 @@ Richer payload:
 }
 ```
 
-`render-stage-comment.py` validates required fields and fails the job loudly
-if the payload is malformed or missing.
+`render-stage-comment.py` re-validates required fields as defense in depth
+(structured_output already enforces the schema) and fails the job loudly if
+something slipped through.
 
 ### Envelope fields — auto-injected, do not write
 
