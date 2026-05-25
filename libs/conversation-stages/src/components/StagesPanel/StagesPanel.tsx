@@ -65,11 +65,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses(
-        'w-full',
-        styles.panel,
-        className,
-      )}
+      className={mergeClasses('w-full', styles.panel, className)}
     >
       <div
         role="button"
