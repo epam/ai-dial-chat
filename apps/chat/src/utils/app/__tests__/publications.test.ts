@@ -40,7 +40,7 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
     );
 
     expect(result).toHaveLength(1);
-    expect(result[0].sourceUrl).toBe(ApiUtils.decodeApiUrl(sharedFile));
+    expect(result[0].oldUrl).toBe(ApiUtils.decodeApiUrl(sharedFile));
 
     const fromRoot = buildDedupedPublicationFileTargetsFromConversations(
       [convRoot],

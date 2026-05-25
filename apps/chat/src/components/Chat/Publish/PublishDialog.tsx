@@ -152,24 +152,25 @@ const PublishDialogContainer = ({
     const fileResources =
       action === PublishActions.DELETE
         ? []
-        : filteredConversationFiles.map(({ id }) => {
-            const decodedId = ApiUtils.decodeApiUrl(id);
-
-            const url =
-              (isFolder
-                ? mappedWithConversationsFiles.find(
-                    (file) => file.sourceUrl === decodedId,
-                  )?.newUrl
-                : transformIdToRootEntityId(decodedId)) ??
-              transformIdToRootEntityId(decodedId);
-
-            return {
+        : isFolder
+          ? mappedWithConversationsFiles.map(({ oldUrl, newUrl }) => ({
               action: PublishActions.ADD_IF_ABSENT,
-              sourceUrl: decodedId,
-              reviewUrl: decodedId,
-              targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
-            };
-          });
+              sourceUrl: oldUrl,
+              reviewUrl: oldUrl,
+              targetUrl: replaceIdWithBucket(newUrl, PUBLIC_URL_PREFIX),
+            }))
+          : filteredConversationFiles.map(({ id }) => {
+              const decodedId = ApiUtils.decodeApiUrl(id);
+
+              const url = transformIdToRootEntityId(decodedId);
+
+              return {
+                action: PublishActions.ADD_IF_ABSENT,
+                sourceUrl: decodedId,
+                reviewUrl: decodedId,
+                targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
+              };
+            });
 
     const iconResource = [];
     if (

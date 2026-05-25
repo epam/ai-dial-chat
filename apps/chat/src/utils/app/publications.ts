@@ -159,8 +159,8 @@ export const buildDedupedPublicationFileTargetsFromConversations = (
   conversations: Conversation[],
   entityFolderId: string,
   isFolder = false,
-): { sourceUrl: string; newUrl: string }[] => {
-  const bySourceUrl = new Map<string, { sourceUrl: string; newUrl: string }>();
+): { oldUrl: string; newUrl: string }[] => {
+  const bySourceUrl = new Map<string, { oldUrl: string; newUrl: string }>();
 
   const folderOldPathPartsRegExp = new RegExp(
     escapeRegExp(getIdWithoutRootPathSegments(entityFolderId)),
@@ -196,7 +196,7 @@ export const buildDedupedPublicationFileTargetsFromConversations = (
         !existing.newUrl?.length ||
         newUrl.length < existing.newUrl.length
       ) {
-        bySourceUrl.set(decodedOldUrl, { sourceUrl: decodedOldUrl, newUrl });
+        bySourceUrl.set(decodedOldUrl, { oldUrl: decodedOldUrl, newUrl });
       }
     }
   }
