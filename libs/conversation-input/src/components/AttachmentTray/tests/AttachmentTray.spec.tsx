@@ -27,8 +27,8 @@ describe('AttachmentTray', () => {
       makeAttachment('2', 'b.pdf'),
     ];
     render(<AttachmentTray attachments={attachments} onRemove={vi.fn()} />);
-    expect(screen.getByText('a.pdf')).toBeTruthy();
-    expect(screen.getByText('b.pdf')).toBeTruthy();
+    expect(screen.getByText('a')).toBeTruthy();
+    expect(screen.getByText('b')).toBeTruthy();
   });
 
   it('forwards onRemove when a card remove button is clicked', () => {
