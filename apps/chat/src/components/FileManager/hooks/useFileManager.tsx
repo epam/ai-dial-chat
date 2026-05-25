@@ -72,9 +72,12 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
-const formatSharedPath = (path: string | undefined | null) => {
+const formatSharedPath = (
+  path: string | undefined | null,
+  sharedWithMeLabel: string,
+) => {
   if (!path) return path;
-  return path.replace(/^files\/[^/]+/, SHARED_WITH_ME_FILES_SECTION);
+  return path.replace(/^files\/[^/]+/, sharedWithMeLabel);
 };
 
 function extractHiddenSharedPathPart(
@@ -279,10 +282,10 @@ export const useFileManager = ({
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
     {
-      my_files: MY_FILES_SECTION,
-      shared: SHARED_WITH_ME_FILES_SECTION,
-      organization: ORGANIZATION_FILES_SECTION,
-      review: REVIEW_FILES_SECTION,
+      my_files: t(MY_FILES_SECTION),
+      shared: t(SHARED_WITH_ME_FILES_SECTION),
+      organization: t(ORGANIZATION_FILES_SECTION),
+      review: t(REVIEW_FILES_SECTION),
     },
     resolvedInitialTab,
   );
@@ -333,16 +336,16 @@ export const useFileManager = ({
       ...searchResults.folders.map((f) => {
         const uiFolder = convertToUIKitFolder(f, []);
         if (activeTab === DialFileManagerTabs.Shared) {
-          uiFolder.parentPath = formatSharedPath(uiFolder.parentPath);
-          uiFolder.folderId = formatSharedPath(uiFolder.folderId) as string;
+          uiFolder.parentPath = formatSharedPath(uiFolder.parentPath, t(SHARED_WITH_ME_FILES_SECTION));
+          uiFolder.folderId = formatSharedPath(uiFolder.folderId, t(SHARED_WITH_ME_FILES_SECTION)) as string;
         }
         return uiFolder;
       }),
       ...searchResults.files.map((f) => {
         const uiFile = convertToUIKitFile(f);
         if (activeTab === DialFileManagerTabs.Shared) {
-          uiFile.parentPath = formatSharedPath(uiFile.parentPath);
-          uiFile.folderId = formatSharedPath(uiFile.folderId) as string;
+          uiFile.parentPath = formatSharedPath(uiFile.parentPath, t(SHARED_WITH_ME_FILES_SECTION));
+          uiFile.folderId = formatSharedPath(uiFile.folderId, t(SHARED_WITH_ME_FILES_SECTION)) as string;
         }
         return uiFile;
       }),
@@ -429,7 +432,7 @@ export const useFileManager = ({
   } = useMemo(() => {
     let filteredFiles = files;
     let filteredFolders = folders;
-    let pathRootAlias = MY_FILES_SECTION;
+    let pathRootAlias = t(MY_FILES_SECTION);
     let uploadEnabled = true;
     const visibleColumns: FileManagerColumnKey[] = [
       FileManagerColumnKey.Name,
@@ -449,12 +452,12 @@ export const useFileManager = ({
           folders,
           defaultMyItemsFilters,
         );
-        pathRootAlias = MY_FILES_SECTION;
+        pathRootAlias = t(MY_FILES_SECTION);
         break;
       case DialFileManagerTabs.Shared:
         filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
-        pathRootAlias = SHARED_WITH_ME_FILES_SECTION;
+        pathRootAlias = t(SHARED_WITH_ME_FILES_SECTION);
         visibleColumns.push(FileManagerColumnKey.Author);
         break;
       case DialFileManagerTabs.Organization:
@@ -463,7 +466,7 @@ export const useFileManager = ({
           folders,
           PublishedWithMeFilter,
         );
-        pathRootAlias = ORGANIZATION_FILES_SECTION;
+        pathRootAlias = t(ORGANIZATION_FILES_SECTION);
         uploadEnabled = false;
         break;
       case DialFileManagerTabs.Review:
@@ -473,7 +476,7 @@ export const useFileManager = ({
         filteredFolders = folders.filter(
           (f) => getEntityBucket(f) === reviewBucket,
         );
-        pathRootAlias = REVIEW_FILES_SECTION;
+        pathRootAlias = t(REVIEW_FILES_SECTION);
         uploadEnabled = false;
         break;
       default:
