@@ -572,7 +572,10 @@ export const filesSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = combineEntities(state.folders, payload.folders);
+      const existingIds = new Set(state.folders.map((f) => f.id));
+      const newFolders = payload.folders.filter((f) => !existingIds.has(f.id));
+      if (newFolders.length === 0) return;
+      state.folders = state.folders.concat(newFolders);
     },
     renameFolder: (
       state,
