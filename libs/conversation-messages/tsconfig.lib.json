@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "../../dist/libs/conversation-messages",
+    "tsBuildInfoFile": "../../dist/libs/conversation-messages/tsconfig.lib.tsbuildinfo",
 
     "jsx": "react-jsx",
 

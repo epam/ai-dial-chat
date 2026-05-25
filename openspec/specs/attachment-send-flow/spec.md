@@ -2,14 +2,14 @@
 
 ---
 
-### Requirement: `attachmentToDialAttachment` encodes a file to base64
+### Requirement: `attachmentToDto` encodes a file to base64
 
-`apps/chat/src/utils/attachment-to-dial.ts` SHALL export `attachmentToDialAttachment(attachment: Attachment): Promise<DialAttachment>` that reads `attachment.file` via `FileReader.readAsDataURL`, strips the data-URL prefix, and returns a `DialAttachment` with `type` set to `attachment.contentType`, `title` set to `attachment.name`, and `data` set to the plain base64 string.
+`apps/chat/src/utils/attachment-to-dto.ts` SHALL export `attachmentToDto(attachment: Attachment): Promise<AttachmentDto>` that reads `attachment.file` via `FileReader.readAsDataURL`, strips the data-URL prefix, and returns the generated API client `AttachmentDto` with `type` set to `attachment.contentType`, `title` set to `attachment.name`, and `data` set to the plain base64 string.
 
 #### Scenario: Encodes a non-empty file
 
-- **WHEN** `attachmentToDialAttachment` is called with a valid `Attachment` whose `file` has content
-- **THEN** it resolves to a `DialAttachment` whose `data` field contains no `data:…;base64,` prefix
+- **WHEN** `attachmentToDto` is called with a valid `Attachment` whose `file` has content
+- **THEN** it resolves to an `AttachmentDto` whose `data` field contains no `data:…;base64,` prefix
 
 #### Scenario: Rejects on `FileReader` error
 
@@ -18,34 +18,34 @@
 
 ---
 
-### Requirement: `attachmentsToDialAttachments` maps an array in parallel
+### Requirement: `attachmentsToDtos` maps an array in parallel
 
-`apps/chat/src/utils/attachment-to-dial.ts` SHALL export `attachmentsToDialAttachments(attachments: Attachment[]): Promise<DialAttachment[] | undefined>` that returns `undefined` when the array is empty and `Promise.all(attachments.map(attachmentToDialAttachment))` otherwise.
+`apps/chat/src/utils/attachment-to-dto.ts` SHALL export `attachmentsToDtos(attachments: Attachment[]): Promise<AttachmentDto[] | undefined>` that returns `undefined` when the array is empty and `Promise.all(attachments.map(attachmentToDto))` otherwise.
 
 #### Scenario: Empty array returns undefined
 
-- **WHEN** `attachmentsToDialAttachments` is called with `[]`
+- **WHEN** `attachmentsToDtos` is called with `[]`
 - **THEN** it resolves to `undefined`
 
 #### Scenario: Non-empty array resolves to encoded list
 
 - **WHEN** called with two valid attachments
-- **THEN** it resolves to an array of two `DialAttachment` objects in the same order
+- **THEN** it resolves to an array of two `AttachmentDto` objects in the same order
 
 ---
 
 ### Requirement: `Conversation` page encodes attachments before send
 
-`apps/chat/src/pages/Conversation/Conversation.tsx` SHALL call `attachmentsToDialAttachments` inside `handleSend` before making the API request. If encoding throws, `handleSend` SHALL catch the error and display an error state without making any API call.
+`apps/chat/src/pages/Conversation/Conversation.tsx` SHALL call `attachmentsToDtos` inside `handleSend` before making the API request. If encoding throws, `handleSend` SHALL catch the error and display an error state without making any API call.
 
 #### Scenario: Successful send with attachments
 
 - **WHEN** the user sends a message with one or more attachments
-- **THEN** the encoded `DialAttachment[]` is included in the API request body
+- **THEN** the encoded `AttachmentDto[]` is included in the API request body
 
 #### Scenario: File-read error prevents send
 
-- **WHEN** `attachmentsToDialAttachments` rejects for any file
+- **WHEN** `attachmentsToDtos` rejects for any file
 - **THEN** no API request is made and an error message is shown to the user
 
 #### Scenario: Send without attachments
@@ -57,7 +57,7 @@
 
 ### Requirement: Backend `SendCompletionDto` accepts attachments
 
-`apps/chat-api/src/conversations/dto/send-completion.dto.ts` SHALL define an optional `attachments?: DialAttachmentDto[]` field decorated with `@IsOptional()`, `@IsArray()`, and `@ValidateNested({ each: true })`. `DialAttachmentDto` SHALL validate `type` (non-empty string), `title` (non-empty string), and at most one of `data` or `url` (both optional strings).
+`apps/chat-api/src/conversations/dto/send-completion.dto.ts` SHALL define an optional `attachments?: AttachmentDto[]` field decorated with `@IsOptional()`, `@IsArray()`, and `@ValidateNested({ each: true })`. `AttachmentDto` SHALL validate `type` (non-empty string), `title` (non-empty string), and at most one of `data` or `url` (both optional strings).
 
 #### Scenario: Valid request with attachments passes validation
 
@@ -78,7 +78,7 @@
 
 ### Requirement: Backend `CreateConversationDto` accepts attachments
 
-`apps/chat-api/src/conversations/dto/create-conversation.dto.ts` SHALL include the same optional `attachments?: DialAttachmentDto[]` field with identical validation decorators as `SendCompletionDto`.
+`apps/chat-api/src/conversations/dto/create-conversation.dto.ts` SHALL include the same optional `attachments?: AttachmentDto[]` field with identical validation decorators as `SendCompletionDto`.
 
 #### Scenario: Create conversation with attachments
 
@@ -89,7 +89,7 @@
 
 ### Requirement: Service embeds attachments in user message `custom_content`
 
-`apps/chat-api/src/conversations/conversation.service.ts` SHALL place the validated `DialAttachmentDto[]` inside `message.custom_content.attachments` when constructing the user `Message` object forwarded to DIAL Core. The service SHALL forward only attachments that have either a non-empty `data` or a non-empty `url` field.
+`apps/chat-api/src/conversations/conversation.service.ts` SHALL place the validated `AttachmentDto[]` inside `message.custom_content.attachments` when constructing the user `Message` object forwarded to DIAL Core. The service SHALL forward only attachments that have either a non-empty `data` or a non-empty `url` field.
 
 #### Scenario: Attachments forwarded to DIAL Core
 

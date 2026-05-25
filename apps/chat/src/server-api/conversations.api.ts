@@ -1,12 +1,12 @@
 import type {
+  AttachmentDto,
   ConversationResponseDto,
-  DialAttachmentDto,
 } from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,
-  attachments?: DialAttachmentDto[],
+  attachments?: AttachmentDto[],
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {

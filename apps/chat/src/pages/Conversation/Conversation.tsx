@@ -11,7 +11,7 @@ import {
   DialAlert,
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
-import type { DialAttachmentDto } from '@epam/chat-api-client';
+import type { AttachmentDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -27,7 +27,7 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { rateMessage } from '../../server-api/rate.api';
-import { attachmentsToDialAttachments } from '../../utils/attachment-to-dial';
+import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { createMessagePair } from '../../utils/message-factory';
 
 export const ConversationPage: FC = () => {
@@ -49,7 +49,7 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
-      attachments?: DialAttachmentDto[],
+      attachments?: AttachmentDto[],
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -301,11 +301,10 @@ export const ConversationPage: FC = () => {
     async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
-      const dialAttachmentsArg =
-        await attachmentsToDialAttachments(attachments);
+      const attachmentDtos = await attachmentsToDtos(attachments);
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message, dialAttachmentsArg);
+        createMessagePair(message, attachmentDtos);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -326,7 +325,7 @@ export const ConversationPage: FC = () => {
         message,
         assistantMessageId,
         conversation.model.id,
-        dialAttachmentsArg,
+        attachmentDtos,
       );
     },
     [conversation, conversationId, startStream],

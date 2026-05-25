@@ -1,8 +1,4 @@
-import {
-  mapDialAttachmentToAttachment,
-  mergeClasses,
-  MessageRole,
-} from '@epam/ai-dial-chat-shared';
+import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { CSSProperties, FC } from 'react';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
@@ -46,13 +42,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
-  const controlAttachments = (attachments ?? []).map(
-    mapDialAttachmentToAttachment,
-  );
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="flex w-fit flex-col items-end gap-2">
-        <AttachmentTray attachments={controlAttachments} />
+        <AttachmentTray attachments={attachments ?? []} />
         <div
           className={mergeClasses(
             styles.userBubble,

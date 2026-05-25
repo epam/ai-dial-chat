@@ -1352,7 +1352,7 @@
           "choices"
         ]
       },
-      "DialAttachmentDto": {
+      "AttachmentDto": {
         "type": "object",
         "properties": {
           "index": {
@@ -1403,7 +1403,7 @@
             "description": "DIAL API attachments to include with the first user message",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DialAttachmentDto"
+              "$ref": "#/components/schemas/AttachmentDto"
             }
           }
         },
@@ -1623,7 +1623,7 @@
             "description": "DIAL API attachments to include with the user message",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DialAttachmentDto"
+              "$ref": "#/components/schemas/AttachmentDto"
             }
           }
         },

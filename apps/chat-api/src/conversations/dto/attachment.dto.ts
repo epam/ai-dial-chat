@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUrl } from 'class-validator';
 
-/** DIAL Core API attachment object included with a user message. */
-export class DialAttachmentDto {
+/** Attachment object included with a chat message. */
+export class AttachmentDto {
   @ApiPropertyOptional({ description: 'Zero-based position in the list' })
   @IsOptional()
   index?: number;
