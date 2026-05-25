@@ -124,27 +124,6 @@ export interface DisplayAttachment {
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
 }
-/**
- * Attachment as returned or accepted by the DIAL Core API.
- * Used inside `Message.custom_content.attachments` for both user requests
- * and assistant responses.
- */
-export interface DialAttachment {
-  /** Zero-based position in the attachment list. */
-  index?: number;
-  /** MIME type of the attachment content. */
-  type: MIMEType | string;
-  /** Display name shown in the UI. */
-  title: string;
-  /** Inline base-64 encoded content (mutually exclusive with `url`). */
-  data?: string;
-  /** Remote URL pointing to the attachment content. */
-  url?: string;
-  /** MIME type of the referenced resource (used with `reference_url`). */
-  reference_type?: MIMEType | string;
-  /** URL of an alternate reference resource (e.g. a download link). */
-  reference_url?: string;
-}
 
 /** Attachment selected locally by the user before it is sent to the backend. */
 export interface Attachment extends DisplayAttachment {
