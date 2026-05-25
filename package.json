@@ -55,6 +55,7 @@
     "@vitest/coverage-v8": "~4.1.0",
     "@vitest/ui": "~4.1.0",
     "autoprefixer": "^10.4.13",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",

@@ -326,6 +326,61 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   firstMessage: string;
+  /**
+   * DIAL API attachments to include with the first user message
+   * @type {Array<DialAttachmentDto>}
+   * @memberof CreateConversationDto
+   */
+  attachments?: Array<DialAttachmentDto>;
+}
+/**
+ *
+ * @export
+ * @interface DialAttachmentDto
+ */
+export interface DialAttachmentDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof DialAttachmentDto
+   */
+  index?: number;
+  /**
+   * MIME type of the attachment
+   * @type {string}
+   * @memberof DialAttachmentDto
+   */
+  type: string;
+  /**
+   * Display name of the attachment
+   * @type {string}
+   * @memberof DialAttachmentDto
+   */
+  title: string;
+  /**
+   * Inline base-64 encoded content
+   * @type {string}
+   * @memberof DialAttachmentDto
+   */
+  data?: string;
+  /**
+   * Remote URL of the attachment content
+   * @type {string}
+   * @memberof DialAttachmentDto
+   */
+  url?: string;
+  /**
+   * MIME type of the reference resource
+   * @type {string}
+   * @memberof DialAttachmentDto
+   */
+  referenceType?: string;
+  /**
+   * URL of the reference resource
+   * @type {string}
+   * @memberof DialAttachmentDto
+   */
+  referenceUrl?: string;
 }
 /**
  *
@@ -859,6 +914,12 @@ export interface SendCompletionDto {
    * @memberof SendCompletionDto
    */
   model: string;
+  /**
+   * DIAL API attachments to include with the user message
+   * @type {Array<DialAttachmentDto>}
+   * @memberof SendCompletionDto
+   */
+  attachments?: Array<DialAttachmentDto>;
 }
 /**
  *
