@@ -1,0 +1,29 @@
+# Agent manifest. The runtime reads this and wires CI for you — you don't
+# write workflow YAML. Copy this directory, rename it, edit the four
+# required fields below + the prompt, commit. The dispatcher picks it up
+# on the next PR.
+
+contract_version: "0.1"              # required: pin schema version
+name: my-agent                        # required: kebab-case; surfaces in PR comments + kill-switch var
+
+# When the agent runs.
+# Short form: triggers: [pull_request]
+# Long form (v0.2, when filters land): [{ on: pull_request, filters: { paths: ["src/**"] } }]
+triggers: [pull_request]              # required
+
+# Comma-separated Claude tool allowlist. Use the smallest set your prompt needs.
+# Tiers: read-only         = "Read,Grep,Glob"
+#        + git diff         = "Read,Grep,Glob,Bash(git diff:*)"
+#        + skill            = append ",Skill"
+#        + MCP context      = append ",mcp__dial-context__*"
+allowed_tools: "Read,Grep,Glob"       # required
+
+# Optional metadata
+agent_version: "0.1.0"                # appears in the output envelope
+description: "One-line description of what this agent does."
+phase: pilot                          # sandbox | pilot | production
+cost_class: light                     # light (<$0.50/run) | medium | heavy
+
+# Kill switch (optional override). Default derived from name: code-review → STAGE_CODE_REVIEW_ENABLED.
+# Set the corresponding repo or org variable to "false" to disable without a revert.
+# kill_switch_var: STAGE_MY_AGENT_ENABLED

@@ -1,0 +1,59 @@
+name: SDLC / Run Agent
+
+on:
+  workflow_call:
+    inputs:
+      agent_name:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: "${{ github.workflow }}-${{ inputs.agent_name }}-${{ github.ref }}"
+      cancel-in-progress: true
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Install YAML parser
+        run: pip install --quiet pyyaml
+
+      - name: Load manifest
+        id: manifest
+        env:
+          AGENT_NAME: ${{ inputs.agent_name }}
+        run: |
+          set -euo pipefail
+          MANIFEST="agents/${AGENT_NAME}/agent.yml"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "::error::Manifest not found: $MANIFEST"
+            exit 1
+          fi
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import os, yaml
+          with open(f"agents/{os.environ['AGENT_NAME']}/agent.yml") as f:
+              m = yaml.safe_load(f) or {}
+          tools = m.get("allowed_tools")
+          if not tools:
+              raise SystemExit("::error::manifest missing required field: allowed_tools")
+          print(f"allowed_tools={tools}")
+          print(f"agent_version={m.get('agent_version', 'unknown')}")
+          print(f"prompt_file=agents/{os.environ['AGENT_NAME']}/prompt.md")
+          EOF
+
+      - id: stage
+        uses: ./.github/actions/run-claude-stage
+        with:
+          stage_name: ${{ inputs.agent_name }}
+          allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
+          agent_version: ${{ steps.manifest.outputs.agent_version }}
+          prompt_file: ${{ steps.manifest.outputs.prompt_file }}

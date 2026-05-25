@@ -1,0 +1,43 @@
+name: SDLC Dispatch / PR
+
+on:
+  pull_request:
+    branches: [development-1.0]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      agents: ${{ steps.match.outputs.agents }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install matcher deps
+        run: pip install --quiet pyyaml
+
+      - id: match
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          set -euo pipefail
+          echo "$VARS_JSON" > /tmp/vars.json
+          AGENTS=$(python3 tools/match-agents.py pull_request --vars /tmp/vars.json)
+          echo "agents=$AGENTS" >> "$GITHUB_OUTPUT"
+          echo "Matched agents for pull_request: $AGENTS"
+
+  run:
+    needs: discover
+    if: needs.discover.outputs.agents != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: ${{ fromJSON(needs.discover.outputs.agents) }}
+    uses: ./.github/workflows/run-agent.yml
+    with:
+      agent_name: ${{ matrix.agent }}
+    secrets: inherit

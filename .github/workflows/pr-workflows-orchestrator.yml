@@ -1,0 +1,21 @@
+name: PR Workflows Orchestrator
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [development-1.0]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-review:
+    if: vars.STAGE_SECURITY_REVIEW_ENABLED != 'false'
+    uses: ./.github/workflows/stage-security-review.yml
+    secrets: inherit
+
+  code-review:
+    if: vars.STAGE_CODE_REVIEW_ENABLED != 'false'
+    uses: ./.github/workflows/stage-code-review.yml
+    secrets: inherit

@@ -1,0 +1,36 @@
+name: SDLC Stage / Code Review
+
+on:
+  workflow_call:
+    outputs:
+      message:
+        description: 'Sticky JSON payload from the stage.'
+        value: ${{ jobs.run.outputs.message }}
+      status:
+        description: 'Stage status (passed | passed_with_findings | failed).'
+        value: ${{ jobs.run.outputs.status }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: "${{ github.workflow }}-code-review-${{ github.ref }}"
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      message: ${{ steps.stage.outputs.message }}
+      status:  ${{ steps.stage.outputs.status }}
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0   # full history so git diff against base works
+
+      - id: stage
+        uses: ./.github/actions/run-claude-stage
+        with:
+          stage_name: code-review
+          allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"

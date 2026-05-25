@@ -1,0 +1,128 @@
+name: 'Run Claude Stage'
+description: 'Run a Claude-powered DIAL SDLC stage. Validates output and posts a sticky PR comment.'
+
+inputs:
+  stage_name:
+    description: 'Stage identifier (kebab-case). Must match prompt filename and sticky-comment marker.'
+    required: true
+  allowed_tools:
+    description: 'Comma-separated allowed tools (e.g. "Read,Grep,Glob,Skill").'
+    required: true
+  prompt:
+    description: 'Inline prompt. If empty, falls back to prompt_file or the default convention.'
+    required: false
+    default: ''
+  prompt_file:
+    description: 'Explicit prompt file path. Used when manifest-driven dispatcher provides it. If empty, falls back to .github/claude/prompts/{stage_name}.md.'
+    required: false
+    default: ''
+  agent_version:
+    description: 'Stage/agent version (semver) recorded into the output envelope.'
+    required: false
+    default: 'unknown'
+  max_turns:
+    description: 'Max Claude turns.'
+    required: false
+    default: '25'
+
+outputs:
+  message:
+    description: 'Validated sticky JSON payload from the stage.'
+    value: ${{ steps.extract.outputs.json }}
+  status:
+    description: 'Stage status (passed | passed_with_findings | failed).'
+    value: ${{ steps.extract.outputs.status }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate ANTHROPIC_API_KEY env
+      shell: bash
+      run: |
+        if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+          echo "::error::ANTHROPIC_API_KEY env is not set. Set it on the calling job from secrets.ANTHROPIC_API_KEY."
+          exit 1
+        fi
+
+    - name: Resolve prompt source
+      id: prompt
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        INLINE_PROMPT: ${{ inputs.prompt }}
+        EXPLICIT_FILE: ${{ inputs.prompt_file }}
+      run: |
+        set -euo pipefail
+        if [ -n "${INLINE_PROMPT}" ]; then
+          echo "mode=inline" >> "$GITHUB_OUTPUT"
+        else
+          if [ -n "${EXPLICIT_FILE}" ]; then
+            FILE="${EXPLICIT_FILE}"
+          else
+            FILE=".github/claude/prompts/${STAGE_NAME}.md"
+          fi
+          if [ ! -f "$FILE" ]; then
+            echo "::error::Prompt file not found: $FILE"
+            exit 1
+          fi
+          echo "mode=file" >> "$GITHUB_OUTPUT"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Run Claude (file prompt)
+      if: steps.prompt.outputs.mode == 'file'
+      uses: anthropics/claude-code-action@v1
+      with:
+        anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
+        prompt_file: ${{ steps.prompt.outputs.file }}
+        allowed_tools: ${{ inputs.allowed_tools }}
+        claude_args: --max-turns ${{ inputs.max_turns }}
+
+    - name: Run Claude (inline prompt)
+      if: steps.prompt.outputs.mode == 'inline'
+      uses: anthropics/claude-code-action@v1
+      with:
+        anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
+        prompt: ${{ inputs.prompt }}
+        allowed_tools: ${{ inputs.allowed_tools }}
+        claude_args: --max-turns ${{ inputs.max_turns }}
+
+    - name: Extract and validate sticky JSON
+      id: extract
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        AGENT_VERSION: ${{ inputs.agent_version }}
+      run: ./.github/claude/scripts/render-stage-comment.sh
+
+    - name: Upload stage output artifact
+      if: always() && hashFiles('stage-output.json') != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: stage-output-${{ inputs.stage_name }}
+        path: stage-output.json
+        retention-days: 90
+        if-no-files-found: warn
+
+    - name: Post sticky PR comment
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        STAGE_NAME: ${{ inputs.stage_name }}
+        BODY: ${{ steps.extract.outputs.comment }}
+      run: |
+        set -euo pipefail
+        MARKER="<!-- dial-sdlc:${STAGE_NAME} -->"
+        EXISTING_ID="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          | jq -r --arg m "$MARKER" '.[] | select(.body | startswith($m)) | .id' \
+          | head -n1)"
+        if [ -n "$EXISTING_ID" ]; then
+          gh api -X PATCH "repos/${REPO}/issues/comments/${EXISTING_ID}" -f body="$BODY" > /dev/null
+          echo "Updated sticky comment $EXISTING_ID"
+        else
+          gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY" > /dev/null
+          echo "Created sticky comment for stage ${STAGE_NAME}"
+        fi
