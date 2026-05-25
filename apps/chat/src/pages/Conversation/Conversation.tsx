@@ -1,7 +1,6 @@
 import {
   Attachment,
   Conversation,
-  DialAttachment,
   Message,
   MessageRole,
   type MessageRating,
@@ -12,6 +11,7 @@ import {
   DialAlert,
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
+import type { DialAttachmentDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -49,7 +49,7 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
-      attachments?: DialAttachment[],
+      attachments?: DialAttachmentDto[],
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
