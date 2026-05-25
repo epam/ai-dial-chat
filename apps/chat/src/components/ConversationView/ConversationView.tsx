@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionsI18nKeys } from '../../constants/translation-keys.js';
+import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(async () => {
@@ -27,7 +28,7 @@ const ConversationInput = lazy(async () => {
 
 interface Props {
   messages: MessageType[];
-  onSend: (message: string) => void;
+  onSend: (message: string, attachments: Attachment[]) => void;
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
@@ -167,6 +168,9 @@ const ConversationView: FC<Props> = ({
                   key={msg.id}
                   role={msg.role}
                   text={msg.content}
+                  attachments={attachmentDtosToDisplayAttachments(
+                    msg.custom_content?.attachments,
+                  )}
                   alwaysVisibleActions={!isStreaming}
                   actions={buildMessageActions(
                     msg,

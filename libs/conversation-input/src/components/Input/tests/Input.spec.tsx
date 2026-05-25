@@ -39,7 +39,7 @@ describe('Input', () => {
     if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
       fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(handleSend).toHaveBeenCalledWith('Test message', []);
       expect(textarea.value).toBe('');
     }
   });
@@ -75,7 +75,7 @@ describe('Input', () => {
     }
     const sendButton = screen.getByLabelText('Send message');
     fireEvent.click(sendButton);
-    expect(handleSend).toHaveBeenCalledWith('Click send');
+    expect(handleSend).toHaveBeenCalledWith('Click send', []);
   });
 
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {

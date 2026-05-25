@@ -1,5 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { AttachmentDto } from './attachment.dto';
 
 export class SendCompletionDto {
   @ApiProperty({
@@ -31,4 +41,14 @@ export class SendCompletionDto {
   @IsString()
   @MinLength(1)
   model!: string;
+
+  @ApiPropertyOptional({
+    description: 'DIAL API attachments to include with the user message',
+    type: [AttachmentDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }

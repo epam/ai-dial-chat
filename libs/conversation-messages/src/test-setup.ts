@@ -4,7 +4,6 @@ class IntersectionObserverMock {
   unobserve() {}
   disconnect() {}
 }
-
 Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,
   configurable: true,

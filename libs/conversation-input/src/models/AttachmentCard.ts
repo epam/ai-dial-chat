@@ -1,4 +1,4 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 
 /** CSS custom-property overrides for the `AttachmentCard` component. */
 export interface AttachmentCardColors {
@@ -21,9 +21,9 @@ export interface AttachmentCardTypography {
 /** Props accepted by the `AttachmentCard` component. */
 export interface AttachmentCardProps {
   /** The attachment data to display. */
-  attachment: Attachment;
+  attachment: DisplayAttachment;
   /** Called when the user activates the remove button. */
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   /** Called when the user activates the retry button (error state only). */
   onRetry?: (id: string) => void;
   /** Renders the card in selected state (accent border + tinted background). */

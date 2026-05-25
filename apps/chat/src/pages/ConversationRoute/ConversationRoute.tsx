@@ -1,3 +1,4 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   Suspense,
@@ -13,6 +14,7 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
+import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -41,11 +43,15 @@ const ConversationRoute: FC = () => {
   }, []);
 
   const handleSend = useCallback(
-    async (message: string) => {
+    async (message: string, attachments: Attachment[]) => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const conversation = await apiCreateConversation(message);
+        const attachmentDtos = await attachmentsToDtos(attachments);
+        const conversation = await apiCreateConversation(
+          message,
+          attachmentDtos,
+        );
         navigate(getConversationRoute(conversation.id));
       } finally {
         setIsSending(false);

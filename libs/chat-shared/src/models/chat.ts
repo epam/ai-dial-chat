@@ -1,4 +1,5 @@
 import { AttachmentType } from '../types/attachment.js';
+import { MIMEType } from '../types/mime-type.js';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
 export interface ConversationMetadata {
@@ -50,6 +51,15 @@ export interface Message {
   content: string;
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
+  /**
+   * Extra DIAL API payload attached to the message.
+   * Present on both user requests (uploaded files) and assistant responses
+   * (generated/referenced files).
+   */
+  custom_content?: {
+    /** Files or media items associated with this message. */
+    attachments?: MessageAttachment[];
+  };
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
 }
@@ -77,6 +87,16 @@ export interface StreamChunk {
     /** Zero-based index of this choice. */
     index: number;
   }>;
+  /**
+   * Present when DIAL Core signals an error inside the SSE stream instead of
+   * (or in addition to) a non-2xx HTTP status.
+   */
+  error?: {
+    /** Human-readable error description. */
+    message: string;
+    /** Machine-readable error category (e.g. `'invalid_request_error'`). */
+    type?: string;
+  };
 }
 
 /** Generic async-operation status, reusable for any request lifecycle. */
@@ -89,22 +109,48 @@ export enum RequestStatus {
   Error = 'error',
 }
 
-/** Represents a file or content item the user has attached to a message. */
-export interface Attachment {
+/** Represents a file or content item that can be displayed as an attachment. */
+export interface DisplayAttachment {
   /** Unique client-side identifier. */
   id: string;
   /** Display name (usually the original filename). */
   name: string;
   /** MIME type of the attachment (e.g. `'image/png'`, `'application/pdf'`). */
-  contentType: string;
-  /** The underlying `File` object selected by the user. */
-  file: File;
+  contentType: MIMEType | string;
   /** Content category used to select the correct icon and thumbnail. */
   type: AttachmentType;
   /** Upload / processing lifecycle state. */
   status: RequestStatus;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
+}
+
+/** Attachment selected locally by the user before it is sent to the backend. */
+export interface Attachment extends DisplayAttachment {
+  /** The underlying browser `File` object selected by the user. */
+  file: File;
+}
+
+/**
+ * Attachment payload stored in message custom content.
+ * Used inside `Message.custom_content.attachments` for both user requests
+ * and assistant responses.
+ */
+export interface MessageAttachment {
+  /** Zero-based position in the attachment list. */
+  index?: number;
+  /** MIME type of the attachment content. */
+  type: MIMEType | string;
+  /** Display name shown in the UI. */
+  title: string;
+  /** Inline base-64 encoded content (mutually exclusive with `url`). */
+  data?: string;
+  /** Remote URL pointing to the attachment content. */
+  url?: string;
+  /** MIME type of the referenced resource (used with `reference_url`). */
+  reference_type?: MIMEType | string;
+  /** URL of an alternate reference resource (e.g. a download link). */
+  reference_url?: string;
 }
 
 /** A full conversation including its messages and configuration. */

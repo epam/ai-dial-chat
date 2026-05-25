@@ -44,7 +44,7 @@ export const useFavicon = (faviconUrl?: string) => {
     img.onload = () => {
       // Image loaded successfully, update favicon
       link.href = urlWithCache;
-      console.log(`Favicon updated to: ${faviconUrl}`);
+      console.info(`Favicon updated to: ${faviconUrl}`);
     };
 
     img.onerror = () => {
