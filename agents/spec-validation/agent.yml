@@ -1,0 +1,9 @@
+contract_version: "0.1"
+name: spec-validation
+agent_version: "0.1.0"
+description: "OpenSpec PR-time validation via the /opsx:verify command."
+triggers: [pull_request]
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(openspec:*),Skill"
+model: claude-sonnet-4-6
+phase: pilot
+cost_class: light
