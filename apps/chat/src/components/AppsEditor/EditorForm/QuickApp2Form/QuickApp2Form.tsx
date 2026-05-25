@@ -307,7 +307,9 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 files={field.value ?? []}
                 addBtnTooltip={
                   isSharedWithMe
-                    ? getSharedTooltip(t(MarketplaceI18nKeys.DocumentsLowercase))
+                    ? getSharedTooltip(
+                        t(MarketplaceI18nKeys.DocumentsLowercase),
+                      )
                     : undefined
                 }
                 confirmDialogValues={
