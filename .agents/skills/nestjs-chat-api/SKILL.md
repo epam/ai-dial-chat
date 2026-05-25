@@ -43,6 +43,7 @@ Use this skill for backend work in `apps/chat-api`. It is a router to the reposi
    - Add `@ApiOperation`, `@ApiResponse` for every status, and `@ApiParam`/`@ApiQuery` when a param is not fully described by a DTO.
    - Name the controller handler as the desired generated SDK method (`listModels`, `getCurrentUser`, `createConversation`).
    - Run `npm run openapi`, inspect generated method/type names, then run `npm run openapi:check`.
+   - Ensure frontend callers use the generated API via `apps/chat/src/server-api/api-client.ts` and domain wrappers, unless a documented generator gap requires an exception.
 5. If adding public API behavior, add or update controller/service tests. Use `supertest` for request-level behavior and mock outbound clients or SDK methods.
 6. Use Nx for verification:
    - `npm exec nx test chat-api`

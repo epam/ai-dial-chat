@@ -1,4 +1,8 @@
-import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  MessageRating,
+  MessageRole,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
@@ -28,6 +32,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onCopyMarkdown,
   onLike,
   onDislike,
+  activeRating,
   alwaysVisible,
   className,
   tooltips,
@@ -120,6 +125,11 @@ export const MessageActions: FC<MessageActionsProps> = ({
             icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Like response"
+            className={
+              activeRating === MessageRating.Like
+                ? 'text-accent-primary'
+                : undefined
+            }
             tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
             onClick={onLike}
           />
@@ -127,6 +137,11 @@ export const MessageActions: FC<MessageActionsProps> = ({
             icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
             aria-label="Dislike response"
+            className={
+              activeRating === MessageRating.Dislike
+                ? 'text-accent-primary'
+                : undefined
+            }
             tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
             onClick={onDislike}
           />

@@ -1,10 +1,11 @@
+import { MessageRating, MessageRole } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MessageActions } from './MessageActions.js';
 
 describe('MessageActions', () => {
-  describe('source="User" (default)', () => {
+  describe('role=User (default)', () => {
     it('renders Edit and Delete buttons', () => {
       render(<MessageActions />);
       expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
@@ -34,26 +35,24 @@ describe('MessageActions', () => {
 
     it('calls onEdit when Edit button is clicked', async () => {
       const onEdit = vi.fn();
+      const user = userEvent.setup();
       render(<MessageActions onEdit={onEdit} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Edit message' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Edit message' }));
       expect(onEdit).toHaveBeenCalledOnce();
     });
 
     it('calls onDelete when Delete button is clicked', async () => {
       const onDelete = vi.fn();
+      const user = userEvent.setup();
       render(<MessageActions onDelete={onDelete} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Delete message' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Delete message' }));
       expect(onDelete).toHaveBeenCalledOnce();
     });
   });
 
-  describe('source="Agent"', () => {
+  describe('role=Assistant', () => {
     it('renders Regenerate, Copy, Markdown, Like, and Dislike buttons', () => {
-      render(<MessageActions role="Agent" />);
+      render(<MessageActions role={MessageRole.Assistant} />);
       expect(
         screen.getByRole('button', { name: 'Regenerate response' }),
       ).toBeTruthy();
@@ -72,7 +71,7 @@ describe('MessageActions', () => {
     });
 
     it('does not render User action buttons', () => {
-      render(<MessageActions role="Agent" />);
+      render(<MessageActions role={MessageRole.Assistant} />);
       expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
       expect(
         screen.queryByRole('button', { name: 'Delete message' }),
@@ -81,8 +80,14 @@ describe('MessageActions', () => {
 
     it('calls onRegenerate when Regenerate button is clicked', async () => {
       const onRegenerate = vi.fn();
-      render(<MessageActions role="Agent" onRegenerate={onRegenerate} />);
-      await userEvent.click(
+      const user = userEvent.setup();
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          onRegenerate={onRegenerate}
+        />,
+      );
+      await user.click(
         screen.getByRole('button', { name: 'Regenerate response' }),
       );
       expect(onRegenerate).toHaveBeenCalledOnce();
@@ -90,17 +95,22 @@ describe('MessageActions', () => {
 
     it('calls onCopy when Copy button is clicked', async () => {
       const onCopy = vi.fn();
-      render(<MessageActions role="Agent" onCopy={onCopy} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Copy response' }),
-      );
+      const user = userEvent.setup();
+      render(<MessageActions role={MessageRole.Assistant} onCopy={onCopy} />);
+      await user.click(screen.getByRole('button', { name: 'Copy response' }));
       expect(onCopy).toHaveBeenCalledOnce();
     });
 
     it('calls onCopyMarkdown when Markdown button is clicked', async () => {
       const onCopyMarkdown = vi.fn();
-      render(<MessageActions role="Agent" onCopyMarkdown={onCopyMarkdown} />);
-      await userEvent.click(
+      const user = userEvent.setup();
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          onCopyMarkdown={onCopyMarkdown}
+        />,
+      );
+      await user.click(
         screen.getByRole('button', { name: 'Copy as markdown' }),
       );
       expect(onCopyMarkdown).toHaveBeenCalledOnce();
@@ -108,17 +118,19 @@ describe('MessageActions', () => {
 
     it('calls onLike when Like button is clicked', async () => {
       const onLike = vi.fn();
-      render(<MessageActions role="Agent" onLike={onLike} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Like response' }),
-      );
+      const user = userEvent.setup();
+      render(<MessageActions role={MessageRole.Assistant} onLike={onLike} />);
+      await user.click(screen.getByRole('button', { name: 'Like response' }));
       expect(onLike).toHaveBeenCalledOnce();
     });
 
     it('calls onDislike when Dislike button is clicked', async () => {
       const onDislike = vi.fn();
-      render(<MessageActions role="Agent" onDislike={onDislike} />);
-      await userEvent.click(
+      const user = userEvent.setup();
+      render(
+        <MessageActions role={MessageRole.Assistant} onDislike={onDislike} />,
+      );
+      await user.click(
         screen.getByRole('button', { name: 'Dislike response' }),
       );
       expect(onDislike).toHaveBeenCalledOnce();
@@ -140,5 +152,65 @@ describe('MessageActions', () => {
   it('does not apply opacity-0 when alwaysVisible is true', () => {
     const { container } = render(<MessageActions alwaysVisible />);
     expect(container.firstElementChild?.className).not.toContain('opacity-0');
+  });
+
+  describe('activeRating', () => {
+    it('highlights the Like button when activeRating is Like (1)', () => {
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          activeRating={MessageRating.Like}
+        />,
+      );
+      const likeBtn = screen.getByRole('button', { name: 'Like response' });
+      expect(likeBtn.className).toContain('text-accent-primary');
+    });
+
+    it('does not highlight the Dislike button when activeRating is Like (1)', () => {
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          activeRating={MessageRating.Like}
+        />,
+      );
+      const dislikeBtn = screen.getByRole('button', {
+        name: 'Dislike response',
+      });
+      expect(dislikeBtn.className).not.toContain('text-accent-primary');
+    });
+
+    it('highlights the Dislike button when activeRating is Dislike (-1)', () => {
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          activeRating={MessageRating.Dislike}
+        />,
+      );
+      const dislikeBtn = screen.getByRole('button', {
+        name: 'Dislike response',
+      });
+      expect(dislikeBtn.className).toContain('text-accent-primary');
+    });
+
+    it('does not highlight the Like button when activeRating is Dislike (-1)', () => {
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          activeRating={MessageRating.Dislike}
+        />,
+      );
+      const likeBtn = screen.getByRole('button', { name: 'Like response' });
+      expect(likeBtn.className).not.toContain('text-accent-primary');
+    });
+
+    it('does not highlight either button when activeRating is undefined', () => {
+      render(<MessageActions role={MessageRole.Assistant} />);
+      const likeBtn = screen.getByRole('button', { name: 'Like response' });
+      const dislikeBtn = screen.getByRole('button', {
+        name: 'Dislike response',
+      });
+      expect(likeBtn.className).not.toContain('text-accent-primary');
+      expect(dislikeBtn.className).not.toContain('text-accent-primary');
+    });
   });
 });

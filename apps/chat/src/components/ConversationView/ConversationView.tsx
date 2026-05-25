@@ -2,6 +2,7 @@ import {
   MessageRole,
   type Attachment,
   type Message as MessageType,
+  type MessageRating,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 import { DialFabButton } from '@epam/ai-dial-ui-kit';
@@ -30,6 +31,7 @@ interface Props {
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
+  onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
@@ -43,6 +45,7 @@ const ConversationView: FC<Props> = ({
   onStop,
   onDeleteMessage,
   onRegenerateMessage,
+  onRateMessage,
   onAttachmentsChange,
   placeholder,
   isAssistantTyping = false,
@@ -170,6 +173,7 @@ const ConversationView: FC<Props> = ({
                     {
                       onDelete: onDeleteMessage,
                       onRegenerate: onRegenerateMessage,
+                      onRate: onRateMessage,
                     },
                     tooltips,
                   )}

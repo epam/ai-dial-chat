@@ -777,6 +777,54 @@ export interface ProviderInfoDto {
 /**
  *
  * @export
+ * @interface RateMessageDto
+ */
+export interface RateMessageDto {
+  /**
+   * Identifier of the conversation being rated
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  conversationId: string;
+  /**
+   * Identifier of the assistant response message being rated
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  responseId: string;
+  /**
+   * Model deployment ID that produced the response
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  modelId: string;
+  /**
+   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * @type {number}
+   * @memberof RateMessageDto
+   */
+  rate: RateMessageDtoRateEnum;
+  /**
+   * Optional free-text comment from the user
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  comment?: string;
+}
+
+/**
+ * @export
+ */
+export const RateMessageDtoRateEnum = {
+  NUMBER_1: 1,
+  NUMBER_MINUS_1: -1,
+} as const;
+export type RateMessageDtoRateEnum =
+  (typeof RateMessageDtoRateEnum)[keyof typeof RateMessageDtoRateEnum];
+
+/**
+ *
+ * @export
  * @interface SaveConversationBodyDto
  */
 export interface SaveConversationBodyDto {

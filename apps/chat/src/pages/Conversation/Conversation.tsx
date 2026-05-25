@@ -1,4 +1,9 @@
-import { Conversation, Message, MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  Conversation,
+  Message,
+  MessageRole,
+  type MessageRating,
+} from '@epam/ai-dial-chat-shared';
 import {
   AlertVariant,
   ConfirmationPopupVariant,
@@ -19,6 +24,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { rateMessage } from '../../server-api/rate.api';
 import { createMessagePair } from '../../utils/message-factory';
 
 export const ConversationPage: FC = () => {
@@ -216,6 +222,68 @@ export const ConversationPage: FC = () => {
     });
   }, [conversationId, pendingDeleteId]);
 
+  const handleRateMessage = useCallback(
+    async (messageId: string, rating: MessageRating | null) => {
+      if (!conversationId || !conversation) return;
+      const msg = conversation.messages.find((m) => m.id === messageId);
+      if (!msg) return;
+
+      const previousRating = msg.rating;
+
+      const conversationPath = conversationId.substring(
+        conversationId.indexOf('/') + 1,
+      );
+
+      // Optimistic update
+      const updatedConversation: Conversation = {
+        ...conversation,
+        messages: conversation.messages.map((m) =>
+          m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
+        ),
+      };
+      setConversation(updatedConversation);
+
+      if (rating !== null) {
+        try {
+          await rateMessage({
+            conversationId: conversation.id,
+            responseId: messageId,
+            modelId: conversation.model.id,
+            rate: rating,
+          });
+          await saveConversation(conversationPath, updatedConversation);
+        } catch {
+          // Revert optimistic update on failure
+          setConversation((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map((m) =>
+                m.id === messageId ? { ...m, rating: previousRating } : m,
+              ),
+            };
+          });
+        }
+      } else {
+        // Rating cleared (toggle off) — persist the removal without calling the rate API
+        await saveConversation(conversationPath, updatedConversation).catch(
+          () => {
+            setConversation((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === messageId ? { ...m, rating: previousRating } : m,
+                ),
+              };
+            });
+          },
+        );
+      }
+    },
+    [conversation, conversationId],
+  );
+
   const handleSend = useCallback(
     (message: string) => {
       if (!conversationId || !conversation) return;
@@ -273,6 +341,7 @@ export const ConversationPage: FC = () => {
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}
           onRegenerateMessage={handleRegenerateMessage}
+          onRateMessage={handleRateMessage}
           isAssistantTyping={isStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
         />

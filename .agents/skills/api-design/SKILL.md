@@ -29,7 +29,7 @@ For every new or changed endpoint, define these before coding:
 - Authentication and authorization requirements, including whether the endpoint is explicitly public.
 - Rate limiting requirements. Public unauthenticated endpoints should usually tighten the global default.
 - Cache behavior when applicable: TTL, invalidation, and key naming (`<domain>:<resource>[:<param>]`).
-- Frontend impact: typed client helper in `apps/chat/src/server-api/`, shared type in `libs/chat-shared/` if needed, and user-visible i18n strings if errors surface in UI.
+- Frontend impact: thin domain wrapper in `apps/chat/src/server-api/` that delegates to generated `@epam/chat-api-client`, shared type in `libs/chat-shared/` if needed, and user-visible i18n strings if errors surface in UI.
 - Generated client impact: expected SDK class, method name, request type, response type, and whether callers need `Raw` access for headers/status. The SDK method name comes from the controller handler name via `operationIdFactory`.
 - OpenAPI annotation plan: request DTO class, response DTO class, path/query param metadata, and success/error `@ApiResponse` coverage.
 
@@ -84,7 +84,8 @@ When writing or reviewing an OpenSpec change that touches API behavior:
 
 - Specs must include method, full versioned path, request body, response body, and error codes.
 - Tasks must name concrete files, not vague "update API" wording.
-- Include dedicated tasks for Swagger DTO/annotation updates, `npm run openapi`, `npm run openapi:check`, backend controller/service tests, and frontend generated-client usage when applicable.
+- Include dedicated tasks for Swagger DTO/annotation updates, `npm run openapi`, `npm run openapi:check`, `chat-api-client` build/lint, backend controller/service tests, generated API singleton updates in `apps/chat/src/server-api/api-client.ts`, and frontend wrappers that use generated `@epam/chat-api-client`.
+- Generated-client frontend usage is required for new or changed business REST endpoints. Direct `base.ts` get/post/put/del usage is allowed only for documented generator gaps, streaming calls, or infrastructure endpoints.
 - Include rate-limit and cache requirements when relevant.
 - Reference `apps/chat-api/AGENTS.md` instead of duplicating NestJS implementation rules.
 
@@ -92,6 +93,7 @@ When writing or reviewing an OpenSpec change that touches API behavior:
 
 - Returning `200` for error cases.
 - Designing backend-only contracts without checking the frontend `server-api` layer.
+- Adding new handwritten frontend REST helpers over `base.ts` for business endpoints when the generated client can represent the contract.
 - Adding unversioned business endpoints.
 - Introducing a generic `{ data }` envelope unless the domain already uses it or the change explicitly standardizes responses.
 - Mixing API redesign with unrelated implementation refactors.
