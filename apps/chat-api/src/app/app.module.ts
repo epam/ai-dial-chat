@@ -12,6 +12,7 @@ import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
+import { RateModule } from '../rate/rate.module';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
 import { AppController } from './app.controller';
@@ -42,6 +43,7 @@ import { createServeStaticOptions } from './static-assets';
     ModelsModule,
     ChatModule,
     ConversationModule,
+    RateModule,
   ],
   controllers: [AppController, ThemeController, HealthController],
   providers: [
