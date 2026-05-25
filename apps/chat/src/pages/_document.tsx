@@ -12,10 +12,29 @@ function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
 
-  const rtlLanguages = process.env.RTL_LANGUAGES
-    ? process.env.RTL_LANGUAGES.split(',').map((lang) => lang.trim())
-    : ['ar'];
-  const dir = rtlLanguages.includes(currentLocale) ? 'rtl' : 'ltr';
+  const RTL_LANGUAGES = [
+    'ar', // Arabic
+    'he', // Hebrew
+    'fa', // Persian/Farsi
+    'ur', // Urdu
+    'yi', // Yiddish
+    'ku', // Kurdish (Sorani)
+    'ckb', // Central Kurdish
+    'dv', // Divehi/Maldivian
+    'ps', // Pashto
+    'sd', // Sindhi
+    'ug', // Uyghur
+    'pnb', // Western Punjabi (Shahmukhi)
+    'mzn', // Mazanderani
+    'lrc', // Northern Luri
+  ];
+
+  const locale = new Intl.Locale(currentLocale) as Intl.Locale & {
+    getTextInfo?: () => { direction: string };
+  };
+  const dir =
+    locale.getTextInfo?.().direction ??
+    (RTL_LANGUAGES.includes(locale.language) ? 'rtl' : 'ltr');
 
   return (
     <Html lang={currentLocale} dir={dir}>

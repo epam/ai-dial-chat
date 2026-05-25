@@ -1,8 +1,6 @@
-const defaultLocale = process.env.DEFAULT_LOCALE || 'en';
-
 module.exports = {
   i18n: {
-    defaultLocale,
+    defaultLocale: 'en',
     locales: ['en', 'ar'],
   },
   localePath:

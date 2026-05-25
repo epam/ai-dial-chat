@@ -336,16 +336,28 @@ export const useFileManager = ({
       ...searchResults.folders.map((f) => {
         const uiFolder = convertToUIKitFolder(f, []);
         if (activeTab === DialFileManagerTabs.Shared) {
-          uiFolder.parentPath = formatSharedPath(uiFolder.parentPath, t(SHARED_WITH_ME_FILES_SECTION));
-          uiFolder.folderId = formatSharedPath(uiFolder.folderId, t(SHARED_WITH_ME_FILES_SECTION)) as string;
+          uiFolder.parentPath = formatSharedPath(
+            uiFolder.parentPath,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          );
+          uiFolder.folderId = formatSharedPath(
+            uiFolder.folderId,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          ) as string;
         }
         return uiFolder;
       }),
       ...searchResults.files.map((f) => {
         const uiFile = convertToUIKitFile(f);
         if (activeTab === DialFileManagerTabs.Shared) {
-          uiFile.parentPath = formatSharedPath(uiFile.parentPath, t(SHARED_WITH_ME_FILES_SECTION));
-          uiFile.folderId = formatSharedPath(uiFile.folderId, t(SHARED_WITH_ME_FILES_SECTION)) as string;
+          uiFile.parentPath = formatSharedPath(
+            uiFile.parentPath,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          );
+          uiFile.folderId = formatSharedPath(
+            uiFile.folderId,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          ) as string;
         }
         return uiFile;
       }),
