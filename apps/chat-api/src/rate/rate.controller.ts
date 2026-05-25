@@ -2,9 +2,9 @@ import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
-import type { SessionUser } from '../auth/session/session.types.js';
-import { RateMessageDto } from './dto/rate-message.dto.js';
-import { RateService } from './rate.service.js';
+import type { SessionUser } from '../auth/session/session.types';
+import { RateMessageDto } from './dto/rate-message.dto';
+import { RateService } from './rate.service';
 
 @ApiTags('rate')
 @Controller({ path: 'rate', version: '1' })

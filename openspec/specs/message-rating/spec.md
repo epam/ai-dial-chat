@@ -28,6 +28,27 @@
 
 ---
 
+### Requirement: Generated rate API client
+
+The rate endpoint SHALL be included in `libs/chat-api-client/openapi.json` and SHALL generate a `RateApi` class with a `rateMessage` method accepting `RateMessageDto`. Frontend code SHALL call `POST /api/v1/rate` through an `apps/chat/src/server-api/rate.api.ts` wrapper that delegates to the generated `RateApi`, not through handwritten `base.ts` `post` helpers.
+
+#### Scenario: Generated client exposes rateMessage
+
+- **WHEN** `npm run openapi` is run after the BFF rate endpoint is added
+- **THEN** `libs/chat-api-client/src/generated/src/apis/RateApi.ts` contains `rateMessage({ rateMessageDto })`
+
+#### Scenario: Frontend wrapper delegates to generated client
+
+- **WHEN** `rateMessage(body)` is called from `apps/chat/src/server-api/rate.api.ts`
+- **THEN** it calls `rateApi.rateMessage({ rateMessageDto: body })`
+
+#### Scenario: Legacy base endpoint is not extended
+
+- **WHEN** the frontend rate wrapper is implemented
+- **THEN** `apps/chat/src/server-api/base.ts` does not gain a new `RATE` endpoint constant for `/api/v1/rate`
+
+---
+
 ### Requirement: `rating` field on `Message`
 
 The `Message` interface in `libs/chat-shared` SHALL include an optional `rating?: MessageRating` field where `MessageRating` is a numeric enum: `Like = 1`, `Dislike = -1`. This value is the signed integer DIAL Core adds to the message's running like count. The field is kept in local conversation state and persisted to the server after each successful rate action.

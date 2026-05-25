@@ -3,7 +3,7 @@
 ## Overview
 
 Wire up the DIAL Core rating endpoint (`POST /v1/{modelId}/rate`) end-to-end:
-backend BFF domain → typed frontend helper → active-state UI on the assistant message action bar.
+backend BFF domain → generated OpenAPI client → thin frontend wrapper → active-state UI on the assistant message action bar.
 
 The like/dislike icon buttons (`IconThumbUp` / `IconThumbDown`) and their i18n keys already exist in `MessageActions` and `en.json`. This change adds: (1) a BFF endpoint to proxy the rating call, (2) an `activeRating` prop so the UI knows which button is currently active, and (3) toggle wiring from `Conversation.tsx` down through `ConversationView`.
 
@@ -15,9 +15,11 @@ The like/dislike icon buttons (`IconThumbUp` / `IconThumbDown`) and their i18n k
 
 Add an optional field to `Message`:
 
+Use the numeric shared enum:
+
 ```ts
 /** User-submitted rating for this message. Only meaningful for assistant messages. */
-rating?: 'like' | 'dislike';
+rating?: MessageRating; // Like = 1, Dislike = -1
 ```
 
 No other shared-type changes needed.
@@ -47,7 +49,7 @@ export class RateMessageDto {
   @IsString() @IsNotEmpty()  conversationId: string;
   @IsString() @IsNotEmpty()  responseId: string;
   @IsString() @IsNotEmpty()  modelId: string;
-  @IsIn(['like', 'dislike']) rate: 'like' | 'dislike';
+  @IsIn([1, -1]) rate: MessageRating;
   @IsString() @IsOptional()  comment?: string;
 }
 ```
@@ -59,7 +61,7 @@ export class RateMessageDto {
 - Calls `POST ${this.baseUrl}/v1/${encodeURIComponent(dto.modelId)}/rate` with:
   ```json
   {
-    "rate": "<like|dislike>",
+    "rate": 1,
     "modelId": "<modelId>",
     "conversationId": "<conversationId>",
     "responseId": "<responseId>",
@@ -97,35 +99,43 @@ Add `RateModule` to `AppModule` imports in `apps/chat-api/src/app/app.module.ts`
 
 ---
 
-## 3. Frontend API helper — `apps/chat/src/server-api/rate.api.ts`
+## 3. OpenAPI and generated client — `libs/chat-api-client`
 
-Add endpoint constant to `base.ts`:
+The BFF endpoint is part of the public frontend contract. After adding the backend
+controller and DTO:
+
+- Add the `rate` tag in `apps/chat-api/src/openapi/openapi.config.ts`.
+- Run `npm run openapi` so `libs/chat-api-client/openapi.json` contains `/api/v1/rate`
+  and `libs/chat-api-client/src/generated/src/apis/RateApi.ts`.
+- Run `npm run openapi:check`, `npm exec nx build chat-api-client -- --skip-nx-cache`,
+  and `npm exec nx lint chat-api-client`.
+
+Expected generated client:
 
 ```ts
-RATE = '/api/v1/rate',
-```
-
-New file `rate.api.ts`:
-
-```ts
-import { post } from './base.js';
-import { ApiEndpoints } from './base.js';
-
-export interface RateMessageRequest {
-  conversationId: string;
-  responseId: string;
-  modelId: string;
-  rate: 'like' | 'dislike';
-  comment?: string;
+class RateApi {
+  rateMessage({ rateMessageDto }: { rateMessageDto: RateMessageDto }): Promise<void>;
 }
-
-export const rateMessage = (body: RateMessageRequest): Promise<void> =>
-  post<void>(ApiEndpoints.RATE, body);
 ```
 
 ---
 
-## 4. UI — `libs/conversation-messages`
+## 4. Frontend API wrapper — `apps/chat/src/server-api/rate.api.ts`
+
+Expose a thin wrapper over the generated client. Do not add a new `ApiEndpoints.RATE`
+entry or call `post()` from `base.ts`.
+
+```ts
+import type { RateMessageDto } from '@epam/chat-api-client';
+import { rateApi } from './api-client';
+
+export const rateMessage = (body: RateMessageDto): Promise<void> =>
+  rateApi.rateMessage({ rateMessageDto: body });
+```
+
+---
+
+## 5. UI — `libs/conversation-messages`
 
 ### `MessageActionsProps` — add `activeRating`
 
@@ -133,7 +143,7 @@ export const rateMessage = (body: RateMessageRequest): Promise<void> =>
 
 ```ts
 /** Currently active rating for this message, if any. */
-activeRating?: 'like' | 'dislike';
+activeRating?: MessageRating;
 ```
 
 Update `onLike` and `onDislike` JSDoc: callbacks fire whether toggling on or off — the parent decides the new state.
@@ -144,27 +154,27 @@ Update `onLike` and `onDislike` JSDoc: callbacks fire whether toggling on or off
 
 - Accept `activeRating` prop.
 - Wrap both thumbs buttons so clicking the currently-active one calls `onLike()`/`onDislike()` anyway — the parent computes the toggle.
-- Apply a highlight class when active: add `isActive` by comparing `activeRating` to `'like'` or `'dislike'`.
+- Apply a highlight class when active: add `isActive` by comparing `activeRating` to `MessageRating.Like` or `MessageRating.Dislike`.
   Use the `DialGhostIconButton` `className` prop with a Tailwind class (`text-accent-primary` or `text-[--uikit-accent-primary]`) to tint the icon when active.
 
 ---
 
-## 5. Wiring — `apps/chat`
+## 6. Wiring — `apps/chat`
 
 ### `buildMessageActions.ts`
 
-Add `onRate?: (messageId: string, rating: 'like' | 'dislike' | null) => void` to `MessageActionHandlers`.
+Add `onRate?: (messageId: string, rating: MessageRating | null) => void` to `MessageActionHandlers`.
 
 For assistant messages, wire:
 ```ts
-onLike: () => handlers.onRate?.(msg.id, msg.rating === 'like' ? null : 'like'),
-onDislike: () => handlers.onRate?.(msg.id, msg.rating === 'dislike' ? null : 'dislike'),
+onLike: () => handlers.onRate?.(msg.id, msg.rating === MessageRating.Like ? null : MessageRating.Like),
+onDislike: () => handlers.onRate?.(msg.id, msg.rating === MessageRating.Dislike ? null : MessageRating.Dislike),
 activeRating: msg.rating,
 ```
 
 ### `ConversationView.tsx`
 
-Add `onRateMessage?: (messageId: string, rating: 'like' | 'dislike' | null) => void` to `Props`.
+Add `onRateMessage?: (messageId: string, rating: MessageRating | null) => void` to `Props`.
 Pass it into `buildMessageActions` as `handlers.onRate`.
 
 ### `Conversation.tsx`
@@ -173,21 +183,21 @@ Add `handleRateMessage` callback:
 
 ```ts
 const handleRateMessage = useCallback(
-  async (messageId: string, rating: 'like' | 'dislike' | null) => {
-    if (!conversation) return;
+  async (messageId: string, rating: MessageRating | null) => {
+    if (!conversationId || !conversation) return;
     const msg = conversation.messages.find((m) => m.id === messageId);
     if (!msg) return;
 
-    // Optimistic update
-    setConversation((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        messages: prev.messages.map((m) =>
-          m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
-        ),
-      };
-    });
+    const previousRating = msg.rating;
+    const conversationPath = conversationId.substring(conversationId.indexOf('/') + 1);
+    const updatedConversation = {
+      ...conversation,
+      messages: conversation.messages.map((m) =>
+        m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
+      ),
+    };
+
+    setConversation(updatedConversation);
 
     if (rating !== null) {
       try {
@@ -197,6 +207,7 @@ const handleRateMessage = useCallback(
           modelId: conversation.model.id,
           rate: rating,
         });
+        await saveConversation(conversationPath, updatedConversation);
       } catch {
         // Revert optimistic update on failure
         setConversation((prev) => {
@@ -204,14 +215,27 @@ const handleRateMessage = useCallback(
           return {
             ...prev,
             messages: prev.messages.map((m) =>
-              m.id === messageId ? { ...m, rating: msg.rating } : m,
+              m.id === messageId ? { ...m, rating: previousRating } : m,
             ),
           };
         });
       }
+    } else {
+      await saveConversation(conversationPath, updatedConversation).catch(() => {
+        setConversation((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === messageId ? { ...m, rating: previousRating } : m,
+                ),
+              }
+            : prev,
+        );
+      });
     }
   },
-  [conversation],
+  [conversation, conversationId],
 );
 ```
 
@@ -219,12 +243,13 @@ Pass `onRateMessage={handleRateMessage}` to `<ConversationView>`.
 
 ---
 
-## 6. Tests
+## 7. Tests
 
 | Layer | File | Coverage |
 |---|---|---|
 | Backend unit | `rate/tests/rate.service.spec.ts` | rateMessage forwards correct body + headers; non-2xx throws |
 | Backend integration | `rate/tests/rate.controller.spec.ts` | POST /api/v1/rate returns 204; invalid body returns 400 |
-| Frontend unit | `server-api/tests/rate.api.spec.ts` | `rateMessage` calls post with correct URL/body |
+| Generated client | `libs/chat-api-client` build/lint + `npm run openapi:check` | `RateApi.rateMessage` exists and is strongly typed |
+| Frontend unit | `server-api/tests/rate.api.spec.ts` | `rateMessage` delegates to generated `RateApi` with the correct body |
 | UI unit | `MessageActions` spec | active state on like/dislike; toggle clears rating |
 | App integration | `buildMessageActions` spec | onLike wires toggle; onDislike wires toggle |

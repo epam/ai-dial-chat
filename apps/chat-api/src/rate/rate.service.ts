@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppService } from '../app/app.service.js';
-import { getBearerAuthHeaders } from '../common/utils/auth-header.js';
-import { handleDialError } from '../common/utils/dial-error.js';
-import type { EnvironmentVariables } from '../config/environment.config.js';
-import type { RateMessageDto } from './dto/rate-message.dto.js';
+import { AppService } from '../app/app.service';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { handleDialError } from '../common/utils/dial-error';
+import type { EnvironmentVariables } from '../config/environment.config';
+import type { RateMessageDto } from './dto/rate-message.dto';
 
 @Injectable()
 export class RateService extends AppService {

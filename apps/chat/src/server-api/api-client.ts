@@ -5,6 +5,7 @@ import {
   DeploymentsApi,
   Middleware,
   ModelsApi,
+  RateApi,
 } from '@epam/chat-api-client';
 import { UnauthorizedError, getCsrfToken, notifyUnauthorized } from './base';
 
@@ -59,3 +60,4 @@ export const modelsApi = new ModelsApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
 export const conversationsApi = new ConversationsApi(config);
 export const authApi = new AuthApi(config);
+export const rateApi = new RateApi(config);

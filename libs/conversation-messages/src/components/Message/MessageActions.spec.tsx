@@ -1,6 +1,6 @@
 import { MessageRating, MessageRole } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MessageActions } from './MessageActions.js';
 
@@ -35,19 +35,17 @@ describe('MessageActions', () => {
 
     it('calls onEdit when Edit button is clicked', async () => {
       const onEdit = vi.fn();
+      const user = userEvent.setup();
       render(<MessageActions onEdit={onEdit} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Edit message' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Edit message' }));
       expect(onEdit).toHaveBeenCalledOnce();
     });
 
     it('calls onDelete when Delete button is clicked', async () => {
       const onDelete = vi.fn();
+      const user = userEvent.setup();
       render(<MessageActions onDelete={onDelete} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Delete message' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Delete message' }));
       expect(onDelete).toHaveBeenCalledOnce();
     });
   });
@@ -82,13 +80,14 @@ describe('MessageActions', () => {
 
     it('calls onRegenerate when Regenerate button is clicked', async () => {
       const onRegenerate = vi.fn();
+      const user = userEvent.setup();
       render(
         <MessageActions
           role={MessageRole.Assistant}
           onRegenerate={onRegenerate}
         />,
       );
-      await userEvent.click(
+      await user.click(
         screen.getByRole('button', { name: 'Regenerate response' }),
       );
       expect(onRegenerate).toHaveBeenCalledOnce();
@@ -96,22 +95,22 @@ describe('MessageActions', () => {
 
     it('calls onCopy when Copy button is clicked', async () => {
       const onCopy = vi.fn();
+      const user = userEvent.setup();
       render(<MessageActions role={MessageRole.Assistant} onCopy={onCopy} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Copy response' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Copy response' }));
       expect(onCopy).toHaveBeenCalledOnce();
     });
 
     it('calls onCopyMarkdown when Markdown button is clicked', async () => {
       const onCopyMarkdown = vi.fn();
+      const user = userEvent.setup();
       render(
         <MessageActions
           role={MessageRole.Assistant}
           onCopyMarkdown={onCopyMarkdown}
         />,
       );
-      await userEvent.click(
+      await user.click(
         screen.getByRole('button', { name: 'Copy as markdown' }),
       );
       expect(onCopyMarkdown).toHaveBeenCalledOnce();
@@ -119,19 +118,19 @@ describe('MessageActions', () => {
 
     it('calls onLike when Like button is clicked', async () => {
       const onLike = vi.fn();
+      const user = userEvent.setup();
       render(<MessageActions role={MessageRole.Assistant} onLike={onLike} />);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Like response' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Like response' }));
       expect(onLike).toHaveBeenCalledOnce();
     });
 
     it('calls onDislike when Dislike button is clicked', async () => {
       const onDislike = vi.fn();
+      const user = userEvent.setup();
       render(
         <MessageActions role={MessageRole.Assistant} onDislike={onDislike} />,
       );
-      await userEvent.click(
+      await user.click(
         screen.getByRole('button', { name: 'Dislike response' }),
       );
       expect(onDislike).toHaveBeenCalledOnce();

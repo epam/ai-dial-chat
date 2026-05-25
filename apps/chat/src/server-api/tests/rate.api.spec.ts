@@ -1,63 +1,46 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiEndpoints } from '../base';
+import { rateApi } from '../api-client';
 import { rateMessage } from '../rate.api';
-
-const makeResponse = (status: number, body: unknown = null): Response =>
-  new Response(body === null ? null : JSON.stringify(body), { status });
 
 describe('rateMessage', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('calls POST to ApiEndpoints.RATE', async () => {
-    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(makeResponse(204));
-    global.fetch = fetchSpy;
+  it('delegates to the generated RateApi', async () => {
+    const rateSpy = vi.spyOn(rateApi, 'rateMessage').mockResolvedValue();
 
     await rateMessage({
       conversationId: 'bucket/conv',
       responseId: 'msg-1',
       modelId: 'gpt-4o',
-      rate: 'like',
+      rate: 1,
     });
 
-    expect(fetchSpy).toHaveBeenCalledOnce();
-    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(ApiEndpoints.RATE);
-    expect(init.method).toBe('POST');
+    expect(rateSpy).toHaveBeenCalledWith({
+      rateMessageDto: {
+        conversationId: 'bucket/conv',
+        responseId: 'msg-1',
+        modelId: 'gpt-4o',
+        rate: 1,
+      },
+    });
   });
 
-  it('sends the correct body', async () => {
-    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(makeResponse(204));
-    global.fetch = fetchSpy;
-
+  it('forwards optional comment when provided', async () => {
+    const rateSpy = vi.spyOn(rateApi, 'rateMessage').mockResolvedValue();
     const body = {
       conversationId: 'bucket/conv',
       responseId: 'msg-1',
       modelId: 'gpt-4o',
-      rate: 'dislike' as const,
+      rate: -1 as const,
+      comment: 'Very helpful',
     };
+
     await rateMessage(body);
 
-    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(JSON.parse(init.body as string)).toMatchObject(body);
-  });
-
-  it('includes optional comment when provided', async () => {
-    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(makeResponse(204));
-    global.fetch = fetchSpy;
-
-    await rateMessage({
-      conversationId: 'bucket/conv',
-      responseId: 'msg-1',
-      modelId: 'gpt-4o',
-      rate: 'like',
-      comment: 'Very helpful',
-    });
-
-    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(JSON.parse(init.body as string)).toMatchObject({
-      comment: 'Very helpful',
+    expect(rateSpy).toHaveBeenCalledWith({
+      rateMessageDto: body,
     });
   });
 });

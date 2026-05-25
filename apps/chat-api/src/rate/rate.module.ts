@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { RateController } from './rate.controller.js';
-import { RateService } from './rate.service.js';
+import { RateController } from './rate.controller';
+import { RateService } from './rate.service';
 
 @Module({
   controllers: [RateController],
