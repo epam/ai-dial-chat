@@ -4,6 +4,7 @@ import {
   type Message as MessageType,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
+import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 import { DialFabButton } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -16,7 +17,14 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionsI18nKeys } from '../../constants/translation-keys.js';
+import {
+  ActionsI18nKeys,
+  StagesI18nKeys,
+} from '../../constants/translation-keys.js';
+import {
+  isMessageStreaming,
+  messageHasStages,
+} from '../../utils/message-utils.js';
 import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(async () => {
@@ -155,30 +163,42 @@ const ConversationView: FC<Props> = ({
         >
           <div className="flex flex-1 flex-col gap-6">
             {messages.map((msg, index) => {
-              const isStreaming =
-                isAssistantTyping &&
-                index === messages.length - 1 &&
-                msg.role === MessageRole.Assistant;
+              const isStreaming = isMessageStreaming(
+                msg,
+                index,
+                messages.length,
+                isAssistantTyping,
+              );
+              const hasStages = messageHasStages(msg);
               return (
-                <MessageBubble
-                  key={msg.id}
-                  role={msg.role}
-                  text={msg.content}
-                  alwaysVisibleActions={!isStreaming}
-                  actions={buildMessageActions(
-                    msg,
-                    {
-                      onDelete: onDeleteMessage,
-                      onRegenerate: onRegenerateMessage,
-                    },
-                    tooltips,
+                <div key={msg.id} className="flex flex-col gap-2">
+                  <MessageBubble
+                    role={msg.role}
+                    text={msg.content}
+                    alwaysVisibleActions={!isStreaming}
+                    actions={buildMessageActions(
+                      msg,
+                      {
+                        onDelete: onDeleteMessage,
+                        onRegenerate: onRegenerateMessage,
+                      },
+                      tooltips,
+                    )}
+                    className={
+                      msg.role === MessageRole.User
+                        ? 'justify-end'
+                        : 'justify-start'
+                    }
+                  />
+                  {hasStages && (
+                    <StagesPanel
+                      stages={msg.stages ?? []}
+                      isStreaming={isStreaming}
+                      headerLabel={t(StagesI18nKeys.PanelHeader)}
+                      toggleAriaLabel={t(StagesI18nKeys.CollapseAriaLabel)}
+                    />
                   )}
-                  className={
-                    msg.role === MessageRole.User
-                      ? 'justify-end'
-                      : 'justify-start'
-                  }
-                />
+                </div>
               );
             })}
           </div>

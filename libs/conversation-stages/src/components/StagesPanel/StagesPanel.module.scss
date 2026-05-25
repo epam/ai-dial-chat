@@ -1,0 +1,33 @@
+.panel {
+  background: var(--cs-bg,transparent);
+  border-color: var(--cs-border, transparent);
+  color: var(--cs-text, var(--text-primary, #eef1f7));
+}
+
+.header {
+  color: var(--cs-text, var(--text-secondary, #9fa6bd));
+
+  &:hover {
+    color: var(--cs-text, var(--text-primary, #eef1f7));
+  }
+}
+
+.divider {
+  border-color: var(--cs-border, var(--stroke-primary, #696e7c));
+}
+
+.stageName {
+  color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
+}
+
+.iconRunning {
+  color: var(--cs-running, var(--icon-accent, #4d90f0));
+}
+
+.iconCompleted {
+  color: var(--cs-completed, var(--icon-success, #4caf7d));
+}
+
+.iconFailed {
+  color: var(--cs-failed, var(--icon-error, #f05454));
+}

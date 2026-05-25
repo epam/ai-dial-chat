@@ -41,6 +41,12 @@
     "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
     "attachmentTray": { "label": "Attached files" }
   },
+  "stages": {
+    "panel": {
+      "header": "Steps",
+      "collapseAriaLabel": "Toggle steps panel"
+    }
+  },
   "auth": {
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",

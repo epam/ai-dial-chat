@@ -42,6 +42,32 @@ export interface Message {
   content: string;
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
+  /**
+   * Accumulated agent stages for this message.
+   * Only present on assistant messages that received stage data during streaming.
+   */
+  stages?: Stage[];
+}
+
+/** Status of a single agent stage. */
+export enum StageStatus {
+  /** The stage completed successfully. */
+  Completed = 'completed',
+  /** The stage encountered an error. */
+  Failed = 'failed',
+}
+
+/**
+ * A single stage entry produced by an agent during a streaming response.
+ * Stages are delivered incrementally via `StreamChunkDelta.custom_content.stages`.
+ */
+export interface Stage {
+  /** Zero-based ordering key; used to merge/upsert incoming stage updates. */
+  index: number;
+  /** Human-readable label for this stage (e.g. `"Lookup available terms"`). */
+  name: string;
+  /** `null` while the stage is running; a `StageStatus` value when it has settled. */
+  status: StageStatus | null;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */
@@ -50,6 +76,11 @@ export interface StreamChunkDelta {
   content?: string;
   /** Role field — only present in the first chunk of a response. */
   role?: string;
+  /** Agent stage updates delivered alongside text tokens. */
+  custom_content?: {
+    /** Incremental stage updates; merge by `index` into the accumulating stage list. */
+    stages?: Stage[];
+  };
 }
 
 /** A single server-sent event chunk from the streaming completions endpoint. */

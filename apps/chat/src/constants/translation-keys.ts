@@ -29,3 +29,8 @@ export enum CatalogI18nKeys {
   AriaLabel = 'catalog.ariaLabel',
   ComingSoon = 'catalog.comingSoon',
 }
+
+export enum StagesI18nKeys {
+  PanelHeader = 'stages.panel.header',
+  CollapseAriaLabel = 'stages.panel.collapseAriaLabel',
+}

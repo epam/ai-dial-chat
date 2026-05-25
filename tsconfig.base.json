@@ -23,6 +23,9 @@
       "@epam/ai-dial-conversation-messages/*": [
         "./libs/conversation-messages/*"
       ],
+      "@epam/ai-dial-conversation-stages/*": [
+        "./libs/conversation-stages/*"
+      ],
       "@epam/ai-dial-chat-shared/*": ["./libs/chat-shared/*"]
     }
   }

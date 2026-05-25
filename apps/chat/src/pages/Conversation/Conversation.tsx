@@ -1,4 +1,9 @@
-import { Conversation, Message, MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  Conversation,
+  Message,
+  MessageRole,
+  Stage,
+} from '@epam/ai-dial-chat-shared';
 import {
   AlertVariant,
   ConfirmationPopupVariant,
@@ -20,6 +25,18 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { createMessagePair } from '../../utils/message-factory';
+
+/**
+ * Merges incoming stage updates into the existing accumulated list.
+ * Upserts by `index` (replaces matching entry, appends new ones), then sorts ascending.
+ */
+const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
+  const map = new Map<number, Stage>(existing.map((s) => [s.index, s]));
+  for (const stage of incoming) {
+    map.set(stage.index, stage);
+  }
+  return Array.from(map.values()).sort((a, b) => a.index - b.index);
+};
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
@@ -48,17 +65,25 @@ export const ConversationPage: FC = () => {
       streamCompletion(conversationPath, userContent, model, {
         signal: controller.signal,
         onChunk: (chunk) => {
-          const token = chunk.choices[0]?.delta?.content ?? '';
-          if (!token) return;
+          const delta = chunk.choices[0]?.delta;
+          const token = delta?.content ?? '';
+          const incomingStages = delta?.custom_content?.stages;
+          if (!token && !incomingStages?.length) return;
           setConversation((prev) => {
             if (!prev) return prev;
             const next = {
               ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === assistantMessageId
-                  ? { ...m, content: m.content + token }
-                  : m,
-              ),
+              messages: prev.messages.map((m) => {
+                if (m.id !== assistantMessageId) return m;
+                const updated: Message = {
+                  ...m,
+                  content: token ? m.content + token : m.content,
+                };
+                if (incomingStages?.length) {
+                  updated.stages = mergeStages(m.stages ?? [], incomingStages);
+                }
+                return updated;
+              }),
             };
             conversationRef.current = next;
             return next;

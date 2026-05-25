@@ -44,14 +44,14 @@ export class ConversationService extends AppService {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
-      model: { id: 'anthropic.claude-v3-sonnet' },
+      model: { id: 'statgpt-gtdc' },
       prompt: '',
       temperature: 1,
       messages: [userMessage],
       lastActivityDate: now,
       updatedAt: now,
       selectedAddons: [],
-      assistantModelId: 'anthropic.claude-v3-sonnet',
+      assistantModelId: 'statgpt-gtdc',
     };
 
     try {
