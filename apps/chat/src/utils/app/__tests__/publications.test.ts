@@ -36,7 +36,7 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
     const result = buildDedupedPublicationFileTargetsFromConversations(
       [convNested, convRoot],
       entityFolderId,
-      { isFolder: true },
+      true,
     );
 
     expect(result).toHaveLength(1);
@@ -45,7 +45,7 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
     const fromRoot = buildDedupedPublicationFileTargetsFromConversations(
       [convRoot],
       entityFolderId,
-      { isFolder: true },
+      true,
     );
     expect(result[0].newUrl).toBe(fromRoot[0].newUrl);
   });
@@ -54,12 +54,12 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
     const forward = buildDedupedPublicationFileTargetsFromConversations(
       [convNested, convRoot],
       entityFolderId,
-      { isFolder: true },
+      true,
     );
     const reversed = buildDedupedPublicationFileTargetsFromConversations(
       [convRoot, convNested],
       entityFolderId,
-      { isFolder: true },
+      true,
     );
 
     expect(forward).toHaveLength(1);
@@ -69,7 +69,7 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
     const fromRoot = buildDedupedPublicationFileTargetsFromConversations(
       [convRoot],
       entityFolderId,
-      { isFolder: true },
+      true,
     );
     expect(forward[0].newUrl).toBe(fromRoot[0].newUrl);
     expect(reversed[0].newUrl).toBe(fromRoot[0].newUrl);
@@ -80,7 +80,7 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
     const result = buildDedupedPublicationFileTargetsFromConversations(
       [convNested],
       entityFolderId,
-      { isFolder: false },
+      false,
     );
 
     expect(result).toHaveLength(1);
