@@ -1,6 +1,7 @@
 import {
   MessageRole,
   type Attachment,
+  type MessageRating,
   type Message as MessageType,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -21,6 +22,7 @@ import {
   ActionsI18nKeys,
   StagesI18nKeys,
 } from '../../constants/translation-keys.js';
+import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import {
   isMessageStreaming,
   messageHasStages,
@@ -34,10 +36,11 @@ const ConversationInput = lazy(async () => {
 
 interface Props {
   messages: MessageType[];
-  onSend: (message: string) => void;
+  onSend: (message: string, attachments: Attachment[]) => void;
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
+  onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
@@ -51,6 +54,7 @@ const ConversationView: FC<Props> = ({
   onStop,
   onDeleteMessage,
   onRegenerateMessage,
+  onRateMessage,
   onAttachmentsChange,
   placeholder,
   isAssistantTyping = false,
@@ -173,14 +177,19 @@ const ConversationView: FC<Props> = ({
               return (
                 <div key={msg.id} className="flex flex-col gap-2">
                   <MessageBubble
+                    key={msg.id}
                     role={msg.role}
                     text={msg.content}
+                    attachments={attachmentDtosToDisplayAttachments(
+                      msg.custom_content?.attachments,
+                    )}
                     alwaysVisibleActions={!isStreaming}
                     actions={buildMessageActions(
                       msg,
                       {
                         onDelete: onDeleteMessage,
                         onRegenerate: onRegenerateMessage,
+                        onRate: onRateMessage,
                       },
                       tooltips,
                     )}

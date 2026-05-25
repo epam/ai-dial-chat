@@ -6,4 +6,5 @@ export * from './ConversationsApi';
 export * from './DeploymentsApi';
 export * from './HealthApi';
 export * from './ModelsApi';
+export * from './RateApi';
 export * from './ThemesApi';

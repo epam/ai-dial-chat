@@ -1,11 +1,11 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 
 /** Props accepted by the `AttachmentTray` component. */
 export interface AttachmentTrayProps {
   /** The list of attachments to display. */
-  attachments: Attachment[];
+  attachments: DisplayAttachment[];
   /** Called when the user removes an attachment card. */
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   /** Called when the user retries a failed attachment upload. */
   onRetry?: (id: string) => void;
   /** Accessible label for the tray region. */

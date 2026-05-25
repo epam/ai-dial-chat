@@ -831,6 +831,47 @@
           "conversations"
         ]
       }
+    },
+    "/api/v1/rate": {
+      "post": {
+        "description": "Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
+        "operationId": "rateMessage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Rating accepted — no content returned"
+          },
+          "400": {
+            "description": "Invalid request body — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or returned a server error"
+          }
+        },
+        "summary": "Rate an assistant message",
+        "tags": [
+          "rate"
+        ]
+      }
     }
   },
   "info": {
@@ -859,6 +900,10 @@
     {
       "name": "chat",
       "description": "Chat completion proxy to DIAL Core"
+    },
+    {
+      "name": "rate",
+      "description": "Submit assistant message ratings to DIAL Core"
     }
   ],
   "servers": [
@@ -1352,6 +1397,43 @@
           "choices"
         ]
       },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type of the attachment"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display name of the attachment"
+          },
+          "data": {
+            "type": "string",
+            "description": "Inline base-64 encoded content"
+          },
+          "url": {
+            "type": "string",
+            "description": "Remote URL of the attachment content"
+          },
+          "reference_type": {
+            "type": "string",
+            "description": "MIME type of the reference resource"
+          },
+          "reference_url": {
+            "type": "string",
+            "description": "URL of the reference resource"
+          }
+        },
+        "required": [
+          "type",
+          "title"
+        ]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -1361,6 +1443,13 @@
             "example": "Hello, how can you help me today?",
             "minLength": 1,
             "maxLength": 4000
+          },
+          "attachments": {
+            "description": "DIAL API attachments to include with the first user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [
@@ -1574,12 +1663,58 @@
             "type": "string",
             "description": "DIAL Core deployment name to use for completion",
             "example": "anthropic.claude-v3-sonnet"
+          },
+          "attachments": {
+            "description": "DIAL API attachments to include with the user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [
           "path",
           "message",
           "model"
+        ]
+      },
+      "RateMessageDto": {
+        "type": "object",
+        "properties": {
+          "conversationId": {
+            "type": "string",
+            "description": "Identifier of the conversation being rated",
+            "example": "bucket/uuid__name"
+          },
+          "responseId": {
+            "type": "string",
+            "description": "Identifier of the assistant response message being rated",
+            "example": "22222222-2222-2222-2222-222222222222"
+          },
+          "modelId": {
+            "type": "string",
+            "description": "Model deployment ID that produced the response",
+            "example": "anthropic.claude-v3-sonnet"
+          },
+          "rate": {
+            "type": "number",
+            "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
+            "enum": [
+              1,
+              -1
+            ]
+          },
+          "comment": {
+            "type": "string",
+            "description": "Optional free-text comment from the user",
+            "example": "The response was too brief"
+          }
+        },
+        "required": [
+          "conversationId",
+          "responseId",
+          "modelId",
+          "rate"
         ]
       }
     }

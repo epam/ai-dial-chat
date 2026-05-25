@@ -1,8 +1,10 @@
 import {
+  Attachment,
   Conversation,
   Message,
   MessageRole,
   Stage,
+  type MessageRating,
 } from '@epam/ai-dial-chat-shared';
 import {
   AlertVariant,
@@ -10,6 +12,7 @@ import {
   DialAlert,
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
+import type { AttachmentDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -24,6 +27,8 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { rateMessage } from '../../server-api/rate.api';
+import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { createMessagePair } from '../../utils/message-factory';
 
 /**
@@ -45,6 +50,7 @@ export const ConversationPage: FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState(false);
+  const [streamError, setStreamError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
@@ -56,56 +62,67 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
+      attachments?: AttachmentDto[],
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       setIsStreaming(true);
 
-      streamCompletion(conversationPath, userContent, model, {
-        signal: controller.signal,
-        onChunk: (chunk) => {
-          const delta = chunk.choices[0]?.delta;
-          const token = delta?.content ?? '';
-          const incomingStages = delta?.custom_content?.stages;
-          if (!token && !incomingStages?.length) return;
-          setConversation((prev) => {
-            if (!prev) return prev;
-            const next = {
-              ...prev,
-              messages: prev.messages.map((m) => {
-                if (m.id !== assistantMessageId) return m;
-                const updated: Message = {
-                  ...m,
-                  content: token ? m.content + token : m.content,
-                };
-                if (incomingStages?.length) {
-                  updated.stages = mergeStages(m.stages ?? [], incomingStages);
-                }
-                return updated;
-              }),
-            };
-            conversationRef.current = next;
-            return next;
-          });
-        },
-        onComplete: async () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-          const final = conversationRef.current;
-          if (final) {
-            try {
-              await saveConversation(conversationPath, final);
-            } catch (err: unknown) {
-              void err;
+      streamCompletion(
+        conversationPath,
+        userContent,
+        model,
+        {
+          signal: controller.signal,
+          onChunk: (chunk) => {
+            const delta = chunk.choices[0]?.delta;
+            const content = delta?.content ?? '';
+            const incomingStages = delta?.custom_content?.stages;
+            if (!content && !incomingStages?.length) return;
+            setConversation((prev) => {
+              if (!prev) return prev;
+              const next = {
+                ...prev,
+                messages: prev.messages.map((m) => {
+                  if (m.id !== assistantMessageId) return m;
+                  const updated: Message = {
+                    ...m,
+                    content: content ? m.content + content : m.content,
+                  };
+                  if (incomingStages?.length) {
+                    updated.stages = mergeStages(
+                      m.stages ?? [],
+                      incomingStages,
+                    );
+                  }
+                  return updated;
+                }),
+              };
+              conversationRef.current = next;
+              return next;
+            });
+          },
+          onComplete: async () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+            const final = conversationRef.current;
+            if (final) {
+              try {
+                await saveConversation(conversationPath, final);
+              } catch (err: unknown) {
+                void err;
+              }
             }
-          }
+          },
+          onError: () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+            setStreamError(true);
+          },
         },
-        onError: () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-        },
-      });
+        attachments,
+      );
     },
     [],
   );
@@ -145,6 +162,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
+            lastMsg.custom_content?.attachments,
           );
         } else {
           setConversation(result);
@@ -241,12 +259,76 @@ export const ConversationPage: FC = () => {
     });
   }, [conversationId, pendingDeleteId]);
 
+  const handleRateMessage = useCallback(
+    async (messageId: string, rating: MessageRating | null) => {
+      if (!conversationId || !conversation) return;
+      const msg = conversation.messages.find((m) => m.id === messageId);
+      if (!msg) return;
+
+      const previousRating = msg.rating;
+
+      const conversationPath = conversationId.substring(
+        conversationId.indexOf('/') + 1,
+      );
+
+      // Optimistic update
+      const updatedConversation: Conversation = {
+        ...conversation,
+        messages: conversation.messages.map((m) =>
+          m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
+        ),
+      };
+      setConversation(updatedConversation);
+
+      if (rating !== null) {
+        try {
+          await rateMessage({
+            conversationId: conversation.id,
+            responseId: messageId,
+            modelId: conversation.model.id,
+            rate: rating,
+          });
+          await saveConversation(conversationPath, updatedConversation);
+        } catch {
+          // Revert optimistic update on failure
+          setConversation((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map((m) =>
+                m.id === messageId ? { ...m, rating: previousRating } : m,
+              ),
+            };
+          });
+        }
+      } else {
+        // Rating cleared (toggle off) — persist the removal without calling the rate API
+        await saveConversation(conversationPath, updatedConversation).catch(
+          () => {
+            setConversation((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === messageId ? { ...m, rating: previousRating } : m,
+                ),
+              };
+            });
+          },
+        );
+      }
+    },
+    [conversation, conversationId],
+  );
+
   const handleSend = useCallback(
-    (message: string) => {
+    async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
+      const attachmentDtos = await attachmentsToDtos(attachments);
+
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message);
+        createMessagePair(message, attachmentDtos);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -267,6 +349,7 @@ export const ConversationPage: FC = () => {
         message,
         assistantMessageId,
         conversation.model.id,
+        attachmentDtos,
       );
     },
     [conversation, conversationId, startStream],
@@ -282,6 +365,16 @@ export const ConversationPage: FC = () => {
   return (
     <>
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
+        {streamError && (
+          <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
+            <DialAlert
+              variant={AlertVariant.Error}
+              message={t(ChatI18nKeys.StreamError)}
+              closable
+              onClose={() => setStreamError(false)}
+            />
+          </div>
+        )}
         {deleteError && (
           <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
             <DialAlert
@@ -298,6 +391,7 @@ export const ConversationPage: FC = () => {
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}
           onRegenerateMessage={handleRegenerateMessage}
+          onRateMessage={handleRateMessage}
           isAssistantTyping={isStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
         />

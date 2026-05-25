@@ -1,23 +1,24 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AttachmentCard } from '../AttachmentCard.js';
 
-const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
+const makeAttachment = (
+  overrides?: Partial<DisplayAttachment>,
+): DisplayAttachment => ({
   id: 'a1',
   name: 'report.pdf',
   contentType: 'application/pdf',
-  file: new File([''], 'report.pdf', { type: 'application/pdf' }),
   type: AttachmentType.File,
   status: RequestStatus.Idle,
   ...overrides,
 });
 
 describe('AttachmentCard', () => {
-  it('renders the file name', () => {
+  it('renders the file name without extension', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
-    expect(screen.getByText('report.pdf')).toBeTruthy();
+    expect(screen.getByText('report')).toBeTruthy();
   });
 
   it('renders an img thumbnail for image attachments', () => {
@@ -43,6 +44,11 @@ describe('AttachmentCard', () => {
   it('shows remove button in idle state', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
     expect(screen.getByLabelText('Remove attachment')).toBeTruthy();
+  });
+
+  it('hides remove button when no remove handler is provided', () => {
+    render(<AttachmentCard attachment={makeAttachment()} />);
+    expect(screen.queryByLabelText('Remove attachment')).toBeNull();
   });
 
   it('shows retry button in error state', () => {

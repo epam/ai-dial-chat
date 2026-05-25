@@ -69,6 +69,7 @@ describe('ConversationController (integration)', () => {
         'Hello',
         TEST_USER.at,
         TEST_USER.bucket,
+        undefined,
       );
     });
 
@@ -138,5 +139,120 @@ describe('ConversationController (integration)', () => {
 
       await realApp.close();
     });
+
+    it('returns 201 when valid attachments are provided', async () => {
+      const conversation = { id: 'test-id', messages: [] };
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Here is a file',
+          attachments: [
+            {
+              type: 'application/pdf',
+              title: 'report.pdf',
+              data: 'base64data',
+            },
+          ],
+        })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        'Here is a file',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        [
+          {
+            type: 'application/pdf',
+            title: 'report.pdf',
+            data: 'base64data',
+          },
+        ],
+      );
+    });
+
+    it('returns 400 when an attachment is missing the required type field', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Hello',
+          attachments: [{ title: 'file.pdf' }],
+        })
+        .expect(400);
+    });
+
+    it('returns 400 when an attachment is missing the required title field', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Hello',
+          attachments: [{ type: 'application/pdf' }],
+        })
+        .expect(400);
+    });
+
+    it('returns 201 when a valid https url is provided in an attachment', async () => {
+      const conversation = { id: 'test-id', messages: [] };
+      service.createConversation.mockReturnValue(conversation);
+
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Here is a link',
+          attachments: [
+            {
+              type: 'image/png',
+              title: 'screenshot.png',
+              url: 'https://files.example.com/screenshot.png',
+            },
+          ],
+        })
+        .expect(201);
+    });
+
+    it.each([
+      'http://169.254.169.254/latest/meta-data/',
+      'http://internal.service/secret',
+      'file:///etc/passwd',
+      'javascript:alert(1)',
+      'not-a-url',
+    ])(
+      'returns 400 when attachment url is a disallowed value: %s',
+      async (badUrl) => {
+        await request(app.getHttpServer())
+          .post('/conversations')
+          .send({
+            firstMessage: 'Hello',
+            attachments: [{ type: 'image/png', title: 'x.png', url: badUrl }],
+          })
+          .expect(400);
+      },
+    );
+
+    it.each([
+      'http://169.254.169.254/latest/meta-data/',
+      'file:///etc/passwd',
+      'not-a-url',
+    ])(
+      'returns 400 when attachment reference_url is a disallowed value: %s',
+      async (badUrl) => {
+        await request(app.getHttpServer())
+          .post('/conversations')
+          .send({
+            firstMessage: 'Hello',
+            attachments: [
+              {
+                type: 'image/png',
+                title: 'x.png',
+                data: 'base64data',
+                reference_url: badUrl,
+              },
+            ],
+          })
+          .expect(400);
+      },
+    );
   });
 });

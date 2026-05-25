@@ -11,7 +11,9 @@ context: |
   - Styling: Tailwind CSS 3 (primary) + SCSS (component overrides only)
   - i18n: react-i18next + i18next-browser-languagedetector (keys in apps/chat/src/i18n/locales/en.json)
   - State: React Context + custom hooks (no external state management library)
-  - API layer: typed fetch helpers in apps/chat/src/server-api/base.ts — get/post/put/del with TResponse generic
+  - API layer: generated `@epam/chat-api-client` wrappers in apps/chat/src/server-api/ for REST endpoints.
+    `apps/chat/src/server-api/base.ts` is legacy/infrastructure support (CSRF, unauthorized handling,
+    streaming, and temporary exceptions only), not the default path for new business endpoints.
   - Routing: React Router v6 (BrowserRouter, lazy-loaded routes)
   - Testing: Vitest 4 + @testing-library/react 16 (frontend), supertest 7 (backend)
   - Linting: ESLint 9 flat config (eslint.config.mjs) + Prettier 3
@@ -62,7 +64,9 @@ context: |
   - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
     - Folder name must be PascalCase and match the component name exactly (e.g. RequireAuth/RequireAuth.tsx)
     - Tests go in a tests/ subfolder inside the component folder (e.g. RequireAuth/tests/RequireAuth.spec.tsx)
-  - API: apps/chat/src/server-api/ — typed fetch helpers and endpoint constants
+  - API: apps/chat/src/server-api/ — thin domain wrappers around generated `@epam/chat-api-client`
+    APIs. New REST business endpoints must be exposed through the generated client; use raw
+    `base.ts` helpers only for documented generator gaps, streaming, or infrastructure endpoints.
   - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
 
   ### Backend (apps/chat-api)
@@ -114,8 +118,10 @@ rules:
       components (e.g. ConversationView); default export the same name
     - 'Use FC<{ComponentName}Props> for component type annotation'
     - 'All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}'
-    - Use the existing typed API helpers (get, post) from server-api/base.ts — do not call
-      fetch directly in components or hooks
+    - Use the generated `@epam/chat-api-client` through apps/chat/src/server-api/api-client.ts
+      and thin domain wrappers in apps/chat/src/server-api/. Do not call `fetch` directly in
+      components or hooks, and do not add new `base.ts` get/post/put/del wrappers for business
+      endpoints unless the design documents a generated-client gap.
     - Use async/await with try/catch/finally for frontend async code — avoid Promise chains
       with `.then()`/`.catch()`.
     - Use the void operator before Promise-returning calls only for intentional
@@ -149,6 +155,10 @@ rules:
     - Define the API endpoint shape if the feature requires a new backend endpoint
       (HTTP method, full versioned path like /api/v1/{resource} for business endpoints,
       request body, response body, error codes including 4xx and 5xx)
+    - >-
+      For every new or changed business endpoint, specify generated-client impact:
+      OpenAPI operationId / SDK method name, request DTO, response DTO, and whether frontend
+      callers use normal or `Raw` generated methods.
     - Include i18n key names for all new user-visible strings
     - Flag any memoisation requirements (useMemo, useCallback, React.memo)
     - Define accessibility requirements — keyboard navigation, ARIA roles/labels
@@ -161,7 +171,7 @@ rules:
     - Reference specific file paths — never vague descriptions like "update the service"
     - Follow the file location conventions:
         - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
-          API helpers in apps/chat/src/server-api/
+          API wrappers in apps/chat/src/server-api/ that delegate to `@epam/chat-api-client`
         - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
           see apps/chat-api/AGENTS.md §1 for the full layout
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
@@ -176,6 +186,14 @@ rules:
     - Do not use data-testid attributes in tests — use role, label, and text queries
     - Do not add manual testing tasks
     - Add i18n keys to en.json as a dedicated task when new strings are introduced
+    - For any new or changed business HTTP endpoint, include dedicated tasks to:
+        - update Swagger DTO/response annotations in apps/chat-api so the endpoint appears in
+          `libs/chat-api-client/openapi.json` with strong types
+        - run `npm run openapi` and `npm run openapi:check`
+        - build and lint `chat-api-client`
+        - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
+        - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
+          `base.ts` helpers, unless the task documents a generator gap
     - Run lint + typecheck + tests as a final verification task after all implementation tasks
       using `pnpm nx <target> chat-api` for single-project checks or
       `pnpm nx affected --target=<t> --base=origin/development` for affected sets

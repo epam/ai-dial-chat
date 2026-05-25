@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Logger,
   Post,
   Put,
   Query,
@@ -31,6 +32,8 @@ import { SendCompletionDto } from './dto/send-completion.dto';
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
 export class ConversationController {
+  private readonly logger = new Logger(ConversationController.name);
+
   constructor(private readonly conversationService: ConversationService) {}
 
   @Post()
@@ -60,6 +63,7 @@ export class ConversationController {
       dto.firstMessage,
       at,
       bucket,
+      dto.attachments,
     );
   }
 
@@ -162,6 +166,7 @@ export class ConversationController {
       bucket,
       dto.message,
       dto.model,
+      dto.attachments,
     );
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -170,19 +175,19 @@ export class ConversationController {
     res.flushHeaders();
 
     const reader = stream.getReader();
-    const pump = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          res.write(value);
-        }
-      } finally {
-        reader.releaseLock();
-        res.end();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        res.write(value);
       }
-    };
-    pump();
+    } catch (err) {
+      this.logger.error('Error while streaming completion to client', err);
+    } finally {
+      reader.releaseLock();
+      res.end();
+    }
   }
 
   @Delete()

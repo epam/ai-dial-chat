@@ -3,6 +3,55 @@
 /**
  *
  * @export
+ * @interface AttachmentDto
+ */
+export interface AttachmentDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof AttachmentDto
+   */
+  index?: number;
+  /**
+   * MIME type of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  type: string;
+  /**
+   * Display name of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  title: string;
+  /**
+   * Inline base-64 encoded content
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  data?: string;
+  /**
+   * Remote URL of the attachment content
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  url?: string;
+  /**
+   * MIME type of the reference resource
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceType?: string;
+  /**
+   * URL of the reference resource
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceUrl?: string;
+}
+/**
+ *
+ * @export
  * @interface ChatCompletionChoiceDto
  */
 export interface ChatCompletionChoiceDto {
@@ -326,6 +375,12 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   firstMessage: string;
+  /**
+   * DIAL API attachments to include with the first user message
+   * @type {Array<AttachmentDto>}
+   * @memberof CreateConversationDto
+   */
+  attachments?: Array<AttachmentDto>;
 }
 /**
  *
@@ -777,6 +832,54 @@ export interface ProviderInfoDto {
 /**
  *
  * @export
+ * @interface RateMessageDto
+ */
+export interface RateMessageDto {
+  /**
+   * Identifier of the conversation being rated
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  conversationId: string;
+  /**
+   * Identifier of the assistant response message being rated
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  responseId: string;
+  /**
+   * Model deployment ID that produced the response
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  modelId: string;
+  /**
+   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * @type {number}
+   * @memberof RateMessageDto
+   */
+  rate: RateMessageDtoRateEnum;
+  /**
+   * Optional free-text comment from the user
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  comment?: string;
+}
+
+/**
+ * @export
+ */
+export const RateMessageDtoRateEnum = {
+  NUMBER_1: 1,
+  NUMBER_MINUS_1: -1,
+} as const;
+export type RateMessageDtoRateEnum =
+  (typeof RateMessageDtoRateEnum)[keyof typeof RateMessageDtoRateEnum];
+
+/**
+ *
+ * @export
  * @interface SaveConversationBodyDto
  */
 export interface SaveConversationBodyDto {
@@ -811,6 +914,12 @@ export interface SendCompletionDto {
    * @memberof SendCompletionDto
    */
   model: string;
+  /**
+   * DIAL API attachments to include with the user message
+   * @type {Array<AttachmentDto>}
+   * @memberof SendCompletionDto
+   */
+  attachments?: Array<AttachmentDto>;
 }
 /**
  *

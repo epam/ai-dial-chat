@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "../../dist/libs/conversation-messages",
+    "tsBuildInfoFile": "../../dist/libs/conversation-messages/tsconfig.lib.tsbuildinfo",
 
     "jsx": "react-jsx",
 
@@ -31,5 +32,12 @@
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx"
   ],
-  "references": [{ "path": "../chat-shared/tsconfig.lib.json" }]
+  "references": [
+    {
+      "path": "../conversation-input/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    }
+  ]
 }

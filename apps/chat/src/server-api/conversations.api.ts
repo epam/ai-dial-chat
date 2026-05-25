@@ -1,9 +1,18 @@
-import type { ConversationResponseDto } from '@epam/chat-api-client';
+import type {
+  AttachmentDto,
+  ConversationResponseDto,
+} from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
 
-export const createConversation = (firstMessage: string) =>
+export const createConversation = (
+  firstMessage: string,
+  attachments?: AttachmentDto[],
+) =>
   conversationsApi.createConversation({
-    createConversationDto: { firstMessage },
+    createConversationDto: {
+      firstMessage,
+      ...(attachments?.length ? { attachments } : {}),
+    },
   });
 
 export const getConversation = (conversationPath: string) =>

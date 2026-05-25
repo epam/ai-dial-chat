@@ -1,4 +1,5 @@
 import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { CSSProperties, FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
 import { MessageActions } from '../Message/MessageActions.js';
@@ -11,7 +12,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   colors,
   typography,
   actions,
-  alwaysVisibleActions: alwaysVisible,
+  alwaysVisibleActions,
+  attachments,
 }) => {
   const cssVars = {
     ...(colors?.text && { '--cm-bubble-text': colors.text }),
@@ -42,9 +44,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
         )}
       >
         <p className={mergeClasses(textClass, 'text-left')}>{text}</p>
+        <AttachmentTray attachments={attachments ?? []} />
         <MessageActions
           {...actions}
-          alwaysVisible={alwaysVisible}
+          alwaysVisible={alwaysVisibleActions}
           role={MessageRole.Assistant}
         />
       </div>

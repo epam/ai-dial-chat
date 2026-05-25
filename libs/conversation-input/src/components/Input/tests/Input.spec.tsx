@@ -39,7 +39,7 @@ describe('Input', () => {
     if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
       fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(handleSend).toHaveBeenCalledWith('Test message', []);
       expect(textarea.value).toBe('');
     }
   });
@@ -75,7 +75,7 @@ describe('Input', () => {
     }
     const sendButton = screen.getByLabelText('Send message');
     fireEvent.click(sendButton);
-    expect(handleSend).toHaveBeenCalledWith('Click send');
+    expect(handleSend).toHaveBeenCalledWith('Click send', []);
   });
 
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
@@ -137,7 +137,7 @@ describe('Input', () => {
     ) as HTMLInputElement;
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(screen.getByText('doc.pdf')).toBeTruthy();
+    expect(screen.getByText('doc')).toBeTruthy();
   });
 
   it('should remove the card when the remove button is clicked', () => {
@@ -148,7 +148,7 @@ describe('Input', () => {
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     fireEvent.click(screen.getByLabelText('Remove attachment'));
-    expect(screen.queryByText('doc.pdf')).toBeNull();
+    expect(screen.queryByText('doc')).toBeNull();
   });
 
   it('should call onAttachmentsChange when a file is added', () => {

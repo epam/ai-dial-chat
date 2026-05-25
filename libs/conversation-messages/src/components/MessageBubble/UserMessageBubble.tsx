@@ -1,4 +1,5 @@
 import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { CSSProperties, FC } from 'react';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
 import { BubblePosition } from '../../types/bubble-position.js';
@@ -13,7 +14,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   colors,
   typography,
   actions,
-  alwaysVisibleActions: alwaysVisible,
+  alwaysVisibleActions,
+  attachments,
 }) => {
   const cssVars = {
     ...(colors?.userBackground && {
@@ -40,10 +42,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
-
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex w-fit flex-col items-end gap-4">
+      <div className="flex w-fit flex-col items-end gap-2">
+        <AttachmentTray attachments={attachments ?? []} />
         <div
           className={mergeClasses(
             styles.userBubble,
@@ -56,7 +58,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
         </div>
         <MessageActions
           {...actions}
-          alwaysVisible={alwaysVisible}
+          alwaysVisible={alwaysVisibleActions}
           role={MessageRole.User}
         />
       </div>

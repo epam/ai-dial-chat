@@ -1,4 +1,8 @@
-import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
+import {
+  MessageRating,
+  MessageRole,
+  type Message,
+} from '@epam/ai-dial-chat-shared';
 import type {
   MessageActionTooltips,
   MessageActionsProps,
@@ -7,6 +11,7 @@ import type {
 export interface MessageActionHandlers {
   onDelete?: (messageId: string) => void;
   onRegenerate?: (messageId: string) => void;
+  onRate?: (messageId: string, rating: MessageRating | null) => void;
 }
 
 export const buildMessageActions = (
@@ -32,6 +37,21 @@ export const buildMessageActions = (
       : void 0,
     onCopy: copyToClipboard,
     onCopyMarkdown: copyToClipboard, // TODO: add implementation for markdown formatting
+    onLike: handlers.onRate
+      ? () =>
+          handlers.onRate?.(
+            msg.id,
+            msg.rating === MessageRating.Like ? null : MessageRating.Like,
+          )
+      : void 0,
+    onDislike: handlers.onRate
+      ? () =>
+          handlers.onRate?.(
+            msg.id,
+            msg.rating === MessageRating.Dislike ? null : MessageRating.Dislike,
+          )
+      : void 0,
+    activeRating: msg.rating,
     tooltips,
   };
 };

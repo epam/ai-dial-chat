@@ -1,6 +1,5 @@
 .gitignore
 .npmignore
-.openapi-generator-ignore
 README.md
 package.json
 src/apis/AuthApi.ts
@@ -9,6 +8,7 @@ src/apis/ConversationsApi.ts
 src/apis/DeploymentsApi.ts
 src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
+src/apis/RateApi.ts
 src/apis/ThemesApi.ts
 src/apis/index.ts
 src/index.ts
