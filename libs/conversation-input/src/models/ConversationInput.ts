@@ -49,4 +49,8 @@ export interface ConversationInputProps {
   typography?: ConversationInputTypography;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */
+  dropLabel?: string;
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
+  pasteTextThreshold?: number;
 }

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
 
 describe('Input', () => {
@@ -151,6 +151,24 @@ describe('Input', () => {
     expect(screen.queryByText('doc')).toBeNull();
   });
 
+  it('pendingDropFiles prop creates attachment cards and calls onDropFilesConsumed', () => {
+    const onDropFilesConsumed = vi.fn();
+    const file = new File(['content'], 'dropped.pdf', {
+      type: 'application/pdf',
+    });
+    const { rerender } = render(
+      <Input pendingDropFiles={[]} onDropFilesConsumed={onDropFilesConsumed} />,
+    );
+    rerender(
+      <Input
+        pendingDropFiles={[file]}
+        onDropFilesConsumed={onDropFilesConsumed}
+      />,
+    );
+    expect(screen.getByText('dropped')).toBeTruthy();
+    expect(onDropFilesConsumed).toHaveBeenCalled();
+  });
+
   it('should call onAttachmentsChange when a file is added', () => {
     const onAttachmentsChange = vi.fn();
     render(<Input onAttachmentsChange={onAttachmentsChange} />);
@@ -162,5 +180,60 @@ describe('Input', () => {
     expect(onAttachmentsChange).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
+  });
+});
+
+describe('Input — pasted attachment expand', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const pasteText = (textarea: Element, text: string) => {
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => text,
+      },
+    });
+  };
+
+  it('clicking a pasted card appends its text to the textarea and removes the card', async () => {
+    const { container } = render(<Input pasteTextThreshold={5} />);
+    const text = 'This is long enough to become a pasted attachment';
+
+    pasteText(container.querySelector('textarea')!, text);
+
+    const card = screen.getByText(text).closest('[role="button"]')!;
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(container.querySelector('textarea')?.value).toBe(text);
+    });
+    expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
+
+  it('clicking a pasted card appends with newline when textarea already has text', async () => {
+    const { container } = render(
+      <Input pasteTextThreshold={5} initialMessage="existing" />,
+    );
+    const text = 'This is long enough to become a pasted attachment';
+
+    pasteText(container.querySelector('textarea')!, text);
+
+    const card = screen.getByText(text).closest('[role="button"]')!;
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(container.querySelector('textarea')?.value).toBe(
+        `existing\n${text}`,
+      );
+    });
   });
 });

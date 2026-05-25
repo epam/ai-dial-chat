@@ -1,8 +1,9 @@
 // Colors only — no layout, spacing, border-radius (those live in Tailwind)
 
 .card {
+  --_card-bg: var(--ci-card-bg, var(--bg-layer-0, #000000));
   border-color: var(--ci-card-border, var(--stroke-secondary, #242c42));
-  background: var(--ci-card-bg, var(--bg-layer-0, #000000));
+  background: var(--_card-bg);
 }
 
 .cardError {
@@ -10,23 +11,18 @@
 }
 
 .cardSelected {
+  --_card-bg: var(--ci-card-bg-selected, var(--bg-accent-primary-alpha, #7da4ff26));
   border-color: var(
     --ci-card-border-selected,
     var(--stroke-accent-primary, #7da4ff)
-  );
-  background: var(
-    --ci-card-bg-selected,
-    var(--bg-accent-primary-alpha, #7da4ff26)
   );
 }
 
 .cardPrompt,
 .cardPasted {
   &:hover {
-    background: var(
-      --ci-card-bg-hover,
-      var(--controls-bg-neutral-hover, #242c42)
-    );
+    --_card-bg: var(--ci-card-bg-hover, var(--controls-bg-neutral-hover, #242c42));
+    background: var(--_card-bg);
   }
 }
 
@@ -44,15 +40,20 @@
 
 .actionBtn {
   color: var(--ci-card-action-color, var(--text-primary, #eef1f7));
+  background: var(--_card-bg);
+
+  &:hover {
+    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #1d2439));
+  }
 }
 
 .card:focus-within {
-  outline-color: var(--ci-card-focus-outline, var(--stroke-focus, #7da4ff));
+  outline-color: var(--ci-card-focus-outline, var(--controls-stroke-focus, #eef1f7));
 }
 
 .removeBtnImage {
   background: var(--ci-card-remove-bg, var(--bg-layer-2, #161b2d));
-  color: var(--ci-card-remove-color, var(--text-forced-white, #fff));
+  color: var(--ci-card-action-color, var(--text-primary, #eef1f7));
 
   &:hover {
     background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #1d2439));

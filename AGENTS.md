@@ -57,6 +57,7 @@ Default behavior:
 ## Local coding conventions
 
 - In `libs/**/*.tsx` files, **never** use `useTranslation` or `t()` from `react-i18next`. Pass all user-visible strings as props with English default values instead. i18n is the responsibility of the consuming app, not the lib.
+- In JSX, always prefer Tailwind utility classes over inline `style` props. Use the `style` prop only for dynamic computed values (e.g., pixel values from JS measurements, CSS custom properties set by user overrides) that cannot be expressed as static Tailwind classes.
 - In all `**/*.{ts,tsx}` files, **never** write ternary-in-ternary (nested conditional expressions). Use `if`/`else` blocks, early returns, or a `switch` statement instead.
 
 - In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.

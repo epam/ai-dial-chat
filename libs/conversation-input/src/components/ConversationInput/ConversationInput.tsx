@@ -1,6 +1,8 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CSSProperties, type FC } from 'react';
+import { useCallback, useState, type FC } from 'react';
+import { useDragDrop } from '../../hooks/useDragDrop.js';
 import type { ConversationInputProps } from '../../models/ConversationInput.js';
+import { buildCssVars } from '../../utils/buildCssVars.js';
 import { Input } from '../Input/Input.js';
 import styles from './ConversationInput.module.scss';
 
@@ -15,27 +17,38 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   colors,
   typography,
   className,
+  dropLabel = 'Drop files here',
+  pasteTextThreshold,
 }) => {
-  const cssVars = {
-    ...(colors?.background && { '--ci-root-bg': colors.background }),
-    ...(colors?.welcomeText && { '--ci-welcome-color': colors.welcomeText }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeFontFamily && {
-        '--ci-welcome-font-family': typography.welcomeFontFamily,
-      }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeFontSize && {
-        '--ci-welcome-font-size': typography.welcomeFontSize,
-      }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeFontWeight && {
-        '--ci-welcome-font-weight': String(typography.welcomeFontWeight),
-      }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeLineHeight && {
-        '--ci-welcome-line-height': String(typography.welcomeLineHeight),
-      }),
-  } as CSSProperties;
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const handleDropFiles = useCallback((files: File[]) => {
+    setPendingFiles(files);
+  }, []);
+
+  const handleDropFilesConsumed = useCallback(() => {
+    setPendingFiles([]);
+  }, []);
+
+  const { dragHandlers, isDragOver } = useDragDrop(handleDropFiles);
+
+  const noCustomClass = !typography?.welcomeClassName;
+  const cssVars = buildCssVars({
+    '--ci-root-bg': colors?.background,
+    '--ci-welcome-color': colors?.welcomeText,
+    '--ci-welcome-font-family': noCustomClass
+      ? typography?.welcomeFontFamily
+      : undefined,
+    '--ci-welcome-font-size': noCustomClass
+      ? typography?.welcomeFontSize
+      : undefined,
+    '--ci-welcome-font-weight': noCustomClass
+      ? typography?.welcomeFontWeight
+      : undefined,
+    '--ci-welcome-line-height': noCustomClass
+      ? typography?.welcomeLineHeight
+      : undefined,
+  });
 
   return (
     <div
@@ -44,6 +57,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         'relative flex w-full flex-col items-center gap-6 p-4',
         className,
       )}
+      {...dragHandlers}
     >
       {welcomeText && (
         <h1
@@ -56,16 +70,31 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           {welcomeText}
         </h1>
       )}
-      <Input
-        initialMessage={initialMessage}
-        onSend={onSend}
-        onStop={onStop}
-        isStreaming={isStreaming}
-        onAttachmentsChange={onAttachmentsChange}
-        placeholder={placeholder}
-        colors={colors?.input}
-        typography={typography?.input}
-      />
+      <div className="relative w-full max-w-[748px]">
+        <Input
+          initialMessage={initialMessage}
+          onSend={onSend}
+          onStop={onStop}
+          isStreaming={isStreaming}
+          onAttachmentsChange={onAttachmentsChange}
+          placeholder={placeholder}
+          colors={colors?.input}
+          typography={typography?.input}
+          pendingDropFiles={pendingFiles}
+          onDropFilesConsumed={handleDropFilesConsumed}
+          pasteTextThreshold={pasteTextThreshold}
+        />
+        {isDragOver && (
+          <div
+            className={mergeClasses(
+              styles.dropOverlay,
+              'pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded border border-dashed',
+            )}
+          >
+            <span className="dial-tiny-text">{dropLabel}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

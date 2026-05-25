@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationInput } from './ConversationInput.js';
 
 describe('ConversationInput', () => {
@@ -86,5 +86,109 @@ describe('ConversationInput', () => {
     );
     const textarea = container.querySelector('textarea');
     expect(textarea?.placeholder).toBe('Ask me anything');
+  });
+});
+
+describe('ConversationInput — attachments', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const makeDragEvent = (types: string[] = ['Files'], files: File[] = []) =>
+    ({
+      dataTransfer: { types, files: files as unknown as FileList },
+      preventDefault: vi.fn(),
+    }) as unknown as React.DragEvent;
+
+  it('shows drop overlay when dragging files over and hides it on drag leave', () => {
+    const { container } = render(
+      <ConversationInput dropLabel="Drop here" />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+
+    fireEvent.dragEnter(root, makeDragEvent(['Files']));
+    expect(screen.getByText('Drop here')).toBeTruthy();
+
+    fireEvent.dragLeave(root, makeDragEvent());
+    expect(screen.queryByText('Drop here')).toBeNull();
+  });
+
+  it('does not show drop overlay for non-file drags', () => {
+    const { container } = render(
+      <ConversationInput dropLabel="Drop here" />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+
+    fireEvent.dragEnter(root, makeDragEvent(['text/plain']));
+    expect(screen.queryByText('Drop here')).toBeNull();
+  });
+
+  it('dropping a file creates an attachment card', () => {
+    const { container } = render(<ConversationInput />);
+    const root = container.firstElementChild as HTMLElement;
+    const file = new File(['content'], 'report.pdf', {
+      type: 'application/pdf',
+    });
+
+    fireEvent.dragEnter(root, makeDragEvent(['Files'], [file]));
+    fireEvent.drop(root, makeDragEvent(['Files'], [file]));
+
+    expect(screen.getByText('report')).toBeTruthy();
+  });
+
+  it('pasting an image creates an image attachment card', () => {
+    const { container } = render(<ConversationInput />);
+    const textarea = container.querySelector('textarea')!;
+    const blob = new Blob(['img'], { type: 'image/png' });
+    const item = { kind: 'file', type: 'image/png', getAsFile: () => blob };
+
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        items: [item] as unknown as DataTransferItemList,
+        getData: () => '',
+      },
+    });
+
+    expect(screen.getByText('Screenshot')).toBeTruthy();
+  });
+
+  it('pasting long text creates a pasted attachment card', () => {
+    const { container } = render(
+      <ConversationInput pasteTextThreshold={5} />,
+    );
+    const textarea = container.querySelector('textarea')!;
+    const text = 'This text is long enough';
+
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => text,
+      },
+    });
+
+    expect(screen.getByText(text)).toBeTruthy();
+  });
+
+  it('pasting short text does not create an attachment card', () => {
+    const { container } = render(
+      <ConversationInput pasteTextThreshold={100} />,
+    );
+    const textarea = container.querySelector('textarea')!;
+
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'hi',
+      },
+    });
+
+    expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
   });
 });

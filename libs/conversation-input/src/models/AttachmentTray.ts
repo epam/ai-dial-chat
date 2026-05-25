@@ -8,6 +8,8 @@ export interface AttachmentTrayProps {
   onRemove?: (id: string) => void;
   /** Called when the user retries a failed attachment upload. */
   onRetry?: (id: string) => void;
+  /** Called when the user clicks a pasted-text card to expand its content back into the input. */
+  onExpand?: (id: string) => void;
   /** Accessible label for the tray region. */
   ariaLabel?: string;
   /** Accessible label for each card's remove button. */
