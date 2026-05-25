@@ -148,13 +148,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               onClick={() => onRetry(id)}
             />
           )}
-          <DialGhostIconButton
-            icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
-            size={ElementSize.Small}
-            className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
-            aria-label={removeLabel}
-            onClick={() => onRemove?.(id)}
-          />
+          {onRemove && (
+            <DialGhostIconButton
+              icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              size={ElementSize.Small}
+              className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
+              aria-label={removeLabel}
+              onClick={() => onRemove(id)}
+            />
+          )}
         </div>
       )}
     </div>

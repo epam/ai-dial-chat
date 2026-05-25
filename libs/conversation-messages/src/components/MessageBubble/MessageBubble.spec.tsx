@@ -1,5 +1,9 @@
-import type { DialAttachment } from '@epam/ai-dial-chat-shared';
-import { MessageRole } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  MessageRole,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BubblePosition } from '../../types/bubble-position.js';
@@ -7,10 +11,12 @@ import { AssistantMessageBubble } from './AssistantMessageBubble.js';
 import { MessageBubble } from './MessageBubble.js';
 import { UserMessageBubble } from './UserMessageBubble.js';
 
-const ATTACHMENT: DialAttachment = {
-  type: 'application/pdf',
-  title: 'report.pdf',
-  data: 'base64==',
+const ATTACHMENT: DisplayAttachment = {
+  id: 'report.pdf',
+  name: 'report.pdf',
+  contentType: 'application/pdf',
+  type: AttachmentType.File,
+  status: RequestStatus.Idle,
 };
 
 describe('MessageBubble', () => {
@@ -139,11 +145,8 @@ describe('UserMessageBubble — attachments', () => {
   });
 
   it('remove button does not trigger a callback (read-only tray)', () => {
-    // AttachmentCard always renders the remove button in DOM (hidden via opacity CSS).
-    // When no onRemove is wired the click is a no-op — verify no error is thrown.
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
-    const btn = screen.queryByRole('button', { name: /remove/i });
-    expect(() => btn && btn.click()).not.toThrow();
+    expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
   });
 });
 
@@ -188,15 +191,12 @@ describe('AssistantMessageBubble — attachments', () => {
   });
 
   it('remove button does not trigger a callback (read-only tray)', () => {
-    // AttachmentCard always renders the remove button in DOM (hidden via opacity CSS).
-    // When no onRemove is wired the click is a no-op — verify no error is thrown.
     render(
       <AssistantMessageBubble
         text="Here is your file"
         attachments={[ATTACHMENT]}
       />,
     );
-    const btn = screen.queryByRole('button', { name: /remove/i });
-    expect(() => btn && btn.click()).not.toThrow();
+    expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
   });
 });

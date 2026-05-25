@@ -1352,6 +1352,43 @@
           "choices"
         ]
       },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type of the attachment"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display name of the attachment"
+          },
+          "data": {
+            "type": "string",
+            "description": "Inline base-64 encoded content"
+          },
+          "url": {
+            "type": "string",
+            "description": "Remote URL of the attachment content"
+          },
+          "reference_type": {
+            "type": "string",
+            "description": "MIME type of the reference resource"
+          },
+          "reference_url": {
+            "type": "string",
+            "description": "URL of the reference resource"
+          }
+        },
+        "required": [
+          "type",
+          "title"
+        ]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -1361,6 +1398,13 @@
             "example": "Hello, how can you help me today?",
             "minLength": 1,
             "maxLength": 4000
+          },
+          "attachments": {
+            "description": "DIAL API attachments to include with the first user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [
@@ -1574,6 +1618,13 @@
             "type": "string",
             "description": "DIAL Core deployment name to use for completion",
             "example": "anthropic.claude-v3-sonnet"
+          },
+          "attachments": {
+            "description": "DIAL API attachments to include with the user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [

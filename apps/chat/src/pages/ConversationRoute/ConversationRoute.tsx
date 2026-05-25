@@ -14,7 +14,7 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
-import { attachmentsToDialAttachments } from '../../utils/attachment-to-dial';
+import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -47,10 +47,10 @@ const ConversationRoute: FC = () => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const dialAttachments = await attachmentsToDialAttachments(attachments);
+        const attachmentDtos = await attachmentsToDtos(attachments);
         const conversation = await apiCreateConversation(
           message,
-          dialAttachments,
+          attachmentDtos,
         );
         navigate(getConversationRoute(conversation.id));
       } finally {

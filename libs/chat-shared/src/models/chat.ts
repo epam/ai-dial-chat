@@ -58,7 +58,7 @@ export interface Message {
    */
   custom_content?: {
     /** Files or media items associated with this message. */
-    attachments?: DialAttachment[];
+    attachments?: MessageAttachment[];
   };
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
@@ -109,16 +109,14 @@ export enum RequestStatus {
   Error = 'error',
 }
 
-/** Represents a file or content item the user has attached to a message. */
-export interface Attachment {
+/** Represents a file or content item that can be displayed as an attachment. */
+export interface DisplayAttachment {
   /** Unique client-side identifier. */
   id: string;
   /** Display name (usually the original filename). */
   name: string;
   /** MIME type of the attachment (e.g. `'image/png'`, `'application/pdf'`). */
   contentType: MIMEType | string;
-  /** The underlying `File` object selected by the user. */
-  file: File;
   /** Content category used to select the correct icon and thumbnail. */
   type: AttachmentType;
   /** Upload / processing lifecycle state. */
@@ -126,12 +124,19 @@ export interface Attachment {
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
 }
+
+/** Attachment selected locally by the user before it is sent to the backend. */
+export interface Attachment extends DisplayAttachment {
+  /** The underlying browser `File` object selected by the user. */
+  file: File;
+}
+
 /**
- * Attachment as returned or accepted by the DIAL Core API.
+ * Attachment payload stored in message custom content.
  * Used inside `Message.custom_content.attachments` for both user requests
  * and assistant responses.
  */
-export interface DialAttachment {
+export interface MessageAttachment {
   /** Zero-based position in the attachment list. */
   index?: number;
   /** MIME type of the attachment content. */

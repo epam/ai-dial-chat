@@ -1,8 +1,9 @@
-import type { Attachment, DialAttachment } from '@epam/ai-dial-chat-shared';
+import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { AttachmentDto } from '@epam/chat-api-client';
 
 /**
  * Converts a base64url-encoded string produced by `FileReader.readAsDataURL`
- * into the plain base64 string that DIAL Core's `data` field expects.
+ * into the plain base64 string that the Chat API attachment DTO expects.
  */
 const dataUrlToBase64 = (dataUrl: string): string => {
   const comma = dataUrl.indexOf(',');
@@ -21,13 +22,12 @@ const fileToBase64 = (file: File): Promise<string> =>
   });
 
 /**
- * Maps a client-side `Attachment` to the `DialAttachment` format accepted by
- * DIAL Core. The file content is base64-encoded and placed in the `data`
- * field, which DIAL Core requires when no `url` is present.
+ * Maps a client-side `Attachment` to the attachment DTO accepted by the
+ * Chat API. The file content is base64-encoded and placed in the `data` field.
  */
-export const attachmentToDialAttachment = async (
+export const attachmentToDto = async (
   attachment: Attachment,
-): Promise<DialAttachment> => {
+): Promise<AttachmentDto> => {
   const data = await fileToBase64(attachment.file);
   return {
     type: attachment.contentType,
@@ -37,12 +37,12 @@ export const attachmentToDialAttachment = async (
 };
 
 /**
- * Maps an array of `Attachment` items to `DialAttachment[]` in parallel.
+ * Maps an array of `Attachment` items to Chat API attachment DTOs in parallel.
  * Returns `undefined` when the input array is empty.
  */
-export const attachmentsToDialAttachments = async (
+export const attachmentsToDtos = async (
   attachments: Attachment[],
-): Promise<DialAttachment[] | undefined> => {
+): Promise<AttachmentDto[] | undefined> => {
   if (!attachments.length) return undefined;
-  return Promise.all(attachments.map(attachmentToDialAttachment));
+  return Promise.all(attachments.map(attachmentToDto));
 };

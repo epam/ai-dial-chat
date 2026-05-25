@@ -1,10 +1,7 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  attachmentToDialAttachment,
-  attachmentsToDialAttachments,
-} from '../attachment-to-dial';
+import { attachmentToDto, attachmentsToDtos } from '../attachment-to-dto';
 
 const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
   id: 'test-id',
@@ -16,17 +13,17 @@ const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
   ...overrides,
 });
 
-describe('attachmentToDialAttachment', () => {
-  it('resolves to a DialAttachment with correct type and title', async () => {
+describe('attachmentToDto', () => {
+  it('resolves to an attachment DTO with correct type and title', async () => {
     const attachment = makeAttachment();
-    const result = await attachmentToDialAttachment(attachment);
+    const result = await attachmentToDto(attachment);
     expect(result.type).toBe('application/pdf');
     expect(result.title).toBe('file.pdf');
   });
 
   it('strips the data-URL prefix from the data field', async () => {
     const attachment = makeAttachment();
-    const result = await attachmentToDialAttachment(attachment);
+    const result = await attachmentToDto(attachment);
     expect(result.data).not.toMatch(/^data:/);
   });
 
@@ -51,14 +48,14 @@ describe('attachmentToDialAttachment', () => {
       () => mockReader,
     ) as unknown as typeof FileReader;
 
-    await expect(attachmentToDialAttachment(attachment)).rejects.toBeDefined();
+    await expect(attachmentToDto(attachment)).rejects.toBeDefined();
     globalThis.FileReader = originalFileReader;
   });
 });
 
-describe('attachmentsToDialAttachments', () => {
+describe('attachmentsToDtos', () => {
   it('returns undefined for an empty array', async () => {
-    const result = await attachmentsToDialAttachments([]);
+    const result = await attachmentsToDtos([]);
     expect(result).toBeUndefined();
   });
 
@@ -72,7 +69,7 @@ describe('attachmentsToDialAttachments', () => {
       contentType: 'image/png',
       file: new File(['img'], 'img.png', { type: 'image/png' }),
     });
-    const result = await attachmentsToDialAttachments([a1, a2]);
+    const result = await attachmentsToDtos([a1, a2]);
     expect(result).toHaveLength(2);
     expect(result?.[0].title).toBe('a.pdf');
     expect(result?.[1].title).toBe('img.png');

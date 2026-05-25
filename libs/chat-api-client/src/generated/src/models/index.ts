@@ -3,6 +3,55 @@
 /**
  *
  * @export
+ * @interface AttachmentDto
+ */
+export interface AttachmentDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof AttachmentDto
+   */
+  index?: number;
+  /**
+   * MIME type of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  type: string;
+  /**
+   * Display name of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  title: string;
+  /**
+   * Inline base-64 encoded content
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  data?: string;
+  /**
+   * Remote URL of the attachment content
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  url?: string;
+  /**
+   * MIME type of the reference resource
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceType?: string;
+  /**
+   * URL of the reference resource
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceUrl?: string;
+}
+/**
+ *
+ * @export
  * @interface ChatCompletionChoiceDto
  */
 export interface ChatCompletionChoiceDto {
@@ -326,6 +375,12 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   firstMessage: string;
+  /**
+   * DIAL API attachments to include with the first user message
+   * @type {Array<AttachmentDto>}
+   * @memberof CreateConversationDto
+   */
+  attachments?: Array<AttachmentDto>;
 }
 /**
  *
@@ -859,6 +914,12 @@ export interface SendCompletionDto {
    * @memberof SendCompletionDto
    */
   model: string;
+  /**
+   * DIAL API attachments to include with the user message
+   * @type {Array<AttachmentDto>}
+   * @memberof SendCompletionDto
+   */
+  attachments?: Array<AttachmentDto>;
 }
 /**
  *

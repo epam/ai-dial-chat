@@ -1,7 +1,7 @@
 import {
   Conversation,
   ConversationMetadata,
-  DialAttachment,
+  MessageAttachment,
   MessageRole,
   Message,
 } from '@epam/ai-dial-chat-shared';
@@ -25,7 +25,7 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
-    attachments?: DialAttachment[],
+    attachments?: MessageAttachment[],
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
@@ -179,7 +179,7 @@ export class ConversationService extends AppService {
     bucket: string,
     message: string,
     model: string,
-    attachments?: DialAttachment[],
+    attachments?: MessageAttachment[],
   ): Promise<ReadableStream<Uint8Array>> {
     const conversation = await this.getConversation(
       conversationPath,

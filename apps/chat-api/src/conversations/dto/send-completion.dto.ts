@@ -9,7 +9,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { DialAttachmentDto } from './dial-attachment.dto';
+import { AttachmentDto } from './attachment.dto';
 
 export class SendCompletionDto {
   @ApiProperty({
@@ -44,11 +44,11 @@ export class SendCompletionDto {
 
   @ApiPropertyOptional({
     description: 'DIAL API attachments to include with the user message',
-    type: [DialAttachmentDto],
+    type: [AttachmentDto],
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => DialAttachmentDto)
-  attachments?: DialAttachmentDto[];
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }
