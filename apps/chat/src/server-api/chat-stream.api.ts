@@ -1,4 +1,5 @@
 import { StreamChunk } from '@epam/ai-dial-chat-shared';
+import type { DialAttachmentDto } from '@epam/chat-api-client';
 import { ApiEndpoints, getCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
@@ -13,6 +14,7 @@ export const streamCompletion = (
   message: string,
   model: string,
   options: StreamCompletionOptions,
+  attachments?: DialAttachmentDto[],
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -29,7 +31,12 @@ export const streamCompletion = (
             ? { 'X-CSRF-Token': getCsrfToken() as string }
             : {}),
         },
-        body: JSON.stringify({ path, message, model }),
+        body: JSON.stringify({
+          path,
+          message,
+          model,
+          ...(attachments?.length ? { attachments } : {}),
+        }),
       });
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
@@ -58,7 +65,7 @@ export const streamCompletion = (
         const { done, value } = await reader.read();
 
         if (done) {
-          if (buffer.trim()) parseSSELine(buffer, onChunk);
+          if (buffer.trim()) parseSSELine(buffer, onChunk, onError);
           break;
         }
 
@@ -68,7 +75,7 @@ export const streamCompletion = (
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          parseSSELine(line, onChunk);
+          parseSSELine(line, onChunk, onError);
         }
       }
       onComplete();
@@ -86,6 +93,7 @@ export const streamCompletion = (
 const parseSSELine = (
   line: string,
   onChunk: (chunk: StreamChunk) => void,
+  onError: (error: Error) => void,
 ): void => {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith(':')) return;
@@ -96,6 +104,10 @@ const parseSSELine = (
 
   try {
     const parsed = JSON.parse(data) as StreamChunk;
+    if (parsed.error) {
+      onError(new Error(parsed.error.message));
+      return;
+    }
     onChunk(parsed);
   } catch {
     // malformed chunk — skip silently

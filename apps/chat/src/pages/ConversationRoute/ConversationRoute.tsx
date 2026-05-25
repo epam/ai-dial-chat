@@ -1,4 +1,5 @@
-import type { StarterOption } from '@epam/ai-dial-chat-shared';
+import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
+import type { FC } from 'react';
 import {
   lazy,
   Suspense,
@@ -8,7 +9,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -17,6 +17,7 @@ import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useModels } from '../../context/ModelsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
+import { attachmentsToDialAttachments } from '../../utils/attachment-to-dial';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -53,11 +54,15 @@ const ConversationRoute: FC = () => {
   }, []);
 
   const handleSend = useCallback(
-    async (message: string) => {
+    async (message: string, attachments: Attachment[]) => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const conversation = await apiCreateConversation(message);
+        const dialAttachments = await attachmentsToDialAttachments(attachments);
+        const conversation = await apiCreateConversation(
+          message,
+          dialAttachments,
+        );
         navigate(getConversationRoute(conversation.id));
       } finally {
         setIsSending(false);

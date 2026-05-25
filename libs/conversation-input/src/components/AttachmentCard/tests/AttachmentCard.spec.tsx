@@ -15,7 +15,7 @@ const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
 });
 
 describe('AttachmentCard', () => {
-  it('renders the file name', () => {
+  it('renders the file name without extension', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
     expect(screen.getByText('report')).toBeTruthy();
   });

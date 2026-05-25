@@ -27,7 +27,7 @@ const ConversationInput = lazy(async () => {
 
 interface Props {
   messages: MessageType[];
-  onSend: (message: string) => void;
+  onSend: (message: string, attachments: Attachment[]) => void;
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
@@ -167,6 +167,7 @@ const ConversationView: FC<Props> = ({
                   key={msg.id}
                   role={msg.role}
                   text={msg.content}
+                  attachments={msg.custom_content?.attachments}
                   alwaysVisibleActions={!isStreaming}
                   actions={buildMessageActions(
                     msg,

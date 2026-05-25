@@ -72,7 +72,6 @@ export class ThemeService {
    * ```typescript
    * try {
    *   const config = await themeService.getThemes();
-   *   console.log(config.themes);
    * } catch (error) {
    *   if (error instanceof NotFoundException) {
    *     console.error('Theme configuration not found');

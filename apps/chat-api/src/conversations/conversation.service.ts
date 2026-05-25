@@ -1,6 +1,7 @@
 import {
   Conversation,
   ConversationMetadata,
+  DialAttachment,
   MessageRole,
   Message,
 } from '@epam/ai-dial-chat-shared';
@@ -24,6 +25,7 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
+    attachments?: DialAttachment[],
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
@@ -36,6 +38,7 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
+      ...(attachments?.length ? { custom_content: { attachments } } : {}),
     };
 
     // TODO: remove hardcoded - add model info
@@ -176,6 +179,7 @@ export class ConversationService extends AppService {
     bucket: string,
     message: string,
     model: string,
+    attachments?: DialAttachment[],
   ): Promise<ReadableStream<Uint8Array>> {
     const conversation = await this.getConversation(
       conversationPath,
@@ -188,6 +192,7 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
+      ...(attachments?.length ? { custom_content: { attachments } } : {}),
     };
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
@@ -198,10 +203,18 @@ export class ConversationService extends AppService {
         ? conversation.messages
         : [...conversation.messages, userMessage];
 
-    const messages = messagesForCompletion.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const messages = messagesForCompletion.map((m) => {
+      const validAttachments = (m.custom_content?.attachments ?? []).filter(
+        (a) => a.data ?? a.url,
+      );
+      return {
+        role: m.role,
+        content: m.content,
+        ...(validAttachments.length
+          ? { custom_content: { attachments: validAttachments } }
+          : {}),
+      };
+    });
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
@@ -220,7 +233,6 @@ export class ConversationService extends AppService {
         );
         return handleDialError({ status: result.response.status });
       }
-
       return result.response.body;
     } catch (error) {
       this.logger.error('DIAL Core streamCompletion failed', error);

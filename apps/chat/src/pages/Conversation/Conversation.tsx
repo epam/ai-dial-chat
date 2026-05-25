@@ -1,4 +1,5 @@
 import {
+  Attachment,
   Conversation,
   Message,
   MessageRole,
@@ -10,6 +11,7 @@ import {
   DialAlert,
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
+import type { DialAttachmentDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -25,6 +27,7 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { rateMessage } from '../../server-api/rate.api';
+import { attachmentsToDialAttachments } from '../../utils/attachment-to-dial';
 import { createMessagePair } from '../../utils/message-factory';
 
 export const ConversationPage: FC = () => {
@@ -34,6 +37,7 @@ export const ConversationPage: FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState(false);
+  const [streamError, setStreamError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
@@ -45,48 +49,56 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
+      attachments?: DialAttachmentDto[],
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       setIsStreaming(true);
 
-      streamCompletion(conversationPath, userContent, model, {
-        signal: controller.signal,
-        onChunk: (chunk) => {
-          const token = chunk.choices[0]?.delta?.content ?? '';
-          if (!token) return;
-          setConversation((prev) => {
-            if (!prev) return prev;
-            const next = {
-              ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === assistantMessageId
-                  ? { ...m, content: m.content + token }
-                  : m,
-              ),
-            };
-            conversationRef.current = next;
-            return next;
-          });
-        },
-        onComplete: async () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-          const final = conversationRef.current;
-          if (final) {
-            try {
-              await saveConversation(conversationPath, final);
-            } catch (err: unknown) {
-              void err;
+      streamCompletion(
+        conversationPath,
+        userContent,
+        model,
+        {
+          signal: controller.signal,
+          onChunk: (chunk) => {
+            const content = chunk.choices[0]?.delta?.content ?? '';
+            if (!content) return;
+            setConversation((prev) => {
+              if (!prev) return prev;
+              const next = {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === assistantMessageId
+                    ? { ...m, content: m.content + content }
+                    : m,
+                ),
+              };
+              conversationRef.current = next;
+              return next;
+            });
+          },
+          onComplete: async () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+            const final = conversationRef.current;
+            if (final) {
+              try {
+                await saveConversation(conversationPath, final);
+              } catch (err: unknown) {
+                void err;
+              }
             }
-          }
+          },
+          onError: () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+            setStreamError(true);
+          },
         },
-        onError: () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-        },
-      });
+        attachments,
+      );
     },
     [],
   );
@@ -126,6 +138,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
+            lastMsg.custom_content?.attachments,
           );
         } else {
           setConversation(result);
@@ -285,11 +298,14 @@ export const ConversationPage: FC = () => {
   );
 
   const handleSend = useCallback(
-    (message: string) => {
+    async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
+      const dialAttachmentsArg =
+        await attachmentsToDialAttachments(attachments);
+
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message);
+        createMessagePair(message, dialAttachmentsArg);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -310,6 +326,7 @@ export const ConversationPage: FC = () => {
         message,
         assistantMessageId,
         conversation.model.id,
+        dialAttachmentsArg,
       );
     },
     [conversation, conversationId, startStream],
@@ -325,6 +342,16 @@ export const ConversationPage: FC = () => {
   return (
     <>
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
+        {streamError && (
+          <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
+            <DialAlert
+              variant={AlertVariant.Error}
+              message={t(ChatI18nKeys.StreamError)}
+              closable
+              onClose={() => setStreamError(false)}
+            />
+          </div>
+        )}
         {deleteError && (
           <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
             <DialAlert

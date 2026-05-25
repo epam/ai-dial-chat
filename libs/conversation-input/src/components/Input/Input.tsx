@@ -10,6 +10,7 @@ import {
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import classNames from 'classnames';
 import {
   CSSProperties,
   type FC,
@@ -73,12 +74,23 @@ export const Input: FC<InputProps> = ({
     };
   }, []);
 
+  const canSend = message.trim().length > 0;
+
+  const handleSend = () => {
+    onSend?.(message, attachments);
+    setMessage('');
+    attachments.forEach((a) => {
+      if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+    });
+    setAttachments([]);
+    onAttachmentsChange?.([]);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isStreaming) {
-        onSend?.(message);
-        setMessage('');
+      if (!isStreaming && canSend) {
+        handleSend();
       }
     }
   };
@@ -121,74 +133,87 @@ export const Input: FC<InputProps> = ({
     });
   };
 
+  const textarea = (
+    <textarea
+      className={mergeClasses(
+        styles.textarea,
+        'flex-1 resize-none bg-transparent outline-none',
+      )}
+      value={message}
+      onChange={(e) => {
+        setMessage(e.target.value);
+        onChange?.(e.target.value);
+      }}
+      onKeyDown={handleKeyDown}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      rows={1}
+    />
+  );
   return (
     <div
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col rounded border px-3 py-2',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border px-3 py-2',
         className,
       )}
     >
       {attachments.length > 0 && (
-        <AttachmentTray
-          attachments={attachments}
-          onRemove={handleRemove}
-          removeLabel={removeLabel}
-          retryLabel={retryLabel}
-          className="mb-2"
-        />
-      )}
-      <div className="flex items-center gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="sr-only"
-          aria-hidden
-          tabIndex={-1}
-          onChange={handleFileChange}
-        />
-        <DialDropdown
-          matchReferenceWidth={false}
-          placement="bottom-start"
-          listClassName="!w-[240px]"
-          menu={{
-            items: [
-              {
-                key: 'attach',
-                label: attachLabel,
-                icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-                onClick: () => fileInputRef.current?.click(),
-              },
-            ],
-          }}
-        >
-          <DialGhostIconButton
-            icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-            aria-label={addMenuLabel}
-            className="size-10 flex-shrink-0"
+        <>
+          <AttachmentTray
+            attachments={attachments}
+            onRemove={handleRemove}
+            removeLabel={removeLabel}
+            retryLabel={retryLabel}
           />
-        </DialDropdown>
-        <textarea
-          className={mergeClasses(
-            styles.textarea,
-            'flex-1 resize-none bg-transparent outline-none',
-          )}
-          value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            onChange?.(e.target.value);
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          aria-label={ariaLabel}
-          rows={1}
-        />
+          {textarea}
+        </>
+      )}
+
+      <div
+        className={classNames(
+          'flex items-center gap-2',
+          attachments.length > 0 && 'justify-between',
+        )}
+      >
+        <div className="flex">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="sr-only"
+            aria-hidden
+            tabIndex={-1}
+            onChange={handleFileChange}
+          />
+          <DialDropdown
+            matchReferenceWidth={false}
+            placement="bottom-start"
+            listClassName="!w-[240px]"
+            menu={{
+              items: [
+                {
+                  key: 'attach',
+                  label: attachLabel,
+                  icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+                  onClick: () => fileInputRef.current?.click(),
+                },
+              ],
+            }}
+          >
+            <DialGhostIconButton
+              icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+              aria-label={addMenuLabel}
+              className="size-10 flex-shrink-0"
+            />
+          </DialDropdown>
+        </div>
+        {attachments.length === 0 && textarea}
         {isStreaming ? (
           <StopButton onStop={onStop} />
         ) : (
-          message.trim() && <SendButton onSend={() => onSend?.(message)} />
+          canSend && <SendButton onSend={handleSend} />
         )}
       </div>
     </div>

@@ -1,8 +1,17 @@
+import type { DialAttachment } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BubblePosition } from '../../types/bubble-position.js';
+import { AssistantMessageBubble } from './AssistantMessageBubble.js';
 import { MessageBubble } from './MessageBubble.js';
+import { UserMessageBubble } from './UserMessageBubble.js';
+
+const ATTACHMENT: DialAttachment = {
+  type: 'application/pdf',
+  title: 'report.pdf',
+  data: 'base64==',
+};
 
 describe('MessageBubble', () => {
   it('renders the provided text content', () => {
@@ -91,5 +100,103 @@ describe('MessageBubble', () => {
     );
     const actionsWrapper = container.querySelector('[class*="gap-1"]');
     expect(actionsWrapper?.className).not.toContain('opacity-0');
+  });
+});
+
+describe('UserMessageBubble — attachments', () => {
+  it('renders an attachment tray when attachments are provided', () => {
+    render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
+    // AttachmentTray renders a list role
+    expect(screen.getByRole('list')).toBeTruthy();
+  });
+
+  it('renders no attachment tray when attachments prop is absent', () => {
+    render(<UserMessageBubble text="Hello" />);
+    expect(screen.queryByRole('list')).toBeNull();
+  });
+
+  it('renders no attachment tray when attachments array is empty', () => {
+    render(<UserMessageBubble text="Hello" attachments={[]} />);
+    expect(screen.queryByRole('list')).toBeNull();
+  });
+
+  it('renders the tray before the message text in the DOM', () => {
+    const { container } = render(
+      <UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />,
+    );
+    const inner = container.querySelector(
+      '.flex.w-fit.flex-col',
+    ) as HTMLElement;
+    const children = Array.from(inner?.children ?? []);
+    const trayIndex = children.findIndex(
+      (el) => el.getAttribute('role') === 'list',
+    );
+    const textIndex = children.findIndex(
+      (el) => el.tagName === 'DIV' && el.className.includes('rounded'),
+    );
+    // tray should come before the bubble
+    expect(trayIndex).toBeLessThan(textIndex);
+  });
+
+  it('remove button does not trigger a callback (read-only tray)', () => {
+    // AttachmentCard always renders the remove button in DOM (hidden via opacity CSS).
+    // When no onRemove is wired the click is a no-op — verify no error is thrown.
+    render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
+    const btn = screen.queryByRole('button', { name: /remove/i });
+    expect(() => btn && btn.click()).not.toThrow();
+  });
+});
+
+describe('AssistantMessageBubble — attachments', () => {
+  it('renders an attachment tray when attachments are provided', () => {
+    render(
+      <AssistantMessageBubble
+        text="Here is your file"
+        attachments={[ATTACHMENT]}
+      />,
+    );
+    expect(screen.getByRole('list')).toBeTruthy();
+  });
+
+  it('renders no attachment tray when attachments prop is absent', () => {
+    render(<AssistantMessageBubble text="Hello" />);
+    expect(screen.queryByRole('list')).toBeNull();
+  });
+
+  it('renders no attachment tray when attachments array is empty', () => {
+    render(<AssistantMessageBubble text="Hello" attachments={[]} />);
+    expect(screen.queryByRole('list')).toBeNull();
+  });
+
+  it('renders the tray after the message text in the DOM', () => {
+    const { container } = render(
+      <AssistantMessageBubble
+        text="Here is your file"
+        attachments={[ATTACHMENT]}
+      />,
+    );
+    const inner = container.querySelector(
+      '.flex.w-fit.flex-col',
+    ) as HTMLElement;
+    const children = Array.from(inner?.children ?? []);
+    const textIndex = children.findIndex((el) => el.tagName === 'P');
+    const trayIndex = children.findIndex(
+      (el) => el.getAttribute('role') === 'list',
+    );
+    // text comes before the tray
+    expect(textIndex).toBeLessThan(trayIndex);
+  });
+
+  it('remove button does not trigger a callback (read-only tray)', () => {
+    // AttachmentCard always renders the remove button in DOM (hidden via opacity CSS).
+    // When no onRemove is wired the click is a no-op — verify no error is thrown.
+    render(
+      <AssistantMessageBubble
+        text="Here is your file"
+        attachments={[ATTACHMENT]}
+      />,
+    );
+    const btn = screen.queryByRole('button', { name: /remove/i });
+    expect(() => btn && btn.click()).not.toThrow();
   });
 });

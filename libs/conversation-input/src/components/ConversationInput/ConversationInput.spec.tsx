@@ -30,7 +30,7 @@ describe('ConversationInput', () => {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
       fireEvent.click(screen.getByLabelText('Send message'));
 
-      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(handleSend).toHaveBeenCalledWith('Test message', []);
     }
   });
 
@@ -44,7 +44,7 @@ describe('ConversationInput', () => {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
       fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
 
-      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(handleSend).toHaveBeenCalledWith('Test message', []);
     }
   });
 
