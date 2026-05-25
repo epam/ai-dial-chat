@@ -8,6 +8,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
+import { isRtlLocale } from '@/src/utils/app/rtl';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { ScreenState } from '@/src/types/common';
@@ -65,8 +66,7 @@ export function ResizableSidebarWrapper({
   const isMarketplaceFilterbar =
     isLeftSidebar && router.route === Routes.Marketplace;
 
-  const isRtl =
-    typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
+  const isRtl = isRtlLocale(router.locale ?? 'en');
   const isPhysicallyLeftSidebar = isRtl ? !isLeftSidebar : isLeftSidebar;
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {

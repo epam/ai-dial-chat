@@ -1,6 +1,8 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
+import { isRtlLocale } from '@/src/utils/app/rtl';
+
 import i18nextConfig from '@/next-i18next.config';
 import { documentWithJss } from '@epam/ai-dial-modulify-ui';
 
@@ -12,29 +14,7 @@ function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
 
-  const RTL_LANGUAGES = [
-    'ar', // Arabic
-    'he', // Hebrew
-    'fa', // Persian/Farsi
-    'ur', // Urdu
-    'yi', // Yiddish
-    'ku', // Kurdish (Sorani)
-    'ckb', // Central Kurdish
-    'dv', // Divehi/Maldivian
-    'ps', // Pashto
-    'sd', // Sindhi
-    'ug', // Uyghur
-    'pnb', // Western Punjabi (Shahmukhi)
-    'mzn', // Mazanderani
-    'lrc', // Northern Luri
-  ];
-
-  const locale = new Intl.Locale(currentLocale) as Intl.Locale & {
-    getTextInfo?: () => { direction: string };
-  };
-  const dir =
-    locale.getTextInfo?.().direction ??
-    (RTL_LANGUAGES.includes(locale.language) ? 'rtl' : 'ltr');
+  const dir = isRtlLocale(currentLocale) ? 'rtl' : 'ltr';
 
   return (
     <Html lang={currentLocale} dir={dir}>
