@@ -316,7 +316,6 @@ export const ChangePathDialog = ({
     initiallySelectedFolderId,
     onRenamePath,
   ]);
-
   useEffect(() => {
     if (!isOpen) {
       return;

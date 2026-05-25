@@ -512,6 +512,9 @@ export enum PromptBarI18nKeys {
   AgentSkillHintBody = 'allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.',
   AgentSkillHintSeeExamples = 'See examples',
   AgentSkillHintHere = 'here',
+  AgentSkillStaleHint = 'Save to re-validate against the latest content.',
+  AgentSkillValidationPending = 'Validation pending',
+  AgentSkillValidationPendingHint = 'Open inside an agent editor to validate this prompt as a skill.',
 }
 
 //chat.json
@@ -825,13 +828,14 @@ export enum ChatI18nKeys {
   AttachFoldersAndUploadedFiles = 'Attach folders and uploaded files',
   AttachUploadedFiles = 'Attach uploaded files',
   Attach = 'Attach',
-  AttachingHiddenFilesIsNotAllowed = 'Attaching hidden files is not allowed.',
+
   Address = 'Address',
   PasteLink = 'Paste link',
   Title = 'Title',
   WriteText = 'Write text',
   UnsupportedFilesSkipped = 'Unsupported files skipped',
   UnsupportedFilesDescription = "Some files in the selected folder(-s) weren't attached because their type isn't supported.",
+  AttachingHiddenFilesNotAllowed = 'Attaching hidden files is not allowed.',
   TooManyFilesSelected = 'Too many files selected',
   TooManyFilesDescription = 'You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.',
   MaxSizeSupportedTypes = 'Maximum size: {{maxSelectableFileSize}}. Supported types: {{allowedExtensions}}.',
@@ -1119,4 +1123,5 @@ export enum MarketplaceI18nKeys {
   AgentSettings = 'Agent settings',
   AgentSettingsDescription = 'Agent-wide behavior switches that apply to every conversation.',
   TimeAwareness = 'Time awareness',
+  NoLimitsApplied = 'No limits applied',
 }

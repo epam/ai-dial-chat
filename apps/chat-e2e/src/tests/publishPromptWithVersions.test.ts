@@ -191,7 +191,7 @@ dialTest(
     await dialTest.step(
       'Close the modal, open it again and verify the latest version is selected',
       async () => {
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'hidden',
         );
@@ -222,7 +222,7 @@ dialTest(
           description: promptVersionDataMap.get(sortedVersionsArray[1])!
             .description,
         });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState(
           { name: `${prompt.name} 1` },
           'visible',
@@ -239,7 +239,7 @@ dialTest(
         await promptPreviewModalAssertion.assertPromptFields({
           version: sortedVersionsArray[0],
         });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
       },
     );
 
@@ -268,7 +268,7 @@ dialTest(
           description: promptVersionDataMap.get(sortedVersionsArray[0])!
             .description,
         });
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
       },
     );
 
@@ -303,7 +303,7 @@ dialTest(
           },
         );
         await publishingRequestDialog.cancelButton.click();
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
       },
     );
 

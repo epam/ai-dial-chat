@@ -501,25 +501,23 @@ const FormSchemaMemo = memo(function FormSchema({
   );
 
   return (
-    sortedProperties.some(([_name, property]) => !property.description) && (
-      <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
-        {sortedProperties.map(([name, property]) => (
-          <PropertyRenderer
-            property={property}
-            schema={schema}
-            name={name}
-            onChange={onChange}
-            key={name}
-            disabled={disabled}
-            showSelected={showSelected}
-            formValue={formValue}
-            buttonsWrapperClassName={buttonsWrapperClassName}
-            buttonClassName={buttonClassName}
-            className={propertyWrapperClassName}
-          />
-        ))}
-      </div>
-    )
+    <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
+      {sortedProperties.map(([name, property]) => (
+        <PropertyRenderer
+          property={property}
+          schema={schema}
+          name={name}
+          onChange={onChange}
+          key={name}
+          disabled={disabled}
+          showSelected={showSelected}
+          formValue={formValue}
+          buttonsWrapperClassName={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
+          className={propertyWrapperClassName}
+        />
+      ))}
+    </div>
   );
 });
 

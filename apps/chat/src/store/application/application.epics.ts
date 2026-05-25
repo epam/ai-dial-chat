@@ -63,6 +63,7 @@ import {
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
+  PromptsActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -935,7 +936,9 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const actions: Observable<AppAction>[] = [];
+      const actions: Observable<AppAction>[] = [
+        of(PromptsActions.clearSkillValidations()),
+      ];
 
       if (hasCustomEditor) {
         actions.push(

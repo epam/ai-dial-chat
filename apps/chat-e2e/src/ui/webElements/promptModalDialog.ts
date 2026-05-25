@@ -4,12 +4,12 @@ import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { ErrorLabelSelectors } from '@/src/ui/selectors';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
-import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Popup } from '@/src/ui/webElements/common/popup';
 import { FieldLabel } from '@/src/ui/webElements/fieldLabel';
 import { Page } from '@playwright/test';
 
-export class PromptModalDialog extends BaseElement {
+export class PromptModalDialog extends Popup {
   protected fieldLabelHelper: FieldLabel;
 
   constructor(page: Page) {
@@ -24,7 +24,6 @@ export class PromptModalDialog extends BaseElement {
   );
   public prompt = this.getChildElementBySelector(PromptModal.promptValue);
   public saveButton = this.getChildElementBySelector(PromptModal.savePrompt);
-  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
   public fieldLabel = (label: string) =>
     this.getChildElementBySelector(PromptModal.fieldLabel(label));
   public getFieldBottomMessage = (field: BaseElement) =>
