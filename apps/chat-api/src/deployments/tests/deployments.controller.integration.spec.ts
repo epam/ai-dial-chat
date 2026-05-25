@@ -5,19 +5,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentsController } from '../deployments.controller';
 import { DeploymentsService } from '../deployments.service';
 
-const TEST_USER = { at: 'test-access-token' };
+const TEST_USER = { at: 'test-access-token', sub: 'user-123' };
 
 describe('DeploymentsController (integration)', () => {
   let app: INestApplication;
   let service: {
     getDeployments: ReturnType<typeof vi.fn>;
     getDeployment: ReturnType<typeof vi.fn>;
+    getDeploymentConfiguration: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       getDeployments: vi.fn(),
       getDeployment: vi.fn(),
+      getDeploymentConfiguration: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -92,6 +94,49 @@ describe('DeploymentsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/deployments/unknown')
         .expect(404);
+    });
+  });
+
+  describe('GET /deployments/:deployment/configuration', () => {
+    it('returns 200 with JSON Schema object', async () => {
+      const schema = {
+        type: 'object',
+        title: 'StatGPT Config',
+        properties: {},
+      };
+      service.getDeploymentConfiguration.mockResolvedValue(schema);
+
+      const response = await request(app.getHttpServer())
+        .get('/deployments/statgpt/configuration')
+        .expect(200);
+      expect(response.body).toEqual(schema);
+      expect(service.getDeploymentConfiguration).toHaveBeenCalledWith(
+        'statgpt',
+        TEST_USER.sub,
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 404 when deployment does not support configuration', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      service.getDeploymentConfiguration.mockRejectedValue(
+        new NotFoundException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/deployments/basic-model/configuration')
+        .expect(404);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      service.getDeploymentConfiguration.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/deployments/statgpt/configuration')
+        .expect(503);
     });
   });
 });

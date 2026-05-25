@@ -4,15 +4,17 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
+import { useModels } from '../../context/ModelsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 
@@ -28,6 +30,14 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
+  const { selectedModelConfiguration } = useModels();
+
+  const starters = useMemo<StarterOption[]>(() => {
+    const oneOf = selectedModelConfiguration?.properties?.starter?.oneOf;
+
+    if (!Array.isArray(oneOf)) return [];
+    return oneOf as StarterOption[];
+  }, [selectedModelConfiguration]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -74,6 +84,7 @@ const ConversationRoute: FC = () => {
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
           />
+          <StarterButtons starters={starters} onSelect={handleSend} />
         </div>
       </Suspense>
     </div>
