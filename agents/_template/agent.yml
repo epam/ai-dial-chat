@@ -8,7 +8,12 @@ name: my-agent                        # required: kebab-case; surfaces in PR com
 
 # When the agent runs.
 # Short form: triggers: [pull_request]
-# Long form (v0.2, when filters land): [{ on: pull_request, filters: { paths: ["src/**"] } }]
+# Long form with filters (branches + labels honored; paths reserved for v0.3):
+#   triggers:
+#     - on: pull_request
+#       filters:
+#         branches: [main, development-1.0]   # PR target branches
+#         labels: [review-me]                  # all must be present on PR
 triggers: [pull_request]              # required
 
 # Comma-separated Claude tool allowlist. Use the smallest set your prompt needs.
@@ -34,3 +39,20 @@ cost_class: light                     # light (<$0.50/run) | medium | heavy
 # before running. Your prompt reads upstream/<upstream-name>/stage-output.json.
 # Leave empty (or omit) if your agent runs independently — the common case.
 # needs: [scan-deps]
+
+# Per-agent timeout (optional, default 15 min, max 360).
+# timeout_minutes: 30
+
+# GHA permissions (optional). Validated against the platform-supported set:
+#   contents: read           — the default; you don't need to declare it
+#   pull-requests: write     — the default; you don't need to declare it
+#   checks: write            — opt-in: required only if you create check runs
+#   security-events: write   — opt-in: required only if you upload SARIF
+# Any value outside the supported set rejects the manifest at discovery.
+# permissions:
+#   checks: write
+
+# Concurrency override (optional). Default: dispatch-pr-<name>-<ref>.
+# concurrency:
+#   group: "${{ github.workflow }}-special-${{ github.ref }}"
+#   cancel_in_progress: true

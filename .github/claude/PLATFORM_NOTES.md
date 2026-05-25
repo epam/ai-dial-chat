@@ -21,10 +21,11 @@ whichever comes first):
 
 - `.github/actions/run-claude-stage/` — composite action
 - `.github/claude/scripts/render-stage-comment.py`
-- `.github/claude/schemas/stage-message.schema.json`
-- `.github/workflows/dispatch-pr.yml`, `.github/workflows/run-agent.yml`
 - `.github/claude/scripts/match-agents.py`
-- `agents/_template/`
+- `.github/claude/schemas/stage-message.schema.json`
+- `.github/claude/schemas/agent-manifest.schema.json`
+- `.github/workflows/dispatch-pr.yml`, `.github/workflows/run-agent.yml`
+- `agents/_template/`, `agents/_wrapped-template/`
 - `.github/claude/ADDING_AN_AGENT.md`, `.github/claude/PLATFORM_NOTES.md`
 - The three `docs/sdlc/orchestration*.md` design docs
 
@@ -37,6 +38,94 @@ whichever comes first):
 
 Keep the framework-bound surface DIAL-name-free. When extraction happens, it
 should be a mechanical `git mv` + filename rename, not a refactor.
+
+---
+
+## Manifest validation
+
+Every `agents/<name>/agent.yml` is validated against
+`.github/claude/schemas/agent-manifest.schema.json` at discovery time
+(matcher first step). Schema violations fail the dispatcher with a clear
+JSON Pointer to the offending field — no broken agent reaches the matrix.
+
+The schema accepts the framework's full v0.1 manifest field set (so a
+framework-conforming manifest works on our platform without modification).
+**Some fields are recorded only**, not yet acted on at runtime — the schema
+documents which ones (look for `Recorded only` / `not yet wired` notes).
+
+The schema is also referenced by `validate-manifest` if/when we add a CI
+check on `agents/**/agent.yml` changes (framework ROADMAP §4.3, deferred).
+
+---
+
+## Supported permissions
+
+The matcher rejects manifests requesting permissions outside this set:
+
+| Scope | Allowed levels |
+|---|---|
+| `contents` | `read` |
+| `pull-requests` | `write` |
+| `checks` | `write` |
+| `security-events` | `read`, `write` |
+
+`run-agent.yml` and `dispatch-pr.yml` both declare the union as their job
+permissions. Manifests that omit the `permissions:` field get the same
+union (the runner runs with those scopes; the validator is permissive
+about absence).
+
+To add a new tier (e.g., `contents: write` for spec-edit agents that
+commit to `specs/`):
+
+1. Add it to `SUPPORTED_PERMISSIONS` in `match-agents.py`.
+2. Grant it in `dispatch-pr.yml`'s top-level `permissions:`.
+3. Grant it in `run-agent.yml`'s top-level `permissions:`.
+4. Document the new tier in this section + `ADDING_AN_AGENT.md`.
+
+Don't widen permissions speculatively — every grant is a real privilege
+exposure.
+
+---
+
+## Trigger filters
+
+The matcher honors:
+
+- **`branches`**: PR target branch (`github.event.pull_request.base.ref`)
+  must be in the manifest's `branches:` list.
+- **`labels`**: PR must carry **all** labels listed in `labels:`.
+
+Both are passed to the matcher via `--event-context /tmp/event.json` (dump
+of `toJSON(github.event)` set by the dispatcher).
+
+`paths` is reserved (schema accepts it) but **not yet evaluated** — that
+needs a `git diff` against the PR base, which the matcher would do in the
+discover job. Defer until a real path-scoped agent appears.
+
+---
+
+## Native vs Wrapped agents
+
+The framework's two-tier model:
+
+- **Native** — Claude prompt + tool allowlist, runs via the dispatcher's
+  matrix → `run-agent.yml` → composite action. Schema-enforced output.
+  The common case.
+- **Wrapped** — adopts a third-party GHA action under our governance. Each
+  Wrapped agent has its own `.github/workflows/stage-<name>.yml` (the
+  specialized self-triggered workflow pattern). The matcher **skips**
+  agents whose `invocation.pattern: wrapped` — they don't enter the
+  dispatcher's matrix.
+
+**Why per-Wrapped-agent workflow files instead of one centralized runner?**
+GHA's `uses:` field doesn't accept expressions, so a generic
+`run-agent-wrapped.yml` cannot dynamically dispatch to `action_ref:
+foo/bar@<sha>` from the manifest. Each Wrapped agent's third-party
+`uses:` must be hardcoded somewhere. The cost is one short workflow file
+per Wrapped agent (typically <50 lines).
+
+`stage-security-review.yml` is the reference; `agents/_wrapped-template/`
+is the onboarding template.
 
 ---
 

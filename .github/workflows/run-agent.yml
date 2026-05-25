@@ -11,16 +11,29 @@ on:
         required: false
         type: string
         default: ''
+      timeout_minutes:
+        description: 'Per-agent timeout in minutes (from manifest).'
+        required: false
+        type: number
+        default: 15
+      concurrency_group:
+        description: 'Concurrency group (from manifest or derived by the matcher).'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
   pull-requests: write
+  checks: write
+  security-events: write
 
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     concurrency:
-      group: "${{ github.workflow }}-${{ inputs.agent_name }}-${{ github.ref }}"
+      group: ${{ inputs.concurrency_group != '' && inputs.concurrency_group || format('{0}-{1}-{2}', github.workflow, inputs.agent_name, github.ref) }}
       cancel-in-progress: true
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

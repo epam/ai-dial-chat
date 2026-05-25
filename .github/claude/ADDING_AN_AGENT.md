@@ -37,13 +37,19 @@ tools/
 └── match-agents.py                     # dispatcher matcher
 ```
 
-Two agent shapes:
+Two agent shapes (framework terminology: **Native** and **Wrapped**):
 
-- **Manifest-driven agent** — the common case. Declare in `agents/<name>/`. The
-  dispatcher picks it up. **Use this for new agents.**
-- **Specialized self-triggered workflow** — for purpose-built actions that
-  don't fit the composite action's generic shape. `stage-security-review.yml`
-  is the reference. Documented exception.
+- **Native** — the common case. A Claude prompt + tool allowlist. Declare in
+  `agents/<name>/`; the dispatcher picks it up automatically. **Use this for
+  new agents.**
+- **Wrapped** — adopts a third-party GHA action (Trivy, Semgrep,
+  `claude-code-security-review`, etc.) under our governance. Each Wrapped
+  agent has its own self-triggered workflow at
+  `.github/workflows/stage-<name>.yml`; the dispatcher skips them. Reference:
+  [`stage-security-review.yml`](../workflows/stage-security-review.yml).
+  Template: [`agents/_wrapped-template/`](../../agents/_wrapped-template/).
+  The manifest declares `invocation.pattern: wrapped` for catalog/governance
+  purposes only; runtime lives in the dedicated workflow file.
 
 ---
 
@@ -100,7 +106,14 @@ cost_class: light
 | `phase` | No | `sandbox` / `pilot` / `production` |
 | `cost_class` | No | `light` (<$0.50/run) / `medium` / `heavy` |
 | `needs` | No | List of upstream agent names. Platform downloads their `stage-output.json` into `upstream/{name}/` before this agent runs. See *Chaining* below |
+| `timeout_minutes` | No | Per-agent timeout (default 15, max 360). Honored by `run-agent.yml` |
+| `permissions` | No | GHA permissions the runner needs (e.g. `checks: write`). Validated against the platform-supported set; manifest rejected at discovery if it exceeds. See [`PLATFORM_NOTES.md`](./PLATFORM_NOTES.md) → *Supported permissions* |
+| `concurrency` | No | `{group, cancel_in_progress}` override. Default group: `dispatch-pr-<name>-<ref>` |
+| `triggers[].filters` | No | `{branches, labels}` filtering of triggers. `branches` matches PR target; `labels` requires all listed labels present. `paths` is reserved for v0.3 |
+| `invocation.pattern` | No | `native` (default) or `wrapped`. Wrapped = self-triggered workflow file; see [`agents/_wrapped-template/`](../../agents/_wrapped-template/) |
 | `kill_switch_var` | No | Override the derived var name (rarely needed) |
+
+Manifests are validated against [`schemas/agent-manifest.schema.json`](./schemas/agent-manifest.schema.json) at every dispatch. Schema violations fail the discover job with a clear path to the offending field — no broken agent reaches the matrix.
 
 ### Tool tiers
 

@@ -3,11 +3,13 @@ name: SDLC Dispatch / PR
 on:
   pull_request:
     branches: [development-1.0]
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
   contents: read
   pull-requests: write
+  checks: write
+  security-events: write
 
 jobs:
   discover:
@@ -20,15 +22,19 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install matcher deps
-        run: pip install --quiet pyyaml
+        run: pip install --quiet pyyaml jsonschema
 
       - id: match
         env:
           VARS_JSON: ${{ toJSON(vars) }}
+          EVENT_JSON: ${{ toJSON(github.event) }}
+          GITHUB_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
           echo "$VARS_JSON" > /tmp/vars.json
-          ROUNDS=$(python3 .github/claude/scripts/match-agents.py pull_request --vars /tmp/vars.json)
+          echo "$EVENT_JSON" > /tmp/event.json
+          ROUNDS=$(python3 .github/claude/scripts/match-agents.py pull_request \
+            --vars /tmp/vars.json --event-context /tmp/event.json)
           echo "Matched rounds: $ROUNDS"
           echo "round1=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round1", [])))')" >> "$GITHUB_OUTPUT"
           echo "round2=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round2", [])))')" >> "$GITHUB_OUTPUT"
@@ -45,6 +51,8 @@ jobs:
     with:
       agent_name: ${{ matrix.agent.name }}
       upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
+      timeout_minutes: ${{ matrix.agent.timeout_minutes }}
+      concurrency_group: ${{ matrix.agent.concurrency_group }}
     secrets: inherit
 
   run-round-2:
@@ -58,6 +66,8 @@ jobs:
     with:
       agent_name: ${{ matrix.agent.name }}
       upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
+      timeout_minutes: ${{ matrix.agent.timeout_minutes }}
+      concurrency_group: ${{ matrix.agent.concurrency_group }}
     secrets: inherit
 
   run-round-3:
@@ -71,4 +81,6 @@ jobs:
     with:
       agent_name: ${{ matrix.agent.name }}
       upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
+      timeout_minutes: ${{ matrix.agent.timeout_minutes }}
+      concurrency_group: ${{ matrix.agent.concurrency_group }}
     secrets: inherit
