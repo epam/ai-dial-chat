@@ -1,13 +1,24 @@
-# SDLC Orchestration on GitHub: Prior Art and Architecture Review
+# SDLC Orchestration: Vision, Architecture, and Pivot Triggers
 
-Companion to [`dial-claude-sdlc-orchestration.md`](./dial-claude-sdlc-orchestration.md). The design doc proposes a spec-driven, agent-verified SDLC anchored on GitHub Actions. This document maps that design to existing named patterns, critiques it against known limitations of each pattern, and lays out three viable evolution paths with concrete decision points.
+This document captures the SDLC orchestration's vision, its architectural
+choices, and the thresholds at which those choices should be revisited.
 
-The goal is to make the doc's choices defensible by name — so future contributors search the right keywords, and so the next architectural pivot is triggered by a quoted threshold rather than a hunch.
+Audiences:
+
+- **Architects** evaluating the current design or considering Phase 2.
+- **New team members** orienting on what we're building and why.
+- **Future-us** picking up the project six months from now.
+
+For the day-to-day "how do I add an agent" recipe, see
+[`../../.github/claude/ADDING_AN_AGENT.md`](../../.github/claude/ADDING_AN_AGENT.md).
+For the Phase 2 GitHub App blueprint, see
+[`orchestration-app.md`](./orchestration-app.md).
 
 ---
 
 ## Table of Contents
 
+- [Vision and Principles](#vision-and-principles)
 - [Executive Summary](#executive-summary)
 - [Pattern Map: Doc Concepts → Industry Names](#pattern-map-doc-concepts--industry-names)
 - [Architecture Review](#architecture-review)
@@ -20,9 +31,98 @@ The goal is to make the doc's choices defensible by name — so future contribut
 
 ---
 
+## Vision and Principles
+
+### Intent
+
+Spec-driven SDLC verification on GitHub using Claude Code Action. Agents
+triage issues, draft and verify specifications, then verify human-written
+implementations against the approved spec. Developers implement; agents
+review. Humans gate two points: spec approval and PR approval.
+
+### High-level flow (full ambition)
+
+```mermaid
+flowchart TD
+    issue["📋 Issue + 'claude:sdlc' label"] --> triage["🔎 Triage"]
+    triage --> author["📝 Spec-Author"]
+    author --> verify["🔍 Spec-Verify"]
+    verify -->|must-fix| author
+    verify -->|passed| gate1{"🚦 Human<br/>Spec Approval"}
+    gate1 --> branch["🌿 Branch + draft PR<br/>with SPEC.md"]
+    branch --> dev["👤 Developer<br/>implements locally"]
+    dev --> push["⬆️ Push commits"]
+    push --> conformance["🔗 Conformance"]
+    conformance -->|drift / gaps| dev
+    conformance --> test["🧪 Test"]
+    conformance --> security["🔐 Security"]
+    test --> docs["📚 Docs"]
+    security --> docs
+    docs --> gate2{"🚦 Human<br/>PR Review"}
+    gate2 --> final["✅ Final Review"]
+    final --> merge(["🎯 Merge"])
+
+    style gate1 fill:#fff4e1,stroke:#d4a017
+    style gate2 fill:#fff4e1,stroke:#d4a017
+    style dev fill:#e1f0ff,stroke:#3b7dd8
+    style merge fill:#e1ffe1,stroke:#2d8a2d
+```
+
+Two human gates. One developer-driven implementation. Agents handle
+everything else.
+
+**Current implementation status:** only `code-review` (manifest-driven) and
+the specialized `security-review` stage are live today. The remaining
+stages (triage, spec-author, spec-verify, conformance, test, docs,
+final-review) are aspirational — adding any of them is the work of
+authoring a manifest + prompt under `agents/<name>/`. See
+[`ADDING_AN_AGENT.md`](../../.github/claude/ADDING_AN_AGENT.md).
+
+### Spec template
+
+The spec is the contract between business intent and implementation.
+A versioned `SPEC.md` per change contains:
+
+- **Intent** — what problem, who for, why now
+- **Functional Requirements** — `FR-1`, `FR-2`, … numbered, testable
+- **Non-Functional Requirements** — perf / security / observability, with numbers
+- **API / Config Contract** — exact shapes, defaults, validation
+- **Acceptance Criteria** — Given/When/Then, one per FR minimum
+- **Out of Scope** — explicit non-goals
+- **Open Questions** — flagged for human resolution before approval
+
+Stable IDs (`FR-3`, `AC-2`, `NFR-sec-2`) thread through downstream stages.
+
+### Principles
+
+**The spec is the contract.** Modifying approved `SPEC.md` requires
+spec-verify re-run and re-approval. Without this discipline, "spec-driven"
+decays into "spec-shaped commit message."
+
+**Spec-Verify is a different read-only agent.** The author can't credibly
+attack their own work.
+
+**Conformance runs first.** Cheap, fails fast if implementation drifted;
+saves tokens on downstream stages against the wrong target.
+
+**Sticky comments, not new comments.** Markers like
+`<!-- dial-sdlc:security -->` updated in place. PR stays readable across
+reruns.
+
+**One JSON contract, validated.** Invalid JSON fails the stage loudly —
+downstream depends on it.
+
+**Stricter CODEOWNERS on `specs/`** than on code.
+
+**Reentry by comment.** `/claude rerun <stage>`, `/claude help "..."`,
+`/claude skip <stage>` for humane mid-flow control. (Not implemented yet;
+v0.2 dispatcher feature.)
+
+---
+
 ## Executive Summary
 
-The proposed SDLC orchestration is **directionally sound and not novel**. Every major construct — spec-as-contract, reusable-workflow DAGs, label/comment-triggered agents, lead-agent + sub-agents, externalized state on Phase 2 — maps onto an existing named pattern with documented strengths, limitations, and tooling.
+The SDLC orchestration above is **directionally sound and not novel**. Every major construct — spec-as-contract, reusable-workflow DAGs, label/comment-triggered agents, lead-agent + sub-agents, externalized state on Phase 2 — maps onto an existing named pattern with documented strengths, limitations, and tooling.
 
 Three findings shape the recommendation:
 
@@ -174,7 +274,7 @@ There is a published Temporal+GitHub Actions integration pattern that covers exa
 
 **Today: stay on Option A.** The current footprint is one stage (security-review) with one trigger path (PR + label). The two-file split already drafted (`sdlc-orchestrator.yml` + `stage-security.yml`) is the right shape and matches industry practice.
 
-**Document the named patterns in the design doc.** Update `dial-claude-sdlc-orchestration.md` to call out:
+**Document the named patterns in the design doc.** Update `orchestration.md` to call out:
 
 - "IssueOps" as the name for the issue-trigger + comment-command pattern
 - "Spec-driven agentic SDLC" as the umbrella term

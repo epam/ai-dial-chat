@@ -1,8 +1,7 @@
 # Phase 2 Design: SDLC Orchestrator as a GitHub App
 
-Companion to [`dial-claude-sdlc-orchestration.md`](./dial-claude-sdlc-orchestration.md) (design)
-and [`dial-claude-sdlc-orchestration-research.md`](./dial-claude-sdlc-orchestration-research.md)
-(prior-art review).
+Companion to [`orchestration-research.md`](./orchestration-research.md)
+(vision, architecture, and pivot triggers).
 
 The research doc identifies this as **Phase 2 / Option B**. This document
 sketches what it concretely looks like, what it would cost, and the order
@@ -29,7 +28,7 @@ does *not* recommend building it today.
 ## Summary
 
 A single GitHub App, installed once per organization, replaces the YAML
-dispatcher (`dispatch-pr.yml` + `run-agent.yml` + `tools/match-agents.py`)
+dispatcher (`dispatch-pr.yml` + `run-agent.yml` + `.github/claude/scripts/match-agents.py`)
 as the routing and state layer. GHA stays as the **execution** layer —
 the reusable per-agent workflow and agent manifests under `agents/` are
 unchanged. The App holds spec lifecycle, stage run
@@ -80,7 +79,7 @@ are sufficient. The pivot to the App should only happen when the bullets
 in the previous section appear — Phase 1.5 buys time, not features the
 App uniquely provides.
 
-See `.github/claude/ADDING_A_STAGE.md` → *Cross-run state* for the
+See `.github/claude/PLATFORM_NOTES.md` → *Cross-run state* for the
 consumption pattern.
 
 ---
@@ -251,13 +250,13 @@ Phase 1 to Phase 2:
 - `.github/actions/run-claude-stage/action.yml` — composite action
 - `.github/claude/prompts/*.md` — per-stage prompts
 - `.github/claude/schemas/stage-message.schema.json` — output contract
-- `.github/claude/scripts/render-stage-comment.sh` — output validator + comment renderer
-- The permission tiers and "5 places the stage name appears" convention
-  in `ADDING_A_STAGE.md`
+- `.github/claude/scripts/render-stage-comment.py` — output validator + comment renderer
+- The manifest-driven agent conventions documented in
+  `.github/claude/ADDING_AN_AGENT.md`
 
 What is replaced or modified:
 
-- `.github/workflows/dispatch-pr.yml` and `tools/match-agents.py` — their
+- `.github/workflows/dispatch-pr.yml` and `.github/claude/scripts/match-agents.py` — their
   routing role moves into the App; what remains in GHA is a thin trigger
   that listens for `repository_dispatch` and calls `run-agent.yml`
 - Composite action gains one new step: `POST` results to the App's API

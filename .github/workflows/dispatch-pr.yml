@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "$VARS_JSON" > /tmp/vars.json
-          AGENTS=$(python3 tools/match-agents.py pull_request --vars /tmp/vars.json)
+          AGENTS=$(python3 .github/claude/scripts/match-agents.py pull_request --vars /tmp/vars.json)
           echo "agents=$AGENTS" >> "$GITHUB_OUTPUT"
           echo "Matched agents for pull_request: $AGENTS"
 

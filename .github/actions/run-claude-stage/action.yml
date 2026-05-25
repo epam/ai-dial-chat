@@ -20,6 +20,10 @@ inputs:
     description: 'Stage/agent version (semver) recorded into the output envelope.'
     required: false
     default: 'unknown'
+  model:
+    description: 'Claude model to invoke (e.g. claude-sonnet-4-6). Empty means use claude-code-action default.'
+    required: false
+    default: ''
   max_turns:
     description: 'Max Claude turns.'
     required: false
@@ -44,17 +48,23 @@ runs:
           exit 1
         fi
 
-    - name: Resolve prompt source
-      id: prompt
+    - name: Prepare prompt and Claude args
+      id: prep
       shell: bash
       env:
         STAGE_NAME: ${{ inputs.stage_name }}
         INLINE_PROMPT: ${{ inputs.prompt }}
         EXPLICIT_FILE: ${{ inputs.prompt_file }}
+        ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
+        MAX_TURNS: ${{ inputs.max_turns }}
+        MODEL: ${{ inputs.model }}
       run: |
         set -euo pipefail
+
+        # Resolve prompt content. claude-code-action@v1 accepts `prompt:` (string)
+        # only — no prompt_file input — so we read the file content here.
         if [ -n "${INLINE_PROMPT}" ]; then
-          echo "mode=inline" >> "$GITHUB_OUTPUT"
+          PROMPT_CONTENT="${INLINE_PROMPT}"
         else
           if [ -n "${EXPLICIT_FILE}" ]; then
             FILE="${EXPLICIT_FILE}"
@@ -65,27 +75,33 @@ runs:
             echo "::error::Prompt file not found: $FILE"
             exit 1
           fi
-          echo "mode=file" >> "$GITHUB_OUTPUT"
-          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          PROMPT_CONTENT="$(cat "$FILE")"
         fi
 
-    - name: Run Claude (file prompt)
-      if: steps.prompt.outputs.mode == 'file'
-      uses: anthropics/claude-code-action@v1
-      with:
-        anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
-        prompt_file: ${{ steps.prompt.outputs.file }}
-        allowed_tools: ${{ inputs.allowed_tools }}
-        claude_args: --max-turns ${{ inputs.max_turns }}
+        # Build claude_args. Allowed tools and model both go through the CLI
+        # via claude_args; the action exposes neither as a direct input.
+        ARGS="--max-turns ${MAX_TURNS}"
+        if [ -n "${MODEL}" ]; then
+          ARGS="${ARGS} --model ${MODEL}"
+        fi
+        if [ -n "${ALLOWED_TOOLS}" ]; then
+          # Single-quote the value to preserve patterns like `Bash(git diff:*)`.
+          ARGS="${ARGS} --allowed-tools '${ALLOWED_TOOLS}'"
+        fi
 
-    - name: Run Claude (inline prompt)
-      if: steps.prompt.outputs.mode == 'inline'
+        echo "claude_args=${ARGS}" >> "$GITHUB_OUTPUT"
+        {
+          echo "prompt<<PROMPT_EOF"
+          echo "$PROMPT_CONTENT"
+          echo "PROMPT_EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Run Claude
       uses: anthropics/claude-code-action@v1
       with:
         anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
-        prompt: ${{ inputs.prompt }}
-        allowed_tools: ${{ inputs.allowed_tools }}
-        claude_args: --max-turns ${{ inputs.max_turns }}
+        prompt: ${{ steps.prep.outputs.prompt }}
+        claude_args: ${{ steps.prep.outputs.claude_args }}
 
     - name: Extract and validate sticky JSON
       id: extract
@@ -93,7 +109,7 @@ runs:
       env:
         STAGE_NAME: ${{ inputs.stage_name }}
         AGENT_VERSION: ${{ inputs.agent_version }}
-      run: ./.github/claude/scripts/render-stage-comment.sh
+      run: python3 ./.github/claude/scripts/render-stage-comment.py
 
     - name: Upload stage output artifact
       if: always() && hashFiles('stage-output.json') != ''

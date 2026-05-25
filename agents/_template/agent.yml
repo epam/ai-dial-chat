@@ -21,6 +21,7 @@ allowed_tools: "Read,Grep,Glob"       # required
 # Optional metadata
 agent_version: "0.1.0"                # appears in the output envelope
 description: "One-line description of what this agent does."
+model: claude-sonnet-4-6              # claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5-20251001 / etc.
 phase: pilot                          # sandbox | pilot | production
 cost_class: light                     # light (<$0.50/run) | medium | heavy
 

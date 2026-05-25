@@ -47,6 +47,7 @@ jobs:
               raise SystemExit("::error::manifest missing required field: allowed_tools")
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
+          print(f"model={m.get('model', '')}")
           print(f"prompt_file=agents/{os.environ['AGENT_NAME']}/prompt.md")
           EOF
 
@@ -56,4 +57,5 @@ jobs:
           stage_name: ${{ inputs.agent_name }}
           allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
           agent_version: ${{ steps.manifest.outputs.agent_version }}
+          model: ${{ steps.manifest.outputs.model }}
           prompt_file: ${{ steps.manifest.outputs.prompt_file }}

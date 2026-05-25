@@ -4,5 +4,6 @@ agent_version: "0.1.0"
 description: "AI code review via the /code-review-and-quality skill."
 triggers: [pull_request]
 allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"
+model: claude-sonnet-4-6
 phase: pilot
 cost_class: light
