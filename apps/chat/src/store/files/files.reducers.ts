@@ -15,10 +15,10 @@ import {
   addGeneratedFolderId,
   getEmptyLeafFolderIds,
   getFolderFromId,
-  getNextDefaultName,
   getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
   getSelectedEntitiesByFolderId,
+  getStorageSafeUniqueFolderName,
   renameFolderAndMoveEntity,
   updateMovedEntityId,
   updateMovedFolderId,
@@ -40,7 +40,6 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { FilesState } from './files.types';
 
@@ -105,6 +104,7 @@ const initialState: FilesState = {
   isLoadingSearchListing: false,
   searchListingMetadata: {},
   sharedWithMeFilesAndFoldersIds: [],
+  localFileSizeCache: {},
 };
 
 export const filesSlice = createSlice({
@@ -114,6 +114,12 @@ export const filesSlice = createSlice({
     init: (state) => state,
     initFinish: (state) => {
       state.initialized = true;
+    },
+    initFileSizeCache: (
+      state,
+      { payload }: PayloadAction<Record<string, number>>,
+    ) => {
+      state.localFileSizeCache = payload;
     },
     uploadFile: (
       state,
@@ -196,7 +202,16 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.map((file) => {
-        return file.id === payload.apiResult.id ? payload.apiResult : file;
+        if (file.id === payload.apiResult.id) {
+          delete state.localFileSizeCache[file.id];
+          return {
+            ...payload.apiResult,
+            contentLength:
+              payload.apiResult.contentLength || file.contentLength,
+            contentType: payload.apiResult.contentType || file.contentType,
+          };
+        }
+        return file;
       });
       invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
@@ -256,12 +271,24 @@ export const filesSlice = createSlice({
       );
 
       const mergedMappedFiles: DialFile[] = mappedFiles.map((newFile) => {
+        const cachedSize = state.localFileSizeCache[newFile.id];
+        if (newFile.contentLength) {
+          delete state.localFileSizeCache[newFile.id];
+        }
+
         const oldFile = prevById[newFile.id];
-        if (!oldFile) return newFile;
+        if (!oldFile) {
+          return {
+            ...newFile,
+            contentLength: newFile.contentLength || cachedSize,
+          };
+        }
 
         const merged: DialFile = {
           ...oldFile,
           ...newFile,
+          contentLength:
+            newFile.contentLength || oldFile.contentLength || cachedSize,
         };
 
         return merged;
@@ -543,16 +570,13 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       const rootFileId = getFileRootId();
-      const folderName = getNextDefaultName(
-        DEFAULT_FOLDER_NAME,
-        state.folders.filter(
-          (folder) => folder.folderId === (payload.parentId ?? rootFileId), // only folders on the same level
-        ),
-        0,
-        false,
-        false,
-        payload.parentId,
-      );
+      const parentId = payload.parentId ?? rootFileId;
+      const folderName = getStorageSafeUniqueFolderName({
+        folderId: parentId,
+        existingNames: state.folders
+          .filter((folder) => folder.folderId === parentId) // only folders on the same level
+          .map((folder) => folder.name),
+      });
 
       const newAddedFolderId = constructPath(payload.parentId, folderName);
       state.folders.push(
@@ -1242,6 +1266,10 @@ export const filesSlice = createSlice({
           contentLength: file.fileContent.size,
           contentType: fileContent.type,
         });
+
+        if (file.fileContent.size) {
+          state.localFileSizeCache[id] = file.fileContent.size;
+        }
       });
     },
 

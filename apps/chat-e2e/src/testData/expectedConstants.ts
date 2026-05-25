@@ -25,6 +25,14 @@ export const ExpectedConstants = {
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  maxNewFolderIndex: (names: string[]): number =>
+    Math.max(
+      0,
+      ...names
+        .map((n) => n.match(/New folder (\d+)/)?.[1])
+        .filter((n): n is string => Boolean(n))
+        .map(Number),
+    ),
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
   renameConversationModalTitle: 'Rename conversation',
@@ -199,7 +207,7 @@ export const ExpectedConstants = {
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
-  maxEntityNameLength: 160,
+  maxEntityNameLength: 255,
   selectAllTooltip: 'Select all',
   unselectAllTooltip: 'Unselect all',
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
@@ -310,7 +318,7 @@ export const ExpectedConstants = {
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
-    'Request name should be at most 160 characters long',
+    'The Request name is too long. Please shorten it and try again.',
   publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',

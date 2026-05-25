@@ -12,10 +12,12 @@ import classNames from 'classnames';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
 import {
+  getTranscriptTextToInsert,
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
@@ -87,6 +89,7 @@ interface UserMessageProps {
   allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
+  isAlignedToEnd?: boolean;
   withButtons?: boolean;
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
@@ -107,6 +110,7 @@ export const UserMessage = memo(function UserMessage({
   allMessages,
   isEditing,
   isEditingTemplates,
+  isAlignedToEnd,
   withButtons,
   editDisabled,
   onToggleEditing,
@@ -182,6 +186,11 @@ export const UserMessage = memo(function UserMessage({
   );
 
   const [messageContent, setMessageContent] = useState(message.content);
+  const { insertTextAtCursor } = useTextareaInsertInPosition(
+    textareaRef,
+    messageContent,
+    setMessageContent,
+  );
   const [formValue, setFormValue] = useState(currentFormValue);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
@@ -579,13 +588,29 @@ export const UserMessage = memo(function UserMessage({
       return;
     }
 
-    setMessageContent((prev) =>
-      prev.trim()
-        ? `${prev} ${userMessageTranscript.trim()}`
-        : userMessageTranscript.trim(),
-    );
+    const textarea = textareaRef.current;
+
+    if (textarea) {
+      const beforeCursor = messageContent.substring(0, textarea.selectionStart);
+      const textToInsert = getTranscriptTextToInsert(
+        beforeCursor,
+        userMessageTranscript,
+      );
+
+      if (textToInsert) {
+        insertTextAtCursor(textToInsert);
+      }
+    } else {
+      const trimmedTranscript = userMessageTranscript.trim();
+      if (trimmedTranscript) {
+        setMessageContent((prev) =>
+          prev.trim() ? `${prev} ${trimmedTranscript}` : trimmedTranscript,
+        );
+      }
+    }
+
     dispatch(ChatActions.clearUserMessageTranscript());
-  }, [dispatch, userMessageTranscript]);
+  }, [dispatch, insertTextAtCursor, messageContent, userMessageTranscript]);
 
   useEffect(() => {
     if (!userMessageVoiceAttachmentId) {
@@ -783,7 +808,12 @@ export const UserMessage = memo(function UserMessage({
 
   return (
     <>
-      <div className="relative mr-2 flex w-full flex-col gap-5">
+      <div
+        className={classNames('relative flex w-full flex-col gap-5', {
+          'me-2': isAlignedToEnd,
+          'mr-2': !isAlignedToEnd,
+        })}
+      >
         <UserSchema
           formValue={currentFormValue}
           messageIndex={messageIndex}

@@ -11,7 +11,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPathToFolderById } from '@/src/utils/app/folders';
-import { isValidSkillContent } from '@/src/utils/app/prompts';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { constructPath, isMyEntity } from '@/src/utils/app/shared-utils';
 
@@ -21,6 +20,7 @@ import { Translation } from '@/src/types/translation';
 import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
+import { SkillValidationStatus } from '@/src/store/prompts/prompts.types';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
@@ -63,6 +63,12 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
     PromptsSelectors.arePromptsUploaded,
   );
   const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const skillValidation = useAppSelector((state) =>
+    PromptsSelectors.selectSkillValidation(state, promptId),
+  );
+  const validationStatus =
+    skillValidation?.status ?? SkillValidationStatus.Unknown;
+  const validationMessage = skillValidation?.message;
 
   useEffect(() => {
     if (arePromptsUploaded && prompt && prompt.status !== UploadStatus.LOADED) {
@@ -82,9 +88,10 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
   }
 
   const { path: folderPath } = getPathToFolderById(folders, prompt?.folderId);
+  const isMyPrompt = isMyEntity({ id: promptId });
   const resultFolderPath = isEntityIdPublic({ id: promptId })
     ? constructPath(ORGANIZATION_SECTION_NAME, folderPath)
-    : isMyEntity({ id: promptId })
+    : isMyPrompt
       ? promptId.split('/').length > 3
         ? constructPath(PINNED_PROMPTS_SECTION_NAME, folderPath)
         : RECENT_PROMPTS_SECTION_NAME
@@ -92,7 +99,9 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
   const displayName = prompt?.name ?? promptId;
   const isPromptLoaded = prompt?.status === UploadStatus.LOADED;
   const hasInvalidError =
-    isPromptLoaded && prompt?.content && !isValidSkillContent(prompt.content);
+    isPromptLoaded && validationStatus === SkillValidationStatus.Invalid;
+  const isValidating =
+    isPromptLoaded && validationStatus === SkillValidationStatus.Validating;
 
   return (
     <div
@@ -128,14 +137,16 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
 
           {!readonly && (
             <div className="flex gap-2 text-secondary">
-              <IconButton
-                className="size-6"
-                Icon={IconPencilMinus}
-                name={MarketplaceI18nKeys.EditMarketplace}
-                dataQa="edit-skill"
-                size={16}
-                onClick={() => onEdit(promptId)}
-              />
+              {isMyPrompt && (
+                <IconButton
+                  className="size-6"
+                  Icon={IconPencilMinus}
+                  name={MarketplaceI18nKeys.EditMarketplace}
+                  dataQa="edit-skill"
+                  size={16}
+                  onClick={() => onEdit(promptId)}
+                />
+              )}
               <IconButton
                 className="size-6"
                 Icon={IconTrashX}
@@ -148,7 +159,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
           )}
         </div>
 
-        {isPromptLoading && !isPromptLoaded && (
+        {((isPromptLoading && !isPromptLoaded) || isValidating) && (
           <Spinner className="mx-auto my-4" size={16} />
         )}
 
@@ -159,13 +170,14 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
           >
             <IconAlertCircleFilled size={16} className="shrink-0" />
             <span className="text-xs">
-              {t(MarketplaceI18nKeys.AgentSkillsInvalidError)}
+              {validationMessage ||
+                t(MarketplaceI18nKeys.AgentSkillsInvalidError)}
             </span>
           </div>
         )}
       </div>
       {isExpanded && (
-        <div className="whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
+        <div className="max-h-[160px] overflow-auto whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
           {prompt?.content}
         </div>
       )}

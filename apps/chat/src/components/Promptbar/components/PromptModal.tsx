@@ -44,6 +44,9 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
   );
+  const { isQuickAppEditPrompt } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -71,9 +74,19 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
         }
       }
 
+      if (isQuickAppEditPrompt) {
+        dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
+      }
+
       onToggleEditMode(true);
     },
-    [dispatch, isNewPromptCreating, onToggleEditMode, prompt],
+    [
+      dispatch,
+      isNewPromptCreating,
+      onToggleEditMode,
+      prompt,
+      isQuickAppEditPrompt,
+    ],
   );
 
   const handleGoToEditMode = useCallback(() => {

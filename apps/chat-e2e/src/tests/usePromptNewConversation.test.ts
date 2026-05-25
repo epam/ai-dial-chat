@@ -640,7 +640,7 @@ dialSharedWithMeTest(
           promptPreviewModal.usePromptButton,
           'disabled',
         );
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
       },
     );
 

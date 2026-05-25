@@ -23,6 +23,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
+import { DataService } from '@/src/utils/app/data/data-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
@@ -87,6 +88,40 @@ const initEpic: AppEpic = (action$, state$) =>
         of(FilesActions.initFinish()),
       ),
     ),
+  );
+
+const initFileSizeCacheEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.init.type),
+    switchMap(() =>
+      DataService.getFileSizeCache().pipe(
+        map((cache) => FilesActions.initFileSizeCache(cache)),
+      ),
+    ),
+  );
+
+const syncFileSizeCacheEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.getFilesSuccess.type),
+    switchMap(({ payload }) => {
+      const resolvedIds = new Set(
+        payload.files
+          .filter((file) => file.contentLength)
+          .map((file) => file.id),
+      );
+
+      if (!resolvedIds.size) return EMPTY;
+
+      return DataService.getFileSizeCache().pipe(
+        switchMap((cache) => {
+          const updatedCache = Object.fromEntries(
+            Object.entries(cache).filter(([id]) => !resolvedIds.has(id)),
+          );
+          return DataService.setFileSizeCache(updatedCache);
+        }),
+        ignoreElements(),
+      );
+    }),
   );
 
 const uploadFileEpic: AppEpic = (action$) =>
@@ -811,6 +846,18 @@ const uploadFilesEpic: AppEpic = (action$) =>
           ),
           map(({ percent, result }) => {
             if (result) {
+              if (file.fileContent.size) {
+                DataService.getFileSizeCache()
+                  .pipe(
+                    switchMap((cache) =>
+                      DataService.setFileSizeCache({
+                        ...cache,
+                        [result.id]: file.fileContent.size,
+                      }),
+                    ),
+                  )
+                  .subscribe();
+              }
               return FilesActions.uploadFileSuccess({
                 apiResult: result,
                 showSuccessMessage: false,
@@ -1151,6 +1198,8 @@ const createNewFolderEpic: AppEpic = (action$) =>
 
 export const FilesEpics = combineEpics(
   initEpic,
+  initFileSizeCacheEpic,
+  syncFileSizeCacheEpic,
 
   uploadFileEpic,
   uploadFilesSuccessEpic,

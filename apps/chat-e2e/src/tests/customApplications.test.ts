@@ -23,6 +23,7 @@ import { BaseElement, EntityEditSteps } from '@/src/ui/webElements';
 import {
   DateUtil,
   GeneratorUtil,
+  ItemUtil,
   SortingUtil,
   UserUtil,
   applicationNamePrefix,
@@ -2257,11 +2258,16 @@ dialTest(
     tooltipAssertion,
   }) => {
     setTestIds('EPMRTC-5945', 'EPMRTC-6263', 'EPMRTC-8693');
+    const version = GeneratorUtil.randomEntityVersion();
+    const maxRandomNameLength =
+      ExpectedConstants.maxEntityNameLength -
+      ItemUtil.getUtf8ByteLength(`${ItemUtil.entityIdSeparator}${version}`) -
+      ItemUtil.getUtf8ByteLength(applicationNamePrefix);
     const appEntity = {
       name: `${applicationNamePrefix}${GeneratorUtil.randomString(
-        ExpectedConstants.maxEntityNameLength - 7,
+        Math.max(maxRandomNameLength, 1),
       )}`,
-      version: GeneratorUtil.randomEntityVersion(),
+      version,
     } as DialAIEntityModel;
 
     await dialTest.step('Open create a custom app page', async () => {
@@ -2273,7 +2279,7 @@ dialTest(
     });
 
     await dialTest.step(
-      "Input app's name (159 symbols, no spaces) and version on General Info step",
+      "Input app's name (max UTF-8 bytes without spaces, accounting for version) and version on General Info step",
       async () => {
         await entityEditorGeneralForm.fillInEntityFields({
           name: appEntity.name,

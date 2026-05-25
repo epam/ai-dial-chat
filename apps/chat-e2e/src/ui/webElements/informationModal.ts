@@ -1,8 +1,8 @@
-import { IconSelectors, InformationModalSelectors } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { InformationModalSelectors } from '@/src/ui/selectors';
+import { Popup } from '@/src/ui/webElements/common/popup';
 import { Page } from '@playwright/test';
 
-export class InformationModal extends BaseElement {
+export class InformationModal extends Popup {
   constructor(page: Page) {
     super(page, InformationModalSelectors.container);
   }
@@ -34,7 +34,4 @@ export class InformationModal extends BaseElement {
   public authorValue = this.getChildElementBySelector(
     InformationModalSelectors.authorContainer,
   ).getChildElementBySelector(InformationModalSelectors.authorValue);
-  public cancelButton = this.getChildElementBySelector(
-    IconSelectors.cancelIcon,
-  );
 }

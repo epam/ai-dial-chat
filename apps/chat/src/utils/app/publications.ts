@@ -45,6 +45,7 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import {
   getEntityBucket,
+  getFileRootId,
   getIdWithoutRootPathSegments,
   getRootId,
   isApplicationId,
@@ -59,6 +60,7 @@ import {
 import {
   Conversation,
   ConversationInfo,
+  FolderInterface,
   PublishActions,
 } from '@epam/ai-dial-shared';
 import compact from 'lodash-es/compact';
@@ -79,6 +81,61 @@ export const isEntityIdPublic = (
   return entity.id.startsWith(
     getRootId({ featureType, bucket: PUBLIC_URL_PREFIX }),
   );
+};
+
+export const publishToUrlToOrganizationFolderId = (
+  publishToUrl: string | undefined,
+): string => {
+  const root = getRootId({
+    featureType: FeatureType.File,
+    bucket: PUBLIC_URL_PREFIX,
+  });
+  if (!publishToUrl || publishToUrl === PUBLIC_URL_PREFIX) {
+    return root;
+  }
+  const prefix = `${PUBLIC_URL_PREFIX}/`;
+  if (!publishToUrl.startsWith(prefix)) {
+    return root;
+  }
+  const relativePath = publishToUrl.slice(prefix.length).replace(/\/+$/, '');
+  return relativePath ? constructPath(root, relativePath) : root;
+};
+
+export const organizationFolderIdToPublishPathSuffix = (
+  folderId: string | undefined,
+): string | undefined => {
+  if (!folderId) return undefined;
+  const root = getRootId({
+    featureType: FeatureType.File,
+    bucket: PUBLIC_URL_PREFIX,
+  });
+  if (folderId === root) return undefined;
+  return getIdWithoutRootPathSegments(folderId) || undefined;
+};
+
+export const getOrganizationPublishPathDepth = (
+  folderId: string | undefined,
+): number => {
+  const relative = folderId ? getIdWithoutRootPathSegments(folderId) : '';
+  const segments = relative.split('/').filter(Boolean);
+  return segments.length === 0 ? 0 : segments.length - 1;
+};
+
+export const remapPublicFolderToFilesNamespace = (
+  folder: FolderInterface,
+): FolderInterface => {
+  const bucket = getEntityBucket(folder);
+  const filesRoot = getFileRootId(bucket);
+  const relative = getIdWithoutRootPathSegments(folder.id);
+  const id = relative ? constructPath(filesRoot, relative) : filesRoot;
+  const folderId = getFolderIdFromEntityId(id);
+
+  return {
+    ...folder,
+    id,
+    folderId,
+    publishedWithMe: true,
+  };
 };
 
 export const createFoldersFilesTargetUrl = (id: string) => {
