@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsUrl } from 'class-validator';
 
 /** DIAL Core API attachment object included with a user message. */
 export class DialAttachmentDto {
@@ -22,7 +22,7 @@ export class DialAttachmentDto {
 
   @ApiPropertyOptional({ description: 'Remote URL of the attachment content' })
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['https'], require_tld: true, require_protocol: true })
   url?: string;
 
   @ApiPropertyOptional({ description: 'MIME type of the reference resource' })
@@ -32,6 +32,6 @@ export class DialAttachmentDto {
 
   @ApiPropertyOptional({ description: 'URL of the reference resource' })
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['https'], require_tld: true, require_protocol: true })
   reference_url?: string;
 }
