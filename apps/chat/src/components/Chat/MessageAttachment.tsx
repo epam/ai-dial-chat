@@ -34,15 +34,18 @@ import {
 import {
   AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
+  PDF_CONTENT_TYPE,
   PLOTLY_CONTENT_TYPE,
   VIDEO_TYPES_SET,
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, ErrorsI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
+import { PdfPreviewModal } from '@/src/components/Chat/PdfAttachment/PdfPreviewModal';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -68,7 +71,7 @@ const getSourceDataUrl = (attachment: Attachment): string | undefined => {
   if (attachment.url) {
     return getMappedAttachmentUrl(attachment.url);
   }
-  if (attachment.data) {
+  if (attachment.data?.trim()) {
     return `data:${attachment.type};base64,${attachment.data}`;
   }
 };
@@ -77,6 +80,44 @@ const AttachmentSourceRenderer = ({
   attachment,
 }: AttachmentDataRendererProps) => {
   return <source src={getSourceDataUrl(attachment)} type={attachment.type} />;
+};
+
+const ImageAttachmentRenderer = ({
+  attachment,
+  isFullScreen,
+}: {
+  attachment: Attachment;
+  isFullScreen?: boolean;
+}) => {
+  const { t } = useTranslation(Translation.Chat);
+  const [isImageValid, setIsImageValid] = useState(true);
+  const imageUrl = getSourceDataUrl(attachment);
+  if (!imageUrl) {
+    return (
+      <ErrorMessage error={t(ErrorsI18nKeys.ImageIsDeletedDoesNotExist)} />
+    );
+  }
+  const onImageError = () => {
+    setIsImageValid(false);
+  };
+  if (!isImageValid) {
+    return (
+      <ErrorMessage error={t(ErrorsI18nKeys.ImageIsDeletedDoesNotExist)} />
+    );
+  }
+  return (
+    <img
+      src={imageUrl}
+      className={classNames(
+        'm-0',
+        isFullScreen
+          ? 'size-auto max-h-full max-w-full object-contain'
+          : 'aspect-auto w-full',
+      )}
+      alt="Attachment image"
+      onError={onImageError}
+    />
+  );
 };
 
 const AttachmentDataRenderer = ({
@@ -101,15 +142,9 @@ const AttachmentDataRenderer = ({
 
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
-      <img
-        src={getSourceDataUrl(attachment)}
-        className={classNames(
-          'm-0',
-          isFullScreen
-            ? 'size-auto max-h-full max-w-full object-contain'
-            : 'aspect-auto w-full',
-        )}
-        alt="Attachment image"
+      <ImageAttachmentRenderer
+        attachment={attachment}
+        isFullScreen={isFullScreen}
       />
     );
   }
@@ -306,6 +341,7 @@ export const MessageAttachment = ({
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   const handleResize = useCallback(() => {
     if (wasOpened && anchorRef.current) {
@@ -324,6 +360,7 @@ export const MessageAttachment = ({
   useResizeObserver(anchorRef.current, handleResize);
 
   const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
+  const isPdf = attachment.type === PDF_CONTENT_TYPE && !!attachment.url;
   const Icon = isFolder ? IconFolder : IconFile;
 
   const isOpenable =
@@ -372,6 +409,10 @@ export const MessageAttachment = ({
 
   const handleDropdownClick = () => {
     if (isBorderless || isFullScreen) return;
+    if (isPdf && mappedAttachmentUrl) {
+      setIsPdfModalOpen(true);
+      return;
+    }
     setIsExpanded((isExpanded) => !isExpanded);
     if (isOpenable) {
       setIsOpened((isOpened) => {
@@ -568,6 +609,14 @@ export const MessageAttachment = ({
             </a>
           )}
         </div>
+      )}
+      {isPdf && mappedAttachmentUrl && (
+        <PdfPreviewModal
+          url={mappedAttachmentUrl}
+          title={attachment.title}
+          isOpen={isPdfModalOpen}
+          onClose={() => setIsPdfModalOpen(false)}
+        />
       )}
     </div>
   );

@@ -9,6 +9,7 @@ const initialState: CodeEditorState = {
   fileContentLoadingStatus: UploadStatus.LOADED,
   filesContent: [],
   selectedFileId: undefined,
+  sourcesFolderId: undefined,
 };
 
 export const codeEditorSlice = createSlice({
@@ -17,14 +18,16 @@ export const codeEditorSlice = createSlice({
   reducers: {
     initCodeEditor: (
       state,
-      _action: PayloadAction<{ sourcesFolderId: string }>,
+      action: PayloadAction<{ sourcesFolderId: string }>,
     ) => {
       state.selectedFileId = undefined;
       state.filesContent = [];
+      state.sourcesFolderId = action.payload.sourcesFolderId;
     },
     resetCodeEditor: (state) => {
       state.selectedFileId = undefined;
       state.filesContent = [];
+      state.sourcesFolderId = undefined;
     },
     getFileTextContent: (state, _action: PayloadAction<{ id: string }>) => {
       state.fileContentLoadingStatus = UploadStatus.LOADING;

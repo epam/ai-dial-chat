@@ -19,9 +19,11 @@ export const refreshToolset$ = (toolsetId: string, state: RootState) =>
 
       if (!toolset) {
         return of(
-          UIActions.showErrorToast(
-            translate(errorsMessages.toolsetGetFailed, { name: toolsetId }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(errorsMessages.toolsetGetFailed, {
+              name: toolsetId,
+            }),
+          }),
         );
       }
 
@@ -36,9 +38,11 @@ export const refreshToolset$ = (toolsetId: string, state: RootState) =>
     }),
     catchError(() => {
       return of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.toolsetGetFailed, { name: toolsetId }),
-        ),
+        UIActions.showErrorToast({
+          message: translate(errorsMessages.toolsetGetFailed, {
+            name: toolsetId,
+          }),
+        }),
       );
     }),
   );

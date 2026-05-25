@@ -4,14 +4,20 @@ import {
   catchError,
   concatMap,
   from,
+  of,
   switchMap,
   throwError,
 } from 'rxjs';
 
-import { regenerateConversationId } from '@/src/utils/app/conversation';
+import {
+  getStorageSafeUniqueConversationName,
+  regenerateConversationId,
+} from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
-import { generateNextName } from '@/src/utils/app/folders';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  getStorageSafeUniquePromptName,
+  regeneratePromptId,
+} from '@/src/utils/app/prompts';
 import {
   ApiUtils,
   getOpsApiUrl,
@@ -34,15 +40,11 @@ import {
 import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
+import { AgentUsageStats } from '@/src/types/models';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
 import { DialStorage } from '@/src/types/storage';
 import { ToolsetInfo, ToolsetModel } from '@/src/types/toolsets';
-
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_PROMPT_NAME,
-} from '@/src/constants/default-ui-settings';
 
 import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
@@ -64,50 +66,76 @@ export class ApiStorage implements DialStorage {
   private _applicationApiStorage = new ApplicationApiStorage();
   private _toolsetApiStorage = new ToolsetApiStorage();
 
-  private tryCreateEntity<T extends Conversation | Prompt>(
-    entity: T,
-    entities: T[],
-    apiStorage: ApiEntityStorage<T, T>,
+  private tryCreateEntity<
+    TInfo extends Entity,
+    TEntity extends TInfo & (Conversation | Prompt),
+  >(
+    entity: TEntity,
+    siblingEntities: Pick<Entity, 'name' | 'folderId'>[],
+    apiStorage: ApiEntityStorage<TInfo, TEntity>,
     entityType: BackendResourceType,
-  ): Observable<T> {
+    loadSiblingEntities: (
+      folderId?: string,
+    ) => Observable<Pick<Entity, 'name' | 'folderId'>[]> = () =>
+      of(siblingEntities),
+  ): Observable<TInfo> {
     let retries = 0;
 
     const retry = (
-      entity: T,
-      apiStorage: ApiEntityStorage<T, T>,
-    ): Observable<T> =>
+      entity: TEntity,
+      currentSiblingEntities: Pick<Entity, 'name' | 'folderId'>[],
+      apiStorage: ApiEntityStorage<TInfo, TEntity>,
+    ): Observable<TInfo> =>
       apiStorage.createEntity(entity).pipe(
         catchError((err) => {
           if (retries < MAX_RETRIES_COUNT) {
             retries++;
 
-            const defaultName =
-              entityType === BackendResourceType.CONVERSATION
-                ? DEFAULT_CONVERSATION_NAME
-                : DEFAULT_PROMPT_NAME;
-            const newName = generateNextName(
-              defaultName,
-              entity.name,
-              entities.filter((e) => e.folderId === entity.folderId),
+            return loadSiblingEntities(entity.folderId).pipe(
+              switchMap((reloadedSiblingEntities) => {
+                const siblings = reloadedSiblingEntities.length
+                  ? reloadedSiblingEntities
+                  : currentSiblingEntities;
+                const existingNames = siblings
+                  .filter((item) => item.folderId === entity.folderId)
+                  .map((item) => item.name);
+                const newName =
+                  entityType === BackendResourceType.CONVERSATION
+                    ? getStorageSafeUniqueConversationName({
+                        conversation: entity as Conversation,
+                        desiredName: entity.name,
+                        existingNames,
+                      })
+                    : getStorageSafeUniquePromptName({
+                        prompt: entity as Prompt,
+                        desiredName: entity.name,
+                        existingNames,
+                      });
+
+                const updatedEntity = {
+                  ...entity,
+                  name: newName,
+                };
+
+                const updatedEntityWithRegeneratedId =
+                  entityType === BackendResourceType.CONVERSATION
+                    ? regenerateConversationId(updatedEntity as Conversation)
+                    : regeneratePromptId(updatedEntity as Prompt);
+
+                return retry(
+                  updatedEntityWithRegeneratedId as TEntity,
+                  siblings,
+                  apiStorage,
+                );
+              }),
             );
-            const updatedEntity = {
-              ...entity,
-              name: newName,
-            };
-
-            const updatedEntityWithRegeneratedId =
-              entityType === BackendResourceType.CONVERSATION
-                ? regenerateConversationId(updatedEntity as Conversation)
-                : regeneratePromptId(updatedEntity as Prompt);
-
-            return retry(updatedEntityWithRegeneratedId as T, apiStorage);
           }
 
           return throwError(() => err);
         }),
       );
 
-    return retry(entity, apiStorage);
+    return retry(entity, siblingEntities, apiStorage);
   }
 
   getConversationsFolders(path?: string): Observable<FolderInterface[]> {
@@ -163,20 +191,15 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.createEntity(conversation).pipe(
       catchError(() => {
         return this.getConversations(conversation.folderId).pipe(
-          switchMap((conversations) => {
-            const updatedConv = {
-              ...conversation,
-              name: generateNextName(
-                DEFAULT_CONVERSATION_NAME,
-                conversation.name,
-                conversations,
-              ),
-            };
-
-            return this._conversationApiStorage.createEntity(
-              regenerateConversationId(updatedConv),
-            );
-          }),
+          switchMap((conversations) =>
+            this.tryCreateEntity(
+              conversation,
+              conversations,
+              this._conversationApiStorage,
+              BackendResourceType.CONVERSATION,
+              (folderId) => this.getConversations(folderId),
+            ),
+          ),
           switchMap((conversation) => this.getConversation(conversation)),
         );
       }),
@@ -203,6 +226,7 @@ export class ApiStorage implements DialStorage {
               [...conversations, ...apiConversations],
               this._conversationApiStorage,
               BackendResourceType.CONVERSATION,
+              (folderId) => this.getConversations(folderId),
             ),
           ),
         ),
@@ -237,16 +261,15 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.createEntity(prompt).pipe(
       catchError(() => {
         return this.getPrompts(prompt.folderId).pipe(
-          switchMap((prompts) => {
-            const updatedPrompt = {
-              ...prompt,
-              name: generateNextName(DEFAULT_PROMPT_NAME, prompt.name, prompts),
-            };
-
-            return this._promptApiStorage.createEntity(
-              regeneratePromptId(updatedPrompt),
-            );
-          }),
+          switchMap((prompts) =>
+            this.tryCreateEntity(
+              prompt,
+              prompts,
+              this._promptApiStorage,
+              BackendResourceType.PROMPT,
+              (folderId) => this.getPrompts(folderId),
+            ),
+          ),
           switchMap((prompt) => this.getPrompt(prompt)),
         );
       }),
@@ -271,6 +294,7 @@ export class ApiStorage implements DialStorage {
               [...prompts, ...apiPrompts],
               this._promptApiStorage,
               BackendResourceType.PROMPT,
+              (folderId) => this.getPrompts(folderId) as Observable<Prompt[]>,
             ),
           ),
         ),
@@ -413,6 +437,10 @@ export class ApiStorage implements DialStorage {
 
   getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
     return this._applicationApiStorage.getConfigurationSchema(applicationId);
+  }
+
+  getAgentLimits(id: string): Observable<AgentUsageStats> {
+    return this._applicationApiStorage.getAgentLimits(id);
   }
 
   // Toolsets

@@ -54,4 +54,5 @@ export interface SettingsState {
     withoutTitleTypes: string[];
   };
   stageContentLimit: number;
+  resourceMaxSegmentBytes: number;
 }

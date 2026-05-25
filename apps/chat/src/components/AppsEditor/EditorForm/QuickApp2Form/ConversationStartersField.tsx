@@ -38,12 +38,12 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
     val: string,
   ) => {
     const updated = value.map((s, i) =>
-      i === index ? { ...s, [field]: val.trim() } : s,
+      i === index ? { ...s, [field]: val.length === 1 ? val.trim() : val } : s,
     );
     const isLastRow = index === value.length - 1;
     const updatedItem = updated[index];
 
-    if (isLastRow && (updatedItem.title || updatedItem.text)) {
+    if (isLastRow && (updatedItem.title.trim() || updatedItem.text.trim())) {
       onChange([...updated, createEmptyStarter()]);
     } else {
       onChange(updated);

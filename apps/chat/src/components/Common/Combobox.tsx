@@ -6,9 +6,8 @@ import {
   useFloating,
 } from '@floating-ui/react';
 import {
-  FC,
+  ReactNode,
   RefObject,
-  createElement,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -32,11 +31,11 @@ import { useCombobox } from 'downshift';
 
 interface Props<T> {
   items: T[];
-  initialSelectedItem?: T;
+  selectedItem?: T;
   label?: string;
   placeholder?: string;
   notFoundPlaceholder?: string;
-  itemRow?: FC<{ item: T; truncate?: boolean }>;
+  itemRow?: ({ item, truncate }: { item: T; truncate?: boolean }) => ReactNode;
   disabled?: boolean;
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
@@ -48,7 +47,7 @@ interface Props<T> {
 
 export const Combobox = <T,>({
   items,
-  initialSelectedItem,
+  selectedItem: propSelectedItem,
   label,
   placeholder,
   notFoundPlaceholder,
@@ -90,7 +89,7 @@ export const Combobox = <T,>({
     getInputProps,
     getItemProps,
     highlightedIndex,
-    selectedItem,
+    selectedItem: localSelectedItem,
     inputValue,
     setInputValue,
   } = useCombobox({
@@ -107,7 +106,7 @@ export const Combobox = <T,>({
       );
     },
     items: displayedItems,
-    selectedItem: initialSelectedItem,
+    initialSelectedItem: propSelectedItem,
     itemToString: (item: T | null) => (item ? getItemLabel(item) : 'null item'),
     onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
       if (!newSelectedItem) {
@@ -118,6 +117,8 @@ export const Combobox = <T,>({
     },
     defaultInputValue: '',
   });
+
+  const selectedItem = propSelectedItem ?? localSelectedItem;
 
   useEffect(() => {
     setInputValue('');
@@ -159,12 +160,9 @@ export const Combobox = <T,>({
           <div className="relative w-full" data-qa="selected-agent">
             <Tooltip
               tooltip={
-                itemRow &&
-                !!selectedItem &&
-                createElement(itemRow, {
-                  item: selectedItem,
-                  truncate: false,
-                })
+                !!itemRow && !!selectedItem
+                  ? itemRow({ item: selectedItem, truncate: false })
+                  : null
               }
               hideTooltip={!!isOpen}
               triggerClassName="w-full"
@@ -191,7 +189,7 @@ export const Combobox = <T,>({
                 ref={selectedItemRef}
                 className="pointer-events-none absolute left-3 top-0 flex w-full items-center"
               >
-                {createElement(itemRow, { item: selectedItem })}
+                {itemRow({ item: selectedItem })}
               </div>
             )}
           </div>
@@ -243,15 +241,11 @@ export const Combobox = <T,>({
               >
                 <Tooltip
                   tooltip={
-                    itemRow
-                      ? createElement(itemRow, { item, truncate: false })
-                      : getItemLabel(item)
+                    itemRow?.({ item, truncate: false }) ?? getItemLabel(item)
                   }
                   triggerClassName="w-full"
                 >
-                  {itemRow
-                    ? createElement(itemRow, { item })
-                    : getItemLabel(item)}
+                  {itemRow?.({ item }) ?? getItemLabel(item)}
                 </Tooltip>
               </li>
             ))

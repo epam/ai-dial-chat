@@ -18,10 +18,11 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
+import { SkillValidationService } from '@/src/utils/app/data/skill-validation-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import {
   addGeneratedFolderId,
-  generateNextName,
+  fitFolderNameToStorageLimits,
   getFolderFromId,
   getParentFolderIdsFromFolderId,
   updateChildAndCurrentFoldersIds,
@@ -31,6 +32,7 @@ import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   getPromptInfoFromId,
+  getStorageSafeUniquePromptName,
   parseVariablesFromContent,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
@@ -53,9 +55,12 @@ import {
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
-import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  PromptsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
-import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { CommonI18nKeys } from '@/src/constants/i18n';
 import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
@@ -135,11 +140,11 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
           console.error("New prompt wasn't created:", err);
           return concat(
             of(
-              UIActions.showErrorToast(
-                translate(CommonI18nKeys.ErrorCreatingPromptExists, {
+              UIActions.showErrorToast({
+                message: translate(CommonI18nKeys.ErrorCreatingPromptExists, {
                   ns: Translation.Common,
                 }),
-              ),
+              }),
             ),
             of(PromptsActions.setIsNewPromptCreating(false)),
           );
@@ -160,11 +165,11 @@ const saveNewPromptEpic: AppEpic = (action$) =>
             console.error(err);
             return concat(
               of(
-                UIActions.showErrorToast(
-                  translate(CommonI18nKeys.ErrorSavingPromptExists, {
+                UIActions.showErrorToast({
+                  message: translate(CommonI18nKeys.ErrorSavingPromptExists, {
                     ns: Translation.Common,
                   }),
-                ),
+                }),
               ),
               of(
                 PromptsActions.deletePromptsComplete({
@@ -195,9 +200,9 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
           const message = CommonI18nKeys.ErrorSavingFolders;
           console.error(message, err);
           return of(
-            UIActions.showErrorToast(
-              translate(message, { ns: Translation.Common }),
-            ),
+            UIActions.showErrorToast({
+              message: translate(message, { ns: Translation.Common }),
+            }),
           );
         }),
       );
@@ -205,31 +210,50 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const savePromptEpic: AppEpic = (action$) =>
+const savePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.savePrompt.type),
     concatMap(({ payload }) =>
       PromptService.updatePrompt(payload.prompt).pipe(
         switchMap(() => {
-          if (payload.selectSaved) {
-            return of(
-              PromptsActions.selectPrompt({
-                promptId: payload.prompt.id,
-                isApproveRequiredResource: !!payload.prompt.publicationInfo,
-              }),
+          const appDetails = ApplicationSelectors.selectApplicationDetail(
+            state$.value,
+          );
+          const actions: Observable<AppAction>[] = [];
+
+          if (appDetails?.id && payload.prompt.id && payload.prompt.content) {
+            actions.push(
+              of(
+                PromptsActions.validateSkill({
+                  promptId: payload.prompt.id,
+                  deploymentId: appDetails.id,
+                  content: payload.prompt.content,
+                }),
+              ),
             );
           }
 
-          return EMPTY;
+          if (payload.selectSaved) {
+            actions.push(
+              of(
+                PromptsActions.selectPrompt({
+                  promptId: payload.prompt.id,
+                  isApproveRequiredResource: !!payload.prompt.publicationInfo,
+                }),
+              ),
+            );
+          }
+
+          return concat(...actions);
         }),
         catchError((err) => {
           console.error(err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.ErrorSavingPromptExists, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.ErrorSavingPromptExists, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       ),
@@ -241,11 +265,11 @@ const movePromptFailEpic: AppEpic = (action$) =>
     ofType(PromptsActions.movePromptFail.type),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.PromptAlreadyExists, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.PromptAlreadyExists, {
             ns: Translation.Common,
           }),
-        ),
+        }),
       );
     }),
   );
@@ -276,11 +300,11 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload, prompt }) => {
       if (!prompt) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.PromptHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(CommonI18nKeys.PromptHasBeenDeleted, {
               ns: Translation.Common,
             }),
-          ),
+          }),
         );
       }
 
@@ -327,12 +351,12 @@ const deletePromptEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.ErrorDeletingPrompt, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.ErrorDeletingPrompt, {
                 ns: Translation.Common,
                 promptName: payload.prompt.name,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -375,12 +399,12 @@ const deletePromptsEpic: AppEpic = (action$) =>
             iif(
               () => failedNames.filter(Boolean).length > 0,
               of(
-                UIActions.showErrorToast(
-                  translate(CommonI18nKeys.ErrorDeletingPrompts, {
+                UIActions.showErrorToast({
+                  message: translate(CommonI18nKeys.ErrorDeletingPrompts, {
                     ns: Translation.Common,
                     failedNames: failedNames.filter(Boolean).join('", "'),
                   }),
-                ),
+                }),
               ),
               EMPTY,
             ),
@@ -406,7 +430,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
+      const newFolder = addGeneratedFolderId(
+        fitFolderNameToStorageLimits({ ...folder, ...payload.values }),
+      );
 
       if (payload.folderId === newFolder.id) {
         return of(
@@ -551,11 +577,11 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ prompt, wasUploaded }) => {
       if (!prompt) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.PromptHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(CommonI18nKeys.PromptHasBeenDeleted, {
               ns: Translation.Common,
             }),
-          ),
+          }),
         );
       }
 
@@ -572,11 +598,13 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ...omit(prompt, ['publicationInfo']),
         ...getDefaultEntityProps(),
         folderId: promptFolderId,
-        name: generateNextName(
-          DEFAULT_PROMPT_NAME,
-          prompt.name,
-          prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
-        ),
+        name: getStorageSafeUniquePromptName({
+          prompt: { ...prompt, folderId: promptFolderId },
+          desiredName: prompt.name,
+          existingNames: prompts
+            .filter((p) => p.folderId === promptFolderId)
+            .map((p) => p.name),
+        }),
       });
 
       return concat(
@@ -817,11 +845,14 @@ const uploadFoldersEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error('Error during upload prompts and folders', err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.ErrorDuringUploadPromptsAndFolders, {
-                ns: Translation.Common,
-              }),
-            ),
+            UIActions.showErrorToast({
+              message: translate(
+                CommonI18nKeys.ErrorDuringUploadPromptsAndFolders,
+                {
+                  ns: Translation.Common,
+                },
+              ),
+            }),
           );
         }),
       ),
@@ -831,7 +862,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
 const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PromptsActions.uploadPrompt.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const originalPrompt = PromptsSelectors.selectPrompt(
         state$.value,
         payload.promptId,
@@ -851,11 +882,11 @@ const uploadPromptEpic: AppEpic = (action$, state$) =>
       return concat(
         of(PromptsActions.uploadPromptFail()),
         of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.ErrorUploadingPrompt, {
+          UIActions.showErrorToast({
+            message: translate(CommonI18nKeys.ErrorUploadingPrompt, {
               ns: Translation.Common,
             }),
-          ),
+          }),
         ),
       );
     }),
@@ -918,11 +949,11 @@ const applyPromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ prompt, wasUploaded }) => {
       if (!prompt) {
         return of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.PromptHasBeenDeleted, {
+          UIActions.showErrorToast({
+            message: translate(CommonI18nKeys.PromptHasBeenDeleted, {
               ns: Translation.Common,
             }),
-          ),
+          }),
         );
       }
 
@@ -1037,6 +1068,7 @@ const selectPromptEpic: AppEpic = (action$, state$) =>
           PromptsActions.setSelectedPrompt({
             promptId: payload.promptId,
             isApproveRequiredResource: payload.isApproveRequiredResource,
+            isQuickAppEditPrompt: payload.isQuickAppEditPrompt,
           }),
         ),
         of(
@@ -1057,6 +1089,59 @@ const hidePromptbarEpic: AppEpic = (action$) =>
     ),
     switchMap(() =>
       isTabletScreen() ? of(UIActions.setShowPromptbar(false)) : EMPTY,
+    ),
+  );
+
+const autoValidateSkillEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PromptsActions.uploadPromptSuccess.type),
+    mergeMap(({ payload }) => {
+      const { prompt } = payload;
+      if (!prompt?.id || !prompt?.content) {
+        return EMPTY;
+      }
+
+      const appDetails = ApplicationSelectors.selectApplicationDetail(
+        state$.value,
+      );
+      if (!appDetails?.id) {
+        return EMPTY;
+      }
+
+      return of(
+        PromptsActions.validateSkill({
+          promptId: prompt.id,
+          deploymentId: appDetails.id,
+          content: prompt.content,
+        }),
+      );
+    }),
+  );
+
+const validateSkillEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(PromptsActions.validateSkill.type),
+    mergeMap(({ payload }) =>
+      SkillValidationService.validate(
+        payload.deploymentId,
+        payload.promptId,
+      ).pipe(
+        map((result) =>
+          PromptsActions.validateSkillSuccess({
+            promptId: payload.promptId,
+            isValid: !!result.valid,
+            validatedContent: payload.content,
+            deploymentId: payload.deploymentId,
+            message: result.message,
+          }),
+        ),
+        catchError((err) => {
+          console.warn('Skill validation failed:', err);
+          return of(
+            PromptsActions.validateSkillFail({ promptId: payload.promptId }),
+          );
+        }),
+      ),
     ),
   );
 
@@ -1087,4 +1172,6 @@ export const PromptsEpics = combineEpics(
   getPromptMetadataEpic,
   selectPromptEpic,
   hidePromptbarEpic,
+  autoValidateSkillEpic,
+  validateSkillEpic,
 );

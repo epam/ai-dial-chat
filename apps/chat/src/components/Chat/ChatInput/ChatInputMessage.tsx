@@ -11,6 +11,7 @@ import React, {
 import classNames from 'classnames';
 
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
@@ -56,6 +57,7 @@ import { MicrophoneButton } from './MicrophoneButton';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
+import { TranscribingOverlay } from './TranscribingOverlay';
 import { VoiceRecordingOverlay } from './VoiceRecordingOverlay';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
@@ -115,6 +117,9 @@ export const ChatInputMessage = Inversify.register(
     );
     const isReplay = useAppSelector(
       ConversationsSelectors.selectIsReplaySelectedConversations,
+    );
+    const isPlayback = useAppSelector(
+      ConversationsSelectors.selectIsPlaybackSelectedConversations,
     );
     const canAttachFiles = useAppSelector(
       ConversationsSelectors.selectCanAttachFile,
@@ -200,18 +205,6 @@ export const ChatInputMessage = Inversify.register(
       clearAudioBlob,
     } = useVoiceRecorder(supportedAudioTypes);
 
-    useEffect(() => {
-      if (!audioBlob) return;
-
-      dispatch(
-        ChatActions.handleVoiceRecording({
-          audioBlob,
-          fileExtension: voiceFileExtension,
-        }),
-      );
-      clearAudioBlob();
-    }, [audioBlob, voiceFileExtension, dispatch, clearAudioBlob]);
-
     const shouldRegenerate =
       isLastMessageError ||
       (isLastAssistantMessageEmpty && !messageIsStreaming);
@@ -277,6 +270,34 @@ export const ChatInputMessage = Inversify.register(
       isLoading,
       selectedPrompt,
     } = usePromptSelection(maxTokensLength, modelTokenizer, '');
+
+    const { getCursorPosition } = useTextareaInsertInPosition(
+      textareaRef,
+      content,
+      setContent,
+    );
+
+    useEffect(() => {
+      if (!audioBlob) return;
+
+      const selection = isAsrMode ? getCursorPosition() : undefined;
+
+      dispatch(
+        ChatActions.handleVoiceRecording({
+          audioBlob,
+          fileExtension: voiceFileExtension,
+          selection,
+        }),
+      );
+      clearAudioBlob();
+    }, [
+      audioBlob,
+      voiceFileExtension,
+      dispatch,
+      clearAudioBlob,
+      isAsrMode,
+      getCursorPosition,
+    ]);
 
     const isSchemaValueValid = useMemo(() => {
       const schema =
@@ -542,6 +563,13 @@ export const ChatInputMessage = Inversify.register(
       );
     }, []);
 
+    const handleStopRecording = useCallback(() => {
+      if (isAsrMode) {
+        dispatch(ChatActions.setIsTranscribing(true));
+      }
+      stopRecording();
+    }, [isAsrMode, stopRecording, dispatch]);
+
     const tooltipContent = (): string => {
       if (isDisabledInputFeature && disabledInputFeatureData?.description) {
         return disabledInputFeatureData.description;
@@ -586,6 +614,11 @@ export const ChatInputMessage = Inversify.register(
     const isMicDisabled = useMemo(
       () => isDisabled || (isAsrMode && messageIsStreaming),
       [isDisabled, isAsrMode, messageIsStreaming],
+    );
+
+    const isMicHidden = useMemo(
+      () => isPlayback || isReplay || !canRecordAudio || isMessageError,
+      [isPlayback, isReplay, canRecordAudio, isMessageError],
     );
 
     useEffect(() => {
@@ -658,36 +691,17 @@ export const ChatInputMessage = Inversify.register(
             />
           )}
           {isTranscribing && (
-            <div
-              className="absolute inset-0 z-10 flex items-center justify-center rounded bg-layer-3"
-              data-qa="transcribing-overlay"
-            >
-              <div className="flex items-center gap-2">
-                <div className="size-4 animate-spin rounded-full border-2 border-x-transparent border-b-transparent border-t-current text-secondary" />
-                <span className="text-sm text-secondary">
-                  {t(ChatI18nKeys.TranscribingAudio).replace(/\.+$/, '')}
-                  <span
-                    className="inline-flex w-[1.2em] text-left"
-                    aria-hidden="true"
-                  >
-                    <span className="animate-pulse">.</span>
-                    <span className="animate-pulse [animation-delay:200ms]">
-                      .
-                    </span>
-                    <span className="animate-pulse [animation-delay:400ms]">
-                      .
-                    </span>
-                  </span>
-                </span>
-              </div>
-            </div>
+            <TranscribingOverlay
+              text={t(ChatI18nKeys.TranscribingAudio)}
+              dataQa="transcribing-overlay"
+            />
           )}
-          {canRecordAudio && (
+          {!isMicHidden && (
             <MicrophoneButton
               ref={micButtonRef}
               isRecording={isRecording}
               onStartRecording={startRecording}
-              onStopRecording={stopRecording}
+              onStopRecording={handleStopRecording}
               error={voiceError}
               disabled={isMicDisabled}
             />
@@ -700,6 +714,7 @@ export const ChatInputMessage = Inversify.register(
               isLastMessageError={isLastMessageError}
               isLoading={isLoading}
               isSendDisabled={isSendDisabled}
+              microphoneButtonHidden={isMicHidden}
             />
           )}
           {canAttach && (

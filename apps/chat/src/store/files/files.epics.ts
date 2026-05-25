@@ -23,7 +23,10 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
+import { DataService } from '@/src/utils/app/data/data-service';
 import { FileService } from '@/src/utils/app/data/file-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
+import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import {
   constructPath,
   getDownloadPath,
@@ -55,10 +58,18 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
-import { FilesSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  FilesSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
-import { CommonI18nKeys, FilesI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  CommonI18nKeys,
+  FilesI18nKeys,
+} from '@/src/constants/i18n';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
@@ -77,6 +88,40 @@ const initEpic: AppEpic = (action$, state$) =>
         of(FilesActions.initFinish()),
       ),
     ),
+  );
+
+const initFileSizeCacheEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.init.type),
+    switchMap(() =>
+      DataService.getFileSizeCache().pipe(
+        map((cache) => FilesActions.initFileSizeCache(cache)),
+      ),
+    ),
+  );
+
+const syncFileSizeCacheEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.getFilesSuccess.type),
+    switchMap(({ payload }) => {
+      const resolvedIds = new Set(
+        payload.files
+          .filter((file) => file.contentLength)
+          .map((file) => file.id),
+      );
+
+      if (!resolvedIds.size) return EMPTY;
+
+      return DataService.getFileSizeCache().pipe(
+        switchMap((cache) => {
+          const updatedCache = Object.fromEntries(
+            Object.entries(cache).filter(([id]) => !resolvedIds.has(id)),
+          );
+          return DataService.setFileSizeCache(updatedCache);
+        }),
+        ignoreElements(),
+      );
+    }),
   );
 
 const uploadFileEpic: AppEpic = (action$) =>
@@ -227,12 +272,12 @@ const renameFolderFailEpic: AppEpic = (action$) =>
     ofType(FilesActions.renameFolderFail.type),
     switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(FilesI18nKeys.FailedToRename, {
+        UIActions.showErrorToast({
+          message: translate(FilesI18nKeys.FailedToRename, {
             ns: Translation.Files,
             folderName: getFolderFromId(payload.oldId, FeatureType.File).name,
           }),
-        ),
+        }),
       );
     }),
   );
@@ -301,7 +346,7 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
             ];
             if (payload.autoChoseFiles) {
               actions.push(
-                FilesActions.setChosenFiles({
+                FilesActions.addChosenFiles({
                   ids: files.map((file) => file.id),
                 }),
               );
@@ -336,15 +381,16 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
           ];
           if (payload.autoChoseFiles) {
             actions.push(
-              FilesActions.setChosenFiles({
+              FilesActions.addChosenFiles({
                 ids: files.map((file) => file.id),
               }),
             );
           }
           return from(actions);
         }),
-        catchError(() => {
-          return of(FilesActions.getFullListingFail());
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(FilesActions.getFullListingFail({ traceId }));
         }),
       );
     }),
@@ -542,9 +588,9 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const setChosenFolderEpic: AppEpic = (action$, state$) =>
+const addChosenFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(FilesActions.setChosenFolder.type),
+    ofType(FilesActions.addChosenFolder.type),
     mergeMap(({ payload }) => {
       const { folderId } = payload;
       const folders = FilesSelectors.selectFolders(state$.value);
@@ -600,17 +646,19 @@ const copyFilesEpic: AppEpic = (action$) =>
             if (error?.name === 'AbortError') {
               return EMPTY;
             }
+            const { traceId } = parseApiError(error);
 
             return of(
               FilesActions.copyFilesFail({
                 files: payload.files,
                 destinationFolder: payload.destinationFolder,
               }),
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToCopy, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToCopy, {
                   ns: Translation.Files,
                 }),
-              ),
+                traceId,
+              }),
             );
           }),
           takeUntil(action$.pipe(ofType(FilesActions.cancelCopyingFiles.type))),
@@ -656,16 +704,18 @@ const moveFilesEpic: AppEpic = (action$) =>
             if (error?.name === 'AbortError') {
               return EMPTY;
             }
+            const { traceId } = parseApiError(error);
 
             return of(
               FilesActions.moveFilesFail({
                 files: payload.files,
               }),
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToMove, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToMove, {
                   ns: Translation.Files,
                 }),
-              ),
+                traceId,
+              }),
             );
           }),
           takeUntil(action$.pipe(ofType(FilesActions.cancelMovingFiles.type))),
@@ -694,27 +744,30 @@ const deleteFilesEpic: AppEpic = (action$) =>
             ]),
           );
         }),
-        catchError(() => {
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
           return of(
             FilesActions.deleteFilesFail({
               files: payload.files,
             }),
-            UIActions.showErrorToast(
-              translate(FilesI18nKeys.FailedToDeleteFiles, {
+            UIActions.showErrorToast({
+              message: translate(FilesI18nKeys.FailedToDeleteFiles, {
                 ns: Translation.Files,
               }),
-            ),
+              traceId,
+            }),
           );
         }),
       );
     }),
   );
 
-const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
+const downloadFilesAsArchiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(FilesActions.downloadFilesAsArchive.type),
     switchMap(
       (action: ReturnType<typeof FilesActions.downloadFilesAsArchive>) => {
+        const appName = SettingsSelectors.selectAppName(state$.value);
         const { files } = action.payload;
 
         if (files.length === 1 && files[0].nodeType === DialFileNodeType.ITEM) {
@@ -722,11 +775,11 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
           const filePath = file.path || file.id;
           if (!filePath) {
             return of(
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToDownload, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
-              ),
+              }),
               FilesActions.downloadFilesAsArchiveFail(),
             );
           }
@@ -734,15 +787,17 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
           return of(FilesActions.downloadFilesAsArchiveSuccess());
         }
 
-        return from(FileService.downloadFilesAsArchive(files)).pipe(
+        return from(FileService.downloadFilesAsArchive(files, appName)).pipe(
           map(() => FilesActions.downloadFilesAsArchiveSuccess()),
-          catchError(() => {
+          catchError((err) => {
+            const { traceId } = parseApiError(err);
             return of(
-              UIActions.showErrorToast(
-                translate(FilesI18nKeys.FailedToDownload, {
+              UIActions.showErrorToast({
+                message: translate(FilesI18nKeys.FailedToDownload, {
                   ns: Translation.Files,
                 }),
-              ),
+                traceId,
+              }),
               FilesActions.downloadFilesAsArchiveFail(),
             );
           }),
@@ -791,6 +846,18 @@ const uploadFilesEpic: AppEpic = (action$) =>
           ),
           map(({ percent, result }) => {
             if (result) {
+              if (file.fileContent.size) {
+                DataService.getFileSizeCache()
+                  .pipe(
+                    switchMap((cache) =>
+                      DataService.setFileSizeCache({
+                        ...cache,
+                        [result.id]: file.fileContent.size,
+                      }),
+                    ),
+                  )
+                  .subscribe();
+              }
               return FilesActions.uploadFileSuccess({
                 apiResult: result,
                 showSuccessMessage: false,
@@ -899,21 +966,23 @@ const uploadArchiveEpic: AppEpic = (action$) =>
             }),
           ),
         ),
-        catchError(() =>
-          of(
-            UIActions.showErrorToast(
-              translate(FilesI18nKeys.FailedToUploadArchive, {
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(
+            UIActions.showErrorToast({
+              message: translate(FilesI18nKeys.FailedToUploadArchive, {
                 ns: Translation.Files,
               }),
-            ),
+              traceId,
+            }),
             FilesActions.uploadArchiveFail(),
-          ),
-        ),
+          );
+        }),
       );
     }),
   );
 
-const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
+const copyMoveFilesResultToastEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(
       FilesActions.copyFilesSuccess.type,
@@ -931,6 +1000,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       const items = request.files;
       const isCopy = FilesActions.copyFilesSuccess.match(action);
       const verbPast = isCopy ? 'copied' : 'moved';
+      const reviewBucket = getCurrentReviewBucket(state$.value, router);
 
       if (items.length > 0) {
         const destinationUrl = action.payload.request.destinationFolder;
@@ -938,7 +1008,9 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
         const { name, bucket } = splitEntityId(path);
         const folderPlaceholder = destinationUrl.replace(
           `files/${bucket}`,
-          getRootFolderPlaceholderName(bucket),
+          bucket === reviewBucket
+            ? translate(ChatI18nKeys.ReviewFiles, { ns: Translation.Chat })
+            : getRootFolderPlaceholderName(bucket),
         );
         if (items.length === 1) {
           return UIActions.showToast({
@@ -1126,6 +1198,8 @@ const createNewFolderEpic: AppEpic = (action$) =>
 
 export const FilesEpics = combineEpics(
   initEpic,
+  initFileSizeCacheEpic,
+  syncFileSizeCacheEpic,
 
   uploadFileEpic,
   uploadFilesSuccessEpic,
@@ -1144,7 +1218,7 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
-  setChosenFolderEpic,
+  addChosenFolderEpic,
   copyFilesEpic,
   moveFilesEpic,
   deleteFilesEpic,

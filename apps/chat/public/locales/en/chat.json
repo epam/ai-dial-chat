@@ -41,6 +41,14 @@
   "Copied!": "Copied!",
   "Copy stage content": "Copy stage content",
   "Download": "Download",
+  "View PDF": "View PDF",
+  "Failed to load PDF: {{error}}": "Failed to load PDF: {{error}}",
+  "Page": "Page",
+  "Pages": "Pages",
+  "Page Fit": "Page Fit",
+  "Auto": "Auto",
+  "Zoom in": "Zoom in",
+  "Zoom out": "Zoom out",
   "Conversation with name \"{{newName}}\" already exists in this folder.": "Conversation with name \"{{newName}}\" already exists in this folder.",
   "Using a dot at the end of a name is not permitted.": "Using a dot at the end of a name is not permitted.",
   "Rename conversation": "Rename conversation",
@@ -59,6 +67,7 @@
   "Agent": "Agent",
   "Clear conversation messages": "Clear conversation messages",
   "Stop": "Stop",
+  "Path": "Path",
   "Stop playback": "Stop playback",
   "Delete conversation from compare mode": "Delete conversation from compare mode",
   "Confirm deleting all messages in the conversation": "Confirm deleting all messages in the conversation",
@@ -353,5 +362,7 @@
   "Error happened during answering. Please check your internet connection and try again.": "Error happened during answering. Please check your internet connection and try again.",
   "Response format": "Response format",
   "Markdown": "Markdown",
-  "Plain text": "Plain text"
+  "Plain text": "Plain text",
+  "You don't have any files": "You don't have any files",
+  "Select a file from the tree": "Select a file from the tree"
 }

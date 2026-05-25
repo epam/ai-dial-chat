@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 @import '@epam/ai-dial-ui-kit/styles.css';
+@import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
@@ -31,6 +32,27 @@
   .break-words {
     word-break: break-word;
     overflow-wrap: break-word;
+  }
+  /* light */
+  .light input::selection {
+    background: #b3d4fc;
+    color: #000;
+  }
+
+  .light input::-moz-selection {
+    background: #b3d4fc;
+    color: #000;
+  }
+
+  /* dark */
+  .dark input::selection {
+    background: #1d63a9;
+    color: #fff;
+  }
+
+  .dark input::-moz-selection {
+    background: #1d63a9;
+    color: #fff;
   }
 }
 

@@ -1,5 +1,7 @@
 // @ts-check
 
+const fs = require('fs');
+const path = require('path');
 const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
@@ -81,17 +83,17 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/marketplace/share/:slug([A-Za-z0-9-]+)',
+        source: '/marketplace/share/:slug([^/]+)',
         destination: '/marketplace/?share=:slug',
         permanent: false,
       },
       {
-        source: '/share/:slug([A-Za-z0-9-]+)',
+        source: '/share/:slug([^/]+)',
         destination: '/?share=:slug',
         permanent: false,
       },
       {
-        source: '/models/:slug([A-Za-z0-9@.-]+)',
+        source: '/models/:slug([^/]+)',
         destination: '/?isolated-model-id=:slug',
         permanent: false,
       },
@@ -117,6 +119,21 @@ const nextConfig = {
   },
 
   webpack(config, { isServer }) {
+    if (!isServer) {
+      // Copy pdfjs worker to public/ so it's served locally instead of falling
+      // back to an external CDN (which is blocked by script-src CSP).
+      const workerSrc = path.join(
+        __dirname,
+        '../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+      );
+      if (fs.existsSync(workerSrc)) {
+        fs.copyFileSync(
+          workerSrc,
+          path.join(__dirname, 'public/pdf.worker.min.mjs'),
+        );
+      }
+    }
+
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
@@ -170,7 +187,19 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       'micromark-extension-math': 'micromark-extension-llm-math',
+      '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css': path.join(
+        __dirname,
+        '../../node_modules/@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css',
+      ),
     };
+
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /protobufjs[\\/]src[\\/]util[\\/]inquire\.js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
 
     return config;
   },

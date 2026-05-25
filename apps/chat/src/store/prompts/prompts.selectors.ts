@@ -8,14 +8,17 @@ import {
 import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
   getFilteredFolders,
-  getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getPartialAndFullyChosenFolders,
+  getStorageSafeUniqueFolderName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  getStorageSafeUniquePromptName,
+  regeneratePromptId,
+} from '@/src/utils/app/prompts';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   doesEntityContainSearchTerm,
@@ -23,18 +26,12 @@ import {
   isSearchTermMatched,
 } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 import { RootState } from '@/src/types/store';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-
-import {
-  DEFAULT_FOLDER_NAME,
-  DEFAULT_PROMPT_NAME,
-} from '@/src/constants/default-ui-settings';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
 
@@ -189,6 +186,7 @@ const selectSelectedPromptId = createSelector([rootSelector], (state) => {
     selectedPromptId: state.selectedPromptId,
     isSelectedPromptApproveRequiredResource:
       state.isSelectedPromptApproveRequiredResource,
+    isQuickAppEditPrompt: state.isQuickAppEditPrompt,
   };
 });
 
@@ -252,10 +250,11 @@ const selectNewFolderName = createSelector(
     (_state: RootState, folderId: string | undefined) => folderId,
   ],
   (folders, folderId) => {
-    return getNextDefaultName(
-      translate(DEFAULT_FOLDER_NAME),
-      folders.filter((f) => f.folderId === folderId),
-    );
+    const siblings = folders.filter((f) => f.folderId === folderId);
+    return getStorageSafeUniqueFolderName({
+      folderId: folderId ?? '',
+      existingNames: siblings.map((f) => f.name),
+    });
   },
 );
 
@@ -264,11 +263,17 @@ const selectIsNewPromptCreating = (state: RootState) =>
 
 const getNewPrompt = createSelector([selectPrompts], (prompts) => {
   const promptRootId = getPromptRootId();
+  const siblingPrompts = prompts.filter(
+    (prompt) => prompt.folderId === promptRootId,
+  );
   return regeneratePromptId({
-    name: getNextDefaultName(
-      DEFAULT_PROMPT_NAME,
-      prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
-    ),
+    name: getStorageSafeUniquePromptName({
+      prompt: {
+        folderId: promptRootId,
+        name: '',
+      },
+      existingNames: siblingPrompts.map((p) => p.name),
+    }),
     description: '',
     content: '',
     folderId: promptRootId,
@@ -354,6 +359,12 @@ const selectDeletingPromptId = (state: RootState) =>
 const selectMoveToPromptId = (state: RootState) =>
   rootSelector(state).moveToPromptId;
 
+const selectQuickAppUpdatedPrompt = (state: RootState) =>
+  rootSelector(state).quickAppUpdatedPrompt;
+
+const selectSkillValidation = (state: RootState, promptId: string) =>
+  rootSelector(state).skillValidationByPromptId[promptId];
+
 export const PromptsSelectors = {
   selectPrompts,
   selectSearchTerm,
@@ -395,4 +406,6 @@ export const PromptsSelectors = {
   selectPromptWithVariablesForApply,
   selectDeletingPromptId,
   selectMoveToPromptId,
+  selectQuickAppUpdatedPrompt,
+  selectSkillValidation,
 };

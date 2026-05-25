@@ -27,6 +27,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import {
+  fitApplicationNameToStorageLimits,
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
@@ -62,6 +63,7 @@ import {
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
+  PromptsActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -124,7 +126,12 @@ const createApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.create(
-        regenerateApplicationId({ ...applicationData, reference: '' }),
+        regenerateApplicationId(
+          fitApplicationNameToStorageLimits({
+            ...applicationData,
+            reference: '',
+          }),
+        ),
         schema,
       ).pipe(
         switchMap((application) =>
@@ -179,14 +186,14 @@ const createApplicationEpic: AppEpic = (action$) =>
             iif(
               () => err.status === 412,
               of(
-                UIActions.showErrorToast(
-                  translate(
+                UIActions.showErrorToast({
+                  message: translate(
                     CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                     {
                       ns: Translation.Common,
                     },
                   ),
-                ),
+                }),
               ),
               EMPTY,
             ),
@@ -201,11 +208,11 @@ const createFailEpic: AppEpic = (action$) =>
     ofType(ApplicationActions.createFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.createFailed, {
+        UIActions.showErrorToast({
+          message: translate(errorsMessages.createFailed, {
             entity: 'application',
           }),
-        ),
+        }),
       ),
     ),
   );
@@ -255,7 +262,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
       }
 
       const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
+        fitApplicationNameToStorageLimits(payload.applicationData),
       ) as CustomApplicationModel;
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
@@ -266,6 +273,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
           publicationUrl: payload.publicationUrl,
           oldApplication: payload.oldApplication,
           newApplication: updatedCustomApplication,
+          tabToOpen: payload.tabToOpen,
         };
 
         if (isMoved) {
@@ -313,14 +321,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     success: false as const,
                     actions: [
                       ...failActions,
-                      UIActions.showErrorToast(
-                        translate(
+                      UIActions.showErrorToast({
+                        message: translate(
                           CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                           {
                             ns: Translation.Common,
                           },
                         ),
-                      ),
+                      }),
                     ],
                   });
                 }
@@ -329,11 +337,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   success: false as const,
                   actions: [
                     ...failActions,
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.FailedToMoveApplication, {
-                        ns: Translation.Common,
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToMoveApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ],
                 });
               }),
@@ -420,11 +431,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   of(
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.FailedToUpdateApplication, {
-                        ns: Translation.Common,
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToUpdateApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ),
                   iif(
                     () => !!payload.shouldSetEditorError,
@@ -496,11 +510,11 @@ const editApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.editFail({
               oldApplication: payload.oldApplication,
             }),
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.FailedToUpdateApplication, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToUpdateApplication, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -776,9 +790,9 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
           }),
         ),
         of(
-          UIActions.showErrorToast(
-            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
-          ),
+          UIActions.showErrorToast({
+            message: `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
+          }),
         ),
       );
     }),
@@ -873,11 +887,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.FailedToEnterEditMode, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToEnterEditMode, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -922,7 +936,9 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const actions: Observable<AppAction>[] = [];
+      const actions: Observable<AppAction>[] = [
+        of(PromptsActions.clearSkillValidations()),
+      ];
 
       if (hasCustomEditor) {
         actions.push(

@@ -3,6 +3,10 @@ import { createSelector } from '@reduxjs/toolkit';
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { withoutFileManagerPlaceholderByName } from '@/src/utils/app/file';
 import {
+  getFolderFromId,
+  getParentFolderIdsFromEntityId,
+} from '@/src/utils/app/folders';
+import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/marketplace';
@@ -10,8 +14,10 @@ import {
   filterHiddenEntities,
   shouldShowHiddenEntities,
 } from '@/src/utils/app/models';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getIdWithoutVersionFromApiKey } from '@/src/utils/server/api';
 
+import { FeatureType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';
 import { ToolsetModel, ToolsetsMap } from '@/src/types/toolsets';
 
@@ -20,6 +26,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState) => state.toolset;
 
@@ -150,6 +157,21 @@ const selectToolsetsTopics = createSelector(
 const selectIsInstalledToolsetsInitialized = (state: RootState) =>
   rootSelector(state).isInstalledToolsetsInitialized;
 
+const selectPublicFolders = createSelector([selectToolsets], (toolsets) => {
+  const publicToolsetIds = toolsets
+    .filter((toolset) => isEntityIdPublic(toolset))
+    .map((toolset) => toolset.id);
+
+  return uniqBy(
+    publicToolsetIds
+      .flatMap((id) => getParentFolderIdsFromEntityId(id).slice(0, -1))
+      .map((id) =>
+        getFolderFromId(id, FeatureType.Toolset, UploadStatus.LOADED),
+      ),
+    'id',
+  );
+});
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -168,4 +190,5 @@ export const ToolsetSelectors = {
   selectPublishRequestToolsets,
   selectAllGroupToolsetsKeySet,
   selectToolsetsTopics,
+  selectPublicFolders,
 };

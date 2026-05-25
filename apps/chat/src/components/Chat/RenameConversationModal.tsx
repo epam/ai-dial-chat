@@ -14,6 +14,7 @@ import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
+import { getAvailableConversationNameBytes } from '@/src/utils/app/conversation';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 
 import { ModalState } from '@/src/types/modal';
@@ -65,9 +66,18 @@ function RenameConversationView({
     });
   }, [renamingConversation]);
 
+  const availableNameBytes = useMemo(
+    () => getAvailableConversationNameBytes(renamingConversation),
+    [renamingConversation],
+  );
+
   const newName = useMemo(
-    () => prepareEntityName(newConversationName, { forRenaming: true }),
-    [newConversationName],
+    () =>
+      prepareEntityName(newConversationName, {
+        forRenaming: true,
+        maxNameLength: availableNameBytes,
+      }),
+    [newConversationName, availableNameBytes],
   );
 
   const handleRename = useCallback(() => {
@@ -79,19 +89,23 @@ function RenameConversationView({
       )
     ) {
       dispatch(
-        UIActions.showErrorToast(
-          t(ChatI18nKeys.ConversationNameExistsInFolder, {
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.ConversationNameExistsInFolder, {
             ns: Translation.Chat,
             newName,
           }),
-        ),
+        }),
       );
 
       return;
     }
 
     if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(UIActions.showErrorToast(t(ChatI18nKeys.DotAtEndNotPermitted)));
+      dispatch(
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.DotAtEndNotPermitted),
+        }),
+      );
       return;
     }
 

@@ -9,9 +9,10 @@ import {
   formatFileSize,
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
+  isAllowedMimeType,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
-import { isHiddenEntity } from '@/src/utils/app/search';
+import { isHiddenPath } from '@/src/utils/app/search';
 
 import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -38,8 +39,10 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  DialFileNodeType,
   DialLoader,
   DialPrimaryButton,
+  FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -107,6 +110,14 @@ export const FileManagerModal = memo(
 
     const prevSelectionRef = useRef<Set<string>>(new Set());
 
+    const handleOnCloseFilesModal = useCallback(
+      (result: boolean | string[]) => {
+        dispatch(FilesActions.resetAllFoldersStatus());
+        onClose(result);
+      },
+      [dispatch, onClose],
+    );
+
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
         const prev = prevSelectionRef.current;
@@ -115,25 +126,30 @@ export const FileManagerModal = memo(
         const added = [...next].filter((id) => !prev.has(id));
         const removed = [...prev].filter((id) => !next.has(id));
 
-        prevSelectionRef.current = next;
+        const filteredNext = new Set(
+          [...next].filter((id) => !isHiddenPath(id)),
+        );
+        prevSelectionRef.current = filteredNext;
 
         for (const id of added) {
+          if (isHiddenPath(id)) continue;
+
           if (folderPaths.has(id)) {
             dispatch(
-              FilesActions.setChosenFolder({
+              FilesActions.addChosenFolder({
                 folderId: id,
               }),
             );
           } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+            dispatch(FilesActions.addChosenFiles({ ids: [id] }));
           }
         }
 
         for (const id of removed) {
           if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
+            dispatch(FilesActions.removeChosenFolder({ folderId: id }));
           } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+            dispatch(FilesActions.removeChosenFiles({ ids: [id] }));
           }
         }
       },
@@ -166,6 +182,15 @@ export const FileManagerModal = memo(
       }
     }, [allowedTypesArray, allowedTypesLabel, t]);
 
+    const getDisabledTooltip = useCallback(
+      (row: FileManagerGridRow) => {
+        return isHiddenPath(row.path)
+          ? t(ChatI18nKeys.AttachingHiddenFilesNotAllowed)
+          : undefined;
+      },
+      [t],
+    );
+
     useEffect(() => {
       if (isOpen) {
         dispatch(FilesActions.resetAllFoldersStatus());
@@ -191,7 +216,9 @@ export const FileManagerModal = memo(
         ),
       );
       const hiddenFilesIds = new Set(
-        selectedFiles.filter(isHiddenEntity).map(({ id }) => id),
+        selectedFiles
+          .filter((file) => isHiddenPath(file.id))
+          .map(({ id }) => id),
       );
 
       if (invalidFileIds.size > 0) {
@@ -248,7 +275,7 @@ export const FileManagerModal = memo(
         return;
       }
 
-      onClose(Array.from(accumulatedIds));
+      handleOnCloseFilesModal(Array.from(accumulatedIds));
     }, [
       allowedTypesArray,
       canAttachFolders,
@@ -256,7 +283,7 @@ export const FileManagerModal = memo(
       files,
       previousSelectedFilesIds,
       maximumAttachmentsAmount,
-      onClose,
+      handleOnCloseFilesModal,
       selectedFilesIds,
       selectedFolderIds,
       t,
@@ -301,7 +328,6 @@ export const FileManagerModal = memo(
       treeOptions,
       fileMetadataPopupOptions,
       navigationPanelOptions,
-      gridOptions,
       toolbarOptions,
       deleteConfirmationOptions,
 
@@ -317,6 +343,7 @@ export const FileManagerModal = memo(
       sharedWithMeIds,
 
       uploadEnabled,
+      gridOptions,
     } = useFileManager({
       actionLabelsOptions: {
         actionsByTab: {
@@ -338,11 +365,52 @@ export const FileManagerModal = memo(
       additionalFilesAndFolders,
     });
 
+    const mergedGridOptions = useMemo(
+      () => ({
+        ...gridOptions,
+        additionalGridOptions: {
+          rowSelection: {
+            mode: 'multiRow' as const,
+            isRowSelectable: (node: { data?: FileManagerGridRow | null }) => {
+              const row = node.data;
+              if (!row) return true;
+
+              // Disable hidden files/folders and items inside hidden folders.
+              if (isHiddenPath(row.path)) return false;
+
+              // Replicate the UI kit's internal type/size disabled check so
+              // those rows stay non-selectable when we override rowSelection.
+              if (row.nodeType !== DialFileNodeType.FOLDER) {
+                if (
+                  row.contentType &&
+                  !allowedTypes.includes('*/*') &&
+                  allowedTypes.length > 0 &&
+                  !isAllowedMimeType(allowedTypes, row.contentType)
+                ) {
+                  return false;
+                }
+                if (
+                  maxSelectableFileSize != null &&
+                  row.contentLength != null &&
+                  row.contentLength > maxSelectableFileSize
+                ) {
+                  return false;
+                }
+              }
+
+              return true;
+            },
+          },
+        },
+      }),
+      [allowedTypes, gridOptions, maxSelectableFileSize],
+    );
+
     return (
       <Modal
         portalId="theme-main"
         state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-        onClose={() => onClose(false)}
+        onClose={() => handleOnCloseFilesModal(false)}
         dataQa="file-manager-modal"
         containerClassName="flex flex-col gap-4 w-full sm:w-[1200px] h-[min(800px,100vh)] !bg-layer-2"
         dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
@@ -402,7 +470,7 @@ export const FileManagerModal = memo(
               treeOptions={treeOptions}
               fileMetadataPopupOptions={fileMetadataPopupOptions}
               navigationPanelOptions={navigationPanelOptions}
-              gridOptions={gridOptions}
+              gridOptions={mergedGridOptions}
               toolbarOptions={toolbarOptions}
               onDeleteFiles={handleDeleteFiles}
               onDownloadFiles={handleDownloadFiles}
@@ -416,6 +484,7 @@ export const FileManagerModal = memo(
               onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
+              getDisabledTooltip={getDisabledTooltip}
               hideSearchPathItemName
               autoSelectUploadedItems
             />

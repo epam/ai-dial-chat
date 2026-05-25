@@ -4,7 +4,9 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/chat/utils/app/models';
+import { modelsFilePath } from '@/src/core/testPaths';
 import { ApplicationTypes, ModelTopic } from '@/src/testData';
+import * as fs from 'fs';
 
 export class ModelsUtil {
   private static readonly slowModelIds: string[] = process.env.SLOW_MODELS_IDS
@@ -12,7 +14,9 @@ export class ModelsUtil {
     : [];
 
   public static getOpenAIEntities() {
-    return JSON.parse(process.env.MODELS!) as DialAIEntityModel[];
+    return JSON.parse(
+      fs.readFileSync(modelsFilePath, 'utf-8'),
+    ) as DialAIEntityModel[];
   }
 
   public static getLatestOpenAIEntities(

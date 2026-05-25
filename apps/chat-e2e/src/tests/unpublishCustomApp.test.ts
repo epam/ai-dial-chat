@@ -9,6 +9,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   PublishPath,
+  withTraceId,
 } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
@@ -257,8 +258,8 @@ dialAdminTest(
       async () => {
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: requestName,
-          publishToLabel: 'visible',
-          publishTo: PublishPath.Organization,
+          unpublishFromLabel: 'visible',
+          publishPath: PublishPath.Organization,
           authorLabel: 'visible',
           author: defaultAuthor,
           publicAuthorLabel: 'hidden',
@@ -643,7 +644,7 @@ dialAdminTest(
         await chat.sendRequestWithButton(GeneratorUtil.randomString(5), false);
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
-          ExpectedConstants.agentNotFoundToastError,
+          withTraceId(ExpectedConstants.agentNotFoundToastError),
         );
         await chatAssertion.assertElementState(
           chat.notAllowedModelLabel,
