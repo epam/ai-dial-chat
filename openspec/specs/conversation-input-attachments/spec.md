@@ -200,5 +200,5 @@ After `onSend` resolves successfully, the `Input` component SHALL clear the inte
 
 #### Scenario: Tray retained on send error
 
-- **WHEN** the send fails (e.g. `onSend` rejects or `attachmentsToDialAttachments` throws)
+- **WHEN** the send fails (e.g. `onSend` rejects or `attachmentsToDtos` throws)
 - **THEN** the attachment list is unchanged so the user can retry

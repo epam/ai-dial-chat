@@ -1,14 +1,13 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AttachmentTray } from '../AttachmentTray.js';
 
-const makeAttachment = (id: string, name = 'file.pdf'): Attachment => ({
+const makeAttachment = (id: string, name = 'file.pdf'): DisplayAttachment => ({
   id,
   name,
   contentType: 'application/pdf',
-  file: new File([''], name, { type: 'application/pdf' }),
   type: AttachmentType.File,
   status: RequestStatus.Idle,
 });
@@ -41,6 +40,11 @@ describe('AttachmentTray', () => {
     );
     fireEvent.click(screen.getByLabelText('Remove attachment'));
     expect(onRemove).toHaveBeenCalledWith('1');
+  });
+
+  it('renders cards as read-only when no remove handler is provided', () => {
+    render(<AttachmentTray attachments={[makeAttachment('1', 'a.pdf')]} />);
+    expect(screen.queryByLabelText('Remove attachment')).toBeNull();
   });
 
   it('disappears when last card is removed (empty list passed)', () => {

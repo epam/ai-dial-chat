@@ -1,5 +1,5 @@
 import { StreamChunk } from '@epam/ai-dial-chat-shared';
-import type { DialAttachmentDto } from '@epam/chat-api-client';
+import type { AttachmentDto } from '@epam/chat-api-client';
 import { ApiEndpoints, getCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
@@ -14,7 +14,7 @@ export const streamCompletion = (
   message: string,
   model: string,
   options: StreamCompletionOptions,
-  attachments?: DialAttachmentDto[],
+  attachments?: AttachmentDto[],
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 

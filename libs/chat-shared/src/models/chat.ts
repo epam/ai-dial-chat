@@ -58,7 +58,7 @@ export interface Message {
    */
   custom_content?: {
     /** Files or media items associated with this message. */
-    attachments?: DialAttachment[];
+    attachments?: MessageAttachment[];
   };
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
@@ -109,16 +109,14 @@ export enum RequestStatus {
   Error = 'error',
 }
 
-/** Represents a file or content item the user has attached to a message. */
-export interface Attachment {
+/** Represents a file or content item that can be displayed as an attachment. */
+export interface DisplayAttachment {
   /** Unique client-side identifier. */
   id: string;
   /** Display name (usually the original filename). */
   name: string;
   /** MIME type of the attachment (e.g. `'image/png'`, `'application/pdf'`). */
   contentType: MIMEType | string;
-  /** The underlying `File` object selected by the user. */
-  file: File;
   /** Content category used to select the correct icon and thumbnail. */
   type: AttachmentType;
   /** Upload / processing lifecycle state. */
@@ -132,6 +130,34 @@ export interface Attachment {
  * and assistant responses.
  */
 export interface DialAttachment {
+  /** Zero-based position in the attachment list. */
+  index?: number;
+  /** MIME type of the attachment content. */
+  type: MIMEType | string;
+  /** Display name shown in the UI. */
+  title: string;
+  /** Inline base-64 encoded content (mutually exclusive with `url`). */
+  data?: string;
+  /** Remote URL pointing to the attachment content. */
+  url?: string;
+  /** MIME type of the referenced resource (used with `reference_url`). */
+  reference_type?: MIMEType | string;
+  /** URL of an alternate reference resource (e.g. a download link). */
+  reference_url?: string;
+}
+
+/** Attachment selected locally by the user before it is sent to the backend. */
+export interface Attachment extends DisplayAttachment {
+  /** The underlying browser `File` object selected by the user. */
+  file: File;
+}
+
+/**
+ * Attachment payload stored in message custom content.
+ * Used inside `Message.custom_content.attachments` for both user requests
+ * and assistant responses.
+ */
+export interface MessageAttachment {
   /** Zero-based position in the attachment list. */
   index?: number;
   /** MIME type of the attachment content. */

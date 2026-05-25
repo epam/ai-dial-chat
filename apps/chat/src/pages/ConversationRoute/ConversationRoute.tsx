@@ -1,5 +1,4 @@
-import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
-import type { FC } from 'react';
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   Suspense,
@@ -17,7 +16,7 @@ import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useModels } from '../../context/ModelsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
-import { attachmentsToDialAttachments } from '../../utils/attachment-to-dial';
+import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -58,10 +57,10 @@ const ConversationRoute: FC = () => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const dialAttachments = await attachmentsToDialAttachments(attachments);
+        const attachmentDtos = await attachmentsToDtos(attachments);
         const conversation = await apiCreateConversation(
           message,
-          dialAttachments,
+          attachmentDtos,
         );
         navigate(getConversationRoute(conversation.id));
       } finally {

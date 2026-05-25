@@ -35,7 +35,7 @@ export interface ConversationInputProps {
   initialMessage?: string;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
-  /** Called when the user submits a message (Enter or send button). Receives the current attachments as the second argument. */
+  /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;

@@ -8,7 +8,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { DialAttachmentDto } from './dial-attachment.dto';
+import { AttachmentDto } from './attachment.dto';
 
 export class CreateConversationDto {
   @ApiProperty({
@@ -24,11 +24,11 @@ export class CreateConversationDto {
 
   @ApiPropertyOptional({
     description: 'DIAL API attachments to include with the first user message',
-    type: [DialAttachmentDto],
+    type: [AttachmentDto],
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => DialAttachmentDto)
-  attachments?: DialAttachmentDto[];
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }
