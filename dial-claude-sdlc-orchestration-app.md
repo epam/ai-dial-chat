@@ -29,9 +29,10 @@ does *not* recommend building it today.
 ## Summary
 
 A single GitHub App, installed once per organization, replaces the YAML
-orchestrator (`pr-workflows-orchestrator.yml`) as the routing and state
-layer. GHA stays as the **execution** layer — stage workflows
-(`stage-*.yml`) are unchanged. The App holds spec lifecycle, stage run
+dispatcher (`dispatch-pr.yml` + `run-agent.yml` + `tools/match-agents.py`)
+as the routing and state layer. GHA stays as the **execution** layer —
+the reusable per-agent workflow and agent manifests under `agents/` are
+unchanged. The App holds spec lifecycle, stage run
 history, approvals, and cross-repo coordination in Postgres and dispatches
 stages via `repository_dispatch`.
 
@@ -106,7 +107,7 @@ flowchart TB
     end
 
     subgraph runners["GHA runners (unchanged)"]
-      stages["stage-spec-author.yml<br/>stage-code-review.yml<br/>stage-security-review.yml<br/>stage-test.yml<br/>stage-qa.yml"]
+      stages["agents/spec-author/<br/>agents/code-review/<br/>agents/security-review/<br/>agents/test/<br/>agents/qa/<br/>(run-agent.yml + composite action)"]
     end
 
     repos -- workflow_run --> runners
@@ -197,8 +198,8 @@ App can require re-runs / re-approval.
 2. App decides which stages apply (no label scraping; routing is in code).
 3. App calls `POST /repos/org/dial-chat/dispatches` with
    `event_type=run-stage` and `client_payload={stage, pr, change_id?}`.
-4. `pr-workflows-orchestrator.yml` (now triggered by
-   `repository_dispatch`) routes to `stage-code-review.yml`.
+4. A thin GHA workflow (now triggered by `repository_dispatch` instead of
+   `pull_request`) calls `run-agent.yml` with `agent_name=code-review`.
 5. Stage runs Claude, writes `stage-output.json`, posts sticky comment.
 6. Composite action's last step POSTs the JSON +
    `workflow_run_id` to `app/api/stage-runs`.
@@ -256,9 +257,9 @@ Phase 1 to Phase 2:
 
 What is replaced or modified:
 
-- `.github/workflows/pr-workflows-orchestrator.yml` — its routing moves
-  into the App; the file may become a thin trigger that listens for
-  `repository_dispatch` and proxies to the stage workflows
+- `.github/workflows/dispatch-pr.yml` and `tools/match-agents.py` — their
+  routing role moves into the App; what remains in GHA is a thin trigger
+  that listens for `repository_dispatch` and calls `run-agent.yml`
 - Composite action gains one new step: `POST` results to the App's API
   endpoint after writing the sticky comment
 

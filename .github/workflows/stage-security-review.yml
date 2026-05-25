@@ -1,17 +1,21 @@
 name: SDLC Stage / Security Review
 
 on:
-  workflow_call:
+  pull_request:
+    branches: [development-1.0]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   run:
+    if: vars.STAGE_SECURITY_REVIEW_ENABLED != 'false'
     runs-on: ubuntu-latest
     concurrency:
       group: "${{ github.workflow }}-security-review-${{ github.ref }}"
       cancel-in-progress: true
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
       - name: Validate API key
         run: |

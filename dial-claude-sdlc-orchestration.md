@@ -220,8 +220,15 @@ Humans read `summary` + findings; machines read JSON. `spec_id` + `spec_version`
 
 ## Orchestrator Workflow
 
+> **Note:** This section sketches the original "one orchestrator per repo"
+> design. The implementation in this repo evolved to a manifest-driven
+> dispatcher (`.github/workflows/dispatch-pr.yml` + `run-agent.yml` +
+> `tools/match-agents.py` + `agents/<name>/agent.yml` manifests). See
+> `.github/claude/ADDING_A_STAGE.md` for the current shape. The example
+> below is preserved for context.
+
 ```yaml
-# .github/workflows/pr-workflows-orchestrator.yml
+# (illustrative — superseded by dispatch-pr.yml in current impl)
 name: SDLC Orchestrator
 on:
   issues:           { types: [labeled] }

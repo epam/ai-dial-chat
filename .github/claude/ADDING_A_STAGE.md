@@ -1,10 +1,12 @@
-# Adding a Stage to the DIAL SDLC Pipeline
+# Adding an Agent to the DIAL SDLC Pipeline
 
-This is the team-facing recipe for adding a new Claude-powered stage. If you
-follow the conventions below, the new stage should take ~15–20 minutes to
-wire up and reviewers don't have to re-read the whole orchestrator.
+This is the team-facing recipe. The runtime is **manifest-driven**: a dispatcher
+discovers agents from `agents/<name>/agent.yml` files and runs them via a
+reusable workflow. You declare a manifest and a prompt — the platform handles
+GHA wiring, permissions, concurrency, kill switches, output validation, sticky
+comments, and artifacts.
 
-For the architectural background, see
+For architectural background, see
 [`dial-claude-sdlc-orchestration.md`](../../dial-claude-sdlc-orchestration.md)
 and the research companion
 [`dial-claude-sdlc-orchestration-research.md`](../../dial-claude-sdlc-orchestration-research.md).
@@ -14,30 +16,38 @@ and the research companion
 ## File layout
 
 ```
+agents/
+├── _template/                          # copy this for new agents
+│   ├── agent.yml                       # 4 required fields + optional metadata
+│   └── prompt.md                       # starter prompt
+└── code-review/                        # one worked example
+    ├── agent.yml
+    └── prompt.md
+
 .github/
-├── actions/run-claude-stage/action.yml   # composite action; do not edit per-stage
+├── actions/run-claude-stage/action.yml # composite action; do not edit per-agent
 ├── claude/
-│   ├── prompts/
-│   │   ├── _template.md                  # starter prompt — copy this
-│   │   └── {stage-name}.md               # one per stage
-│   ├── schemas/stage-message.schema.json # output contract
-│   ├── scripts/render-stage-comment.sh    # validates Claude's output
-│   └── ADDING_A_STAGE.md                 # this doc
+│   ├── ADDING_A_STAGE.md               # this doc
+│   ├── prompts/_template.md            # (legacy template; agents/_template/ supersedes it)
+│   ├── schemas/stage-message.schema.json
+│   └── scripts/render-stage-comment.sh
 └── workflows/
-    ├── pr-workflows-orchestrator.yml     # routing only; register your stage here
-    ├── stage-security-review.yml         # specialized: uses claude-code-security-review
-    ├── stage-code-review.yml             # generic Claude stage — reference example
-    └── stage-{name}.yml                  # one per generic stage
+    ├── dispatch-pr.yml                 # the dispatcher; do not edit per-agent
+    ├── run-agent.yml                   # reusable per-agent runner; do not edit per-agent
+    └── stage-security-review.yml       # specialized self-triggered exception
+
+tools/
+└── match-agents.py                     # dispatcher matcher
 ```
 
-Two stage shapes exist:
+Two agent shapes:
 
-- **Generic Claude stage** — the common case. Custom prompt + tool allowlist.
-  Driven by the composite action `run-claude-stage`. `stage-code-review.yml` is the
-  reference. **Use this for new stages.**
-- **Specialized action stage** — when a purpose-built Action exists (Trivy,
-  `claude-code-security-review`, etc.). `stage-security-review.yml` is the reference.
-  Documented exception; don't copy unless you also have a specialized action.
+- **Manifest-driven agent** — the common case. Declare in `agents/<name>/`. The
+  dispatcher picks it up. **Use this for new agents.**
+- **Specialized self-triggered workflow** — for purpose-built actions (Trivy,
+  `claude-code-security-review`) that don't fit the composite action's generic
+  shape. `stage-security-review.yml` is the reference. Documented exception;
+  don't copy unless you also have a specialized action.
 
 ---
 
@@ -46,203 +56,172 @@ Two stage shapes exist:
 This repo is the first consumer of the
 [`ai-native-sdlc-framework`](https://gitlab.deltixhub.com/Deltix/openai-apps/poc/ai-native-sdlc-framework).
 Several artifacts here are **framework-bound** — designed to move upstream
-once the abstractions are stress-tested against more stages. Until then,
-they live here as the canonical version; downstream changes happen here
-first, framework PRs come later.
+once the abstractions stress-test against more agents. Until then, they live
+here as the canonical version; downstream changes happen here first, framework
+PRs come later.
 
-**Framework-bound** (extracted when stage #3 lands, or after ~4 weeks of
-use, whichever comes first):
+**Framework-bound** (extracted when agent #3 lands, or after ~4 weeks of use,
+whichever comes first):
 
 - `.github/actions/run-claude-stage/` — composite action
 - `.github/claude/scripts/render-stage-comment.sh`
 - `.github/claude/schemas/stage-message.schema.json`
-- `.github/claude/prompts/_template.md`
+- `.github/workflows/dispatch-pr.yml`, `.github/workflows/run-agent.yml`
+- `tools/match-agents.py`
+- `agents/_template/`
 - `.github/claude/ADDING_A_STAGE.md` *(this file)*
 - The three `dial-claude-sdlc-orchestration*.md` design docs at the repo root
 
 **Consumer-local** (stays in this repo permanently):
 
-- `.github/workflows/pr-workflows-orchestrator.yml`
-- `.github/workflows/stage-{name}.yml`
-- `.github/claude/prompts/{name}.md`
+- `agents/<name>/` directories (the manifests + prompts for our agents)
+- `.github/workflows/stage-security-review.yml` (specialized, won't migrate)
 - `STAGE_*_ENABLED` repo variables
-- The skills under `.claude/skills/` that stage prompts wrap
+- The skills under `.claude/skills/` that agent prompts wrap
 
-Keep the framework-bound surface deliberately generic — no DIAL-specific
-names, paths, or assumptions. When the extraction happens, it should be a
-mechanical `git mv` + `s/dial-//` on the doc filenames, not a refactor.
+Keep the framework-bound surface DIAL-name-free. When the extraction happens,
+it should be a mechanical `git mv` + filename rename, not a refactor.
 
 ---
 
-## The 6-step recipe
+## The 2-step recipe
 
-### 1. Pick a name
-
-kebab-case. Examples: `spec-review`, `threat-model`, `test-gen`, `conformance`.
-
-This name appears in five places, all mechanically:
-
-- workflow filename: `.github/workflows/stage-{name}.yml`
-- prompt filename: `.github/claude/prompts/{name}.md`
-- orchestrator job key: `{name}:`
-- composite action `stage_name` input
-- the `stage` field your Claude run writes into `stage-output.json`
-
-### 2. Write the prompt
-
-Copy `_template.md` and edit:
+### 1. Copy the template
 
 ```bash
-cp .github/claude/prompts/_template.md .github/claude/prompts/{name}.md
+cp -r agents/_template agents/my-agent
 ```
 
-Replace the `<...>` placeholders. Keep the **Output contract** section intact —
-the composite action depends on it.
+### 2. Edit two files
 
-**If you're wrapping a ready skill** (local skill in `.claude/skills/` or a
-marketplace plugin), the prompt body is usually 5 lines:
+`agents/my-agent/agent.yml`:
 
-```markdown
-1. Invoke `/your-skill-name` against the PR diff.
-2. Map the skill's findings into the schema below.
+- Change `name:` to `my-agent`
+- Change `allowed_tools:` to the smallest set your agent needs
+- Optional: set `agent_version`, `description`, `phase`, `cost_class`
+
+`agents/my-agent/prompt.md`:
+
+- Replace placeholders with your agent's name
+- Describe the task (often: "Invoke `/skill-name` and map findings to the
+  output schema below")
+
+Commit. The next PR runs the agent automatically — no workflow YAML to edit,
+no dispatcher changes, no orchestrator entry.
+
+---
+
+## What the manifest declares
+
+```yaml
+contract_version: "0.1"
+name: code-review
+agent_version: "0.1.0"
+description: "AI code review via the /code-review-and-quality skill."
+triggers: [pull_request]
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"
+phase: pilot
+cost_class: light
+# kill_switch_var: STAGE_CODE_REVIEW_ENABLED  # derived from name; override only if needed
 ```
 
-See `prompts/code-review.md` for a worked example using
-`/code-review-and-quality`.
+| Field | Required? | What |
+|---|---|---|
+| `contract_version` | Yes | Pin the schema version. Currently `"0.1"` |
+| `name` | Yes | Kebab-case. Appears in PR comments, artifacts, and the kill-switch var name |
+| `triggers` | Yes | List of events. `[pull_request]` for PR-triggered agents. Long form supports filters in v0.2 |
+| `allowed_tools` | Yes | Comma-separated Claude tool allowlist (see tier table below) |
+| `agent_version` | No | Appears in the output envelope; semver-ish, defaults to `"unknown"` |
+| `description` | No | One-line description for the catalog |
+| `phase` | No | `sandbox` / `pilot` / `production` — governance metadata |
+| `cost_class` | No | `light` (<$0.50/run) / `medium` / `heavy` |
+| `kill_switch_var` | No | Override the derived var name (rarely needed) |
 
-### 3. Pick a permission tier
+### Tool tiers
 
-Stages must use a published tier; do not invent free-form `allowed_tools`
-strings. Append `,Skill` when the stage uses a Claude skill.
+Use the smallest set your prompt actually needs.
 
 | Tier | `allowed_tools` value |
 |---|---|
-| `read-only` | `Read,Grep,Glob,mcp__dial-context__*` |
-| `read-only + skill` | `Read,Grep,Glob,Skill,mcp__dial-context__*` |
-| `read-only + git diff` | `Read,Grep,Glob,Bash(git diff:*)` |
-| `read-only + git diff + skill` | `Read,Grep,Glob,Bash(git diff:*),Skill` |
-| `spec-edit` | read-only + `Edit` scoped to `specs/` |
-| `docs-edit` | read-only + `Edit` scoped to `docs/` |
-| `test-edit` | read-only + `Edit` scoped to test paths + Bash for test runner |
+| read-only | `Read,Grep,Glob,mcp__dial-context__*` |
+| read-only + skill | `Read,Grep,Glob,Skill,mcp__dial-context__*` |
+| read-only + git diff | `Read,Grep,Glob,Bash(git diff:*)` |
+| read-only + git diff + skill | `Read,Grep,Glob,Bash(git diff:*),Skill` |
 
-Rule: minimize. If the skill only needs `Read,Grep`, don't grant `Bash` "just
-in case." Tier choices are reviewable in `stage-{name}.yml`.
+Write-permission tiers (`Edit` scoped to `specs/`, `docs/`, test paths) are
+not exposed via the current dispatcher — `run-agent.yml` hardcodes
+`contents: read` for safety. When a write-needing agent appears, it gets a
+sibling reusable workflow with the appropriate scopes.
 
-### 4. Copy the stage skeleton
+---
 
-Use `stage-code-review.yml` as the template:
+## Kill switch
 
-```bash
-cp .github/workflows/stage-code-review.yml .github/workflows/stage-{name}.yml
-```
+To disable an agent without merging a PR, set its kill-switch variable to
+`false` in **Settings → Variables → Actions** (repo or org scope).
 
-oChange three things:
+The variable name is derived mechanically from `name:`:
 
-- `name:` header: `SDLC Stage / {Display Name}`
-- `stage_name:` input on the composite action: `{name}`
-- `concurrency.group`: replace the literal `code-review` with `{name}`
+| Manifest `name` | Variable name |
+|---|---|
+| `code-review` | `STAGE_CODE_REVIEW_ENABLED` |
+| `threat-model` | `STAGE_THREAT_MODEL_ENABLED` |
 
-Set `allowed_tools` to the tier you picked. The rest of the file is identical
-across stages — do not edit it without a follow-up to this doc. The skeleton
-already handles concurrency (cancels stale runs on rapid pushes), artifact
-upload (90-day retention of `stage-output.json`), and sticky-comment posting.
+(Uppercase, hyphens → underscores, prefix `STAGE_`, suffix `_ENABLED`.)
 
-### 5. Register in the orchestrator
-
-Add a job in `.github/workflows/pr-workflows-orchestrator.yml`:
-
-```yaml
-{name}:
-  if: vars.STAGE_{NAME_UPPER}_ENABLED != 'false'
-  uses: ./.github/workflows/stage-{name}.yml
-  secrets: inherit
-```
-
-Replace `{NAME_UPPER}` with the stage name uppercased and hyphens converted
-to underscores (e.g. `code-review` → `CODE_REVIEW`, `threat-model` →
-`THREAT_MODEL`). The `if:` is the **kill switch**: by default the variable
-is absent and the stage runs; DevOps disables a misbehaving stage instantly
-by setting the corresponding repo or org variable to `false` in the GitHub
-UI — no revert PR required.
-
-Every enabled stage runs on every PR against `development-1.0`. There is no
-per-stage label gate. If you need conditional execution beyond the kill
-switch, prefer `paths:` filters on the orchestrator's `pull_request:` block
-over per-job `if:` expressions.
-
-If your stage depends on another (e.g. `test` should only run after
-`conformance` passes), add `needs:` and gate on the prior stage's
-`outputs.status`:
-
-```yaml
-test:
-  needs: conformance
-  if: |
-    vars.STAGE_TEST_ENABLED != 'false' &&
-    needs.conformance.outputs.status != 'failed'
-  uses: ./.github/workflows/stage-test.yml
-  secrets: inherit
-```
-
-### 6. Test it
-
-1. Open a draft PR against `development-1.0`.
-2. The orchestrator dispatches every registered stage; the composite action
-   posts a sticky comment keyed on `<!-- dial-sdlc:{name} -->`.
-3. Push a new commit. The same comment updates in place rather than appending.
-
-If the stage fails because Claude didn't write `stage-output.json`, that's a
-prompt problem — re-read the **Output contract** section of your prompt.
+When set to `"false"`, the matcher omits the agent at discovery time — the
+matrix doesn't include it, no runner time is spent. To re-enable, delete the
+variable or set it to anything other than `"false"`.
 
 ---
 
 ## Using a ready skill
 
-A "ready skill" is a packaged Claude skill that already implements the work
-your stage needs. Two sources today:
+A "ready skill" is a packaged Claude skill that implements the work your
+agent needs. Two sources today:
 
 1. **Local skill** — already in this repo at `.claude/skills/{skill}/`.
    Available automatically after `actions/checkout`. Reference it as
-   `/{skill}` in your prompt. **Default for new stages.**
-2. **Inlined skill** — copy the skill's `SKILL.md` content into your stage
-   prompt. Drops the skill mechanism. Use when the skill is purely a prompt
-   and you want zero external dependencies.
+   `/{skill}` in your prompt. **Default.**
+2. **Inlined skill** — copy the skill's `SKILL.md` content into your agent's
+   `prompt.md`. Drops the skill mechanism; useful for purely prompt-based
+   skills with no scripts.
 
-### Local skill (path 1)
+### Example: wrapping a local skill
+
+`agents/code-review/agent.yml`:
 
 ```yaml
-- id: stage
-  uses: ./.github/actions/run-claude-stage
-  with:
-    stage_name: code-review
-    allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"
+contract_version: "0.1"
+name: code-review
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"
+triggers: [pull_request]
 ```
 
-And in `prompts/code-review.md`:
+`agents/code-review/prompt.md`:
 
 ```markdown
 1. Invoke `/code-review-and-quality` against the PR diff.
-2. Map the skill's findings into the schema below.
+2. Map the skill's findings into the output schema below.
 ```
 
-### Trust posture for any external skill
+### Trust posture for external skills
 
 - Review `SKILL.md` and any bundled scripts at adoption time.
 - Use the smallest `allowed_tools` set the skill documents needing.
-- If the skill bundles MCP servers, treat those as additional external
-  dependencies and review the same way.
+- If the skill bundles MCP servers, treat those as external dependencies and
+  review the same way.
 
 > Marketplace plugins (e.g. `code-review@claude-plugins-official`) are
 > supported by `anthropics/claude-code-action` but not wired into our
-> composite action yet. Add the `plugin_marketplaces` + `plugins` inputs
-> when the first real marketplace stage arrives; until then, the composite
-> stays simple.
+> composite action yet. Add the `plugin_marketplaces` + `plugins` inputs to
+> the composite when the first real marketplace agent arrives.
 
 ---
 
-## Output contract — what the stage must write
+## Output contract — what the agent must write
 
-Every generic Claude stage writes **`stage-output.json`** at the repo root
+Every manifest-driven agent writes **`stage-output.json`** at the repo root
 before exiting. Schema: `.github/claude/schemas/stage-message.schema.json`.
 
 Minimum viable payload:
@@ -262,8 +241,6 @@ Richer payload:
   "stage": "code-review",
   "status": "passed_with_findings",
   "summary": "3 medium findings on naming/scope; non-blocking",
-  "spec_id": "issue-4521",
-  "spec_version": "1.2",
   "findings": [
     {
       "severity": "medium",
@@ -274,77 +251,64 @@ Richer payload:
       "suggested_fix": "Rename `data` to `items` per libs styling guide"
     }
   ],
-  "next_recommended": ["dev:apply_fix"],
   "cost_usd": 0.31
 }
 ```
 
-The `render-stage-comment.sh` script validates required fields and fails the
-job loudly if the payload is malformed or missing.
+`render-stage-comment.sh` validates required fields and fails the job loudly
+if the payload is malformed or missing.
 
 ### Envelope fields — auto-injected, do not write
 
-The platform injects four fields into `stage-output.json` after the stage exits
-but before validation:
+The platform injects four fields into `stage-output.json` after the agent
+exits but before validation:
 
 - `contract_version` — the schema contract version (currently `"0.1"`).
-- `agent_version` — the stage/agent version from the workflow's `agent_version`
-  input (defaults to `"unknown"`).
+- `agent_version` — from the manifest's `agent_version:` (defaults to `"unknown"`).
 - `run_id` — `$GITHUB_RUN_ID`, the correlation ID across logs and artifacts.
 - `trigger` — `{ event, ref, sha }` from the workflow context.
 
-**Stages must not write these fields.** Any values you provide are overwritten
-by the platform. This keeps the envelope authoritative regardless of which
-stage produced the payload.
-
-The artifact (`stage-output-{name}`) contains the envelope-enriched JSON, not
-the raw output Claude wrote — downstream consumers always see the complete
-shape.
+**Agents must not write these.** Any values an agent provides are overwritten
+by the platform — runtime is authoritative.
 
 ---
 
-## Context tiers — what workspace the stage sees
+## Context tiers — what workspace the agent sees
 
-Adopted from the `ai-native-sdlc-framework` ADR-0001. Three tiers describe how
-much of the world a stage's runner can read:
+Adopted from the `ai-native-sdlc-framework` ADR-0001. Three tiers describe
+how much of the world the runner can read:
 
 | Tier | Workspace | When to use |
 |---|---|---|
-| **A** | The triggering repo only (single `actions/checkout`) | Default for PR-triggered stages — code review, security review, conformance. |
-| **B** | Triggering repo + one or more sibling repos via additional `actions/checkout` steps with pinned SHA | When the spec lives in a separate repo, or a stage must verify against a vendored library |
-| **C** | A prebuilt context bundle (versioned tarball) produced by an upstream job | Heavy or scheduled runs that assemble inputs once and reuse them; avoids re-cloning expensive corpora |
+| **A** | The triggering repo only (single `actions/checkout`) | Default for PR-triggered agents. The dispatcher uses this today. |
+| **B** | Triggering repo + sibling repos via additional `actions/checkout` with pinned SHA | When the spec lives in a separate repo, or the agent must verify against a vendored library. Requires a cross-repo token (GitHub App or fine-grained PAT). |
+| **C** | A prebuilt context bundle (versioned tarball) produced upstream | Heavy or scheduled runs that assemble inputs once and reuse them. Out of scope for v0.1. |
 
-The current `stage-code-review.yml` skeleton is tier A. Promoting a stage to
-tier B is purely additive: add another `actions/checkout` step with the
-sibling repo and a pinned SHA, plus a cross-repo token (PAT, GitHub App
-installation token, or OIDC). Tier C requires a producer job — outside the
-scope of this doc.
-
-**Note on tokens for tier B.** Cross-repo `contents: read` requires a token
-the stage's `GITHUB_TOKEN` doesn't have. Use a GitHub App installation token
-or a fine-grained PAT scoped to read-only on the target repo.
+Tier A is the dispatcher's default. Tier B requires extending `run-agent.yml`
+to honor a `sibling_repos:` manifest field — not implemented yet, but the
+manifest field is reserved.
 
 ---
 
-## Cross-run state — reading a prior stage's output
+## Cross-run state — reading a prior agent's output
 
-Every stage's `stage-output.json` is uploaded as a workflow artifact named
-`stage-output-{stage-name}` and kept for 90 days. The composite action
-handles the upload; you don't add anything per-stage to produce it.
-
-Two ways another job or workflow can consume that artifact:
+Every agent's `stage-output.json` is uploaded as a workflow artifact named
+`stage-output-{name}` and kept for 90 days. The composite action handles the
+upload; you don't add anything per-agent.
 
 ### Same workflow run
 
-Stages in the same orchestrator run should use `needs.{job}.outputs.message`
-— it's strictly cheaper than going through the artifact store.
+Agents in the same dispatcher run can read each other via
+`needs.{job}.outputs.message` if a `needs:` dependency exists. (Currently
+the matrix runs agents in parallel without dependencies — adding inter-agent
+deps is a v0.2 dispatcher feature.)
 
-### Different workflow run (cross-commit on the same PR, or another workflow)
+### Different workflow run
 
 Use `actions/download-artifact@v4` and the GitHub API to find the prior run:
 
 ```yaml
-- name: Find prior orchestrator run on this PR
+- name: Find prior dispatcher run on this PR
   id: prior
   env:
     GH_TOKEN: ${{ github.token }}
@@ -352,12 +316,12 @@ Use `actions/download-artifact@v4` and the GitHub API to find the prior run:
     HEAD_SHA: ${{ github.event.pull_request.head.sha }}
   run: |
     PRIOR_RUN_ID=$(gh api \
-      "repos/${{ github.repository }}/actions/workflows/pr-workflows-orchestrator.yml/runs?event=pull_request&status=completed" \
+      "repos/${{ github.repository }}/actions/workflows/dispatch-pr.yml/runs?event=pull_request&status=completed" \
       --jq ".workflow_runs[] | select(.pull_requests[]?.number==${PR_NUMBER}) | select(.head_sha!=\"${HEAD_SHA}\") | .id" \
       | head -n1)
     echo "run-id=${PRIOR_RUN_ID}" >> "$GITHUB_OUTPUT"
 
-- name: Download prior security-review output
+- name: Download prior agent's output
   if: steps.prior.outputs.run-id != ''
   uses: actions/download-artifact@v4
   with:
@@ -365,56 +329,38 @@ Use `actions/download-artifact@v4` and the GitHub API to find the prior run:
     path: prior-runs/
     run-id: ${{ steps.prior.outputs.run-id }}
     github-token: ${{ github.token }}
-
-- name: Compare findings
-  if: steps.prior.outputs.run-id != ''
-  run: |
-    jq -s '.[0].findings as $prev | .[1].findings as $curr
-           | { regressions: ($curr - $prev), fixed: ($prev - $curr) }' \
-       prior-runs/stage-output.json stage-output.json
 ```
 
-Use this pattern when a stage needs to **compare against a prior commit's
-result** on the same PR — e.g. "did this commit introduce a new
-high-severity finding the previous commit didn't have?" The artifact is
-the durable form; the sticky comment is the human-readable form.
-
-**Do not** parse the sticky PR comment to recover prior state. The
-sticky comment is for humans; the artifact is for machines. Mixing the
-two creates an implicit contract on the comment shape that nobody
-will remember to maintain.
-
-### When artifacts run out
-
-Artifacts are scoped to a single repo and indexed by workflow run, not by
-PR or change. They cover:
-
-- Cross-run within one repo — yes
-- 90-day audit trail — yes
-- Cross-repo coordination — no
-- Cross-PR queries (`show me all security findings this week`) — no, you'd be
-  scraping the artifact list
-
-When those limits become real, see
-[`dial-claude-sdlc-orchestration-app.md`](../../dial-claude-sdlc-orchestration-app.md).
+**Do not** parse the sticky PR comment to recover prior state. The sticky
+comment is for humans; the artifact is for machines. Mixing the two creates
+an implicit contract on comment shape that rots.
 
 ---
 
 ## What you do *not* have to know
 
-- How to wire `outputs:` between jobs — the skeleton handles it.
-- How to post sticky PR comments — composite action handles it.
-- How to validate Claude's output — script handles it.
-- How `secrets:` flow into the stage — orchestrator passes `secrets: inherit`;
-  the stage puts `ANTHROPIC_API_KEY` into env once, composite reads it.
+- How `pull_request` events route to your agent (dispatcher does it).
+- How GHA `permissions:` blocks are wired (`run-agent.yml` does it).
+- How concurrency groups work (reusable workflow declares it per agent).
+- How `secrets:` propagate (`secrets: inherit` in the dispatcher).
+- How sticky comments are posted (composite action handles it).
+- How `stage-output.json` is validated (script handles it).
+- How envelope fields are injected (script handles it).
+- How artifacts are uploaded (composite action handles it).
+- How the kill switch is wired (matcher checks `vars.STAGE_*_ENABLED`).
 
-## What requires a doc update (not just a YAML change)
+## What requires a doc update (not just a manifest change)
 
-- Adding a new `permission tier` to the table above.
-- Adding a new event source to the orchestrator (e.g. `workflow_dispatch`,
-  `issues`). Affects routing semantics for the whole pipeline.
+- Adding a new event trigger (`schedule`, `workflow_run`, `repository_dispatch`):
+  needs a new dispatcher workflow + matcher support.
+- Adding a new permission tier (e.g., spec-edit, docs-edit): needs platform
+  changes — `run-agent.yml` hardcodes `contents: read`. Likely a sibling
+  reusable workflow with write scopes.
+- Changing the output schema (`stage-message.schema.json`).
 - Changing the sticky-comment format (`render-stage-comment.sh`).
-- Changing the JSON schema (`stage-message.schema.json`).
+- Adding inter-agent dependencies (`needs:` between matrix jobs in
+  `dispatch-pr.yml`) — not supported in v0.1; a future matcher could emit
+  topologically-ordered groups.
 
 If your change touches any of those, update this doc and the design doc in
 the same PR.
