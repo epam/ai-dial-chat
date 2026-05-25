@@ -106,6 +106,13 @@ After completing all artifacts, summarize:
 - Read dependency artifacts for context before creating new ones
 - If the change adds or modifies HTTP API behavior, read `.agents/skills/api-design/SKILL.md`
   before writing specs, design, or tasks.
+- For new or changed business endpoints, the generated client is part of the
+  contract. Specs/design/tasks must cover Swagger DTO/response annotations,
+  `npm run openapi`, `npm run openapi:check`, `chat-api-client` build/lint,
+  the generated API singleton in `apps/chat/src/server-api/api-client.ts`, and
+  frontend wrappers that delegate to `@epam/chat-api-client`. Use direct
+  `base.ts` get/post/put/del helpers only when the design documents a generator
+  gap, streaming need, or infrastructure endpoint exception.
 - If the change touches `apps/chat-api/**`, read `.agents/skills/nestjs-chat-api/SKILL.md`
   and reference `apps/chat-api/AGENTS.md` instead of duplicating backend implementation rules.
 - Use `template` as the structure for your output file - fill in its sections

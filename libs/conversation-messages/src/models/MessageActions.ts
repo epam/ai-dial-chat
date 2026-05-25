@@ -1,4 +1,4 @@
-import { MessageRole } from '@epam/ai-dial-chat-shared';
+import { MessageRating, MessageRole } from '@epam/ai-dial-chat-shared';
 
 /** Tooltip labels for each message action button. All fields are optional; omitting a field falls back to the built-in default. */
 export interface MessageActionTooltips {
@@ -46,4 +46,6 @@ export interface MessageActionsProps {
   onLike?: () => void;
   /** Called when the user clicks the Dislike button (Agent source only). */
   onDislike?: () => void;
+  /** Currently active rating for this message, if any. When set, the matching button is visually highlighted. */
+  activeRating?: MessageRating;
 }

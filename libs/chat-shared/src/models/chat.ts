@@ -32,6 +32,14 @@ export enum MessageRole {
   Assistant = 'assistant',
 }
 
+/** A user-submitted thumbs-up or thumbs-down rating for an assistant message.
+ * Stored as a signed integer that DIAL Core adds to the message's running like count:
+ * `Like = 1` increments the count, `Dislike = -1` decrements it. */
+export enum MessageRating {
+  Like = 1,
+  Dislike = -1,
+}
+
 /** A single message in a conversation. */
 export interface Message {
   /** Unique message identifier. */
@@ -42,6 +50,8 @@ export interface Message {
   content: string;
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
+  /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
+  rating?: MessageRating;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */

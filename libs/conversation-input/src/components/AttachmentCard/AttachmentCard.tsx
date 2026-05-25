@@ -10,6 +10,7 @@ import { IconRefresh, IconX } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
+import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
 import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
@@ -26,6 +27,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   className,
 }) => {
   const { id, name } = attachment;
+  const nameWithoutExtension = useMemo(() => {
+    return getNameWithoutExtension(name);
+  }, [name]);
 
   const cssVars = {
     ...(colors?.border && { '--ci-card-border': colors.border }),
@@ -83,9 +87,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 'line-clamp-3 max-w-[76px] break-words',
                 styles.name,
               )}
-              title={name}
             >
-              {name}
+              {nameWithoutExtension}
             </span>
           </div>
 
@@ -150,7 +153,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             size={ElementSize.Small}
             className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
             aria-label={removeLabel}
-            onClick={() => onRemove(id)}
+            onClick={() => onRemove?.(id)}
           />
         </div>
       )}

@@ -137,7 +137,7 @@ describe('Input', () => {
     ) as HTMLInputElement;
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(screen.getByText('doc.pdf')).toBeTruthy();
+    expect(screen.getByText('doc')).toBeTruthy();
   });
 
   it('should remove the card when the remove button is clicked', () => {
@@ -148,7 +148,7 @@ describe('Input', () => {
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     fireEvent.click(screen.getByLabelText('Remove attachment'));
-    expect(screen.queryByText('doc.pdf')).toBeNull();
+    expect(screen.queryByText('doc')).toBeNull();
   });
 
   it('should call onAttachmentsChange when a file is added', () => {
