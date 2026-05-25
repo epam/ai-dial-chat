@@ -37,7 +37,7 @@
     },
     "source": {
       "type": "object",
-      "description": "Pin info for Wrapped agents (origin/url/sha). Recorded only.",
+      "description": "Pin info for adopted/forked agents (origin/url/sha). Recorded only.",
       "additionalProperties": true
     },
     "license": {
@@ -134,15 +134,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "pattern": {
-          "type": "string",
-          "enum": ["native", "wrapped"],
-          "default": "native",
-          "description": "native = generic Claude composite action (default). wrapped = self-triggered workflow that wraps a third-party action; see agents/_wrapped-template/."
-        },
         "action_ref": {
           "type": "string",
-          "description": "For Wrapped: the third-party action pinned by SHA."
+          "description": "Pinned action ref (org/action@sha). Recorded only; the platform always uses its composite action for native agents. Specialized third-party-action workflows are written as standalone stage-<name>.yml files; see stage-security-review.yml."
         },
         "model": {
           "type": "string",

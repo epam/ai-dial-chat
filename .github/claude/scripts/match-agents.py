@@ -140,13 +140,6 @@ def discover_agents(root, event, event_ctx, vars_dict, schema):
 
         name = manifest["name"]
 
-        # Wrapped agents run via their own self-triggered workflow file
-        # (.github/workflows/stage-<name>.yml). The dispatcher doesn't route
-        # them — skip silently during discovery.
-        invocation = manifest.get("invocation") or {}
-        if invocation.get("pattern") == "wrapped":
-            continue
-
         matched_event, filters = matches_trigger(manifest.get("triggers"), event)
         if not matched_event:
             continue

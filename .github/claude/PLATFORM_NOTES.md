@@ -25,7 +25,7 @@ whichever comes first):
 - `.github/claude/schemas/stage-message.schema.json`
 - `.github/claude/schemas/agent-manifest.schema.json`
 - `.github/workflows/dispatch-pr.yml`, `.github/workflows/run-agent.yml`
-- `agents/_template/`, `agents/_wrapped-template/`
+- `agents/_template/`
 - `.github/claude/ADDING_AN_AGENT.md`, `.github/claude/PLATFORM_NOTES.md`
 - The three `docs/sdlc/orchestration*.md` design docs
 
@@ -104,28 +104,23 @@ discover job. Defer until a real path-scoped agent appears.
 
 ---
 
-## Native vs Wrapped agents
+## Specialized self-triggered workflows
 
-The framework's two-tier model:
+Third-party GHA actions (Trivy, Semgrep, `claude-code-security-review`,
+etc.) don't fit the generic Claude composite action. Each gets its own
+`.github/workflows/stage-<name>.yml` that fires on PR directly — it does
+not enter the dispatcher's matrix. The matcher does not need to handle
+these; they're outside the manifest-driven flow.
 
-- **Native** — Claude prompt + tool allowlist, runs via the dispatcher's
-  matrix → `run-agent.yml` → composite action. Schema-enforced output.
-  The common case.
-- **Wrapped** — adopts a third-party GHA action under our governance. Each
-  Wrapped agent has its own `.github/workflows/stage-<name>.yml` (the
-  specialized self-triggered workflow pattern). The matcher **skips**
-  agents whose `invocation.pattern: wrapped` — they don't enter the
-  dispatcher's matrix.
+`stage-security-review.yml` is the reference. When a second specialized
+agent is needed, copy that file.
 
-**Why per-Wrapped-agent workflow files instead of one centralized runner?**
-GHA's `uses:` field doesn't accept expressions, so a generic
-`run-agent-wrapped.yml` cannot dynamically dispatch to `action_ref:
-foo/bar@<sha>` from the manifest. Each Wrapped agent's third-party
-`uses:` must be hardcoded somewhere. The cost is one short workflow file
-per Wrapped agent (typically <50 lines).
-
-`stage-security-review.yml` is the reference; `agents/_wrapped-template/`
-is the onboarding template.
+**Why not a centralized "wrapped runner"?** GHA's `uses:` field doesn't
+accept expressions, so a single runner can't dynamically dispatch to
+`org/action@<sha>` chosen at runtime. Each specialized workflow hardcodes
+its third-party reference. Framework's ROADMAP §4.5 imagines a centralized
+adapter pattern; we deferred it until the first real third-party adoption
+demands more uniformity than per-file copying provides.
 
 ---
 
