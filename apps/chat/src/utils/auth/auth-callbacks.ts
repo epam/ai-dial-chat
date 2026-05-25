@@ -6,6 +6,7 @@ import { logger } from '@/src/utils/server/logger';
 import { Token } from '@/src/types/auth';
 
 import { safeParseJSON } from '../json';
+import { getAuthAdditionalParamsExchangeBody } from './auth-additional-params';
 import {
   CREDENTIALS_PROVIDER_ID,
   getProviderConfigById,
@@ -142,6 +143,7 @@ async function refreshAccessToken(token: Token) {
           typeof localToken.token?.accessTokenExpires === 'number' &&
           Date.now() < localToken.token.accessTokenExpires
         ) {
+          // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
           logger.debug(
             `[Auth] Returning cached refreshed token. Sub: ${displayedTokenSub}`,
           );
@@ -153,12 +155,14 @@ async function refreshAccessToken(token: Token) {
           isRefreshing: true,
         });
         didAcquireLock = true;
+        // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
         logger.debug(
           `[Auth] Starting token refresh. Sub: ${displayedTokenSub}`,
         );
         break;
       }
 
+      // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
       logger.debug(
         `[Auth] Waiting for concurrent refresh. Sub: ${displayedTokenSub}`,
       );
@@ -172,8 +176,10 @@ async function refreshAccessToken(token: Token) {
       }
     }
 
+    const exchangeBody = getAuthAdditionalParamsExchangeBody();
     const refreshedTokens = await client.refresh(
       token.refreshToken as string | TokenSet,
+      exchangeBody ? { exchangeBody } : undefined,
     );
 
     if (
@@ -216,6 +222,7 @@ async function refreshAccessToken(token: Token) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
 
+    // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
     logger.debug(`[Auth] Token refresh succeeded. Sub: ${displayedTokenSub}`);
     NextClient.setIsRefreshTokenStart(token.userId, {
       isRefreshing: false,

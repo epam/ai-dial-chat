@@ -22,6 +22,7 @@ import {
   providerConfigSchema,
 } from '@/src/types/auth';
 
+import { getAuthAdditionalParamsExchangeBody } from './auth-additional-params';
 import { GitLab } from './custom-gitlab';
 import NextClient from './nextauth-client';
 import PingId from './ping-identity';
@@ -32,6 +33,8 @@ const DEFAULT_NAME = 'SSO';
 const tokenConfig: TokenEndpointHandler = {
   request: async (context) => {
     let tokens;
+    const exchangeBody = getAuthAdditionalParamsExchangeBody();
+    const extras = exchangeBody ? { exchangeBody } : undefined;
 
     NextClient.setClient(context.client, context.provider);
 
@@ -40,12 +43,14 @@ const tokenConfig: TokenEndpointHandler = {
         context.provider.callbackUrl,
         context.params,
         context.checks,
+        extras,
       );
     } else {
       tokens = await context.client.oauthCallback(
         context.provider.callbackUrl,
         context.params,
         context.checks,
+        extras,
       );
     }
     return { tokens };
@@ -276,12 +281,14 @@ const providerNames = {
   [SupportedProviders.CREDENTIALS]: 'credentials',
 };
 
-const isOAuthProvider = (provider: Provider): provider is OAuthConfig<any> => {
+const isOAuthProvider = (
+  provider: Provider,
+): provider is OAuthConfig<Record<string, unknown>> => {
   return provider.type === 'oauth';
 };
 export const getProviderConfigById = (
   providerId: string | undefined,
-): OAuthConfig<any> | undefined => {
+): OAuthConfig<Record<string, unknown>> | undefined => {
   const result = authProviders
     .filter(isOAuthProvider)
     .find((p) => p.id === providerId);
