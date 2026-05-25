@@ -1,86 +1,46 @@
-# @epam/chat-api-client
+## @epam/chat-api-client@0.0.1
 
-> **Auto-generated** TypeScript/Fetch client for the Chat API (`apps/chat-api`).  
-> Do not edit files under `src/generated/` by hand — regenerate them instead (see below).
+This generator creates TypeScript/JavaScript client that utilizes [Fetch API](https://fetch.spec.whatwg.org/). The generated Node module can be used in the following environments:
 
-## Overview
+Environment
+* Node.js
+* Webpack
+* Browserify
 
-This library is produced by [OpenAPI Generator](https://openapi-generator.tech) (`typescript-fetch`) from
-`libs/chat-api-client/openapi.json`, which is itself generated from the NestJS controllers in `apps/chat-api`.
+Language level
+* ES5 - you must have a Promises/A+ library installed
+* ES6
 
-The full pipeline:
+Module system
+* CommonJS
+* ES6 module system
 
+It can be used in both TypeScript and JavaScript. In TypeScript, the definition will be automatically resolved via `package.json`. ([Reference](https://www.typescriptlang.org/docs/handbook/declaration-files/consumption.html))
+
+### Building
+
+To build and compile the typescript sources to javascript use:
 ```
-NestJS controllers (@ApiProperty decorators)
-  → openapi.json  (libs/chat-api-client/openapi.json)
-  → TypeScript Fetch client  (libs/chat-api-client/src/generated/)
-```
-
-## Available API classes
-
-| Class | Base path | Auth required |
-|---|---|---|
-| `AuthApi` | `/api/v1/auth` | public |
-| `ThemesApi` | `/api/themes` | public |
-| `HealthApi` | `/api/health` | public |
-| `DeploymentsApi` | `/api/deployments` | session cookie |
-| `ModelsApi` | `/api/v1/models` | session cookie |
-| `ChatApi` | `/api/chat/completions` | session cookie |
-| `ConversationsApi` | `/api/v1/conversations` | session cookie |
-| `RateApi` | `/api/v1/rate` | session cookie |
-
-## Usage
-
-```ts
-import { Configuration, ModelsApi, ConversationsApi } from '@epam/chat-api-client';
-
-const config = new Configuration({ basePath: 'http://localhost:3005' });
-
-const modelsApi = new ModelsApi(config);
-const models = await modelsApi.getModels();
-
-const conversationsApi = new ConversationsApi(config);
-const conversation = await conversationsApi.createConversation({
-  createConversationDto: { title: 'My chat' },
-});
+npm install
+npm run build
 ```
 
-## Regenerating the client
+### Publishing
 
-> **Prerequisites:** Java must be installed (the OpenAPI Generator CLI is Java-based).
+First build the package then run `npm publish`
 
-### Full pipeline (spec + client)
+### Consuming
 
-```bash
-npm run openapi
-# equivalent to:
-npm exec nx run chat-api:openapi
+navigate to the folder of your consuming project and run one of the following commands.
+
+_published:_
+
+```
+npm install @epam/chat-api-client@0.0.1 --save
 ```
 
-### Step by step
+_unPublished (not recommended):_
 
-```bash
-# 1. Regenerate openapi.json from NestJS controllers
-npm exec nx run chat-api:openapi-spec
-
-# 2. Regenerate the TypeScript client from openapi.json
-npm exec nx run chat-api:openapi-sdk
 ```
-
-### Windows note
-
-The Nx targets use the `env` option in `apps/chat-api/package.json` to set environment variables
-cross-platform (e.g. `SWC_NODE_PROJECT`, proxy vars). Do **not** use the `VAR=value cmd` inline
-syntax — it only works on Unix shells.
-
-## Development
-
-The generated files live in `src/generated/` and are committed to the repository.
-The only hand-written file is `src/index.ts`, which re-exports everything:
-
-```ts
-export * from './generated/src/index';
+npm install PATH_TO_GENERATED_PACKAGE --save
 ```
-
-After any change to a controller, DTO, or Swagger decorator in `apps/chat-api`, run the pipeline
-above and commit both `openapi.json` and the updated `src/generated/` files together.

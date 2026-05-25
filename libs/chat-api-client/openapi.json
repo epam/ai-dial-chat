@@ -28,7 +28,9 @@
           }
         },
         "summary": "Get themes configuration",
-        "tags": ["themes"]
+        "tags": [
+          "themes"
+        ]
       }
     },
     "/api/themes/icon": {
@@ -86,7 +88,9 @@
           }
         },
         "summary": "Get theme icon",
-        "tags": ["themes"]
+        "tags": [
+          "themes"
+        ]
       }
     },
     "/api/health": {
@@ -124,7 +128,9 @@
           }
         },
         "summary": "Check application health status",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/api/v1/auth/providers": {
@@ -147,7 +153,9 @@
           }
         },
         "summary": "List configured identity providers",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/v1/auth/login/{providerId}": {
@@ -177,7 +185,9 @@
           }
         },
         "summary": "Start OIDC login flow",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/v1/auth/callback/{providerId}": {
@@ -207,7 +217,9 @@
           }
         },
         "summary": "OIDC authorization callback",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/v1/auth/logout": {
@@ -220,7 +232,9 @@
           }
         },
         "summary": "Log out and clear session cookie",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/v1/auth/me": {
@@ -248,7 +262,9 @@
           }
         ],
         "summary": "Get current user profile",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/deployments": {
@@ -283,7 +299,9 @@
           }
         },
         "summary": "List all available deployments",
-        "tags": ["deployments"]
+        "tags": [
+          "deployments"
+        ]
       }
     },
     "/api/deployments/{deployment}": {
@@ -327,7 +345,9 @@
           }
         },
         "summary": "Get a single deployment by name",
-        "tags": ["deployments"]
+        "tags": [
+          "deployments"
+        ]
       }
     },
     "/api/deployments/{deployment}/configuration": {
@@ -370,7 +390,9 @@
           }
         },
         "summary": "Get JSON Schema configuration for a deployment",
-        "tags": ["deployments"]
+        "tags": [
+          "deployments"
+        ]
       }
     },
     "/api/v1/models": {
@@ -409,7 +431,9 @@
           }
         },
         "summary": "List available models",
-        "tags": ["models"]
+        "tags": [
+          "models"
+        ]
       }
     },
     "/api/v1/models/{modelName}": {
@@ -465,7 +489,9 @@
           }
         },
         "summary": "Get model by name",
-        "tags": ["models"]
+        "tags": [
+          "models"
+        ]
       }
     },
     "/api/chat/completions/{deployment}": {
@@ -516,7 +542,9 @@
           }
         },
         "summary": "Send a chat completion request to DIAL Core",
-        "tags": ["chat"]
+        "tags": [
+          "chat"
+        ]
       }
     },
     "/api/v1/conversations": {
@@ -553,7 +581,9 @@
           }
         },
         "summary": "Create a new conversation",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       },
       "get": {
         "operationId": "getConversation",
@@ -597,7 +627,9 @@
           }
         },
         "summary": "Get a conversation by path",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       },
       "put": {
         "operationId": "saveConversation",
@@ -651,7 +683,9 @@
           }
         },
         "summary": "Save (overwrite) a conversation by path",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       },
       "delete": {
         "operationId": "deleteConversation",
@@ -688,7 +722,9 @@
           }
         },
         "summary": "Delete a conversation by path",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/conversations/metadata": {
@@ -744,7 +780,9 @@
           }
         },
         "summary": "Get metadata for a conversation",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/conversations/completions": {
@@ -789,7 +827,9 @@
           }
         },
         "summary": "Stream a chat completion",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/rate": {
@@ -828,7 +868,9 @@
           }
         },
         "summary": "Rate an assistant message",
-        "tags": ["rate"]
+        "tags": [
+          "rate"
+        ]
       }
     }
   },
@@ -895,7 +937,10 @@
             "example": "icon-light.svg"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "ThemeConfigResponseDto": {
         "type": "object",
@@ -907,7 +952,9 @@
             }
           }
         },
-        "required": ["themes"]
+        "required": [
+          "themes"
+        ]
       },
       "ProviderInfoDto": {
         "type": "object",
@@ -921,7 +968,10 @@
             "example": "Local"
           }
         },
-        "required": ["id", "label"]
+        "required": [
+          "id",
+          "label"
+        ]
       },
       "UserProfileDto": {
         "type": "object",
@@ -943,7 +993,12 @@
             "example": "default-bucket"
           }
         },
-        "required": ["sub", "providerId", "claims", "bucket"]
+        "required": [
+          "sub",
+          "providerId",
+          "claims",
+          "bucket"
+        ]
       },
       "DialDeploymentDto": {
         "type": "object",
@@ -961,7 +1016,9 @@
             "example": "model"
           }
         },
-        "required": ["id"]
+        "required": [
+          "id"
+        ]
       },
       "DialModelFeaturesDto": {
         "type": "object",
@@ -1044,7 +1101,9 @@
         "type": "object",
         "properties": {
           "scale_types": {
-            "example": ["standard"],
+            "example": [
+              "standard"
+            ],
             "type": "array",
             "items": {
               "type": "string"
@@ -1157,7 +1216,10 @@
             "$ref": "#/components/schemas/DialModelFeaturesDto"
           },
           "input_attachment_types": {
-            "example": ["image/png", "application/pdf"],
+            "example": [
+              "image/png",
+              "application/pdf"
+            ],
             "type": "array",
             "items": {
               "type": "string"
@@ -1176,7 +1238,10 @@
             "additionalProperties": true
           },
           "description_keywords": {
-            "example": ["Text Generation", "Image Recognition"],
+            "example": [
+              "Text Generation",
+              "Image Recognition"
+            ],
             "type": "array",
             "items": {
               "type": "string"
@@ -1211,7 +1276,10 @@
             }
           }
         },
-        "required": ["id", "object"]
+        "required": [
+          "id",
+          "object"
+        ]
       },
       "DialModelListResponseDto": {
         "type": "object",
@@ -1223,7 +1291,9 @@
             }
           }
         },
-        "required": ["data"]
+        "required": [
+          "data"
+        ]
       },
       "MessageDto": {
         "type": "object",
@@ -1231,7 +1301,11 @@
           "role": {
             "type": "string",
             "description": "Message author role",
-            "enum": ["system", "user", "assistant"],
+            "enum": [
+              "system",
+              "user",
+              "assistant"
+            ],
             "example": "user"
           },
           "content": {
@@ -1240,7 +1314,10 @@
             "example": "Hello, how can you help me today?"
           }
         },
-        "required": ["role", "content"]
+        "required": [
+          "role",
+          "content"
+        ]
       },
       "ChatCompletionDto": {
         "type": "object",
@@ -1266,7 +1343,9 @@
             "minimum": 1
           }
         },
-        "required": ["messages"]
+        "required": [
+          "messages"
+        ]
       },
       "ChatCompletionChoiceDto": {
         "type": "object",
@@ -1289,7 +1368,10 @@
             }
           }
         },
-        "required": ["index", "message"]
+        "required": [
+          "index",
+          "message"
+        ]
       },
       "ChatCompletionResponseDto": {
         "type": "object",
@@ -1309,7 +1391,11 @@
             }
           }
         },
-        "required": ["id", "object", "choices"]
+        "required": [
+          "id",
+          "object",
+          "choices"
+        ]
       },
       "AttachmentDto": {
         "type": "object",
@@ -1343,7 +1429,10 @@
             "description": "URL of the reference resource"
           }
         },
-        "required": ["type", "title"]
+        "required": [
+          "type",
+          "title"
+        ]
       },
       "CreateConversationDto": {
         "type": "object",
@@ -1363,7 +1452,9 @@
             }
           }
         },
-        "required": ["firstMessage"]
+        "required": [
+          "firstMessage"
+        ]
       },
       "ConversationModelDto": {
         "type": "object",
@@ -1373,7 +1464,9 @@
             "example": "anthropic.claude-v3-sonnet"
           }
         },
-        "required": ["id"]
+        "required": [
+          "id"
+        ]
       },
       "ConversationMessageDto": {
         "type": "object",
@@ -1384,7 +1477,10 @@
           },
           "role": {
             "type": "string",
-            "enum": ["user", "assistant"],
+            "enum": [
+              "user",
+              "assistant"
+            ],
             "example": "user"
           },
           "content": {
@@ -1396,7 +1492,12 @@
             "example": "2026-05-19T16:00:00.000Z"
           }
         },
-        "required": ["id", "role", "content", "timestamp"]
+        "required": [
+          "id",
+          "role",
+          "content",
+          "timestamp"
+        ]
       },
       "ConversationResponseDto": {
         "type": "object",
@@ -1508,7 +1609,10 @@
             "example": 1779206400000
           },
           "permissions": {
-            "example": ["READ", "WRITE"],
+            "example": [
+              "READ",
+              "WRITE"
+            ],
             "type": "array",
             "items": {
               "type": "string"
@@ -1536,7 +1640,9 @@
             ]
           }
         },
-        "required": ["conversation"]
+        "required": [
+          "conversation"
+        ]
       },
       "SendCompletionDto": {
         "type": "object",
@@ -1566,7 +1672,11 @@
             }
           }
         },
-        "required": ["path", "message", "model"]
+        "required": [
+          "path",
+          "message",
+          "model"
+        ]
       },
       "RateMessageDto": {
         "type": "object",
@@ -1589,7 +1699,10 @@
           "rate": {
             "type": "number",
             "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
-            "enum": [1, -1]
+            "enum": [
+              1,
+              -1
+            ]
           },
           "comment": {
             "type": "string",
@@ -1597,7 +1710,12 @@
             "example": "The response was too brief"
           }
         },
-        "required": ["conversationId", "responseId", "modelId", "rate"]
+        "required": [
+          "conversationId",
+          "responseId",
+          "modelId",
+          "rate"
+        ]
       }
     }
   }

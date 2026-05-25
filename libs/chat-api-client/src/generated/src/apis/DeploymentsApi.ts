@@ -79,6 +79,59 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user.
+   * Get JSON Schema configuration for a deployment
+   */
+  async getDeploymentConfigurationRaw(
+    requestParameters: GetDeploymentConfigurationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<{ [key: string]: any }>> {
+    if (requestParameters['deployment'] == null) {
+      throw new runtime.RequiredError(
+        'deployment',
+        'Required parameter "deployment" was null or undefined when calling getDeploymentConfiguration().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/deployments/{deployment}/configuration`;
+    urlPath = urlPath.replace(
+      `{${'deployment'}}`,
+      encodeURIComponent(String(requestParameters['deployment'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<any>(response);
+  }
+
+  /**
+   * Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user.
+   * Get JSON Schema configuration for a deployment
+   */
+  async getDeploymentConfiguration(
+    requestParameters: GetDeploymentConfigurationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<{ [key: string]: any }> {
+    const response = await this.getDeploymentConfigurationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * List all available deployments
    */
   async getDeploymentsRaw(
@@ -110,61 +163,6 @@ export class DeploymentsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<DialDeploymentDto>> {
     const response = await this.getDeploymentsRaw(initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Get JSON Schema configuration for a deployment.
-   * Returns the JSON Schema of configuration supported by the deployment.
-   * Only available for deployments whose `features.configuration` flag is `true`.
-   */
-  async getDeploymentConfigurationRaw(
-    requestParameters: GetDeploymentConfigurationRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Record<string, unknown>>> {
-    if (requestParameters['deployment'] == null) {
-      throw new runtime.RequiredError(
-        'deployment',
-        'Required parameter "deployment" was null or undefined when calling getDeploymentConfiguration().',
-      );
-    }
-
-    const queryParameters: runtime.HTTPQuery = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/deployments/{deployment}/configuration`;
-    urlPath = urlPath.replace(
-      `{${'deployment'}}`,
-      encodeURIComponent(String(requestParameters['deployment'])),
-    );
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse<Record<string, unknown>>(response);
-  }
-
-  /**
-   * Get JSON Schema configuration for a deployment.
-   * Returns the JSON Schema of configuration supported by the deployment.
-   * Only available for deployments whose `features.configuration` flag is `true`.
-   */
-  async getDeploymentConfiguration(
-    requestParameters: GetDeploymentConfigurationRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Record<string, unknown>> {
-    const response = await this.getDeploymentConfigurationRaw(
-      requestParameters,
-      initOverrides,
-    );
     return await response.value();
   }
 }
