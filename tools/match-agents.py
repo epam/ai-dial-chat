@@ -41,6 +41,9 @@ def main():
 
     matched = []
     for path in sorted(glob.glob(f"{args.root}/agents/*/agent.yml")):
+        # Skip underscore-prefixed dirs (e.g. _template) — scaffolding, not agents.
+        if os.path.basename(os.path.dirname(path)).startswith("_"):
+            continue
         try:
             with open(path) as f:
                 manifest = yaml.safe_load(f) or {}
