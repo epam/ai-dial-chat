@@ -20,9 +20,9 @@ inputs:
     required: false
     default: ''
   max_turns:
-    description: 'Max Claude turns. 12 is enough for a typical PR-review or spec-validation pass on a small diff; raise per-stage via the manifest if a heavier agent needs more.'
+    description: 'Max Claude turns. Default 5 is a tight ceiling chosen so that a small-diff PR review completes in <3min and we can distinguish "model working" from "model wedged in a retry loop". Raise per-stage via the manifest when an agent legitimately needs more.'
     required: false
-    default: '12'
+    default: '5'
   show_full_output:
     description: 'When "true", claude-code-action streams full Claude prompts/responses to the GHA log. Useful for debugging on a sandbox base; set to "false" before agents see real secrets in their prompts.'
     required: false
