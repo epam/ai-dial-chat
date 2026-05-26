@@ -370,9 +370,7 @@
           }
         },
         "summary": "Get JSON Schema configuration for a deployment",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/models": {
