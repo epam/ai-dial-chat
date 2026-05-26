@@ -219,18 +219,17 @@ const ConversationView: FC<Props> = ({
             deployments={items}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
-            modelSelectorAriaLabel={t(CatalogI18nKeys.SelectorAriaLabel)}
-            modelSelectorLoadingLabel={
-              isLoading ? t(CatalogI18nKeys.SelectorLoading) : undefined
-            }
-            modelSelectorErrorLabel={
-              error ? t(CatalogI18nKeys.SelectorError) : undefined
-            }
-            modelSelectorEmptyLabel={
-              !isLoading && !error && items.length === 0
-                ? t(CatalogI18nKeys.SelectorEmpty)
-                : undefined
-            }
+            modelSelectorLabels={{
+              ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
+              loading: isLoading
+                ? t(CatalogI18nKeys.SelectorLoading)
+                : undefined,
+              error: error ? t(CatalogI18nKeys.SelectorError) : undefined,
+              empty:
+                !isLoading && !error && items.length === 0
+                  ? t(CatalogI18nKeys.SelectorEmpty)
+                  : undefined,
+            }}
           />
         </Suspense>
       </div>

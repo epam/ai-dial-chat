@@ -1,6 +1,10 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import type { DeploymentItemDto } from '@epam/chat-api-client';
-import type { InputColors, InputTypography } from './Input.js';
+import type {
+  InputColors,
+  InputTypography,
+  ModelSelectorLabels,
+} from './Input.js';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {
@@ -59,12 +63,6 @@ export interface ConversationInputProps {
   selectedDeploymentId?: string | null;
   /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
   onDeploymentChange?: (id: string) => void;
-  /** Accessible label for the model selector trigger button (e.g. "Select model"). */
-  modelSelectorAriaLabel?: string;
-  /** Text displayed (as a disabled menu item) while deployments are loading. */
-  modelSelectorLoadingLabel?: string;
-  /** Text displayed (as a disabled menu item) when the deployments fetch failed. */
-  modelSelectorErrorLabel?: string;
-  /** Text displayed (as a disabled menu item) when the deployments list is empty. */
-  modelSelectorEmptyLabel?: string;
+  /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
+  modelSelectorLabels?: ModelSelectorLabels;
 }

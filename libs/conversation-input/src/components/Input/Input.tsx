@@ -27,6 +27,7 @@ import {
   useState,
 } from 'react';
 import type { InputProps } from '../../models/Input.js';
+import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
@@ -51,10 +52,7 @@ export const Input: FC<InputProps> = ({
   deployments,
   selectedDeploymentId,
   onDeploymentChange,
-  modelSelectorAriaLabel = 'Select model',
-  modelSelectorLoadingLabel,
-  modelSelectorErrorLabel,
-  modelSelectorEmptyLabel,
+  modelSelectorLabels,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-bg': colors.background }),
@@ -96,8 +94,7 @@ export const Input: FC<InputProps> = ({
 
   const canSend = message.trim().length > 0;
   const hasModelSelected =
-    deployments === undefined ||
-    (selectedDeploymentId !== null && selectedDeploymentId !== undefined);
+    deployments === undefined || selectedDeploymentId != null;
 
   const handleSend = () => {
     onSend?.(message, attachments);
@@ -119,18 +116,7 @@ export const Input: FC<InputProps> = ({
   };
 
   const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
-  const resolvedIconUrl = (url: string | undefined) => {
-    if (!url) return undefined;
-    const lower = url.toLowerCase();
-    return lower.startsWith('/') ||
-      lower.startsWith('http://') ||
-      lower.startsWith('https://') ||
-      lower.startsWith('//') ||
-      lower.startsWith('data:')
-      ? url
-      : undefined;
-  };
-  const selectedIconUrl = resolvedIconUrl(selectedItem?.iconUrl);
+  const selectedIconUrl = resolveIconUrl(selectedItem?.iconUrl);
   const selectorIcon = selectedIconUrl ? (
     <img src={selectedIconUrl} alt="" width={18} height={18} />
   ) : (
@@ -138,22 +124,22 @@ export const Input: FC<InputProps> = ({
   );
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
   const selectorAriaLabel = selectedLabel
-    ? `${modelSelectorAriaLabel}: ${selectedLabel}`
-    : modelSelectorAriaLabel;
+    ? `${modelSelectorLabels?.ariaLabel ?? 'Select model'}: ${selectedLabel}`
+    : (modelSelectorLabels?.ariaLabel ?? 'Select model');
 
   const buildSelectorMenuItems = () => {
     if (!deployments || deployments.length === 0) {
       const stateLabel =
-        modelSelectorLoadingLabel ??
-        modelSelectorErrorLabel ??
-        modelSelectorEmptyLabel;
+        modelSelectorLabels?.loading ??
+        modelSelectorLabels?.error ??
+        modelSelectorLabels?.empty;
       if (stateLabel) {
         return [{ key: '__state', label: stateLabel, disabled: true }];
       }
       return [];
     }
     return deployments.map((item) => {
-      const itemIconUrl = resolvedIconUrl(item.iconUrl);
+      const itemIconUrl = resolveIconUrl(item.iconUrl);
       const icon = itemIconUrl ? (
         <img
           src={itemIconUrl}

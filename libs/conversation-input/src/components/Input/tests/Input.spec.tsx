@@ -246,7 +246,7 @@ describe('Input — model selector', () => {
         deployments={mockItems}
         selectedDeploymentId="gpt-4o"
         onDeploymentChange={vi.fn()}
-        modelSelectorAriaLabel="Model"
+        modelSelectorLabels={{ ariaLabel: 'Model' }}
       />,
     );
     expect(screen.getByLabelText('Model: GPT-4o')).toBeTruthy();
@@ -265,13 +265,13 @@ describe('Input — model selector', () => {
     expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });
 
-  it('shows modelSelectorLoadingLabel as disabled item when deployments is empty', () => {
+  it('shows loading label as disabled item when deployments is empty', () => {
     render(
       <Input
         deployments={[]}
         selectedDeploymentId={null}
         onDeploymentChange={vi.fn()}
-        modelSelectorLoadingLabel="Loading models…"
+        modelSelectorLabels={{ loading: 'Loading models…' }}
       />,
     );
     const loadingItem = screen.getByText('Loading models…');
@@ -279,13 +279,13 @@ describe('Input — model selector', () => {
     expect((loadingItem as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('shows modelSelectorErrorLabel as disabled item when deployments is empty', () => {
+  it('shows error label as disabled item when deployments is empty', () => {
     render(
       <Input
         deployments={[]}
         selectedDeploymentId={null}
         onDeploymentChange={vi.fn()}
-        modelSelectorErrorLabel="Failed to load models"
+        modelSelectorLabels={{ error: 'Failed to load models' }}
       />,
     );
     const errorItem = screen.getByText('Failed to load models');

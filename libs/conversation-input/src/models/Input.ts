@@ -31,6 +31,18 @@ export interface InputTypography {
   lineHeight?: string;
 }
 
+/** Status labels displayed inside the model selector dropdown. */
+export interface ModelSelectorLabels {
+  /** Accessible label for the selector trigger button (e.g. `"Select model"`). */
+  ariaLabel?: string;
+  /** Shown as a disabled item while deployments are loading. */
+  loading?: string;
+  /** Shown as a disabled item when the deployments fetch failed. */
+  error?: string;
+  /** Shown as a disabled item when the deployments list is empty. */
+  empty?: string;
+}
+
 /** Props accepted by the `Input` component. */
 export interface InputProps {
   /**
@@ -72,12 +84,6 @@ export interface InputProps {
   selectedDeploymentId?: string | null;
   /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
   onDeploymentChange?: (id: string) => void;
-  /** Accessible label for the model selector trigger button (e.g. "Select model"). */
-  modelSelectorAriaLabel?: string;
-  /** Text displayed (as a disabled menu item) while deployments are loading. */
-  modelSelectorLoadingLabel?: string;
-  /** Text displayed (as a disabled menu item) when the deployments fetch failed. */
-  modelSelectorErrorLabel?: string;
-  /** Text displayed (as a disabled menu item) when the deployments list is empty. */
-  modelSelectorEmptyLabel?: string;
+  /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
+  modelSelectorLabels?: ModelSelectorLabels;
 }

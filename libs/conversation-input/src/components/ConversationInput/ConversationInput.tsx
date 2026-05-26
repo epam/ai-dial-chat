@@ -18,10 +18,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   deployments,
   selectedDeploymentId,
   onDeploymentChange,
-  modelSelectorAriaLabel,
-  modelSelectorLoadingLabel,
-  modelSelectorErrorLabel,
-  modelSelectorEmptyLabel,
+  modelSelectorLabels,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-root-bg': colors.background }),
@@ -75,10 +72,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         deployments={deployments}
         selectedDeploymentId={selectedDeploymentId}
         onDeploymentChange={onDeploymentChange}
-        modelSelectorAriaLabel={modelSelectorAriaLabel}
-        modelSelectorLoadingLabel={modelSelectorLoadingLabel}
-        modelSelectorErrorLabel={modelSelectorErrorLabel}
-        modelSelectorEmptyLabel={modelSelectorEmptyLabel}
+        modelSelectorLabels={modelSelectorLabels}
       />
     </div>
   );
