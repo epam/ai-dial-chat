@@ -51,7 +51,7 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
-      custom_content?: MessageCustomContent,
+      customContent?: MessageCustomContent,
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -99,7 +99,7 @@ export const ConversationPage: FC = () => {
             setStreamError(true);
           },
         },
-        custom_content,
+        customContent,
       );
     },
     [],

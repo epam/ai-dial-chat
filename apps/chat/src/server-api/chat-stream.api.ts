@@ -13,7 +13,7 @@ export const streamCompletion = (
   message: string,
   model: string,
   options: StreamCompletionOptions,
-  custom_content?: MessageCustomContent,
+  customContent?: MessageCustomContent,
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -34,7 +34,7 @@ export const streamCompletion = (
           path,
           message,
           model,
-          ...(custom_content || {}),
+          customContent: customContent || {},
         }),
       });
     } catch (err) {

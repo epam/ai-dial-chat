@@ -822,6 +822,12 @@ export interface DialModelPricingDto {
  */
 export interface MessageDto {
   /**
+   * Unique message identifier
+   * @type {string}
+   * @memberof MessageDto
+   */
+  id?: string;
+  /**
    * Message author role
    * @type {string}
    * @memberof MessageDto
@@ -833,6 +839,18 @@ export interface MessageDto {
    * @memberof MessageDto
    */
   content: string;
+  /**
+   * ISO-8601 timestamp of when the message was created
+   * @type {string}
+   * @memberof MessageDto
+   */
+  timestamp?: string;
+  /**
+   * Extra DIAL payload attached to the message
+   * @type {MessageCustomContentDto}
+   * @memberof MessageDto
+   */
+  custom_content?: MessageCustomContentDto;
 }
 
 /**
