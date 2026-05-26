@@ -19,13 +19,14 @@ import {
   isSmallScreen,
   isTabletScreen,
   isTabletScreenOrMobile,
+  shouldShowConversationsSectionByDefault,
 } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 
-import { UIActions } from '@/src/store/actions';
+import { SettingsActions, UIActions } from '@/src/store/actions';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -48,9 +49,7 @@ const initEpic: AppEpic = (action$, state$) =>
       return forkJoin({
         showChatbar: DataService.getShowChatbar(
           enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
-            (!isTabletScreenOrMobile() ||
-              process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT ===
-                'true'),
+            shouldShowConversationsSectionByDefault(),
         ),
         showPromptbar: DataService.getShowPromptbar(
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
@@ -154,6 +153,19 @@ const initEpic: AppEpic = (action$, state$) =>
         return concat(actions);
       },
     ),
+  );
+
+/** Overlay sends enabledFeatures after UI init; apply sidebar default when the feature arrives. */
+const applyShowConversationsSectionByDefaultEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(SettingsActions.setEnabledFeatures.type),
+    filter(
+      ({ payload }) =>
+        payload.includes(Feature.ShowConversationsSectionByDefault) &&
+        SettingsSelectors.selectIsOverlay(state$.value),
+    ),
+    filter(() => shouldShowConversationsSectionByDefault()),
+    switchMap(() => of(UIActions.setShowChatbar(true))),
   );
 
 const initThemeEpic: AppEpic = (action$, state$) =>
@@ -505,6 +517,7 @@ const setCollapsedSectionsEpic: AppEpic = (action$) =>
 
 export const UIEpics = combineEpics(
   initEpic,
+  applyShowConversationsSectionByDefaultEpic,
   initThemeEpic,
   saveThemeEpic,
   saveEnterTypeEpic,

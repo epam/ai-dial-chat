@@ -78,7 +78,10 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
-import { isTabletScreen } from '@/src/utils/app/mobile';
+import {
+  isTabletScreen,
+  shouldAutoHideChatbarOnConversationChange,
+} from '@/src/utils/app/mobile';
 import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
@@ -2329,7 +2332,9 @@ const hideChatbarEpic: AppEpic = (action$) =>
       return true;
     }),
     switchMap(() =>
-      isTabletScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
+      shouldAutoHideChatbarOnConversationChange()
+        ? of(UIActions.setShowChatbar(false))
+        : EMPTY,
     ),
   );
 
