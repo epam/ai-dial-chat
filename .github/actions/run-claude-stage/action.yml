@@ -110,19 +110,28 @@ runs:
         echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
         PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
 
-        # 3) Build claude_args. Allowed tools, model, json-schema, and the
-        # verbose flag all go through the CLI via claude_args; the action
-        # exposes none as direct inputs. `--verbose` makes the CLI emit
-        # tool-use events as they happen so the GHA log streams live
-        # instead of buffering until the run completes.
-        ARGS="--max-turns ${MAX_TURNS} --json-schema=${SCHEMA_PATH} --verbose"
+        # 3) Build claude_args. Allowed tools, model, and the verbose flag
+        # all go through the CLI via claude_args; the action exposes none
+        # as direct inputs. `--verbose` makes the CLI emit tool-use events
+        # as they happen so the GHA log streams live instead of buffering
+        # until the run completes.
+        #
+        # NOTE: --json-schema is intentionally NOT used. claude-code-action's
+        # structured_output path buffers Claude's output (no live streaming,
+        # zero visibility for ~5-15min) regardless of action version. We
+        # instead instruct the agent in the prompt to write its JSON
+        # response to `stage-output.json` via the Write tool, and the
+        # materialize step below just verifies the file exists. The renderer
+        # (render-stage-comment.py) does the same shape validation that
+        # --json-schema would have done.
+        ARGS="--max-turns ${MAX_TURNS} --verbose"
         if [ -n "${MODEL}" ]; then
           ARGS="${ARGS} --model ${MODEL}"
         fi
-        if [ -n "${ALLOWED_TOOLS}" ]; then
-          # Single-quote the value to preserve patterns like `Bash(git diff:*)`.
-          ARGS="${ARGS} --allowed-tools '${ALLOWED_TOOLS}'"
-        fi
+        # Append `Write` to allowed_tools so the agent can produce
+        # stage-output.json. Every agent needs this — structural, not
+        # agent-specific, so we don't burden manifests with it.
+        ARGS="${ARGS} --allowed-tools '${ALLOWED_TOOLS},Write'"
 
         echo "claude_args=${ARGS}" >> "$GITHUB_OUTPUT"
         {
@@ -165,7 +174,7 @@ runs:
 
     - name: Run Claude
       id: claude
-      uses: anthropics/claude-code-action@0d2971c794049856e777f4e8bb5a81623ec632d3 # v1.0.100 — temporarily older than v1.0.133 to test for recent regression
+      uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
       with:
         anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
         # Pass the runner's GITHUB_TOKEN directly so the action skips its
@@ -182,18 +191,17 @@ runs:
         prompt: ${{ steps.prep.outputs.prompt }}
         claude_args: ${{ steps.prep.outputs.claude_args }}
 
-    - name: Materialize structured output as stage-output.json
+    - name: Verify stage-output.json
       shell: bash
-      env:
-        OUTPUT: ${{ steps.claude.outputs.structured_output }}
       run: |
         set -euo pipefail
-        if [ -z "$OUTPUT" ]; then
-          echo "::error::claude-code-action did not return structured_output. Either --json-schema was not honored, the model does not support structured outputs (requires Sonnet 4.5+ / Opus 4.5+ / Haiku 4.5+), or the agent hit error_max_structured_output_retries."
+        if [ ! -f stage-output.json ]; then
+          echo "::error::Claude did not write stage-output.json. The agent must use the Write tool to create the file at the repo root with its final JSON response. Check the Run Claude step's log for what happened."
           exit 1
         fi
-        printf '%s' "$OUTPUT" > stage-output.json
-        echo "Wrote structured output to stage-output.json ($(wc -c < stage-output.json) bytes)"
+        echo "stage-output.json present ($(wc -c < stage-output.json) bytes)"
+        echo "--- contents ---"
+        cat stage-output.json
 
     - name: Validate and render sticky comment
       id: extract
