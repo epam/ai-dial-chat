@@ -27,7 +27,7 @@ export const MarketplaceEntitySelectors = {
   addBookmarkIcon: '[data-qa="add-bookmark"]',
   removeBookmarkIcon: '[data-qa="remove-bookmark"]',
   topicsContainer: '[data-qa="entity-topics"]',
-  topic: '[data-qa="app-topic"]',
+  topic: '[data-qa="entity-topic"]',
   hiddenTopics: '[data-qa="hidden-topics"]',
   copyLink: '[data-qa="copy-link"]',
   copyLinkText: '[data-qa="copy-link-text"]',
@@ -63,6 +63,7 @@ export const MarketplaceDetailsModal = {
   unshareButton: '[data-qa="unshare"]',
   loginButton: 'Log in',
   logoutButton: 'Log out',
+  viewButton: 'View',
 };
 
 export const MarketplaceSideBarSelectors = {

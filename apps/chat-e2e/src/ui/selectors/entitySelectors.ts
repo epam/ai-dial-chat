@@ -4,6 +4,7 @@ export const EntitySelectors = {
   prompt: '[data-qa="prompt"]',
   file: '[data-qa="file"]',
   application: '[data-qa="application"]',
+  toolset: '[data-qa="toolset"]',
   version: '[data-qa="version"]',
   entityInput: '[data-qa="entity-input"]',
 };
