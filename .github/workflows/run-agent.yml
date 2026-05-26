@@ -30,7 +30,8 @@ permissions:
   id-token: write   # required by anthropics/claude-code-action for OIDC auth
 
 jobs:
-  run:
+  agent:
+    name: agent
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout_minutes }}
     concurrency:

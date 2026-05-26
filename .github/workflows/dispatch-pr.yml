@@ -42,6 +42,7 @@ jobs:
           echo "round3=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round3", [])))')" >> "$GITHUB_OUTPUT"
 
   run-round-1:
+    name: ${{ matrix.agent.name }}
     needs: discover
     if: needs.discover.outputs.round1 != '[]'
     strategy:
@@ -57,6 +58,7 @@ jobs:
     secrets: inherit
 
   run-round-2:
+    name: ${{ matrix.agent.name }}
     needs: [discover, run-round-1]
     if: needs.discover.outputs.round2 != '[]'
     strategy:
@@ -72,6 +74,7 @@ jobs:
     secrets: inherit
 
   run-round-3:
+    name: ${{ matrix.agent.name }}
     needs: [discover, run-round-2]
     if: needs.discover.outputs.round3 != '[]'
     strategy:
