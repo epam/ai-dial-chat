@@ -12,15 +12,28 @@ Invoke the local `/{{skill}}` skill against the inputs above. Follow its instruc
 
 ## Output
 
-Your **final response** is a JSON object validated against the schema passed via `--json-schema`. The renderer pins `stage` to `"{{stage}}"` and injects envelope fields (`contract_version`, `agent_version`, `run_id`, `trigger`) after you exit. Do not write files or post PR comments yourself; the platform handles artifact upload and sticky-comment posting.
+At the end of your work, use the **`Write` tool** to save your final response as a JSON object at `stage-output.json` (repo root). Do **not** print the JSON in chat — only the file matters. Do not post PR comments yourself; the platform reads `stage-output.json`, validates it, injects envelope fields (`contract_version`, `agent_version`, `run_id`, `trigger`), and posts the sticky comment.
 
-Required:
+The JSON object you write must have:
 
-- `status`: `"passed"` (no issues), `"passed_with_findings"` (advisory issues only), or `"failed"` (blocking issue present).
-- `summary`: one short line for the sticky PR comment.
+**Required:**
 
-Optional, under `payload` (object — agent-specific data goes here):
+- `stage`: must be `"{{stage}}"` (the renderer rejects mismatches)
+- `status`: `"passed"` (no issues), `"passed_with_findings"` (advisory issues only), or `"failed"` (blocking issue present)
+- `summary`: one short line for the sticky PR comment (max 280 chars)
+
+**Optional, under `payload`** (object — agent-specific structured data goes here):
 
 - `payload.findings[]` — reviewer convention. Use when the skill emits issues. Shape: `{severity, file?, line?, message, suggested_fix?, requirement_ref?}`. Severity: `info`/`low`/`medium`/`high`/`critical`. Preserve the skill's severity verbatim; do not downgrade.
 - `payload.comment_markdown` — override convention. A markdown string that replaces the renderer's default body. Use when your output isn't reviewer-shaped (test results, benchmarks, generated code summaries, etc.).
 - Any other keys — agent-specific. `payload` accepts arbitrary structured data for downstream consumers.
+
+Minimum example:
+
+```json
+{
+  "stage": "{{stage}}",
+  "status": "passed",
+  "summary": "No issues found."
+}
+```
