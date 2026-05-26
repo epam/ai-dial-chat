@@ -11,7 +11,6 @@ import { ThemeService } from '../theme.service';
 
 describe('ThemeService', () => {
   let service: ThemeService;
-  let configService: ConfigService;
 
   const mockConfigService = {
     get: vi.fn((key: string) => {
@@ -56,7 +55,6 @@ describe('ThemeService', () => {
     }).compile();
 
     service = module.get<ThemeService>(ThemeService);
-    configService = module.get<ConfigService>(ConfigService);
 
     // Reset mocks
     vi.clearAllMocks();

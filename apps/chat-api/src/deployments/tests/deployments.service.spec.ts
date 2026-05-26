@@ -1,9 +1,7 @@
 import {
   BadGatewayException,
-  ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -54,6 +52,8 @@ function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
     }),
   };
 
+  const configService = {
+    get: vi.fn().mockReturnValue('http://dial-core'),
   } as unknown as ConfigService<EnvironmentVariables>;
 
   const service = new DeploymentsService(configService, cacheManager as never);
@@ -62,17 +62,19 @@ function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
   return { service, sdkClient, cacheManager };
 }
 
-const okResponse = <T>(data: T) => ({
-  error: undefined,
-  response: { status: 200 },
-  data,
-});
+const okResponse = <T>(data: T) =>
+  ({
+    error: undefined,
+    response: { status: 200 },
+    data,
+  }) as never;
 
-const errResponse = (status: number) => ({
-  error: true as const,
-  response: { status },
-  data: undefined,
-});
+const errResponse = (status: number) =>
+  ({
+    error: true as const,
+    response: { status },
+    data: undefined,
+  }) as never;
 
 describe('DeploymentsService', () => {
   beforeEach(() => {

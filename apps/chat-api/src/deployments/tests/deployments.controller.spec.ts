@@ -49,7 +49,9 @@ describe('DeploymentsController', () => {
   it('getDeploymentConfiguration returns service result', async () => {
     const { controller, service } = makeController();
     const schema = { type: 'object', title: 'Config' };
-    (service.getDeploymentConfiguration as ReturnType<typeof vi.fn>).mockResolvedValue(schema);
+    (
+      service.getDeploymentConfiguration as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(schema);
 
     const result = await controller.getDeploymentConfiguration(
       mockReq,
@@ -65,9 +67,9 @@ describe('DeploymentsController', () => {
 
   it('getDeploymentConfiguration propagates NotFoundException', async () => {
     const { controller, service } = makeController();
-    (service.getDeploymentConfiguration as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new NotFoundException(),
-    );
+    (
+      service.getDeploymentConfiguration as ReturnType<typeof vi.fn>
+    ).mockRejectedValue(new NotFoundException());
     await expect(
       controller.getDeploymentConfiguration(mockReq, 'unknown'),
     ).rejects.toThrow(NotFoundException);
