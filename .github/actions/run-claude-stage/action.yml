@@ -20,9 +20,9 @@ inputs:
     required: false
     default: ''
   max_turns:
-    description: 'Max Claude turns. Default 5 is a tight ceiling chosen so that a small-diff PR review completes in <3min and we can distinguish "model working" from "model wedged in a retry loop". Raise per-stage via the manifest when an agent legitimately needs more.'
+    description: 'Max Claude turns. 12 is enough for a typical PR-review or spec-validation pass on a small diff with the skill invocation overhead; raise per-stage via the manifest if a heavier agent needs more.'
     required: false
-    default: '5'
+    default: '12'
   show_full_output:
     description: 'When "true", claude-code-action streams full Claude prompts/responses to the GHA log. Useful for debugging on a sandbox base; set to "false" before agents see real secrets in their prompts.'
     required: false
@@ -89,11 +89,20 @@ runs:
             json.dump(s, f)
 
         # --- Composed prompt ------------------------------------------------
+        # IMPORTANT: substitute {{base_ref}} with the real branch name HERE,
+        # not at runtime via ${GITHUB_BASE_REF} in Claude's Bash command. The
+        # Claude Code Bash tool rejects commands containing shell variable
+        # expansion (`Contains expansion` / `Contains simple_expansion`) for
+        # safety — anything Claude types into a Bash tool call must be
+        # literal. So we expand the base ref at compose time and Claude sees
+        # `git diff origin/<actual-branch>...HEAD`.
+        base_ref = os.environ.get('GITHUB_BASE_REF', 'main')
         with open(os.environ['WRAPPER_PATH']) as f:
             template = f.read()
         composed = (template
                     .replace('{{stage}}', stage)
-                    .replace('{{skill}}', os.environ['SKILL']))
+                    .replace('{{skill}}', os.environ['SKILL'])
+                    .replace('{{base_ref}}', base_ref))
         with open(os.environ['COMPOSED_PROMPT_PATH'], 'w') as f:
             f.write(composed)
         PY
@@ -101,19 +110,12 @@ runs:
         echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
         PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
 
-        # 3) Build claude_args. Allowed tools, model, and the verbose flag
-        # all go through the CLI via claude_args; the action exposes none
-        # as direct inputs. `--verbose` makes the CLI emit tool-use events
-        # as they happen so the GHA log streams live instead of buffering
-        # until the run completes.
-        #
-        # DIAGNOSTIC: --json-schema is currently DROPPED to test whether the
-        # structured_output path is the source of the hang we've seen with
-        # v1.0.133. Without --json-schema, the action will not populate the
-        # structured_output output, which causes the "Materialize structured
-        # output" step below to fail loudly — that's expected during this
-        # diagnostic. The Run Claude step's log is what we read.
-        ARGS="--max-turns ${MAX_TURNS} --verbose"
+        # 3) Build claude_args. Allowed tools, model, json-schema, and the
+        # verbose flag all go through the CLI via claude_args; the action
+        # exposes none as direct inputs. `--verbose` makes the CLI emit
+        # tool-use events as they happen so the GHA log streams live
+        # instead of buffering until the run completes.
+        ARGS="--max-turns ${MAX_TURNS} --json-schema=${SCHEMA_PATH} --verbose"
         if [ -n "${MODEL}" ]; then
           ARGS="${ARGS} --model ${MODEL}"
         fi
