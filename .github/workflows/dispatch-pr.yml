@@ -14,6 +14,7 @@ permissions:
   pull-requests: write
   checks: write
   security-events: write
+  id-token: write   # required by anthropics/claude-code-action for OIDC auth
 
 jobs:
   discover:
