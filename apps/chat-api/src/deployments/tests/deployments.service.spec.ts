@@ -1,8 +1,13 @@
 import {
   BadGatewayException,
+  ForbiddenException,
+  NotFoundException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../deployments.service';
 import type { DeploymentItemDto } from '../dto/deployment-item.dto';
 
@@ -45,24 +50,29 @@ function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
     getDeploymentsByInterfaceType: vi.fn().mockResolvedValue({
       error: false,
       response: { status: 200 },
-      data: {
-        deployments: [mockModel, mockApplication, mockToolset],
-      },
+      data: [mockModel, mockApplication, mockToolset],
     }),
   };
 
-  const configService = {
-    get: vi.fn().mockReturnValue('http://dial-core'),
-  };
+  } as unknown as ConfigService<EnvironmentVariables>;
 
-  const service = new DeploymentsService(
-    configService as never,
-    cacheManager as never,
-  );
+  const service = new DeploymentsService(configService, cacheManager as never);
   (service as unknown as { client: typeof sdkClient }).client = sdkClient;
 
   return { service, sdkClient, cacheManager };
 }
+
+const okResponse = <T>(data: T) => ({
+  error: undefined,
+  response: { status: 200 },
+  data,
+});
+
+const errResponse = (status: number) => ({
+  error: true as const,
+  response: { status },
+  data: undefined,
+});
 
 describe('DeploymentsService', () => {
   beforeEach(() => {
@@ -90,7 +100,7 @@ describe('DeploymentsService', () => {
       sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
         error: false,
         response: { status: 200 },
-        data: { deployments: [mockModel, mockNoId] },
+        data: [mockModel, mockNoId],
       });
       const result = await service.listDeployments('user1', 'token');
       expect(result.deployments).toHaveLength(1);
@@ -102,7 +112,7 @@ describe('DeploymentsService', () => {
       sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
         error: false,
         response: { status: 200 },
-        data: { deployments: [mockNoDisplayName] },
+        data: [mockNoDisplayName],
       });
       const result = await service.listDeployments('user1', 'token');
       expect(result.deployments[0].displayName).toBe('no-name');
@@ -160,6 +170,103 @@ describe('DeploymentsService', () => {
       await expect(service.listDeployments('user1', 'token')).rejects.toThrow(
         ServiceUnavailableException,
       );
+    });
+  });
+
+  describe('getDeploymentConfiguration', () => {
+    const schema = { type: 'object', title: 'StatGPT Config', properties: {} };
+
+    it('returns configuration schema from upstream on cache miss', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        okResponse(schema),
+      );
+
+      const result = await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'token',
+      );
+      expect(result).toEqual(schema);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['client'], 'configurationDeployment')
+        .mockResolvedValue(okResponse(schema));
+
+      await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'my-token',
+      );
+      expect(spy).toHaveBeenCalledWith(
+        'statgpt',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('returns cached value and skips upstream on cache hit', async () => {
+      const { service, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(schema);
+      const spy = vi.spyOn(service['client'], 'configurationDeployment');
+
+      const result = await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'token',
+      );
+      expect(result).toEqual(schema);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('stores result in cache with 60 s TTL on success', async () => {
+      const { service, cacheManager } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        okResponse(schema),
+      );
+
+      await service.getDeploymentConfiguration('statgpt', 'user-123', 'token');
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'deployments:configuration:user-123:statgpt',
+        schema,
+        60 * 1000,
+      );
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        errResponse(404),
+      );
+      await expect(
+        service.getDeploymentConfiguration('unknown', 'user-123', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      await expect(
+        service.getDeploymentConfiguration('statgpt', 'user-123', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        errResponse(502),
+      );
+      await expect(
+        service.getDeploymentConfiguration('statgpt', 'user-123', 'token'),
+      ).rejects.toThrow(BadGatewayException);
     });
   });
 });

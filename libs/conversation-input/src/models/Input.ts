@@ -33,8 +33,11 @@ export interface InputTypography {
 
 /** Props accepted by the `Input` component. */
 export interface InputProps {
-  /** Pre-filled message shown when the component mounts. */
-  initialMessage?: string;
+  /**
+   * Message value. Sets the initial textarea content on mount and syncs the
+   * textarea whenever the value changes to a non-empty string.
+   */
+  message?: string;
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */

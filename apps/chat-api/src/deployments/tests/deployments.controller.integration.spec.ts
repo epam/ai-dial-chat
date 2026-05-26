@@ -65,7 +65,10 @@ describe('DeploymentsController (integration)', () => {
   let service: { listDeployments: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    service = { listDeployments: vi.fn().mockResolvedValue(mockResponse) };
+    service = {
+      listDeployments: vi.fn().mockResolvedValue(mockResponse),
+      getDeploymentConfiguration: vi.fn(),
+    };
     app = await buildApp(service);
   });
 
@@ -134,6 +137,49 @@ describe('DeploymentsController (integration)', () => {
         new ServiceUnavailableException(),
       );
       await request(app.getHttpServer()).get('/api/v1/deployments').expect(503);
+    });
+  });
+
+  describe('GET /deployments/:deployment/configuration', () => {
+    it('returns 200 with JSON Schema object', async () => {
+      const schema = {
+        type: 'object',
+        title: 'StatGPT Config',
+        properties: {},
+      };
+      service.getDeploymentConfiguration.mockResolvedValue(schema);
+
+      const response = await request(app.getHttpServer())
+        .get('/deployments/statgpt/configuration')
+        .expect(200);
+      expect(response.body).toEqual(schema);
+      expect(service.getDeploymentConfiguration).toHaveBeenCalledWith(
+        'statgpt',
+        TEST_USER.sub,
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 404 when deployment does not support configuration', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      service.getDeploymentConfiguration.mockRejectedValue(
+        new NotFoundException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/deployments/basic-model/configuration')
+        .expect(404);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      service.getDeploymentConfiguration.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/deployments/statgpt/configuration')
+        .expect(503);
     });
   });
 });

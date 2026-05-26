@@ -85,7 +85,7 @@ describe('Input', () => {
   });
 
   it('should pre-populate textarea with initialMessage', () => {
-    const { container } = render(<Input initialMessage="Hello" />);
+    const { container } = render(<Input message="Hello" />);
     const textarea = container.querySelector('textarea');
     expect(textarea?.value).toBe('Hello');
   });

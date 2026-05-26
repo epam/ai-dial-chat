@@ -568,6 +568,12 @@ export interface DialModelCapabilitiesDto {
   inference?: boolean;
 }
 /**
+ * Legacy deployment DTO returned by GET /api/deployments.
+ * @export
+ */
+export type DialDeploymentDto = DialModelDto;
+
+/**
  *
  * @export
  * @interface DialModelDto
