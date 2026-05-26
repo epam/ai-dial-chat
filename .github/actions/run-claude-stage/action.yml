@@ -101,9 +101,13 @@ runs:
         echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
         PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
 
-        # 3) Build claude_args. Allowed tools, model, and json-schema all go
-        # through the CLI via claude_args; the action exposes none as direct inputs.
-        ARGS="--max-turns ${MAX_TURNS} --json-schema=${SCHEMA_PATH}"
+        # 3) Build claude_args. Allowed tools, model, json-schema, and the
+        # verbose flag all go through the CLI via claude_args; the action
+        # exposes none as direct inputs. `--verbose` makes the CLI emit
+        # tool-use events as they happen so the GHA log streams live
+        # instead of buffering until the run completes — essential for
+        # debugging on the sandbox base.
+        ARGS="--max-turns ${MAX_TURNS} --json-schema=${SCHEMA_PATH} --verbose"
         if [ -n "${MODEL}" ]; then
           ARGS="${ARGS} --model ${MODEL}"
         fi
