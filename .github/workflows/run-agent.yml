@@ -108,3 +108,4 @@ jobs:
           allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
           agent_version: ${{ steps.manifest.outputs.agent_version }}
           model: ${{ steps.manifest.outputs.model }}
+          show_full_output: 'true'   # sandbox debug visibility — revert before merging to development-1.0
