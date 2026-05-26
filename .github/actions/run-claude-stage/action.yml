@@ -20,9 +20,13 @@ inputs:
     required: false
     default: ''
   max_turns:
-    description: 'Max Claude turns.'
+    description: 'Max Claude turns. 12 is enough for a typical PR-review or spec-validation pass on a small diff; raise per-stage via the manifest if a heavier agent needs more.'
     required: false
-    default: '25'
+    default: '12'
+  show_full_output:
+    description: 'When "true", claude-code-action streams full Claude prompts/responses to the GHA log. Useful for debugging on a sandbox base; set to "false" before agents see real secrets in their prompts.'
+    required: false
+    default: 'false'
 
 outputs:
   message:
@@ -126,6 +130,11 @@ runs:
         # in a later step (see "Post sticky PR comment" below) using the
         # same token via `gh api`.
         github_token: ${{ github.token }}
+        # When the caller sets `show_full_output: "true"` we surface Claude's
+        # prompts and tool calls in the GHA log. The action's default hides
+        # them for security; visibility is essential on the sandbox base
+        # while wiring is shaken out.
+        show_full_output: ${{ inputs.show_full_output }}
         prompt: ${{ steps.prep.outputs.prompt }}
         claude_args: ${{ steps.prep.outputs.claude_args }}
 
