@@ -61,10 +61,6 @@ export const SelectFolderModal = ({
     );
   }, [disallowSelectRootFolder, initialSelectedFolderId, rootFolderId]);
 
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    defaultSelectedFolder,
-  );
-
   const lastRenamedParentFolder = useAppSelector(
     FilesSelectors.selectLastRenamedParentFolder,
   );
@@ -113,8 +109,14 @@ export const SelectFolderModal = ({
   });
 
   useEffect(() => {
+    if (isOpen) {
+      setCurrentPath(defaultSelectedFolder);
+    }
+  }, [isOpen, defaultSelectedFolder, setCurrentPath]);
+
+  useEffect(() => {
     if (lastRenamedParentFolder?.newId) {
-      setSelectedFolderId((id) => {
+      setCurrentPath((id) => {
         if (!id) return id;
 
         if (id === lastRenamedParentFolder.oldId)
@@ -133,6 +135,7 @@ export const SelectFolderModal = ({
     dispatch,
     lastRenamedParentFolder?.newId,
     lastRenamedParentFolder?.oldId,
+    setCurrentPath,
   ]);
 
   useEffect(() => {
@@ -143,7 +146,7 @@ export const SelectFolderModal = ({
         }),
       );
     }
-  }, [currentPath, dispatch, isOpen, rootFolderId]);
+  }, [dispatch, isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -152,10 +155,10 @@ export const SelectFolderModal = ({
   }, [dispatch, isOpen]);
 
   useEffect(() => {
-    if (currentPath) {
+    if (isOpen && rootFolderId) {
       dispatch(FilesActions.getFolders({ id: rootFolderId }));
     }
-  }, [currentPath, dispatch, isOpen, rootFolderId]);
+  }, [dispatch, isOpen, rootFolderId]);
 
   const frozenFileTreeItemsRef = useRef(fileTreeItems);
   useEffect(() => {
@@ -170,12 +173,11 @@ export const SelectFolderModal = ({
 
   const handleClose = useCallback(() => {
     onClose(undefined);
-    setSelectedFolderId(defaultSelectedFolder);
-  }, [onClose, defaultSelectedFolder]);
+  }, [onClose]);
 
   const handleConfirm = useCallback(() => {
-    onClose(selectedFolderId);
-  }, [onClose, selectedFolderId]);
+    onClose(currentPath ?? defaultSelectedFolder);
+  }, [onClose, currentPath, defaultSelectedFolder]);
 
   const modalTreeOptions = useMemo(
     () => ({
@@ -196,6 +198,11 @@ export const SelectFolderModal = ({
         suppressRowVirtualisation: true,
         onCellEditingStarted: (params: CellEditingStartedEvent) => {
           setIsGridEditing(true);
+          if (params.api) {
+            setTimeout(() => {
+              params.api.ensureIndexVisible(params.rowIndex as number);
+            }, 0);
+          }
           gridOptions.additionalGridOptions?.onCellEditingStarted?.(params);
         },
         onCellEditingStopped: (params: CellEditingStoppedEvent) => {
