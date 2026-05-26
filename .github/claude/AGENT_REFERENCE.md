@@ -258,15 +258,30 @@ The platform handles the rest:
 You don't write the output contract into your skill — the platform appends
 it to the composed prompt automatically. What the contract says:
 
-The agent's **final response** is a JSON object validated against the
-schema at [`schemas/stage-message.schema.json`](./schemas/stage-message.schema.json).
-The platform passes the schema to Claude via `--json-schema`, so the model
-is constitutionally constrained to match it. There is no separate
-"write a file" step — the structured response itself is the output.
+At the end of the run, the agent uses the **`Write` tool** to save a JSON
+object to `stage-output.json` at the repo root. The renderer reads that
+file, validates required fields, injects envelope fields
+(`contract_version`, `agent_version`, `run_id`, `trigger`), and posts a
+sticky PR comment. The schema lives at
+[`schemas/stage-message.schema.json`](./schemas/stage-message.schema.json).
 
-Failure mode: if Claude can't satisfy the schema within its retry budget,
-the action emits `error_max_structured_output_retries` and the job fails.
-No partial / malformed output ever reaches downstream.
+`Write` is appended to `allowed_tools` automatically by the platform —
+your manifest doesn't need to declare it.
+
+Failure mode: if the agent doesn't write `stage-output.json`, the
+"Verify stage-output.json" step fails loudly. If the file exists but
+fields are missing or malformed, the renderer fails with a clear error.
+Either way the job fails — no partial output reaches downstream.
+
+> **Aside on `--json-schema`** — the platform used to pass the schema
+> to Claude via `--json-schema=<path>` in `claude_args` for
+> constitutional output enforcement. Empirically (across 9 smoke runs)
+> that path buffers Claude's output for the entire run with no live
+> streaming, regardless of action version. We removed it; the agent
+> writes the file itself, the renderer does the shape validation, and
+> we get live debugging for free. See
+> [`PLATFORM_REFERENCE.md`](./PLATFORM_REFERENCE.md) → *How agents emit
+> output* for the full story.
 
 ### Top-level shape
 
