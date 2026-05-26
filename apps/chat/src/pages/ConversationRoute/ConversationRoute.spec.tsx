@@ -2,10 +2,12 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
+import * as ModelsContextModule from '../../context/ModelsContext';
 import * as conversationsApi from '../../server-api/conversations.api';
 import ConversationRoute from './ConversationRoute';
 
 vi.mock('../../context/DeploymentsContext');
+vi.mock('../../context/ModelsContext');
 vi.mock('../../server-api/conversations.api');
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
@@ -53,10 +55,19 @@ const renderRoute = () =>
 
 describe('ConversationRoute', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
+  const mockUseModels = vi.mocked(ModelsContextModule.useModels);
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseModels.mockReturnValue({
+      models: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      selectedModelConfiguration: null,
+      isLoading: false,
+      error: null,
+    } as never);
     mockUseDeployments.mockReturnValue({
       items: mockItems,
       selectedItemId: 'gpt-4o',
