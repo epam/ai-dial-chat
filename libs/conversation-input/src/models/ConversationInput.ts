@@ -1,4 +1,4 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { ApiAttachment, UiAttachment } from '@epam/ai-dial-chat-shared';
 import type { InputColors, InputTypography } from './Input.js';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -36,13 +36,18 @@ export interface ConversationInputProps {
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). */
-  onSend?: (message: string) => void;
+  onSend?: (payload: {
+    message: string;
+    attachments?: ApiAttachment[];
+  }) => void;
+  /** Called to upload a file; injected by the consuming app (lib has no fetch dependency). */
+  onUploadAttachment?: (file: File) => Promise<ApiAttachment>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button and blocks Enter. */
   isStreaming?: boolean;
   /** Called whenever the attachment list changes. */
-  onAttachmentsChange?: (attachments: Attachment[]) => void;
+  onAttachmentsChange?: (attachments: UiAttachment[]) => void;
   /** Color overrides applied as CSS custom properties. */
   colors?: ConversationInputColors;
   /** Typography overrides for the welcome heading and input. */

@@ -1,4 +1,4 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { ApiAttachment, UiAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   RequestStatus,
@@ -31,6 +31,7 @@ export const Input: FC<InputProps> = ({
   isStreaming = false,
   onChange,
   onAttachmentsChange,
+  onUploadAttachment,
   placeholder = 'Type a message...',
   ariaLabel,
   attachLabel = 'Attach file',
@@ -62,7 +63,7 @@ export const Input: FC<InputProps> = ({
   } as CSSProperties;
 
   const [message, setMessage] = useState(initialMessage);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<UiAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -76,18 +77,74 @@ export const Input: FC<InputProps> = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isStreaming) {
-        onSend?.(message);
-        setMessage('');
-      }
+      handleSend();
     }
+  };
+
+  const hasUploadedAttachment = attachments.some(
+    (a) => a.apiAttachment != null,
+  );
+  const hasLoadingAttachment = attachments.some(
+    (a) => a.status === RequestStatus.Loading,
+  );
+  const canSend =
+    (message.trim().length > 0 || hasUploadedAttachment) &&
+    !hasLoadingAttachment;
+
+  const handleSend = () => {
+    if (isStreaming || !canSend) return;
+
+    const apiAttachments = attachments
+      .filter((a) => a.apiAttachment != null)
+      .map((a) => a.apiAttachment as ApiAttachment);
+
+    onSend?.({
+      message,
+      attachments: apiAttachments.length > 0 ? apiAttachments : undefined,
+    });
+    setMessage('');
+    setAttachments([]);
+  };
+
+  const startUpload = (attachment: UiAttachment) => {
+    if (!onUploadAttachment || !attachment.file) return;
+
+    setAttachments((prev) => {
+      const updated = prev.map((a) =>
+        a.id === attachment.id ? { ...a, status: RequestStatus.Loading } : a,
+      );
+      onAttachmentsChange?.(updated);
+      return updated;
+    });
+
+    onUploadAttachment(attachment.file)
+      .then((apiAttachment) => {
+        setAttachments((prev) => {
+          const updated = prev.map((a) =>
+            a.id === attachment.id
+              ? { ...a, status: RequestStatus.Idle, apiAttachment }
+              : a,
+          );
+          onAttachmentsChange?.(updated);
+          return updated;
+        });
+      })
+      .catch(() => {
+        setAttachments((prev) => {
+          const updated = prev.map((a) =>
+            a.id === attachment.id ? { ...a, status: RequestStatus.Error } : a,
+          );
+          onAttachmentsChange?.(updated);
+          return updated;
+        });
+      });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
-    const newAttachments: Attachment[] = files.map((file) => {
+    const newAttachments: UiAttachment[] = files.map((file) => {
       const isImage = file.type.startsWith('image/');
       const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
       return {
@@ -96,7 +153,7 @@ export const Input: FC<InputProps> = ({
         contentType: file.type,
         file,
         type: isImage ? AttachmentType.Image : AttachmentType.File,
-        status: RequestStatus.Idle,
+        status: onUploadAttachment ? RequestStatus.Loading : RequestStatus.Idle,
         previewUrl,
       };
     });
@@ -109,6 +166,10 @@ export const Input: FC<InputProps> = ({
       onAttachmentsChange?.(updated);
       return updated;
     });
+
+    if (onUploadAttachment) {
+      newAttachments.forEach((a) => startUpload(a));
+    }
   };
 
   const handleRemove = (id: string) => {
@@ -119,6 +180,11 @@ export const Input: FC<InputProps> = ({
       onAttachmentsChange?.(updated);
       return updated;
     });
+  };
+
+  const handleRetry = (id: string) => {
+    const target = attachments.find((a) => a.id === id);
+    if (target) startUpload(target);
   };
 
   return (
@@ -134,6 +200,7 @@ export const Input: FC<InputProps> = ({
         <AttachmentTray
           attachments={attachments}
           onRemove={handleRemove}
+          onRetry={handleRetry}
           removeLabel={removeLabel}
           retryLabel={retryLabel}
           className="mb-2"
@@ -188,7 +255,7 @@ export const Input: FC<InputProps> = ({
         {isStreaming ? (
           <StopButton onStop={onStop} />
         ) : (
-          message.trim() && <SendButton onSend={() => onSend?.(message)} />
+          canSend && <SendButton onSend={handleSend} />
         )}
       </div>
     </div>

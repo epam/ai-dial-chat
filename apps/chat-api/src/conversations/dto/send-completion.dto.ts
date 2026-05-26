@@ -1,5 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  ValidateNested,
+  MinLength,
+} from 'class-validator';
+import { AttachmentDto } from '../../common/dto/attachment.dto';
 
 export class SendCompletionDto {
   @ApiProperty({
@@ -14,13 +24,12 @@ export class SendCompletionDto {
   path!: string;
 
   @ApiProperty({
-    description: 'The new user message to send',
+    description:
+      'The new user message to send. May be empty when attachments are provided.',
     example: 'What is the capital of France?',
-    minLength: 1,
     maxLength: 4000,
   })
   @IsString()
-  @MinLength(1)
   @MaxLength(4000)
   message!: string;
 
@@ -31,4 +40,14 @@ export class SendCompletionDto {
   @IsString()
   @MinLength(1)
   model!: string;
+
+  @ApiPropertyOptional({
+    description: 'Attachments to send alongside the user message',
+    type: () => [AttachmentDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }

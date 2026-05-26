@@ -1,4 +1,4 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { UiAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   RequestStatus,
@@ -20,7 +20,7 @@ export interface AttachmentCardState {
   removeBtnClass: string;
 }
 
-const getBottomIcon = (attachment: Attachment): Icon => {
+const getBottomIcon = (attachment: UiAttachment): Icon => {
   const { type, contentType } = attachment;
   if (type === AttachmentType.Prompt) return IconTerminal2;
   if (type === AttachmentType.Pasted) return IconClipboard;
@@ -28,7 +28,7 @@ const getBottomIcon = (attachment: Attachment): Icon => {
   return getAttachmentIcon(contentType);
 };
 
-const getBottomLabel = (attachment: Attachment): string => {
+const getBottomLabel = (attachment: UiAttachment): string => {
   const { type, name, contentType } = attachment;
   if (type === AttachmentType.Prompt) return 'Prompt';
   if (type === AttachmentType.Pasted) return 'Pasted';
@@ -42,7 +42,7 @@ const getBottomLabel = (attachment: Attachment): string => {
 };
 
 export const getAttachmentCardState = (
-  attachment: Attachment,
+  attachment: UiAttachment,
   selected: boolean,
   alwaysShowActions: boolean,
 ): AttachmentCardState => {

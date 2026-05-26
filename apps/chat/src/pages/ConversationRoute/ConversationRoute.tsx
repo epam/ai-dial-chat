@@ -1,3 +1,4 @@
+import { type ApiAttachment } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   Suspense,
@@ -13,6 +14,7 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
+import { uploadFile } from '../../server-api/files.api';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -41,11 +43,17 @@ const ConversationRoute: FC = () => {
   }, []);
 
   const handleSend = useCallback(
-    async (message: string) => {
+    async ({
+      message,
+      attachments,
+    }: {
+      message: string;
+      attachments?: ApiAttachment[];
+    }) => {
       if (isSending) return;
       setIsSending(true);
       try {
-        const conversation = await apiCreateConversation(message);
+        const conversation = await apiCreateConversation(message, attachments);
         navigate(getConversationRoute(conversation.id));
       } finally {
         setIsSending(false);
@@ -64,6 +72,7 @@ const ConversationRoute: FC = () => {
         >
           <ConversationInput
             onSend={handleSend}
+            onUploadAttachment={uploadFile}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}

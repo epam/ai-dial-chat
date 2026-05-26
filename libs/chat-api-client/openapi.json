@@ -787,6 +787,54 @@
         ]
       }
     },
+    "/api/v1/files/upload": {
+      "post": {
+        "description": "Uploads a file to the user bucket under uploads/{yyyy-mm-dd}/. Deduplicates filenames automatically.",
+        "operationId": "uploadFile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file provided"
+          },
+          "413": {
+            "description": "File too large"
+          }
+        },
+        "summary": "Upload a file",
+        "tags": [
+          "files"
+        ]
+      }
+    },
     "/api/v1/rate": {
       "post": {
         "description": "Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
@@ -1250,6 +1298,55 @@
           "data"
         ]
       },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Position used to order attachments inside custom_content",
+            "example": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type of the attachment",
+            "example": "application/pdf"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title (usually the original filename)",
+            "example": "About_EPAM.pdf"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL of the file in DIAL storage",
+            "example": "files/bucket-id/uploads/2026-05-25/About_EPAM.pdf"
+          },
+          "data": {
+            "type": "string",
+            "description": "Base64-encoded inline content (mutually exclusive with url)"
+          },
+          "reference_type": {
+            "type": "string",
+            "description": "MIME type of the referenced resource for citation-style attachments"
+          },
+          "reference_url": {
+            "type": "string",
+            "description": "External URL the attachment references (citations, links)"
+          }
+        }
+      },
+      "CustomContentDto": {
+        "type": "object",
+        "properties": {
+          "attachments": {
+            "description": "Files attached to the message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          }
+        }
+      },
       "MessageDto": {
         "type": "object",
         "properties": {
@@ -1267,6 +1364,14 @@
             "type": "string",
             "description": "Message text content",
             "example": "Hello, how can you help me today?"
+          },
+          "custom_content": {
+            "description": "DIAL Core custom_content carrying attachments and other auxiliary data",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomContentDto"
+              }
+            ]
           }
         },
         "required": [
@@ -1361,6 +1466,13 @@
             "example": "Hello, how can you help me today?",
             "minLength": 1,
             "maxLength": 4000
+          },
+          "attachments": {
+            "description": "Attachments to include with the first user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [
@@ -1401,6 +1513,14 @@
           "timestamp": {
             "type": "string",
             "example": "2026-05-19T16:00:00.000Z"
+          },
+          "custom_content": {
+            "description": "DIAL Core custom_content (attachments and other auxiliary data)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomContentDto"
+              }
+            ]
           }
         },
         "required": [
@@ -1574,12 +1694,45 @@
             "type": "string",
             "description": "DIAL Core deployment name to use for completion",
             "example": "anthropic.claude-v3-sonnet"
+          },
+          "attachments": {
+            "description": "Attachments to send alongside the user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [
           "path",
           "message",
           "model"
+        ]
+      },
+      "FileUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "files/test-bucket/uploads/2026-05-25/report.pdf"
+          },
+          "name": {
+            "type": "string",
+            "example": "report.pdf"
+          },
+          "contentType": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "contentLength": {
+            "type": "number",
+            "example": 204800
+          }
+        },
+        "required": [
+          "url",
+          "name",
+          "contentType"
         ]
       },
       "RateMessageDto": {

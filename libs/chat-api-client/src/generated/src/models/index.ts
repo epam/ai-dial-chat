@@ -3,6 +3,55 @@
 /**
  *
  * @export
+ * @interface AttachmentDto
+ */
+export interface AttachmentDto {
+  /**
+   * Position used to order attachments inside custom_content
+   * @type {number}
+   * @memberof AttachmentDto
+   */
+  index?: number;
+  /**
+   * MIME type of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  type?: string;
+  /**
+   * Display title (usually the original filename)
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  title?: string;
+  /**
+   * URL of the file in DIAL storage
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  url?: string;
+  /**
+   * Base64-encoded inline content (mutually exclusive with url)
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  data?: string;
+  /**
+   * MIME type of the referenced resource for citation-style attachments
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceType?: string;
+  /**
+   * External URL the attachment references (citations, links)
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceUrl?: string;
+}
+/**
+ *
+ * @export
  * @interface ChatCompletionChoiceDto
  */
 export interface ChatCompletionChoiceDto {
@@ -143,6 +192,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   timestamp: string;
+  /**
+   * DIAL Core custom_content (attachments and other auxiliary data)
+   * @type {CustomContentDto}
+   * @memberof ConversationMessageDto
+   */
+  customContent?: CustomContentDto;
 }
 
 /**
@@ -326,6 +381,25 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   firstMessage: string;
+  /**
+   * Attachments to include with the first user message
+   * @type {Array<AttachmentDto>}
+   * @memberof CreateConversationDto
+   */
+  attachments?: Array<AttachmentDto>;
+}
+/**
+ *
+ * @export
+ * @interface CustomContentDto
+ */
+export interface CustomContentDto {
+  /**
+   * Files attached to the message
+   * @type {Array<AttachmentDto>}
+   * @memberof CustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
 }
 /**
  *
@@ -727,6 +801,37 @@ export interface DialModelPricingDto {
 /**
  *
  * @export
+ * @interface FileUploadResponseDto
+ */
+export interface FileUploadResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof FileUploadResponseDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileUploadResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileUploadResponseDto
+   */
+  contentType: string;
+  /**
+   *
+   * @type {number}
+   * @memberof FileUploadResponseDto
+   */
+  contentLength?: number;
+}
+/**
+ *
+ * @export
  * @interface MessageDto
  */
 export interface MessageDto {
@@ -742,6 +847,12 @@ export interface MessageDto {
    * @memberof MessageDto
    */
   content: string;
+  /**
+   * DIAL Core custom_content carrying attachments and other auxiliary data
+   * @type {CustomContentDto}
+   * @memberof MessageDto
+   */
+  customContent?: CustomContentDto;
 }
 
 /**
@@ -859,6 +970,12 @@ export interface SendCompletionDto {
    * @memberof SendCompletionDto
    */
   model: string;
+  /**
+   * Attachments to send alongside the user message
+   * @type {Array<AttachmentDto>}
+   * @memberof SendCompletionDto
+   */
+  attachments?: Array<AttachmentDto>;
 }
 /**
  *

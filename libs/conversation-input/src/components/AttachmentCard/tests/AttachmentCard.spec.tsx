@@ -1,10 +1,10 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { UiAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AttachmentCard } from '../AttachmentCard.js';
 
-const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
+const makeAttachment = (overrides?: Partial<UiAttachment>): UiAttachment => ({
   id: 'a1',
   name: 'report.pdf',
   contentType: 'application/pdf',

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CustomContentDto } from '../common/dto/attachment.dto';
 
 export class ProviderInfoDto {
   @ApiProperty({ example: 'local' })
@@ -271,6 +272,13 @@ export class ConversationMessageDto {
 
   @ApiProperty({ example: '2026-05-19T16:00:00.000Z' })
   timestamp!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'DIAL Core custom_content (attachments and other auxiliary data)',
+    type: () => CustomContentDto,
+  })
+  custom_content?: CustomContentDto;
 }
 
 export class ConversationModelDto {

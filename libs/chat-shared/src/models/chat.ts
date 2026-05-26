@@ -52,6 +52,33 @@ export interface Message {
   timestamp: string;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
+  /** DIAL Core extension: attachments and other auxiliary content tied to this message. */
+  custom_content?: CustomContent;
+}
+
+/** DIAL Core `custom_content` payload — currently only carries attachments in this app. */
+export interface CustomContent {
+  /** Files attached to the message, in the order they appear in the UI. */
+  attachments?: ApiAttachment[];
+}
+
+/** DIAL-Core attachment schema as it appears in `Message.custom_content.attachments` and SSE chunks.
+ * This is the shape persisted to the conversation and sent in chat-completion requests. */
+export interface ApiAttachment {
+  /** Position used by DIAL to order attachments inside `custom_content`. */
+  index?: number;
+  /** MIME type of the attachment (e.g. `'application/pdf'`, `'image/png'`). */
+  type: string;
+  /** Display title (usually the original filename). */
+  title: string;
+  /** URL of the file in DIAL storage (mutually exclusive with `data`). */
+  url?: string;
+  /** Base64-encoded inline content (mutually exclusive with `url`). */
+  data?: string;
+  /** MIME type of the referenced resource for citation-style attachments. */
+  reference_type?: string;
+  /** External URL the attachment references (citations, links). */
+  reference_url?: string;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */
@@ -60,6 +87,8 @@ export interface StreamChunkDelta {
   content?: string;
   /** Role field — only present in the first chunk of a response. */
   role?: string;
+  /** DIAL Core extension: assistant-side attachments accumulated across the stream. Usually appears in a late chunk with the final array. */
+  custom_content?: CustomContent;
 }
 
 /** A single server-sent event chunk from the streaming completions endpoint. */
@@ -89,8 +118,14 @@ export enum RequestStatus {
   Error = 'error',
 }
 
-/** Represents a file or content item the user has attached to a message. */
-export interface Attachment {
+/** Represents a file the user has attached to a chat input, as tracked in UI state.
+ *
+ * Separate from {@link ApiAttachment} (the persisted DIAL Core shape):
+ * `UiAttachment` is transient client state used by the input component — it holds the
+ * raw {@link File}, an upload {@link status}, and a preview URL for images. After a
+ * successful upload the resulting {@link ApiAttachment} is attached via {@link apiAttachment}
+ * and that is what eventually ships in `Message.custom_content.attachments`. */
+export interface UiAttachment {
   /** Unique client-side identifier. */
   id: string;
   /** Display name (usually the original filename). */
@@ -105,6 +140,8 @@ export interface Attachment {
   status: RequestStatus;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
+  /** Populated after the file has been successfully uploaded to DIAL storage. Used to build the chat-completion request payload. */
+  apiAttachment?: ApiAttachment;
 }
 
 /** A full conversation including its messages and configuration. */

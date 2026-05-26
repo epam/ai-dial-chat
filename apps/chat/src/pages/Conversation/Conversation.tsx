@@ -2,6 +2,7 @@ import {
   Conversation,
   Message,
   MessageRole,
+  type ApiAttachment,
   type MessageRating,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -24,6 +25,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
 import { createMessagePair } from '../../utils/message-factory';
 
@@ -40,52 +42,79 @@ export const ConversationPage: FC = () => {
   const { t } = useTranslation();
 
   const startStream = useCallback(
-    (
-      conversationPath: string,
-      userContent: string,
-      assistantMessageId: string,
-      model: string,
-    ) => {
+    ({
+      conversationPath,
+      userContent,
+      assistantMessageId,
+      model,
+      attachments,
+    }: {
+      conversationPath: string;
+      userContent: string;
+      assistantMessageId: string;
+      model: string;
+      attachments?: ApiAttachment[];
+    }) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       setIsStreaming(true);
 
-      streamCompletion(conversationPath, userContent, model, {
-        signal: controller.signal,
-        onChunk: (chunk) => {
-          const token = chunk.choices[0]?.delta?.content ?? '';
-          if (!token) return;
-          setConversation((prev) => {
-            if (!prev) return prev;
-            const next = {
-              ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === assistantMessageId
-                  ? { ...m, content: m.content + token }
-                  : m,
-              ),
-            };
-            conversationRef.current = next;
-            return next;
-          });
-        },
-        onComplete: async () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-          const final = conversationRef.current;
-          if (final) {
-            try {
-              await saveConversation(conversationPath, final);
-            } catch (err: unknown) {
-              void err;
+      streamCompletion({
+        path: conversationPath,
+        message: userContent,
+        model,
+        options: {
+          signal: controller.signal,
+          onChunk: (chunk) => {
+            const delta = chunk.choices[0]?.delta;
+            const token = delta?.content ?? '';
+            const incomingAttachments = delta?.custom_content?.attachments;
+            if (!token && !incomingAttachments?.length) return;
+            setConversation((prev) => {
+              if (!prev) return prev;
+              const next = {
+                ...prev,
+                messages: prev.messages.map((m) => {
+                  if (m.id !== assistantMessageId) return m;
+                  return {
+                    ...m,
+                    ...(token ? { content: m.content + token } : {}),
+                    ...(incomingAttachments?.length
+                      ? {
+                          custom_content: {
+                            attachments: [
+                              ...(m.custom_content?.attachments ?? []),
+                              ...incomingAttachments,
+                            ],
+                          },
+                        }
+                      : {}),
+                  };
+                }),
+              };
+              conversationRef.current = next;
+              return next;
+            });
+          },
+          onComplete: async () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+            const final = conversationRef.current;
+            if (final) {
+              try {
+                await saveConversation(conversationPath, final);
+              } catch (err: unknown) {
+                void err;
+              }
             }
-          }
+          },
+          onError: () => {
+            setIsStreaming(false);
+            abortRef.current = null;
+          },
         },
-        onError: () => {
-          setIsStreaming(false);
-          abortRef.current = null;
-        },
+        attachments,
       });
     },
     [],
@@ -121,12 +150,12 @@ export const ConversationPage: FC = () => {
           };
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
-          startStream(
+          startStream({
             conversationPath,
-            lastMsg.content,
+            userContent: lastMsg.content,
             assistantMessageId,
-            result.model.id,
-          );
+            model: result.model.id,
+          });
         } else {
           setConversation(result);
         }
@@ -177,12 +206,12 @@ export const ConversationPage: FC = () => {
         return next;
       });
 
-      startStream(
+      startStream({
         conversationPath,
-        userMsg.content,
-        messageId,
-        conversation.model.id,
-      );
+        userContent: userMsg.content,
+        assistantMessageId: messageId,
+        model: conversation.model.id,
+      });
     },
     [conversation, conversationId, isStreaming, startStream],
   );
@@ -285,11 +314,17 @@ export const ConversationPage: FC = () => {
   );
 
   const handleSend = useCallback(
-    (message: string) => {
+    ({
+      message,
+      attachments,
+    }: {
+      message: string;
+      attachments?: ApiAttachment[];
+    }) => {
       if (!conversationId || !conversation) return;
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message);
+        createMessagePair({ content: message, attachments });
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -305,12 +340,13 @@ export const ConversationPage: FC = () => {
         return next;
       });
 
-      startStream(
+      startStream({
         conversationPath,
-        message,
+        userContent: message,
         assistantMessageId,
-        conversation.model.id,
-      );
+        model: conversation.model.id,
+        attachments,
+      });
     },
     [conversation, conversationId, startStream],
   );
@@ -343,6 +379,7 @@ export const ConversationPage: FC = () => {
           onRegenerateMessage={handleRegenerateMessage}
           onRateMessage={handleRateMessage}
           isAssistantTyping={isStreaming}
+          onUploadAttachment={uploadFile}
           placeholder={t(ChatI18nKeys.Placeholder)}
         />
       </div>

@@ -1,0 +1,12 @@
+.card {
+  background: var(--bg-layer-0, #000000);
+  border-color: var(--stroke-secondary, #242c42);
+}
+
+.name {
+  color: var(--text-primary, #eef1f7);
+}
+
+.meta {
+  color: var(--text-secondary, #9fa6bd);
+}

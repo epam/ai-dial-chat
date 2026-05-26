@@ -10,6 +10,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { CustomContentDto } from '../../common/dto/attachment.dto';
 
 export enum ChatMessageRole {
   System = 'system',
@@ -32,6 +33,16 @@ export class MessageDto {
   })
   @IsString()
   content?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'DIAL Core custom_content carrying attachments and other auxiliary data',
+    type: () => CustomContentDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CustomContentDto)
+  custom_content?: CustomContentDto;
 }
 
 export class ChatCompletionDto {

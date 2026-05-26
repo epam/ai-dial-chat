@@ -1,4 +1,4 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { ApiAttachment, UiAttachment } from '@epam/ai-dial-chat-shared';
 
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
@@ -37,13 +37,18 @@ export interface InputProps {
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
   /** Called when the user submits a message (Enter or send button). */
-  onSend?: (message: string) => void;
+  onSend?: (payload: {
+    message: string;
+    attachments?: ApiAttachment[];
+  }) => void;
+  /** Called to upload a file; injected by the consuming app (lib has no fetch dependency). */
+  onUploadAttachment?: (file: File) => Promise<ApiAttachment>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
   isStreaming?: boolean;
   /** Called whenever the attachment list changes. */
-  onAttachmentsChange?: (attachments: Attachment[]) => void;
+  onAttachmentsChange?: (attachments: UiAttachment[]) => void;
   /** Placeholder text shown when the textarea is empty. */
   placeholder?: string;
   /** `aria-label` applied to the textarea for screen readers. */

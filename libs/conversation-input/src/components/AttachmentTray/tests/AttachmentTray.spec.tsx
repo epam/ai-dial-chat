@@ -1,10 +1,10 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { UiAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AttachmentTray } from '../AttachmentTray.js';
 
-const makeAttachment = (id: string, name = 'file.pdf'): Attachment => ({
+const makeAttachment = (id: string, name = 'file.pdf'): UiAttachment => ({
   id,
   name,
   contentType: 'application/pdf',

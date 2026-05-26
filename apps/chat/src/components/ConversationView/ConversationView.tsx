@@ -1,6 +1,6 @@
 import {
   MessageRole,
-  type Attachment,
+  type ApiAttachment,
   type Message as MessageType,
   type MessageRating,
 } from '@epam/ai-dial-chat-shared';
@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionsI18nKeys } from '../../constants/translation-keys.js';
+import { ApiEndpoints } from '../../server-api/base.js';
 import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(async () => {
@@ -27,12 +28,12 @@ const ConversationInput = lazy(async () => {
 
 interface Props {
   messages: MessageType[];
-  onSend: (message: string) => void;
+  onSend: (payload: { message: string; attachments?: ApiAttachment[] }) => void;
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
   onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
-  onAttachmentsChange?: (attachments: Attachment[]) => void;
+  onUploadAttachment?: (file: File) => Promise<ApiAttachment>;
   placeholder: string;
   isAssistantTyping?: boolean;
 }
@@ -46,7 +47,7 @@ const ConversationView: FC<Props> = ({
   onDeleteMessage,
   onRegenerateMessage,
   onRateMessage,
-  onAttachmentsChange,
+  onUploadAttachment,
   placeholder,
   isAssistantTyping = false,
 }) => {
@@ -162,11 +163,20 @@ const ConversationView: FC<Props> = ({
                 isAssistantTyping &&
                 index === messages.length - 1 &&
                 msg.role === MessageRole.Assistant;
+              const attachments = msg.custom_content?.attachments?.map((a) =>
+                a.url
+                  ? {
+                      ...a,
+                      url: `${ApiEndpoints.FILES}?url=${encodeURIComponent(a.url)}`,
+                    }
+                  : a,
+              );
               return (
                 <MessageBubble
                   key={msg.id}
                   role={msg.role}
                   text={msg.content}
+                  attachments={attachments}
                   alwaysVisibleActions={!isStreaming}
                   actions={buildMessageActions(
                     msg,
@@ -204,7 +214,7 @@ const ConversationView: FC<Props> = ({
             onSend={onSend}
             onStop={onStop}
             isStreaming={isAssistantTyping}
-            onAttachmentsChange={onAttachmentsChange}
+            onUploadAttachment={onUploadAttachment}
             placeholder={placeholder}
           />
         </Suspense>

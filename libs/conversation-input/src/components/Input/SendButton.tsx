@@ -13,7 +13,7 @@ export const SendButton: FC<Props> = ({ onSend }) => {
     <button
       className={mergeClasses(
         styles.sendButton,
-        'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
+        'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50',
       )}
       aria-label="Send message"
       onClick={() => onSend?.()}

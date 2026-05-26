@@ -61,6 +61,14 @@ await Promise.all(
         .replaceAll(
           'return new runtime.TextApiResponse(response) as any;',
           'return new runtime.TextApiResponse(response);',
+        )
+        .replaceAll(
+          'let formParams: { append(param: string, value: any): any };',
+          'let formParams: FormData | URLSearchParams;',
+        )
+        .replace(
+          /formParams\.append\(('file'|"file"), requestParameters\[['"]file['"]\] as any\);/g,
+          "(formParams as FormData).append('file', requestParameters['file']);",
         );
 
       if (updated !== source) {

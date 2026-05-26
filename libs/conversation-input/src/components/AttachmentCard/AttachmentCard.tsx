@@ -1,4 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  getFileNameWithoutExtension,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -10,7 +13,6 @@ import { IconRefresh, IconX } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
-import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
 import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
@@ -23,12 +25,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   retryLabel = 'Retry upload',
   colors,
   typography,
-  roundedClassName = 'rounded',
+  roundedClassName = 'rounded-md',
   className,
 }) => {
   const { id, name } = attachment;
   const nameWithoutExtension = useMemo(() => {
-    return getNameWithoutExtension(name);
+    return getFileNameWithoutExtension(name);
   }, [name]);
 
   const cssVars = {

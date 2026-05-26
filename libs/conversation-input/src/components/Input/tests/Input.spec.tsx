@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
 
@@ -39,7 +39,10 @@ describe('Input', () => {
     if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
       fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(handleSend).toHaveBeenCalledWith({
+        message: 'Test message',
+        attachments: undefined,
+      });
       expect(textarea.value).toBe('');
     }
   });
@@ -75,7 +78,10 @@ describe('Input', () => {
     }
     const sendButton = screen.getByLabelText('Send message');
     fireEvent.click(sendButton);
-    expect(handleSend).toHaveBeenCalledWith('Click send');
+    expect(handleSend).toHaveBeenCalledWith({
+      message: 'Click send',
+      attachments: undefined,
+    });
   });
 
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
@@ -162,5 +168,61 @@ describe('Input', () => {
     expect(onAttachmentsChange).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
+  });
+
+  it('should show send button when textarea is empty but an attachment is uploaded', async () => {
+    const apiAttachment = {
+      type: 'application/pdf',
+      title: 'doc.pdf',
+      url: 'files/bucket/doc.pdf',
+    };
+    const uploadAttachment = vi.fn().mockResolvedValue(apiAttachment);
+    render(<Input onUploadAttachment={uploadAttachment} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() =>
+      expect(screen.getByLabelText('Send message')).toBeTruthy(),
+    );
+  });
+
+  it('should keep send button hidden when only an error-state attachment is present', async () => {
+    const uploadAttachment = vi
+      .fn()
+      .mockRejectedValue(new Error('upload failed'));
+    render(<Input onUploadAttachment={uploadAttachment} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() => expect(uploadAttachment).toHaveBeenCalled());
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+  });
+
+  it('should call onSend with empty message when only an uploaded attachment is present', async () => {
+    const apiAttachment = {
+      type: 'application/pdf',
+      title: 'doc.pdf',
+      url: 'files/bucket/doc.pdf',
+    };
+    const uploadAttachment = vi.fn().mockResolvedValue(apiAttachment);
+    const handleSend = vi.fn();
+    render(<Input onUploadAttachment={uploadAttachment} onSend={handleSend} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() =>
+      expect(screen.getByLabelText('Send message')).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByLabelText('Send message'));
+    expect(handleSend).toHaveBeenCalledWith({
+      message: '',
+      attachments: [apiAttachment],
+    });
   });
 });

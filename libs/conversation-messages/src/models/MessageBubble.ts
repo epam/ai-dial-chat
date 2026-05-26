@@ -1,4 +1,4 @@
-import type { MessageRole } from '@epam/ai-dial-chat-shared';
+import type { ApiAttachment, MessageRole } from '@epam/ai-dial-chat-shared';
 import type { BubblePosition } from '../types/bubble-position.js';
 import type { MessageActionsProps } from './MessageActions.js';
 
@@ -28,6 +28,8 @@ export interface MessageBubbleTypography {
 interface BaseMessageBubbleProps {
   /** Plain-text (or Markdown) content of the message. */
   text: string;
+  /** DIAL attachments to render alongside the message. */
+  attachments?: ApiAttachment[];
   /** Extra class name(s) merged onto the outer row wrapper. */
   className?: string;
   /** Extra class name(s) merged onto the bubble element itself. */

@@ -2,10 +2,12 @@ import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
 import { CSSProperties, FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
 import { MessageActions } from '../Message/MessageActions.js';
+import { MessageAttachmentTray } from '../MessageAttachmentTray/MessageAttachmentTray.js';
 import styles from './MessageBubble.module.scss';
 
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
+  attachments,
   className,
   bubbleClassName,
   colors,
@@ -42,6 +44,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
         )}
       >
         <p className={mergeClasses(textClass, 'text-left')}>{text}</p>
+        {attachments && attachments.length > 0 && (
+          <MessageAttachmentTray attachments={attachments} side="assistant" />
+        )}
         <MessageActions
           {...actions}
           alwaysVisible={alwaysVisible}

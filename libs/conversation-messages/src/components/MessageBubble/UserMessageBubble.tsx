@@ -3,10 +3,12 @@ import { CSSProperties, FC } from 'react';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { MessageActions } from '../Message/MessageActions.js';
+import { MessageAttachmentTray } from '../MessageAttachmentTray/MessageAttachmentTray.js';
 import styles from './MessageBubble.module.scss';
 
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
+  attachments,
   position = BubblePosition.Bottom,
   className,
   bubbleClassName,
@@ -43,17 +45,22 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
 
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex w-fit flex-col items-end gap-4">
-        <div
-          className={mergeClasses(
-            styles.userBubble,
-            'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
-            positionRadius,
-            bubbleClassName,
-          )}
-        >
-          <p className={mergeClasses(textClass, 'text-right')}>{text}</p>
-        </div>
+      <div className="flex w-fit flex-col items-end gap-2">
+        {attachments && attachments.length > 0 && (
+          <MessageAttachmentTray attachments={attachments} side="user" />
+        )}
+        {text && (
+          <div
+            className={mergeClasses(
+              styles.userBubble,
+              'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
+              positionRadius,
+              bubbleClassName,
+            )}
+          >
+            <p className={mergeClasses(textClass, 'text-right')}>{text}</p>
+          </div>
+        )}
         <MessageActions
           {...actions}
           alwaysVisible={alwaysVisible}
