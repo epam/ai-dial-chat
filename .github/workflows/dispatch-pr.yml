@@ -2,7 +2,11 @@ name: SDLC Dispatch / PR
 
 on:
   pull_request:
-    branches: [development-1.0]
+    # `sdlc-test-base` is a temporary sandbox base for smoke-testing the
+    # dispatcher end-to-end before the platform lands on `development-1.0`.
+    # Delete the entry — and the `sdlc-test-base` branch on origin — once
+    # validation is done.
+    branches: [development-1.0, sdlc-test-base]
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
