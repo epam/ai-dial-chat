@@ -25,7 +25,7 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
-    catalogItemId: string,
+    deploymentId: string,
     attachments?: MessageAttachment[],
   ): Promise<Conversation> {
     const now = Date.now();
@@ -47,14 +47,14 @@ export class ConversationService extends AppService {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
-      model: { id: catalogItemId },
+      model: { id: deploymentId },
       prompt: '',
       temperature: 1,
       messages: [userMessage],
       lastActivityDate: now,
       updatedAt: now,
       selectedAddons: [],
-      assistantModelId: catalogItemId,
+      assistantModelId: deploymentId,
     };
 
     try {

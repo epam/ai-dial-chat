@@ -34,7 +34,7 @@ export class CreateConversationDto {
   @MinLength(1)
   @MaxLength(256)
   @Matches(/^[\w.\-:@/]+$/)
-  catalogItemId!: string;
+  deploymentId!: string;
 
   @ApiPropertyOptional({
     description: 'DIAL API attachments to include with the first user message',

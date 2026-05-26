@@ -87,7 +87,7 @@ describe('ConversationService', () => {
       expect(a.id).not.toBe(b.id);
     });
 
-    it('uses catalogItemId for model.id and assistantModelId', async () => {
+    it('uses deploymentId for model.id and assistantModelId', async () => {
       const result = await service.createConversation(
         'Hello',
         'test-token',

@@ -365,7 +365,7 @@
         ]
       }
     },
-    "/api/deployments/{deployment}/configuration": {
+    "/api/v1/deployments/{deployment}/configuration": {
       "get": {
         "description": "Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user.",
         "operationId": "getDeploymentConfiguration",
@@ -589,7 +589,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body — firstMessage or catalogItemId missing or out of range"
+            "description": "Invalid request body — firstMessage or deploymentId missing or out of range"
           },
           "500": {
             "description": "Internal server error"
@@ -1554,7 +1554,7 @@
             "minLength": 1,
             "maxLength": 4000
           },
-          "catalogItemId": {
+          "deploymentId": {
             "type": "string",
             "description": "ID of the catalog item (model or application) to use for this conversation",
             "example": "anthropic.claude-v3-sonnet",
@@ -1571,7 +1571,7 @@
         },
         "required": [
           "firstMessage",
-          "catalogItemId"
+          "deploymentId"
         ]
       },
       "ConversationModelDto": {

@@ -7,7 +7,7 @@ describe('createConversation', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls conversationsApi with firstMessage and catalogItemId', async () => {
+  it('calls conversationsApi with firstMessage and deploymentId', async () => {
     const spy = vi
       .spyOn(conversationsApi, 'createConversation')
       .mockResolvedValue({} as never);
@@ -15,7 +15,7 @@ describe('createConversation', () => {
     await createConversation('Hello', 'dep-1');
 
     expect(spy).toHaveBeenCalledWith({
-      createConversationDto: { firstMessage: 'Hello', catalogItemId: 'dep-1' },
+      createConversationDto: { firstMessage: 'Hello', deploymentId: 'dep-1' },
     });
   });
 
@@ -30,7 +30,7 @@ describe('createConversation', () => {
     expect(spy).toHaveBeenCalledWith({
       createConversationDto: {
         firstMessage: 'Hello',
-        catalogItemId: 'dep-1',
+        deploymentId: 'dep-1',
         attachments,
       },
     });
@@ -44,7 +44,7 @@ describe('createConversation', () => {
     await createConversation('Hello', 'dep-1', []);
 
     expect(spy).toHaveBeenCalledWith({
-      createConversationDto: { firstMessage: 'Hello', catalogItemId: 'dep-1' },
+      createConversationDto: { firstMessage: 'Hello', deploymentId: 'dep-1' },
     });
   });
 });

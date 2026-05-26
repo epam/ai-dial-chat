@@ -448,7 +448,7 @@ export interface CreateConversationDto {
    * @type {string}
    * @memberof CreateConversationDto
    */
-  catalogItemId: string;
+  deploymentId: string;
   /**
    * DIAL API attachments to include with the first user message
    * @type {Array<AttachmentDto>}
@@ -567,12 +567,6 @@ export interface DialModelCapabilitiesDto {
    */
   inference?: boolean;
 }
-/**
- * Legacy deployment DTO returned by GET /api/deployments.
- * @export
- */
-export type DialDeploymentDto = DialModelDto;
-
 /**
  *
  * @export
