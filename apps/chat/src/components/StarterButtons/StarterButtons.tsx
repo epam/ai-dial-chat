@@ -5,11 +5,31 @@ import { FC } from 'react';
 interface Props {
   /** Starter options to display as buttons. */
   starters: StarterOption[];
-  /** Called with the populate text when a button is clicked. */
-  onSelect: (text: string) => void;
+  /**
+   * Called when a button is clicked.
+   * @param text - The text to populate in the input field.
+   * @param submit - When `true` the message should be sent immediately;
+   *   when `false` only the input field should be populated.
+   * @param confirmationMessage - When non-null a confirmation dialog should be
+   *   shown with this text before the action is executed.
+   * @param configurationValue - When set, should be sent as
+   *   `custom_content.configuration_value` on the message (e.g. `{ button: 1 }`).
+   */
+  onSelect: (
+    text: string,
+    submit: boolean,
+    confirmationMessage: string | null,
+    configurationValue?: Record<string, unknown>,
+  ) => void;
+  /**
+   * The deployment schema property key that these starters belong to
+   * (e.g. `"button"`). When provided, each click passes
+   * `{ [propertyKey]: starter.const }` as `configurationValue`.
+   */
+  propertyKey?: string;
 }
 
-const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
+const StarterButtons: FC<Props> = ({ starters, onSelect, propertyKey }) => {
   if (starters.length === 0) return null;
 
   return (
@@ -22,7 +42,14 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
         <div key={starter.const} role="listitem">
           <DialRoundedButton
             label={starter.title}
-            onClick={() => onSelect(starter['dial:widgetOptions'].populateText)}
+            onClick={() =>
+              onSelect(
+                starter['dial:widgetOptions'].populateText || starter.title,
+                starter['dial:widgetOptions'].submit,
+                starter['dial:widgetOptions'].confirmationMessage,
+                propertyKey ? { [propertyKey]: starter.const } : undefined,
+              )
+            }
           />
         </div>
       ))}

@@ -67,6 +67,12 @@ export interface Message {
   custom_content?: {
     /** Files or media items associated with this message. */
     attachments?: MessageAttachment[];
+    /**
+     * Configuration form value submitted alongside the message.
+     * Keys match the property names in the deployment's JSON Schema
+     * (e.g. `{ button: 1 }`).
+     */
+    configuration_value?: Record<string, unknown>;
   };
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;

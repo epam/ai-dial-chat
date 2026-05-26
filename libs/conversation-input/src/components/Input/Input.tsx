@@ -41,6 +41,7 @@ export const Input: FC<InputProps> = ({
   colors,
   typography,
   className,
+  populateText,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-bg': colors.background }),
@@ -65,6 +66,12 @@ export const Input: FC<InputProps> = ({
   const [message, setMessage] = useState(initialMessage);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (populateText) {
+      setMessage(populateText);
+    }
+  }, [populateText]);
 
   useEffect(() => {
     return () => {

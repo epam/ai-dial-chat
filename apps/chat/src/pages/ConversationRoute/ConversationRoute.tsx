@@ -1,4 +1,5 @@
 import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
+import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   lazy,
@@ -30,14 +31,31 @@ const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
+  const [populateText, setPopulateText] = useState<string | undefined>();
+  const [pendingStarter, setPendingStarter] = useState<{
+    text: string;
+    submit: boolean;
+    confirmationMessage: string;
+    configurationValue?: Record<string, unknown>;
+  } | null>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const { selectedModelConfiguration } = useModels();
 
-  const starters = useMemo<StarterOption[]>(() => {
-    const oneOf = selectedModelConfiguration?.properties?.starter?.oneOf;
-
-    if (!Array.isArray(oneOf)) return [];
-    return oneOf as StarterOption[];
+  const { starters, startersPropertyKey } = useMemo<{
+    starters: StarterOption[];
+    startersPropertyKey: string | undefined;
+  }>(() => {
+    const properties = selectedModelConfiguration?.properties;
+    const key = properties?.starter
+      ? 'starter'
+      : properties?.button
+        ? 'button'
+        : undefined;
+    const oneOf = key ? properties?.[key]?.oneOf : undefined;
+    if (!Array.isArray(oneOf)) {
+      return { starters: [], startersPropertyKey: undefined };
+    }
+    return { starters: oneOf as StarterOption[], startersPropertyKey: key };
   }, [selectedModelConfiguration]);
 
   useEffect(() => {
@@ -54,7 +72,11 @@ const ConversationRoute: FC = () => {
   }, []);
 
   const handleSend = useCallback(
-    async (message: string, attachments?: Attachment[]) => {
+    async (
+      message: string,
+      attachments?: Attachment[],
+      configurationValue?: Record<string, unknown>,
+    ) => {
       if (isSending) return;
       setIsSending(true);
       try {
@@ -62,6 +84,7 @@ const ConversationRoute: FC = () => {
         const conversation = await apiCreateConversation(
           message,
           attachmentDtos,
+          configurationValue,
         );
         navigate(getConversationRoute(conversation.id));
       } finally {
@@ -70,6 +93,57 @@ const ConversationRoute: FC = () => {
     },
     [navigate, isSending],
   );
+
+  const executeStarter = useCallback(
+    (
+      text: string,
+      submit: boolean,
+      configurationValue?: Record<string, unknown>,
+    ) => {
+      if (submit) {
+        void handleSend(text, undefined, configurationValue);
+      } else {
+        setPopulateText(text);
+      }
+    },
+    [handleSend],
+  );
+
+  const handleStarterSelect = useCallback(
+    (
+      text: string,
+      submit: boolean,
+      confirmationMessage: string | null,
+      configurationValue?: Record<string, unknown>,
+    ) => {
+      if (confirmationMessage) {
+        setPendingStarter({
+          text,
+          submit,
+          confirmationMessage,
+          configurationValue,
+        });
+      } else {
+        executeStarter(text, submit, configurationValue);
+      }
+    },
+    [executeStarter],
+  );
+
+  const handleConfirmStarter = useCallback(() => {
+    if (pendingStarter) {
+      executeStarter(
+        pendingStarter.text,
+        pendingStarter.submit,
+        pendingStarter.configurationValue,
+      );
+      setPendingStarter(null);
+    }
+  }, [pendingStarter, executeStarter]);
+
+  const handleCancelStarter = useCallback(() => {
+    setPendingStarter(null);
+  }, []);
 
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
@@ -84,10 +158,23 @@ const ConversationRoute: FC = () => {
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
+            populateText={populateText}
           />
-          <StarterButtons starters={starters} onSelect={handleSend} />
+          <StarterButtons
+            starters={starters}
+            onSelect={handleStarterSelect}
+            propertyKey={startersPropertyKey}
+          />
         </div>
       </Suspense>
+      <DialConfirmationPopup
+        open={!!pendingStarter}
+        header={t(ChatI18nKeys.StarterConfirmationTitle)}
+        description={pendingStarter?.confirmationMessage}
+        onConfirm={handleConfirmStarter}
+        onCancel={handleCancelStarter}
+        onClose={handleCancelStarter}
+      />
     </div>
   );
 };

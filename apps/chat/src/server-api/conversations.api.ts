@@ -7,11 +7,13 @@ import { conversationsApi } from './api-client';
 export const createConversation = (
   firstMessage: string,
   attachments?: AttachmentDto[],
+  configurationValue?: Record<string, unknown>,
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
       ...(attachments?.length ? { attachments } : {}),
+      ...(configurationValue ? { configurationValue } : {}),
     },
   });
 

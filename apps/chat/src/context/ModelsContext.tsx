@@ -49,7 +49,7 @@ export const ModelsProvider = ({ children }: { children: ReactNode }) => {
         const response = await getModels();
         if (!signal.cancelled) {
           setModels(response.data);
-          setSelectedModelId('statgpt-gtdc');
+          setSelectedModelId('form-example');
         }
       } catch (err: unknown) {
         if (!signal.cancelled) {

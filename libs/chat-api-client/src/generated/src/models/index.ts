@@ -381,6 +381,13 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   attachments?: Array<AttachmentDto>;
+  /**
+   * Configuration form values submitted with the first message.
+   * Keys match the property names in the deployment JSON Schema (e.g. { button: 1 }).
+   * @type {Record<string, unknown>}
+   * @memberof CreateConversationDto
+   */
+  configurationValue?: Record<string, unknown>;
 }
 /**
  *

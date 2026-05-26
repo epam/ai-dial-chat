@@ -64,6 +64,7 @@ export class ConversationController {
       at,
       bucket,
       dto.attachments,
+      dto.configurationValue,
     );
   }
 
@@ -167,6 +168,7 @@ export class ConversationController {
       dto.message,
       dto.model,
       dto.attachments,
+      dto.configurationValue,
     );
 
     res.setHeader('Content-Type', 'text/event-stream');

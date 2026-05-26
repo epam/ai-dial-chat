@@ -10,10 +10,16 @@ interface MessagePair {
 export const createMessagePair = (
   content: string,
   attachments?: AttachmentDto[],
+  configurationValue?: Record<string, unknown>,
 ): MessagePair => {
   const now = Date.now();
   const timestamp = new Date(now).toISOString();
   const assistantMessageId = `stream_${now}`;
+
+  const customContent = {
+    ...(attachments?.length ? { attachments } : {}),
+    ...(configurationValue ? { configuration_value: configurationValue } : {}),
+  };
 
   return {
     userMessage: {
@@ -21,7 +27,9 @@ export const createMessagePair = (
       role: MessageRole.User,
       content,
       timestamp,
-      ...(attachments?.length ? { custom_content: { attachments } } : {}),
+      ...(Object.keys(customContent).length
+        ? { custom_content: customContent }
+        : {}),
     },
     assistantMessage: {
       id: assistantMessageId,

@@ -26,6 +26,7 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
     attachments?: MessageAttachment[],
+    configurationValue?: Record<string, unknown>,
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
@@ -33,12 +34,21 @@ export class ConversationService extends AppService {
     const conversationPath = `${uuid}__${name}`;
     const folderId = `${bucket}`; // TODO: check
 
+    const customContent = {
+      ...(attachments?.length ? { attachments } : {}),
+      ...(configurationValue
+        ? { configuration_value: configurationValue }
+        : {}),
+    };
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
-      ...(attachments?.length ? { custom_content: { attachments } } : {}),
+      ...(Object.keys(customContent).length
+        ? { custom_content: customContent }
+        : {}),
     };
 
     // TODO: remove hardcoded - add model info
@@ -47,14 +57,14 @@ export class ConversationService extends AppService {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
-      model: { id: 'statgpt-gtdc' },
+      model: { id: 'form-example' },
       prompt: '',
       temperature: 1,
       messages: [userMessage],
       lastActivityDate: now,
       updatedAt: now,
       selectedAddons: [],
-      assistantModelId: 'statgpt-gtdc',
+      assistantModelId: 'form-example',
     };
 
     try {
@@ -180,6 +190,7 @@ export class ConversationService extends AppService {
     message: string,
     model: string,
     attachments?: MessageAttachment[],
+    configurationValue?: Record<string, unknown>,
   ): Promise<ReadableStream<Uint8Array>> {
     const conversation = await this.getConversation(
       conversationPath,
@@ -187,12 +198,21 @@ export class ConversationService extends AppService {
       bucket,
     );
 
+    const customContent = {
+      ...(attachments?.length ? { attachments } : {}),
+      ...(configurationValue
+        ? { configuration_value: configurationValue }
+        : {}),
+    };
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
-      ...(attachments?.length ? { custom_content: { attachments } } : {}),
+      ...(Object.keys(customContent).length
+        ? { custom_content: customContent }
+        : {}),
     };
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
@@ -207,15 +227,27 @@ export class ConversationService extends AppService {
       const validAttachments = (m.custom_content?.attachments ?? []).filter(
         (a) => a.data ?? a.url,
       );
+      const configValue = m.custom_content?.configuration_value;
+      const msgCustomContent = {
+        ...(validAttachments.length ? { attachments: validAttachments } : {}),
+        ...(m.role === MessageRole.User && configValue
+          ? { form_value: configValue }
+          : {}),
+      };
       return {
         role: m.role,
         content: m.content,
-        ...(validAttachments.length
-          ? { custom_content: { attachments: validAttachments } }
+        ...(Object.keys(msgCustomContent).length
+          ? { custom_content: msgCustomContent }
           : {}),
       };
     });
 
+    console.log(
+      'Messages sent to DIAL Core for completion:',
+      messages[0].custom_content,
+      messages[0],
+    );
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
         body: { messages, stream: true },

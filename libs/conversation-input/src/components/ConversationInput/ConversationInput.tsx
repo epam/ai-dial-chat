@@ -15,6 +15,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   colors,
   typography,
   className,
+  populateText,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-root-bg': colors.background }),
@@ -65,6 +66,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         placeholder={placeholder}
         colors={colors?.input}
         typography={typography?.input}
+        populateText={populateText}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   MessageRole,
   Stage,
   type MessageRating,
+  type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
   AlertVariant,
@@ -13,7 +14,7 @@ import {
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
 import type { AttachmentDto } from '@epam/chat-api-client';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
@@ -22,6 +23,7 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useModels } from '../../context/ModelsContext';
 import { streamCompletion } from '../../server-api/chat-stream.api';
 import {
   getConversation as apiGetConversation,
@@ -51,10 +53,35 @@ export const ConversationPage: FC = () => {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState(false);
   const [streamError, setStreamError] = useState(false);
+  const [populateText, setPopulateText] = useState<string | undefined>();
+  const [pendingStarter, setPendingStarter] = useState<{
+    text: string;
+    submit: boolean;
+    confirmationMessage: string;
+    configurationValue?: Record<string, unknown>;
+  } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { selectedModelConfiguration } = useModels();
+
+  const { starters, startersPropertyKey } = useMemo<{
+    starters: StarterOption[];
+    startersPropertyKey: string | undefined;
+  }>(() => {
+    const properties = selectedModelConfiguration?.properties;
+    const key = properties?.starter
+      ? 'starter'
+      : properties?.button
+        ? 'button'
+        : undefined;
+    const oneOf = key ? properties?.[key]?.oneOf : undefined;
+    if (!Array.isArray(oneOf)) {
+      return { starters: [], startersPropertyKey: undefined };
+    }
+    return { starters: oneOf as StarterOption[], startersPropertyKey: key };
+  }, [selectedModelConfiguration]);
 
   const startStream = useCallback(
     (
@@ -63,6 +90,7 @@ export const ConversationPage: FC = () => {
       assistantMessageId: string,
       model: string,
       attachments?: AttachmentDto[],
+      configurationValue?: Record<string, unknown>,
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -76,6 +104,7 @@ export const ConversationPage: FC = () => {
         {
           signal: controller.signal,
           onChunk: (chunk) => {
+            console.log('Received chunk', chunk);
             const delta = chunk.choices[0]?.delta;
             const content = delta?.content ?? '';
             const incomingStages = delta?.custom_content?.stages;
@@ -115,13 +144,15 @@ export const ConversationPage: FC = () => {
               }
             }
           },
-          onError: () => {
+          onError: (e) => {
+            console.error('Stream error', e);
             setIsStreaming(false);
             abortRef.current = null;
             setStreamError(true);
           },
         },
         attachments,
+        configurationValue,
       );
     },
     [],
@@ -163,6 +194,7 @@ export const ConversationPage: FC = () => {
             assistantMessageId,
             result.model.id,
             lastMsg.custom_content?.attachments,
+            lastMsg.custom_content?.configuration_value,
           );
         } else {
           setConversation(result);
@@ -322,13 +354,17 @@ export const ConversationPage: FC = () => {
   );
 
   const handleSend = useCallback(
-    async (message: string, attachments: Attachment[]) => {
+    async (
+      message: string,
+      attachments: Attachment[],
+      configurationValue?: Record<string, unknown>,
+    ) => {
       if (!conversationId || !conversation) return;
 
       const attachmentDtos = await attachmentsToDtos(attachments);
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message, attachmentDtos);
+        createMessagePair(message, attachmentDtos, configurationValue);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -350,10 +386,62 @@ export const ConversationPage: FC = () => {
         assistantMessageId,
         conversation.model.id,
         attachmentDtos,
+        configurationValue,
       );
     },
     [conversation, conversationId, startStream],
   );
+
+  const executeStarter = useCallback(
+    (
+      text: string,
+      submit: boolean,
+      configurationValue?: Record<string, unknown>,
+    ) => {
+      if (submit) {
+        void handleSend(text, [], configurationValue);
+      } else {
+        setPopulateText(text);
+      }
+    },
+    [handleSend],
+  );
+
+  const handleStarterSelect = useCallback(
+    (
+      text: string,
+      submit: boolean,
+      confirmationMessage: string | null,
+      configurationValue?: Record<string, unknown>,
+    ) => {
+      if (confirmationMessage) {
+        setPendingStarter({
+          text,
+          submit,
+          confirmationMessage,
+          configurationValue,
+        });
+      } else {
+        executeStarter(text, submit, configurationValue);
+      }
+    },
+    [executeStarter],
+  );
+
+  const handleConfirmStarter = useCallback(() => {
+    if (pendingStarter) {
+      executeStarter(
+        pendingStarter.text,
+        pendingStarter.submit,
+        pendingStarter.configurationValue,
+      );
+      setPendingStarter(null);
+    }
+  }, [pendingStarter, executeStarter]);
+
+  const handleCancelStarter = useCallback(() => {
+    setPendingStarter(null);
+  }, []);
 
   if (isFetching) return null;
 
@@ -394,6 +482,9 @@ export const ConversationPage: FC = () => {
           onRateMessage={handleRateMessage}
           isAssistantTyping={isStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
+          starters={starters}
+          onStarterSelect={handleStarterSelect}
+          populateText={populateText}
         />
       </div>
 
@@ -406,6 +497,14 @@ export const ConversationPage: FC = () => {
         variant={ConfirmationPopupVariant.Danger}
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDeleteId(null)}
+      />
+      <DialConfirmationPopup
+        open={!!pendingStarter}
+        header={t(ChatI18nKeys.StarterConfirmationTitle)}
+        description={pendingStarter?.confirmationMessage}
+        onConfirm={handleConfirmStarter}
+        onCancel={handleCancelStarter}
+        onClose={handleCancelStarter}
       />
     </>
   );

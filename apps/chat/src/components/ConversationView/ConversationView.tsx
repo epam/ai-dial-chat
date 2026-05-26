@@ -3,6 +3,7 @@ import {
   type Attachment,
   type MessageRating,
   type Message as MessageType,
+  type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
@@ -27,6 +28,7 @@ import {
   isMessageStreaming,
   messageHasStages,
 } from '../../utils/message-utils.js';
+import StarterButtons from '../StarterButtons/StarterButtons';
 import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(async () => {
@@ -44,6 +46,15 @@ interface Props {
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
+  starters?: StarterOption[];
+  onStarterSelect?: (
+    text: string,
+    submit: boolean,
+    confirmationMessage: string | null,
+    configurationValue?: Record<string, unknown>,
+  ) => void;
+  startersPropertyKey?: string;
+  populateText?: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -58,6 +69,10 @@ const ConversationView: FC<Props> = ({
   onAttachmentsChange,
   placeholder,
   isAssistantTyping = false,
+  starters,
+  onStarterSelect,
+  startersPropertyKey,
+  populateText,
 }) => {
   const { t } = useTranslation();
   const tooltips = {
@@ -223,6 +238,13 @@ const ConversationView: FC<Props> = ({
         )}
       </div>
 
+      {starters && starters.length > 0 && onStarterSelect && (
+        <StarterButtons
+          starters={starters}
+          onSelect={onStarterSelect}
+          propertyKey={startersPropertyKey}
+        />
+      )}
       <div role="region" aria-label="Message input" className="w-full">
         <Suspense fallback={null}>
           <ConversationInput
@@ -231,6 +253,7 @@ const ConversationView: FC<Props> = ({
             isStreaming={isAssistantTyping}
             onAttachmentsChange={onAttachmentsChange}
             placeholder={placeholder}
+            populateText={populateText}
           />
         </Suspense>
       </div>

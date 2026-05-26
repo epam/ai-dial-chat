@@ -15,6 +15,7 @@ export const streamCompletion = (
   model: string,
   options: StreamCompletionOptions,
   attachments?: AttachmentDto[],
+  configurationValue?: Record<string, unknown>,
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -36,6 +37,7 @@ export const streamCompletion = (
           message,
           model,
           ...(attachments?.length ? { attachments } : {}),
+          ...(configurationValue ? { configurationValue } : {}),
         }),
       });
     } catch (err) {

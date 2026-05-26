@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsObject,
   IsOptional,
   IsString,
   Matches,
@@ -26,11 +27,9 @@ export class SendCompletionDto {
   @ApiProperty({
     description: 'The new user message to send',
     example: 'What is the capital of France?',
-    minLength: 1,
     maxLength: 4000,
   })
   @IsString()
-  @MinLength(1)
   @MaxLength(4000)
   message!: string;
 
@@ -51,4 +50,14 @@ export class SendCompletionDto {
   @ValidateNested({ each: true })
   @Type(() => AttachmentDto)
   attachments?: AttachmentDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Configuration form values submitted with the message. ' +
+      'Keys match the property names in the deployment JSON Schema (e.g. { button: 1 }).',
+    example: { button: 1 },
+  })
+  @IsOptional()
+  @IsObject()
+  configurationValue?: Record<string, unknown>;
 }

@@ -49,4 +49,10 @@ export interface ConversationInputProps {
   typography?: ConversationInputTypography;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /**
+   * Text injected into the textarea from an external source (e.g. a starter
+   * button with `submit: false`). Forwarded to the inner `Input` component —
+   * see {@link InputProps.populateText} for details.
+   */
+  populateText?: string;
 }

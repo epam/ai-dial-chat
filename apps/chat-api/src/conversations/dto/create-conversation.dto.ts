@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
-  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { AttachmentDto } from './attachment.dto';
@@ -14,11 +14,9 @@ export class CreateConversationDto {
   @ApiProperty({
     description: 'The first message to start the conversation',
     example: 'Hello, how can you help me today?',
-    minLength: 1,
     maxLength: 4000,
   })
   @IsString()
-  @MinLength(1)
   @MaxLength(4000)
   firstMessage!: string;
 
@@ -31,4 +29,14 @@ export class CreateConversationDto {
   @ValidateNested({ each: true })
   @Type(() => AttachmentDto)
   attachments?: AttachmentDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Configuration form values submitted with the first message. ' +
+      'Keys match the property names in the deployment JSON Schema (e.g. { button: 1 }).',
+    example: { button: 1 },
+  })
+  @IsOptional()
+  @IsObject()
+  configurationValue?: Record<string, unknown>;
 }
