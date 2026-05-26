@@ -73,7 +73,18 @@ def main():
     try:
         payload = json.loads(output_file.read_text())
     except json.JSONDecodeError as e:
-        fail(f"{output_file} is not valid JSON: {e}")
+        # Dump what the agent actually wrote so we can see WHERE the escaping
+        # went wrong. JSON parse errors give char offsets that are hard to
+        # interpret without seeing the source text. 1500 chars is enough to
+        # cover the offset of typical failures while staying readable in
+        # the GHA log.
+        raw = output_file.read_text()
+        sys.stderr.write("::group::stage-output.json (first 1500 chars)\n")
+        sys.stderr.write(raw[:1500])
+        if len(raw) > 1500:
+            sys.stderr.write(f"\n... [truncated; total {len(raw)} bytes]")
+        sys.stderr.write("\n::endgroup::\n")
+        fail(f"{output_file} is not valid JSON: {e}. File contents logged above.")
 
     envelope = {
         "contract_version": CONTRACT_VERSION,

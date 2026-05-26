@@ -100,6 +100,14 @@ jobs:
           print(f"model={m.get('model', '')}")
           EOF
 
+      - name: Install openspec CLI (when agent declares it)
+        # Some agents (e.g., spec-validation) shell out to the `openspec` CLI
+        # via Bash(openspec:*). The GHA runner doesn't include it by default;
+        # install only when the manifest's allowed_tools mentions openspec,
+        # so unrelated agents don't pay the npm install cost.
+        if: contains(steps.manifest.outputs.allowed_tools, 'openspec')
+        run: npm install -g openspec
+
       - id: stage
         uses: ./.github/actions/run-claude-stage
         with:
