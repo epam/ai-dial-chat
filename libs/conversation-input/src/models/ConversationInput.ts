@@ -33,8 +33,11 @@ export interface ConversationInputTypography {
 export interface ConversationInputProps {
   /** Placeholder text shown inside the textarea when empty. */
   placeholder?: string;
-  /** Pre-filled message shown when the component mounts. */
-  initialMessage?: string;
+  /**
+   * Message value. Sets the initial textarea content on mount and syncs the
+   * textarea whenever the value changes to a non-empty string.
+   */
+  message?: string;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */

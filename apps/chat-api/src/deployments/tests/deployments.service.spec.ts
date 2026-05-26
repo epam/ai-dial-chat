@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../deployments.service';
 
@@ -20,13 +20,18 @@ function makeService() {
   const configService = {
     get: vi.fn().mockReturnValue('http://dial-core'),
   } as unknown as ConfigService<EnvironmentVariables>;
-  return new DeploymentsService(configService);
+  const cacheManager = {
+    get: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+  };
+  const service = new DeploymentsService(configService, cacheManager as never);
+  return { service, cacheManager };
 }
 
 describe('DeploymentsService', () => {
   describe('getDeployments', () => {
     it('returns deployment list on success', async () => {
-      const service = makeService();
+      const { service } = makeService();
       const deployments = [{ name: 'gpt-4' }];
       vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
         okResponse(deployments),
@@ -37,7 +42,7 @@ describe('DeploymentsService', () => {
     });
 
     it('forwards Authorization header', async () => {
-      const service = makeService();
+      const { service } = makeService();
       const spy = vi
         .spyOn(service['client'], 'getDeployments')
         .mockResolvedValue(okResponse([]));
@@ -53,7 +58,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws UnauthorizedException on upstream 401', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
         errResponse(401),
       );
@@ -63,7 +68,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws ForbiddenException on upstream 403', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
         errResponse(403),
       );
@@ -73,7 +78,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws BadGatewayException on upstream 5xx', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
         errResponse(500),
       );
@@ -83,7 +88,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws ServiceUnavailableException on network error', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployments').mockRejectedValue(
         new TypeError('fetch failed'),
       );
@@ -95,7 +100,7 @@ describe('DeploymentsService', () => {
 
   describe('getDeployment', () => {
     it('returns a single deployment on success', async () => {
-      const service = makeService();
+      const { service } = makeService();
       const deployment = { name: 'gpt-4' };
       const spy = vi
         .spyOn(service['client'], 'getDeployment')
@@ -112,7 +117,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws NotFoundException on upstream 404', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployment').mockResolvedValue(
         errResponse(404),
       );
@@ -122,7 +127,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws UnauthorizedException on upstream 401', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployment').mockResolvedValue(
         errResponse(401),
       );
@@ -132,7 +137,7 @@ describe('DeploymentsService', () => {
     });
 
     it('throws BadGatewayException on upstream 5xx', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployment').mockResolvedValue(
         errResponse(502),
       );
@@ -142,13 +147,110 @@ describe('DeploymentsService', () => {
     });
 
     it('throws ServiceUnavailableException on network error', async () => {
-      const service = makeService();
+      const { service } = makeService();
       vi.spyOn(service['client'], 'getDeployment').mockRejectedValue(
         new TypeError('fetch failed'),
       );
       await expect(service.getDeployment('gpt-4', 'token')).rejects.toThrow(
         ServiceUnavailableException,
       );
+    });
+  });
+
+  describe('getDeploymentConfiguration', () => {
+    const schema = { type: 'object', title: 'StatGPT Config', properties: {} };
+
+    it('returns configuration schema from upstream on cache miss', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        okResponse(schema),
+      );
+
+      const result = await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'token',
+      );
+      expect(result).toEqual(schema);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['client'], 'configurationDeployment')
+        .mockResolvedValue(okResponse(schema));
+
+      await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'my-token',
+      );
+      expect(spy).toHaveBeenCalledWith(
+        'statgpt',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('returns cached value and skips upstream on cache hit', async () => {
+      const { service, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(schema);
+      const spy = vi.spyOn(service['client'], 'configurationDeployment');
+
+      const result = await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'token',
+      );
+      expect(result).toEqual(schema);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('stores result in cache with 60 s TTL on success', async () => {
+      const { service, cacheManager } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        okResponse(schema),
+      );
+
+      await service.getDeploymentConfiguration('statgpt', 'user-123', 'token');
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'deployments:configuration:user-123:statgpt',
+        schema,
+        60 * 1000,
+      );
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        errResponse(404),
+      );
+      await expect(
+        service.getDeploymentConfiguration('unknown', 'user-123', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      await expect(
+        service.getDeploymentConfiguration('statgpt', 'user-123', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'configurationDeployment').mockResolvedValue(
+        errResponse(502),
+      );
+      await expect(
+        service.getDeploymentConfiguration('statgpt', 'user-123', 'token'),
+      ).rejects.toThrow(BadGatewayException);
     });
   });
 });

@@ -350,6 +350,51 @@
         ]
       }
     },
+    "/api/deployments/{deployment}/configuration": {
+      "get": {
+        "description": "Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user.",
+        "operationId": "getDeploymentConfiguration",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON Schema configuration object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Deployment does not support configuration"
+          },
+          "502": {
+            "description": "Unexpected response from DIAL Core"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Get JSON Schema configuration for a deployment",
+        "tags": [
+          "deployments"
+        ]
+      }
+    },
     "/api/v1/models": {
       "get": {
         "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",

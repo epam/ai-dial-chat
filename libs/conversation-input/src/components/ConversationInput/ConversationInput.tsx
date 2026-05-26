@@ -10,7 +10,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   onStop,
   isStreaming = false,
   onAttachmentsChange,
-  initialMessage = '',
+  message,
   placeholder = 'Type a new prompt or use "/" to select one',
   welcomeText,
   colors,
@@ -73,7 +73,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       )}
       <div className="relative w-full max-w-[748px]">
         <Input
-          initialMessage={initialMessage}
+          message={message}
           onSend={onSend}
           onStop={onStop}
           isStreaming={isStreaming}

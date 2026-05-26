@@ -74,7 +74,7 @@ describe('ConversationInput', () => {
 
   it('should seed textarea with initialMessage', () => {
     const { container } = render(
-      <ConversationInput initialMessage="Prefilled text" />,
+      <ConversationInput message="Prefilled text" />,
     );
     const textarea = container.querySelector('textarea');
     expect(textarea?.value).toBe('Prefilled text');
