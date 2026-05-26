@@ -123,6 +123,38 @@ runs:
           echo "PROMPT_EOF"
         } >> "$GITHUB_OUTPUT"
 
+    - name: Pre-flight state dump
+      shell: bash
+      env:
+        SCHEMA_PATH: ${{ runner.temp }}/agent-schema.json
+        COMPOSED_PROMPT_PATH: ${{ runner.temp }}/composed-prompt.md
+        STAGE_NAME: ${{ inputs.stage_name }}
+        SKILL: ${{ inputs.skill }}
+        ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
+      run: |
+        set -euo pipefail
+        echo "::group::stage + cwd + tree state"
+        echo "stage_name=$STAGE_NAME"
+        echo "skill=$SKILL"
+        echo "allowed_tools=$ALLOWED_TOOLS"
+        echo "cwd=$(pwd)"
+        echo "ANTHROPIC_API_KEY set? $([ -n "${ANTHROPIC_API_KEY:-}" ] && echo yes || echo NO)"
+        echo "--- .claude/ in cwd ---"
+        ls -la .claude/ 2>/dev/null || echo "(missing)"
+        echo "--- .claude/skills/ ---"
+        ls -la .claude/skills/ 2>/dev/null || echo "(missing)"
+        echo "--- .claude/commands/opsx/ ---"
+        ls -la .claude/commands/opsx/ 2>/dev/null || echo "(missing)"
+        echo "--- target skill SKILL.md ---"
+        ls -la ".claude/skills/${SKILL}/SKILL.md" 2>/dev/null || echo "(missing — Claude will not find /$SKILL)"
+        echo "::endgroup::"
+        echo "::group::composed prompt (full)"
+        cat "$COMPOSED_PROMPT_PATH"
+        echo "::endgroup::"
+        echo "::group::agent-facing schema"
+        cat "$SCHEMA_PATH"
+        echo "::endgroup::"
+
     - name: Run Claude
       id: claude
       uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
