@@ -51,7 +51,7 @@ describe('useFavicon', () => {
   it('should handle undefined URL gracefully', () => {
     renderHook(() => useFavicon(undefined));
 
-    expect(console.debug).toHaveBeenCalledWith(
+    expect(console.error).toHaveBeenCalledWith(
       'No favicon URL provided, using default',
     );
     expect(imageInstances).toHaveLength(0);

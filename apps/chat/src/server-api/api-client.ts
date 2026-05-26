@@ -40,7 +40,7 @@ const unauthorizedMiddleware: Middleware = {
 
 const telemetryMiddleware: Middleware = {
   post: async (context) => {
-    console.debug(
+    console.info(
       `[api] ${context.init.method ?? 'GET'} ${context.url} → ${context.response.status}`,
     );
     return context.response;

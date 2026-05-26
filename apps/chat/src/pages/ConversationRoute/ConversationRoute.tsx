@@ -62,12 +62,9 @@ const ConversationRoute: FC = () => {
       setIsSending(true);
       try {
         const attachmentDtos = await attachmentsToDtos(attachments);
-        const customContent = attachmentDtos?.length
-          ? { attachments: attachmentDtos }
-          : undefined;
         const conversation = await apiCreateConversation(
           message,
-          customContent,
+          attachmentDtos,
         );
         navigate(getConversationRoute(conversation.id));
       } finally {
@@ -87,12 +84,11 @@ const ConversationRoute: FC = () => {
         const configurationValue = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
-        const customContent = configurationValue
-          ? { configuration_value: configurationValue }
-          : undefined;
-        void apiCreateConversation(text, customContent).then((conversation) => {
-          navigate(getConversationRoute(conversation.id));
-        });
+        void apiCreateConversation(text, undefined, configurationValue).then(
+          (conversation) => {
+            navigate(getConversationRoute(conversation.id));
+          },
+        );
       } else {
         setInputMessage(text);
       }

@@ -22,4 +22,13 @@ export class MessageCustomContentDto {
   @IsOptional()
   @IsObject()
   configuration_value?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description:
+      'Key-value map of form field values submitted via an embedded form widget.',
+    example: { field1: 'value', field2: 42 },
+  })
+  @IsOptional()
+  @IsObject()
+  form_value?: Record<string, unknown>;
 }

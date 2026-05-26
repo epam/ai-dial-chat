@@ -364,6 +364,18 @@ export interface ConversationResponseDto {
   assistantModelId: string;
 }
 /**
+ * Permitted scalar/array types for a single form field value.
+ * @export
+ */
+export type MessageFormValueType = number | string | boolean | string[];
+
+/**
+ * Key-value map submitted from a form widget embedded in a message.
+ * @export
+ */
+export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/**
  *
  * @export
  * @interface MessageCustomContentDto
@@ -380,6 +392,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   configuration_value?: Record<string, unknown>;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {MessageFormValue}
+   * @memberof MessageCustomContentDto
+   */
+  form_value?: MessageFormValue;
 }
 /**
  *
@@ -933,11 +951,11 @@ export interface SendCompletionDto {
    */
   model: string;
   /**
-   * DIAL API attachments to include with the user message
-   * @type {Array<AttachmentDto>}
+   * Extra DIAL payload attached to the user message
+   * @type {MessageCustomContentDto}
    * @memberof SendCompletionDto
    */
-  attachments?: Array<AttachmentDto>;
+  custom_content?: MessageCustomContentDto;
 }
 /**
  *

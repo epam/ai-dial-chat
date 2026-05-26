@@ -2,6 +2,7 @@ import {
   Attachment,
   Conversation,
   Message,
+  MessageAttachment,
   MessageCustomContent,
   MessageRole,
   type MessageRating,
@@ -23,6 +24,7 @@ import {
 } from '../../constants/translation-keys';
 import { streamCompletion } from '../../server-api/chat-stream.api';
 import {
+  deleteConversation as apiDeleteConversation,
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
@@ -63,7 +65,6 @@ export const ConversationPage: FC = () => {
         {
           signal: controller.signal,
           onChunk: (chunk) => {
-            console.log('Received chunk:', chunk);
             const content = chunk.choices[0]?.delta?.content ?? '';
             if (!content) return;
             setConversation((prev) => {
@@ -228,6 +229,14 @@ export const ConversationPage: FC = () => {
           ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
           : prev.messages.filter((_, i) => i !== idx);
 
+      if (next.length === 0) {
+        apiDeleteConversation(conversationPath).catch(() =>
+          setDeleteError(true),
+        );
+        navigate(ROUTES.ROOT);
+        return prev;
+      }
+
       const updated = { ...prev, messages: next };
       conversationRef.current = updated;
       saveConversation(conversationPath, updated).catch(() =>
@@ -235,7 +244,7 @@ export const ConversationPage: FC = () => {
       );
       return updated;
     });
-  }, [conversationId, pendingDeleteId]);
+  }, [conversationId, navigate, pendingDeleteId]);
 
   const handleRateMessage = useCallback(
     async (messageId: string, rating: MessageRating | null) => {

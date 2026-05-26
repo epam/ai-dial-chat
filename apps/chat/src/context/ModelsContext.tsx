@@ -49,7 +49,7 @@ export const ModelsProvider = ({ children }: { children: ReactNode }) => {
         const response = await getModels();
         if (!signal.cancelled) {
           setModels(response.data);
-          setSelectedModelId(response.data[0]?.id ?? null);
+          setSelectedModelId('form-example');
         }
       } catch (err: unknown) {
         if (!signal.cancelled) {

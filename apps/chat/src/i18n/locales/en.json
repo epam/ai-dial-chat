@@ -5,7 +5,8 @@
     "streamError": "Something went wrong while generating the response.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
-    "deleteMessageError": "Failed to delete the message. Please try again."
+    "deleteMessageError": "Failed to delete the message. Please try again.",
+    "starterConfirmTitle": "Confirm action"
   },
   "navigation": {
     "ariaLabel": "Main navigation",

@@ -41,15 +41,21 @@ export enum MessageRating {
   Dislike = -1,
 }
 
+/** Permitted scalar/array types for a single form field value. */
+export type MessageFormValueType = number | string | boolean | string[];
+
+/**
+ * A key-value map submitted from a form widget embedded in a message.
+ * Keys are field identifiers; values are typed form field values (or `undefined` for unset fields).
+ */
+export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
 /** Extra DIAL API payload attached to a message. */
 export interface MessageCustomContent {
   /** Files or media items associated with this message. */
   attachments?: MessageAttachment[];
-  /**
-   * Form/button submission value sent with the user message.
-   * Key is the schema property name (e.g. `'button'`), value is the selected `const` (e.g. `{ button: 1 }`).
-   */
-  configuration_value?: Record<string, unknown>;
+  /** Form field values submitted via an embedded form widget. */
+  form_value?: MessageFormValue;
 }
 
 /** A single message in a conversation. */

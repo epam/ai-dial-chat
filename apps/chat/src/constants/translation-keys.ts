@@ -5,6 +5,7 @@ export enum ChatI18nKeys {
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   DeleteMessageError = 'chat.deleteMessageError',
+  StarterConfirmTitle = 'chat.starterConfirmTitle',
 }
 
 export enum ActionsI18nKeys {
