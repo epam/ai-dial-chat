@@ -26,7 +26,7 @@ import { SendButton } from './SendButton.js';
 import { StopButton } from './StopButton.js';
 
 export const Input: FC<InputProps> = ({
-  initialMessage = '',
+  message: messageProp = '',
   onSend,
   onStop,
   isStreaming = false,
@@ -62,8 +62,14 @@ export const Input: FC<InputProps> = ({
     }),
   } as CSSProperties;
 
-  const [message, setMessage] = useState(initialMessage);
+  const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+
+  useEffect(() => {
+    if (messageProp) {
+      setMessage(messageProp);
+    }
+  }, [messageProp]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

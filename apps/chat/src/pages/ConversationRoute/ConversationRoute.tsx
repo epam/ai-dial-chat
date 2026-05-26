@@ -1,5 +1,6 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
 import {
+  FC,
   lazy,
   Suspense,
   useCallback,
@@ -17,6 +18,7 @@ import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useModels } from '../../context/ModelsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import { getStarterPopulateText } from '../../utils/starter-option';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -29,6 +31,7 @@ const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
+  const [inputMessage, setInputMessage] = useState<string | undefined>();
   const inputRef = useRef<HTMLDivElement>(null);
   const { selectedModelConfiguration } = useModels();
 
@@ -70,6 +73,18 @@ const ConversationRoute: FC = () => {
     [navigate, isSending],
   );
 
+  const handleStarterSelect = useCallback(
+    (starter: StarterOption) => {
+      const text = getStarterPopulateText(starter);
+      if (starter['dial:widgetOptions'].submit) {
+        void handleSend(text, []);
+      } else {
+        setInputMessage(text);
+      }
+    },
+    [handleSend],
+  );
+
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
       <Suspense fallback={<RouteFallback />}>
@@ -80,11 +95,12 @@ const ConversationRoute: FC = () => {
         >
           <ConversationInput
             onSend={handleSend}
+            message={inputMessage}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
           />
-          <StarterButtons starters={starters} onSelect={handleSend} />
+          <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
       </Suspense>
     </div>

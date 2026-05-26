@@ -5,8 +5,8 @@ import { FC } from 'react';
 interface Props {
   /** Starter options to display as buttons. */
   starters: StarterOption[];
-  /** Called with the populate text when a button is clicked. */
-  onSelect: (text: string) => void;
+  /** Called with the full starter option when a button is clicked. */
+  onSelect: (starter: StarterOption) => void;
 }
 
 const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
@@ -22,7 +22,7 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
         <div key={starter.const} role="listitem">
           <DialRoundedButton
             label={starter.title}
-            onClick={() => onSelect(starter['dial:widgetOptions'].populateText)}
+            onClick={() => onSelect(starter)}
           />
         </div>
       ))}
