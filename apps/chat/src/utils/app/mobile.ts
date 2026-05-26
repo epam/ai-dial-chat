@@ -32,14 +32,19 @@ export const is4XLScreen = createCheck(ScreenState.XL4);
 export const isTabletScreenOrMobile = () => isTabletScreen() || isMobile();
 export const isSmallScreenOrTouchable = () => isSmallScreen() || isTouchable();
 
-export const useMdSidebarOverlayBreakpoint = () =>
+export const isMdSidebarOverlayBreakpointEnabled = () =>
   process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT === 'true';
 
-export const shouldAutoHideChatbarOnConversationChange = () =>
-  useMdSidebarOverlayBreakpoint() ? isMobile() : isTabletScreen();
+export const shouldAutoHideChatbarOnConversationChange = (
+  isOverlay: boolean,
+) =>
+  isOverlay && isMdSidebarOverlayBreakpointEnabled()
+    ? isMobile()
+    : isTabletScreen();
 
-export const shouldShowConversationsSectionByDefault = () =>
-  !isTabletScreenOrMobile() || useMdSidebarOverlayBreakpoint();
+export const shouldShowConversationsSectionByDefault = (isOverlay: boolean) =>
+  !isTabletScreenOrMobile() ||
+  (isOverlay && isMdSidebarOverlayBreakpointEnabled());
 
 export const getScreenState = () => {
   const screenMappings = [

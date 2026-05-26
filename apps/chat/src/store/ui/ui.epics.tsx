@@ -45,11 +45,12 @@ const initEpic: AppEpic = (action$, state$) =>
     switchMap(() => {
       const state = state$.value;
       const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
+      const isOverlay = SettingsSelectors.selectIsOverlay(state);
 
       return forkJoin({
         showChatbar: DataService.getShowChatbar(
           enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
-            shouldShowConversationsSectionByDefault(),
+            shouldShowConversationsSectionByDefault(isOverlay),
         ),
         showPromptbar: DataService.getShowPromptbar(
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
@@ -164,7 +165,11 @@ const applyShowConversationsSectionByDefaultEpic: AppEpic = (action$, state$) =>
         payload.includes(Feature.ShowConversationsSectionByDefault) &&
         SettingsSelectors.selectIsOverlay(state$.value),
     ),
-    filter(() => shouldShowConversationsSectionByDefault()),
+    filter(() =>
+      shouldShowConversationsSectionByDefault(
+        SettingsSelectors.selectIsOverlay(state$.value),
+      ),
+    ),
     switchMap(() => of(UIActions.setShowChatbar(true))),
   );
 

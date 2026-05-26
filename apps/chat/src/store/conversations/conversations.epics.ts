@@ -2308,7 +2308,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const hideChatbarEpic: AppEpic = (action$) =>
+const hideChatbarEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(
       ConversationsActions.createNewConversations.type,
@@ -2332,7 +2332,9 @@ const hideChatbarEpic: AppEpic = (action$) =>
       return true;
     }),
     switchMap(() =>
-      shouldAutoHideChatbarOnConversationChange()
+      shouldAutoHideChatbarOnConversationChange(
+        SettingsSelectors.selectIsOverlay(state$.value),
+      )
         ? of(UIActions.setShowChatbar(false))
         : EMPTY,
     ),
