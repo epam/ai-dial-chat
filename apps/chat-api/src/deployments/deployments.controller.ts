@@ -5,6 +5,9 @@ import type { SessionUser } from '../auth/session/session.types';
 import { DialDeploymentDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 
+// Swagger inline type for an open JSON Schema object
+const schemaObject = { type: 'object', additionalProperties: true };
+
 @ApiTags('deployments')
 @Controller('deployments')
 export class DeploymentsController {
@@ -47,5 +50,40 @@ export class DeploymentsController {
   getDeployment(@Req() req: Request, @Param('deployment') deployment: string) {
     const { at } = req.user as SessionUser;
     return this.deploymentsService.getDeployment(deployment, at);
+  }
+
+  @Get(':deployment/configuration')
+  @ApiOperation({
+    summary: 'Get JSON Schema configuration for a deployment',
+    description:
+      'Returns the JSON Schema of configuration supported by the deployment. ' +
+      'Only available for deployments whose `features.configuration` flag is `true`. ' +
+      'Results are cached server-side for 60 seconds per user.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'JSON Schema configuration object',
+    schema: schemaObject,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 404,
+    description: 'Deployment does not support configuration',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'Unexpected response from DIAL Core',
+  })
+  @ApiResponse({ status: 503, description: 'DIAL Core is unreachable' })
+  getDeploymentConfiguration(
+    @Req() req: Request,
+    @Param('deployment') deployment: string,
+  ) {
+    const { at, sub } = req.user as SessionUser;
+    return this.deploymentsService.getDeploymentConfiguration(
+      deployment,
+      sub,
+      at,
+    );
   }
 }
