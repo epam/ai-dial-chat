@@ -2,6 +2,7 @@
   "name": "@epam/ai-dial-conversation-input",
   "version": "0.0.1",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

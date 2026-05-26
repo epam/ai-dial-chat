@@ -1,5 +1,6 @@
 {
   "name": "@epam/chat",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "license": "Apache-2.0"
 }
