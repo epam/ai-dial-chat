@@ -103,7 +103,9 @@ def main():
         fail(f"Invalid status: {status} (expected passed | passed_with_findings | failed)")
 
     summary = payload["summary"]
-    findings = payload.get("findings") or []
+    agent_payload = payload.get("payload") or {}
+    findings = agent_payload.get("findings") or []
+    override_md = agent_payload.get("comment_markdown")
     cost = payload.get("cost_usd")
     run_url = (
         f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}"
@@ -112,7 +114,13 @@ def main():
     )
 
     parts = [f"<!-- dial-sdlc:{stage_name} -->", f"{ICON[status]} **{stage_name}**: {summary}"]
-    parts.extend(build_findings_block(findings, run_url))
+    # Body precedence: explicit comment_markdown wins; otherwise render findings
+    # table when present; otherwise leave the summary line alone.
+    if override_md:
+        parts.append("")
+        parts.append(override_md)
+    else:
+        parts.extend(build_findings_block(findings, run_url))
     parts.append("")
     footer = f"[Run details]({run_url})"
     if cost is not None:

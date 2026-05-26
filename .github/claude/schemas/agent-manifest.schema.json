@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "DIAL SDLC Agent Manifest",
-  "description": "Manifest at agents/<name>/agent.yml. The matcher validates every manifest against this schema at discovery time; violations fail the dispatcher loudly. Accepts the framework's v0.1 fields (some recorded-only today; see PLATFORM_NOTES for which are runtime-honored).",
+  "description": "Manifest at agents/<name>/agent.yml. The matcher validates every manifest against this schema at discovery time; violations fail the dispatcher loudly. Accepts the framework's v0.1 fields (some recorded-only today; see PLATFORM_REFERENCE.md for which are runtime-honored).",
   "type": "object",
-  "required": ["contract_version", "name", "triggers", "allowed_tools"],
+  "required": ["contract_version", "name", "skill", "triggers", "allowed_tools"],
   "additionalProperties": false,
   "properties": {
     "contract_version": {
@@ -15,6 +15,11 @@
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]*$",
       "description": "Kebab-case agent name. Surfaces in PR comments, artifacts, kill-switch var name."
+    },
+    "skill": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9:-]*$",
+      "description": "Local skill the agent wraps. Must be addressable as `/<skill>` in a Claude prompt (e.g. `code-review-and-quality`, `opsx:verify`). Skill-only: no per-agent prompt.md is permitted; the composite action composes a uniform prompt that delegates work to this skill. Reusable agent logic belongs in `.claude/skills/` or `.claude/commands/`, not inlined in agents/."
     },
     "agent_version": {
       "type": "string",

@@ -41,7 +41,7 @@ DEFAULT_TIMEOUT = 15
 
 # Platform-supported permissions. Any manifest requesting permissions OUTSIDE
 # this set is rejected; adding a new permission requires raising the bar in
-# run-agent.yml + dispatcher (see PLATFORM_NOTES.md).
+# run-agent.yml + dispatcher (see PLATFORM_REFERENCE.md).
 SUPPORTED_PERMISSIONS = {
     "contents": {"read"},
     "pull-requests": {"write"},
@@ -108,7 +108,7 @@ def validate_permissions(name, perms):
             fail(
                 f"agent {name} declares unsupported permission '{scope}'. "
                 f"Platform supports: {sorted(SUPPORTED_PERMISSIONS)}. "
-                f"See .github/claude/PLATFORM_NOTES.md → permission tiers."
+                f"See .github/claude/PLATFORM_REFERENCE.md → permission tiers."
             )
         if level not in allowed:
             fail(

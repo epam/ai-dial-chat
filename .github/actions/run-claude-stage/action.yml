@@ -1,21 +1,16 @@
 name: 'Run Claude Stage'
-description: 'Run a Claude-powered DIAL SDLC stage. Validates output and posts a sticky PR comment.'
+description: 'Run a Claude-powered DIAL SDLC stage. An agent is a manifest + skill ref; the action composes a uniform prompt that delegates work to the skill, runs Claude with --json-schema, validates the output, and posts a sticky PR comment.'
 
 inputs:
   stage_name:
-    description: 'Stage identifier (kebab-case). Must match prompt filename and sticky-comment marker.'
+    description: 'Stage identifier (kebab-case). Pinned into the output schema and sticky-comment marker.'
+    required: true
+  skill:
+    description: 'Local skill the agent wraps. Must be addressable as `/<skill>` (e.g. code-review-and-quality, opsx:verify).'
     required: true
   allowed_tools:
-    description: 'Comma-separated allowed tools (e.g. "Read,Grep,Glob,Skill").'
+    description: 'Comma-separated allowed tools (e.g. "Read,Grep,Glob,Skill"). Should include the tools the wrapped skill needs plus `Skill` itself.'
     required: true
-  prompt:
-    description: 'Inline prompt. If empty, falls back to prompt_file or the default convention.'
-    required: false
-    default: ''
-  prompt_file:
-    description: 'Explicit prompt file path. Used when manifest-driven dispatcher provides it. If empty, falls back to .github/claude/prompts/{stage_name}.md.'
-    required: false
-    default: ''
   agent_version:
     description: 'Stage/agent version (semver) recorded into the output envelope.'
     required: false
@@ -53,51 +48,54 @@ runs:
       shell: bash
       env:
         STAGE_NAME: ${{ inputs.stage_name }}
-        INLINE_PROMPT: ${{ inputs.prompt }}
-        EXPLICIT_FILE: ${{ inputs.prompt_file }}
+        SKILL: ${{ inputs.skill }}
         ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
         MAX_TURNS: ${{ inputs.max_turns }}
         MODEL: ${{ inputs.model }}
         RUNNER_TEMP: ${{ runner.temp }}
       run: |
         set -euo pipefail
-
-        # 1) Resolve prompt content. claude-code-action@v1 accepts `prompt:`
-        # (string) only — no prompt_file input — so we read the file here.
-        if [ -n "${INLINE_PROMPT}" ]; then
-          PROMPT_CONTENT="${INLINE_PROMPT}"
-        else
-          if [ -n "${EXPLICIT_FILE}" ]; then
-            FILE="${EXPLICIT_FILE}"
-          else
-            FILE=".github/claude/prompts/${STAGE_NAME}.md"
-          fi
-          if [ ! -f "$FILE" ]; then
-            echo "::error::Prompt file not found: $FILE"
-            exit 1
-          fi
-          PROMPT_CONTENT="$(cat "$FILE")"
+        if [ -z "${SKILL}" ]; then
+          echo "::error::skill input is required (agents wrap a local skill)"
+          exit 1
         fi
 
-        # 2) Build an agent-facing JSON Schema: strip envelope fields the
-        # platform injects, pin `stage` to a literal const so Claude can't
-        # write the wrong stage name. Saved to a temp file for --json-schema.
+        # Build agent-facing schema AND compose the prompt. Schema: strip
+        # envelope fields the renderer injects, pin `stage` to a literal const
+        # so Claude can't mismatch. Prompt: load the universal wrapper
+        # template (.github/claude/prompts/agent-wrapper.md) and substitute
+        # `{{stage}}` and `{{skill}}` — no per-agent prompt file is involved.
         SCHEMA_PATH="${RUNNER_TEMP}/agent-schema.json"
-        export STAGE_NAME SCHEMA_PATH
+        COMPOSED_PROMPT_PATH="${RUNNER_TEMP}/composed-prompt.md"
+        WRAPPER_PATH=".github/claude/prompts/agent-wrapper.md"
+        export STAGE_NAME SKILL SCHEMA_PATH COMPOSED_PROMPT_PATH WRAPPER_PATH
         python3 - <<'PY'
         import json, os
+
+        # --- Agent-facing schema --------------------------------------------
         with open('.github/claude/schemas/stage-message.schema.json') as f:
             s = json.load(f)
         # Envelope fields are injected by render-stage-comment.py; agents must not write them.
         for k in ('contract_version', 'agent_version', 'run_id', 'trigger'):
             s.get('properties', {}).pop(k, None)
         s['required'] = [r for r in s.get('required', []) if r != 'contract_version']
-        # Pin the stage name so Claude can't mismatch.
-        s.setdefault('properties', {}).setdefault('stage', {'type': 'string'})['const'] = os.environ['STAGE_NAME']
+        stage = os.environ['STAGE_NAME']
+        s.setdefault('properties', {}).setdefault('stage', {'type': 'string'})['const'] = stage
         with open(os.environ['SCHEMA_PATH'], 'w') as f:
             json.dump(s, f)
+
+        # --- Composed prompt ------------------------------------------------
+        with open(os.environ['WRAPPER_PATH']) as f:
+            template = f.read()
+        composed = (template
+                    .replace('{{stage}}', stage)
+                    .replace('{{skill}}', os.environ['SKILL']))
+        with open(os.environ['COMPOSED_PROMPT_PATH'], 'w') as f:
+            f.write(composed)
         PY
         echo "Agent-facing schema written to $SCHEMA_PATH"
+        echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
+        PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
 
         # 3) Build claude_args. Allowed tools, model, and json-schema all go
         # through the CLI via claude_args; the action exposes none as direct inputs.

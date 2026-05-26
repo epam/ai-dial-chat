@@ -75,24 +75,34 @@ jobs:
             echo "::error::Manifest not found: $MANIFEST"
             exit 1
           fi
+          # Skill-only: no per-agent prompt.md. The composite action composes
+          # the full prompt from the manifest's `skill:` value. Fail loudly if
+          # a stray prompt.md is committed — it has no effect and signals drift.
+          if [ -f "agents/${AGENT_NAME}/prompt.md" ]; then
+            echo "::error::agents/${AGENT_NAME}/prompt.md exists but is no longer honored. Remove the file and put any reusable agent logic into a Claude skill at .claude/skills/<skill>/SKILL.md or .claude/commands/<skill>.md."
+            exit 1
+          fi
           python3 - <<'EOF' >> "$GITHUB_OUTPUT"
           import os, yaml
           with open(f"agents/{os.environ['AGENT_NAME']}/agent.yml") as f:
               m = yaml.safe_load(f) or {}
+          skill = m.get("skill")
+          if not skill:
+              raise SystemExit("::error::manifest missing required field: skill (agents must wrap a local skill)")
           tools = m.get("allowed_tools")
           if not tools:
               raise SystemExit("::error::manifest missing required field: allowed_tools")
+          print(f"skill={skill}")
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
-          print(f"prompt_file=agents/{os.environ['AGENT_NAME']}/prompt.md")
           EOF
 
       - id: stage
         uses: ./.github/actions/run-claude-stage
         with:
           stage_name: ${{ inputs.agent_name }}
+          skill: ${{ steps.manifest.outputs.skill }}
           allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
           agent_version: ${{ steps.manifest.outputs.agent_version }}
           model: ${{ steps.manifest.outputs.model }}
-          prompt_file: ${{ steps.manifest.outputs.prompt_file }}

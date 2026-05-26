@@ -1,7 +1,8 @@
 contract_version: "0.1"
 name: code-review
+skill: code-review-and-quality
 agent_version: "0.1.0"
-description: "AI code review via the /code-review-and-quality skill."
+description: "AI code review wrapping the local /code-review-and-quality skill."
 triggers: [pull_request]
 allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"
 model: claude-sonnet-4-6
