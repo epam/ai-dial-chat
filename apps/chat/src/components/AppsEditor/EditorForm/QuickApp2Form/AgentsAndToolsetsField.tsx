@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Controller,
   useFormContext,
@@ -252,13 +252,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [allEntitiesMap, dispatch, getValues, resetField, setValue],
   );
 
-  const handleOpenDetails = useCallback(
-    (entity: MarketplaceEntity) => {
-      setSelectedEntityId(entity.id);
-      onAutoSave();
-    },
-    [onAutoSave],
-  );
+  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
+    setSelectedEntityId(entity.id);
+  }, []);
 
   const handleCloseDetails = useCallback(() => {
     setSelectedEntityId(null);
