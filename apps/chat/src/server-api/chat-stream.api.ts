@@ -34,7 +34,7 @@ export const streamCompletion = (
           path,
           message,
           model,
-          customContent: customContent || {},
+          custom_content: customContent || {},
         }),
       });
     } catch (err) {

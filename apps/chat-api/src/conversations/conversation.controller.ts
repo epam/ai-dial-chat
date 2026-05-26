@@ -29,6 +29,9 @@ import {
 } from './dto/save-conversation.dto';
 import { SendCompletionDto } from './dto/send-completion.dto';
 
+const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
+const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
+
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
 export class ConversationController {
@@ -175,16 +178,35 @@ export class ConversationController {
     res.flushHeaders();
 
     const reader = stream.getReader();
+
+    let clientAborted = false;
+    res.on('close', () => {
+      clientAborted = true;
+      reader.cancel();
+    });
+
+    let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
     try {
+      keepaliveTimer = setInterval(() => {
+        if (!clientAborted && !res.writableEnded) {
+          res.write(SSE_KEEPALIVE_PAYLOAD);
+        }
+      }, SSE_KEEPALIVE_INTERVAL_MS);
+
       while (true) {
+        if (clientAborted) break;
+
         const { done, value } = await reader.read();
         if (done) break;
 
         res.write(value);
       }
     } catch (err) {
-      this.logger.error('Error while streaming completion to client', err);
+      if (!clientAborted) {
+        this.logger.error('Error while streaming completion to client', err);
+      }
     } finally {
+      if (keepaliveTimer) clearInterval(keepaliveTimer);
       reader.releaseLock();
       res.end();
     }
