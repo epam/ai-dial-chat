@@ -120,6 +120,12 @@ runs:
       uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
       with:
         anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
+        # Pass the runner's GITHUB_TOKEN directly so the action skips its
+        # OIDC → Claude-App-token exchange. We do not install the Claude
+        # Code GitHub App on this repo; we render our own sticky comments
+        # in a later step (see "Post sticky PR comment" below) using the
+        # same token via `gh api`.
+        github_token: ${{ github.token }}
         prompt: ${{ steps.prep.outputs.prompt }}
         claude_args: ${{ steps.prep.outputs.claude_args }}
 
