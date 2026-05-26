@@ -11,7 +11,10 @@
 }
 
 .cardSelected {
-  --_card-bg: var(--ci-card-bg-selected, var(--bg-accent-primary-alpha, #7da4ff26));
+  --_card-bg: var(
+    --ci-card-bg-selected,
+    var(--bg-accent-primary-alpha, #7da4ff26)
+  );
   border-color: var(
     --ci-card-border-selected,
     var(--stroke-accent-primary, #7da4ff)
@@ -21,7 +24,10 @@
 .cardPrompt,
 .cardPasted {
   &:hover {
-    --_card-bg: var(--ci-card-bg-hover, var(--controls-bg-neutral-hover, #242c42));
+    --_card-bg: var(
+      --ci-card-bg-hover,
+      var(--controls-bg-neutral-hover, #242c42)
+    );
     background: var(--_card-bg);
   }
 }
@@ -48,7 +54,10 @@
 }
 
 .card:focus-within {
-  outline-color: var(--ci-card-focus-outline, var(--controls-stroke-focus, #eef1f7));
+  outline-color: var(
+    --ci-card-focus-outline,
+    var(--controls-stroke-focus, #eef1f7)
+  );
 }
 
 .removeBtnImage {
