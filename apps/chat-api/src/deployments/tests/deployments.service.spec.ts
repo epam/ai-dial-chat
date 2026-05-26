@@ -50,6 +50,7 @@ function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
       response: { status: 200 },
       data: [mockModel, mockApplication, mockToolset],
     }),
+    configurationDeployment: vi.fn(),
   };
 
   const configService = {

@@ -150,7 +150,7 @@ describe('DeploymentsController (integration)', () => {
       service.getDeploymentConfiguration.mockResolvedValue(schema);
 
       const response = await request(app.getHttpServer())
-        .get('/deployments/statgpt/configuration')
+        .get('/api/v1/deployments/statgpt/configuration')
         .expect(200);
       expect(response.body).toEqual(schema);
       expect(service.getDeploymentConfiguration).toHaveBeenCalledWith(
@@ -167,7 +167,7 @@ describe('DeploymentsController (integration)', () => {
       );
 
       await request(app.getHttpServer())
-        .get('/deployments/basic-model/configuration')
+        .get('/api/v1/deployments/basic-model/configuration')
         .expect(404);
     });
 
@@ -178,7 +178,7 @@ describe('DeploymentsController (integration)', () => {
       );
 
       await request(app.getHttpServer())
-        .get('/deployments/statgpt/configuration')
+        .get('/api/v1/deployments/statgpt/configuration')
         .expect(503);
     });
   });
