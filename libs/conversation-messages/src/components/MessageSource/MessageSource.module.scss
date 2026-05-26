@@ -8,7 +8,13 @@
 
   &:hover,
   &:active {
-    background: var(--cm-source-bg-hover, var(--bg-accent-primary-alpha, #7da4ff26));
-    border-color: var(--cm-source-border-hover, var(--stroke-accent-primary, #7da4ff));
+    background: var(
+      --cm-source-bg-hover,
+      var(--bg-accent-primary-alpha, #7da4ff26)
+    );
+    border-color: var(
+      --cm-source-border-hover,
+      var(--stroke-accent-primary, #7da4ff)
+    );
   }
 }
