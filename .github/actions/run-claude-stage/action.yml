@@ -56,6 +56,7 @@ runs:
         ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
         MAX_TURNS: ${{ inputs.max_turns }}
         MODEL: ${{ inputs.model }}
+        SHOW_FULL_OUTPUT: ${{ inputs.show_full_output }}
         RUNNER_TEMP: ${{ runner.temp }}
       run: |
         set -euo pipefail
@@ -110,21 +111,25 @@ runs:
         echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
         PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
 
-        # 3) Build claude_args. Allowed tools, model, and the verbose flag
-        # all go through the CLI via claude_args; the action exposes none
-        # as direct inputs. `--verbose` makes the CLI emit tool-use events
-        # as they happen so the GHA log streams live instead of buffering
-        # until the run completes.
+        # 3) Build claude_args. Allowed tools, model, and (when toggled)
+        # the verbose flag all go through the CLI via claude_args; the
+        # action exposes none as direct inputs.
         #
-        # NOTE: --json-schema is intentionally NOT used. claude-code-action's
-        # structured_output path buffers Claude's output (no live streaming,
-        # zero visibility for ~5-15min) regardless of action version. We
-        # instead instruct the agent in the prompt to write its JSON
-        # response to `stage-output.json` via the Write tool, and the
-        # materialize step below just verifies the file exists. The renderer
-        # (render-stage-comment.py) does the same shape validation that
-        # --json-schema would have done.
-        ARGS="--max-turns ${MAX_TURNS} --verbose"
+        # NOTE: --json-schema is intentionally NOT used. The
+        # claude-code-action structured_output path buffers Claude's
+        # output entirely (no live streaming for ~5-15min) regardless of
+        # version. We instead instruct the agent in the prompt to write
+        # its JSON response to `stage-output.json` via the Write tool,
+        # and the verify step below just confirms the file exists. The
+        # renderer (render-stage-comment.py) performs the same shape
+        # validation that --json-schema would have given us.
+        ARGS="--max-turns ${MAX_TURNS}"
+        if [ "${SHOW_FULL_OUTPUT}" = "true" ]; then
+          # `--verbose` streams tool-use events with full detail. Costs
+          # log volume; useful when an agent is misbehaving. Gated by
+          # show_full_output so production runs stay quieter.
+          ARGS="${ARGS} --verbose"
+        fi
         if [ -n "${MODEL}" ]; then
           ARGS="${ARGS} --model ${MODEL}"
         fi
@@ -141,6 +146,11 @@ runs:
         } >> "$GITHUB_OUTPUT"
 
     - name: Pre-flight state dump
+      # Diagnostic only — dumps cwd, env, skill discovery paths, composed
+      # prompt, and the agent-facing schema before invoking Claude. Off by
+      # default in production; toggle via `show_full_output: 'true'` to
+      # debug a misbehaving agent.
+      if: inputs.show_full_output == 'true'
       shell: bash
       env:
         SCHEMA_PATH: ${{ runner.temp }}/agent-schema.json

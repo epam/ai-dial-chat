@@ -165,16 +165,38 @@ document it as available to authors until Tier B is wired through.
 
 ---
 
-## How agents emit output — Claude `structured_output`
+## How agents emit output — the `Write`-tool path
 
-The composite action passes a JSON Schema to Claude via
-`--json-schema=<temp-path>` in `claude_args`. The agent-facing schema is a
-runtime-derived subset of `stage-message.schema.json`:
+The composite action does **not** use `claude-code-action`'s
+`--json-schema` / `structured_output` enforcement. Instead, the agent
+writes its JSON response to `stage-output.json` at the repo root via the
+`Write` tool, and the renderer reads + validates that file. Reasons
+(empirical, established across the v0.1 smoke-test cycle):
 
-- Envelope fields (`contract_version`, `agent_version`, `run_id`, `trigger`)
-  are stripped — the renderer injects them after the agent exits.
-- `stage` is pinned via `const: "<agent-name>"` so the agent can't write a
-  mismatched stage name.
+- **`--json-schema` buffers all output.** Setting `--json-schema=<path>`
+  in `claude_args` causes the action to hold every tool-use event and
+  every assistant message until end-of-run. No live streaming, no
+  visibility for 5-15 minutes per run, regardless of action version
+  (reproduced on both v1.0.100 and v1.0.133). `--verbose` and
+  `show_full_output: 'true'` don't pierce it.
+- **Without `--json-schema`, the action streams every event live.** A
+  failing or slow agent is debuggable as it runs.
+- **What we give up by not using `--json-schema`**: automatic retry on
+  schema violation (the SDK would re-prompt Claude up to N times if its
+  output didn't match the schema). Modern Claude models are reliable
+  enough at producing valid JSON when given a clear schema description
+  in the prompt + an example that we accept this trade. If the agent
+  ever emits malformed JSON, the renderer fails loudly with a clear
+  error — same end state.
+
+The composite action's prompt-prep step still generates the agent-facing
+schema (subset of `stage-message.schema.json` with envelope fields
+stripped, `stage` pinned via `const`) and writes it to disk. The
+**prompt** describes this schema as the required output shape; the
+**Claude runtime** doesn't enforce it. This keeps the schema as
+documentation + a quick re-enable surface if upstream ships a fix.
+
+### Output shape — conventions, not enforcement
 
 Top-level is open (`additionalProperties: true`) so non-reviewer agents
 can extend without schema churn. Agent-specific structured data goes
@@ -187,21 +209,57 @@ conventions:
   default body with verbatim markdown. Use for test results, benchmarks,
   generated code summaries, etc.
 
-These are conventions, not schema requirements. Agents free to put any
-keys under `payload`; the renderer just falls back to summary-only display
+These are conventions, not schema requirements. Agents are free to put
+any keys under `payload`; the renderer falls back to summary-only display
 when neither convention is present.
 
-Claude's Agent SDK constrains generation to the schema and re-prompts on
-mismatch. The validated payload appears as the `structured_output` step
-output of `anthropics/claude-code-action@v1`. The composite action
-materializes it to `stage-output.json` for the artifact upload and
-downstream consumption. If Claude exhausts its retry budget, the action
-returns subtype `error_max_structured_output_retries` and the job fails —
-no malformed output ever reaches the renderer.
+### Runtime path
 
-**Model requirement**: Claude Sonnet 4.5+, Opus 4.5+, Haiku 4.5+ (GA 2026).
-Older models silently lack structured_output support; the composite action
-fails with a clear error if the action's output is empty.
+1. Composite action composes the prompt and writes `stage-output.json`
+   instruction into it.
+2. `anthropics/claude-code-action` runs Claude; tool calls stream live
+   (no buffering since no `--json-schema`).
+3. Agent uses the `Write` tool to save its JSON to `stage-output.json`.
+   `Write` is appended to `allowed_tools` automatically by the composite
+   action — agents don't need to declare it.
+4. Composite action's "Verify stage-output.json" step confirms the file
+   exists and dumps its contents to the GHA log.
+5. `render-stage-comment.py` validates required fields, injects envelope,
+   renders sticky comment markdown.
+6. Sticky-comment step posts (or updates) the comment via `gh api`.
+7. `upload-artifact` ships `stage-output-<name>` (90-day retention).
+
+**Model requirement**: any Claude model that supports the `Write` tool
+and produces valid JSON when instructed — i.e., any modern Claude. The
+older `--json-schema` requirement (Sonnet 4.5+, Opus 4.5+, Haiku 4.5+)
+no longer applies.
+
+### Debug visibility
+
+Three surfaces are gated on the `show_full_output` composite input
+(default `'false'`) so production runs stay quiet:
+
+- The pre-flight state dump step (cwd, env, skill discovery paths,
+  composed prompt, agent-facing schema) — runs only when toggled on.
+- `--verbose` in `claude_args` — emits richer tool-use event JSON when
+  toggled on; otherwise the action streams at its default verbosity.
+- `show_full_output: 'true'` passed to `claude-code-action` itself —
+  surfaces Claude's prompts and responses in the log instead of
+  obscuring them for security.
+
+All three flip with one input. If an agent is misbehaving, set
+`show_full_output: 'true'` (either temporarily in `run-agent.yml` or via
+a per-stage manifest field if/when we expose one) and re-run.
+
+### Why we still keep the schema file
+
+`stage-message.schema.json` remains the canonical contract. The renderer
+re-validates required fields against it as defense in depth. If
+`anthropics/claude-code-action` ships a fix for the `--json-schema`
+buffering behavior, the path back to constitutional enforcement is one
+line: re-add `--json-schema=${SCHEMA_PATH}` to `ARGS` in the composite
+action. Keep watching:
+<https://github.com/anthropics/claude-code-action/issues>.
 
 ---
 
