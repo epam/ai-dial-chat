@@ -1,8 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState, type FC } from 'react';
-import { useDragDrop } from '../../hooks/useDragDrop.js';
+import { useDropzone } from 'react-dropzone';
 import type { ConversationInputProps } from '../../models/ConversationInput.js';
-import { buildCssVars } from '../../utils/buildCssVars.js';
 import { Input } from '../Input/Input.js';
 import styles from './ConversationInput.module.scss';
 
@@ -18,19 +17,20 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   typography,
   className,
   dropLabel = 'Drop files here',
+  dropOverlayClassName = 'rounded',
   pasteTextThreshold,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-
-  const handleDropFiles = useCallback((files: File[]) => {
-    setPendingFiles(files);
-  }, []);
 
   const handleDropFilesConsumed = useCallback(() => {
     setPendingFiles([]);
   }, []);
 
-  const { dragHandlers, isDragOver } = useDragDrop(handleDropFiles);
+  const { getRootProps, isDragActive } = useDropzone({
+    onDrop: (files) => setPendingFiles(files),
+    noClick: true,
+    noKeyboard: true,
+  });
 
   const noCustomClass = !typography?.welcomeClassName;
   const cssVars = buildCssVars({
@@ -52,12 +52,13 @@ export const ConversationInput: FC<ConversationInputProps> = ({
 
   return (
     <div
-      style={cssVars}
-      className={mergeClasses(
-        'relative flex w-full flex-col items-center gap-6 p-4',
-        className,
-      )}
-      {...dragHandlers}
+      {...getRootProps({
+        style: cssVars,
+        className: mergeClasses(
+          'relative flex w-full flex-col items-center gap-6 p-4',
+          className,
+        ),
+      })}
     >
       {welcomeText && (
         <h1
@@ -84,14 +85,19 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           onDropFilesConsumed={handleDropFilesConsumed}
           pasteTextThreshold={pasteTextThreshold}
         />
-        {isDragOver && (
+        {isDragActive && (
           <div
             className={mergeClasses(
               styles.dropOverlay,
-              'pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded border border-dashed',
+              'pointer-events-none absolute inset-0 z-10 flex items-center justify-center border border-dashed',
+              dropOverlayClassName,
             )}
           >
-            <span className="dial-tiny-text">{dropLabel}</span>
+            <span
+              className={typography?.dropLabelClassName ?? 'dial-tiny-text'}
+            >
+              {dropLabel}
+            </span>
           </div>
         )}
       </div>

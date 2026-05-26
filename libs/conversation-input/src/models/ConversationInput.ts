@@ -23,6 +23,8 @@ export interface ConversationInputTypography {
   welcomeFontWeight?: string | number;
   /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
   welcomeLineHeight?: string | number;
+  /** Tailwind (or custom) class applied to the drop-overlay label. Defaults to `'dial-tiny-text'`. */
+  dropLabelClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -51,6 +53,8 @@ export interface ConversationInputProps {
   className?: string;
   /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */
   dropLabel?: string;
+  /** Tailwind (or custom) class applied to the drag-over overlay container. Defaults to `'rounded'`. */
+  dropOverlayClassName?: string;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
 }

@@ -2,6 +2,7 @@ import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   RequestStatus,
+  buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -21,7 +22,6 @@ import {
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
 import type { InputProps } from '../../models/Input.js';
-import { buildCssVars } from '../../utils/buildCssVars.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
