@@ -238,6 +238,8 @@ export const ChangePathDialog = ({
 
       if (!tempRootIds.length) return;
 
+      deduplicatedFileIdsRef.current.clear();
+
       [...addedTempFolderIdsRef.current]
         .filter((id) =>
           tempRootIds.some(
