@@ -366,6 +366,24 @@ export interface ConversationResponseDto {
 /**
  *
  * @export
+ * @interface MessageCustomContentDto
+ */
+export interface MessageCustomContentDto {
+  /**
+   * @type {Array<AttachmentDto>}
+   * @memberof MessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. { button: 1 })
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  configuration_value?: Record<string, unknown>;
+}
+/**
+ *
+ * @export
  * @interface CreateConversationDto
  */
 export interface CreateConversationDto {
@@ -376,11 +394,11 @@ export interface CreateConversationDto {
    */
   firstMessage: string;
   /**
-   * DIAL API attachments to include with the first user message
-   * @type {Array<AttachmentDto>}
+   * Extra DIAL payload attached to the first user message
+   * @type {MessageCustomContentDto}
    * @memberof CreateConversationDto
    */
-  attachments?: Array<AttachmentDto>;
+  custom_content?: MessageCustomContentDto;
 }
 /**
  *

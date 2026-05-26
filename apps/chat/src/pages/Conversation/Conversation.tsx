@@ -2,6 +2,7 @@ import {
   Attachment,
   Conversation,
   Message,
+  MessageCustomContent,
   MessageRole,
   type MessageRating,
 } from '@epam/ai-dial-chat-shared';
@@ -11,7 +12,6 @@ import {
   DialAlert,
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
-import type { AttachmentDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -49,7 +49,7 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
-      attachments?: AttachmentDto[],
+      custom_content?: MessageCustomContent,
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -63,6 +63,7 @@ export const ConversationPage: FC = () => {
         {
           signal: controller.signal,
           onChunk: (chunk) => {
+            console.log('Received chunk:', chunk);
             const content = chunk.choices[0]?.delta?.content ?? '';
             if (!content) return;
             setConversation((prev) => {
@@ -97,7 +98,7 @@ export const ConversationPage: FC = () => {
             setStreamError(true);
           },
         },
-        attachments,
+        custom_content,
       );
     },
     [],
@@ -138,7 +139,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
-            lastMsg.custom_content?.attachments,
+            lastMsg.custom_content,
           );
         } else {
           setConversation(result);
@@ -195,6 +196,7 @@ export const ConversationPage: FC = () => {
         userMsg.content,
         messageId,
         conversation.model.id,
+        userMsg.custom_content,
       );
     },
     [conversation, conversationId, isStreaming, startStream],
@@ -325,7 +327,7 @@ export const ConversationPage: FC = () => {
         message,
         assistantMessageId,
         conversation.model.id,
-        attachmentDtos,
+        { attachments: attachmentDtos },
       );
     },
     [conversation, conversationId, startStream],

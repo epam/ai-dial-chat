@@ -18,7 +18,10 @@ import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useModels } from '../../context/ModelsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { getStarterPopulateText } from '../../utils/starter-option';
+import {
+  getStarterPopulateText,
+  getStartersFromSchema,
+} from '../../utils/starter-option';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -35,12 +38,10 @@ const ConversationRoute: FC = () => {
   const inputRef = useRef<HTMLDivElement>(null);
   const { selectedModelConfiguration } = useModels();
 
-  const starters = useMemo<StarterOption[]>(() => {
-    const oneOf = selectedModelConfiguration?.properties?.starter?.oneOf;
-
-    if (!Array.isArray(oneOf)) return [];
-    return oneOf as StarterOption[];
-  }, [selectedModelConfiguration]);
+  const { starters, propertyKey, description } = useMemo(
+    () => getStartersFromSchema(selectedModelConfiguration),
+    [selectedModelConfiguration],
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -61,9 +62,12 @@ const ConversationRoute: FC = () => {
       setIsSending(true);
       try {
         const attachmentDtos = await attachmentsToDtos(attachments);
+        const customContent = attachmentDtos?.length
+          ? { attachments: attachmentDtos }
+          : undefined;
         const conversation = await apiCreateConversation(
           message,
-          attachmentDtos,
+          customContent,
         );
         navigate(getConversationRoute(conversation.id));
       } finally {
@@ -75,14 +79,25 @@ const ConversationRoute: FC = () => {
 
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
-      const text = getStarterPopulateText(starter);
+      // For button widgets the description is the message content;
+      // for starter widgets fall back to populateText / title.
+      const text = description ?? getStarterPopulateText(starter);
+
       if (starter['dial:widgetOptions'].submit) {
-        void handleSend(text, []);
+        const configurationValue = propertyKey
+          ? { [propertyKey]: starter.const }
+          : undefined;
+        const customContent = configurationValue
+          ? { configuration_value: configurationValue }
+          : undefined;
+        void apiCreateConversation(text, customContent).then((conversation) => {
+          navigate(getConversationRoute(conversation.id));
+        });
       } else {
         setInputMessage(text);
       }
     },
-    [handleSend],
+    [navigate, propertyKey, description],
   );
 
   return (

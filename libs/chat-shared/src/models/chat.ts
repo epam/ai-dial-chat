@@ -41,6 +41,17 @@ export enum MessageRating {
   Dislike = -1,
 }
 
+/** Extra DIAL API payload attached to a message. */
+export interface MessageCustomContent {
+  /** Files or media items associated with this message. */
+  attachments?: MessageAttachment[];
+  /**
+   * Form/button submission value sent with the user message.
+   * Key is the schema property name (e.g. `'button'`), value is the selected `const` (e.g. `{ button: 1 }`).
+   */
+  configuration_value?: Record<string, unknown>;
+}
+
 /** A single message in a conversation. */
 export interface Message {
   /** Unique message identifier. */
@@ -56,10 +67,7 @@ export interface Message {
    * Present on both user requests (uploaded files) and assistant responses
    * (generated/referenced files).
    */
-  custom_content?: {
-    /** Files or media items associated with this message. */
-    attachments?: MessageAttachment[];
-  };
+  custom_content?: MessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
 }

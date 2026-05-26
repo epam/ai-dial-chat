@@ -1,17 +1,15 @@
-import type {
-  AttachmentDto,
-  ConversationResponseDto,
-} from '@epam/chat-api-client';
+import type { MessageCustomContent } from '@epam/ai-dial-chat-shared';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,
-  attachments?: AttachmentDto[],
+  customContent?: MessageCustomContent,
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
-      ...(attachments?.length ? { attachments } : {}),
+      ...(customContent ? { custom_content: customContent } : {}),
     },
   });
 
