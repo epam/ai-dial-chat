@@ -2,8 +2,8 @@ You are running the **{{stage}}** agent on a pull request.
 
 ## Inputs
 
-- Working tree: `$GITHUB_WORKSPACE`.
-- PR diff: `git diff origin/${GITHUB_BASE_REF}...HEAD`.
+- Working tree: the current checkout (repo root).
+- PR diff: `git diff origin/{{base_ref}}...HEAD`.
 - Upstream agent outputs (when declared in `needs:`): `upstream/<agent-name>/stage-output.json`.
 
 ## Task
