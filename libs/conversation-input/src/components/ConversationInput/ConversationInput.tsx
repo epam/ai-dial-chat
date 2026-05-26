@@ -15,9 +15,9 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   colors,
   typography,
   className,
-  catalogItems,
-  selectedCatalogItemId,
-  onSelectedCatalogItemChange,
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
   modelSelectorAriaLabel,
   modelSelectorLoadingLabel,
   modelSelectorErrorLabel,
@@ -72,9 +72,9 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         placeholder={placeholder}
         colors={colors?.input}
         typography={typography?.input}
-        catalogItems={catalogItems}
-        selectedCatalogItemId={selectedCatalogItemId}
-        onSelectedCatalogItemChange={onSelectedCatalogItemChange}
+        deployments={deployments}
+        selectedDeploymentId={selectedDeploymentId}
+        onDeploymentChange={onDeploymentChange}
         modelSelectorAriaLabel={modelSelectorAriaLabel}
         modelSelectorLoadingLabel={modelSelectorLoadingLabel}
         modelSelectorErrorLabel={modelSelectorErrorLabel}

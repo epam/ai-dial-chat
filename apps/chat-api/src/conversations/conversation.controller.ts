@@ -133,7 +133,7 @@ export class ConversationController {
       query.path,
       at,
       bucket,
-      body.conversation as never,
+      body.conversation,
     );
   }
 

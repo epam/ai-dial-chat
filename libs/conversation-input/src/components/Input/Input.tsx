@@ -48,9 +48,9 @@ export const Input: FC<InputProps> = ({
   colors,
   typography,
   className,
-  catalogItems,
-  selectedCatalogItemId,
-  onSelectedCatalogItemChange,
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
   modelSelectorAriaLabel = 'Select model',
   modelSelectorLoadingLabel,
   modelSelectorErrorLabel,
@@ -96,8 +96,8 @@ export const Input: FC<InputProps> = ({
 
   const canSend = message.trim().length > 0;
   const hasModelSelected =
-    catalogItems === undefined ||
-    (selectedCatalogItemId !== null && selectedCatalogItemId !== undefined);
+    deployments === undefined ||
+    (selectedDeploymentId !== null && selectedDeploymentId !== undefined);
 
   const handleSend = () => {
     onSend?.(message, attachments);
@@ -118,9 +118,7 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  const selectedItem = catalogItems?.find(
-    (i) => i.id === selectedCatalogItemId,
-  );
+  const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
   const resolvedIconUrl = (url: string | undefined) => {
     if (!url) return undefined;
     const lower = url.toLowerCase();
@@ -144,7 +142,7 @@ export const Input: FC<InputProps> = ({
     : modelSelectorAriaLabel;
 
   const buildSelectorMenuItems = () => {
-    if (!catalogItems || catalogItems.length === 0) {
+    if (!deployments || deployments.length === 0) {
       const stateLabel =
         modelSelectorLoadingLabel ??
         modelSelectorErrorLabel ??
@@ -154,7 +152,7 @@ export const Input: FC<InputProps> = ({
       }
       return [];
     }
-    return catalogItems.map((item) => {
+    return deployments.map((item) => {
       const itemIconUrl = resolvedIconUrl(item.iconUrl);
       const icon = itemIconUrl ? (
         <img
@@ -172,7 +170,7 @@ export const Input: FC<InputProps> = ({
         key: item.id,
         label: item.displayName ?? item.id,
         icon,
-        onClick: () => onSelectedCatalogItemChange?.(item.id),
+        onClick: () => onDeploymentChange?.(item.id),
       };
     });
   };
@@ -293,7 +291,7 @@ export const Input: FC<InputProps> = ({
         </div>
         {attachments.length === 0 && textarea}
         <div className="flex flex-shrink-0 items-center gap-2">
-          {catalogItems !== undefined && (
+          {deployments !== undefined && (
             <DialDropdownIcon
               icon={selectorIcon}
               ariaLabel={selectorAriaLabel}

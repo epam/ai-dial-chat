@@ -63,7 +63,7 @@ export class ConversationService extends AppService {
         conversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation as never,
+          body: conversation,
         },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -159,7 +159,7 @@ export class ConversationService extends AppService {
         conversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation as never,
+          body: conversation,
         },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {

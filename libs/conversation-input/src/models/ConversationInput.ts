@@ -54,17 +54,17 @@ export interface ConversationInputProps {
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
-  catalogItems?: DeploymentItemDto[];
-  /** ID of the currently selected catalog item. When `null` or `undefined` and `catalogItems` is defined, the send button is disabled. */
-  selectedCatalogItemId?: string | null;
-  /** Called when the user selects a different catalog item from the dropdown. Receives the selected item's `id`. */
-  onSelectedCatalogItemChange?: (id: string) => void;
+  deployments?: DeploymentItemDto[];
+  /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
+  selectedDeploymentId?: string | null;
+  /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
+  onDeploymentChange?: (id: string) => void;
   /** Accessible label for the model selector trigger button (e.g. "Select model"). */
   modelSelectorAriaLabel?: string;
-  /** Text displayed (as a disabled menu item) while catalog items are loading. */
+  /** Text displayed (as a disabled menu item) while deployments are loading. */
   modelSelectorLoadingLabel?: string;
-  /** Text displayed (as a disabled menu item) when the catalog fetch failed. */
+  /** Text displayed (as a disabled menu item) when the deployments fetch failed. */
   modelSelectorErrorLabel?: string;
-  /** Text displayed (as a disabled menu item) when the catalog returned no items. */
+  /** Text displayed (as a disabled menu item) when the deployments list is empty. */
   modelSelectorEmptyLabel?: string;
 }

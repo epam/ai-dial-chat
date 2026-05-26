@@ -19,7 +19,6 @@ import {
   ChatI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { useModels } from '../../context/ModelsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getStarterPopulateText } from '../../utils/starter-option';
@@ -37,16 +36,20 @@ const ConversationRoute: FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const inputRef = useRef<HTMLDivElement>(null);
-  const { items, selectedItemId, setSelectedItemId, isLoading, error } =
-    useDeployments();
-  const { selectedModelConfiguration } = useModels();
+  const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+  } = useDeployments();
 
   const starters = useMemo<StarterOption[]>(() => {
-    const oneOf = selectedModelConfiguration?.properties?.starter?.oneOf;
-
+    const oneOf = selectedDeploymentConfiguration?.properties?.starter?.oneOf;
     if (!Array.isArray(oneOf)) return [];
     return oneOf as StarterOption[];
-  }, [selectedModelConfiguration]);
+  }, [selectedDeploymentConfiguration]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -106,9 +109,9 @@ const ConversationRoute: FC = () => {
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
-            catalogItems={items}
-            selectedCatalogItemId={selectedItemId}
-            onSelectedCatalogItemChange={setSelectedItemId}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
             modelSelectorAriaLabel={t(CatalogI18nKeys.SelectorAriaLabel)}
             modelSelectorLoadingLabel={
               isLoading ? t(CatalogI18nKeys.SelectorLoading) : undefined

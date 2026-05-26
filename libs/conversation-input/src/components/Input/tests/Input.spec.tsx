@@ -229,12 +229,12 @@ const mockItems = [
 ];
 
 describe('Input — model selector', () => {
-  it('renders DialDropdownIcon when catalogItems is non-empty', () => {
+  it('renders DialDropdownIcon when deployments is non-empty', () => {
     render(
       <Input
-        catalogItems={mockItems}
-        selectedCatalogItemId="gpt-4o"
-        onSelectedCatalogItemChange={vi.fn()}
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
       />,
     );
     expect(screen.getByLabelText(/Select model/)).toBeTruthy();
@@ -243,34 +243,34 @@ describe('Input — model selector', () => {
   it('trigger aria-label includes selected item displayName', () => {
     render(
       <Input
-        catalogItems={mockItems}
-        selectedCatalogItemId="gpt-4o"
-        onSelectedCatalogItemChange={vi.fn()}
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
         modelSelectorAriaLabel="Model"
       />,
     );
     expect(screen.getByLabelText('Model: GPT-4o')).toBeTruthy();
   });
 
-  it('clicking a menu item calls onSelectedCatalogItemChange with the item id', () => {
-    const onSelectedCatalogItemChange = vi.fn();
+  it('clicking a menu item calls onDeploymentChange with the item id', () => {
+    const onDeploymentChange = vi.fn();
     render(
       <Input
-        catalogItems={mockItems}
-        selectedCatalogItemId="gpt-4o"
-        onSelectedCatalogItemChange={onSelectedCatalogItemChange}
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={onDeploymentChange}
       />,
     );
     fireEvent.click(screen.getByText('My App'));
-    expect(onSelectedCatalogItemChange).toHaveBeenCalledWith('my-app');
+    expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });
 
-  it('shows modelSelectorLoadingLabel as disabled item when catalogItems is empty', () => {
+  it('shows modelSelectorLoadingLabel as disabled item when deployments is empty', () => {
     render(
       <Input
-        catalogItems={[]}
-        selectedCatalogItemId={null}
-        onSelectedCatalogItemChange={vi.fn()}
+        deployments={[]}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
         modelSelectorLoadingLabel="Loading models…"
       />,
     );
@@ -279,12 +279,12 @@ describe('Input — model selector', () => {
     expect((loadingItem as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('shows modelSelectorErrorLabel as disabled item when catalogItems is empty', () => {
+  it('shows modelSelectorErrorLabel as disabled item when deployments is empty', () => {
     render(
       <Input
-        catalogItems={[]}
-        selectedCatalogItemId={null}
-        onSelectedCatalogItemChange={vi.fn()}
+        deployments={[]}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
         modelSelectorErrorLabel="Failed to load models"
       />,
     );
@@ -293,12 +293,12 @@ describe('Input — model selector', () => {
     expect((errorItem as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('disables send button when catalogItems is defined and selectedCatalogItemId is null', () => {
+  it('disables send button when deployments is defined and selectedDeploymentId is null', () => {
     const { container } = render(
       <Input
-        catalogItems={mockItems}
-        selectedCatalogItemId={null}
-        onSelectedCatalogItemChange={vi.fn()}
+        deployments={mockItems}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
       />,
     );
     const textarea = container.querySelector('textarea');
@@ -311,14 +311,14 @@ describe('Input — model selector', () => {
     expect(sendButton.disabled).toBe(true);
   });
 
-  it('does not fire onSend on Enter when selectedCatalogItemId is null', () => {
+  it('does not fire onSend on Enter when selectedDeploymentId is null', () => {
     const handleSend = vi.fn();
     const { container } = render(
       <Input
         onSend={handleSend}
-        catalogItems={mockItems}
-        selectedCatalogItemId={null}
-        onSelectedCatalogItemChange={vi.fn()}
+        deployments={mockItems}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
       />,
     );
     const textarea = container.querySelector('textarea');
@@ -329,7 +329,7 @@ describe('Input — model selector', () => {
     expect(handleSend).not.toHaveBeenCalled();
   });
 
-  it('does not render selector when catalogItems is undefined', () => {
+  it('does not render selector when deployments is undefined', () => {
     render(<Input />);
     expect(screen.queryByLabelText(/Select model/)).toBeNull();
   });

@@ -216,9 +216,9 @@ const ConversationView: FC<Props> = ({
             isStreaming={isAssistantTyping}
             onAttachmentsChange={onAttachmentsChange}
             placeholder={placeholder}
-            catalogItems={items}
-            selectedCatalogItemId={selectedItemId}
-            onSelectedCatalogItemChange={setSelectedItemId}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
             modelSelectorAriaLabel={t(CatalogI18nKeys.SelectorAriaLabel)}
             modelSelectorLoadingLabel={
               isLoading ? t(CatalogI18nKeys.SelectorLoading) : undefined

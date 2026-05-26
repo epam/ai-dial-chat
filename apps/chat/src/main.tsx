@@ -6,7 +6,6 @@ import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
-import { ModelsProvider } from './context/ModelsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
 import './styles.scss';
@@ -22,23 +21,21 @@ root.render(
     <BrowserRouter>
       <UserProvider>
         <ThemeProvider>
-          <ModelsProvider>
-            <DeploymentsProvider>
-              <Suspense fallback={null}>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route
-                    path="*"
-                    element={
-                      <RequireAuth>
-                        <App />
-                      </RequireAuth>
-                    }
-                  />
-                </Routes>
-              </Suspense>
-            </DeploymentsProvider>
-          </ModelsProvider>
+          <DeploymentsProvider>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="*"
+                  element={
+                    <RequireAuth>
+                      <App />
+                    </RequireAuth>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </DeploymentsProvider>
         </ThemeProvider>
       </UserProvider>
     </BrowserRouter>

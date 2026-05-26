@@ -1,3 +1,4 @@
+import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import {
   ListDeploymentsInterfaceTypeEnum,
   type DeploymentItemDto,
@@ -10,6 +11,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 
 export interface DeploymentsContextType {
@@ -19,6 +21,8 @@ export interface DeploymentsContextType {
   selectedItemId: string | null;
   /** Updates the selected deployment. */
   setSelectedItemId: (id: string) => void;
+  /** JSON Schema configuration for the currently selected deployment, or null if none selected or unsupported. */
+  selectedDeploymentConfiguration: DeploymentConfigurationSchema | null;
   /** True while deployments are being fetched. */
   isLoading: boolean;
   /** Non-null if the fetch failed. */
@@ -32,6 +36,8 @@ export const DeploymentsContext = createContext<
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<DeploymentItemDto[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedDeploymentConfiguration, setSelectedDeploymentConfiguration] =
+    useState<DeploymentConfigurationSchema | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -74,6 +80,34 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!selectedItemId) {
+      setSelectedDeploymentConfiguration(null);
+      return;
+    }
+
+    const signal = { cancelled: false };
+
+    const loadConfiguration = async () => {
+      try {
+        const configuration = await getDeploymentConfiguration(selectedItemId);
+        if (!signal.cancelled) {
+          setSelectedDeploymentConfiguration(configuration);
+        }
+      } catch {
+        if (!signal.cancelled) {
+          setSelectedDeploymentConfiguration(null);
+        }
+      }
+    };
+
+    loadConfiguration();
+
+    return () => {
+      signal.cancelled = true;
+    };
+  }, [selectedItemId]);
+
   return (
     <DeploymentsContext.Provider
       value={useMemo(
@@ -81,10 +115,17 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           items,
           selectedItemId,
           setSelectedItemId,
+          selectedDeploymentConfiguration,
           isLoading,
           error,
         }),
-        [items, selectedItemId, isLoading, error],
+        [
+          items,
+          selectedItemId,
+          selectedDeploymentConfiguration,
+          isLoading,
+          error,
+        ],
       )}
     >
       {children}
