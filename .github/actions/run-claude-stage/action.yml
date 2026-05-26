@@ -101,13 +101,19 @@ runs:
         echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
         PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
 
-        # 3) Build claude_args. Allowed tools, model, json-schema, and the
-        # verbose flag all go through the CLI via claude_args; the action
-        # exposes none as direct inputs. `--verbose` makes the CLI emit
-        # tool-use events as they happen so the GHA log streams live
-        # instead of buffering until the run completes — essential for
-        # debugging on the sandbox base.
-        ARGS="--max-turns ${MAX_TURNS} --json-schema=${SCHEMA_PATH} --verbose"
+        # 3) Build claude_args. Allowed tools, model, and the verbose flag
+        # all go through the CLI via claude_args; the action exposes none
+        # as direct inputs. `--verbose` makes the CLI emit tool-use events
+        # as they happen so the GHA log streams live instead of buffering
+        # until the run completes.
+        #
+        # DIAGNOSTIC: --json-schema is currently DROPPED to test whether the
+        # structured_output path is the source of the hang we've seen with
+        # v1.0.133. Without --json-schema, the action will not populate the
+        # structured_output output, which causes the "Materialize structured
+        # output" step below to fail loudly — that's expected during this
+        # diagnostic. The Run Claude step's log is what we read.
+        ARGS="--max-turns ${MAX_TURNS} --verbose"
         if [ -n "${MODEL}" ]; then
           ARGS="${ARGS} --model ${MODEL}"
         fi
@@ -157,7 +163,7 @@ runs:
 
     - name: Run Claude
       id: claude
-      uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
+      uses: anthropics/claude-code-action@0d2971c794049856e777f4e8bb5a81623ec632d3 # v1.0.100 — temporarily older than v1.0.133 to test for recent regression
       with:
         anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
         # Pass the runner's GITHUB_TOKEN directly so the action skips its
