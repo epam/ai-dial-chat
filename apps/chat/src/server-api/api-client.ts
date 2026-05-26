@@ -1,7 +1,6 @@
 import {
   ApplicationsApi,
   AuthApi,
-  CatalogApi,
   Configuration,
   ConversationsApi,
   DeploymentsApi,
@@ -59,9 +58,8 @@ export const createApiConfiguration = (): Configuration =>
 const config = createApiConfiguration();
 
 export const applicationsApi = new ApplicationsApi(config);
-export const catalogApi = new CatalogApi(config);
-export const modelsApi = new ModelsApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
+export const modelsApi = new ModelsApi(config);
 export const conversationsApi = new ConversationsApi(config);
 export const authApi = new AuthApi(config);
 export const rateApi = new RateApi(config);

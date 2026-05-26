@@ -51,7 +51,8 @@ export class ConversationController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid request body — firstMessage missing or out of range',
+    description:
+      'Invalid request body — firstMessage or catalogItemId missing or out of range',
   })
   @ApiResponse({
     status: 500,
@@ -63,6 +64,7 @@ export class ConversationController {
       dto.firstMessage,
       at,
       bucket,
+      dto.catalogItemId,
       dto.attachments,
     );
   }

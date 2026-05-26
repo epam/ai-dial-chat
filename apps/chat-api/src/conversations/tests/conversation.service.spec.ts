@@ -34,6 +34,7 @@ describe('ConversationService', () => {
         'Hello',
         'test-token',
         'test-bucket',
+        'gpt-4o',
       );
       expect(result.id).toMatch(/.*__.*/); // id format: folderId/path
     });
@@ -43,6 +44,7 @@ describe('ConversationService', () => {
         'Hello world',
         'test-token',
         'test-bucket',
+        'gpt-4o',
       );
       expect(result.messages).toHaveLength(1);
       expect(result.messages[0].role).toBe('user');
@@ -54,6 +56,7 @@ describe('ConversationService', () => {
         'Hello',
         'test-token',
         'test-bucket',
+        'gpt-4o',
       );
       expect(result.messages[0].id).toMatch(UUID_REGEX);
     });
@@ -63,6 +66,7 @@ describe('ConversationService', () => {
         'Hello',
         'test-token',
         'test-bucket',
+        'gpt-4o',
       );
       expect(result.messages[0].timestamp).toMatch(ISO_REGEX);
     });
@@ -72,13 +76,26 @@ describe('ConversationService', () => {
         'First',
         'test-token',
         'test-bucket',
+        'gpt-4o',
       );
       const b = await service.createConversation(
         'Second',
         'test-token',
         'test-bucket',
+        'gpt-4o',
       );
       expect(a.id).not.toBe(b.id);
+    });
+
+    it('uses catalogItemId for model.id and assistantModelId', async () => {
+      const result = await service.createConversation(
+        'Hello',
+        'test-token',
+        'test-bucket',
+        'my-catalog-item',
+      );
+      expect(result.model.id).toBe('my-catalog-item');
+      expect(result.assistantModelId).toBe('my-catalog-item');
     });
   });
 });

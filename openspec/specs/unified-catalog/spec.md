@@ -154,47 +154,50 @@ The generated `@epam/chat-api-client` request type SHALL be used directly as the
 
 ---
 
-### Requirement: CatalogContext owns unified deployment selection
-`apps/chat/src/context/CatalogContext.tsx` SHALL provide:
+### Requirement: DeploymentsContext owns unified deployment selection
+`apps/chat/src/context/DeploymentsContext.tsx` (replaces `CatalogContext.tsx`) SHALL provide:
 
-- `items: CatalogItemDto[]` — full sorted catalog from `GET /api/v1/catalog`
-- `selectedItemId: string | null` — currently selected model or application id
+- `items: DeploymentItemDto[]` — full deployment list from `GET /api/v1/deployments` (replaces `CatalogItemDto[]` from `GET /api/v1/catalog`)
+- `selectedItemId: string | null` — currently selected deployment id
 - `setSelectedItemId: (id: string) => void`
 - `isLoading: boolean`
 - `error: Error | null`
 
 The provider SHALL:
-- Fetch catalog items on mount using `getCatalogItems()` from `server-api/catalog.ts`.
+- Fetch deployments on mount using `getDeployments()` from `server-api/deployments.api.ts` (replaces `getCatalogItems()` from `server-api/catalog.ts`).
 - Use a `cancelled` flag inside `useEffect` to guard against setState-on-unmount.
 - Use `useMemo` to memoize the context value.
 - Default `selectedItemId` to the first item's `id` on successful load.
-- Export a `useCatalog()` hook that throws a clear error when called outside the provider.
+- If the deployments reload and the previously selected `id` is no longer present in `items`, reset `selectedItemId` to `items[0]?.id ?? null`.
+- Export a `useDeployments()` hook (replaces `useCatalog()`) that throws a clear error when called outside the provider.
 
-The state management pattern SHALL follow `ModelsContext.tsx` as the reference implementation.
+The conversation input model/application selection component in `apps/chat` SHALL consume `useDeployments()` to supply `catalogItems`, `selectedCatalogItemId`, and `onSelectedCatalogItemChange` props to `ConversationInput`. `setSelectedItemId` from `DeploymentsContext` is the handler for `onSelectedCatalogItemChange`.
 
-The conversation-flow model/application selection component SHALL consume `useCatalog` instead of `useModels`.
+`ModelsContext` and `useModels` SHALL remain unchanged. `CatalogContext.tsx` SHALL be deleted.
 
-`ModelsContext` and `useModels` SHALL remain unchanged.
-
-#### Scenario: CatalogProvider loads items on mount
-- **WHEN** `CatalogProvider` mounts
-- **THEN** it calls `getCatalogItems()`, sets `isLoading: true` during fetch, sets `items` on success, sets `error` on failure, and sets `isLoading: false` when done
+#### Scenario: DeploymentsProvider loads items on mount
+- **WHEN** `DeploymentsProvider` mounts
+- **THEN** it calls `getDeployments()`, sets `isLoading: true` during fetch, sets `items` on success, sets `error` on failure, and sets `isLoading: false` when done
 
 #### Scenario: selectedItemId defaults to first item
-- **WHEN** the catalog loads successfully with one or more items
+- **WHEN** the deployments load successfully with one or more items
 - **THEN** `selectedItemId` is set to `items[0].id`
 
-#### Scenario: useCatalog throws outside provider
-- **WHEN** `useCatalog()` is called outside a `CatalogProvider`
-- **THEN** it throws `Error('useCatalog must be used within a CatalogProvider')`
+#### Scenario: useDeployments throws outside provider
+- **WHEN** `useDeployments()` is called outside a `DeploymentsProvider`
+- **THEN** it throws `Error('useDeployments must be used within a DeploymentsProvider')`
 
 #### Scenario: Unmount before fetch completes — no state update
-- **WHEN** `CatalogProvider` unmounts before `getCatalogItems()` resolves
+- **WHEN** `DeploymentsProvider` unmounts before `getDeployments()` resolves
 - **THEN** the `cancelled` flag prevents any `setState` calls
 
-#### Scenario: Conversation model selection uses CatalogContext
-- **WHEN** the user opens the conversation model/application selector
-- **THEN** the displayed items come from `useCatalog().items`, not `useModels().models`
+#### Scenario: Conversation model selection uses DeploymentsContext
+- **WHEN** the user opens the conversation model/application/toolset selector
+- **THEN** the displayed items come from `useDeployments().items`, not from `useModels().models`
+
+#### Scenario: onSelectedCatalogItemChange updates DeploymentsContext
+- **WHEN** the user selects a deployment with `id: "dep-2"` via the `DialDropdownIcon` menu
+- **THEN** `useDeployments().selectedItemId === "dep-2"` in `DeploymentsContext`
 
 ---
 

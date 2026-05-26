@@ -1,152 +1,163 @@
 import {
   BadGatewayException,
-  ForbiddenException,
-  NotFoundException,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentsService } from '../deployments.service';
+import type { DeploymentItemDto } from '../dto/deployment-item.dto';
 
-const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+const mockModel = {
+  id: 'gpt-4o',
+  object: 'model',
+  display_name: 'GPT-4o',
+  interfaces: ['chat'],
+};
+const mockApplication = {
+  id: 'my-app',
+  object: 'application',
+  display_name: 'My App',
+  interfaces: ['custom_ui'],
+};
+const mockToolset = {
+  id: 'search-tool',
+  toolset: 'search-tool',
+  display_name: 'Search Tool',
+  interfaces: ['mcp'],
+};
+const mockNoId = { object: 'model', display_name: 'No ID' };
+const mockNoDisplayName = { id: 'no-name', object: 'model' };
 
-const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
+  const store = new Map<string, unknown>();
+  if (overrides.cached) {
+    store.set('deployments:list:user1', overrides.cached);
+  }
 
-function makeService() {
+  const cacheManager = {
+    get: vi.fn((key: string) => Promise.resolve(store.get(key))),
+    set: vi.fn((key: string, value: unknown) => {
+      store.set(key, value);
+      return Promise.resolve();
+    }),
+  };
+
+  const sdkClient = {
+    getDeploymentsByInterfaceType: vi.fn().mockResolvedValue({
+      error: false,
+      response: { status: 200 },
+      data: {
+        deployments: [mockModel, mockApplication, mockToolset],
+      },
+    }),
+  };
+
   const configService = {
     get: vi.fn().mockReturnValue('http://dial-core'),
-  } as unknown as ConfigService<EnvironmentVariables>;
-  return new DeploymentsService(configService);
+  };
+
+  const service = new DeploymentsService(
+    configService as never,
+    cacheManager as never,
+  );
+  (service as unknown as { client: typeof sdkClient }).client = sdkClient;
+
+  return { service, sdkClient, cacheManager };
 }
 
 describe('DeploymentsService', () => {
-  describe('getDeployments', () => {
-    it('returns deployment list on success', async () => {
-      const service = makeService();
-      const deployments = [{ name: 'gpt-4' }];
-      vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
-        okResponse(deployments),
-      );
-
-      const result = await service.getDeployments('token');
-      expect(result).toEqual(deployments);
-    });
-
-    it('forwards Authorization header', async () => {
-      const service = makeService();
-      const spy = vi
-        .spyOn(service['client'], 'getDeployments')
-        .mockResolvedValue(okResponse([]));
-
-      await service.getDeployments('my-token');
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer my-token',
-          }),
-        }),
-      );
-    });
-
-    it('throws UnauthorizedException on upstream 401', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
-        errResponse(401),
-      );
-      await expect(service.getDeployments('token')).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('throws ForbiddenException on upstream 403', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
-        errResponse(403),
-      );
-      await expect(service.getDeployments('token')).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('throws BadGatewayException on upstream 5xx', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployments').mockResolvedValue(
-        errResponse(500),
-      );
-      await expect(service.getDeployments('token')).rejects.toThrow(
-        BadGatewayException,
-      );
-    });
-
-    it('throws ServiceUnavailableException on network error', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployments').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
-      await expect(service.getDeployments('token')).rejects.toThrow(
-        ServiceUnavailableException,
-      );
-    });
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  describe('getDeployment', () => {
-    it('returns a single deployment on success', async () => {
-      const service = makeService();
-      const deployment = { name: 'gpt-4' };
-      const spy = vi
-        .spyOn(service['client'], 'getDeployment')
-        .mockResolvedValue(okResponse(deployment));
-
-      const result = await service.getDeployment('gpt-4', 'token');
-      expect(result).toEqual(deployment);
-      expect(spy).toHaveBeenCalledWith(
-        'gpt-4',
-        expect.objectContaining({
-          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
-        }),
+  describe('listDeployments', () => {
+    it('maps model, application, and toolset correctly', async () => {
+      const { service } = makeService();
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments).toHaveLength(3);
+      expect(result.deployments.find((d) => d.id === 'gpt-4o')?.type).toBe(
+        'model',
+      );
+      expect(result.deployments.find((d) => d.id === 'my-app')?.type).toBe(
+        'application',
+      );
+      expect(result.deployments.find((d) => d.id === 'search-tool')?.type).toBe(
+        'toolset',
       );
     });
 
-    it('throws NotFoundException on upstream 404', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployment').mockResolvedValue(
-        errResponse(404),
-      );
-      await expect(service.getDeployment('unknown', 'token')).rejects.toThrow(
-        NotFoundException,
-      );
+    it('skips items without id', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: { deployments: [mockModel, mockNoId] },
+      });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments).toHaveLength(1);
+      expect(result.deployments[0].id).toBe('gpt-4o');
     });
 
-    it('throws UnauthorizedException on upstream 401', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployment').mockResolvedValue(
-        errResponse(401),
-      );
-      await expect(service.getDeployment('gpt-4', 'token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+    it('falls back displayName to id when display_name is absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: { deployments: [mockNoDisplayName] },
+      });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments[0].displayName).toBe('no-name');
     });
 
-    it('throws BadGatewayException on upstream 5xx', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployment').mockResolvedValue(
-        errResponse(502),
-      );
-      await expect(service.getDeployment('gpt-4', 'token')).rejects.toThrow(
+    it('returns cached value without calling SDK on cache hit', async () => {
+      const cached: DeploymentItemDto[] = [
+        { id: 'cached', displayName: 'Cached', type: 'model' },
+      ];
+      const { service, sdkClient } = makeService({ cached });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments).toEqual(cached);
+      expect(sdkClient.getDeploymentsByInterfaceType).not.toHaveBeenCalled();
+    });
+
+    it('applies interface_type filter in-process after cache hit', async () => {
+      const cached: DeploymentItemDto[] = [
+        {
+          id: 'chat-model',
+          displayName: 'Chat',
+          type: 'model',
+          interfaces: ['chat'],
+        },
+        {
+          id: 'embed-model',
+          displayName: 'Embed',
+          type: 'model',
+          interfaces: ['embeddings'],
+        },
+        { id: 'no-iface', displayName: 'None', type: 'model' },
+      ];
+      const { service } = makeService({ cached });
+      const result = await service.listDeployments('user1', 'token', ['chat']);
+      expect(result.deployments).toHaveLength(1);
+      expect(result.deployments[0].id).toBe('chat-model');
+    });
+
+    it('throws BadGatewayException when DIAL Core returns non-2xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: true,
+        response: { status: 502 },
+        data: undefined,
+      });
+      await expect(service.listDeployments('user1', 'token')).rejects.toThrow(
         BadGatewayException,
       );
     });
 
-    it('throws ServiceUnavailableException on network error', async () => {
-      const service = makeService();
-      vi.spyOn(service['client'], 'getDeployment').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
-      await expect(service.getDeployment('gpt-4', 'token')).rejects.toThrow(
+    it('throws ServiceUnavailableException when DIAL Core is unreachable', async () => {
+      const { service, sdkClient } = makeService();
+      const abortError = new Error('fetch failed');
+      abortError.name = 'AbortError';
+      sdkClient.getDeploymentsByInterfaceType.mockRejectedValue(abortError);
+      await expect(service.listDeployments('user1', 'token')).rejects.toThrow(
         ServiceUnavailableException,
       );
     });

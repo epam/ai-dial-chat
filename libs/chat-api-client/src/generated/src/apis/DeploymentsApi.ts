@@ -13,10 +13,10 @@
  */
 
 import * as runtime from '../runtime';
-import type { DialDeploymentDto } from '../models/index';
+import type { DeploymentsResponseDto } from '../models/index';
 
-export interface GetDeploymentRequest {
-  deployment: string;
+export interface ListDeploymentsRequest {
+  interfaceType?: Array<ListDeploymentsInterfaceTypeEnum>;
 }
 
 /**
@@ -24,30 +24,21 @@ export interface GetDeploymentRequest {
  */
 export class DeploymentsApi extends runtime.BaseAPI {
   /**
-   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
-   * Get a single deployment by name
-   * @deprecated
+   * List deployments by interface type
    */
-  async getDeploymentRaw(
-    requestParameters: GetDeploymentRequest,
+  async listDeploymentsRaw(
+    requestParameters: ListDeploymentsRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<DialDeploymentDto>> {
-    if (requestParameters['deployment'] == null) {
-      throw new runtime.RequiredError(
-        'deployment',
-        'Required parameter "deployment" was null or undefined when calling getDeployment().',
-      );
-    }
-
+  ): Promise<runtime.ApiResponse<DeploymentsResponseDto>> {
     const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['interfaceType'] != null) {
+      queryParameters['interface_type'] = requestParameters['interfaceType'];
+    }
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/deployments/{deployment}`;
-    urlPath = urlPath.replace(
-      `{${'deployment'}}`,
-      encodeURIComponent(String(requestParameters['deployment'])),
-    );
+    let urlPath = `/api/v1/deployments`;
 
     const response = await this.request(
       {
@@ -59,61 +50,33 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse<DialDeploymentDto>(response);
+    return new runtime.JSONApiResponse<DeploymentsResponseDto>(response);
   }
 
   /**
-   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
-   * Get a single deployment by name
-   * @deprecated
+   * List deployments by interface type
    */
-  async getDeployment(
-    requestParameters: GetDeploymentRequest,
+  async listDeployments(
+    requestParameters: ListDeploymentsRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<DialDeploymentDto> {
-    const response = await this.getDeploymentRaw(
+  ): Promise<DeploymentsResponseDto> {
+    const response = await this.listDeploymentsRaw(
       requestParameters,
       initOverrides,
     );
     return await response.value();
   }
-
-  /**
-   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
-   * List all available deployments
-   * @deprecated
-   */
-  async getDeploymentsRaw(
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Array<DialDeploymentDto>>> {
-    const queryParameters: runtime.HTTPQuery = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/deployments`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse<Array<DialDeploymentDto>>(response);
-  }
-
-  /**
-   * Deprecated — use GET /api/v1/catalog instead. This endpoint is retained for backward compatibility only.
-   * List all available deployments
-   * @deprecated
-   */
-  async getDeployments(
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Array<DialDeploymentDto>> {
-    const response = await this.getDeploymentsRaw(initOverrides);
-    return await response.value();
-  }
 }
+
+/**
+ * @export
+ */
+export const ListDeploymentsInterfaceTypeEnum = {
+  Chat: 'chat',
+  Embeddings: 'embeddings',
+  Mcp: 'mcp',
+  CustomUi: 'custom_ui',
+  All: 'all',
+} as const;
+export type ListDeploymentsInterfaceTypeEnum =
+  (typeof ListDeploymentsInterfaceTypeEnum)[keyof typeof ListDeploymentsInterfaceTypeEnum];

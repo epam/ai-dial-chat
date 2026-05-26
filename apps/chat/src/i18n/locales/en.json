@@ -21,6 +21,12 @@
     "type": {
       "model": "Model",
       "application": "Application"
+    },
+    "selector": {
+      "ariaLabel": "Select model",
+      "loading": "Loading models…",
+      "error": "Failed to load models",
+      "empty": "No models available"
     }
   },
   "actions": {

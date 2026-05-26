@@ -12,7 +12,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys } from '../../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ChatI18nKeys,
+} from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 
@@ -28,6 +32,8 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
+  const { items, selectedItemId, setSelectedItemId, isLoading, error } =
+    useDeployments();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,12 +50,13 @@ const ConversationRoute: FC = () => {
 
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
-      if (isSending) return;
+      if (isSending || !selectedItemId) return;
       setIsSending(true);
       try {
         const attachmentDtos = await attachmentsToDtos(attachments);
         const conversation = await apiCreateConversation(
           message,
+          selectedItemId,
           attachmentDtos,
         );
         navigate(getConversationRoute(conversation.id));
@@ -57,7 +64,7 @@ const ConversationRoute: FC = () => {
         setIsSending(false);
       }
     },
-    [navigate, isSending],
+    [navigate, isSending, selectedItemId],
   );
 
   return (
@@ -73,6 +80,21 @@ const ConversationRoute: FC = () => {
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
+            catalogItems={items}
+            selectedCatalogItemId={selectedItemId}
+            onSelectedCatalogItemChange={setSelectedItemId}
+            modelSelectorAriaLabel={t(CatalogI18nKeys.SelectorAriaLabel)}
+            modelSelectorLoadingLabel={
+              isLoading ? t(CatalogI18nKeys.SelectorLoading) : undefined
+            }
+            modelSelectorErrorLabel={
+              error ? t(CatalogI18nKeys.SelectorError) : undefined
+            }
+            modelSelectorEmptyLabel={
+              !isLoading && !error && items.length === 0
+                ? t(CatalogI18nKeys.SelectorEmpty)
+                : undefined
+            }
           />
         </div>
       </Suspense>

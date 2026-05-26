@@ -6,10 +6,17 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
+  DIAL_ICON_SIZE,
   DialDropdown,
+  DialDropdownIcon,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import {
+  IconApps,
+  IconPaperclip,
+  IconPlus,
+  IconRobot,
+} from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
   CSSProperties,
@@ -41,6 +48,13 @@ export const Input: FC<InputProps> = ({
   colors,
   typography,
   className,
+  catalogItems,
+  selectedCatalogItemId,
+  onSelectedCatalogItemChange,
+  modelSelectorAriaLabel = 'Select model',
+  modelSelectorLoadingLabel,
+  modelSelectorErrorLabel,
+  modelSelectorEmptyLabel,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-bg': colors.background }),
@@ -75,6 +89,9 @@ export const Input: FC<InputProps> = ({
   }, []);
 
   const canSend = message.trim().length > 0;
+  const hasModelSelected =
+    catalogItems === undefined ||
+    (selectedCatalogItemId !== null && selectedCatalogItemId !== undefined);
 
   const handleSend = () => {
     onSend?.(message, attachments);
@@ -89,10 +106,69 @@ export const Input: FC<InputProps> = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isStreaming && canSend) {
+      if (!isStreaming && canSend && hasModelSelected) {
         handleSend();
       }
     }
+  };
+
+  const selectedItem = catalogItems?.find(
+    (i) => i.id === selectedCatalogItemId,
+  );
+  const resolvedIconUrl = (url: string | undefined) => {
+    if (!url) return undefined;
+    const lower = url.toLowerCase();
+    return lower.startsWith('/') ||
+      lower.startsWith('http://') ||
+      lower.startsWith('https://') ||
+      lower.startsWith('//') ||
+      lower.startsWith('data:')
+      ? url
+      : undefined;
+  };
+  const selectedIconUrl = resolvedIconUrl(selectedItem?.iconUrl);
+  const selectorIcon = selectedIconUrl ? (
+    <img src={selectedIconUrl} alt="" width={18} height={18} />
+  ) : (
+    <IconRobot size={18} aria-hidden />
+  );
+  const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
+  const selectorAriaLabel = selectedLabel
+    ? `${modelSelectorAriaLabel}: ${selectedLabel}`
+    : modelSelectorAriaLabel;
+
+  const buildSelectorMenuItems = () => {
+    if (!catalogItems || catalogItems.length === 0) {
+      const stateLabel =
+        modelSelectorLoadingLabel ??
+        modelSelectorErrorLabel ??
+        modelSelectorEmptyLabel;
+      if (stateLabel) {
+        return [{ key: '__state', label: stateLabel, disabled: true }];
+      }
+      return [];
+    }
+    return catalogItems.map((item) => {
+      const itemIconUrl = resolvedIconUrl(item.iconUrl);
+      const icon = itemIconUrl ? (
+        <img
+          src={itemIconUrl}
+          alt=""
+          width={DIAL_ICON_SIZE.SM}
+          height={DIAL_ICON_SIZE.SM}
+        />
+      ) : item.type === 'application' ? (
+        <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
+      ) : (
+        <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
+      );
+      return {
+        key: item.id,
+        label: item.displayName ?? item.id,
+        icon,
+        onClick: () => onSelectedCatalogItemChange?.(item.id),
+      };
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,11 +286,25 @@ export const Input: FC<InputProps> = ({
           </DialDropdown>
         </div>
         {attachments.length === 0 && textarea}
-        {isStreaming ? (
-          <StopButton onStop={onStop} />
-        ) : (
-          canSend && <SendButton onSend={handleSend} />
-        )}
+        <div className="flex flex-shrink-0 items-center gap-2">
+          {catalogItems !== undefined && (
+            <DialDropdownIcon
+              icon={selectorIcon}
+              ariaLabel={selectorAriaLabel}
+              menu={{ items: buildSelectorMenuItems() }}
+              buttonClassName={
+                isStreaming ? 'pointer-events-none opacity-50' : undefined
+              }
+            />
+          )}
+          {isStreaming ? (
+            <StopButton onStop={onStop} />
+          ) : (
+            canSend && (
+              <SendButton onSend={handleSend} disabled={!hasModelSelected} />
+            )
+          )}
+        </div>
       </div>
     </div>
   );

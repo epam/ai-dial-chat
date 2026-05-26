@@ -1,6 +1,64 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
+
+type MenuItems = Array<{
+  key: string;
+  label: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}>;
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
+    DialDropdown: ({
+      children,
+      menu,
+    }: {
+      children: React.ReactNode;
+      menu: { items?: MenuItems };
+    }) => (
+      <div>
+        {children}
+        {menu.items?.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.onClick}
+            disabled={item.disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    ),
+    DialDropdownIcon: ({
+      ariaLabel,
+      menu,
+    }: {
+      ariaLabel: string;
+      icon: React.ReactNode;
+      menu: { items?: MenuItems };
+    }) => (
+      <div>
+        <button type="button" aria-label={ariaLabel} />
+        {menu.items?.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.onClick}
+            disabled={item.disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    ),
+  };
+});
 
 describe('Input', () => {
   it('should hide send button when textarea is empty', () => {
@@ -162,5 +220,117 @@ describe('Input', () => {
     expect(onAttachmentsChange).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
+  });
+});
+
+const mockItems = [
+  { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' as const },
+  { id: 'my-app', displayName: 'My App', type: 'application' as const },
+];
+
+describe('Input — model selector', () => {
+  it('renders DialDropdownIcon when catalogItems is non-empty', () => {
+    render(
+      <Input
+        catalogItems={mockItems}
+        selectedCatalogItemId="gpt-4o"
+        onSelectedCatalogItemChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText(/Select model/)).toBeTruthy();
+  });
+
+  it('trigger aria-label includes selected item displayName', () => {
+    render(
+      <Input
+        catalogItems={mockItems}
+        selectedCatalogItemId="gpt-4o"
+        onSelectedCatalogItemChange={vi.fn()}
+        modelSelectorAriaLabel="Model"
+      />,
+    );
+    expect(screen.getByLabelText('Model: GPT-4o')).toBeTruthy();
+  });
+
+  it('clicking a menu item calls onSelectedCatalogItemChange with the item id', () => {
+    const onSelectedCatalogItemChange = vi.fn();
+    render(
+      <Input
+        catalogItems={mockItems}
+        selectedCatalogItemId="gpt-4o"
+        onSelectedCatalogItemChange={onSelectedCatalogItemChange}
+      />,
+    );
+    fireEvent.click(screen.getByText('My App'));
+    expect(onSelectedCatalogItemChange).toHaveBeenCalledWith('my-app');
+  });
+
+  it('shows modelSelectorLoadingLabel as disabled item when catalogItems is empty', () => {
+    render(
+      <Input
+        catalogItems={[]}
+        selectedCatalogItemId={null}
+        onSelectedCatalogItemChange={vi.fn()}
+        modelSelectorLoadingLabel="Loading models…"
+      />,
+    );
+    const loadingItem = screen.getByText('Loading models…');
+    expect(loadingItem).toBeTruthy();
+    expect((loadingItem as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('shows modelSelectorErrorLabel as disabled item when catalogItems is empty', () => {
+    render(
+      <Input
+        catalogItems={[]}
+        selectedCatalogItemId={null}
+        onSelectedCatalogItemChange={vi.fn()}
+        modelSelectorErrorLabel="Failed to load models"
+      />,
+    );
+    const errorItem = screen.getByText('Failed to load models');
+    expect(errorItem).toBeTruthy();
+    expect((errorItem as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('disables send button when catalogItems is defined and selectedCatalogItemId is null', () => {
+    const { container } = render(
+      <Input
+        catalogItems={mockItems}
+        selectedCatalogItemId={null}
+        onSelectedCatalogItemChange={vi.fn()}
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+    }
+    const sendButton = screen.getByLabelText(
+      'Send message',
+    ) as HTMLButtonElement;
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it('does not fire onSend on Enter when selectedCatalogItemId is null', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input
+        onSend={handleSend}
+        catalogItems={mockItems}
+        selectedCatalogItemId={null}
+        onSelectedCatalogItemChange={vi.fn()}
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('does not render selector when catalogItems is undefined', () => {
+    render(<Input />);
+    expect(screen.queryByLabelText(/Select model/)).toBeNull();
   });
 });

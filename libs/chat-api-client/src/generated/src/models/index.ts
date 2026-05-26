@@ -120,97 +120,6 @@ export interface AttachmentDto {
 /**
  *
  * @export
- * @interface CatalogItemDto
- */
-export interface CatalogItemDto {
-  /**
-   *
-   * @type {string}
-   * @memberof CatalogItemDto
-   */
-  id: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CatalogItemDto
-   */
-  displayName: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CatalogItemDto
-   */
-  type: CatalogItemDtoTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof CatalogItemDto
-   */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CatalogItemDto
-   */
-  iconUrl?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof CatalogItemDto
-   */
-  maxInputAttachments?: number;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof CatalogItemDto
-   */
-  inputAttachmentTypes?: Array<string>;
-  /**
-   * Boolean capability flags from DIAL Core (model items only). scale_types is excluded.
-   * @type {{ [key: string]: boolean; }}
-   * @memberof CatalogItemDto
-   */
-  capabilities?: { [key: string]: boolean };
-}
-
-/**
- * @export
- */
-export const CatalogItemDtoTypeEnum = {
-  Model: 'model',
-  Application: 'application',
-} as const;
-export type CatalogItemDtoTypeEnum =
-  (typeof CatalogItemDtoTypeEnum)[keyof typeof CatalogItemDtoTypeEnum];
-
-/**
- *
- * @export
- * @interface CatalogResponseDto
- */
-export interface CatalogResponseDto {
-  /**
-   *
-   * @type {Array<CatalogItemDto>}
-   * @memberof CatalogResponseDto
-   */
-  data: Array<CatalogItemDto>;
-  /**
-   * Total count before filtering
-   * @type {number}
-   * @memberof CatalogResponseDto
-   */
-  total: number;
-  /**
-   * Count of items after filtering
-   * @type {number}
-   * @memberof CatalogResponseDto
-   */
-  filtered: number;
-}
-/**
- *
- * @export
  * @interface ChatCompletionChoiceDto
  */
 export interface ChatCompletionChoiceDto {
@@ -535,6 +444,12 @@ export interface CreateConversationDto {
    */
   firstMessage: string;
   /**
+   * ID of the catalog item (model or application) to use for this conversation
+   * @type {string}
+   * @memberof CreateConversationDto
+   */
+  catalogItemId: string;
+  /**
    * DIAL API attachments to include with the first user message
    * @type {Array<AttachmentDto>}
    * @memberof CreateConversationDto
@@ -544,27 +459,70 @@ export interface CreateConversationDto {
 /**
  *
  * @export
- * @interface DialDeploymentDto
+ * @interface DeploymentItemDto
  */
-export interface DialDeploymentDto {
+export interface DeploymentItemDto {
   /**
-   *
+   * Unique stable identifier from DIAL Core
    * @type {string}
-   * @memberof DialDeploymentDto
+   * @memberof DeploymentItemDto
    */
   id: string;
   /**
-   *
+   * Display name, falls back to id when absent
    * @type {string}
-   * @memberof DialDeploymentDto
+   * @memberof DeploymentItemDto
    */
-  name?: string;
+  displayName: string;
   /**
    *
    * @type {string}
-   * @memberof DialDeploymentDto
+   * @memberof DeploymentItemDto
    */
-  type?: string;
+  type: DeploymentItemDtoTypeEnum;
+  /**
+   * Icon URL from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  iconUrl?: string;
+  /**
+   * Description from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  description?: string;
+  /**
+   * Interface types supported by this deployment
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  interfaces?: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const DeploymentItemDtoTypeEnum = {
+  Model: 'model',
+  Application: 'application',
+  Toolset: 'toolset',
+} as const;
+export type DeploymentItemDtoTypeEnum =
+  (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface DeploymentsResponseDto
+ */
+export interface DeploymentsResponseDto {
+  /**
+   *
+   * @type {Array<DeploymentItemDto>}
+   * @memberof DeploymentsResponseDto
+   */
+  deployments: Array<DeploymentItemDto>;
 }
 /**
  *

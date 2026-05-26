@@ -15,6 +15,13 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   colors,
   typography,
   className,
+  catalogItems,
+  selectedCatalogItemId,
+  onSelectedCatalogItemChange,
+  modelSelectorAriaLabel,
+  modelSelectorLoadingLabel,
+  modelSelectorErrorLabel,
+  modelSelectorEmptyLabel,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-root-bg': colors.background }),
@@ -65,6 +72,13 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         placeholder={placeholder}
         colors={colors?.input}
         typography={typography?.input}
+        catalogItems={catalogItems}
+        selectedCatalogItemId={selectedCatalogItemId}
+        onSelectedCatalogItemChange={onSelectedCatalogItemChange}
+        modelSelectorAriaLabel={modelSelectorAriaLabel}
+        modelSelectorLoadingLabel={modelSelectorLoadingLabel}
+        modelSelectorErrorLabel={modelSelectorErrorLabel}
+        modelSelectorEmptyLabel={modelSelectorEmptyLabel}
       />
     </div>
   );

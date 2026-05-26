@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
-import { CatalogProvider } from './context/CatalogContext';
+import { DeploymentsProvider } from './context/DeploymentsContext';
 import { ModelsProvider } from './context/ModelsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
@@ -23,7 +23,7 @@ root.render(
       <UserProvider>
         <ThemeProvider>
           <ModelsProvider>
-            <CatalogProvider>
+            <DeploymentsProvider>
               <Suspense fallback={null}>
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
@@ -37,7 +37,7 @@ root.render(
                   />
                 </Routes>
               </Suspense>
-            </CatalogProvider>
+            </DeploymentsProvider>
           </ModelsProvider>
         </ThemeProvider>
       </UserProvider>

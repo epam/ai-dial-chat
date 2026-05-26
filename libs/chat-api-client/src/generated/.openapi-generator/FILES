@@ -4,7 +4,6 @@ README.md
 package.json
 src/apis/ApplicationsApi.ts
 src/apis/AuthApi.ts
-src/apis/CatalogApi.ts
 src/apis/ChatApi.ts
 src/apis/ConversationsApi.ts
 src/apis/DeploymentsApi.ts

@@ -288,7 +288,6 @@ describe('ApiEndpoints', () => {
   it('exposes expected endpoint values', () => {
     expect(ApiEndpoints.THEMES).toBe('/api/themes');
     expect(ApiEndpoints.CONVERSATIONS).toBe('/api/v1/conversations');
-    expect(ApiEndpoints.DEPLOYMENTS).toBe('/api/deployments');
     expect(ApiEndpoints.MODELS).toBe('/api/v1/models');
     expect(ApiEndpoints.AUTH_LOGOUT).toBe('/api/v1/auth/logout');
   });
