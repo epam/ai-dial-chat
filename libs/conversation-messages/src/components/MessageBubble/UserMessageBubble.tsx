@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  MessageRole,
+} from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { FC } from 'react';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
@@ -21,10 +25,16 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
     '--cm-bubble-text': colors?.text,
-    '--cm-bubble-font-family': noCustomClass ? typography?.fontFamily : undefined,
+    '--cm-bubble-font-family': noCustomClass
+      ? typography?.fontFamily
+      : undefined,
     '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-bubble-font-weight': noCustomClass ? typography?.fontWeight : undefined,
-    '--cm-bubble-line-height': noCustomClass ? typography?.lineHeight : undefined,
+    '--cm-bubble-font-weight': noCustomClass
+      ? typography?.fontWeight
+      : undefined,
+    '--cm-bubble-line-height': noCustomClass
+      ? typography?.lineHeight
+      : undefined,
   });
 
   const positionRadius =
