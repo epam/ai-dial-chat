@@ -4,7 +4,6 @@ export enum ChatI18nKeys {
   StreamError = 'chat.streamError',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
-  DeleteMessageError = 'chat.deleteMessageError',
   StarterConfirmTitle = 'chat.starterConfirmTitle',
 }
 
