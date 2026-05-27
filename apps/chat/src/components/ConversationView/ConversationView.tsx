@@ -3,6 +3,7 @@ import {
   type Attachment,
   type Message as MessageType,
   type MessageRating,
+  type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 import { DialFabButton } from '@epam/ai-dial-ui-kit';
@@ -24,6 +25,10 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { buildMessageActions } from './buildMessageActions.js';
+import {
+  getMessageStarterProps,
+  isStreamingMessage,
+} from './message-display.js';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -38,6 +43,11 @@ interface Props {
   onRegenerateMessage?: (messageId: string) => void;
   onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
+  onSelectStarter?: (
+    starter: StarterOption,
+    propertyKey?: string,
+    description?: string,
+  ) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
 }
@@ -52,6 +62,7 @@ const ConversationView: FC<Props> = ({
   onRegenerateMessage,
   onRateMessage,
   onAttachmentsChange,
+  onSelectStarter,
   placeholder,
   isAssistantTyping = false,
 }) => {
@@ -165,10 +176,23 @@ const ConversationView: FC<Props> = ({
         >
           <div className="flex flex-1 flex-col gap-6">
             {messages.map((msg, index) => {
-              const isStreaming =
-                isAssistantTyping &&
-                index === messages.length - 1 &&
-                msg.role === MessageRole.Assistant;
+              const streaming = isStreamingMessage(
+                msg.role,
+                index,
+                messages.length,
+                isAssistantTyping,
+              );
+              const {
+                starters: activeStarters,
+                onSelectStarter: handleSelectStarter,
+              } = getMessageStarterProps(
+                msg,
+                index,
+                messages.length,
+                isAssistantTyping,
+                onSelectStarter,
+              );
+
               return (
                 <MessageBubble
                   key={msg.id}
@@ -177,7 +201,7 @@ const ConversationView: FC<Props> = ({
                   attachments={attachmentDtosToDisplayAttachments(
                     msg.custom_content?.attachments,
                   )}
-                  alwaysVisibleActions={!isStreaming}
+                  alwaysVisibleActions={!streaming}
                   actions={buildMessageActions(
                     msg,
                     {
@@ -192,6 +216,8 @@ const ConversationView: FC<Props> = ({
                       ? 'justify-end'
                       : 'justify-start'
                   }
+                  starters={activeStarters}
+                  onSelectStarter={handleSelectStarter}
                 />
               );
             })}

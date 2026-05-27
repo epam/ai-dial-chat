@@ -2,8 +2,10 @@ import {
   Attachment,
   Conversation,
   Message,
+  MessageCustomContent,
   MessageRole,
   type MessageRating,
+  type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
   AlertVariant,
@@ -11,7 +13,6 @@ import {
   DialAlert,
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
-import type { AttachmentDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -23,12 +24,15 @@ import {
 } from '../../constants/translation-keys';
 import { streamCompletion } from '../../server-api/chat-stream.api';
 import {
+  deleteConversation as apiDeleteConversation,
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
 import { rateMessage } from '../../server-api/rate.api';
+import { applyChunkToMessages } from '../../utils/apply-chunk';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { createMessagePair } from '../../utils/message-factory';
+import { getStarterPopulateText } from '../../utils/starter-option';
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
@@ -36,7 +40,6 @@ export const ConversationPage: FC = () => {
   const [isFetching, setIsFetching] = useState(!!conversationId);
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState(false);
   const [streamError, setStreamError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const conversationRef = useRef<Conversation | null>(null);
@@ -49,7 +52,7 @@ export const ConversationPage: FC = () => {
       userContent: string,
       assistantMessageId: string,
       model: string,
-      attachments?: AttachmentDto[],
+      customContent?: MessageCustomContent,
     ) => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -63,18 +66,15 @@ export const ConversationPage: FC = () => {
         {
           signal: controller.signal,
           onChunk: (chunk) => {
-            const content = chunk.choices[0]?.delta?.content ?? '';
-            if (!content) return;
             setConversation((prev) => {
               if (!prev) return prev;
-              const next = {
-                ...prev,
-                messages: prev.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? { ...m, content: m.content + content }
-                    : m,
-                ),
-              };
+              const updatedMessages = applyChunkToMessages(
+                prev.messages,
+                assistantMessageId,
+                chunk,
+              );
+              if (!updatedMessages) return prev;
+              const next = { ...prev, messages: updatedMessages };
               conversationRef.current = next;
               return next;
             });
@@ -97,7 +97,7 @@ export const ConversationPage: FC = () => {
             setStreamError(true);
           },
         },
-        attachments,
+        customContent,
       );
     },
     [],
@@ -138,7 +138,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
-            lastMsg.custom_content?.attachments,
+            lastMsg.custom_content,
           );
         } else {
           setConversation(result);
@@ -195,6 +195,7 @@ export const ConversationPage: FC = () => {
         userMsg.content,
         messageId,
         conversation.model.id,
+        userMsg.custom_content,
       );
     },
     [conversation, conversationId, isStreaming, startStream],
@@ -226,14 +227,18 @@ export const ConversationPage: FC = () => {
           ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
           : prev.messages.filter((_, i) => i !== idx);
 
+      if (next.length === 0) {
+        apiDeleteConversation(conversationPath);
+        navigate(ROUTES.ROOT);
+        return prev;
+      }
+
       const updated = { ...prev, messages: next };
       conversationRef.current = updated;
-      saveConversation(conversationPath, updated).catch(() =>
-        setDeleteError(true),
-      );
+      saveConversation(conversationPath, updated);
       return updated;
     });
-  }, [conversationId, pendingDeleteId]);
+  }, [conversationId, navigate, pendingDeleteId]);
 
   const handleRateMessage = useCallback(
     async (messageId: string, rating: MessageRating | null) => {
@@ -297,6 +302,74 @@ export const ConversationPage: FC = () => {
     [conversation, conversationId],
   );
 
+  const submitStarter = useCallback(
+    (starter: StarterOption, propertyKey?: string, description?: string) => {
+      if (!conversationId || !conversation) return;
+
+      const text = description ?? getStarterPopulateText(starter);
+      const configurationValue = propertyKey
+        ? { [propertyKey]: starter.const }
+        : undefined;
+
+      const { userMessage, assistantMessage, assistantMessageId } =
+        createMessagePair(text);
+
+      const conversationPath = conversationId.substring(
+        conversationId.indexOf('/') + 1,
+      );
+
+      setConversation((prev) => {
+        if (!prev) return prev;
+        const next = {
+          ...prev,
+          messages: [...prev.messages, userMessage, assistantMessage],
+        };
+        conversationRef.current = next;
+        return next;
+      });
+
+      startStream(
+        conversationPath,
+        text,
+        assistantMessageId,
+        conversation.model.id,
+        configurationValue
+          ? {
+              form_value: configurationValue,
+            }
+          : undefined,
+      );
+    },
+    [conversation, conversationId, startStream],
+  );
+
+  const [pendingStarterContext, setPendingStarterContext] = useState<{
+    starter: StarterOption;
+    propertyKey?: string;
+    description?: string;
+  } | null>(null);
+
+  const handleButtonSelect = useCallback(
+    (starter: StarterOption, propertyKey?: string, description?: string) => {
+      if (!conversationId || !conversation || isStreaming) return;
+
+      if (starter['dial:widgetOptions'].confirmationMessage) {
+        setPendingStarterContext({ starter, propertyKey, description });
+      } else {
+        submitStarter(starter, propertyKey, description);
+      }
+    },
+    [conversation, conversationId, isStreaming, submitStarter],
+  );
+
+  const handleConfirmStarter = useCallback(() => {
+    if (!pendingStarterContext) return;
+
+    const { starter, propertyKey, description } = pendingStarterContext;
+    setPendingStarterContext(null);
+    submitStarter(starter, propertyKey, description);
+  }, [pendingStarterContext, submitStarter]);
+
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
@@ -325,7 +398,7 @@ export const ConversationPage: FC = () => {
         message,
         assistantMessageId,
         conversation.model.id,
-        attachmentDtos,
+        { attachments: attachmentDtos },
       );
     },
     [conversation, conversationId, startStream],
@@ -351,16 +424,6 @@ export const ConversationPage: FC = () => {
             />
           </div>
         )}
-        {deleteError && (
-          <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
-            <DialAlert
-              variant={AlertVariant.Error}
-              message={t(ChatI18nKeys.DeleteMessageError)}
-              closable
-              onClose={() => setDeleteError(false)}
-            />
-          </div>
-        )}
         <ConversationView
           messages={conversation.messages}
           onSend={handleSend}
@@ -370,6 +433,7 @@ export const ConversationPage: FC = () => {
           onRateMessage={handleRateMessage}
           isAssistantTyping={isStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
+          onSelectStarter={handleButtonSelect}
         />
       </div>
 
@@ -382,6 +446,19 @@ export const ConversationPage: FC = () => {
         variant={ConfirmationPopupVariant.Danger}
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDeleteId(null)}
+      />
+
+      <DialConfirmationPopup
+        open={!!pendingStarterContext}
+        header={t(ChatI18nKeys.StarterConfirmTitle)}
+        description={
+          pendingStarterContext?.starter['dial:widgetOptions']
+            .confirmationMessage ?? ''
+        }
+        confirmLabel={t(ActionsI18nKeys.Confirm)}
+        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        onConfirm={handleConfirmStarter}
+        onClose={() => setPendingStarterContext(null)}
       />
     </>
   );

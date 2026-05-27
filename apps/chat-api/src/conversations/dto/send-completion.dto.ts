@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsArray,
   IsOptional,
   IsString,
   Matches,
@@ -9,7 +8,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { AttachmentDto } from './attachment.dto';
+import { MessageCustomContentDto } from './message-custom-content.dto';
 
 export class SendCompletionDto {
   @ApiProperty({
@@ -43,12 +42,11 @@ export class SendCompletionDto {
   model!: string;
 
   @ApiPropertyOptional({
-    description: 'DIAL API attachments to include with the user message',
-    type: [AttachmentDto],
+    description: 'Extra DIAL payload attached to the user message',
+    type: MessageCustomContentDto,
   })
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AttachmentDto)
-  attachments?: AttachmentDto[];
+  @ValidateNested()
+  @Type(() => MessageCustomContentDto)
+  custom_content?: MessageCustomContentDto;
 }

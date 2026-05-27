@@ -1,4 +1,8 @@
-import type { DisplayAttachment, MessageRole } from '@epam/ai-dial-chat-shared';
+import type {
+  DisplayAttachment,
+  MessageRole,
+  StarterOption,
+} from '@epam/ai-dial-chat-shared';
 import type { BubblePosition } from '../types/bubble-position.js';
 import type { MessageActionsProps } from './MessageActions.js';
 
@@ -8,6 +12,8 @@ export interface MessageBubbleColors {
   userBackground?: string;
   /** Text color applied to all message bubbles. */
   text?: string;
+  /** Border color of the divider line above quick-reply starter buttons. Falls back to `--color-secondary` when omitted. */
+  startersDivider?: string;
 }
 
 /** Typography overrides for message bubble components. */
@@ -51,7 +57,15 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
 }
 
 /** Props accepted by the `AssistantMessageBubble` component. */
-export type AssistantMessageBubbleProps = BaseMessageBubbleProps;
+export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
+  /**
+   * Quick-reply buttons derived from the assistant message's `form_schema`.
+   * Rendered below the message text when the array is non-empty.
+   */
+  starters?: StarterOption[];
+  /** Called with the selected `StarterOption` when a quick-reply button is clicked. */
+  onSelectStarter?: (starter: StarterOption) => void;
+}
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
 export interface MessageBubbleProps extends BaseMessageBubbleProps {
@@ -59,4 +73,11 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   role: MessageRole;
   /** Position within a message group — controls which corner is rounded (user messages only). Defaults to `BubblePosition.Bottom`. */
   position?: BubblePosition;
+  /**
+   * Quick-reply buttons derived from the assistant message's `form_schema`.
+   * Forwarded to `AssistantMessageBubble`; ignored for user messages.
+   */
+  starters?: StarterOption[];
+  /** Called with the selected `StarterOption` when a quick-reply button is clicked. Forwarded to `AssistantMessageBubble`. */
+  onSelectStarter?: (starter: StarterOption) => void;
 }

@@ -21,7 +21,10 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { getStarterPopulateText } from '../../utils/starter-option';
+import {
+  getStarterPopulateText,
+  getStartersFromSchema,
+} from '../../utils/starter-option';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -45,11 +48,10 @@ const ConversationRoute: FC = () => {
     error,
   } = useDeployments();
 
-  const starters = useMemo<StarterOption[]>(() => {
-    const oneOf = selectedDeploymentConfiguration?.properties?.starter?.oneOf;
-    if (!Array.isArray(oneOf)) return [];
-    return oneOf as StarterOption[];
-  }, [selectedDeploymentConfiguration]);
+  const { starters, propertyKey, description } = useMemo(
+    () => getStartersFromSchema(selectedDeploymentConfiguration),
+    [selectedDeploymentConfiguration],
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,14 +87,27 @@ const ConversationRoute: FC = () => {
 
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
-      const text = getStarterPopulateText(starter);
+      // For button widgets the description is the message content;
+      // for starter widgets fall back to populateText / title.
+      const text = description ?? getStarterPopulateText(starter);
+
       if (starter['dial:widgetOptions'].submit) {
-        void handleSend(text, []);
+        const configurationValue = propertyKey
+          ? { [propertyKey]: starter.const }
+          : undefined;
+        void apiCreateConversation(
+          text,
+          selectedItemId,
+          [],
+          configurationValue,
+        ).then((conversation) => {
+          navigate(getConversationRoute(conversation.id));
+        });
       } else {
         setInputMessage(text);
       }
     },
-    [handleSend],
+    [description, propertyKey, selectedItemId, navigate],
   );
 
   return (

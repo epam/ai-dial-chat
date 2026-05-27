@@ -19,8 +19,12 @@ export const MessageSource: FC<MessageSourceProps> = ({
     '--cm-source-bg-hover': colors?.backgroundHover,
     '--cm-source-border-hover': colors?.borderHover,
     '--cm-source-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-source-font-weight': noCustomClass ? typography?.fontWeight : undefined,
-    '--cm-source-line-height': noCustomClass ? typography?.lineHeight : undefined,
+    '--cm-source-font-weight': noCustomClass
+      ? typography?.fontWeight
+      : undefined,
+    '--cm-source-line-height': noCustomClass
+      ? typography?.lineHeight
+      : undefined,
   });
 
   return (

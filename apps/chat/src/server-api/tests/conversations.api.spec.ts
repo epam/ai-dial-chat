@@ -31,7 +31,9 @@ describe('createConversation', () => {
       createConversationDto: {
         firstMessage: 'Hello',
         deploymentId: 'dep-1',
-        attachments,
+        custom_content: {
+          attachments,
+        },
       },
     });
   });

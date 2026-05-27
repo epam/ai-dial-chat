@@ -20,7 +20,7 @@ export const useFavicon = (faviconUrl?: string) => {
   useEffect(() => {
     if (!faviconUrl) {
       // No favicon URL provided, keep default
-      console.debug('No favicon URL provided, using default');
+      console.error('No favicon URL provided, using default');
       return;
     }
 

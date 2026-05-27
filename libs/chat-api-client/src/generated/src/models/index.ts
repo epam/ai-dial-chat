@@ -432,6 +432,42 @@ export interface ConversationResponseDto {
   assistantModelId: string;
 }
 /**
+ * Permitted scalar/array types for a single form field value.
+ * @export
+ */
+export type MessageFormValueType = number | string | boolean | string[];
+
+/**
+ * Key-value map submitted from a form widget embedded in a message.
+ * @export
+ */
+export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/**
+ *
+ * @export
+ * @interface MessageCustomContentDto
+ */
+export interface MessageCustomContentDto {
+  /**
+   * @type {Array<AttachmentDto>}
+   * @memberof MessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. { button: 1 })
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  configuration_value?: Record<string, unknown>;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {MessageFormValue}
+   * @memberof MessageCustomContentDto
+   */
+  form_value?: MessageFormValue;
+}
+/**
  *
  * @export
  * @interface CreateConversationDto
@@ -450,11 +486,11 @@ export interface CreateConversationDto {
    */
   deploymentId: string;
   /**
-   * DIAL API attachments to include with the first user message
-   * @type {Array<AttachmentDto>}
+   * Extra DIAL payload attached to the first user message
+   * @type {MessageCustomContentDto}
    * @memberof CreateConversationDto
    */
-  attachments?: Array<AttachmentDto>;
+  custom_content?: MessageCustomContentDto;
 }
 /**
  *
@@ -903,6 +939,12 @@ export interface DialModelPricingDto {
  */
 export interface MessageDto {
   /**
+   * Unique message identifier
+   * @type {string}
+   * @memberof MessageDto
+   */
+  id?: string;
+  /**
    * Message author role
    * @type {string}
    * @memberof MessageDto
@@ -914,6 +956,18 @@ export interface MessageDto {
    * @memberof MessageDto
    */
   content: string;
+  /**
+   * ISO-8601 timestamp of when the message was created
+   * @type {string}
+   * @memberof MessageDto
+   */
+  timestamp?: string;
+  /**
+   * Extra DIAL payload attached to the message
+   * @type {MessageCustomContentDto}
+   * @memberof MessageDto
+   */
+  custom_content?: MessageCustomContentDto;
 }
 
 /**
@@ -1032,11 +1086,11 @@ export interface SendCompletionDto {
    */
   model: string;
   /**
-   * DIAL API attachments to include with the user message
-   * @type {Array<AttachmentDto>}
+   * Extra DIAL payload attached to the user message
+   * @type {MessageCustomContentDto}
    * @memberof SendCompletionDto
    */
-  attachments?: Array<AttachmentDto>;
+  custom_content?: MessageCustomContentDto;
 }
 /**
  *

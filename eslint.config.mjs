@@ -27,6 +27,7 @@ export default [
       'jsx-a11y': jsxA11y,
     },
     rules: {
+      'no-console': ['error', { allow: ['warn', 'error', 'info'] }],
       '@nx/enforce-module-boundaries': [
         'error',
         {
