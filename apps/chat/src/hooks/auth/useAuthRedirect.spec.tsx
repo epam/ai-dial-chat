@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
-import * as base from '../../server-api/base';
+import * as authApi from '../../server-api/auth.api';
 import {
   AUTH_REDIRECT_ATTEMPT_STORAGE_KEY,
   useAuthRedirect,
@@ -53,7 +53,7 @@ describe('useAuthRedirect', () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    vi.spyOn(base, 'get').mockResolvedValue([
+    vi.spyOn(authApi, 'getProviders').mockResolvedValue([
       { id: 'keycloak', label: 'Keycloak' },
     ]);
 
@@ -79,7 +79,7 @@ describe('useAuthRedirect', () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    const getSpy = vi.spyOn(base, 'get');
+    const getProvidersSpy = vi.spyOn(authApi, 'getProviders');
     window.sessionStorage.setItem(
       AUTH_REDIRECT_ATTEMPT_STORAGE_KEY,
       JSON.stringify({
@@ -98,7 +98,7 @@ describe('useAuthRedirect', () => {
         { replace: true },
       );
     });
-    expect(getSpy).not.toHaveBeenCalled();
+    expect(getProvidersSpy).not.toHaveBeenCalled();
     expect(assignSpy).not.toHaveBeenCalled();
   });
 
@@ -109,7 +109,7 @@ describe('useAuthRedirect', () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    vi.spyOn(base, 'get').mockResolvedValue([
+    vi.spyOn(authApi, 'getProviders').mockResolvedValue([
       { id: 'keycloak', label: 'Keycloak' },
       { id: 'auth0', label: 'Auth0' },
     ]);
@@ -133,7 +133,7 @@ describe('useAuthRedirect', () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    const getSpy = vi.spyOn(base, 'get');
+    const getProvidersSpy = vi.spyOn(authApi, 'getProviders');
 
     renderHook(() => useAuthRedirect(), {
       wrapper: makeWrapper('/conversation'),
@@ -142,7 +142,7 @@ describe('useAuthRedirect', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(assignSpy).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
-    expect(getSpy).not.toHaveBeenCalled();
+    expect(getProvidersSpy).not.toHaveBeenCalled();
   });
 
   it('authenticated on /login: navigate to same-origin callbackUrl', async () => {
@@ -198,12 +198,12 @@ describe('useAuthRedirect', () => {
       refresh: vi.fn(),
       reset: vi.fn(),
     });
-    const getSpy = vi.spyOn(base, 'get');
+    const getProvidersSpy = vi.spyOn(authApi, 'getProviders');
 
     renderHook(() => useAuthRedirect(), { wrapper: makeWrapper('/login') });
 
     await new Promise((r) => setTimeout(r, 50));
-    expect(getSpy).not.toHaveBeenCalled();
+    expect(getProvidersSpy).not.toHaveBeenCalled();
     expect(assignSpy).not.toHaveBeenCalled();
   });
 });

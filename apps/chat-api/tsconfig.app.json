@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "../../",
     "outDir": "dist",
     "types": ["node"],
     "rootDir": "src",
@@ -11,10 +10,14 @@
     "target": "es2021"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["eslint.config.js", "eslint.config.cjs", "eslint.config.mjs"],
-  "references": [
-    {
-      "path": "../../libs/chat-shared/tsconfig.lib.json"
-    }
-  ]
+  "exclude": [
+    "eslint.config.js",
+    "eslint.config.cjs",
+    "eslint.config.mjs",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ],
+  "references": [{ "path": "../../libs/chat-shared/tsconfig.lib.json" }]
 }

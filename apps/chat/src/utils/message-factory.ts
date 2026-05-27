@@ -1,0 +1,34 @@
+import { Message, MessageRole } from '@epam/ai-dial-chat-shared';
+import type { AttachmentDto } from '@epam/chat-api-client';
+
+interface MessagePair {
+  userMessage: Message;
+  assistantMessage: Message;
+  assistantMessageId: string;
+}
+
+export const createMessagePair = (
+  content: string,
+  attachments?: AttachmentDto[],
+): MessagePair => {
+  const now = Date.now();
+  const timestamp = new Date(now).toISOString();
+  const assistantMessageId = `stream_${now}`;
+
+  return {
+    userMessage: {
+      id: `msg_${now}`,
+      role: MessageRole.User,
+      content,
+      timestamp,
+      ...(attachments?.length ? { custom_content: { attachments } } : {}),
+    },
+    assistantMessage: {
+      id: assistantMessageId,
+      role: MessageRole.Assistant,
+      content: '',
+      timestamp,
+    },
+    assistantMessageId,
+  };
+};

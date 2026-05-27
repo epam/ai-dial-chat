@@ -45,6 +45,9 @@
     },
     {
       "path": "../../libs/conversation-input/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/chat-api-client/tsconfig.lib.json"
     }
   ]
 }

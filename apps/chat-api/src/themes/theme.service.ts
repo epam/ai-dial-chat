@@ -1,4 +1,4 @@
-import { ThemeConfiguration } from '@epam/chat-shared';
+import { ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
@@ -72,7 +72,6 @@ export class ThemeService {
    * ```typescript
    * try {
    *   const config = await themeService.getThemes();
-   *   console.log(config.themes);
    * } catch (error) {
    *   if (error instanceof NotFoundException) {
    *     console.error('Theme configuration not found');

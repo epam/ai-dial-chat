@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthController } from './auth.controller';
+import { BucketService } from './bucket/bucket.service';
 import { CsrfGuard } from './csrf/csrf.guard';
 import { KeysService } from './keys/keys.service';
 import { ProviderRegistryService } from './providers/provider-registry.service';
@@ -15,6 +16,7 @@ import { SessionService } from './session/session.service';
     SessionService,
     RefreshService,
     ProviderRegistryService,
+    BucketService,
     {
       provide: APP_GUARD,
       useClass: SessionGuard,

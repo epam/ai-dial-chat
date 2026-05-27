@@ -1,4 +1,4 @@
-import { Theme } from '@epam/chat-shared';
+import { Theme } from '@epam/ai-dial-chat-shared';
 import { setToLocalStorage } from './local-storage';
 
 export const applyThemeColors = (div: HTMLElement, theme?: Theme) => {

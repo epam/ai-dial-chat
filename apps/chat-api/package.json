@@ -2,6 +2,7 @@
   "name": "@epam/chat-api",
   "version": "0.0.1",
   "private": true,
+  "license": "Apache-2.0",
   "nx": {
     "targets": {
       "build": {
@@ -65,6 +66,35 @@
           "command": "vitest run --config apps/chat-api/vitest.config.ts"
         }
       },
+      "openapi-spec": {
+        "executor": "nx:run-commands",
+        "outputs": [
+          "{workspaceRoot}/libs/chat-api-client/openapi.json"
+        ],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "cross-env SWC_NODE_PROJECT=apps/chat-api/tsconfig.app.json node -r @swc-node/register apps/chat-api/src/openapi-spec.ts"
+        }
+      },
+      "openapi-sdk": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "openapi-spec"
+        ],
+        "outputs": [
+          "{workspaceRoot}/libs/chat-api-client/src/generated"
+        ],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "cross-env HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= npm exec openapi-generator-cli -- generate -i libs/chat-api-client/openapi.json -g typescript-fetch -o libs/chat-api-client/src/generated --additional-properties=supportsES6=true,withoutRuntimeChecks=true,npmName=@epam/chat-api-client,npmVersion=0.0.1 && node tools/openapi/postprocess-client.mjs && npm exec prettier -- --write \"libs/chat-api-client/src/generated/src/**/*.ts\" && node tools/openapi/check-client.mjs"
+        }
+      },
+      "openapi": {
+        "executor": "nx:noop",
+        "dependsOn": [
+          "openapi-sdk"
+        ]
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",
@@ -88,16 +118,25 @@
     }
   },
   "dependencies": {
+    "@epam/ai-dial-chat-shared": "0.0.1",
+    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.16",
+    "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/serve-static": "^5.0.5",
+    "@nestjs/swagger": "^11.4.1",
+    "@nestjs/throttler": "^6.5.0",
+    "cache-manager": "^7.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
+    "helmet": "^8.1.0",
+    "mime-types": "^3.0.2",
     "jose": "5.10.0",
     "openid-client": "~5.7.0",
-    "reflect-metadata": "^0.1.13",
+    "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0"
   },

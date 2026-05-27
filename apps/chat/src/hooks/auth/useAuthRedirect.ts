@@ -1,8 +1,7 @@
-import { ProviderInfo } from '@epam/chat-shared';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
-import { ApiEndpoints, get } from '../../server-api/base';
+import { getProviders } from '../../server-api/auth.api';
 
 export const AUTH_REDIRECT_ATTEMPT_STORAGE_KEY = 'chat.auth.redirectAttempt';
 
@@ -96,9 +95,7 @@ export const useAuthRedirect = () => {
 
       const load = async () => {
         try {
-          const providers = await get<ProviderInfo[]>(
-            ApiEndpoints.AUTH_PROVIDERS,
-          );
+          const providers = await getProviders();
           if (cancelled) return;
           if (providers.length === 1) {
             rememberAuthRedirectAttempt(rawCallbackUrl);

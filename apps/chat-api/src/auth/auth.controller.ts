@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   ApiCookieAuth,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -24,6 +25,11 @@ import type { Request, Response } from 'express';
 import { generators } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
+import {
+  ProviderInfoDto,
+  UserProfileDto,
+} from '../openapi/openapi-response.dto';
+import { BucketService } from './bucket/bucket.service';
 import {
   clearCookieValue,
   getCookieOptions,
@@ -49,6 +55,7 @@ export class AuthController {
     private readonly registry: ProviderRegistryService,
     private readonly session: SessionService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
+    private readonly bucketService: BucketService,
   ) {}
 
   private isOriginAllowed(origin: string): boolean {
@@ -75,7 +82,11 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'List configured identity providers' })
-  @ApiResponse({ status: 200, description: 'Array of provider descriptors' })
+  @ApiResponse({
+    status: 200,
+    description: 'Array of provider descriptors',
+    type: [ProviderInfoDto],
+  })
   listProviders() {
     return this.registry.listProviders();
   }
@@ -84,6 +95,12 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Start OIDC login flow' })
+  @ApiParam({
+    name: 'providerId',
+    description: 'Configured identity provider ID',
+    type: String,
+    example: 'local',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to identity provider' })
   @ApiResponse({ status: 400, description: 'Unsafe callback URL' })
   @ApiResponse({ status: 404, description: 'Unknown provider' })
@@ -139,6 +156,7 @@ export class AuthController {
       iat: Math.floor(Date.now() / 1000),
       csrf: randomUUID(),
       claims: {},
+      bucket: '',
     });
 
     res.cookie(getTransactionCookieName(this.config), txToken, {
@@ -152,6 +170,12 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'OIDC authorization callback' })
+  @ApiParam({
+    name: 'providerId',
+    description: 'Configured identity provider ID',
+    type: String,
+    example: 'local',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to app after login' })
   @ApiResponse({
     status: 400,
@@ -277,12 +301,23 @@ export class AuthController {
       filteredClaims[rolesClaim] = allClaims[rolesClaim];
     }
 
+    const accessToken = tokenSet.access_token ?? '';
+    let bucket = '';
+    try {
+      ({ bucket } = await this.bucketService.getUserBucket(accessToken));
+    } catch (err) {
+      this.logger.warn(
+        'Bucket fetch failed during callback — will retry on first authenticated request',
+        err,
+      );
+    }
+
     const payload: SessionPayload = {
       v: 1,
       sid: randomUUID(),
       providerId: params.providerId,
       sub: claims.sub,
-      at: tokenSet.access_token ?? '',
+      at: accessToken,
       rt: tokenSet.refresh_token ?? '',
       it: tokenSet.id_token,
       at_exp: tokenSet.expires_at ?? now + 3600,
@@ -292,6 +327,7 @@ export class AuthController {
       iat: now,
       csrf: randomUUID(),
       claims: filteredClaims,
+      bucket,
     };
 
     const sessionToken = await this.session.encrypt(payload);
@@ -387,15 +423,23 @@ export class AuthController {
   @ApiCookieAuth('session')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user profile',
+    type: UserProfileDto,
+  })
   @ApiResponse({ status: 401, description: 'No valid session' })
-  me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  getCurrentUser(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const user = req.user as SessionUser;
     res.setHeader('X-CSRF-Token', user.csrf);
     return {
       sub: user.sub,
       providerId: user.providerId,
       claims: user.claims,
+      bucket: user.bucket,
     };
   }
 }

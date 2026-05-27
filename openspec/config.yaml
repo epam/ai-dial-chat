@@ -11,13 +11,16 @@ context: |
   - Styling: Tailwind CSS 3 (primary) + SCSS (component overrides only)
   - i18n: react-i18next + i18next-browser-languagedetector (keys in apps/chat/src/i18n/locales/en.json)
   - State: React Context + custom hooks (no external state management library)
-  - API layer: typed fetch helpers in apps/chat/src/server-api/base.ts — get/post/put/del with TResponse generic
+  - API layer: generated `@epam/chat-api-client` wrappers in apps/chat/src/server-api/ for REST endpoints.
+    `apps/chat/src/server-api/base.ts` is legacy/infrastructure support (CSRF, unauthorized handling,
+    streaming, and temporary exceptions only), not the default path for new business endpoints.
   - Routing: React Router v6 (BrowserRouter, lazy-loaded routes)
   - Testing: Vitest 4 + @testing-library/react 16 (frontend), supertest 7 (backend)
   - Linting: ESLint 9 flat config (eslint.config.mjs) + Prettier 3
   - Commits: Conventional commits — feat/fix/chore/refactor/test/docs with optional scope
 
   ## Libraries
+  - @epam/ai-dial-typescript-sdk: Preferred server-side DIAL Core client in apps/chat-api
   - @epam/ai-dial-ui-kit: Design system base components
   - @tabler/icons-react: Icon set — use for all icons, no inline SVGs
   - react-i18next / i18next: Internationalisation
@@ -30,8 +33,8 @@ context: |
 
   ## Path Aliases
   - @/*        → apps/chat/*
-  - @epam/conversation-input/* → libs/conversation-input/*
-  - @epam/chat-shared/*        → libs/chat-shared/*
+  - @epam/ai-dial-conversation-input/* → libs/conversation-input/*
+  - @epam/ai-dial-chat-shared/*        → libs/chat-shared/*
 
   ## Commands
   - Frontend dev: `pnpm start` (localhost:4207, proxies /api → localhost:3005)
@@ -57,16 +60,19 @@ context: |
       useMemo on context value, guard hook throws if used outside provider
   - Hooks: apps/chat/src/hooks/ — custom hooks co-located by concern
     - useFavicon.ts is the reference pattern: JSDoc, AbortController/cleanup in useEffect,
-      cancelled flag for async operations
+      cancelled flag for async operations, and async/await instead of Promise chains
   - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
     - Folder name must be PascalCase and match the component name exactly (e.g. RequireAuth/RequireAuth.tsx)
     - Tests go in a tests/ subfolder inside the component folder (e.g. RequireAuth/tests/RequireAuth.spec.tsx)
-  - API: apps/chat/src/server-api/ — typed fetch helpers and endpoint constants
+  - API: apps/chat/src/server-api/ — thin domain wrappers around generated `@epam/chat-api-client`
+    APIs. New REST business endpoints must be exposed through the generated client; use raw
+    `base.ts` helpers only for documented generator gaps, streaming, or infrastructure endpoints.
   - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
 
   ### Backend (apps/chat-api)
   - Entry: apps/chat-api/src/main.ts — registers Helmet, ValidationPipe, CORS, URI versioning,
-    Swagger; serves compiled frontend static files from dist/apps/chat
+    Swagger; serves compiled frontend static files from apps/chat/dist with SPA fallback
+    for non-/api/* routes
   - Domains: apps/chat-api/src/{domain}/ — one folder per domain, NO `modules/` wrapper
     (e.g. apps/chat-api/src/themes/theme.controller.ts, theme.service.ts, theme.module.ts, dto/)
   - Business endpoints are URI-versioned at /api/v{N}/{resource}; infrastructure endpoints
@@ -79,7 +85,6 @@ context: |
   ### Libraries
   - libs/chat-shared/  — shared TypeScript interfaces and types only (no logic)
   - libs/conversation-input/  — ConversationInput React component
-  - libs/conversation-panel/  — ConversationPanel React component
 
   ### Module boundary rules
   - apps may import from libs; apps may not import from each other
@@ -108,13 +113,20 @@ rules:
     - Use clsx for conditional class composition — not template literal concatenation
     - Use @tabler/icons-react for all icons — no unicode characters, no inline SVGs
     - Use components from @epam/ai-dial-ui-kit before creating new primitives
-    - "Name props interfaces {ComponentName}Props — not Props, not inline anonymous types"
+    - 'Name props interfaces {ComponentName}Props — not Props, not inline anonymous types'
     - Export components as named exports wrapped in React.memo for performance-sensitive
       components (e.g. ConversationView); default export the same name
-    - "Use FC<{ComponentName}Props> for component type annotation"
-    - "All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}"
-    - Use the existing typed API helpers (get, post) from server-api/base.ts — do not call
-      fetch directly in components or hooks
+    - 'Use FC<{ComponentName}Props> for component type annotation'
+    - 'All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}'
+    - Use the generated `@epam/chat-api-client` through apps/chat/src/server-api/api-client.ts
+      and thin domain wrappers in apps/chat/src/server-api/. Do not call `fetch` directly in
+      components or hooks, and do not add new `base.ts` get/post/put/del wrappers for business
+      endpoints unless the design documents a generated-client gap.
+    - Use async/await with try/catch/finally for frontend async code — avoid Promise chains
+      with `.then()`/`.catch()`.
+    - Use the void operator before Promise-returning calls only for intentional
+      fire-and-forget work where errors are handled; do not add it as a routine prefix
+      for local async helpers in useEffect.
     - Fetch inside useEffect with a cancelled flag to prevent setState-on-unmount warnings
     - Context value must be wrapped in useMemo — prevents all consumers re-rendering on
       every parent render
@@ -123,11 +135,15 @@ rules:
       with components
     - Custom hooks go in apps/chat/src/hooks/ — one hook per file, JSDoc required explaining WHY
     - Lazy-load every route component with React.lazy + Suspense — always provide a fallback
-    - "For named exports from lazy-loaded libs: import the module then return { default: module.X }"
+    - 'For named exports from lazy-loaded libs: use async React.lazy loaders, await the import,
+      then return { default: module.X }'
     - For anything under apps/chat-api/**, follow apps/chat-api/AGENTS.md as the source of
       truth (URI versioning, thin controllers + Swagger, Logger + ConfigService, validated
       DTOs with allowlist @Matches, typed HTTP exceptions, env on EnvironmentVariables).
       Do NOT duplicate or paraphrase those rules in the design — reference the section.
+    - For DIAL Core integrations in apps/chat-api/**, prefer @epam/ai-dial-typescript-sdk
+      via the shared AppService SDK client. Use raw fetch only for non-DIAL upstreams or
+      SDK gaps, and document why the exception is needed.
     - Name handler functions with the handle prefix in React components
       (e.g. handleSend, handleScroll, handleKeyDown)
     - Use semantic HTML elements (button, nav, main, section) before div/span
@@ -139,6 +155,10 @@ rules:
     - Define the API endpoint shape if the feature requires a new backend endpoint
       (HTTP method, full versioned path like /api/v1/{resource} for business endpoints,
       request body, response body, error codes including 4xx and 5xx)
+    - >-
+      For every new or changed business endpoint, specify generated-client impact:
+      OpenAPI operationId / SDK method name, request DTO, response DTO, and whether frontend
+      callers use normal or `Raw` generated methods.
     - Include i18n key names for all new user-visible strings
     - Flag any memoisation requirements (useMemo, useCallback, React.memo)
     - Define accessibility requirements — keyboard navigation, ARIA roles/labels
@@ -150,10 +170,10 @@ rules:
   tasks:
     - Reference specific file paths — never vague descriptions like "update the service"
     - Follow the file location conventions:
-      - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
-        API helpers in apps/chat/src/server-api/
-      - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
-        see apps/chat-api/AGENTS.md §1 for the full layout
+        - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
+          API wrappers in apps/chat/src/server-api/ that delegate to `@epam/chat-api-client`
+        - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
+          see apps/chat-api/AGENTS.md §1 for the full layout
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
       AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
       conventions of that project
@@ -166,6 +186,14 @@ rules:
     - Do not use data-testid attributes in tests — use role, label, and text queries
     - Do not add manual testing tasks
     - Add i18n keys to en.json as a dedicated task when new strings are introduced
+    - For any new or changed business HTTP endpoint, include dedicated tasks to:
+        - update Swagger DTO/response annotations in apps/chat-api so the endpoint appears in
+          `libs/chat-api-client/openapi.json` with strong types
+        - run `npm run openapi` and `npm run openapi:check`
+        - build and lint `chat-api-client`
+        - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
+        - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
+          `base.ts` helpers, unless the task documents a generator gap
     - Run lint + typecheck + tests as a final verification task after all implementation tasks
       using `pnpm nx <target> chat-api` for single-project checks or
       `pnpm nx affected --target=<t> --base=origin/development` for affected sets

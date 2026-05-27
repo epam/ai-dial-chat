@@ -4,6 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { lookup } from 'mime-types';
 import { Public } from '../common/decorators/public.decorator';
+import { ThemeConfigResponseDto } from '../openapi/openapi-response.dto';
 import { GetThemeIconDto } from './dto/get-theme-icon.dto';
 import { ThemeService } from './theme.service';
 /**
@@ -40,14 +41,7 @@ export class ThemeController {
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved theme configuration',
-    schema: {
-      example: {
-        themes: [
-          { id: 'light', name: 'Light Theme', icon: 'icon-light.svg' },
-          { id: 'dark', name: 'Dark Theme', icon: 'icon-dark.svg' },
-        ],
-      },
-    },
+    type: ThemeConfigResponseDto,
   })
   @ApiResponse({
     status: 404,

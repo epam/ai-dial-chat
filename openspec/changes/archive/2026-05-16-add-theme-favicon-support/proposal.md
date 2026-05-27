@@ -7,6 +7,7 @@ Add support for dynamic favicon loading based on theme configuration. The favico
 ## Why
 
 ### Problem
+
 Currently, the chat application uses a static favicon that doesn't adapt to different themes or branding requirements. Organizations using the chat application with custom themes want their brand identity to extend to the browser tab, including:
 
 - Custom favicon matching their brand colors and logo
@@ -14,24 +15,29 @@ Currently, the chat application uses a static favicon that doesn't adapt to diff
 - Professional appearance in browser tabs, bookmarks, and tab previews
 
 ### Impact
+
 **Current State:**
+
 - Single static favicon for all themes
 - No branding flexibility for organizations
 - Inconsistent brand experience between the app logo and favicon
 
 **Desired State:**
+
 - Theme-specific favicons loaded dynamically
 - Automatic favicon updates when theme changes
 - Fallback to default favicon if theme-specific one unavailable
 - Browser tab reflects the current theme's branding
 
 ### Benefits
+
 1. **Enhanced Branding**: Organizations can provide complete brand experience including browser tabs
 2. **Multi-Tenant Support**: Different customers/tenants can have distinct favicons
 3. **Theme Consistency**: Favicon matches the in-app theme logo and colors
 4. **Professional Polish**: Complete branded experience from browser tab to application interface
 
 ### Use Cases
+
 - **Enterprise Deployments**: Company-specific branding in all aspects of the UI
 - **White-Label Solutions**: Different customers get their own favicon
 - **Theme Switching**: Favicon updates automatically when users change themes
@@ -40,6 +46,7 @@ Currently, the chat application uses a static favicon that doesn't adapt to diff
 ## Scope
 
 ### In Scope
+
 - Fetch favicon URL from theme configuration (`images.chat-favicon` key)
 - Dynamically update `<link rel="icon">` in document head
 - Support `.png` format for `chat-favicon.png`
@@ -48,6 +55,7 @@ Currently, the chat application uses a static favicon that doesn't adapt to diff
 - Maintain existing favicon during theme loading
 
 ### Out of Scope
+
 - Multiple favicon formats (ico, svg) - only PNG initially
 - Animated favicons
 - Badge/notification indicators on favicon
@@ -85,21 +93,25 @@ Currently, the chat application uses a static favicon that doesn't adapt to diff
 ## Alternatives Considered
 
 ### 1. Static Favicon Only (Current State)
+
 **Pros**: Simple, no code changes needed
 **Cons**: No branding flexibility, poor multi-tenant support
 **Decision**: Rejected - doesn't meet branding requirements
 
 ### 2. Build-Time Favicon Configuration
+
 **Pros**: Simple implementation, no runtime overhead
 **Cons**: Requires rebuild for different themes, not suitable for multi-tenant
 **Decision**: Rejected - not flexible enough
 
 ### 3. Multiple Favicon Formats (ICO, SVG, PNG)
+
 **Pros**: Better browser compatibility, vector scaling for SVG
 **Cons**: More complex implementation, larger payload
 **Decision**: Deferred - Start with PNG, add formats as needed
 
 ### 4. Server-Side Favicon Generation
+
 **Pros**: Can generate from theme colors automatically
 **Cons**: Server complexity, caching challenges, latency
 **Decision**: Rejected - Simpler to use pre-made images
@@ -112,13 +124,13 @@ Currently, the chat application uses a static favicon that doesn't adapt to diff
 
 ## Risks and Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|-----------|
-| Favicon load failure breaks UX | Low | Medium | Fallback to default favicon, error handling |
-| CORS issues loading favicon | Medium | High | Ensure proper CORS headers on favicon CDN |
-| Slow favicon loading | Low | Low | Load asynchronously, don't block render |
-| Theme without favicon field | High | Low | Graceful fallback to default, backward compatible |
-| Browser caching issues | Medium | Medium | Use cache-busting query params when theme changes |
+| Risk                           | Likelihood | Impact | Mitigation                                        |
+| ------------------------------ | ---------- | ------ | ------------------------------------------------- |
+| Favicon load failure breaks UX | Low        | Medium | Fallback to default favicon, error handling       |
+| CORS issues loading favicon    | Medium     | High   | Ensure proper CORS headers on favicon CDN         |
+| Slow favicon loading           | Low        | Low    | Load asynchronously, don't block render           |
+| Theme without favicon field    | High       | Low    | Graceful fallback to default, backward compatible |
+| Browser caching issues         | Medium     | Medium | Use cache-busting query params when theme changes |
 
 ## Timeline Estimate
 

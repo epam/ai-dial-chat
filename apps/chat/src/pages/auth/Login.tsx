@@ -1,11 +1,12 @@
-import { ProviderInfo } from '@epam/chat-shared';
+import type { ProviderInfoDto } from '@epam/chat-api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
-import { ApiEndpoints, get } from '../../server-api/base';
+import { getProviders } from '../../server-api/auth.api';
 
+// TODO: change styles, add app logo, etc.
 const LoginPage = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -14,12 +15,12 @@ const LoginPage = () => {
   useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
-  const [providers, setProviders] = useState<ProviderInfo[] | null>(null);
+  const [providers, setProviders] = useState<ProviderInfoDto[] | null>(null);
   const [error, setError] = useState(false);
 
   const loadProviders = useCallback(async (signal: { cancelled: boolean }) => {
     try {
-      const data = await get<ProviderInfo[]>(ApiEndpoints.AUTH_PROVIDERS);
+      const data = await getProviders();
       if (!signal.cancelled) setProviders(data);
     } catch (err) {
       if (!signal.cancelled) {

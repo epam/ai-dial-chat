@@ -27,10 +27,6 @@ export class EnvironmentVariables {
   @IsUrl({ require_tld: false })
   DIAL_CORE_URL!: string;
 
-  @IsNotEmpty()
-  @IsString()
-  DIAL_API_KEY!: string;
-
   @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;

@@ -2,28 +2,10 @@
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
     "placeholder": "Type a new prompt or use '/' to select one",
-    "demoResponse": "This is a demo response. Connect to your API to get real responses.",
-    "user": "User",
-    "assistant": "Assistant"
-  },
-  "accessibility": {
-    "skipToContent": "Skip to main content",
-    "conversationMessages": "Conversation messages",
-    "messageInput": "Message input",
-    "welcomeScreen": "Welcome screen",
-    "userMessage": "User message",
-    "assistantMessage": "Assistant message",
-    "assistantTyping": "Assistant is typing",
-    "scrollToBottom": "Scroll to bottom of conversation",
-    "copyMessage": "Copy message",
-    "copyUserMessage": "Copy user message",
-    "copyAssistantMessage": "Copy assistant message",
-    "logoLoading": "Logo loading"
-  },
-  "actions": {
-    "copy": "Copy",
-    "send": "Send",
-    "loading": "Loading..."
+    "streamError": "Something went wrong while generating the response.",
+    "deleteMessageTitle": "Confirm deleting message?",
+    "deleteMessageDescription": "Are you sure that you want to delete the message?",
+    "starterConfirmTitle": "Confirm action"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
@@ -32,7 +14,32 @@
   },
   "catalog": {
     "ariaLabel": "Catalog",
-    "comingSoon": "Catalog coming soon"
+    "comingSoon": "Catalog coming soon",
+    "loading": "Loading catalog…",
+    "error": "Failed to load catalog. Please try again.",
+    "empty": "No models or applications available.",
+    "type": {
+      "model": "Model",
+      "application": "Application"
+    },
+    "selector": {
+      "ariaLabel": "Select model",
+      "loading": "Loading models…",
+      "error": "Failed to load models",
+      "empty": "No models available"
+    }
+  },
+  "actions": {
+    "add": "Add",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "regenerate": "Regenerate",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "like": "Like",
+    "dislike": "Dislike"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -41,6 +48,11 @@
     "tryAgain": "Try again",
     "failedToLoadTheme": "Failed to load themes. Using default theme.",
     "failedToLoadLogo": "Failed to load logo"
+  },
+  "conversationInput": {
+    "attach": { "label": "Attach file" },
+    "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
+    "attachmentTray": { "label": "Attached files" }
   },
   "auth": {
     "signOut": "Sign out",

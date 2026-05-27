@@ -7,6 +7,7 @@ The implementation is complete on branch `feat/input`. This document records the
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Provide a standalone, composable `Input` primitive in `libs/conversation-input`
 - Support runtime theming via `colors` and `typography` props mapped to CSS custom variables
 - Keep internal message state inside the component; expose `onSend` / `onChange` callbacks for the caller
@@ -14,6 +15,7 @@ The implementation is complete on branch `feat/input`. This document records the
 - Enter submits; Shift+Enter inserts a newline
 
 **Non-Goals:**
+
 - Replacing or modifying `ConversationInput`
 - Adding welcome-text rendering to `Input`
 - Connecting `Input` to any React Context or global state
@@ -49,7 +51,7 @@ Layout (flex, gap, padding, rounded, border) uses Tailwind utility classes. Visu
 
 **Why:** Consistent with `openspec/lib-styling-guide.md` — Tailwind handles structure, SCSS handles dynamic variable-driven visuals.
 
-### 5. `mergeClasses` (from `@epam/chat-shared`) for class composition
+### 5. `mergeClasses` (from `@epam/ai-dial-chat-shared`) for class composition
 
 Used instead of `clsx` because `mergeClasses` is already the shared utility in this library.
 

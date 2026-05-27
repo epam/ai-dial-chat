@@ -1,4 +1,4 @@
-import { UserProfile } from '@epam/chat-shared';
+import { UserProfile } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   ReactNode,
@@ -8,13 +8,8 @@ import {
   useMemo,
   useState,
 } from 'react';
-import {
-  ApiEndpoints,
-  get,
-  onUnauthorized,
-  setCsrfToken,
-  UnauthorizedError,
-} from '../../server-api/base';
+import { getMe } from '../../server-api/auth.api';
+import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -34,9 +29,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const bootstrap = useCallback(async (signal: { cancelled: boolean }) => {
     setStatus('loading');
     try {
-      const profile = await get<UserProfile>(ApiEndpoints.AUTH_ME, {
-        responseHandler: (res) => setCsrfToken(res.headers.get('x-csrf-token')),
-      });
+      const profile = await getMe();
       if (!signal.cancelled) {
         setUser(profile);
         setStatus('authenticated');

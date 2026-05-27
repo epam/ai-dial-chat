@@ -17,7 +17,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 1.6.c A `401` response causes `request()` to throw an instance of `UnauthorizedError` whose `status === 401` and whose `url` matches the call.
   - 1.6.d A `500` response throws a plain `Error` (not `UnauthorizedError`).
   - 1.6.e Listeners registered via `onUnauthorized` are invoked exactly once per `401` and not at all for non-401 errors; the cleanup callback unregisters the listener.
-- [x] 1.7 Verify the slice in isolation: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 1.7 Verify the slice in isolation: `npm exec nx test chat` and `npm exec nx lint chat`.
 
 ## 2. Slice 2 — UserContext provider and useUser hook
 
@@ -33,7 +33,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - Wrap the context value in `useMemo`.
   - Register a single `onUnauthorized` listener inside `useEffect` that calls `reset()`; return the cleanup callback.
 - [x] 2.2 Export `useUser(): UserContextType` from the same file; throw `Error('useUser must be used within a UserProvider')` when the context is `undefined`.
-- [x] 2.3 Import `UserProfile` from `@epam/chat-shared` — do not redefine it locally.
+- [x] 2.3 Import `UserProfile` from `@epam/ai-dial-chat-shared` — do not redefine it locally.
 - [x] 2.4 In `apps/chat/src/main.tsx`, wrap the existing `<ThemeProvider>` with `<UserProvider>` so the tree becomes `<BrowserRouter><UserProvider><ThemeProvider>…</ThemeProvider></UserProvider></BrowserRouter>`. Do **not** add `<Routes>` yet (that lands in slice 3).
 - [x] 2.5 Add `apps/chat/src/context/auth/UserContext.spec.tsx` with Vitest + `@testing-library/react`. Use role/label/text queries only. Cover:
   - 2.5.a 200 path → `status` transitions to `'authenticated'` and `user` equals the mocked profile.
@@ -43,7 +43,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 2.5.e `refresh()` re-runs the fetch and updates state on a previously failed bootstrap.
   - 2.5.f `useUser()` outside `<UserProvider>` throws a descriptive `Error`.
   - 2.5.g A `401` from any subsequent call (simulated by manually firing a registered `onUnauthorized` listener) resets the context.
-- [x] 2.6 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 2.6 Verify the slice: `npm exec nx test chat` and `npm exec nx lint chat`.
 
 ## 3. Slice 3 — i18n keys batch
 
@@ -56,7 +56,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - `auth.providerButtonLabel`: "Sign in with {{provider}}"
   - `auth.providersError`: "Could not load identity providers. Please retry."
   - `auth.userMenuLabel`: "User menu"
-- [x] 3.2 Run `pnpm nx lint chat` to confirm no ESLint key-format rule is violated.
+- [x] 3.2 Run `npm exec nx lint chat` to confirm no ESLint key-format rule is violated.
 
 ## 4. Slice 4 — useAuthRedirect hook and <RequireAuth> gate with routing
 
@@ -75,7 +75,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
 - [x] 4.3 Update `apps/chat/src/main.tsx` to add a `<Routes>` block inside `<ThemeProvider>`:
   - `<Route path="/login" element={<LoginPage />} />` (lazy import added in slice 5; for now use a temporary placeholder component or skip this route until slice 5).
   - `<Route path="*" element={<RequireAuth><App /></RequireAuth>} />`.
-  Wrap the routes in `<Suspense fallback={null}>` consistent with the existing lazy-loading pattern.
+    Wrap the routes in `<Suspense fallback={null}>` consistent with the existing lazy-loading pattern.
 - [x] 4.4 Add a `ProviderInfo` type to `libs/chat-shared/src/models/auth.ts`: `export interface ProviderInfo { id: string; label: string }`. Re-export it from `libs/chat-shared/src/index.ts` if such a barrel exists; otherwise leave the named export at the file level.
 - [x] 4.5 Add `apps/chat/src/hooks/auth/useAuthRedirect.spec.tsx`. Cover:
   - 4.5.a Mocked `window.location.assign` is called once with the correct login URL and encoded `callbackUrl` when one provider, `status='unauthenticated'`, and pathname is not `/login`.
@@ -88,7 +88,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 4.6.a Renders `null` when `status='loading'`.
   - 4.6.b Renders `null` when `status='unauthenticated'` (and `useAuthRedirect` is invoked — assert via a spy on its module export, or by asserting the side-effect from 4.5.a).
   - 4.6.c Renders children (resolved by role/text) when `status='authenticated'`.
-- [x] 4.7 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 4.7 Verify the slice: `npm exec nx test chat` and `npm exec nx lint chat`.
 
 ## 5. Slice 5 — LoginPage route
 
@@ -107,7 +107,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 5.3.c Failed providers fetch renders the `auth.providersError` text and logs an error.
   - 5.3.d Anchors are real `<a>` elements (assert `anchor.tagName === 'A'`) — guards against the regression "someone replaced with `<Link>`".
   - 5.3.e Direct visits to `/login` without `callbackUrl` use `window.location.origin + '/'` as the default callback URL.
-- [x] 5.4 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 5.4 Verify the slice: `npm exec nx test chat` and `npm exec nx lint chat`.
 
 ## 6. Slice 6 — UserMenu widget in Header
 
@@ -127,15 +127,15 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 6.3.e The submit button is resolvable by `getByRole('button', { name: /sign out/i })`.
   - 6.3.f No assertion uses `data-testid`.
 - [x] 6.4 Update `apps/chat/src/components/Header/tests/Header.spec.tsx` minimally: add a single test verifying the `<UserMenu />` mount point exists when `<UserProvider>` is mocked with an authenticated user. Existing logo assertions stay intact.
-- [x] 6.5 Verify the slice: `pnpm nx test chat` and `pnpm nx lint chat`.
+- [x] 6.5 Verify the slice: `npm exec nx test chat` and `npm exec nx lint chat`.
 
 ## 7. Final cross-slice verification
 
-- [x] 7.1 Run `pnpm nx test chat` and confirm green.
-- [x] 7.2 Run `pnpm nx lint chat` and confirm green.
-- [x] 7.3 Run `pnpm nx build chat` to confirm the bundle builds (validates the new lazy chunk for `LoginPage`).
-- [x] 7.4 Run `pnpm nx affected --target=lint --base=origin/development` from the workspace root to catch any cross-project regressions in `libs/chat-shared` (the only shared lib touched, via the new `ProviderInfo` type).
-- [x] 7.5 Run `pnpm nx affected --target=test --base=origin/development` from the workspace root.
+- [x] 7.1 Run `npm exec nx test chat` and confirm green.
+- [x] 7.2 Run `npm exec nx lint chat` and confirm green.
+- [x] 7.3 Run `npm exec nx build chat` to confirm the bundle builds (validates the new lazy chunk for `LoginPage`).
+- [x] 7.4 Run `npm exec nx affected --target=lint --base=origin/development` from the workspace root to catch any cross-project regressions in `libs/chat-shared` (the only shared lib touched, via the new `ProviderInfo` type).
+- [x] 7.5 Run `npm exec nx affected --target=test --base=origin/development` from the workspace root.
 - [x] 7.6 Open `apps/chat-api/AGENTS.md` and confirm that no rule in §1–§13 is violated by this change (sanity check — this change touches `apps/chat` only, but `libs/chat-shared` is shared with the API).
 
 ## 8. Out-of-scope notes (record only, no implementation here)

@@ -50,13 +50,14 @@ Rules:
 - When a source folder would contain more than one spec, keep those specs in a
   local `tests/` subfolder instead of mixing multiple test files with
   implementation files.
-- Shared types live in `libs/chat-shared` and are imported as `@epam/chat-shared`. Do not
+- Shared types live in `libs/chat-shared` and are imported as `@epam/ai-dial-chat-shared`. Do not
   duplicate them in the app.
 
 Reference files (read these before adding new code):
 
 - Controller pattern → `apps/chat-api/src/themes/theme.controller.ts`
 - Service pattern → `apps/chat-api/src/themes/theme.service.ts`
+- DIAL SDK client pattern → `apps/chat-api/src/app/app.service.ts`
 - DTO pattern → `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`
 - Env validation → `apps/chat-api/src/config/environment.config.ts` + `validation.ts`
 - Health check → `apps/chat-api/src/health/health.controller.ts`
@@ -84,10 +85,10 @@ either breaks all versioned routes.
 
 ### Versioning scope
 
-| Controller type | Must be versioned? | Example route |
-|---|---|---|
-| Business domain (themes, auth, chat, …) | **Yes** | `GET /api/v1/themes` |
-| Infrastructure (health, metrics, readiness) | No — exempt | `GET /api/health` |
+| Controller type                             | Must be versioned? | Example route        |
+| ------------------------------------------- | ------------------ | -------------------- |
+| Business domain (themes, auth, chat, …)     | **Yes**            | `GET /api/v1/themes` |
+| Infrastructure (health, metrics, readiness) | No — exempt        | `GET /api/health`    |
 
 Infrastructure endpoints exist for ops tooling (load balancers, Kubernetes probes, Prometheus
 scrapers) and MUST NOT carry a version prefix.
@@ -151,6 +152,16 @@ Controllers MUST:
 - Annotate every endpoint with `@ApiOperation({ summary, description })` and **every
   possible response status** as a separate `@ApiResponse({ status, description, schema? })`
   (200/201, plus each thrown HTTP exception → 400/404/502/503/...).
+- Treat generated client names as public API: `operationIdFactory` uses the controller
+  handler name, so handlers MUST be named as the desired SDK method (`listModels`,
+  `getCurrentUser`, `createConversation`). Use `@ApiOperation({ operationId })` only for
+  exceptional overrides.
+- For every JSON success response, `@ApiResponse` MUST include `type` or `schema`.
+  Do not leave success responses as description-only annotations; that generates
+  `void`/`any` client methods.
+- For every path/query parameter, use a DTO with Swagger metadata or explicit
+  `@ApiParam`/`@ApiQuery` metadata. Parameters without Swagger types generate weak
+  client request types.
 - Apply `@Throttle({ default: { limit, ttl } })` per endpoint when the global throttler
   default (100 req/min) needs tightening. Public unauthenticated endpoints SHOULD have
   a stricter per-route limit.
@@ -163,21 +174,24 @@ Good (follow `ThemeController`):
 
 ```ts
 @ApiTags('themes')
-@Controller({ path: 'themes', version: '1' })   // ✅ versioned: GET /api/v1/themes
+@Controller({ path: 'themes', version: '1' }) // ✅ versioned: GET /api/v1/themes
 export class ThemeController {
   constructor(private readonly themeService: ThemeService) {}
 
   @Get('icon')
   @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({ summary: 'Get theme icon', description: '...' })
-  @ApiResponse({ status: 200, description: 'Icon content', /* schema */ })
+  @ApiResponse({ status: 200, description: 'Icon content' /* schema */ })
   @ApiResponse({ status: 400, description: 'Invalid icon name' })
   @ApiResponse({ status: 404, description: 'Icon not found' })
   @ApiResponse({ status: 502, description: 'Upstream error' })
   @ApiResponse({ status: 503, description: 'Upstream unavailable' })
   async getThemeIcon(@Query() query: GetThemeIconDto, @Res() res: Response) {
     const file = await this.themeService.getThemeIcon(query.iconName ?? '');
-    res.setHeader('Content-Type', lookup(query.iconName ?? '') || 'image/svg+xml');
+    res.setHeader(
+      'Content-Type',
+      lookup(query.iconName ?? '') || 'image/svg+xml',
+    );
     return res.send(file);
   }
 }
@@ -186,7 +200,7 @@ export class ThemeController {
 Bad:
 
 ```ts
-@Controller('themes')                            // ❌ missing version → /api/themes
+@Controller('themes') // ❌ missing version → /api/themes
 export class BadController {
   @Get('icon')
   async icon(@Query('name') name: string) {
@@ -215,15 +229,23 @@ Services MUST:
   ```
 
   Never cast with `as string`; rely on the validated env schema.
-- For outbound HTTP, use `fetch` with an `AbortController` and the configurable timeout
-  env var (e.g. `THEMES_SERVICE_TIMEOUT_MS`). Always `clearTimeout` in both branches.
+
+- For DIAL Core integrations, prefer `@epam/ai-dial-typescript-sdk` through the shared
+  SDK client on `AppService` (`createSDK({ baseUrl })`). Pass per-request auth headers
+  from the BFF session for user-scoped data, and handle the SDK's success/error response
+  shape explicitly.
+- Use raw `fetch` only for non-DIAL upstreams or when the SDK does not expose the required
+  DIAL operation. In those cases, use an `AbortController` and the configurable timeout
+  env var (e.g. `THEMES_SERVICE_TIMEOUT_MS`). Always `clearTimeout` in both branches and
+  document why the SDK is not used.
 - Translate failures into proper Nest HTTP exceptions (see §6). Never return `null`,
   `undefined`, or a swallowed error from a service method.
 - Cache repeatable external lookups via `@Inject(CACHE_MANAGER) cacheManager: Cache`
   (`@nestjs/cache-manager`). Cache key naming: `<domain>:<resource>[:<param>]`
   (e.g. `themes:config`, `themes:icon:<name>`).
 
-Follow `ThemeService` as the reference for fetch + timeout + cache + error mapping.
+Follow `AppService` as the reference for DIAL SDK client setup. Follow `ThemeService` only
+for non-DIAL fetch + timeout + cache + error mapping.
 
 Bad:
 
@@ -246,15 +268,17 @@ Every endpoint that accepts user input MUST use a DTO class with:
 
 - `class-validator` decorators on each field (`@IsString`, `@IsEnum`, `@IsUrl`, `@IsInt`,
   `@Min`, `@Max`, …).
-- `@ApiProperty({ description, example })` on each field so Swagger documents it.
+- `@ApiProperty({ description, example })` or `@ApiPropertyOptional(...)` on each field so
+  Swagger documents it and the generated client gets strong request types.
 - For string fields that may end up in a filesystem path, URL segment, header, log line,
   cookie name, etc. — apply `@Matches(<allowlist regex>, { message })`. Reject everything
   not on the allowlist (anti path-traversal, anti-injection). See `GetThemeIconDto`.
 - Optional fields use `@IsOptional()` + a default in the calling code, not optional
   chaining everywhere.
 
-DTOs live in `<domain>/dto/<action>.dto.ts`. Do **not** inline anonymous types in
-controllers — they break Swagger and validation.
+DTOs live in `<domain>/dto/<action>.dto.ts`. Response DTOs that exist only to document
+proxied upstream shapes may live in `src/openapi/`. Do **not** inline anonymous types or
+use TypeScript interfaces in controllers — they break Swagger runtime metadata.
 
 Global `ValidationPipe` is already configured in `main.ts` with `whitelist`,
 `forbidNonWhitelisted`, `transform`. Do not remove these flags; they are the reason
@@ -266,15 +290,15 @@ unknown fields and wrong types are rejected automatically.
 
 Map failure modes to NestJS built-in exceptions:
 
-| Situation | Throw |
-|---|---|
-| Resource not found (404 from upstream) | `NotFoundException` |
-| Validation failure (handled by `ValidationPipe`) | — automatic `BadRequestException` |
-| Upstream returned non-OK status | `BadGatewayException` |
-| Upstream timed out / unreachable | `ServiceUnavailableException` |
-| Caller is unauthenticated | `UnauthorizedException` |
-| Caller is authenticated but lacks permission | `ForbiddenException` |
-| Programming error / unexpected branch | `InternalServerErrorException` (log first) |
+| Situation                                        | Throw                                      |
+| ------------------------------------------------ | ------------------------------------------ |
+| Resource not found (404 from upstream)           | `NotFoundException`                        |
+| Validation failure (handled by `ValidationPipe`) | — automatic `BadRequestException`          |
+| Upstream returned non-OK status                  | `BadGatewayException`                      |
+| Upstream timed out / unreachable                 | `ServiceUnavailableException`              |
+| Caller is unauthenticated                        | `UnauthorizedException`                    |
+| Caller is authenticated but lacks permission     | `ForbiddenException`                       |
+| Programming error / unexpected branch            | `InternalServerErrorException` (log first) |
 
 Rules:
 
@@ -300,7 +324,7 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
   `apps/chat-api/src/config/environment.config.ts`.
 - Each field has at least one `class-validator` decorator. URL fields use
   `@IsUrl({ require_tld: false })`. Numeric fields use `@Transform(({ value }) =>
-  parseInt(value, 10))` + `@IsNumber()`.
+parseInt(value, 10))` + `@IsNumber()`.
 - `ConfigModule.forRoot({ isGlobal: true, validate, envFilePath: ['.env.local', '.env'] })`
   in `AppModule`. The app MUST fail fast at boot if env validation fails (already wired
   via `validation.ts`).
@@ -364,7 +388,7 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
   - Each thrown HTTP exception path (404 / 502 / 503 / …)
   - Security checks: path-traversal attempts, oversized inputs, missing required fields,
     rate-limit (one hit beyond `@Throttle` limit).
-- Mock `fetch` (or any outbound client) — never hit live services in unit tests.
+- Mock SDK methods, `fetch`, or any other outbound client — never hit live services in unit tests.
 - Test names describe observable behaviour ("returns 404 when icon is missing"), not
   implementation details ("calls fetch with url").
 
@@ -375,10 +399,23 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
 Per repo rule `incremental-implementation`, after each slice run:
 
 ```sh
-pnpm nx test  chat-api
-pnpm nx lint  chat-api
-pnpm nx build chat-api      # when bundling/Nest startup is affected
+npm exec nx test  chat-api
+npm exec nx lint  chat-api
+npm exec nx build chat-api      # when bundling/Nest startup is affected
 ```
+
+When adding or changing HTTP endpoints, also run:
+
+```sh
+npm run openapi
+npm run openapi:check
+npm exec nx build chat-api-client -- --skip-nx-cache
+npm exec nx lint chat-api-client
+```
+
+Inspect `libs/chat-api-client/src/generated/src/apis` after generation: method names should
+be clean (`getModel`, not `ModelsController_getModel_v1`) and endpoint-level `any` should
+not appear outside the generator's `runtime.ts`.
 
 Do not move to the next slice while any of these is red for the project you touched.
 
@@ -394,9 +431,14 @@ Do not move to the next slice while any of these is red for the project you touc
 - Inlining anonymous types in controllers instead of DTO classes.
 - Returning `null` / `undefined` from a service to signal failure.
 - `console.log` instead of `Logger`.
+- Raw `fetch` for DIAL Core endpoints when `@epam/ai-dial-typescript-sdk` supports the operation.
 - Reading `process.env` directly inside a service.
 - Casting env vars (`as string`) instead of typing through `EnvironmentVariables`.
 - Missing `@ApiResponse` entries for thrown exceptions.
+- Description-only success `@ApiResponse` entries that generate `void`/`any` SDK methods.
+- Handler names like `handle`, `me`, or `doThing` that become unclear generated SDK method
+  names.
+- Path/query params without DTO Swagger metadata or `@ApiParam`/`@ApiQuery`.
 - Catching errors with no logging and no re-throw.
 - `origin: '*'` CORS when cookies are in use.
 - Stashing tokens, secrets, or full request bodies in logs.

@@ -23,6 +23,8 @@ export interface SessionPayload {
   csrf: string;
   /** Filtered OIDC claims stored for the UI (allowlist only) */
   claims: Record<string, unknown>;
+  /** DIAL Core bucket assigned to this user — empty string means not yet resolved (will be lazily fetched on first authenticated request) */
+  bucket: string;
 }
 
 export interface SessionUser {
@@ -31,5 +33,6 @@ export interface SessionUser {
   providerId: string;
   claims: Record<string, unknown>;
   at: string;
+  bucket: string;
   csrf: string;
 }

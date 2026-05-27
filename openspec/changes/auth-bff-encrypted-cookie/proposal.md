@@ -13,12 +13,12 @@ The current implementation has no authentication. The two standard client-side a
 
 The chosen pattern — BFF + encrypted cookie — is the only option that satisfies all four constraints simultaneously:
 
-| Constraint | Why it matters |
-|---|---|
-| Tokens must not be readable by JavaScript | XSS mitigation; `HttpOnly` + AEAD encryption |
+| Constraint                                                    | Why it matters                                        |
+| ------------------------------------------------------------- | ----------------------------------------------------- |
+| Tokens must not be readable by JavaScript                     | XSS mitigation; `HttpOnly` + AEAD encryption          |
 | Multiple identity providers (Keycloak, Auth0, Okta, Entra ID) | OIDC is provider-neutral; registry pattern covers all |
-| No Redis or external session store | Full session lives inside the cookie as JWE |
-| IETF BCP 212 compliance | Authorization Code + PKCE, no implicit flow |
+| No Redis or external session store                            | Full session lives inside the cookie as JWE           |
+| IETF BCP 212 compliance                                       | Authorization Code + PKCE, no implicit flow           |
 
 ## Goals
 
@@ -95,14 +95,14 @@ Attributes: `HttpOnly`, `Secure` by default, `SameSite=Lax`, `Path=/`, `Max-Age=
 
 Following the `incremental-implementation` approach, work is split into five thin vertical slices:
 
-| Slice | Scope |
-|---|---|
-| 1 | Single provider (Keycloak), happy-path login + cookie + `/auth/me` |
-| 1a | Application `callbackUrl` support so the BFF returns users to the correct SPA origin/page after login |
-| 2 | Session guard on `/api/*` + transparent access-token refresh |
-| 3 | Logout (local cookie clear + federated `end_session_endpoint`) |
-| 4 | Second provider (Auth0) — validates registry abstraction |
-| 5 | CSRF hardening, key rotation with `kid`, CSP security headers audit |
+| Slice | Scope                                                                                                 |
+| ----- | ----------------------------------------------------------------------------------------------------- |
+| 1     | Single provider (Keycloak), happy-path login + cookie + `/auth/me`                                    |
+| 1a    | Application `callbackUrl` support so the BFF returns users to the correct SPA origin/page after login |
+| 2     | Session guard on `/api/*` + transparent access-token refresh                                          |
+| 3     | Logout (local cookie clear + federated `end_session_endpoint`)                                        |
+| 4     | Second provider (Auth0) — validates registry abstraction                                              |
+| 5     | CSRF hardening, key rotation with `kid`, CSP security headers audit                                   |
 
 ## Success Criteria
 

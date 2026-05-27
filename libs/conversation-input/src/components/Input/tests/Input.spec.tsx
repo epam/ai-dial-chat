@@ -1,11 +1,69 @@
-import { fireEvent, render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
+
+type MenuItems = Array<{
+  key: string;
+  label: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}>;
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
+    DialDropdown: ({
+      children,
+      menu,
+    }: {
+      children: React.ReactNode;
+      menu: { items?: MenuItems };
+    }) => (
+      <div>
+        {children}
+        {menu.items?.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.onClick}
+            disabled={item.disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    ),
+    DialDropdownIcon: ({
+      ariaLabel,
+      menu,
+    }: {
+      ariaLabel: string;
+      icon: React.ReactNode;
+      menu: { items?: MenuItems };
+    }) => (
+      <div>
+        <button type="button" aria-label={ariaLabel} />
+        {menu.items?.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.onClick}
+            disabled={item.disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    ),
+  };
+});
 
 describe('Input', () => {
   it('should hide send button when textarea is empty', () => {
-    const { container } = render(<Input />);
-    expect(container.querySelector('button')).toBeNull();
+    render(<Input />);
+    expect(screen.queryByLabelText('Send message')).toBeNull();
   });
 
   it('should show send button when user types non-whitespace text', () => {
@@ -22,12 +80,12 @@ describe('Input', () => {
     const textarea = container.querySelector('textarea');
     if (textarea) {
       fireEvent.change(textarea, { target: { value: '   ' } });
-      expect(container.querySelector('button')).toBeNull();
+      expect(screen.queryByLabelText('Send message')).toBeNull();
     }
   });
 
   it('should pre-populate textarea with initialMessage', () => {
-    const { container } = render(<Input initialMessage="Hello" />);
+    const { container } = render(<Input message="Hello" />);
     const textarea = container.querySelector('textarea');
     expect(textarea?.value).toBe('Hello');
   });
@@ -39,7 +97,7 @@ describe('Input', () => {
     if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Test message' } });
       fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
-      expect(handleSend).toHaveBeenCalledWith('Test message');
+      expect(handleSend).toHaveBeenCalledWith('Test message', []);
       expect(textarea.value).toBe('');
     }
   });
@@ -70,14 +128,12 @@ describe('Input', () => {
     const handleSend = vi.fn();
     const { container } = render(<Input onSend={handleSend} />);
     const textarea = container.querySelector('textarea');
-    const button = container.querySelector('button');
     if (textarea) {
       fireEvent.change(textarea, { target: { value: 'Click send' } });
     }
-    if (button) {
-      fireEvent.click(button);
-      expect(handleSend).toHaveBeenCalledWith('Click send');
-    }
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+    expect(handleSend).toHaveBeenCalledWith('Click send', []);
   });
 
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
@@ -125,5 +181,229 @@ describe('Input', () => {
     expect(
       container.querySelector('textarea')?.getAttribute('aria-label'),
     ).toBe('Message input');
+  });
+
+  it('should render the add menu button', () => {
+    render(<Input />);
+    expect(screen.getByLabelText('Add')).toBeTruthy();
+  });
+
+  it('should show an attachment card after a file is picked', () => {
+    render(<Input />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(screen.getByText('doc')).toBeTruthy();
+  });
+
+  it('should remove the card when the remove button is clicked', () => {
+    render(<Input />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
+    expect(screen.queryByText('doc')).toBeNull();
+  });
+
+  it('pendingDropFiles prop creates attachment cards and calls onDropFilesConsumed', () => {
+    const onDropFilesConsumed = vi.fn();
+    const file = new File(['content'], 'dropped.pdf', {
+      type: 'application/pdf',
+    });
+    const { rerender } = render(
+      <Input pendingDropFiles={[]} onDropFilesConsumed={onDropFilesConsumed} />,
+    );
+    rerender(
+      <Input
+        pendingDropFiles={[file]}
+        onDropFilesConsumed={onDropFilesConsumed}
+      />,
+    );
+    expect(screen.getByText('dropped')).toBeTruthy();
+    expect(onDropFilesConsumed).toHaveBeenCalled();
+  });
+
+  it('should call onAttachmentsChange when a file is added', () => {
+    const onAttachmentsChange = vi.fn();
+    render(<Input onAttachmentsChange={onAttachmentsChange} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(onAttachmentsChange).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
+    );
+  });
+});
+
+const mockItems = [
+  { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' as const },
+  { id: 'my-app', displayName: 'My App', type: 'application' as const },
+];
+
+describe('Input — model selector', () => {
+  it('renders DialDropdownIcon when deployments is non-empty', () => {
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText(/Select model/)).toBeTruthy();
+  });
+
+  it('trigger aria-label includes selected item displayName', () => {
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ ariaLabel: 'Model' }}
+      />,
+    );
+    expect(screen.getByLabelText('Model: GPT-4o')).toBeTruthy();
+  });
+
+  it('clicking a menu item calls onDeploymentChange with the item id', () => {
+    const onDeploymentChange = vi.fn();
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={onDeploymentChange}
+      />,
+    );
+    fireEvent.click(screen.getByText('My App'));
+    expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
+  });
+
+  it('shows loading label as disabled item when deployments is empty', () => {
+    render(
+      <Input
+        deployments={[]}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ loading: 'Loading models…' }}
+      />,
+    );
+    const loadingItem = screen.getByText('Loading models…');
+    expect(loadingItem).toBeTruthy();
+    expect((loadingItem as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('shows error label as disabled item when deployments is empty', () => {
+    render(
+      <Input
+        deployments={[]}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ error: 'Failed to load models' }}
+      />,
+    );
+    const errorItem = screen.getByText('Failed to load models');
+    expect(errorItem).toBeTruthy();
+    expect((errorItem as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('disables send button when deployments is defined and selectedDeploymentId is null', () => {
+    const { container } = render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+    }
+    const sendButton = screen.getByLabelText(
+      'Send message',
+    ) as HTMLButtonElement;
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it('does not fire onSend on Enter when selectedDeploymentId is null', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input
+        onSend={handleSend}
+        deployments={mockItems}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('does not render selector when deployments is undefined', () => {
+    render(<Input />);
+    expect(screen.queryByLabelText(/Select model/)).toBeNull();
+  });
+});
+
+describe('Input — pasted attachment expand', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const pasteText = (textarea: Element, text: string) => {
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => text,
+      },
+    });
+  };
+
+  it('clicking a pasted card appends its text to the textarea and removes the card', async () => {
+    const { container } = render(<Input pasteTextThreshold={5} />);
+    const text = 'This is long enough to become a pasted attachment';
+
+    pasteText(container.querySelector('textarea')!, text);
+
+    const card = screen.getByText(text).closest('[role="button"]')!;
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(container.querySelector('textarea')?.value).toBe(text);
+    });
+    expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
+
+  it('clicking a pasted card appends with newline when textarea already has text', async () => {
+    const { container } = render(
+      <Input pasteTextThreshold={5} message="existing" />,
+    );
+    const text = 'This is long enough to become a pasted attachment';
+
+    pasteText(container.querySelector('textarea')!, text);
+
+    const card = screen.getByText(text).closest('[role="button"]')!;
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(container.querySelector('textarea')?.value).toBe(
+        `existing\n${text}`,
+      );
+    });
   });
 });

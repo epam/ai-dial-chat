@@ -1,20 +1,24 @@
-import { join } from 'path';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
+import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { HealthController } from '../health/health.controller';
+import { ModelsModule } from '../models/models.module';
+import { RateModule } from '../rate/rate.module';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { createServeStaticOptions } from './static-assets';
 
 @Module({
   imports: [
@@ -35,12 +39,13 @@ import { AppService } from './app.service';
         limit: 100, // 100 requests per minute
       },
     ]),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', '..', 'dist', 'apps', 'chat'),
-      exclude: ['/api{/*splat}'],
-    }),
+    ServeStaticModule.forRoot(createServeStaticOptions()),
+    ApplicationsModule,
     DeploymentsModule,
+    ModelsModule,
     ChatModule,
+    ConversationModule,
+    RateModule,
   ],
   controllers: [AppController, ThemeController, HealthController],
   providers: [

@@ -6,11 +6,12 @@ Reference implementation: `libs/conversation-input`
 
 Libs must work in any project — with or without this app's theme. The styling split is:
 
-| What | Where |
-|---|---|
-| Layout, spacing, border-radius | Tailwind classes in JSX |
-| Colors, typography (themed) | CSS custom properties in `.module.scss` |
-| User overrides | `colors` / `typography` props → inline CSS vars |
+| What                           | Where                                           |
+| ------------------------------ | ----------------------------------------------- |
+| Layout, spacing, border-radius | Tailwind classes in JSX                         |
+| Colors, typography (themed)    | CSS custom properties in `.module.scss`         |
+| User overrides                 | `colors` / `typography` props → inline CSS vars |
+| Dynamic computed values        | Inline `style` prop (only when no Tailwind class exists for the value) |
 
 ---
 
@@ -24,7 +25,7 @@ Every themeable value uses a three-tier fallback chain defined **once** in the S
 // 1. User override via prop  → --ci-bg (set inline by component)
 // 2. App theme variable      → --bg-layer-2
 // 3. Hard fallback hex       → #161B2D
-background: var(--ci-bg, var(--bg-layer-2, #161B2D));
+background: var(--ci-bg, var(--bg-layer-2, #161b2d));
 ```
 
 Hex fallbacks live **only** in `.module.scss`. Never duplicate them in TypeScript.
@@ -45,11 +46,13 @@ conversation-messages → --cm-*
 `.module.scss` contains **only** CSS custom property references — no layout, no spacing, no border-radius.
 
 Allowed in SCSS:
+
 - Color and typography via `var()`
 - Pseudo-elements: `::placeholder`, `::selection`
 - State selectors that change colors: `&:focus-within`, `&:disabled`
 
 Not allowed in SCSS (use Tailwind instead):
+
 - `display`, `flex`, `gap`, `padding`, `margin`
 - `border-radius`, `width`, `height`
 - `cursor`, `opacity`, `resize`, `outline`
@@ -59,19 +62,19 @@ Not allowed in SCSS (use Tailwind instead):
 ```scss
 // ✅ correct — only CSS vars
 .wrapper {
-  background: var(--ci-bg, var(--bg-layer-2, #161B2D));
-  border-color: var(--ci-border, var(--stroke-primary, #696E7C));
+  background: var(--ci-bg, var(--bg-layer-2, #161b2d));
+  border-color: var(--ci-border, var(--stroke-primary, #696e7c));
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus, #EEF1F7));
+    border-color: var(--ci-border-focus, var(--stroke-focus, #eef1f7));
   }
 }
 
 .textarea {
-  color: var(--ci-text, var(--text-primary, #EEF1F7));
+  color: var(--ci-text, var(--text-primary, #eef1f7));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #9FA6BD));
+    color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
   }
 }
 
@@ -123,17 +126,18 @@ src/
 
 ### Component applies props as inline CSS vars
 
-In the component, **only set a variable if the user passed a value**. No hex values in TypeScript:
+In the component, use `buildCssVars` from `@epam/ai-dial-chat-shared` to convert the props to a `CSSProperties` object. It omits entries whose value is `undefined` or `''`, so pass `undefined` explicitly when a var should be skipped. No hex values in TypeScript:
 
 ```tsx
-const cssVars = {
-  ...(colors?.background && { '--ci-bg': colors.background }),
-  ...(colors?.text &&       { '--ci-text': colors.text }),
-  // font class takes priority — skip individual vars
-  ...(!typography?.fontClassName && typography?.fontSize && {
-    '--ci-font-size': typography.fontSize,
-  }),
-} as React.CSSProperties;
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+
+const noCustomClass = !typography?.fontClassName;
+const cssVars = buildCssVars({
+  '--ci-bg': colors?.background,
+  '--ci-text': colors?.text,
+  // font class takes priority — skip individual typography vars when fontClassName is set
+  '--ci-font-size': noCustomClass ? typography?.fontSize : undefined,
+});
 
 return <div style={cssVars} className={mergeClasses(styles.wrapper, 'flex w-full ...', className)}>
 ```
@@ -150,10 +154,10 @@ Apply it alongside the SCSS class. The SCSS class handles color; the font class 
 
 ## Class merging
 
-Use `mergeClasses` from `@epam/chat-shared` (wraps `classnames`):
+Use `mergeClasses` from `@epam/ai-dial-chat-shared` (wraps `classnames`):
 
 ```tsx
-import { mergeClasses } from '@epam/chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 
 className={mergeClasses(styles.wrapper, 'flex w-full gap-2', className)}
 ```
@@ -165,11 +169,11 @@ className={mergeClasses(styles.wrapper, 'flex w-full gap-2', className)}
 ### With this app's theme (CSS vars already defined)
 
 ```tsx
-import { ConversationInput } from '@epam/conversation-input';
-import '@epam/conversation-input/styles.css';
+import { ConversationInput } from '@epam/ai-dial-conversation-input';
+import '@epam/ai-dial-conversation-input/styles.css';
 
 // Theme CSS vars resolve automatically — no extra config needed
-<ConversationInput onSend={handleSend} />
+<ConversationInput onSend={handleSend} />;
 ```
 
 ### Without this app's theme (external project)

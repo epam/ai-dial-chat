@@ -24,13 +24,21 @@ export default defineConfig(() => ({
   plugins: [react(), svgr()],
   resolve: {
     alias: {
-      '@epam/conversation-input': path.resolve(
+      '@epam/ai-dial-chat-shared': path.resolve(
+        __dirname,
+        '../../libs/chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-conversation-input': path.resolve(
         __dirname,
         '../../libs/conversation-input/src/index.ts',
       ),
-      '@epam/conversation-messages': path.resolve(
+      '@epam/ai-dial-conversation-messages': path.resolve(
         __dirname,
         '../../libs/conversation-messages/src/index.ts',
+      ),
+      '@epam/chat-api-client': path.resolve(
+        __dirname,
+        '../../libs/chat-api-client/src/index.ts',
       ),
     },
   },

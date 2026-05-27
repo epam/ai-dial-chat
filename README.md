@@ -60,7 +60,7 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 ## Prerequisites
 
 - **Node.js**: 24 or higher
-- **npm**: v9 or higher (or pnpm)
+- **npm**: v9 or higher
 - **Git**: Latest version
 
 ## Quick Start
@@ -146,8 +146,7 @@ ai-dial-chat/
 │       └── README.md            # Backend docs
 │
 ├── libs/
-│   ├── conversation-input/      # Chat input component library
-│   └── conversation-panel/      # Chat panel component library
+│   └── conversation-input/      # Chat input component library
 │
 ├── .claude/                     # Claude Code configuration
 ├── nx.json                      # Nx configuration

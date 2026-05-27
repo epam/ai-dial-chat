@@ -76,7 +76,8 @@ const Navigation: FC = () => {
     >
       <div className="flex flex-col items-center gap-1 pt-2">
         {NAVIGATION_CONFIG.map(({ path, icon: Icon, labelKey }) => {
-          const isActive = path === '/' ? pathname === '/' : pathname.startsWith(path);
+          const isActive =
+            path === '/' ? pathname === '/' : pathname.startsWith(path);
           return (
             <DialGhostIconButton
               key={path}
@@ -97,6 +98,7 @@ export default memo(Navigation);
 ```
 
 Key decisions:
+
 - `DialGhostIconButton` from ui-kit — matches design system ghost icon button style.
 - `useLocation` + `useNavigate` instead of `NavLink` — avoids invalid `<button>` inside `<a>` HTML.
 - Active route detected with exact match on `/` and `startsWith` for all other paths.
@@ -105,6 +107,7 @@ Key decisions:
 ### `apps/chat/src/app/app.tsx`
 
 Two changes:
+
 1. Outer `flex-col` → `flex-row` so `Navigation` is a sidebar.
 2. Wrap content area in `<Routes>` with two lazy-loaded routes.
 
@@ -212,8 +215,8 @@ Add the corresponding strings to `apps/chat/src/i18n/locales/en.json`:
 Use the scoped enum in each file — never raw string literals:
 
 ```tsx
-t(NavigationI18nKeys.Home)
-t(CatalogI18nKeys.ComingSoon)
+t(NavigationI18nKeys.Home);
+t(CatalogI18nKeys.ComingSoon);
 ```
 
 ## Accessibility

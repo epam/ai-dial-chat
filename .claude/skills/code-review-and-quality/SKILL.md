@@ -1,6 +1,7 @@
 ---
 name: code-review-and-quality
 description: Five-axis code review before merge. Use for quality passes after implementation, before merge, and when asked to review a diff.
+context: fork
 ---
 
 # Code review and quality
@@ -17,6 +18,38 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 - After implementation (self-review or cross-review)
 - After bugfixes (review fix **and** regression coverage)
 - When evaluating code produced by another agent or author
+
+## Review modes
+
+Choose the review mode from the user's request and available context:
+
+| Mode                | Use when                            | Required context                                                                |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
+| **Local review**    | Reviewing uncommitted local changes | `git status`, `git diff`, full changed files, related OpenSpec artifacts if any |
+| **PR review**       | Reviewing a GitHub PR number or URL | PR metadata, PR diff, full changed files at PR head, related OpenSpec artifacts |
+| **Self-review**     | Finishing an implementation slice   | Touched files, completed task, tests run, remaining task status                 |
+| **OpenSpec review** | Reviewing an OpenSpec-backed change | `proposal.md`, `design.md`, `tasks.md`, changed specs, implementation diff      |
+
+For PR review, read full changed files, not only diff hunks. Diffs show what changed; full files show whether the change fits the surrounding design.
+
+## OpenSpec review gate
+
+If the change is tied to OpenSpec, review the artifacts before judging the code:
+
+1. Identify the change from the branch, PR description, user request, or `openspec list --json`.
+2. Read the relevant artifacts under `openspec/changes/<change>/`:
+   - `proposal.md` for problem, scope, non-goals
+   - `design.md` for architecture and local patterns
+   - `tasks.md` for promised implementation and verification
+   - changed specs under `specs/**/spec.md` when present
+3. Check the diff against the artifacts:
+   - Implementation matches the accepted scope and does not add silent scope creep.
+   - Completed task checkboxes correspond to real code and tests.
+   - New requirements discovered during implementation are captured in specs/design/tasks, not only in code.
+   - Non-goals are still respected.
+4. If implementation reveals a design/spec gap, request an artifact update before or alongside code changes.
+
+Block merge for OpenSpec-backed work when code behavior materially diverges from the artifacts, when tasks are marked complete without implementation, or when API/user-facing requirements were implemented without updating the relevant spec/design/task.
 
 ## Five-axis review
 
@@ -54,13 +87,43 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 - UI: avoidable re-renders, huge props, sync work on hot paths
 - Only flag with **measurable or clear scaling** reasoning when possible
 
+## Repo-specific routing
+
+Use the repository skills and rules as the source of truth before applying generic advice:
+
+| Change area                            | Read / apply                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| Workspace structure, project ownership | `openspec/config.yaml`, `AGENTS.md`, `.agents/skills/nx-workspace/SKILL.md`       |
+| Multi-file implementation or refactor  | `.claude/skills/incremental-implementation/SKILL.md`                              |
+| HTTP API contract or generated client  | `.agents/skills/api-design/SKILL.md`                                              |
+| `apps/chat-api/**`                     | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`           |
+| `libs/*` React components              | `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules from `AGENTS.md` |
+| UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives  |
+| CI status or self-healing fixes        | `.agents/skills/monitor-ci/SKILL.md`; do not replace it with ad hoc polling       |
+
+Do not import generic standards that conflict with these repo rules. For example, do not require a new REST response envelope, direct frontend REST helpers, raw HTML controls, or a generic project structure when local conventions say otherwise.
+
+## Code quality standards
+
+Use these as cross-cutting checks after applying repo-specific rules:
+
+- Prefer clear, specific names over generic `data`, `result`, `temp`, `item` when the domain is known.
+- Keep control flow shallow with early returns or extracted helpers when nesting hides the main path.
+- Avoid functions that mix validation, IO, transformation, and presentation unless the surrounding pattern already does so.
+- Avoid magic numbers; name domain thresholds, debounce delays, limits, and TTLs.
+- Avoid mutation of shared state. Local mutation is acceptable only when contained, intentional, and clearer or measurably faster.
+- Comments should explain why a choice exists, not restate what the code does.
+- No `console.log` in application code; use the app's logging pattern.
+- No TODO/FIXME in merge-ready code unless linked to an accepted follow-up and non-blocking by design.
+- Tests should assert observable behavior and meaningful edge/error paths, not implementation details.
+
 ## Change sizing
 
-| Size (approx.) | Expectation |
-| --- | --- |
-| ~100 lines | Good — one focused review |
-| ~300 lines | OK if **one** logical change + tests |
-| ~1000+ lines | Too large — ask to split (stack, vertical slices, or refactor vs feature) |
+| Size (approx.) | Expectation                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| ~100 lines     | Good — one focused review                                                 |
+| ~300 lines     | OK if **one** logical change + tests                                      |
+| ~1000+ lines   | Too large — ask to split (stack, vertical slices, or refactor vs feature) |
 
 **Never mix** large refactor with new behavior in one changeset unless team explicitly allows.
 
@@ -68,28 +131,59 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 
 Use a prefix so authors know what is mandatory:
 
-| Label | Meaning |
-| --- | --- |
-| *(none)* or **Required:** | Must fix before merge |
-| **Critical:** | Blocks merge — security, data loss, broken contract |
-| **Nit:** | Optional — style, minor preference |
-| **Optional:** / **Consider:** | Worth discussing, not blocking |
-| **FYI:** | Context only |
+| Label                         | Meaning                                             |
+| ----------------------------- | --------------------------------------------------- |
+| _(none)_ or **Required:**     | Must fix before merge                               |
+| **Critical:**                 | Blocks merge — security, data loss, broken contract |
+| **Nit:**                      | Optional — style, minor preference                  |
+| **Optional:** / **Consider:** | Worth discussing, not blocking                      |
+| **FYI:**                      | Context only                                        |
 
 ## Review process
 
 1. **Context** — What does this change do? Which spec/task? Expected behavior?
-2. **Tests first** — Coverage, names, edge cases, behavioral (not brittle implementation) assertions
-3. **Implementation** — Walk files with the five axes
-4. **Findings** — Every item labeled with severity above
-5. **Verification story** — What was run, what still needs a human check (UI screenshots if relevant)
+2. **OpenSpec gate** — If applicable, read artifacts and compare implementation to proposal/design/tasks/specs
+3. **Tests first** — Coverage, names, edge cases, behavioral (not brittle implementation) assertions
+4. **Implementation** — Walk files with the five axes
+5. **Findings** — Every item labeled with severity above
+6. **Verification story** — What was run, what still needs a human check (UI screenshots if relevant)
+7. **Verdict** — Approve, comment, request changes, or block
 
 ## This workspace (Nx)
 
 When checking "tests / build / lint":
 
-- Prefer `npx nx test <project>`, `npx nx lint <project>`, `npx nx build <project>` for touched projects (see `AGENTS.md`).
-- For broad checks: `npm run lint`, or `npm run lint:affected` / `npx nx affected` when a git baseline exists.
+- Prefer `npx nx test <project>`, `npx nx lint <project>`, `npx nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
+- For broad checks, use affected targets with the repository base branch: `npx nx affected --target=<target> --base=origin/development`.
+- Do not use `origin/main` as the affected base in this workspace.
+- When unsure which project owns a path, use `npx nx show projects` or `npx nx show project <name> --json`.
+
+## Validation matrix
+
+Select the smallest validation set that proves the change:
+
+| Change type                | Expected validation                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Frontend component / hook  | `npx nx test chat`, `npx nx lint chat`; build if route/bundling/shared imports changed                                        |
+| Backend `apps/chat-api/**` | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed             |
+| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
+| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                   |
+| Broad cross-project change | `npx nx affected --target=lint --base=origin/development` and affected test/build targets as appropriate                      |
+| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                        |
+
+Record skipped checks with a reason. A review without a verification story is incomplete.
+
+## Decision policy
+
+Use a clear verdict:
+
+| Verdict             | Use when                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| **Approve**         | No blocking issues; relevant verification is green or CI covers it                          |
+| **Approve/comment** | Only optional or low-risk improvements remain                                               |
+| **Request changes** | Required issues, failing relevant checks, missing tests for risky behavior, OpenSpec drift  |
+| **Block**           | Security issue, data loss risk, broken public contract, secrets exposure, invalid auth flow |
+| **Comment only**    | Draft PR, exploratory review, or user explicitly asked for non-blocking feedback            |
 
 ## Commit / PR description
 
@@ -105,44 +199,55 @@ Use as a literal template when writing a review:
 ## Review: [title]
 
 ### Context
+
 - [ ] I understand intent and expected behavior
+- [ ] I read related OpenSpec artifacts, or confirmed none apply
 
 ### Correctness
+
 - [ ] Matches spec/task
 - [ ] Edge and error paths
 - [ ] Tests adequate and meaningful
 
 ### Readability
+
 - [ ] Clear names and flow
 - [ ] No unnecessary complexity
 
 ### Architecture
+
 - [ ] Fits monorepo boundaries and patterns
 - [ ] Coupling and abstraction level appropriate
+- [ ] API/generated-client/OpenSpec contract rules followed when relevant
 
 ### Security
+
 - [ ] No secrets; boundaries validated; auth as needed
 - [ ] New deps justified
 
 ### Performance
+
 - [ ] No obvious N+1 / unbounded work / UI hot-path issues
 
 ### Verification
+
 - [ ] Relevant Nx targets (or CI) green
+- [ ] OpenAPI/generated-client checks run when API contracts changed
 - [ ] Manual / visual check noted if UI
 
 ### Verdict
+
 - [ ] Approve | [ ] Request changes (list blocking items)
 ```
 
 ## Rationalizations to reject
 
-| Excuse | Response |
-| --- | --- |
-| "It works, ship it" | Readability, security, and architecture debt still compound. |
-| "I wrote it, it's fine" | Second pass catches blind spots. |
-| "We'll clean up later" | Cleanup before merge unless true emergency + tracked follow-up. |
-| "Tests pass, so it's good" | Tests don't replace architecture or security review. |
+| Excuse                     | Response                                                        |
+| -------------------------- | --------------------------------------------------------------- |
+| "It works, ship it"        | Readability, security, and architecture debt still compound.    |
+| "I wrote it, it's fine"    | Second pass catches blind spots.                                |
+| "We'll clean up later"     | Cleanup before merge unless true emergency + tracked follow-up. |
+| "Tests pass, so it's good" | Tests don't replace architecture or security review.            |
 
 ## Red flags
 
@@ -157,4 +262,5 @@ Use as a literal template when writing a review:
 
 - [ ] All **Critical** / **Required** items closed or explicitly deferred with reason
 - [ ] Tests and build (for touched scope) are green
+- [ ] OpenSpec tasks/specs/design reflect the implementation state
 - [ ] Verdict and severity-labeled notes are clear for the author

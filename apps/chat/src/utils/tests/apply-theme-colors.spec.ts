@@ -1,4 +1,4 @@
-import { Theme } from '@epam/chat-shared';
+import { Theme } from '@epam/ai-dial-chat-shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { applyThemeColors } from '../apply-theme-colors';
 import * as localStorage from '../local-storage';
