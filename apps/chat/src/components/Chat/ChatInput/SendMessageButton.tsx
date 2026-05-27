@@ -66,11 +66,11 @@ export const SendMessageButton = Inversify.register(
     const rightClass =
       canRecordAudio && !isLastMessageError && !microphoneButtonHidden
         ? isOverlay
-          ? 'right-10'
-          : 'right-11'
+          ? 'end-10'
+          : 'end-11'
         : isOverlay
-          ? 'right-3'
-          : 'right-4';
+          ? 'end-3'
+          : 'end-4';
 
     if (
       isLastMessageError ||
