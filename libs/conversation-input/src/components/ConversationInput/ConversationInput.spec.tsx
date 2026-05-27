@@ -162,7 +162,7 @@ describe('ConversationInput — attachments', () => {
       },
     });
 
-    expect(screen.getByText('Screenshot')).toBeTruthy();
+    expect(container.querySelector('img[src="blob:mock"]')).toBeTruthy();
   });
 
   it('pasting long text creates a pasted attachment card', () => {
