@@ -37,7 +37,7 @@ export class ModelsService extends AppService {
     }
 
     try {
-      const result = await this.client.getApplications({
+      const result = await this.client.getModels({
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
@@ -69,7 +69,7 @@ export class ModelsService extends AppService {
     }
 
     try {
-      const result = await this.client.getApplication(modelName, {
+      const result = await this.client.getModel(modelName, {
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
