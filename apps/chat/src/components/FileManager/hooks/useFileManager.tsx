@@ -362,7 +362,7 @@ export const useFileManager = ({
         return uiFile;
       }),
     ],
-    [searchResults, activeTab],
+    [searchResults, activeTab, t],
   );
 
   const filteredTabs = useMemo(() => {
@@ -537,7 +537,7 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, reviewBucket, currentPath]);
+  }, [files, folders, activeTab, reviewBucket, currentPath, t]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
