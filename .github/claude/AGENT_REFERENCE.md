@@ -130,15 +130,18 @@ in the manifest:
 ```yaml
 tools:
   extra:
-    - openspec
+    - "@fission-ai/openspec"   # scoped packages: quote the leading @
     - some-other-cli
 ```
 
 Each entry is treated as a global npm package name. The runner does
-`npm install -g <name>` for each before invoking the agent, so the binary
-is available on `$PATH` to any `Bash(<name>:*)` tool call the agent
-makes. Agents that don't declare `tools.extra` pay zero install cost
-(the step is conditional on the field being non-empty).
+`npm install -g <name>` for each before invoking the agent, so the
+binary the package ships — e.g., `@fission-ai/openspec` ships the
+`openspec` binary — is available on `$PATH` to any `Bash(<name>:*)`
+tool call the agent makes. **Quote scoped packages** (anything starting
+with `@`) — YAML treats `@` at the start of a scalar as special.
+Agents that don't declare `tools.extra` pay zero install cost (the
+step is conditional on the field being non-empty).
 
 Coverage today: **npm packages only**. For non-npm tooling (apt
 packages, curl-installed binaries, Docker images), extend the schema —

@@ -7,7 +7,7 @@ triggers: [pull_request]
 allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(openspec:*),Skill"
 tools:
   extra:
-    - openspec   # global npm install before agent invocation; see AGENT_REFERENCE.md → CLI dependencies
+    - "@fission-ai/openspec"   # scoped npm package (quote due to leading @); provides the `openspec` binary on PATH. See AGENT_REFERENCE.md → CLI dependencies
 model: claude-sonnet-4-6
 phase: pilot
 cost_class: light
