@@ -1,4 +1,8 @@
-## ADDED Requirements
+# conversation-input-attachments Specification
+
+## Purpose
+
+Specifies all attachment entry points for the conversation input: file picker via add menu, drag-and-drop from the OS, clipboard paste (images and long text), and the attachment tray UI that manages pending attachments before send.
 
 ---
 
@@ -202,3 +206,179 @@ After `onSend` resolves successfully, the `Input` component SHALL clear the inte
 
 - **WHEN** the send fails (e.g. `onSend` rejects or `attachmentsToDtos` throws)
 - **THEN** the attachment list is unchanged so the user can retry
+
+---
+
+### Requirement: Drop zone on ConversationInput
+
+The `ConversationInput` component SHALL act as a drag-and-drop target for OS files. While one or more files are dragged over the component, a full-cover overlay SHALL be rendered over the `Input` area (excluding the welcome heading and outer padding) with a 1 px dashed border in `--stroke-accent-primary`, a semi-transparent `--bg-blackout` background, label text in `--text-secondary` using `dial-tiny-text`, sourced from the `dropLabel` prop (default `"Drop files here"`). Dropping the files SHALL add them to the attachment list using the same pipeline as the file picker.
+
+#### Scenario: Drag enter shows overlay
+
+- **WHEN** the user drags one or more files over the `ConversationInput` area
+- **THEN** the drop-zone overlay becomes visible
+
+#### Scenario: Drag leave hides overlay
+
+- **WHEN** the user drags files out of the `ConversationInput` area without dropping
+- **THEN** the drop-zone overlay is hidden
+
+#### Scenario: Overlay does not block child interaction during normal use
+
+- **WHEN** no drag is in progress
+- **THEN** the overlay is not rendered and all child elements are fully interactive
+
+#### Scenario: Drop adds files as attachments
+
+- **WHEN** the user drops one or more files onto the `ConversationInput`
+- **THEN** each file is converted to an `Attachment` and added to the tray, and the overlay is hidden
+
+#### Scenario: Drop of image file creates image attachment
+
+- **WHEN** the user drops an image file (MIME type starting with `image/`)
+- **THEN** an `Attachment` with `type: AttachmentType.Image` and a valid `previewUrl` is added
+
+#### Scenario: Drop of non-image file creates file attachment
+
+- **WHEN** the user drops a non-image file (e.g. `.pdf`)
+- **THEN** an `Attachment` with `type: AttachmentType.File` and no `previewUrl` is added
+
+#### Scenario: Drop of multiple files adds all
+
+- **WHEN** the user drops three files simultaneously
+- **THEN** all three attachments are added to the tray
+
+#### Scenario: `onAttachmentsChange` fired after drop
+
+- **WHEN** files are dropped and converted to attachments
+- **THEN** `onAttachmentsChange` is called with the full updated attachment list
+
+#### Scenario: Non-file drag items are ignored
+
+- **WHEN** the user drags text or a browser element (no `files` in `dataTransfer`) over the component and releases
+- **THEN** no attachments are added and the drop-zone overlay is not shown
+
+#### Scenario: Overlay is scoped to the Input area only
+
+- **WHEN** the drag-over overlay is shown
+- **THEN** it covers only the `Input` component area and does not extend over the welcome heading or outer padding
+
+#### Scenario: `dropLabel` prop customises overlay text
+
+- **WHEN** `dropLabel="Drag files here to attach"` is passed
+- **THEN** the overlay displays that string
+
+---
+
+### Requirement: `dropLabel` prop on `ConversationInput`
+
+`ConversationInput` SHALL accept an optional `dropLabel?: string` prop (default `"Drop files here"`) that supplies the text shown inside the drag-over overlay.
+
+#### Scenario: Default label rendered
+
+- **WHEN** `dropLabel` is not provided
+- **THEN** the overlay shows `"Drop files here"`
+
+#### Scenario: Custom label rendered
+
+- **WHEN** `dropLabel="Release to attach"` is provided
+- **THEN** the overlay shows `"Release to attach"`
+
+---
+
+### Requirement: Paste image from clipboard as attachment
+
+The `Input` component SHALL intercept `paste` events that contain image data (e.g. a screenshot copied to the clipboard). Each image item in `ClipboardEvent.clipboardData.items` with a MIME type starting with `image/` SHALL be converted to an `AttachmentType.Image` attachment. The paste event SHALL be prevented from inserting content into the textarea.
+
+#### Scenario: Pasting a screenshot creates an image attachment
+
+- **WHEN** the user presses Ctrl+V (or Cmd+V) while the input has focus and the clipboard contains an image
+- **THEN** an `Attachment` with `type: AttachmentType.Image`, a synthetic filename `"Screenshot.png"`, and a valid `previewUrl` is added to the tray
+
+#### Scenario: Pasted image does not insert text into textarea
+
+- **WHEN** the clipboard contains an image and the user pastes
+- **THEN** the textarea content is unchanged
+
+#### Scenario: `onAttachmentsChange` fired after image paste
+
+- **WHEN** a clipboard image is pasted
+- **THEN** `onAttachmentsChange` is called with the updated attachment list
+
+#### Scenario: Null clipboardData degrades silently
+
+- **WHEN** `ClipboardEvent.clipboardData` is `null` (e.g. sandboxed iframe)
+- **THEN** the paste event proceeds normally with no attachment created and no error thrown
+
+---
+
+### Requirement: Paste long text as a Pasted attachment
+
+The `Input` component SHALL intercept `paste` events containing plain text whose length exceeds `pasteTextThreshold`. When the threshold is exceeded, the pasted text SHALL be wrapped in a synthetic `File` (`type: 'text/plain'`) and added as an `AttachmentType.Pasted` attachment with a preview name showing the first 80 characters of the text (trimmed, with `…` appended if truncated). The paste event SHALL be prevented from inserting the text into the textarea.
+
+#### Scenario: Short text paste inserts inline
+
+- **WHEN** the user pastes text whose length is less than or equal to `pasteTextThreshold`
+- **THEN** the text is inserted into the textarea normally and no attachment is created
+
+#### Scenario: Long text paste creates Pasted attachment
+
+- **WHEN** the user pastes text whose length exceeds `pasteTextThreshold`
+- **THEN** an `Attachment` with `type: AttachmentType.Pasted` and `contentType: "text/plain"` is added to the tray
+
+#### Scenario: Preview name shows first 80 chars with ellipsis
+
+- **WHEN** the pasted text is longer than 80 characters
+- **THEN** the attachment name is the first 80 characters of the trimmed text followed by `…`
+
+#### Scenario: Long text does not insert into textarea
+
+- **WHEN** the pasted text exceeds the threshold
+- **THEN** the textarea content is unchanged after the paste
+
+#### Scenario: `onAttachmentsChange` fired after long text paste
+
+- **WHEN** a long-text paste creates an attachment
+- **THEN** `onAttachmentsChange` is called with the updated attachment list
+
+#### Scenario: Default threshold is 2000 characters
+
+- **WHEN** `pasteTextThreshold` is not provided and the pasted text is exactly 2001 characters
+- **THEN** it is treated as an attachment, not inline text
+
+---
+
+### Requirement: `pasteTextThreshold` prop on `ConversationInput` and `Input`
+
+Both `ConversationInput` and `Input` SHALL accept an optional `pasteTextThreshold?: number` prop (default `2000`) that controls the character count above which a pasted plain-text string is converted into an `AttachmentType.Pasted` attachment. `ConversationInput` SHALL forward this value to `Input`.
+
+#### Scenario: Prop forwarded from ConversationInput to Input
+
+- **WHEN** `pasteTextThreshold={1000}` is set on `ConversationInput`
+- **THEN** `Input` uses 1000 as the threshold for paste handling
+
+---
+
+### Requirement: Pasted attachment expand
+
+Clicking or keyboard-activating a card of `type: AttachmentType.Pasted` SHALL read the file content and append it as plain text into the textarea (separated by a newline if the textarea already contains text), then remove the card from the tray.
+
+#### Scenario: Click expands pasted card into textarea
+
+- **WHEN** the user clicks a pasted attachment card
+- **THEN** the card's text is appended to the textarea and the card is removed
+
+#### Scenario: Expand appends with newline when textarea has content
+
+- **WHEN** the textarea already contains text and the user expands a pasted card
+- **THEN** the text is appended with a `\n` separator
+
+#### Scenario: Enter or Space activates expand
+
+- **WHEN** a pasted card has focus and the user presses Enter or Space
+- **THEN** the same expand behaviour fires
+
+#### Scenario: Remove button does not trigger expand
+
+- **WHEN** the user clicks the remove button on a pasted card
+- **THEN** only the card is removed; no text is inserted into the textarea

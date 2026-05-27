@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -7,7 +7,13 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
-import { type CSSProperties, type FC, useMemo } from 'react';
+import {
+  type CSSProperties,
+  type FC,
+  type KeyboardEvent,
+  type MouseEvent,
+  useMemo,
+} from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
 import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
@@ -17,6 +23,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   attachment,
   onRemove,
   onRetry,
+  onExpand,
   selected,
   alwaysShowActions,
   removeLabel = 'Remove attachment',
@@ -27,9 +34,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   className,
 }) => {
   const { id, name } = attachment;
-  const nameWithoutExtension = useMemo(() => {
-    return getNameWithoutExtension(name);
-  }, [name]);
+  const isPasted = attachment.type === AttachmentType.Pasted;
+  const isExpandable = isPasted && onExpand !== undefined;
+
+  const displayName = useMemo(() => {
+    return isPasted ? name : getNameWithoutExtension(name);
+  }, [isPasted, name]);
 
   const cssVars = {
     ...(colors?.border && { '--ci-card-border': colors.border }),
@@ -57,6 +67,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     [attachment, selected, alwaysShowActions],
   );
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (isExpandable && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onExpand(id);
+    }
+  };
+
   return (
     <div
       style={cssVars}
@@ -65,8 +82,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         roundedClassName,
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
+        isExpandable && 'cursor-pointer',
         className,
       )}
+      onClick={isExpandable ? () => onExpand(id) : undefined}
+      onKeyDown={isExpandable ? handleKeyDown : undefined}
+      tabIndex={isExpandable ? 0 : undefined}
+      role={isExpandable ? 'button' : undefined}
     >
       {isImage ? (
         <img
@@ -88,7 +110,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.name,
               )}
             >
-              {nameWithoutExtension}
+              {displayName}
             </span>
           </div>
 
@@ -145,7 +167,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.actionBtn,
               )}
               aria-label={retryLabel}
-              onClick={() => onRetry(id)}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                onRetry(id);
+              }}
             />
           )}
           {onRemove && (
@@ -154,7 +179,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               size={ElementSize.Small}
               className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
               aria-label={removeLabel}
-              onClick={() => onRemove(id)}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                onRemove?.(id);
+              }}
             />
           )}
         </div>
