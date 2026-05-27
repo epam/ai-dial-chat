@@ -108,10 +108,13 @@ jobs:
           EOF
 
       - name: Install agent-declared CLI tools
-        # Iterates `tools.extra` from the manifest. Strings → npm install -g.
-        # Objects with .install → run as shell. Failure here exits early
-        # before Claude is invoked — loud failure, not silent. Agents without
-        # extra deps pay zero install cost (step skipped when array is empty).
+        # Iterates `tools.extra` from the manifest. Three shapes:
+        #   - "pkg"                                          → npm install -g pkg
+        #   - {name: "pkg", version: "1.2.3"}                → npm install -g pkg@1.2.3
+        #   - {name: "x", version?: ..., install: "...{{version}}..."} → shell, with
+        #     {{version}} substituted from the sibling version field
+        # Failure exits early before Claude is invoked — loud failure, not silent.
+        # Agents without extra deps pay zero install cost (step skipped when array is empty).
         if: steps.manifest.outputs.tools_extra_json != '[]' && steps.manifest.outputs.tools_extra_json != ''
         env:
           EXTRA_JSON: ${{ steps.manifest.outputs.tools_extra_json }}
@@ -125,16 +128,27 @@ jobs:
                   print(f"::group::npm install -g {entry}")
                   subprocess.run(["npm", "install", "-g", entry], check=True)
                   print("::endgroup::")
-              elif isinstance(entry, dict) and "install" in entry:
-                  name = entry.get("name", "<unnamed>")
-                  cmd = entry["install"]
-                  print(f"::group::install {name}")
+                  continue
+              if not isinstance(entry, dict) or "name" not in entry:
+                  sys.stderr.write(f"::error::Invalid tools.extra entry shape: {entry!r}\n")
+                  sys.exit(1)
+              name = entry["name"]
+              version = entry.get("version")
+              install = entry.get("install")
+              if install:
+                  # Shell form. Substitute {{version}} placeholder (empty when no version).
+                  cmd = install.replace("{{version}}", version or "")
+                  label = f"{name}" + (f" v{version}" if version else "")
+                  print(f"::group::install {label}")
                   print(f"+ {cmd}")
                   subprocess.run(cmd, shell=True, check=True)
                   print("::endgroup::")
               else:
-                  sys.stderr.write(f"::error::Invalid tools.extra entry shape: {entry!r}\n")
-                  sys.exit(1)
+                  # npm form, optionally pinned via @-syntax.
+                  pkg = f"{name}@{version}" if version else name
+                  print(f"::group::npm install -g {pkg}")
+                  subprocess.run(["npm", "install", "-g", pkg], check=True)
+                  print("::endgroup::")
           PY
 
       - id: stage

@@ -60,7 +60,12 @@ jobs:
   run-round-2:
     name: ${{ matrix.agent.name }}
     needs: [discover, run-round-1]
-    if: needs.discover.outputs.round2 != '[]'
+    # `always()` lets round-2 fire even when a different round-1 agent
+    # failed. Without it, GHA treats run-round-1 as failed-as-a-whole and
+    # skips round-2 entirely — blocking downstream agents whose specific
+    # `needs:` upstream DID succeed. We still gate on discover succeeding
+    # so the matrix is empty rather than malformed if the matcher failed.
+    if: always() && needs.discover.result == 'success' && needs.discover.outputs.round2 != '[]'
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +81,7 @@ jobs:
   run-round-3:
     name: ${{ matrix.agent.name }}
     needs: [discover, run-round-2]
-    if: needs.discover.outputs.round3 != '[]'
+    if: always() && needs.discover.result == 'success' && needs.discover.outputs.round3 != '[]'
     strategy:
       fail-fast: false
       matrix:

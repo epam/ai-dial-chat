@@ -134,20 +134,21 @@
         "mcp": { "type": "array", "items": { "type": "string" } },
         "extra": {
           "type": "array",
-          "description": "CLI tools to install on the runner before invocation. Items can be a string (npm package name) or an object {name, install} for non-npm tools.",
+          "description": "CLI tools to install on the runner before invocation. See AGENT_REFERENCE.md → CLI dependencies for the three valid shapes.",
           "items": {
             "oneOf": [
               {
                 "type": "string",
-                "description": "npm package name. Installed via `npm install -g <name>`."
+                "description": "npm package name; latest stable. Installed via `npm install -g <name>`. Use the object form to pin a version."
               },
               {
                 "type": "object",
-                "required": ["name", "install"],
+                "required": ["name"],
                 "additionalProperties": false,
                 "properties": {
-                  "name":    { "type": "string", "description": "Display name (used in logs)." },
-                  "install": { "type": "string", "description": "Shell command to install the tool." }
+                  "name":    { "type": "string", "description": "For npm: the package name. For shell: a display name used in logs." },
+                  "version": { "type": "string", "description": "For npm: appended as `@<version>` to the install command (default: latest stable). For shell: available as `{{version}}` placeholder inside `install`." },
+                  "install": { "type": "string", "description": "Shell command to install the tool. When present, overrides the npm path. May reference `{{version}}` for substitution from the sibling `version` field." }
                 }
               }
             ]

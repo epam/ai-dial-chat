@@ -125,37 +125,52 @@ Manifests are validated against [`schemas/agent-manifest.schema.json`](./schemas
 
 If your skill shells out to a CLI that the GitHub runner doesn't ship
 by default (e.g., `openspec`, `trivy`, `prettier`), declare it in the
-manifest. Two shapes:
+manifest. Three shapes, in order of complexity:
 
 ```yaml
 tools:
   extra:
-    # Short form: npm package name (installed via `npm install -g`).
-    # Quote scoped packages — YAML treats a leading `@` as special.
+    # 1. String — npm package, latest stable.
+    #    Quote scoped packages (YAML treats leading `@` as special).
     - "@fission-ai/openspec"
 
-    # Long form: name + arbitrary shell install command. Use for
-    # non-npm tools (Go binaries, apt packages, anything you'd
-    # install in a regular shell step).
+    # 2. Object with version — npm package, pinned to a specific version.
+    #    Equivalent to: npm install -g @fission-ai/openspec@1.3.1
+    - name: "@fission-ai/openspec"
+      version: "1.3.1"
+
+    # 3. Object with install — arbitrary shell command (non-npm tools).
+    #    `{{version}}` placeholder in `install` is substituted from
+    #    the sibling `version` field (or empty string if omitted).
     - name: trivy
-      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"
+      version: "0.69.0"
+      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v{{version}}"
 ```
 
-The runner iterates `tools.extra` before invoking the agent. Strings
-get `npm install -g <name>`; objects with `install` get their command
-shelled. Failure exits early — Claude isn't invoked if any dependency
-fails to install (loud, not silent). Agents without `tools.extra` pay
-zero install cost; the step is conditional on the array being
-non-empty.
+The runner iterates `tools.extra` before invoking the agent:
+
+- **String** or **`{name, version?}`** → `npm install -g <name>[@<version>]`
+- **`{name, version?, install}`** → shell-execute `install` after
+  substituting `{{version}}` with the sibling `version` value
+
+Failure exits early — Claude isn't invoked if any dependency fails to
+install (loud, not silent). Agents without `tools.extra` pay zero
+install cost; the step is conditional on the array being non-empty.
 
 After install, the binary the tool ships is on `$PATH` and any
-`Bash(<binary>:*)` tool call the agent makes will work. Examples in
-this repo:
+`Bash(<binary>:*)` tool call the agent makes will work.
+
+**Version pinning is recommended for reproducibility.** Bare strings
+and `{name}` without `version` resolve to the latest stable, which
+can silently change between runs. Pin the version unless you have a
+specific reason to track latest.
+
+Worked examples:
 
 - `agents/spec-validation/agent.yml` — short form
-  (`"@fission-ai/openspec"` → `openspec` binary).
-- `agents/scan-deps/agent.yml` — long form
-  (Trivy installed via the official curl-based installer).
+  (`"@fission-ai/openspec"`, latest)
+- `agents/scan-deps/agent.yml` — long form with version pin
+  (Trivy `v0.69.0` via the official curl-based installer)
 
 ### Tool tiers
 
