@@ -37,7 +37,6 @@
     "@nx/react": "22.7.2",
     "@nx/vite": "22.7.2",
     "@nx/vitest": "22.7.2",
-    "@nx/web": "22.7.2",
     "@nx/webpack": "22.7.2",
     "@openapitools/openapi-generator-cli": "^2.33.1",
     "@swc-node/register": "1.11.1",
