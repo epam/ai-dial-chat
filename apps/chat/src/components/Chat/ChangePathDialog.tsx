@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -45,7 +46,13 @@ import {
   type DialFileManagerActionsRef,
   DialFileManagerTabs,
   DialUploadFileItem,
+  FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
+import {
+  CellEditingStartedEvent,
+  CellEditingStoppedEvent,
+  GridApi,
+} from 'ag-grid-community';
 import uniqBy from 'lodash-es/uniqBy';
 
 const createTemporaryFolder = (folderPath: string): FolderInterface => {
@@ -105,6 +112,14 @@ export const ChangePathDialog = ({
   const [collapsedTree, setCollapsedTree] = useState(false);
   const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
   const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
+  const [gridApi, setGridApi] = useState<GridApi<FileManagerGridRow> | null>(
+    null,
+  );
+  const [newlyAddedFolderId, setNewlyAddedFolderId] = useState<string | null>(
+    null,
+  );
+
+  const [isGridEditing, setIsGridEditing] = useState(false);
   const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
 
   const filesFolders = useAppSelector(FilesSelectors.selectFolders);
@@ -158,6 +173,21 @@ export const ChangePathDialog = ({
     ],
   );
 
+  const actionLabelsOptions = useMemo<UseFileManagerActionLabelsOptions>(
+    () => ({
+      actionsByTab: {
+        my_files: [],
+        shared: [],
+        organization: [
+          DialFileManagerActions.Rename,
+          DialFileManagerActions.Delete,
+        ],
+        review: [],
+      },
+    }),
+    [],
+  );
+
   const {
     currentPath,
     setCurrentPath,
@@ -170,17 +200,7 @@ export const ChangePathDialog = ({
     handleRenameValidation,
   } = useFileManager({
     initialTab: DialFileManagerTabs.Organization,
-    actionLabelsOptions: {
-      actionsByTab: {
-        my_files: [],
-        shared: [],
-        organization: [
-          DialFileManagerActions.Rename,
-          DialFileManagerActions.Delete,
-        ],
-        review: [],
-      },
-    },
+    actionLabelsOptions,
     toolbarOptions: {
       tabs: [],
       showHiddenFilesToggle: false,
@@ -366,6 +386,24 @@ export const ChangePathDialog = ({
     }
   }, [dispatch, isOpen]);
 
+  useEffect(() => {
+    if (newlyAddedFolderId && gridApi) {
+      const timeoutId = setTimeout(() => {
+        let found = false;
+        gridApi.forEachNode((node) => {
+          if (node.data && node.data.id === newlyAddedFolderId) {
+            gridApi.ensureNodeVisible(node, 'middle');
+            found = true;
+          }
+        });
+        if (found) {
+          setNewlyAddedFolderId(null);
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [newlyAddedFolderId, gridApi, filesFolders]);
+
   const handleCreateOrganizationFolder = useCallback(
     (_file: DialUploadFileItem, folderPath: string, fileId: string) => {
       if (deduplicatedFileIdsRef.current.has(fileId)) return;
@@ -378,6 +416,7 @@ export const ChangePathDialog = ({
 
       addedTempFolderIdsRef.current.add(folderPath);
       dispatch(FilesActions.addFolders({ folders: [folder] }));
+      setNewlyAddedFolderId(folderPath);
     },
     [dispatch],
   );
@@ -392,6 +431,17 @@ export const ChangePathDialog = ({
     },
     [depth, handleRenameValidation, t],
   );
+
+  const frozenFileTreeItemsRef = useRef(fileTreeItems);
+  useEffect(() => {
+    if (!isGridEditing) {
+      frozenFileTreeItemsRef.current = fileTreeItems;
+    }
+  }, [fileTreeItems, isGridEditing]);
+
+  const itemsToRender = isGridEditing
+    ? frozenFileTreeItemsRef.current
+    : fileTreeItems;
 
   const handleClose = useCallback(() => onClose(false), [onClose]);
 
@@ -425,38 +475,58 @@ export const ChangePathDialog = ({
     () => ({
       ...gridOptions,
       showFiles: false,
+      additionalGridOptions: {
+        ...gridOptions.additionalGridOptions,
+        suppressRowVirtualisation: true,
+        onCellEditingStarted: (params: CellEditingStartedEvent) => {
+          setIsGridEditing(true);
+          if (params.api) {
+            setTimeout(() => {
+              params.api.ensureIndexVisible(params.rowIndex as number);
+            }, 0);
+          }
+          gridOptions.additionalGridOptions?.onCellEditingStarted?.(params);
+        },
+        onCellEditingStopped: (params: CellEditingStoppedEvent) => {
+          setIsGridEditing(false);
+          gridOptions.additionalGridOptions?.onCellEditingStopped?.(params);
+        },
+      },
     }),
     [gridOptions],
   );
 
   return (
-    <DialDestinationFolderPopup
-      className="min-h-[500px] min-w-[700px]"
-      open={isOpen}
-      onClose={handleClose}
-      onConfirm={handleConfirm}
-      mode="move"
-      moveLabel={t(CommonI18nKeys.SelectFolder)}
-      addFolderLabel={t(CommonI18nKeys.AddFolder)}
-      header={t(ChatI18nKeys.ChangePath)}
-      path={currentPath}
-      onFolderPopupPathChange={setCurrentPath}
-      items={fileTreeItems}
-      rootItem={rootFolder}
-      filesLoading={areFoldersLoading}
-      treeOptions={modalTreeOptions}
-      gridOptions={modalGridOptions}
-      navigationPanelOptions={navigationPanelOptions}
-      collapsedFileTree={collapsedTree}
-      allowedFileTypes={[]}
-      actionsRef={fileManagerActionRef}
-      onCreateFolder={handleCreateOrganizationFolder}
-      onMoveToFiles={handleOrganizationMoveFiles}
-      onCreateFolderValidate={handleCreateFolderValidate}
-      onRenameValidate={handleOrganizationRenameValidation}
-      onDeleteFiles={handleDeleteTempFolders}
-      uploadEnabled={false}
-      showHiddenFileSwitcher
-    />
+    <div>
+      <DialDestinationFolderPopup
+        className="min-h-[500px] min-w-[700px]"
+        open={isOpen}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
+        mode="move"
+        moveLabel={t(CommonI18nKeys.SelectFolder)}
+        addFolderLabel={t(CommonI18nKeys.AddFolder)}
+        header={t(ChatI18nKeys.ChangePath)}
+        path={currentPath}
+        onFolderPopupPathChange={setCurrentPath}
+        items={itemsToRender}
+        rootItem={rootFolder}
+        filesLoading={areFoldersLoading}
+        treeOptions={modalTreeOptions}
+        gridOptions={modalGridOptions}
+        navigationPanelOptions={navigationPanelOptions}
+        collapsedFileTree={collapsedTree}
+        allowedFileTypes={[]}
+        actionsRef={fileManagerActionRef}
+        onGridApiChange={setGridApi}
+        onCreateFolder={handleCreateOrganizationFolder}
+        onMoveToFiles={handleOrganizationMoveFiles}
+        onCreateFolderValidate={handleCreateFolderValidate}
+        onRenameValidate={handleOrganizationRenameValidation}
+        onDeleteFiles={handleDeleteTempFolders}
+        uploadEnabled={false}
+        showHiddenFileSwitcher
+      />
+    </div>
   );
 };
