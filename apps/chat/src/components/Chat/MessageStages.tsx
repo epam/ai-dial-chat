@@ -28,23 +28,25 @@ export const MessageStages = ({ stages }: Props) => {
         <MessageStage key={stage.index} stage={stage} />
       ))}
       {stages.length > NUMBER_OF_VISIBLE_STAGES && (
-        <DialButton
-          onClick={() => setShowMore(!showMore)}
-          className="mt-2 flex leading-[18px] text-accent-primary"
-          textClassName="font-normal"
-          data-qa={showMore ? 'show-less' : 'show-more'}
-          label={showMore ? 'Show less' : 'Show more'}
-          iconAfter={
-            <ChevronDown
-              height={18}
-              width={18}
-              className={classNames(
-                'shrink-0 transition',
-                showMore && 'rotate-180',
-              )}
-            />
-          }
-        />
+        <div>
+          <DialButton
+            onClick={() => setShowMore(!showMore)}
+            className="mt-2 flex leading-[18px] text-accent-primary"
+            textClassName="font-normal"
+            data-qa={showMore ? 'show-less' : 'show-more'}
+            label={showMore ? 'Show less' : 'Show more'}
+            iconAfter={
+              <ChevronDown
+                height={18}
+                width={18}
+                className={classNames(
+                  'shrink-0 transition',
+                  showMore && 'rotate-180',
+                )}
+              />
+            }
+          />
+        </div>
       )}
     </div>
   );

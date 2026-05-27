@@ -4,7 +4,10 @@ import { useFileManager } from '@/src/components/FileManager/hooks/useFileManage
 import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { updateMovedFolderId } from '@/src/utils/app/folders';
+import {
+  getFolderIdFromEntityId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
 import {
   getOrganizationPublishPathDepth,
   organizationFolderIdToPublishPathSuffix,
@@ -12,6 +15,7 @@ import {
   remapPublicFolderToFilesNamespace,
 } from '@/src/utils/app/publications';
 
+import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, UIActions } from '@/src/store/actions';
@@ -51,6 +55,42 @@ import {
 } from 'ag-grid-community';
 import uniqBy from 'lodash-es/uniqBy';
 
+const createTemporaryFolder = (folderPath: string): FolderInterface => {
+  const segments = folderPath.split('/');
+  return {
+    id: folderPath,
+    folderId: getFolderIdFromEntityId(folderPath),
+    name: segments[segments.length - 1],
+    type: FeatureType.File,
+    status: UploadStatus.LOADED,
+    temporary: true,
+    publishedWithMe: true,
+    permissions: [SharePermission.READ, SharePermission.WRITE],
+  };
+};
+
+const buildMissingFolderChain = (
+  targetPath: string,
+  rootId: string,
+  existingIds: Set<string>,
+): FolderInterface[] => {
+  if (targetPath === rootId || !targetPath.startsWith(`${rootId}/`)) return [];
+
+  const relativePath = targetPath.slice(rootId.length + 1);
+  const segments = relativePath.split('/');
+  const result: FolderInterface[] = [];
+  let currentPath = rootId;
+
+  for (const segment of segments) {
+    currentPath = `${currentPath}/${segment}`;
+    if (!existingIds.has(currentPath)) {
+      result.push(createTemporaryFolder(currentPath));
+    }
+  }
+
+  return result;
+};
+
 interface Props {
   isOpen: boolean;
   initiallySelectedFolderId?: string;
@@ -80,6 +120,7 @@ export const ChangePathDialog = ({
   );
 
   const [isGridEditing, setIsGridEditing] = useState(false);
+  const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
 
   const filesFolders = useAppSelector(FilesSelectors.selectFolders);
   const filesFoldersRef = useRef(filesFolders);
@@ -217,6 +258,8 @@ export const ChangePathDialog = ({
 
       if (!tempRootIds.length) return;
 
+      deduplicatedFileIdsRef.current.clear();
+
       [...addedTempFolderIdsRef.current]
         .filter((id) =>
           tempRootIds.some(
@@ -295,16 +338,51 @@ export const ChangePathDialog = ({
     initiallySelectedFolderId,
     onRenamePath,
   ]);
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    dispatch(FilesActions.getFoldersList({ paths: [undefined] }));
+
+    if (!resolvedInitialFolderId) return;
+
+    const rootId = publishToUrlToOrganizationFolderId(PUBLIC_URL_PREFIX);
+    const existingIds = new Set(filesFoldersRef.current.map((f) => f.id));
+    const missingFolders = buildMissingFolderChain(
+      resolvedInitialFolderId,
+      rootId,
+      existingIds,
+    );
+
+    if (missingFolders.length === 0) return;
+
+    for (const folder of missingFolders) {
+      addedTempFolderIdsRef.current.add(folder.id);
+    }
+    dispatch(FilesActions.addFolders({ folders: missingFolders }));
+  }, [dispatch, isOpen, resolvedInitialFolderId]);
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(FilesActions.getFoldersList({ paths: [undefined] }));
+      return;
     }
-  }, [dispatch, isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      dispatch(FilesActions.resetNewFolderId());
+    deduplicatedFileIdsRef.current.clear();
+    dispatch(FilesActions.resetNewFolderId());
+
+    if (addedTempFolderIdsRef.current.size > 0) {
+      const tempIds = addedTempFolderIdsRef.current;
+      dispatch(
+        FilesActions.setFolders({
+          folders: filesFoldersRef.current.filter(
+            (f) =>
+              !tempIds.has(f.id) &&
+              ![...tempIds].some((tempId) => f.id.startsWith(`${tempId}/`)),
+          ),
+        }),
+      );
+      addedTempFolderIdsRef.current.clear();
     }
   }, [dispatch, isOpen]);
 
@@ -327,29 +405,17 @@ export const ChangePathDialog = ({
   }, [newlyAddedFolderId, gridApi, filesFolders]);
 
   const handleCreateOrganizationFolder = useCallback(
-    (_file: DialUploadFileItem, folderPath: string) => {
-      const segments = folderPath.split('/');
-      const name = segments[segments.length - 1];
-      if (!name) return;
+    (_file: DialUploadFileItem, folderPath: string, fileId: string) => {
+      if (deduplicatedFileIdsRef.current.has(fileId)) return;
+      deduplicatedFileIdsRef.current.add(fileId);
+
+      if (filesFoldersRef.current.some((f) => f.id === folderPath)) return;
+
+      const folder = createTemporaryFolder(folderPath);
+      if (!folder.name) return;
 
       addedTempFolderIdsRef.current.add(folderPath);
-
-      dispatch(
-        FilesActions.addFolders({
-          folders: [
-            {
-              id: folderPath,
-              folderId: segments.slice(0, -1).join('/'),
-              name,
-              type: FeatureType.File,
-              status: UploadStatus.LOADED,
-              temporary: true,
-              publishedWithMe: true,
-              permissions: [SharePermission.READ, SharePermission.WRITE],
-            },
-          ],
-        }),
-      );
+      dispatch(FilesActions.addFolders({ folders: [folder] }));
       setNewlyAddedFolderId(folderPath);
     },
     [dispatch],

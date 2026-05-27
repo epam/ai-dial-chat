@@ -194,7 +194,7 @@ const ModelIconTemplate = memo(
             onError={handleError}
             data-image-name={description}
             ref={ref}
-            className="absolute left-0 top-0 z-10 size-full"
+            className="absolute start-0 top-0 z-10 size-full"
             style={{ height: `${size}px`, width: `${size}px` }}
             id={entityId}
           />

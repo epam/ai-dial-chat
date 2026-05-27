@@ -58,13 +58,13 @@ export const ToggleSidebarButton: React.FC<Props> = ({
           isFloatingToggle
             ? 'text-secondary'
             : 'text-secondary hover:text-accent-primary',
-          rightSide && 'rotate-180',
+          rightSide ? 'rotate-180 rtl:rotate-0' : 'rtl:rotate-180',
         )}
         width={iconSize}
         height={iconSize}
       />
       {!isOpened && filterIndicator && (
-        <div className="absolute right-0 top-0 size-[12px] rounded-full bg-accent-primary"></div>
+        <div className="absolute end-0 top-0 size-[12px] rounded-full bg-accent-primary"></div>
       )}
     </div>
   );

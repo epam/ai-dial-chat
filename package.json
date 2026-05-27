@@ -13,7 +13,7 @@
     "test": "nx run-many -t test",
     "test:watch": "nx run-many -t test:watch",
     "test:coverage": "nx run-many -t test:coverage",
-    "publish": "nx run-many -t publish --projects=tag:publishable",
+    "publish:npm": "nx run-many -t publish --projects=tag:publishable",
     "publish:dry": "nx run-many -t publish --output-style=static --dry --projects=tag:publishable",
     "e2e": "nx run-many -t e2e --output-style=stream --skipInstall",
     "e2e:ci": "nx run-many -t e2e --configuration=production --output-style=stream --skipInstall",
@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "0.10.0-dev.53",
+    "@epam/ai-dial-ui-kit": "0.10.0",
     "@epam/pdf-highlighter-kit": "^0.0.13",
     "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
@@ -201,7 +201,8 @@
     "serialize-javascript": "7.0.5",
     "picomatch": "4.0.4",
     "lodash": "4.18.0",
-    "protobufjs": "8.0.2"
+    "protobufjs": "8.0.2",
+    "tmp": "0.2.6"
   },
   "engines": {
     "node": ">=24.11.1",
