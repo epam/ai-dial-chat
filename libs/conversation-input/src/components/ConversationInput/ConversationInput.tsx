@@ -15,6 +15,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   colors,
   typography,
   className,
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
+  modelSelectorLabels,
 }) => {
   const cssVars = {
     ...(colors?.background && { '--ci-root-bg': colors.background }),
@@ -65,6 +69,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         placeholder={placeholder}
         colors={colors?.input}
         typography={typography?.input}
+        deployments={deployments}
+        selectedDeploymentId={selectedDeploymentId}
+        onDeploymentChange={onDeploymentChange}
+        modelSelectorLabels={modelSelectorLabels}
       />
     </div>
   );

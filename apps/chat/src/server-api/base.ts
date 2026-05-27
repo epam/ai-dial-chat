@@ -2,7 +2,6 @@ export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
   CONVERSATIONS = '/api/v1/conversations',
-  DEPLOYMENTS = '/api/deployments',
   MODELS = '/api/v1/models',
   AUTH_LOGOUT = '/api/v1/auth/logout',
 }

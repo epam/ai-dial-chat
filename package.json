@@ -91,8 +91,8 @@
     "libs/*"
   ],
   "dependencies": {
-    "@epam/ai-dial-typescript-sdk": "0.1.0-dev.5",
-    "@epam/ai-dial-ui-kit": "0.10.0-dev.56",
+    "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.16",
+    "@epam/ai-dial-ui-kit": "0.10.0",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",

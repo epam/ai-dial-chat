@@ -61,7 +61,7 @@ describe('ConversationController (integration)', () => {
 
       const result = await request(app.getHttpServer())
         .post('/conversations')
-        .send({ firstMessage: 'Hello' })
+        .send({ firstMessage: 'Hello', deploymentId: 'gpt-4o' })
         .expect(201);
 
       expect(result.body).toEqual(conversation);
@@ -69,6 +69,7 @@ describe('ConversationController (integration)', () => {
         'Hello',
         TEST_USER.at,
         TEST_USER.bucket,
+        'gpt-4o',
         undefined,
       );
     });
@@ -76,7 +77,7 @@ describe('ConversationController (integration)', () => {
     it('returns 400 when firstMessage is an empty string', async () => {
       await request(app.getHttpServer())
         .post('/conversations')
-        .send({ firstMessage: '' })
+        .send({ firstMessage: '', deploymentId: 'gpt-4o' })
         .expect(400);
     });
 
@@ -90,7 +91,35 @@ describe('ConversationController (integration)', () => {
     it('returns 400 when firstMessage exceeds 4000 characters', async () => {
       await request(app.getHttpServer())
         .post('/conversations')
-        .send({ firstMessage: 'a'.repeat(4001) })
+        .send({ firstMessage: 'a'.repeat(4001), deploymentId: 'gpt-4o' })
+        .expect(400);
+    });
+
+    it('returns 400 when deploymentId is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello' })
+        .expect(400);
+    });
+
+    it('returns 400 when deploymentId is an empty string', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello', deploymentId: '' })
+        .expect(400);
+    });
+
+    it('returns 400 when deploymentId exceeds 256 characters', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello', deploymentId: 'a'.repeat(257) })
+        .expect(400);
+    });
+
+    it('returns 400 when deploymentId contains disallowed characters', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello', deploymentId: 'bad id!' })
         .expect(400);
     });
 
@@ -128,7 +157,10 @@ describe('ConversationController (integration)', () => {
 
       const result = await request(realApp.getHttpServer())
         .post('/conversations')
-        .send({ firstMessage: 'Hello from integration' })
+        .send({
+          firstMessage: 'Hello from integration',
+          deploymentId: 'gpt-4o',
+        })
         .expect(201);
 
       expect(result.body.id).toMatch(
@@ -148,6 +180,7 @@ describe('ConversationController (integration)', () => {
         .post('/conversations')
         .send({
           firstMessage: 'Here is a file',
+          deploymentId: 'gpt-4o',
           attachments: [
             {
               type: 'application/pdf',
@@ -163,6 +196,7 @@ describe('ConversationController (integration)', () => {
         'Here is a file',
         TEST_USER.at,
         TEST_USER.bucket,
+        'gpt-4o',
         [
           {
             type: 'application/pdf',
@@ -178,6 +212,7 @@ describe('ConversationController (integration)', () => {
         .post('/conversations')
         .send({
           firstMessage: 'Hello',
+          deploymentId: 'gpt-4o',
           attachments: [{ title: 'file.pdf' }],
         })
         .expect(400);
@@ -188,6 +223,7 @@ describe('ConversationController (integration)', () => {
         .post('/conversations')
         .send({
           firstMessage: 'Hello',
+          deploymentId: 'gpt-4o',
           attachments: [{ type: 'application/pdf' }],
         })
         .expect(400);
@@ -201,6 +237,7 @@ describe('ConversationController (integration)', () => {
         .post('/conversations')
         .send({
           firstMessage: 'Here is a link',
+          deploymentId: 'gpt-4o',
           attachments: [
             {
               type: 'image/png',
@@ -225,6 +262,7 @@ describe('ConversationController (integration)', () => {
           .post('/conversations')
           .send({
             firstMessage: 'Hello',
+            deploymentId: 'gpt-4o',
             attachments: [{ type: 'image/png', title: 'x.png', url: badUrl }],
           })
           .expect(400);
@@ -242,6 +280,7 @@ describe('ConversationController (integration)', () => {
           .post('/conversations')
           .send({
             firstMessage: 'Hello',
+            deploymentId: 'gpt-4o',
             attachments: [
               {
                 type: 'image/png',

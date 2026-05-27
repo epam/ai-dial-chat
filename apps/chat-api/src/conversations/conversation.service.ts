@@ -25,6 +25,7 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
+    deploymentId: string,
     attachments?: MessageAttachment[],
   ): Promise<Conversation> {
     const now = Date.now();
@@ -41,20 +42,19 @@ export class ConversationService extends AppService {
       ...(attachments?.length ? { custom_content: { attachments } } : {}),
     };
 
-    // TODO: remove hardcoded - add model info
     // TODO: add temperature and other conversation settings
     const conversation: Conversation = {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
-      model: { id: 'anthropic.claude-v3-sonnet' },
+      model: { id: deploymentId },
       prompt: '',
       temperature: 1,
       messages: [userMessage],
       lastActivityDate: now,
       updatedAt: now,
       selectedAddons: [],
-      assistantModelId: 'anthropic.claude-v3-sonnet',
+      assistantModelId: deploymentId,
     };
 
     try {
@@ -187,6 +187,10 @@ export class ConversationService extends AppService {
       bucket,
     );
 
+    this.logger.log(
+      `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
+    );
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
@@ -215,6 +219,10 @@ export class ConversationService extends AppService {
           : {}),
       };
     });
+
+    this.logger.log(
+      `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
+    );
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {

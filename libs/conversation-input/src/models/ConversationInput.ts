@@ -1,5 +1,10 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
-import type { InputColors, InputTypography } from './Input.js';
+import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type {
+  InputColors,
+  InputTypography,
+  ModelSelectorLabels,
+} from './Input.js';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {
@@ -52,4 +57,12 @@ export interface ConversationInputProps {
   typography?: ConversationInputTypography;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
+  deployments?: DeploymentItemDto[];
+  /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
+  selectedDeploymentId?: string | null;
+  /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
+  onDeploymentChange?: (id: string) => void;
+  /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
+  modelSelectorLabels?: ModelSelectorLabels;
 }
