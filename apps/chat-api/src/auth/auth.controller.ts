@@ -302,7 +302,15 @@ export class AuthController {
     }
 
     const accessToken = tokenSet.access_token ?? '';
-    const { bucket } = await this.bucketService.getUserBucket(accessToken);
+    let bucket = '';
+    try {
+      ({ bucket } = await this.bucketService.getUserBucket(accessToken));
+    } catch (err) {
+      this.logger.warn(
+        'Bucket fetch failed during callback — will retry on first authenticated request',
+        err,
+      );
+    }
 
     const payload: SessionPayload = {
       v: 1,

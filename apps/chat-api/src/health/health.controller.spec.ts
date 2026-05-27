@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BucketService } from '../auth/bucket/bucket.service';
 import { RefreshService } from '../auth/refresh/refresh.service';
 import { SessionGuard } from '../auth/session/session.guard';
 import { SessionService } from '../auth/session/session.service';
@@ -53,6 +54,7 @@ describe('HealthController', () => {
             },
           },
           { provide: RefreshService, useValue: { refresh: vi.fn() } },
+          { provide: BucketService, useValue: { getUserBucket: vi.fn() } },
           { provide: ConfigService, useValue: { get: vi.fn() } },
           { provide: APP_GUARD, useClass: SessionGuard },
         ],
