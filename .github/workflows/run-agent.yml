@@ -94,19 +94,34 @@ jobs:
           tools = m.get("allowed_tools")
           if not tools:
               raise SystemExit("::error::manifest missing required field: allowed_tools")
+          # tools.extra: optional array of npm package names the agent needs
+          # installed globally before invocation (e.g. ["openspec"]). Emit as
+          # comma-separated; the install step splits and runs npm install.
+          extra = (m.get("tools") or {}).get("extra") or []
           print(f"skill={skill}")
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
+          print(f"tools_extra={','.join(extra)}")
           EOF
 
-      - name: Install openspec CLI (when agent declares it)
-        # Some agents (e.g., spec-validation) shell out to the `openspec` CLI
-        # via Bash(openspec:*). The GHA runner doesn't include it by default;
-        # install only when the manifest's allowed_tools mentions openspec,
-        # so unrelated agents don't pay the npm install cost.
-        if: contains(steps.manifest.outputs.allowed_tools, 'openspec')
-        run: npm install -g openspec
+      - name: Install agent-declared CLI tools
+        # Reads the manifest's `tools.extra:` array and installs each as a
+        # global npm package. Only runs when the agent declares at least one
+        # tool, so agents without extra CLI deps pay zero install cost.
+        # Failure here exits early before Claude is invoked — loud failure,
+        # not silent.
+        if: steps.manifest.outputs.tools_extra != ''
+        env:
+          EXTRA: ${{ steps.manifest.outputs.tools_extra }}
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra TOOLS <<< "$EXTRA"
+          for tool in "${TOOLS[@]}"; do
+            [ -z "$tool" ] && continue
+            echo "Installing $tool..."
+            npm install -g "$tool"
+          done
 
       - id: stage
         uses: ./.github/actions/run-claude-stage

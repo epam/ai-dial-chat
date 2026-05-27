@@ -117,8 +117,41 @@ cost_class: light
 | `concurrency` | No | `{group, cancel_in_progress}` override. Default group: `dispatch-pr-<name>-<ref>` |
 | `triggers[].filters` | No | `{branches, labels}` filtering of triggers. `branches` matches PR target; `labels` requires all listed labels present. `paths` is reserved for v0.3 |
 | `kill_switch_var` | No | Override the derived var name (rarely needed) |
+| `tools.extra` | No | Array of npm package names to install globally before the agent runs (e.g. `[openspec]`). See *CLI dependencies* below |
 
 Manifests are validated against [`schemas/agent-manifest.schema.json`](./schemas/agent-manifest.schema.json) at every dispatch. Schema violations fail the discover job with a clear path to the offending field — no broken agent reaches the matrix. Per-agent `prompt.md` files are rejected (the runner fails loudly if it finds one).
+
+### CLI dependencies (`tools.extra`)
+
+If your skill shells out to a CLI that the GitHub runner doesn't ship by
+default (e.g., `openspec`, `prettier`, an org-specific linter), declare it
+in the manifest:
+
+```yaml
+tools:
+  extra:
+    - openspec
+    - some-other-cli
+```
+
+Each entry is treated as a global npm package name. The runner does
+`npm install -g <name>` for each before invoking the agent, so the binary
+is available on `$PATH` to any `Bash(<name>:*)` tool call the agent
+makes. Agents that don't declare `tools.extra` pay zero install cost
+(the step is conditional on the field being non-empty).
+
+Coverage today: **npm packages only**. For non-npm tooling (apt
+packages, curl-installed binaries, Docker images), extend the schema —
+not implemented yet because no live agent needs it. When the first one
+appears, the natural evolution is a polymorphic shape:
+
+```yaml
+# future, not implemented
+tools:
+  extra:
+    - openspec                                           # short form: npm package
+    - { name: trivy, install: "apt-get -y install trivy" }  # long form: arbitrary shell
+```
 
 ### Tool tiers
 
