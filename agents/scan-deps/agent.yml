@@ -8,7 +8,8 @@ allowed_tools: "Read,Glob,Bash(trivy:*),Skill"
 tools:
   extra:
     - name: trivy
-      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"
+      version: "0.69.0"
+      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v{{version}}"
 model: claude-sonnet-4-6
 phase: pilot
 cost_class: medium
