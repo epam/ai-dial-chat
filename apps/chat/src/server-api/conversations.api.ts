@@ -6,12 +6,14 @@ import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,
+  deploymentId: string,
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
+      deploymentId,
       ...(attachments?.length || configurationValue
         ? {
             custom_content: {

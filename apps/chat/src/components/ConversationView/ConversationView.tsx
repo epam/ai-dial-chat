@@ -18,7 +18,11 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionsI18nKeys } from '../../constants/translation-keys.js';
+import {
+  CatalogI18nKeys,
+  ActionsI18nKeys,
+} from '../../constants/translation-keys.js';
+import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { buildMessageActions } from './buildMessageActions.js';
 import {
@@ -63,6 +67,8 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
 }) => {
   const { t } = useTranslation();
+  const { items, selectedItemId, setSelectedItemId, isLoading, error } =
+    useDeployments();
   const tooltips = {
     edit: t(ActionsI18nKeys.Edit),
     delete: t(ActionsI18nKeys.Delete),
@@ -236,6 +242,20 @@ const ConversationView: FC<Props> = ({
             isStreaming={isAssistantTyping}
             onAttachmentsChange={onAttachmentsChange}
             placeholder={placeholder}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
+            modelSelectorLabels={{
+              ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
+              loading: isLoading
+                ? t(CatalogI18nKeys.SelectorLoading)
+                : undefined,
+              error: error ? t(CatalogI18nKeys.SelectorError) : undefined,
+              empty:
+                !isLoading && !error && items.length === 0
+                  ? t(CatalogI18nKeys.SelectorEmpty)
+                  : undefined,
+            }}
           />
         </Suspense>
       </div>

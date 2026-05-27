@@ -28,4 +28,8 @@ export enum NavigationI18nKeys {
 export enum CatalogI18nKeys {
   AriaLabel = 'catalog.ariaLabel',
   ComingSoon = 'catalog.comingSoon',
+  SelectorAriaLabel = 'catalog.selector.ariaLabel',
+  SelectorLoading = 'catalog.selector.loading',
+  SelectorError = 'catalog.selector.error',
+  SelectorEmpty = 'catalog.selector.empty',
 }

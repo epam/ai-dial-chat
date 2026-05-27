@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -20,6 +21,19 @@ export class CreateConversationDto {
   @MinLength(1)
   @MaxLength(4000)
   firstMessage!: string;
+
+  @ApiProperty({
+    description:
+      'ID of the catalog item (model or application) to use for this conversation',
+    example: 'anthropic.claude-v3-sonnet',
+    minLength: 1,
+    maxLength: 256,
+  })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  @Matches(/^[\w.\-:@/]+$/)
+  deploymentId!: string;
 
   @ApiPropertyOptional({
     description: 'Extra DIAL payload attached to the first user message',

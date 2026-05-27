@@ -87,6 +87,8 @@ export interface Message {
   custom_content?: MessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
+  /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
+  [key: string]: unknown;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */

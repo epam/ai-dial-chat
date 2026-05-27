@@ -14,8 +14,11 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys } from '../../constants/translation-keys';
-import { useModels } from '../../context/ModelsContext';
+import {
+  CatalogI18nKeys,
+  ChatI18nKeys,
+} from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import {
@@ -36,11 +39,18 @@ const ConversationRoute: FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const inputRef = useRef<HTMLDivElement>(null);
-  const { selectedModelConfiguration } = useModels();
+  const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+  } = useDeployments();
 
   const { starters, propertyKey, description } = useMemo(
-    () => getStartersFromSchema(selectedModelConfiguration),
-    [selectedModelConfiguration],
+    () => getStartersFromSchema(selectedDeploymentConfiguration),
+    [selectedDeploymentConfiguration],
   );
 
   useEffect(() => {
@@ -58,12 +68,13 @@ const ConversationRoute: FC = () => {
 
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
-      if (isSending) return;
+      if (isSending || !selectedItemId) return;
       setIsSending(true);
       try {
         const attachmentDtos = await attachmentsToDtos(attachments);
         const conversation = await apiCreateConversation(
           message,
+          selectedItemId,
           attachmentDtos,
         );
         navigate(getConversationRoute(conversation.id));
@@ -71,7 +82,7 @@ const ConversationRoute: FC = () => {
         setIsSending(false);
       }
     },
-    [navigate, isSending],
+    [navigate, isSending, selectedItemId],
   );
 
   const handleStarterSelect = useCallback(
@@ -110,6 +121,20 @@ const ConversationRoute: FC = () => {
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
+            modelSelectorLabels={{
+              ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
+              loading: isLoading
+                ? t(CatalogI18nKeys.SelectorLoading)
+                : undefined,
+              error: error ? t(CatalogI18nKeys.SelectorError) : undefined,
+              empty:
+                !isLoading && !error && items.length === 0
+                  ? t(CatalogI18nKeys.SelectorEmpty)
+                  : undefined,
+            }}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

@@ -26,6 +26,7 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
+    deploymentId: string,
     customContent?: MessageCustomContentDto,
   ): Promise<Conversation> {
     const now = Date.now();
@@ -42,20 +43,19 @@ export class ConversationService extends AppService {
       custom_content: customContent,
     };
 
-    // TODO: remove hardcoded - add model info
     // TODO: add temperature and other conversation settings
     const conversation: Conversation = {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
-      model: { id: 'form-example' },
+      model: { id: deploymentId },
       prompt: '',
       temperature: 1,
       messages: [userMessage],
       lastActivityDate: now,
       updatedAt: now,
       selectedAddons: [],
-      assistantModelId: 'form-example',
+      assistantModelId: deploymentId,
     };
 
     try {
@@ -188,6 +188,10 @@ export class ConversationService extends AppService {
       bucket,
     );
 
+    this.logger.log(
+      `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
+    );
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
@@ -222,6 +226,10 @@ export class ConversationService extends AppService {
           : {}),
       };
     });
+
+    this.logger.log(
+      `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
+    );
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {

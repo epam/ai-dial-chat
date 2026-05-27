@@ -14,27 +14,27 @@ Core principle: the chat application is assembled from a set of **independently 
 
 ## Goals
 
-| Goal | Description |
-|------|-------------|
-| **Composable** | Chat is built from discrete, reusable `@epam/*` packages |
-| **Styleable** | Every package accepts colors, fonts, and border-radius via a three-tier CSS variable contract |
-| **Theme-compatible** | DIAL Theme system supported — same JSON format as legacy chat |
-| **Auth-agnostic** | Authentication lives in the app layer only, never inside libraries |
+| Goal                 | Description                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| **Composable**       | Chat is built from discrete, reusable `@epam/*` packages                                      |
+| **Styleable**        | Every package accepts colors, fonts, and border-radius via a three-tier CSS variable contract |
+| **Theme-compatible** | DIAL Theme system supported — same JSON format as legacy chat                                 |
+| **Auth-agnostic**    | Authentication lives in the app layer only, never inside libraries                            |
 
 ---
 
 ## Monorepo & Tooling
 
-| Tool | Role |
-|------|------|
-| **Nx 22** | Monorepo orchestration, task pipeline, caching, affected graph |
-| **npm workspaces** | Package management |
-| **React 19** | UI framework for all libraries and the frontend app |
-| **NestJS 11** | Backend API server (`apps/chat-api`) |
-| **TypeScript 5.9** | Strict mode, `noUnusedLocals`, `noUnusedParameters` |
-| **Vite 8** | Frontend bundler |
-| **Vitest 4** | Test runner (frontend + backend unit tests) |
-| **ESLint 9** | Flat config (`eslint.config.mjs`) + Prettier 3 |
+| Tool               | Role                                                           |
+| ------------------ | -------------------------------------------------------------- |
+| **Nx 22**          | Monorepo orchestration, task pipeline, caching, affected graph |
+| **npm workspaces** | Package management                                             |
+| **React 19**       | UI framework for all libraries and the frontend app            |
+| **NestJS 11**      | Backend API server (`apps/chat-api`)                           |
+| **TypeScript 5.9** | Strict mode, `noUnusedLocals`, `noUnusedParameters`            |
+| **Vite 8**         | Frontend bundler                                               |
+| **Vitest 4**       | Test runner (frontend + backend unit tests)                    |
+| **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                 |
 
 ```
 root/
@@ -84,6 +84,7 @@ root/
 Shared foundation consumed by all libraries **and** apps. Published to npm.
 
 Responsibilities:
+
 - Common TypeScript types and interfaces (`Message`, `Conversation`, `ConversationMetadata`, `UserProfile`, `Theme`, `DialModel`, etc.)
 - `mergeClasses` utility (wraps `classnames` + `tailwind-merge`)
 
@@ -96,12 +97,14 @@ Does **not** contain any UI components or business logic.
 The message composer — user input area. Published to npm.
 
 Responsibilities:
+
 - Textarea with auto-resize
 - Send button
 - Attachment picker
 - Mentions / slash commands
 
 Props API:
+
 ```tsx
 import { ConversationInput } from '@epam/ai-dial-conversation-input';
 
@@ -109,10 +112,11 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
   onSend={(text, attachments) => sendMessage(text, attachments)}
   colors={{ background: '#1e1e1e', welcomeText: '#fff' }}
   typography={{ fontSize: '14px', fontFamily: 'Inter, sans-serif' }}
-/>
+/>;
 ```
 
 Does **not**:
+
 - Make API calls directly
 - Manage conversation state
 - Handle auth
@@ -124,6 +128,7 @@ Does **not**:
 The message feed. Published to npm.
 
 Responsibilities:
+
 - Render message list (user / assistant / system)
 - Markdown + code highlighting in assistant messages
 - Streaming message rendering (receives streamed chunks via props)
@@ -184,12 +189,13 @@ apps/chat/src/
 
 Current implementation uses **React Context** with no external state library.
 
-| Context | State owned |
-|---------|-------------|
-| `UserContext` | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()` |
-| `ThemeContext` | Active theme ID, theme list, `setTheme()`, logo URL, loading flag |
+| Context        | State owned                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------- |
+| `UserContext`  | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()` |
+| `ThemeContext` | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                  |
 
 Context pattern (reference: `ThemeContext.tsx`):
+
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
 - Guard consumer hook throws a clear error when used outside the provider
@@ -206,26 +212,28 @@ del<TResponse>(url, options?)
 ```
 
 Behaviour applied automatically:
+
 - `credentials: 'include'` on every request
 - `X-CSRF-Token` header on all state-changing methods (POST / PUT / DELETE)
 - 401 responses → notify `onUnauthorized` listeners → throw `UnauthorizedError`
 
 `ApiEndpoints` enum centralises all URL constants:
 
-| Key | URL |
-|-----|-----|
-| `THEMES` | `/api/themes` |
-| `THEME_ICON` | `/api/themes/icon` |
-| `CONVERSATIONS` | `/api/v1/conversations` |
-| `DEPLOYMENTS` | `/api/deployments` |
-| `MODELS` | `/api/v1/models` |
-| `AUTH_ME` | `/api/v1/auth/me` |
+| Key              | URL                      |
+| ---------------- | ------------------------ |
+| `THEMES`         | `/api/themes`            |
+| `THEME_ICON`     | `/api/themes/icon`       |
+| `CONVERSATIONS`  | `/api/v1/conversations`  |
+| `DEPLOYMENTS`    | `/api/deployments`       |
+| `MODELS`         | `/api/v1/models`         |
+| `AUTH_ME`        | `/api/v1/auth/me`        |
 | `AUTH_PROVIDERS` | `/api/v1/auth/providers` |
-| `AUTH_LOGOUT` | `/api/v1/auth/logout` |
+| `AUTH_LOGOUT`    | `/api/v1/auth/logout`    |
 
 ### SSE streaming
 
 `chat-stream.api.ts` handles streaming completions:
+
 - Uses `ReadableStream.getReader()` + line-by-line SSE parsing (`data: {json}`)
 - Handles `[DONE]` termination marker
 - Supports `AbortSignal` for cancellation
@@ -241,6 +249,7 @@ Behaviour applied automatically:
 NestJS 11 server. Entry: `apps/chat-api/src/main.ts`.
 
 Configured at startup:
+
 - `helmet` — security headers (CSP, HSTS, etc.)
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
@@ -285,40 +294,40 @@ One folder per domain. **No `modules/` wrapper** — `{domain}.module.ts` sits d
 
 #### Auth (`/api/v1/auth`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/v1/auth/me` | Current user profile (public) |
-| `GET` | `/api/v1/auth/providers` | List configured auth providers |
-| `POST` | `/api/v1/auth/login/{providerId}` | Initiate OIDC flow |
-| `POST` | `/api/v1/auth/callback` | OIDC callback handler |
-| `POST` | `/api/v1/auth/refresh` | Refresh access token |
-| `POST` | `/api/v1/auth/logout` | Clear session cookie |
+| Method | Path                              | Description                    |
+| ------ | --------------------------------- | ------------------------------ |
+| `GET`  | `/api/v1/auth/me`                 | Current user profile (public)  |
+| `GET`  | `/api/v1/auth/providers`          | List configured auth providers |
+| `POST` | `/api/v1/auth/login/{providerId}` | Initiate OIDC flow             |
+| `POST` | `/api/v1/auth/callback`           | OIDC callback handler          |
+| `POST` | `/api/v1/auth/refresh`            | Refresh access token           |
+| `POST` | `/api/v1/auth/logout`             | Clear session cookie           |
 
 #### Conversations (`/api/v1/conversations`)
 
-| Method | Path | Description | Rate limit |
-|--------|------|-------------|------------|
-| `POST` | `/api/v1/conversations` | Create conversation | 20/min |
-| `GET` | `/api/v1/conversations?path=` | Get conversation by path | — |
-| `GET` | `/api/v1/conversations/metadata?path=` | Get metadata + permissions | — |
-| `PUT` | `/api/v1/conversations?path=` | Save / overwrite conversation | — |
-| `POST` | `/api/v1/conversations/completions` | SSE chat completion stream | 10/min |
-| `DELETE` | `/api/v1/conversations?path=` | Delete conversation | — |
+| Method   | Path                                   | Description                   | Rate limit |
+| -------- | -------------------------------------- | ----------------------------- | ---------- |
+| `POST`   | `/api/v1/conversations`                | Create conversation           | 20/min     |
+| `GET`    | `/api/v1/conversations?path=`          | Get conversation by path      | —          |
+| `GET`    | `/api/v1/conversations/metadata?path=` | Get metadata + permissions    | —          |
+| `PUT`    | `/api/v1/conversations?path=`          | Save / overwrite conversation | —          |
+| `POST`   | `/api/v1/conversations/completions`    | SSE chat completion stream    | 10/min     |
+| `DELETE` | `/api/v1/conversations?path=`          | Delete conversation           | —          |
 
 #### Models & Deployments
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/v1/models` | List available models (cached) |
-| `GET` | `/api/deployments` | List available deployments |
+| Method | Path               | Description                    |
+| ------ | ------------------ | ------------------------------ |
+| `GET`  | `/api/v1/models`   | List available models (cached) |
+| `GET`  | `/api/deployments` | List available deployments     |
 
 #### Infrastructure
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/themes` | Theme configuration JSON |
-| `GET` | `/api/themes/icon/{themeId}` | Theme icon image |
-| `GET` | `/api/health` | Health check |
+| Method | Path                         | Description              |
+| ------ | ---------------------------- | ------------------------ |
+| `GET`  | `/api/themes`                | Theme configuration JSON |
+| `GET`  | `/api/themes/icon/{themeId}` | Theme icon image         |
+| `GET`  | `/api/health`                | Health check             |
 
 ---
 
@@ -350,19 +359,20 @@ Encrypted session cookie (`HttpOnly`, `Secure`, `SameSite`). Payload:
 
 ```typescript
 interface SessionPayload {
-  sid: string;       // session ID
-  sub: string;       // user subject
+  sid: string; // session ID
+  sub: string; // user subject
   providerId: string;
   claims: Record<string, unknown>;
-  at: string;        // access token
-  csrf: string;      // CSRF token
-  bucket: string;    // user storage bucket
-  rt_exp: number;    // refresh token expiry (unix ms)
-  at_exp: number;    // access token expiry (unix ms)
+  at: string; // access token
+  csrf: string; // CSRF token
+  bucket: string; // user storage bucket
+  rt_exp: number; // refresh token expiry (unix ms)
+  at_exp: number; // access token expiry (unix ms)
 }
 ```
 
 `SessionGuard` (applied globally):
+
 1. Decrypts session cookie
 2. If `at_exp < now + 60s` → call `RefreshService.refresh()`
 3. Sets `req.user` from session payload
@@ -371,6 +381,7 @@ interface SessionPayload {
 ### CSRF protection
 
 `CsrfGuard` (applied globally after `SessionGuard`):
+
 - Skips `GET`, `HEAD`, `OPTIONS` (safe methods)
 - Skips `@Public()` routes
 - Validates `Origin` / `Referer` header against configured `CORS_ORIGIN`
@@ -397,6 +408,7 @@ Three-tier fallback pattern (defined in `openspec/lib-styling-guide.md`):
 ```
 
 Tiers:
+
 1. `--ci-welcome-color` — set by parent app via `colors` prop → `style={{ '--ci-welcome-color': value }}`
 2. `--text-primary` — global DIAL Theme token injected by `ThemeProvider`
 3. `#eef1f7` — hardcoded hex fallback (dark theme defaults)
@@ -432,17 +444,17 @@ Themes are defined in [ai-dial-chat-themes](https://github.com/epam/ai-dial-chat
 
 ### Colour token groups
 
-| Group | Examples | Purpose |
-|-------|----------|---------|
-| `bg-layer-*` | `bg-layer-0` … `bg-layer-4` | Background depth levels |
-| `bg-accent-*` | `bg-accent-primary`, `bg-accent-secondary` | Brand accent fills |
-| `bg-*` | `bg-error`, `bg-warning`, `bg-info`, `bg-success` | Semantic state backgrounds |
-| `text-*` | `text-primary`, `text-secondary`, `text-error`, `text-accent-primary` | Text colours |
-| `stroke-*` | `stroke-primary`, `stroke-hover`, `stroke-focus`, `stroke-accent-primary` | Borders and outlines |
-| `controls-bg-*` | `controls-bg-accent-primary`, `controls-bg-error`, `controls-bg-disable` | Interactive element fills |
-| `controls-text-*` | `controls-text-permanent`, `controls-text-neutral` | Interactive element text |
-| `topicColors` | `bg-topic-*`, `stroke-topic-*` | Application / model topic tags |
-| `authColors` | `bg-auth-layer-0`, `bg-auth-layer-1` | Auth screen backgrounds |
+| Group             | Examples                                                                  | Purpose                        |
+| ----------------- | ------------------------------------------------------------------------- | ------------------------------ |
+| `bg-layer-*`      | `bg-layer-0` … `bg-layer-4`                                               | Background depth levels        |
+| `bg-accent-*`     | `bg-accent-primary`, `bg-accent-secondary`                                | Brand accent fills             |
+| `bg-*`            | `bg-error`, `bg-warning`, `bg-info`, `bg-success`                         | Semantic state backgrounds     |
+| `text-*`          | `text-primary`, `text-secondary`, `text-error`, `text-accent-primary`     | Text colours                   |
+| `stroke-*`        | `stroke-primary`, `stroke-hover`, `stroke-focus`, `stroke-accent-primary` | Borders and outlines           |
+| `controls-bg-*`   | `controls-bg-accent-primary`, `controls-bg-error`, `controls-bg-disable`  | Interactive element fills      |
+| `controls-text-*` | `controls-text-permanent`, `controls-text-neutral`                        | Interactive element text       |
+| `topicColors`     | `bg-topic-*`, `stroke-topic-*`                                            | Application / model topic tags |
+| `authColors`      | `bg-auth-layer-0`, `bg-auth-layer-1`                                      | Auth screen backgrounds        |
 
 ### Token flow
 
@@ -466,51 +478,51 @@ ThemeProvider (apps/chat)
 
 Enforced by `@nx/enforce-module-boundaries` in `eslint.config.mjs`:
 
-| Consumer | May import from |
-|----------|----------------|
-| `apps/*` | `libs/*` |
-| `type:ui` libs | `chat-shared` only |
-| `type:shared` libs (`chat-shared`) | nothing |
-| `apps/*` | may **not** import from other `apps/*` |
+| Consumer                           | May import from                        |
+| ---------------------------------- | -------------------------------------- |
+| `apps/*`                           | `libs/*`                               |
+| `type:ui` libs                     | `chat-shared` only                     |
+| `type:shared` libs (`chat-shared`) | nothing                                |
+| `apps/*`                           | may **not** import from other `apps/*` |
 
 ---
 
 ## Key external dependencies
 
-| Package | Role |
-|---------|------|
-| `@epam/ai-dial-typescript-sdk` | Server-side DIAL Core client — preferred in `apps/chat-api` |
-| `@epam/ai-dial-ui-kit` | Design system base components — use before creating new primitives |
-| `@tabler/icons-react` | Icon set — all icons; no inline SVGs |
-| `react-i18next` / `i18next` | Internationalisation |
-| `class-validator` + `class-transformer` | NestJS DTO validation |
-| `@nestjs/swagger` | OpenAPI documentation |
-| `@nestjs/throttler` | Rate limiting |
-| `@nestjs/cache-manager` | In-memory cache |
-| `helmet` | Security headers |
-| `jose` + `openid-client` | OIDC / JWT handling in auth module |
+| Package                                 | Role                                                               |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| `@epam/ai-dial-typescript-sdk`          | Server-side DIAL Core client — preferred in `apps/chat-api`        |
+| `@epam/ai-dial-ui-kit`                  | Design system base components — use before creating new primitives |
+| `@tabler/icons-react`                   | Icon set — all icons; no inline SVGs                               |
+| `react-i18next` / `i18next`             | Internationalisation                                               |
+| `class-validator` + `class-transformer` | NestJS DTO validation                                              |
+| `@nestjs/swagger`                       | OpenAPI documentation                                              |
+| `@nestjs/throttler`                     | Rate limiting                                                      |
+| `@nestjs/cache-manager`                 | In-memory cache                                                    |
+| `helmet`                                | Security headers                                                   |
+| `jose` + `openid-client`                | OIDC / JWT handling in auth module                                 |
 
 ---
 
 ## Decision Log
 
-| # | Decision | Status |
-|---|----------|--------|
-| 1 | Package prefix: `@epam/*` (short form, no `ai-dial-` in package name) | ✅ Accepted |
-| 2 | Monorepo tooling: **Nx 22** | ✅ Accepted |
-| 3 | Package manager: **npm workspaces** | ✅ Accepted |
-| 4 | UI framework: **React 19** (SPA) | ✅ Accepted |
-| 5 | Backend framework: **NestJS 11** (`apps/chat-api`) | ✅ Accepted |
-| 6 | Libs styling: **Tailwind CSS + SCSS Modules** (three-tier CSS var fallback) | ✅ Accepted |
-| 7 | Apps styling: **Tailwind CSS** only | ✅ Accepted |
-| 8 | Theming: DIAL Theme JSON → CSS variables on `:root` | ✅ Accepted |
-| 9 | `ThemeProvider` lives in `apps/chat` | ✅ Accepted |
-| 10 | Auth: cookie-based OIDC, handled by NestJS | ✅ Accepted |
-| 11 | Frontend ↔ Backend: REST + SSE | ✅ Accepted |
-| 12 | Lib publishing: **npm** (`@epam` scope) | ✅ Accepted |
-| 13 | State management in `apps/chat` | ❓ Open |
-| 14 | i18n: **react-i18next** with `i18next-browser-languagedetector` | ✅ Accepted |
-| 15 | CSRF: per-session token, validated via `X-CSRF-Token` header + origin check | ✅ Accepted |
+| #   | Decision                                                                    | Status      |
+| --- | --------------------------------------------------------------------------- | ----------- |
+| 1   | Package prefix: `@epam/*` (short form, no `ai-dial-` in package name)       | ✅ Accepted |
+| 2   | Monorepo tooling: **Nx 22**                                                 | ✅ Accepted |
+| 3   | Package manager: **npm workspaces**                                         | ✅ Accepted |
+| 4   | UI framework: **React 19** (SPA)                                            | ✅ Accepted |
+| 5   | Backend framework: **NestJS 11** (`apps/chat-api`)                          | ✅ Accepted |
+| 6   | Libs styling: **Tailwind CSS + SCSS Modules** (three-tier CSS var fallback) | ✅ Accepted |
+| 7   | Apps styling: **Tailwind CSS** only                                         | ✅ Accepted |
+| 8   | Theming: DIAL Theme JSON → CSS variables on `:root`                         | ✅ Accepted |
+| 9   | `ThemeProvider` lives in `apps/chat`                                        | ✅ Accepted |
+| 10  | Auth: cookie-based OIDC, handled by NestJS                                  | ✅ Accepted |
+| 11  | Frontend ↔ Backend: REST + SSE                                              | ✅ Accepted |
+| 12  | Lib publishing: **npm** (`@epam` scope)                                     | ✅ Accepted |
+| 13  | State management in `apps/chat`                                             | ❓ Open     |
+| 14  | i18n: **react-i18next** with `i18next-browser-languagedetector`             | ✅ Accepted |
+| 15  | CSRF: per-session token, validated via `X-CSRF-Token` header + origin check | ✅ Accepted |
 
 ---
 
