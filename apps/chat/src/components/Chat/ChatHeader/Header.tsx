@@ -279,7 +279,7 @@ export const ChatHeader = Inversify.register(
                 </span>
               </>
             )}
-            <div className="flex items-center [&>*:not(:first-child)]:ps-2 [&>*:not(:last-child)]:border-e [&>*:not(:last-child)]:pe-2 [&>*]:border-e-primary">
+            <div className="flex items-center gap-2">
               {isTopChatModelSettingsEnabled && !isConversationInvalid && (
                 <Tooltip
                   isTriggerClickable={
