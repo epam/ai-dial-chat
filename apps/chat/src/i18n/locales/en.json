@@ -25,7 +25,9 @@
     "ariaLabel": "Catalog",
     "comingSoon": "Catalog coming soon",
     "loading": "Loading catalog…",
-    "error": "Failed to load catalog. Please try again.",
+    "error": "Failed to load catalog. Please try again."
+  },
+  "deployments": {
     "empty": "No models or applications available.",
     "type": {
       "model": "Model",

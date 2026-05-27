@@ -44,8 +44,14 @@ export enum NavigationI18nKeys {
 export enum CatalogI18nKeys {
   AriaLabel = 'catalog.ariaLabel',
   ComingSoon = 'catalog.comingSoon',
-  SelectorAriaLabel = 'catalog.selector.ariaLabel',
-  SelectorLoading = 'catalog.selector.loading',
-  SelectorError = 'catalog.selector.error',
-  SelectorEmpty = 'catalog.selector.empty',
+}
+
+export enum DeploymentsI18nKeys {
+  Empty = 'deployments.empty',
+  TypeModel = 'deployments.type.model',
+  TypeApplication = 'deployments.type.application',
+  SelectorAriaLabel = 'deployments.selector.ariaLabel',
+  SelectorLoading = 'deployments.selector.loading',
+  SelectorError = 'deployments.selector.error',
+  SelectorEmpty = 'deployments.selector.empty',
 }

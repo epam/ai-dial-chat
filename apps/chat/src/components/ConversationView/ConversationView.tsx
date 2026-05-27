@@ -22,6 +22,7 @@ import {
   CatalogI18nKeys,
   ActionsI18nKeys,
   ChatI18nKeys,
+  DeploymentsI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
@@ -263,14 +264,14 @@ const ConversationView: FC<Props> = ({
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             modelSelectorLabels={{
-              ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
+              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
               loading: isLoading
-                ? t(CatalogI18nKeys.SelectorLoading)
+                ? t(DeploymentsI18nKeys.SelectorLoading)
                 : undefined,
-              error: error ? t(CatalogI18nKeys.SelectorError) : undefined,
+              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
               empty:
                 !isLoading && !error && items.length === 0
-                  ? t(CatalogI18nKeys.SelectorEmpty)
+                  ? t(DeploymentsI18nKeys.SelectorEmpty)
                   : undefined,
             }}
             sendLabel={t(ChatI18nKeys.SendMessage)}
