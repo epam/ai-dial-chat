@@ -28,6 +28,8 @@ export interface ConversationInputTypography {
   welcomeFontWeight?: string | number;
   /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
   welcomeLineHeight?: string | number;
+  /** Tailwind (or custom) class applied to the drop-overlay label. Defaults to `'dial-tiny-text'`. */
+  dropLabelClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -57,6 +59,12 @@ export interface ConversationInputProps {
   typography?: ConversationInputTypography;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */
+  dropLabel?: string;
+  /** Tailwind (or custom) class applied to the drag-over overlay container. Defaults to `'rounded'`. */
+  dropOverlayClassName?: string;
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
+  pasteTextThreshold?: number;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
   deployments?: DeploymentItemDto[];
   /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */

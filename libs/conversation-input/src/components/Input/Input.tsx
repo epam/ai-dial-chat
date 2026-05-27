@@ -2,6 +2,7 @@ import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   RequestStatus,
+  buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -19,14 +20,16 @@ import {
 } from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
-  CSSProperties,
   type FC,
   KeyboardEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from 'react';
+import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
 import type { InputProps } from '../../models/Input.js';
+import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
@@ -49,30 +52,27 @@ export const Input: FC<InputProps> = ({
   colors,
   typography,
   className,
+  pendingDropFiles = [],
+  onDropFilesConsumed,
+  pasteTextThreshold = 2000,
   deployments,
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
 }) => {
-  const cssVars = {
-    ...(colors?.background && { '--ci-bg': colors.background }),
-    ...(colors?.text && { '--ci-text': colors.text }),
-    ...(colors?.border && { '--ci-border': colors.border }),
-    ...(colors?.borderFocus && { '--ci-border-focus': colors.borderFocus }),
-    ...(colors?.placeholder && { '--ci-placeholder': colors.placeholder }),
-    ...(colors?.sendBackground && { '--ci-send-bg': colors.sendBackground }),
-    ...(colors?.sendText && { '--ci-send-text': colors.sendText }),
-    ...(typography?.fontFamily && {
-      '--ci-font-family': typography.fontFamily,
-    }),
-    ...(typography?.fontSize && { '--ci-font-size': typography.fontSize }),
-    ...(typography?.fontWeight && {
-      '--ci-font-weight': String(typography.fontWeight),
-    }),
-    ...(typography?.lineHeight && {
-      '--ci-line-height': typography.lineHeight,
-    }),
-  } as CSSProperties;
+  const cssVars = buildCssVars({
+    '--ci-bg': colors?.background,
+    '--ci-text': colors?.text,
+    '--ci-border': colors?.border,
+    '--ci-border-focus': colors?.borderFocus,
+    '--ci-placeholder': colors?.placeholder,
+    '--ci-send-bg': colors?.sendBackground,
+    '--ci-send-text': colors?.sendText,
+    '--ci-font-family': typography?.fontFamily,
+    '--ci-font-size': typography?.fontSize,
+    '--ci-font-weight': typography?.fontWeight,
+    '--ci-line-height': typography?.lineHeight,
+  });
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -91,6 +91,42 @@ export const Input: FC<InputProps> = ({
       });
     };
   }, []);
+
+  const buildAttachments = useCallback((files: File[]): Attachment[] => {
+    return files.map((file) => {
+      const isImage = file.type.startsWith('image/');
+      const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+      return {
+        id: generateAttachmentId(),
+        name: file.name,
+        contentType: file.type,
+        file,
+        type: isImage ? AttachmentType.Image : AttachmentType.File,
+        status: RequestStatus.Idle,
+        previewUrl,
+      };
+    });
+  }, []);
+
+  const addAttachments = useCallback(
+    (newAttachments: Attachment[]) => {
+      setAttachments((prev) => {
+        const updated = [...prev, ...newAttachments];
+        onAttachmentsChange?.(updated);
+        return updated;
+      });
+    },
+    [onAttachmentsChange],
+  );
+
+  useEffect(() => {
+    if (pendingDropFiles.length === 0) return;
+    const built = buildAttachments(pendingDropFiles);
+    addAttachments(built);
+    onDropFilesConsumed?.();
+  }, [pendingDropFiles]); // intentionally omit buildAttachments/addAttachments/onDropFilesConsumed — stable refs
+
+  const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
   const canSend = message.trim().length > 0;
   const hasModelSelected =
@@ -165,45 +201,43 @@ export const Input: FC<InputProps> = ({
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
-    const newAttachments: Attachment[] = files.map((file) => {
-      const isImage = file.type.startsWith('image/');
-      const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
-      return {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        name: file.name,
-        contentType: file.type,
-        file,
-        type: isImage ? AttachmentType.Image : AttachmentType.File,
-        status: RequestStatus.Idle,
-        previewUrl,
-      };
-    });
+    const newAttachments = buildAttachments(files);
 
     // Reset so the same file can be picked again
     e.target.value = '';
 
-    setAttachments((prev) => {
-      const updated = [...prev, ...newAttachments];
-      onAttachmentsChange?.(updated);
-      return updated;
-    });
+    addAttachments(newAttachments);
   };
 
-  const handleRemove = (id: string) => {
-    setAttachments((prev) => {
-      const target = prev.find((a) => a.id === id);
-      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-      const updated = prev.filter((a) => a.id !== id);
-      onAttachmentsChange?.(updated);
-      return updated;
-    });
-  };
+  const handleRemove = useCallback(
+    (id: string) => {
+      setAttachments((prev) => {
+        const target = prev.find((a) => a.id === id);
+        if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+        const updated = prev.filter((a) => a.id !== id);
+        onAttachmentsChange?.(updated);
+        return updated;
+      });
+    },
+    [onAttachmentsChange],
+  );
+
+  const handleExpand = useCallback(
+    async (id: string) => {
+      const target = attachments.find((a) => a.id === id);
+      if (!target || target.type !== AttachmentType.Pasted) return;
+      const text = await target.file.text();
+      setMessage((prev) => (prev ? `${prev}\n${text}` : text));
+      handleRemove(id);
+    },
+    [attachments, handleRemove],
+  );
 
   const textarea = (
     <textarea
       className={mergeClasses(
         styles.textarea,
-        'flex-1 resize-none bg-transparent outline-none',
+        'max-h-[272px] flex-1 resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
       )}
       value={message}
       onChange={(e) => {
@@ -211,6 +245,7 @@ export const Input: FC<InputProps> = ({
         onChange?.(e.target.value);
       }}
       onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       placeholder={placeholder}
       aria-label={ariaLabel}
       rows={1}
@@ -230,6 +265,7 @@ export const Input: FC<InputProps> = ({
           <AttachmentTray
             attachments={attachments}
             onRemove={handleRemove}
+            onExpand={handleExpand}
             removeLabel={removeLabel}
             retryLabel={retryLabel}
           />
