@@ -11,6 +11,7 @@ Libs must work in any project — with or without this app's theme. The styling 
 | Layout, spacing, border-radius | Tailwind classes in JSX                         |
 | Colors, typography (themed)    | CSS custom properties in `.module.scss`         |
 | User overrides                 | `colors` / `typography` props → inline CSS vars |
+| Dynamic computed values        | Inline `style` prop (only when no Tailwind class exists for the value) |
 
 ---
 
