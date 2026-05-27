@@ -85,7 +85,7 @@ jobs:
             exit 1
           fi
           python3 - <<'EOF' >> "$GITHUB_OUTPUT"
-          import os, yaml
+          import json, os, yaml
           with open(f"agents/{os.environ['AGENT_NAME']}/agent.yml") as f:
               m = yaml.safe_load(f) or {}
           skill = m.get("skill")
@@ -94,34 +94,48 @@ jobs:
           tools = m.get("allowed_tools")
           if not tools:
               raise SystemExit("::error::manifest missing required field: allowed_tools")
-          # tools.extra: optional array of npm package names the agent needs
-          # installed globally before invocation (e.g. ["openspec"]). Emit as
-          # comma-separated; the install step splits and runs npm install.
+          # tools.extra: optional list of CLI tools to install on the runner
+          # before invocation. Items can be either:
+          #   - a string (npm package name; installed via npm install -g)
+          #   - an object {name, install} where `install` is a shell command
+          # Emit as a single JSON line; the install step dispatches on shape.
           extra = (m.get("tools") or {}).get("extra") or []
           print(f"skill={skill}")
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
-          print(f"tools_extra={','.join(extra)}")
+          print(f"tools_extra_json={json.dumps(extra)}")
           EOF
 
       - name: Install agent-declared CLI tools
-        # Reads the manifest's `tools.extra:` array and installs each as a
-        # global npm package. Only runs when the agent declares at least one
-        # tool, so agents without extra CLI deps pay zero install cost.
-        # Failure here exits early before Claude is invoked — loud failure,
-        # not silent.
-        if: steps.manifest.outputs.tools_extra != ''
+        # Iterates `tools.extra` from the manifest. Strings → npm install -g.
+        # Objects with .install → run as shell. Failure here exits early
+        # before Claude is invoked — loud failure, not silent. Agents without
+        # extra deps pay zero install cost (step skipped when array is empty).
+        if: steps.manifest.outputs.tools_extra_json != '[]' && steps.manifest.outputs.tools_extra_json != ''
         env:
-          EXTRA: ${{ steps.manifest.outputs.tools_extra }}
+          EXTRA_JSON: ${{ steps.manifest.outputs.tools_extra_json }}
         run: |
           set -euo pipefail
-          IFS=',' read -ra TOOLS <<< "$EXTRA"
-          for tool in "${TOOLS[@]}"; do
-            [ -z "$tool" ] && continue
-            echo "Installing $tool..."
-            npm install -g "$tool"
-          done
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          extra = json.loads(os.environ['EXTRA_JSON'])
+          for entry in extra:
+              if isinstance(entry, str):
+                  print(f"::group::npm install -g {entry}")
+                  subprocess.run(["npm", "install", "-g", entry], check=True)
+                  print("::endgroup::")
+              elif isinstance(entry, dict) and "install" in entry:
+                  name = entry.get("name", "<unnamed>")
+                  cmd = entry["install"]
+                  print(f"::group::install {name}")
+                  print(f"+ {cmd}")
+                  subprocess.run(cmd, shell=True, check=True)
+                  print("::endgroup::")
+              else:
+                  sys.stderr.write(f"::error::Invalid tools.extra entry shape: {entry!r}\n")
+                  sys.exit(1)
+          PY
 
       - id: stage
         uses: ./.github/actions/run-claude-stage

@@ -1,0 +1,14 @@
+contract_version: "0.1"
+name: scan-deps
+skill: dep-scan
+agent_version: "0.1.0"
+description: "Filesystem dependency scan (Trivy). Detects known CVEs in repo lockfiles and emits structured findings for downstream triage."
+triggers: [pull_request]
+allowed_tools: "Read,Glob,Bash(trivy:*),Skill"
+tools:
+  extra:
+    - name: trivy
+      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"
+model: claude-sonnet-4-6
+phase: pilot
+cost_class: medium
