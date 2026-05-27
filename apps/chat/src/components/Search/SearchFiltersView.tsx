@@ -92,7 +92,7 @@ export function SearchFiltersView({
     <ContextMenu
       menuItems={filterItems}
       featureType={featureType}
-      triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
+      triggerIconClassName="absolute end-4 cursor-pointer max-h-[18px]"
       onOpenChange={setIsOpen}
       TriggerCustomRenderer={
         <Tooltip
@@ -107,7 +107,7 @@ export function SearchFiltersView({
             <IconCircleFilled
               size={8}
               className={classNames(
-                'absolute right-0 top-0 bg-layer-0 p-[0.3px] text-accent-primary',
+                'absolute end-0 top-0 bg-layer-0 p-[0.3px] text-accent-primary',
               )}
             />
           )}

@@ -41,7 +41,7 @@ export const BaseHeader: FC<Props> = ({
     >
       <div
         className={classNames(
-          'flex w-1/2 items-center pr-20',
+          'flex w-1/2 items-center pe-20',
           leftItemsWrapperClassName,
         )}
       >
@@ -57,7 +57,7 @@ export const BaseHeader: FC<Props> = ({
       </div>
       <div
         className={classNames(
-          'flex w-1/2 items-center justify-end pl-20',
+          'flex w-1/2 items-center justify-end ps-20',
           rightItemsWrapperClassName,
         )}
       >

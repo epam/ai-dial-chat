@@ -1,6 +1,8 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
+import { isRtlLocale } from '@/src/utils/app/rtl';
+
 import i18nextConfig from '@/next-i18next.config';
 import { documentWithJss } from '@epam/ai-dial-modulify-ui';
 
@@ -12,8 +14,10 @@ function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
 
+  const dir = isRtlLocale(currentLocale) ? 'rtl' : 'ltr';
+
   return (
-    <Html lang={currentLocale}>
+    <Html lang={currentLocale} dir={dir}>
       <Head nonce={props.nonce}>
         {!!process.env.APP_BASE_ORIGIN && !!process.env.APP_BASE_PATH && (
           <base
