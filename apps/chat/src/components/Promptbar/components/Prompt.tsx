@@ -52,6 +52,7 @@ import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   item: PromptInfo;
@@ -330,7 +331,7 @@ export const PromptComponent = memo(
                 )}
                 hideTooltip={!isNameOrPathInvalid}
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 min-w-0 flex-1 text-left',
                   (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
                     'text-secondary',
                   !!additionalItemData?.publicationUrl &&
@@ -339,7 +340,7 @@ export const PromptComponent = memo(
                 )}
                 dataQa="entity-name"
               >
-                {prompt.name}
+                <DialEllipsisTooltip text={prompt.name} />
               </Tooltip>
             </div>
           </div>
