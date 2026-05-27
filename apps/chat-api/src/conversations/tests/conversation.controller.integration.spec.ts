@@ -181,13 +181,15 @@ describe('ConversationController (integration)', () => {
         .send({
           firstMessage: 'Here is a file',
           deploymentId: 'gpt-4o',
-          attachments: [
-            {
-              type: 'application/pdf',
-              title: 'report.pdf',
-              data: 'base64data',
-            },
-          ],
+          custom_content: {
+            attachments: [
+              {
+                type: 'application/pdf',
+                title: 'report.pdf',
+                data: 'base64data',
+              },
+            ],
+          },
         })
         .expect(201);
 
@@ -197,13 +199,15 @@ describe('ConversationController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
         'gpt-4o',
-        [
-          {
-            type: 'application/pdf',
-            title: 'report.pdf',
-            data: 'base64data',
-          },
-        ],
+        {
+          attachments: [
+            {
+              type: 'application/pdf',
+              title: 'report.pdf',
+              data: 'base64data',
+            },
+          ],
+        },
       );
     });
 
@@ -213,7 +217,7 @@ describe('ConversationController (integration)', () => {
         .send({
           firstMessage: 'Hello',
           deploymentId: 'gpt-4o',
-          attachments: [{ title: 'file.pdf' }],
+          custom_content: { attachments: [{ title: 'file.pdf' }] },
         })
         .expect(400);
     });
@@ -224,7 +228,7 @@ describe('ConversationController (integration)', () => {
         .send({
           firstMessage: 'Hello',
           deploymentId: 'gpt-4o',
-          attachments: [{ type: 'application/pdf' }],
+          custom_content: { attachments: [{ type: 'application/pdf' }] },
         })
         .expect(400);
     });
@@ -238,13 +242,15 @@ describe('ConversationController (integration)', () => {
         .send({
           firstMessage: 'Here is a link',
           deploymentId: 'gpt-4o',
-          attachments: [
-            {
-              type: 'image/png',
-              title: 'screenshot.png',
-              url: 'https://files.example.com/screenshot.png',
-            },
-          ],
+          custom_content: {
+            attachments: [
+              {
+                type: 'image/png',
+                title: 'screenshot.png',
+                url: 'https://files.example.com/screenshot.png',
+              },
+            ],
+          },
         })
         .expect(201);
     });
@@ -263,7 +269,9 @@ describe('ConversationController (integration)', () => {
           .send({
             firstMessage: 'Hello',
             deploymentId: 'gpt-4o',
-            attachments: [{ type: 'image/png', title: 'x.png', url: badUrl }],
+            custom_content: {
+              attachments: [{ type: 'image/png', title: 'x.png', url: badUrl }],
+            },
           })
           .expect(400);
       },
@@ -281,14 +289,16 @@ describe('ConversationController (integration)', () => {
           .send({
             firstMessage: 'Hello',
             deploymentId: 'gpt-4o',
-            attachments: [
-              {
-                type: 'image/png',
-                title: 'x.png',
-                data: 'base64data',
-                reference_url: badUrl,
-              },
-            ],
+            custom_content: {
+              attachments: [
+                {
+                  type: 'image/png',
+                  title: 'x.png',
+                  data: 'base64data',
+                  reference_url: badUrl,
+                },
+              ],
+            },
           })
           .expect(400);
       },
