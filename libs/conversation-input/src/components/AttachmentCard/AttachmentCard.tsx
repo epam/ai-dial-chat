@@ -1,4 +1,8 @@
-import { buildCssVars, AttachmentType, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  AttachmentType,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -7,12 +11,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
-import {
-  type FC,
-  type KeyboardEvent,
-  type MouseEvent,
-  useMemo,
-} from 'react';
+import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
 import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';

@@ -116,7 +116,7 @@ const ConversationRoute: FC = () => {
         <div
           className="flex h-full flex-col items-center justify-center p-8"
           role="region"
-          aria-label="Welcome screen"
+          aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
           <ConversationInput
             onSend={handleSend}
@@ -138,6 +138,8 @@ const ConversationRoute: FC = () => {
                   ? t(CatalogI18nKeys.SelectorEmpty)
                   : undefined,
             }}
+            sendLabel={t(ChatI18nKeys.SendMessage)}
+            stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

@@ -5,7 +5,16 @@
     "streamError": "Something went wrong while generating the response.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
-    "starterConfirmTitle": "Confirm action"
+    "starterConfirmTitle": "Confirm action",
+    "conversationMessages": "Conversation messages",
+    "scrollToBottom": "Scroll to bottom",
+    "messageInput": "Message input",
+    "welcomeScreen": "Welcome screen",
+    "logo": "Logo",
+    "conversationStarters": "Conversation starters",
+    "sendMessage": "Send message",
+    "stopStreaming": "Stop streaming",
+    "quickReplyButtons": "Quick reply buttons"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
@@ -39,7 +48,14 @@
     "copy": "Copy",
     "copied": "Copied!",
     "like": "Like",
-    "dislike": "Dislike"
+    "dislike": "Dislike",
+    "editMessage": "Edit message",
+    "deleteMessage": "Delete message",
+    "regenerateResponse": "Regenerate response",
+    "copyResponse": "Copy response",
+    "copyAsMarkdown": "Copy as markdown",
+    "likeResponse": "Like response",
+    "dislikeResponse": "Dislike response"
   },
   "errors": {
     "generic": "Something went wrong",

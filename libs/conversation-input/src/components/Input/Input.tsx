@@ -51,6 +51,8 @@ export const Input: FC<InputProps> = ({
   addMenuLabel = 'Add',
   removeLabel,
   retryLabel,
+  sendLabel,
+  stopLabel,
   colors,
   typography,
   className,
@@ -356,10 +358,14 @@ export const Input: FC<InputProps> = ({
             />
           )}
           {isStreaming ? (
-            <StopButton onStop={onStop} />
+            <StopButton onStop={onStop} ariaLabel={stopLabel} />
           ) : (
             canSend && (
-              <SendButton onSend={handleSend} disabled={!hasModelSelected} />
+              <SendButton
+                onSend={handleSend}
+                disabled={!hasModelSelected}
+                ariaLabel={sendLabel}
+              />
             )
           )}
         </div>
