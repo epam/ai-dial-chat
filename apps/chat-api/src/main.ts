@@ -9,6 +9,8 @@ import {
   openApiDocumentOptions,
 } from './openapi/openapi.config';
 
+declare const module: any;
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -67,6 +69,11 @@ async function bootstrap() {
     Logger.log(
       `📚 Swagger documentation available at: http://localhost:${port}/api/docs`,
     );
+  }
+
+  if (module.hot) {
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
   }
 }
 
