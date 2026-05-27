@@ -5,6 +5,9 @@ agent_version: "0.1.0"
 description: "OpenSpec PR-time validation wrapping the local /spec-validation skill (which itself orchestrates /opsx:verify and the openspec CLI)."
 triggers: [pull_request]
 allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(openspec:*),Skill"
+tools:
+  extra:
+    - openspec   # global npm install before agent invocation; see AGENT_REFERENCE.md → CLI dependencies
 model: claude-sonnet-4-6
 phase: pilot
 cost_class: light
