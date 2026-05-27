@@ -117,44 +117,45 @@ cost_class: light
 | `concurrency` | No | `{group, cancel_in_progress}` override. Default group: `dispatch-pr-<name>-<ref>` |
 | `triggers[].filters` | No | `{branches, labels}` filtering of triggers. `branches` matches PR target; `labels` requires all listed labels present. `paths` is reserved for v0.3 |
 | `kill_switch_var` | No | Override the derived var name (rarely needed) |
-| `tools.extra` | No | Array of npm package names to install globally before the agent runs (e.g. `[openspec]`). See *CLI dependencies* below |
+| `tools.extra` | No | CLI tools to install on the runner before the agent runs. Items can be a string (npm package name) or `{name, install}` for non-npm tools. See *CLI dependencies* below |
 
 Manifests are validated against [`schemas/agent-manifest.schema.json`](./schemas/agent-manifest.schema.json) at every dispatch. Schema violations fail the discover job with a clear path to the offending field — no broken agent reaches the matrix. Per-agent `prompt.md` files are rejected (the runner fails loudly if it finds one).
 
 ### CLI dependencies (`tools.extra`)
 
-If your skill shells out to a CLI that the GitHub runner doesn't ship by
-default (e.g., `openspec`, `prettier`, an org-specific linter), declare it
-in the manifest:
+If your skill shells out to a CLI that the GitHub runner doesn't ship
+by default (e.g., `openspec`, `trivy`, `prettier`), declare it in the
+manifest. Two shapes:
 
 ```yaml
 tools:
   extra:
-    - "@fission-ai/openspec"   # scoped packages: quote the leading @
-    - some-other-cli
+    # Short form: npm package name (installed via `npm install -g`).
+    # Quote scoped packages — YAML treats a leading `@` as special.
+    - "@fission-ai/openspec"
+
+    # Long form: name + arbitrary shell install command. Use for
+    # non-npm tools (Go binaries, apt packages, anything you'd
+    # install in a regular shell step).
+    - name: trivy
+      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"
 ```
 
-Each entry is treated as a global npm package name. The runner does
-`npm install -g <name>` for each before invoking the agent, so the
-binary the package ships — e.g., `@fission-ai/openspec` ships the
-`openspec` binary — is available on `$PATH` to any `Bash(<name>:*)`
-tool call the agent makes. **Quote scoped packages** (anything starting
-with `@`) — YAML treats `@` at the start of a scalar as special.
-Agents that don't declare `tools.extra` pay zero install cost (the
-step is conditional on the field being non-empty).
+The runner iterates `tools.extra` before invoking the agent. Strings
+get `npm install -g <name>`; objects with `install` get their command
+shelled. Failure exits early — Claude isn't invoked if any dependency
+fails to install (loud, not silent). Agents without `tools.extra` pay
+zero install cost; the step is conditional on the array being
+non-empty.
 
-Coverage today: **npm packages only**. For non-npm tooling (apt
-packages, curl-installed binaries, Docker images), extend the schema —
-not implemented yet because no live agent needs it. When the first one
-appears, the natural evolution is a polymorphic shape:
+After install, the binary the tool ships is on `$PATH` and any
+`Bash(<binary>:*)` tool call the agent makes will work. Examples in
+this repo:
 
-```yaml
-# future, not implemented
-tools:
-  extra:
-    - openspec                                           # short form: npm package
-    - { name: trivy, install: "apt-get -y install trivy" }  # long form: arbitrary shell
-```
+- `agents/spec-validation/agent.yml` — short form
+  (`"@fission-ai/openspec"` → `openspec` binary).
+- `agents/scan-deps/agent.yml` — long form
+  (Trivy installed via the official curl-based installer).
 
 ### Tool tiers
 

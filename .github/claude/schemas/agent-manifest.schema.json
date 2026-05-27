@@ -129,10 +129,30 @@
     "tools": {
       "type": "object",
       "additionalProperties": false,
-      "description": "MCP servers and extra CLI tools available to the runner. Recorded; not yet wired.",
+      "description": "MCP servers and extra CLI tools available to the runner. `extra` items are installed by run-agent.yml before invoking the agent. `mcp` is recorded; not yet wired.",
       "properties": {
         "mcp": { "type": "array", "items": { "type": "string" } },
-        "extra": { "type": "array", "items": { "type": "string" } }
+        "extra": {
+          "type": "array",
+          "description": "CLI tools to install on the runner before invocation. Items can be a string (npm package name) or an object {name, install} for non-npm tools.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "npm package name. Installed via `npm install -g <name>`."
+              },
+              {
+                "type": "object",
+                "required": ["name", "install"],
+                "additionalProperties": false,
+                "properties": {
+                  "name":    { "type": "string", "description": "Display name (used in logs)." },
+                  "install": { "type": "string", "description": "Shell command to install the tool." }
+                }
+              }
+            ]
+          }
+        }
       }
     },
     "invocation": {
