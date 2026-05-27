@@ -17,6 +17,7 @@ import { getConversationRoute } from '../../constants/routes';
 import {
   CatalogI18nKeys,
   ChatI18nKeys,
+  DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
@@ -116,7 +117,7 @@ const ConversationRoute: FC = () => {
         <div
           className="flex h-full flex-col items-center justify-center p-8"
           role="region"
-          aria-label="Welcome screen"
+          aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
           <ConversationInput
             onSend={handleSend}
@@ -128,16 +129,18 @@ const ConversationRoute: FC = () => {
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             modelSelectorLabels={{
-              ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
+              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
               loading: isLoading
-                ? t(CatalogI18nKeys.SelectorLoading)
+                ? t(DeploymentsI18nKeys.SelectorLoading)
                 : undefined,
-              error: error ? t(CatalogI18nKeys.SelectorError) : undefined,
+              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
               empty:
                 !isLoading && !error && items.length === 0
-                  ? t(CatalogI18nKeys.SelectorEmpty)
+                  ? t(DeploymentsI18nKeys.SelectorEmpty)
                   : undefined,
             }}
+            sendLabel={t(ChatI18nKeys.SendMessage)}
+            stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

@@ -22,6 +22,24 @@ export interface MessageActionTooltips {
   dislike?: string;
 }
 
+/** Accessible labels for each message action button. All fields are optional; omitting a field falls back to the built-in English default. */
+export interface MessageActionAriaLabels {
+  /** aria-label for the Edit button. */
+  editMessage?: string;
+  /** aria-label for the Delete button. */
+  deleteMessage?: string;
+  /** aria-label for the Regenerate button. */
+  regenerateResponse?: string;
+  /** aria-label for the Copy button. */
+  copyResponse?: string;
+  /** aria-label for the Copy as Markdown button. */
+  copyAsMarkdown?: string;
+  /** aria-label for the Like button. */
+  likeResponse?: string;
+  /** aria-label for the Dislike button. */
+  dislikeResponse?: string;
+}
+
 /** Props accepted by the `MessageActions` component. */
 export interface MessageActionsProps {
   /** Which action set to render — `'User'` shows Edit/Delete, `'Agent'` shows Regenerate/Copy/Markdown/Like/Dislike. Defaults to `'User'`. */
@@ -32,6 +50,8 @@ export interface MessageActionsProps {
   alwaysVisible?: boolean;
   /** Override tooltip labels for individual action buttons. */
   tooltips?: MessageActionTooltips;
+  /** Override accessible labels (aria-label) for individual action buttons. */
+  ariaLabels?: MessageActionAriaLabels;
   /** Called when the user clicks the Edit button (User source only). */
   onEdit?: () => void;
   /** Called when the user clicks the Delete button (User source only). */

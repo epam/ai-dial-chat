@@ -4,6 +4,7 @@ import {
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  MessageActionAriaLabels,
   MessageActionTooltips,
   MessageActionsProps,
 } from '@epam/ai-dial-conversation-messages';
@@ -18,11 +19,13 @@ export const buildMessageActions = (
   msg: Message,
   handlers: MessageActionHandlers,
   tooltips?: MessageActionTooltips,
+  ariaLabels?: MessageActionAriaLabels,
 ): MessageActionsProps => {
   if (msg.role === MessageRole.User) {
     return {
       onDelete: handlers.onDelete ? () => handlers.onDelete?.(msg.id) : void 0,
       tooltips,
+      ariaLabels,
     };
   }
 
@@ -53,5 +56,6 @@ export const buildMessageActions = (
       : void 0,
     activeRating: msg.rating,
     tooltips,
+    ariaLabels,
   };
 };

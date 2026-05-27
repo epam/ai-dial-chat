@@ -7,16 +7,22 @@ import styles from './Input.module.scss';
 interface Props {
   onSend?: () => void;
   disabled?: boolean;
+  /** Accessible label for the send button. */
+  ariaLabel?: string;
 }
 
-export const SendButton: FC<Props> = ({ onSend, disabled = false }) => {
+export const SendButton: FC<Props> = ({
+  onSend,
+  disabled = false,
+  ariaLabel = 'Send message',
+}) => {
   return (
     <button
       className={mergeClasses(
         styles.sendButton,
         'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
       )}
-      aria-label="Send message"
+      aria-label={ariaLabel}
       onClick={() => onSend?.()}
       type="button"
       disabled={disabled}

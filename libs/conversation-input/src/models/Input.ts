@@ -76,6 +76,10 @@ export interface InputProps {
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
+  /** Accessible label for the send button. */
+  sendLabel?: string;
+  /** Accessible label for the stop button. */
+  stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
   /** Files dropped onto the parent that should be processed as attachments. Reset to `[]` after processing. */

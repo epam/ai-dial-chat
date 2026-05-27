@@ -21,6 +21,8 @@ import { useTranslation } from 'react-i18next';
 import {
   CatalogI18nKeys,
   ActionsI18nKeys,
+  ChatI18nKeys,
+  DeploymentsI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
@@ -79,6 +81,16 @@ const ConversationView: FC<Props> = ({
     copiedMarkdown: t(ActionsI18nKeys.Copied),
     like: t(ActionsI18nKeys.Like),
     dislike: t(ActionsI18nKeys.Dislike),
+  };
+
+  const ariaLabels = {
+    editMessage: t(ActionsI18nKeys.EditMessage),
+    deleteMessage: t(ActionsI18nKeys.DeleteMessage),
+    regenerateResponse: t(ActionsI18nKeys.RegenerateResponse),
+    copyResponse: t(ActionsI18nKeys.CopyResponse),
+    copyAsMarkdown: t(ActionsI18nKeys.CopyAsMarkdown),
+    likeResponse: t(ActionsI18nKeys.LikeResponse),
+    dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
   };
 
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -169,7 +181,7 @@ const ConversationView: FC<Props> = ({
         <div
           ref={containerRef}
           role="log"
-          aria-label="Conversation messages"
+          aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
           className="flex flex-1 flex-col overflow-y-auto px-4 py-8"
@@ -210,6 +222,7 @@ const ConversationView: FC<Props> = ({
                       onRate: onRateMessage,
                     },
                     tooltips,
+                    ariaLabels,
                   )}
                   className={
                     msg.role === MessageRole.User
@@ -218,6 +231,7 @@ const ConversationView: FC<Props> = ({
                   }
                   starters={activeStarters}
                   onSelectStarter={handleSelectStarter}
+                  startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
                 />
               );
             })}
@@ -227,14 +241,18 @@ const ConversationView: FC<Props> = ({
 
         {showScrollButton && (
           <DialFabButton
-            aria-label="Scroll to bottom"
+            aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={handleScrollToBottom}
             className="absolute bottom-4 left-1/2 -translate-x-1/2"
           />
         )}
       </div>
 
-      <div role="region" aria-label="Message input" className="w-full">
+      <div
+        role="region"
+        aria-label={t(ChatI18nKeys.MessageInput)}
+        className="w-full"
+      >
         <Suspense fallback={null}>
           <ConversationInput
             onSend={onSend}
@@ -246,16 +264,18 @@ const ConversationView: FC<Props> = ({
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             modelSelectorLabels={{
-              ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
+              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
               loading: isLoading
-                ? t(CatalogI18nKeys.SelectorLoading)
+                ? t(DeploymentsI18nKeys.SelectorLoading)
                 : undefined,
-              error: error ? t(CatalogI18nKeys.SelectorError) : undefined,
+              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
               empty:
                 !isLoading && !error && items.length === 0
-                  ? t(CatalogI18nKeys.SelectorEmpty)
+                  ? t(DeploymentsI18nKeys.SelectorEmpty)
                   : undefined,
             }}
+            sendLabel={t(ChatI18nKeys.SendMessage)}
+            stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
         </Suspense>
       </div>

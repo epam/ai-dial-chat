@@ -65,6 +65,8 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   starters?: StarterOption[];
   /** Called with the selected `StarterOption` when a quick-reply button is clicked. */
   onSelectStarter?: (starter: StarterOption) => void;
+  /** Accessible label for the quick-reply buttons list. Defaults to `"Quick reply buttons"`. */
+  startersAriaLabel?: string;
 }
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
@@ -80,4 +82,6 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   starters?: StarterOption[];
   /** Called with the selected `StarterOption` when a quick-reply button is clicked. Forwarded to `AssistantMessageBubble`. */
   onSelectStarter?: (starter: StarterOption) => void;
+  /** Accessible label for the quick-reply buttons list. Forwarded to `AssistantMessageBubble`; ignored for user messages. */
+  startersAriaLabel?: string;
 }

@@ -1,7 +1,7 @@
 ---
 paths:
-  - "libs/**/*.ts"
-  - "libs/**/*.tsx"
+  - 'libs/**/*.ts'
+  - 'libs/**/*.tsx'
 ---
 
 # Libs coding conventions

@@ -73,4 +73,8 @@ export interface ConversationInputProps {
   onDeploymentChange?: (id: string) => void;
   /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
   modelSelectorLabels?: ModelSelectorLabels;
+  /** Accessible label for the send button. */
+  sendLabel?: string;
+  /** Accessible label for the stop button. */
+  stopLabel?: string;
 }

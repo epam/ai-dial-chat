@@ -23,6 +23,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
+  sendLabel,
+  stopLabel,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -92,6 +94,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           selectedDeploymentId={selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           modelSelectorLabels={modelSelectorLabels}
+          sendLabel={sendLabel}
+          stopLabel={stopLabel}
         />
         {isDragActive && (
           <div

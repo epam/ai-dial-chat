@@ -21,6 +21,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   attachments,
   starters,
   onSelectStarter,
+  startersAriaLabel = 'Quick reply buttons',
 }) => {
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
@@ -60,7 +61,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
         {starters && starters.length > 0 && onSelectStarter && (
           <div
             role="list"
-            aria-label="Quick reply buttons"
+            aria-label={startersAriaLabel}
             className={mergeClasses(
               'flex flex-wrap gap-2 border-t pt-5',
               styles.startersDivider,
