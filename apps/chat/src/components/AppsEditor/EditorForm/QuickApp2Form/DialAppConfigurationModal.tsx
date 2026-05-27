@@ -11,6 +11,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
@@ -80,7 +81,7 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
             <span className="truncate text-sm font-semibold text-primary">
               {entity?.name ?? toolset.name}
             </span>
-            {version && (
+            {version && version !== NA_VERSION && (
               <span className="truncate text-xs text-primary">{version}</span>
             )}
           </div>
