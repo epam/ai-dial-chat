@@ -1,4 +1,4 @@
-import { AttachmentType, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, AttachmentType, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -8,7 +8,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
 import {
-  type CSSProperties,
   type FC,
   type KeyboardEvent,
   type MouseEvent,
@@ -41,12 +40,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     return isPasted ? name : getNameWithoutExtension(name);
   }, [isPasted, name]);
 
-  const cssVars = {
-    ...(colors?.border && { '--ci-card-border': colors.border }),
-    ...(colors?.background && { '--ci-card-bg': colors.background }),
-    ...(colors?.nameText && { '--ci-card-name': colors.nameText }),
-    ...(colors?.metaText && { '--ci-card-meta': colors.metaText }),
-  } as CSSProperties;
+  const cssVars = buildCssVars({
+    '--ci-card-border': colors?.border,
+    '--ci-card-bg': colors?.background,
+    '--ci-card-name': colors?.nameText,
+    '--ci-card-meta': colors?.metaText,
+  });
 
   const {
     isLoading,

@@ -1,0 +1,6 @@
+curations:
+  packages:
+    - id: "NPM::union:0.5.0"
+      curations:
+        comment: "License is MIT per LICENSE file in the repository, but the field is missing from package.json."
+        concluded_license: "MIT"
