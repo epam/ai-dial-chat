@@ -21,7 +21,7 @@ jobs:
             const static_args =
               pull.base.ref === 'development-1.0'
                 ? ["application=ai-dial-chat-ng", "skip-e2e"]
-                : ["application=${{ github.event.repository.name }}", "test-applications=chat,overlay"]
+                : ["application=ai-dial-chat", "test-applications=chat,overlay"]
 
             core.setOutput('static_args', static_args)
       - name: Slash Command Dispatch
