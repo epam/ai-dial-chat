@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
-import { ModelsProvider } from './context/ModelsContext';
+import { DeploymentsProvider } from './context/DeploymentsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
 import './styles.scss';
@@ -21,7 +21,7 @@ root.render(
     <BrowserRouter>
       <UserProvider>
         <ThemeProvider>
-          <ModelsProvider>
+          <DeploymentsProvider>
             <Suspense fallback={null}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
@@ -35,7 +35,7 @@ root.render(
                 />
               </Routes>
             </Suspense>
-          </ModelsProvider>
+          </DeploymentsProvider>
         </ThemeProvider>
       </UserProvider>
     </BrowserRouter>

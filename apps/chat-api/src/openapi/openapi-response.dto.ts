@@ -22,17 +22,6 @@ export class UserProfileDto {
   bucket!: string;
 }
 
-export class DialDeploymentDto {
-  @ApiProperty({ example: 'gpt-4o' })
-  id!: string;
-
-  @ApiPropertyOptional({ example: 'GPT-4o' })
-  name?: string;
-
-  @ApiPropertyOptional({ example: 'model' })
-  type?: string;
-}
-
 export class DialModelFeaturesDto {
   @ApiPropertyOptional({ example: false })
   rate?: boolean;

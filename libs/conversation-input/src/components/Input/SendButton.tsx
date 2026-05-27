@@ -6,9 +6,10 @@ import styles from './Input.module.scss';
 
 interface Props {
   onSend?: () => void;
+  disabled?: boolean;
 }
 
-export const SendButton: FC<Props> = ({ onSend }) => {
+export const SendButton: FC<Props> = ({ onSend, disabled = false }) => {
   return (
     <button
       className={mergeClasses(
@@ -18,6 +19,7 @@ export const SendButton: FC<Props> = ({ onSend }) => {
       aria-label="Send message"
       onClick={() => onSend?.()}
       type="button"
+      disabled={disabled}
     >
       <IconArrowNarrowRight size={DIAL_ICON_SIZE.LG} />
     </button>

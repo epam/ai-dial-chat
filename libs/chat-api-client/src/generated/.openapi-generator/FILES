@@ -2,6 +2,7 @@
 .npmignore
 README.md
 package.json
+src/apis/ApplicationsApi.ts
 src/apis/AuthApi.ts
 src/apis/ChatApi.ts
 src/apis/ConversationsApi.ts

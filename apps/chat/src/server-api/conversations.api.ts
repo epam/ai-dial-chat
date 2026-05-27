@@ -6,11 +6,13 @@ import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,
+  deploymentId: string,
   attachments?: AttachmentDto[],
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
+      deploymentId,
       ...(attachments?.length ? { attachments } : {}),
     },
   });
