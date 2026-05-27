@@ -8,6 +8,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
+import { isRtlLocale } from '@/src/utils/app/rtl';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { ScreenState } from '@/src/types/common';
@@ -64,6 +65,9 @@ export function ResizableSidebarWrapper({
 
   const isMarketplaceFilterbar =
     isLeftSidebar && router.route === Routes.Marketplace;
+
+  const isRtl = isRtlLocale(router.locale ?? 'en');
+  const isPhysicallyLeftSidebar = isRtl ? !isLeftSidebar : isLeftSidebar;
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -223,12 +227,12 @@ export function ResizableSidebarWrapper({
     '!fixed z-40 flex !h-full max-w-[95%] border-tertiary md:max-w-[45%]',
     'sidebar-overlay:!relative sidebar-overlay:top-0',
     isLeftSidebar
-      ? 'left-0 border-r sidebar-overlay:left-0'
-      : 'right-0 border-l',
+      ? 'start-0 border-r sidebar-overlay:start-0'
+      : 'end-0 border-l',
     sidebarThemeClassname,
     isLeftSidebar &&
       isNavigationVisible &&
-      (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
+      (isOverlay ? 'md:start-[44px]' : 'md:start-[60px]'),
   );
 
   const resizeSettings: ResizableProps = useMemo(() => {
@@ -246,9 +250,9 @@ export function ResizableSidebarWrapper({
       },
       enable: {
         top: false,
-        right: isLeftSidebar,
+        right: isPhysicallyLeftSidebar,
         bottom: false,
-        left: !isLeftSidebar,
+        left: !isPhysicallyLeftSidebar,
         topRight: false,
         bottomRight: false,
         bottomLeft: false,
@@ -258,10 +262,20 @@ export function ResizableSidebarWrapper({
         right: 'group invisible md:visible',
         left: 'group invisible md:visible',
       },
-      handleStyles: { right: { right: '-11px' }, left: { left: '-3px' } },
+      handleStyles: {
+        right: { right: isRtl ? '-3px' : '-11px' },
+        left: { left: isRtl ? '-11px' : '-3px' },
+      },
       handleComponent: {
         left: <LeftSideResizeIcon className={resizeTriggerClassName} />,
-        right: <RightSideResizeIcon className={resizeTriggerClassName} />,
+        right: (
+          <RightSideResizeIcon
+            className={classNames(
+              resizeTriggerClassName,
+              isRtl && '[&>svg]:-mr-6',
+            )}
+          />
+        ),
       },
       onResizeStart: onResizeStart,
       onResizeStop: onResizeStop,
@@ -271,7 +285,8 @@ export function ResizableSidebarWrapper({
     sidebarWidth,
     sidebarMinWidth,
     maxWidth,
-    isLeftSidebar,
+    isRtl,
+    isPhysicallyLeftSidebar,
     resizeTriggerClassName,
     onResizeStart,
     onResizeStop,
