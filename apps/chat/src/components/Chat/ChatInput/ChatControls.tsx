@@ -91,7 +91,7 @@ export const ChatControls: FC<Props> = ({
         isTriggerClickable: true,
         triggerClassName: classNames(
           'absolute size-[20px]',
-          isOverlay ? 'bottom-2 right-3' : 'right-4 top-3 md:bottom-3',
+          isOverlay ? 'bottom-2 end-3' : 'end-4 top-3 md:bottom-3',
         ),
       }}
       onClick={handleReplayReStart}
