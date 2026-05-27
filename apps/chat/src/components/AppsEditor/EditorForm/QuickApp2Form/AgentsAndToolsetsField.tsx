@@ -422,29 +422,28 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   onConfigureClick={handleConfigureClick}
                 />
               </div>
-              {detailedViewEntity &&
-                isDialAiEntityModel(detailedViewEntity) && (
-                  <ApplicationDetails
-                    entity={detailedViewEntity}
-                    allEntities={allModels}
-                    FooterComponent={SimpleApplicationDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
-
-              {detailedViewEntity &&
-                isToolsetEntityModel(detailedViewEntity) && (
-                  <ToolsetDetails
-                    entity={detailedViewEntity}
-                    allEntities={allToolsets}
-                    FooterComponent={SimpleToolsetDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
             </>
           );
         }}
       />
+
+      {detailedViewEntity && isDialAiEntityModel(detailedViewEntity) && (
+        <ApplicationDetails
+          entity={detailedViewEntity}
+          allEntities={allModels}
+          FooterComponent={SimpleApplicationDetailsFooter}
+          {...commonDetailsProps}
+        />
+      )}
+
+      {detailedViewEntity && isToolsetEntityModel(detailedViewEntity) && (
+        <ToolsetDetails
+          entity={detailedViewEntity}
+          allEntities={allToolsets}
+          FooterComponent={SimpleToolsetDetailsFooter}
+          {...commonDetailsProps}
+        />
+      )}
 
       <DialConfirmationPopup
         variant={ConfirmationPopupVariant.Danger}
