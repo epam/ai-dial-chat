@@ -23,12 +23,12 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 
 Choose the review mode from the user's request and available context:
 
-| Mode                    | Use when                                 | Required context                                                                 |
-| ----------------------- | ---------------------------------------- | -------------------------------------------------------------------------------- |
-| **Local review**        | Reviewing uncommitted local changes      | `git status`, `git diff`, full changed files, related OpenSpec artifacts if any   |
-| **PR review**           | Reviewing a GitHub PR number or URL      | PR metadata, PR diff, full changed files at PR head, related OpenSpec artifacts   |
-| **Self-review**         | Finishing an implementation slice        | Touched files, completed task, tests run, remaining task status                   |
-| **OpenSpec review**     | Reviewing an OpenSpec-backed change      | `proposal.md`, `design.md`, `tasks.md`, changed specs, implementation diff        |
+| Mode                | Use when                            | Required context                                                                |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
+| **Local review**    | Reviewing uncommitted local changes | `git status`, `git diff`, full changed files, related OpenSpec artifacts if any |
+| **PR review**       | Reviewing a GitHub PR number or URL | PR metadata, PR diff, full changed files at PR head, related OpenSpec artifacts |
+| **Self-review**     | Finishing an implementation slice   | Touched files, completed task, tests run, remaining task status                 |
+| **OpenSpec review** | Reviewing an OpenSpec-backed change | `proposal.md`, `design.md`, `tasks.md`, changed specs, implementation diff      |
 
 For PR review, read full changed files, not only diff hunks. Diffs show what changed; full files show whether the change fits the surrounding design.
 
@@ -91,15 +91,15 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 
 Use the repository skills and rules as the source of truth before applying generic advice:
 
-| Change area                                | Read / apply                                                                                                    |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| Workspace structure, project ownership      | `openspec/config.yaml`, `AGENTS.md`, `.agents/skills/nx-workspace/SKILL.md`                                      |
-| Multi-file implementation or refactor       | `.claude/skills/incremental-implementation/SKILL.md`                                                            |
-| HTTP API contract or generated client       | `.agents/skills/api-design/SKILL.md`                                                                            |
-| `apps/chat-api/**`                          | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`                                         |
-| `libs/*` React components                   | `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules from `AGENTS.md`                               |
-| UI kit components                           | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives                                |
-| CI status or self-healing fixes             | `.agents/skills/monitor-ci/SKILL.md`; do not replace it with ad hoc polling                                     |
+| Change area                            | Read / apply                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| Workspace structure, project ownership | `openspec/config.yaml`, `AGENTS.md`, `.agents/skills/nx-workspace/SKILL.md`       |
+| Multi-file implementation or refactor  | `.claude/skills/incremental-implementation/SKILL.md`                              |
+| HTTP API contract or generated client  | `.agents/skills/api-design/SKILL.md`                                              |
+| `apps/chat-api/**`                     | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`           |
+| `libs/*` React components              | `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules from `AGENTS.md` |
+| UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives  |
+| CI status or self-healing fixes        | `.agents/skills/monitor-ci/SKILL.md`; do not replace it with ad hoc polling       |
 
 Do not import generic standards that conflict with these repo rules. For example, do not require a new REST response envelope, direct frontend REST helpers, raw HTML controls, or a generic project structure when local conventions say otherwise.
 
@@ -162,14 +162,14 @@ When checking "tests / build / lint":
 
 Select the smallest validation set that proves the change:
 
-| Change type                         | Expected validation                                                                                                        |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Frontend component / hook           | `npx nx test chat`, `npx nx lint chat`; build if route/bundling/shared imports changed                                      |
-| Backend `apps/chat-api/**`          | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed           |
-| HTTP API contract                   | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
-| Shared lib                          | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                |
-| Broad cross-project change          | `npx nx affected --target=lint --base=origin/development` and affected test/build targets as appropriate                   |
-| CI-only review                      | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                     |
+| Change type                | Expected validation                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Frontend component / hook  | `npx nx test chat`, `npx nx lint chat`; build if route/bundling/shared imports changed                                        |
+| Backend `apps/chat-api/**` | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed             |
+| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
+| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                   |
+| Broad cross-project change | `npx nx affected --target=lint --base=origin/development` and affected test/build targets as appropriate                      |
+| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                        |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.
 
@@ -177,10 +177,10 @@ Record skipped checks with a reason. A review without a verification story is in
 
 Use a clear verdict:
 
-| Verdict             | Use when                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| **Approve**         | No blocking issues; relevant verification is green or CI covers it                         |
-| **Approve/comment** | Only optional or low-risk improvements remain                                              |
+| Verdict             | Use when                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| **Approve**         | No blocking issues; relevant verification is green or CI covers it                          |
+| **Approve/comment** | Only optional or low-risk improvements remain                                               |
 | **Request changes** | Required issues, failing relevant checks, missing tests for risky behavior, OpenSpec drift  |
 | **Block**           | Security issue, data loss risk, broken public contract, secrets exposure, invalid auth flow |
 | **Comment only**    | Draft PR, exploratory review, or user explicitly asked for non-blocking feedback            |
