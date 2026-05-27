@@ -17,7 +17,9 @@ export const CloseSidebarButton: React.FC<Props> = ({
     <div
       className={classNames(
         'absolute top-0 z-50 p-[6px] sidebar-overlay:hidden',
-        isLeftSide ? 'right-0 translate-x-full' : 'left-0 -translate-x-full',
+        isLeftSide
+          ? 'end-0 translate-x-full rtl:-translate-x-full'
+          : 'start-0 -translate-x-full rtl:translate-x-full',
       )}
     >
       <CloseButtonSmall

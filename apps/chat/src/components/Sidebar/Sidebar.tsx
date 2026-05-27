@@ -129,9 +129,8 @@ export const Sidebar = <T,>({
           </div>
           <Search
             placeholder={t(PromptBarI18nKeys.Search, {
-              name: trimEnd(
-                EnumMapper.getApiKeyByFeatureType(featureType),
-                's',
+              name: t(
+                trimEnd(EnumMapper.getApiKeyByFeatureType(featureType), 's'),
               ),
             })}
             searchTerm={searchTerm}

@@ -49,7 +49,7 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
         onMouseEnter={() => onRowHover(entity.id)}
         onMouseLeave={() => onRowHoverOver()}
         className={classNames(
-          'flex h-[55px] cursor-pointer py-3 pl-3 pr-1 md:h-[115px] md:py-4 md:pl-4',
+          'flex h-[55px] cursor-pointer py-3 pe-1 ps-3 md:h-[115px] md:py-4 md:ps-4',
           isHovered && 'bg-layer-2',
         )}
       >

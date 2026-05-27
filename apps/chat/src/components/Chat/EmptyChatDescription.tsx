@@ -244,7 +244,7 @@ const EmptyChatDescriptionView = ({
         </div>
       </div>
       {(!isReadOnly || !isExternal) && (
-        <div className="flex gap-3 divide-x divide-primary leading-4">
+        <div className="flex gap-3 divide-x divide-primary leading-4 rtl:divide-x-reverse">
           {!isEmptyChatChangeAgentHidden && (
             <DialLinkButton
               data-qa="change-agent"
