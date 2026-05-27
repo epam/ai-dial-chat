@@ -27,6 +27,9 @@
       }
     }
   },
+  "peerDependencies": {
+    "react": "^19.2.6"
+  },
   "dependencies": {
     "tslib": "^2.3.0",
     "classnames": "2.5.1",

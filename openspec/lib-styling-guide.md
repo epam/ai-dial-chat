@@ -11,6 +11,7 @@ Libs must work in any project — with or without this app's theme. The styling 
 | Layout, spacing, border-radius | Tailwind classes in JSX                         |
 | Colors, typography (themed)    | CSS custom properties in `.module.scss`         |
 | User overrides                 | `colors` / `typography` props → inline CSS vars |
+| Dynamic computed values        | Inline `style` prop (only when no Tailwind class exists for the value) |
 
 ---
 
@@ -125,17 +126,18 @@ src/
 
 ### Component applies props as inline CSS vars
 
-In the component, **only set a variable if the user passed a value**. No hex values in TypeScript:
+In the component, use `buildCssVars` from `@epam/ai-dial-chat-shared` to convert the props to a `CSSProperties` object. It omits entries whose value is `undefined` or `''`, so pass `undefined` explicitly when a var should be skipped. No hex values in TypeScript:
 
 ```tsx
-const cssVars = {
-  ...(colors?.background && { '--ci-bg': colors.background }),
-  ...(colors?.text &&       { '--ci-text': colors.text }),
-  // font class takes priority — skip individual vars
-  ...(!typography?.fontClassName && typography?.fontSize && {
-    '--ci-font-size': typography.fontSize,
-  }),
-} as React.CSSProperties;
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+
+const noCustomClass = !typography?.fontClassName;
+const cssVars = buildCssVars({
+  '--ci-bg': colors?.background,
+  '--ci-text': colors?.text,
+  // font class takes priority — skip individual typography vars when fontClassName is set
+  '--ci-font-size': noCustomClass ? typography?.fontSize : undefined,
+});
 
 return <div style={cssVars} className={mergeClasses(styles.wrapper, 'flex w-full ...', className)}>
 ```

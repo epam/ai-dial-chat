@@ -6,12 +6,13 @@
   "scripts": {
     "start": "nx serve chat",
     "start:api": "nx serve chat-api",
+    "start:api:dev": "cd apps/chat-api && webpack-cli build --config webpack.hmr.config.js --watch --node-env=development",
     "start:all": "nx run-many --target=serve --projects=chat,chat-api --parallel",
     "build": "nx build chat",
     "build:api": "nx build chat-api",
     "build:all": "nx run-many --target=build --all",
     "test": "nx run-many -t test --all",
-    "lint": "nx run-many --target=lint --all && npm run format",
+    "lint": "nx run-many --target=lint --all --fix && npm run format",
     "lint:check": "nx run-many --target=lint --all && npm run format:check",
     "lint:fix": "nx run-many --target=lint --all --fix",
     "lint:affected": "nx affected --target=lint",
@@ -36,7 +37,6 @@
     "@nx/react": "22.7.2",
     "@nx/vite": "22.7.2",
     "@nx/vitest": "22.7.2",
-    "@nx/web": "22.7.2",
     "@nx/webpack": "22.7.2",
     "@openapitools/openapi-generator-cli": "^2.33.1",
     "@swc-node/register": "1.11.1",
@@ -72,6 +72,7 @@
     "postcss": "^8.5.10",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "run-script-webpack-plugin": "^0.2.3",
     "sass": "^1.99.0",
     "supertest": "^7.2.2",
     "tailwindcss": "^3.4.3",
@@ -83,7 +84,8 @@
     "vite-plugin-dts": "~4.5.0",
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "~4.1.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
   },
   "workspaces": [
     "packages/*",

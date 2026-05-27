@@ -7,6 +7,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
   attachments,
   onRemove,
   onRetry,
+  onExpand,
   ariaLabel = 'Attached files',
   removeLabel,
   retryLabel,
@@ -26,6 +27,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
             attachment={attachment}
             onRemove={onRemove}
             onRetry={onRetry}
+            onExpand={onExpand}
             removeLabel={removeLabel}
             retryLabel={retryLabel}
           />
