@@ -95,16 +95,19 @@ const ConversationRoute: FC = () => {
         const configurationValue = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
-        void apiCreateConversation(text, undefined, configurationValue).then(
-          (conversation) => {
-            navigate(getConversationRoute(conversation.id));
-          },
-        );
+        void apiCreateConversation(
+          text,
+          selectedItemId,
+          [],
+          configurationValue,
+        ).then((conversation) => {
+          navigate(getConversationRoute(conversation.id));
+        });
       } else {
         setInputMessage(text);
       }
     },
-    [navigate, propertyKey, description],
+    [description, propertyKey, selectedItemId, navigate],
   );
 
   return (

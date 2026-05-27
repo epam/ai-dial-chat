@@ -85,7 +85,6 @@ export const ConversationPage: FC = () => {
             const final = conversationRef.current;
             if (final) {
               try {
-                console.log('Saving conversation', final);
                 await saveConversation(conversationPath, final);
               } catch (err: unknown) {
                 void err;
@@ -335,7 +334,9 @@ export const ConversationPage: FC = () => {
         assistantMessageId,
         conversation.model.id,
         configurationValue
-          ? { configuration_value: configurationValue }
+          ? {
+              form_value: configurationValue,
+            }
           : undefined,
       );
     },
@@ -363,6 +364,7 @@ export const ConversationPage: FC = () => {
 
   const handleConfirmStarter = useCallback(() => {
     if (!pendingStarterContext) return;
+
     const { starter, propertyKey, description } = pendingStarterContext;
     setPendingStarterContext(null);
     submitStarter(starter, propertyKey, description);

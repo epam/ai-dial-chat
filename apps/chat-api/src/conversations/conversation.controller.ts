@@ -182,10 +182,20 @@ export class ConversationController {
     const reader = stream.getReader();
 
     let clientAborted = false;
-    res.on('close', () => {
+    let readerReleased = false;
+    let readerCancelRequested = false;
+
+    const handleClose = () => {
       clientAborted = true;
-      reader.cancel();
-    });
+      if (readerReleased || readerCancelRequested) {
+        return;
+      }
+
+      readerCancelRequested = true;
+      void reader.cancel().catch(() => undefined);
+    };
+
+    res.on('close', handleClose);
 
     let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
     try {
@@ -209,8 +219,12 @@ export class ConversationController {
       }
     } finally {
       if (keepaliveTimer) clearInterval(keepaliveTimer);
+      res.off('close', handleClose);
+      readerReleased = true;
       reader.releaseLock();
-      res.end();
+      if (!res.writableEnded) {
+        res.end();
+      }
     }
   }
 

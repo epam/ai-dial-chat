@@ -20,14 +20,14 @@ export const applyChunkToMessages = (
 
   if (!content && !formSchema) return null;
 
-  return messages.map((m) => {
-    if (m.id !== assistantMessageId) return m;
+  return messages.map((message) => {
+    if (message.id !== assistantMessageId) return message;
     return {
-      ...m,
-      content: content ? m.content + content : m.content,
+      ...message,
+      content: content ? message.content + content : message.content,
       ...(formSchema && {
         custom_content: {
-          ...m.custom_content,
+          ...message.custom_content,
           form_schema: formSchema,
         },
       }),

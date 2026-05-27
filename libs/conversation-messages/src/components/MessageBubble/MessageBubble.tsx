@@ -4,19 +4,10 @@ import type { MessageBubbleProps } from '../../models/MessageBubble.js';
 import { AssistantMessageBubble } from './AssistantMessageBubble.js';
 import { UserMessageBubble } from './UserMessageBubble.js';
 
-export const MessageBubble: FC<MessageBubbleProps> = ({
-  role,
-  starters,
-  onSelectStarter,
-  ...props
-}) => {
+export const MessageBubble: FC<MessageBubbleProps> = ({ role, ...props }) => {
   return role === MessageRole.User ? (
     <UserMessageBubble {...props} />
   ) : (
-    <AssistantMessageBubble
-      {...props}
-      starters={starters}
-      onSelectStarter={onSelectStarter}
-    />
+    <AssistantMessageBubble {...props} />
   );
 };

@@ -6,7 +6,7 @@ import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,
-  deploymentId: string,
+  deploymentId: string | null,
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
 ) =>
