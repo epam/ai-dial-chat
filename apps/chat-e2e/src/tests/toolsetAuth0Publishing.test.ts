@@ -352,18 +352,20 @@ dialAdminTest(
       'Click on "Go to a review" button and verify toolset details are displayed',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview();
-        await adminPublishedToolsetReviewModalAssertion.assertToolsetAttributes({
-          expectedName: toolsetEntity.name,
-          expectedVersion: toolsetEntity.version,
-          expectedIcon: expectedIconReviewUrl,
-          expectedDescription: toolsetEntity.description,
-          expectedTopics: toolsetEntity.topics,
-          expectedEndpoint: toolsetEntity.endpoint,
-          expectedTransportProtocol: ToolsetTransportType.HTTP,
-          expectedAuthenticationType: ToolsetAuthTypes.OAUTH,
-          //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5202
-          // expectedAllowedTools: toolsetEntity.allowedTools,
-        });
+        await adminPublishedToolsetReviewModalAssertion.assertToolsetAttributes(
+          {
+            expectedName: toolsetEntity.name,
+            expectedVersion: toolsetEntity.version,
+            expectedIcon: expectedIconReviewUrl,
+            expectedDescription: toolsetEntity.description,
+            expectedTopics: toolsetEntity.topics,
+            expectedEndpoint: toolsetEntity.endpoint,
+            expectedTransportProtocol: ToolsetTransportType.HTTP,
+            expectedAuthenticationType: ToolsetAuthTypes.OAUTH,
+            //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5202
+            // expectedAllowedTools: toolsetEntity.allowedTools,
+          },
+        );
         await adminPublishedToolsetReviewModalControlsAssertion.assertButtonsState(
           {
             backToPublicationRequestButtonState: 'enabled',
@@ -385,6 +387,10 @@ dialAdminTest(
           reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
           approveButtonState: 'enabled',
         });
+
+        //need to temporarily disable mocking since the toolset listing is triggered when clicking the 'approve' btn
+        adminOAuthMockHelper.disableMocking();
+
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
           { name: requestName },
@@ -395,9 +401,11 @@ dialAdminTest(
           'hidden',
         );
 
+        //mock published toolset
         const publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
           toolsetResource.targetUrl,
         );
+        adminOAuthMockHelper.enableMocking();
         await adminOAuthMockHelper.setupToolsetListingRoute(publishedToolset);
         await adminOAuthMockHelper.setupToolsetRoutes(publishedToolset);
       },
