@@ -1,53 +1,18 @@
-import { translate } from '@/src/utils/app/translation';
-
-import { Translation } from '@/src/types/translation';
-
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
-export const ORGANIZATION_SECTION_NAME = translate(ChatI18nKeys.Organization, {
-  ns: Translation.Chat,
-});
-export const APPROVE_REQUIRED_SECTION_NAME = translate(
-  ChatI18nKeys.ApproveRequired,
-  {
-    ns: Translation.Chat,
-  },
-);
-export const SHARED_WITH_ME_SECTION_NAME = translate(
-  ChatI18nKeys.SharedWithMe,
-  {
-    ns: Translation.Chat,
-  },
-);
-export const ROOT_SECTION_NAME = translate(ChatI18nKeys.MyFiles, {
-  ns: Translation.Chat,
-});
-
-export const PINNED_PROMPTS_SECTION_NAME = translate(
-  ChatI18nKeys.PinnedPrompts,
-  {
-    ns: Translation.Chat,
-  },
-);
-export const RECENT_PROMPTS_SECTION_NAME = translate(ChatI18nKeys.Recent, {
-  ns: Translation.Chat,
-});
-
-export const PINNED_CONVERSATIONS_SECTION_NAME = translate(
-  ChatI18nKeys.PinnedConversations,
-  {
-    ns: Translation.Chat,
-  },
-);
+export const ORGANIZATION_SECTION_NAME = ChatI18nKeys.Organization;
+export const APPROVE_REQUIRED_SECTION_NAME = ChatI18nKeys.ApproveRequired;
+export const SHARED_WITH_ME_SECTION_NAME = ChatI18nKeys.SharedWithMe;
+export const ROOT_SECTION_NAME = ChatI18nKeys.MyFiles;
+export const PINNED_PROMPTS_SECTION_NAME = ChatI18nKeys.PinnedPrompts;
+export const RECENT_PROMPTS_SECTION_NAME = ChatI18nKeys.Recent;
+export const PINNED_CONVERSATIONS_SECTION_NAME =
+  ChatI18nKeys.PinnedConversations;
 export const CONVERSATIONS_DATE_SECTIONS = {
-  today: translate(ChatI18nKeys.Today, { ns: Translation.Chat }),
-  yesterday: translate(ChatI18nKeys.Yesterday, { ns: Translation.Chat }),
-  lastSevenDays: translate(ChatI18nKeys.Last7Days, {
-    ns: Translation.Chat,
-  }),
-  lastThirtyDays: translate(ChatI18nKeys.Last30Days, {
-    ns: Translation.Chat,
-  }),
-  older: translate(ChatI18nKeys.Older, { ns: Translation.Chat }),
-  other: translate(ChatI18nKeys.Other, { ns: Translation.Chat }),
+  today: ChatI18nKeys.Today,
+  yesterday: ChatI18nKeys.Yesterday,
+  lastSevenDays: ChatI18nKeys.Last7Days,
+  lastThirtyDays: ChatI18nKeys.Last30Days,
+  older: ChatI18nKeys.Older,
+  other: ChatI18nKeys.Other,
 };
