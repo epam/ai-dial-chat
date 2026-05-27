@@ -1,9 +1,12 @@
 import { randomUUID } from 'crypto';
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  UnauthorizedException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
-import { ServiceUnavailableException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BucketService } from '../../bucket/bucket.service';
 import { RefreshService } from '../../refresh/refresh.service';
@@ -157,7 +160,9 @@ describe('SessionGuard', () => {
     it('fetches bucket and updates session cookie when payload.bucket is empty', async () => {
       const payload = makePayload({ bucket: '' });
       sessionService.decryptFromRequest.mockResolvedValue(payload);
-      bucketService.getUserBucket.mockResolvedValue({ bucket: 'resolved-bucket' });
+      bucketService.getUserBucket.mockResolvedValue({
+        bucket: 'resolved-bucket',
+      });
 
       const { context, req, res } = makeContext({ cookieValue: 'valid-token' });
       await expect(guard.canActivate(context)).resolves.toBe(true);
@@ -177,7 +182,9 @@ describe('SessionGuard', () => {
     it('throws ServiceUnavailableException when bucket fetch fails', async () => {
       const payload = makePayload({ bucket: '' });
       sessionService.decryptFromRequest.mockResolvedValue(payload);
-      bucketService.getUserBucket.mockRejectedValue(new Error('DIAL Core down'));
+      bucketService.getUserBucket.mockRejectedValue(
+        new Error('DIAL Core down'),
+      );
 
       const { context } = makeContext({ cookieValue: 'valid-token' });
       await expect(guard.canActivate(context)).rejects.toThrow(

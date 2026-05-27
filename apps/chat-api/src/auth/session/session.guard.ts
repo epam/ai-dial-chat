@@ -11,12 +11,12 @@ import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { BucketService } from '../bucket/bucket.service';
 import {
   getCookieOptions,
   getSessionCookieName,
   setCookieValue,
 } from '../cookies/cookie-options';
-import { BucketService } from '../bucket/bucket.service';
 import { RefreshService } from '../refresh/refresh.service';
 import { SessionService } from './session.service';
 import type { SessionPayload, SessionUser } from './session.types';
