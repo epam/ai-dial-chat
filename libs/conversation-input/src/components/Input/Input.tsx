@@ -7,10 +7,17 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
+  DIAL_ICON_SIZE,
   DialDropdown,
+  DialDropdownIcon,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import {
+  IconApps,
+  IconPaperclip,
+  IconPlus,
+  IconRobot,
+} from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
   type FC,
@@ -23,6 +30,7 @@ import {
 import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
+import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
@@ -47,6 +55,10 @@ export const Input: FC<InputProps> = ({
   pendingDropFiles = [],
   onDropFilesConsumed,
   pasteTextThreshold = 2000,
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
+  modelSelectorLabels,
 }) => {
   const cssVars = buildCssVars({
     '--ci-bg': colors?.background,
@@ -117,6 +129,8 @@ export const Input: FC<InputProps> = ({
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
   const canSend = message.trim().length > 0;
+  const hasModelSelected =
+    deployments === undefined || selectedDeploymentId != null;
 
   const handleSend = () => {
     onSend?.(message, attachments);
@@ -131,10 +145,56 @@ export const Input: FC<InputProps> = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isStreaming && canSend) {
+      if (!isStreaming && canSend && hasModelSelected) {
         handleSend();
       }
     }
+  };
+
+  const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
+  const selectedIconUrl = resolveIconUrl(selectedItem?.iconUrl);
+  const selectorIcon = selectedIconUrl ? (
+    <img src={selectedIconUrl} alt="" width={18} height={18} />
+  ) : (
+    <IconRobot size={18} aria-hidden />
+  );
+  const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
+  const selectorAriaLabel = selectedLabel
+    ? `${modelSelectorLabels?.ariaLabel ?? 'Select model'}: ${selectedLabel}`
+    : (modelSelectorLabels?.ariaLabel ?? 'Select model');
+
+  const buildSelectorMenuItems = () => {
+    if (!deployments || deployments.length === 0) {
+      const stateLabel =
+        modelSelectorLabels?.loading ??
+        modelSelectorLabels?.error ??
+        modelSelectorLabels?.empty;
+      if (stateLabel) {
+        return [{ key: '__state', label: stateLabel, disabled: true }];
+      }
+      return [];
+    }
+    return deployments.map((item) => {
+      const itemIconUrl = resolveIconUrl(item.iconUrl);
+      const icon = itemIconUrl ? (
+        <img
+          src={itemIconUrl}
+          alt=""
+          width={DIAL_ICON_SIZE.SM}
+          height={DIAL_ICON_SIZE.SM}
+        />
+      ) : item.type === 'application' ? (
+        <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
+      ) : (
+        <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
+      );
+      return {
+        key: item.id,
+        label: item.displayName ?? item.id,
+        icon,
+        onClick: () => onDeploymentChange?.(item.id),
+      };
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,11 +312,25 @@ export const Input: FC<InputProps> = ({
           </DialDropdown>
         </div>
         {attachments.length === 0 && textarea}
-        {isStreaming ? (
-          <StopButton onStop={onStop} />
-        ) : (
-          canSend && <SendButton onSend={handleSend} />
-        )}
+        <div className="flex flex-shrink-0 items-center gap-2">
+          {deployments !== undefined && (
+            <DialDropdownIcon
+              icon={selectorIcon}
+              ariaLabel={selectorAriaLabel}
+              menu={{ items: buildSelectorMenuItems() }}
+              buttonClassName={
+                isStreaming ? 'pointer-events-none opacity-50' : undefined
+              }
+            />
+          )}
+          {isStreaming ? (
+            <StopButton onStop={onStop} />
+          ) : (
+            canSend && (
+              <SendButton onSend={handleSend} disabled={!hasModelSelected} />
+            )
+          )}
+        </div>
       </div>
     </div>
   );

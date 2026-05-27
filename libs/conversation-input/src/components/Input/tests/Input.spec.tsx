@@ -1,6 +1,64 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
+
+type MenuItems = Array<{
+  key: string;
+  label: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}>;
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
+    DialDropdown: ({
+      children,
+      menu,
+    }: {
+      children: React.ReactNode;
+      menu: { items?: MenuItems };
+    }) => (
+      <div>
+        {children}
+        {menu.items?.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.onClick}
+            disabled={item.disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    ),
+    DialDropdownIcon: ({
+      ariaLabel,
+      menu,
+    }: {
+      ariaLabel: string;
+      icon: React.ReactNode;
+      menu: { items?: MenuItems };
+    }) => (
+      <div>
+        <button type="button" aria-label={ariaLabel} />
+        {menu.items?.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={item.onClick}
+            disabled={item.disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    ),
+  };
+});
 
 describe('Input', () => {
   it('should hide send button when textarea is empty', () => {
@@ -183,6 +241,118 @@ describe('Input', () => {
   });
 });
 
+const mockItems = [
+  { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' as const },
+  { id: 'my-app', displayName: 'My App', type: 'application' as const },
+];
+
+describe('Input — model selector', () => {
+  it('renders DialDropdownIcon when deployments is non-empty', () => {
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText(/Select model/)).toBeTruthy();
+  });
+
+  it('trigger aria-label includes selected item displayName', () => {
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ ariaLabel: 'Model' }}
+      />,
+    );
+    expect(screen.getByLabelText('Model: GPT-4o')).toBeTruthy();
+  });
+
+  it('clicking a menu item calls onDeploymentChange with the item id', () => {
+    const onDeploymentChange = vi.fn();
+    render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={onDeploymentChange}
+      />,
+    );
+    fireEvent.click(screen.getByText('My App'));
+    expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
+  });
+
+  it('shows loading label as disabled item when deployments is empty', () => {
+    render(
+      <Input
+        deployments={[]}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ loading: 'Loading models…' }}
+      />,
+    );
+    const loadingItem = screen.getByText('Loading models…');
+    expect(loadingItem).toBeTruthy();
+    expect((loadingItem as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('shows error label as disabled item when deployments is empty', () => {
+    render(
+      <Input
+        deployments={[]}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ error: 'Failed to load models' }}
+      />,
+    );
+    const errorItem = screen.getByText('Failed to load models');
+    expect(errorItem).toBeTruthy();
+    expect((errorItem as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('disables send button when deployments is defined and selectedDeploymentId is null', () => {
+    const { container } = render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+    }
+    const sendButton = screen.getByLabelText(
+      'Send message',
+    ) as HTMLButtonElement;
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it('does not fire onSend on Enter when selectedDeploymentId is null', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input
+        onSend={handleSend}
+        deployments={mockItems}
+        selectedDeploymentId={null}
+        onDeploymentChange={vi.fn()}
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('does not render selector when deployments is undefined', () => {
+    render(<Input />);
+    expect(screen.queryByLabelText(/Select model/)).toBeNull();
+  });
+});
+
 describe('Input — pasted attachment expand', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', {
@@ -221,7 +391,7 @@ describe('Input — pasted attachment expand', () => {
 
   it('clicking a pasted card appends with newline when textarea already has text', async () => {
     const { container } = render(
-      <Input pasteTextThreshold={5} initialMessage="existing" />,
+      <Input pasteTextThreshold={5} message="existing" />,
     );
     const text = 'This is long enough to become a pasted attachment';
 

@@ -19,6 +19,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   dropLabel = 'Drop files here',
   dropOverlayClassName = 'rounded',
   pasteTextThreshold,
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
+  modelSelectorLabels,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -84,6 +88,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={handleDropFilesConsumed}
           pasteTextThreshold={pasteTextThreshold}
+          deployments={deployments}
+          selectedDeploymentId={selectedDeploymentId}
+          onDeploymentChange={onDeploymentChange}
+          modelSelectorLabels={modelSelectorLabels}
         />
         {isDragActive && (
           <div
