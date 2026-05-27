@@ -1,6 +1,6 @@
-import { mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses, MessageRole } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
-import { CSSProperties, FC } from 'react';
+import { FC } from 'react';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { MessageActions } from '../Message/MessageActions.js';
@@ -17,26 +17,15 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   alwaysVisibleActions,
   attachments,
 }) => {
-  const cssVars = {
-    ...(colors?.userBackground && {
-      '--cm-bubble-user-bg': colors.userBackground,
-    }),
-    ...(colors?.text && { '--cm-bubble-text': colors.text }),
-    ...(!typography?.fontClassName &&
-      typography?.fontFamily && {
-        '--cm-bubble-font-family': typography.fontFamily,
-      }),
-    ...(!typography?.fontClassName &&
-      typography?.fontSize && { '--cm-bubble-font-size': typography.fontSize }),
-    ...(!typography?.fontClassName &&
-      typography?.fontWeight && {
-        '--cm-bubble-font-weight': String(typography.fontWeight),
-      }),
-    ...(!typography?.fontClassName &&
-      typography?.lineHeight && {
-        '--cm-bubble-line-height': typography.lineHeight,
-      }),
-  } as CSSProperties;
+  const noCustomClass = !typography?.fontClassName;
+  const cssVars = buildCssVars({
+    '--cm-bubble-user-bg': colors?.userBackground,
+    '--cm-bubble-text': colors?.text,
+    '--cm-bubble-font-family': noCustomClass ? typography?.fontFamily : undefined,
+    '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
+    '--cm-bubble-font-weight': noCustomClass ? typography?.fontWeight : undefined,
+    '--cm-bubble-line-height': noCustomClass ? typography?.lineHeight : undefined,
+  });
 
   const positionRadius =
     position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
