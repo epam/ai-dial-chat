@@ -13,7 +13,7 @@
     "test": "nx run-many -t test",
     "test:watch": "nx run-many -t test:watch",
     "test:coverage": "nx run-many -t test:coverage",
-    "publish": "nx run-many -t publish --projects=tag:publishable",
+    "publish:npm": "nx run-many -t publish --projects=tag:publishable",
     "publish:dry": "nx run-many -t publish --output-style=static --dry --projects=tag:publishable",
     "e2e": "nx run-many -t e2e --output-style=stream --skipInstall",
     "e2e:ci": "nx run-many -t e2e --configuration=production --output-style=stream --skipInstall",
