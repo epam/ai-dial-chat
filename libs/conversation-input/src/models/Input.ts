@@ -78,6 +78,12 @@ export interface InputProps {
   retryLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** Files dropped onto the parent that should be processed as attachments. Reset to `[]` after processing. */
+  pendingDropFiles?: File[];
+  /** Called after `pendingDropFiles` have been consumed so the parent can reset its state. */
+  onDropFilesConsumed?: () => void;
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
+  pasteTextThreshold?: number;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
   deployments?: DeploymentItemDto[];
   /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
