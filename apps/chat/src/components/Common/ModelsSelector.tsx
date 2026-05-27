@@ -50,7 +50,7 @@ const ModelSelectRow = ({
         <span>
           {getOpenAIEntityFullName(item)}
           {item.version && (
-            <span className="ml-2 text-secondary" data-qa="agent-version">
+            <span className="ms-2 text-secondary" data-qa="agent-version">
               {item.version}
             </span>
           )}
