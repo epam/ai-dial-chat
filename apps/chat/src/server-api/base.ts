@@ -107,6 +107,9 @@ const request = async <TResponse>(
     body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
   });
 
+  const rotatedCsrf = response.headers.get('x-csrf-token');
+  if (rotatedCsrf) _csrfToken = rotatedCsrf;
+
   if (!response.ok) {
     if (response.status === 401) {
       listeners.forEach((l) => l(url));
