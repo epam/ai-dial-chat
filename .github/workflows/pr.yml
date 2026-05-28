@@ -12,12 +12,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-env:
-  ORT_CONFIG_VCS_REVISION: 5650fed55a20397b9abb9017a0c6bb674dc8481d
 
 jobs:
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.3.0
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@fix-ort-config-vcs-revision
     secrets: inherit
     with:
       node-version: 24

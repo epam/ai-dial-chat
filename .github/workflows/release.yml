@@ -25,7 +25,7 @@ env:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.3.0
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@fix-ort-config-vcs-revision
     with:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
