@@ -7,19 +7,11 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
-  DIAL_ICON_SIZE,
   DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
-  DialSearch,
-  ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconApps,
-  IconPaperclip,
-  IconPlus,
-  IconRobot,
-} from '@tabler/icons-react';
+import { IconPaperclip, IconPlus } from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
   type FC,
@@ -30,6 +22,7 @@ import {
   useState,
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
+import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
@@ -63,6 +56,7 @@ export const Input: FC<InputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
+  resolveDeploymentIconUrl = resolveIconUrl,
 }) => {
   const cssVars = buildCssVars({
     '--ci-bg': colors?.background,
@@ -80,7 +74,6 @@ export const Input: FC<InputProps> = ({
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [modelSearchQuery, setModelSearchQuery] = useState('');
 
   useEffect(() => {
     if (messageProp) {
@@ -156,73 +149,19 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
-  const selectedIconUrl = resolveIconUrl(selectedItem?.iconUrl);
-  const selectorIcon = selectedIconUrl ? (
-    <img src={selectedIconUrl} alt="" width={18} height={18} />
-  ) : (
-    <IconRobot size={18} aria-hidden />
-  );
-  const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
-  const selectorAriaLabel = selectedLabel
-    ? `${modelSelectorLabels?.ariaLabel ?? 'Select model'}: ${selectedLabel}`
-    : (modelSelectorLabels?.ariaLabel ?? 'Select model');
-
-  const buildSelectorMenuItems = () => {
-    if (!deployments || deployments.length === 0) {
-      const stateLabel =
-        modelSelectorLabels?.loading ??
-        modelSelectorLabels?.error ??
-        modelSelectorLabels?.empty;
-      if (stateLabel) {
-        return [{ key: '__state', label: stateLabel, disabled: true }];
-      }
-      return [];
-    }
-    const query = modelSearchQuery.trim().toLowerCase();
-    const filtered = query
-      ? deployments.filter((item) =>
-          (item.displayName ?? item.id).toLowerCase().includes(query),
-        )
-      : deployments;
-    return filtered.map((item) => {
-      const itemIconUrl = resolveIconUrl(item.iconUrl);
-      const icon = itemIconUrl ? (
-        <img
-          src={itemIconUrl}
-          alt=""
-          width={DIAL_ICON_SIZE.SM}
-          height={DIAL_ICON_SIZE.SM}
-        />
-      ) : item.type === 'application' ? (
-        <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
-      ) : (
-        <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
-      );
-      return {
-        key: item.id,
-        label: item.displayName ?? item.id,
-        icon,
-        onClick: () => onDeploymentChange?.(item.id),
-      };
-    });
-  };
-
-  const selectorMenuHeader =
-    deployments && deployments.length > 0 ? (
-      <div className="sticky top-0 z-10 bg-layer-0 px-2 pb-1 pt-2">
-        <DialSearch
-          value={modelSearchQuery}
-          placeholder="Search"
-          size={ElementSize.Small}
-          onChange={setModelSearchQuery}
-        />
-      </div>
-    ) : undefined;
-
-  const handleModelSelectorOpenChange = (open: boolean) => {
-    if (!open) setModelSearchQuery('');
-  };
+  const {
+    selectorIcon,
+    selectorAriaLabel,
+    menuItems,
+    menuHeader,
+    onOpenChange: handleModelSelectorOpenChange,
+  } = useModelSelector({
+    deployments,
+    selectedDeploymentId,
+    onDeploymentChange,
+    modelSelectorLabels,
+    resolveDeploymentIconUrl,
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -345,8 +284,8 @@ export const Input: FC<InputProps> = ({
               icon={selectorIcon}
               ariaLabel={selectorAriaLabel}
               menu={{
-                items: buildSelectorMenuItems(),
-                header: selectorMenuHeader,
+                items: menuItems,
+                header: menuHeader,
               }}
               placement="bottom-end"
               matchReferenceWidth={false}

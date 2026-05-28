@@ -61,6 +61,22 @@ await Promise.all(
         .replaceAll(
           'return new runtime.TextApiResponse(response) as any;',
           'return new runtime.TextApiResponse(response);',
+        )
+        // Fix multipart/form-data generator gap: replace untyped formParams declaration.
+        // Method-shorthand syntax is bivariant in TypeScript, so URLSearchParams (string-only
+        // append) and FormData (string | Blob append) both satisfy this interface.
+        .replaceAll(
+          'let formParams: { append(param: string, value: any): any };',
+          'let formParams: { append(name: string, value: string | Blob): void };',
+        )
+        // Fix multipart/form-data generator gap: remove `as any` from formParams.append calls
+        .replace(/formParams\.append\(([^,]+),\s*([^)]+)\s+as\s+any\)/g, 'formParams.append($1, $2)')
+        // Replace loose object index-signature any in API return types and response wrappers
+        .replace(/\{ \[key: string\]: any;? \}/g, '{ [key: string]: unknown }')
+        // Replace JSONApiResponse<any> where the generator emitted an explicit any type arg
+        .replaceAll(
+          'return new runtime.JSONApiResponse<any>(response);',
+          'return new runtime.JSONApiResponse<{ [key: string]: unknown }>(response);',
         );
 
       if (updated !== source) {

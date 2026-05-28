@@ -11,6 +11,7 @@ import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { RateModule } from '../rate/rate.module';
@@ -45,6 +46,7 @@ import { createServeStaticOptions } from './static-assets';
     ModelsModule,
     ChatModule,
     ConversationModule,
+    FilesModule,
     RateModule,
   ],
   controllers: [AppController, ThemeController, HealthController],
