@@ -58,6 +58,14 @@ Rules:
 - Static `/api/v1/auth/*` endpoints belong in `server-api/base.ts` via
   `ApiEndpoints`. Dynamic login URLs may be built at the auth call site because
   they include runtime provider ids and callback URLs.
+- The app owns host/external integration. When a `libs/*` component needs app behavior such as
+  file download/upload, icon URL resolution, navigation, auth-aware actions, persistence,
+  feature flags, analytics/telemetry/logging, SDK-backed behavior, or platform bridges, resolve it
+  in `apps/chat` and pass data, resolved values, or callbacks into the lib. Do not move `/api`
+  paths, generated clients, server-api imports, auth/session/cookie/env details, route knowledge,
+  storage keys/schemas, SDK setup, or app-specific URL schemes into hand-authored libs. The
+  exception is `libs/chat-api-client`, which is generated from OpenAPI; consume it through
+  `apps/chat/src/server-api` wrappers rather than directly from UI libs.
 - Use `async`/`await` with `try`/`catch`/`finally` for frontend async flows
   instead of Promise chains with `.then()`/`.catch()`. For `React.lazy` named
   exports, use an async loader that awaits the import and returns `{ default }`.
