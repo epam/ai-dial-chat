@@ -122,7 +122,7 @@ export const useModelSelector = ({
 
   const menuHeader: ReactNode =
     deployments && deployments.length > 0 ? (
-      <div className="bg-layer-0 sticky top-0 z-10 px-2 pb-1 pt-2">
+      <div className="sticky top-0 z-10 bg-layer-0 px-2 pb-1 pt-2">
         <DialSearch
           value={searchQuery}
           placeholder="Search"
