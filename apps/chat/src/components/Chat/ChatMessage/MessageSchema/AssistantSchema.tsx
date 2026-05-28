@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ChatSelectors,
   ConversationsSelectors,
+  ModelsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
 
@@ -45,7 +46,12 @@ const AssistantSchemaView = ({ schema, modelId }: AssistantSchemaViewProps) => {
   const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
   const isReadOnlyConversation = selectedConversations.some(isEntityReadOnly);
-
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const areModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
+  );
   const resourcesToReview = useAppSelector(
     PublicationSelectors.selectResourcesToReview,
   );
@@ -89,7 +95,8 @@ const AssistantSchemaView = ({ schema, modelId }: AssistantSchemaViewProps) => {
         formValue={formValue}
         disabled={
           (isReadOnlyConversation && !isPublishingConversation) ||
-          isUnpublishingConversation
+          isUnpublishingConversation ||
+          !areModelsInstalled
         }
         showSelected
       />
