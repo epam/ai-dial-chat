@@ -181,6 +181,7 @@ export function ChatMessageContent({
               realMessageIndex={realMessageIndex}
               message={message}
               allMessages={allMessages}
+              editDisabled={editDisabled}
               conversation={conversation}
               isEditing={isEditing}
               isLastMessage={isLastMessage}

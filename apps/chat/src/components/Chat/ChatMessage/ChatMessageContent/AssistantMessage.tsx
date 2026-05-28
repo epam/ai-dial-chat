@@ -569,6 +569,7 @@ interface AssistantMessageProps {
   isLikesEnabled: boolean;
   isEditing: boolean;
   withButtons?: boolean;
+  editDisabled?: boolean;
   onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing: (value: boolean) => void;
@@ -592,6 +593,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   onLike,
   onRegenerate,
   onToggleEditing,
+  editDisabled,
   onEdit,
 }: AssistantMessageProps) {
   const { t } = useTranslation(Translation.Chat);
@@ -730,7 +732,8 @@ export const AssistantMessage = memo(function AssistantMessage({
               !isPlaybackConversation(conversation) &&
               (isAllLastMessageEnabled ||
                 (isLastMessage && isEditLastMessageEnabled)) &&
-              (!isReadOnlyConversation || isPublishingConversation)
+              (!isReadOnlyConversation || isPublishingConversation) &&
+              !editDisabled
                 ? handleToggleEditing
                 : undefined
             }
