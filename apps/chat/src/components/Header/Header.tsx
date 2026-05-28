@@ -8,7 +8,7 @@ import Logo from './Logo';
 
 const Header = () => {
   const { t } = useTranslation();
-  const { isOpen: isSourcesSidebarOpen, handleOpen: openSourcesSidebar } =
+  const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
     useSourcesSidebar();
 
   return (
@@ -22,7 +22,7 @@ const Header = () => {
             aria-label={t(SidebarI18nKeys.ToggleOpen)}
             aria-pressed={isSourcesSidebarOpen}
             tooltipProps={{ tooltip: t(SidebarI18nKeys.ToggleOpen) }}
-            onClick={openSourcesSidebar}
+            onClick={handleOpenSourcesSidebar}
           />
         )}
       </div>
