@@ -20,9 +20,9 @@ inputs:
     required: false
     default: ''
   max_turns:
-    description: 'Max Claude turns. 12 is enough for a typical PR-review or spec-validation pass on a small diff with the skill invocation overhead; raise per-stage via the manifest if a heavier agent needs more.'
+    description: 'Max Claude turns. 18 covers a typical multi-step agent (e.g. spec-validation: CLI floor + diff scoping + drift check via Grep/Read + Write); reviewer agents typically use 5-8. Raise per-stage via the manifest if a heavier agent needs more.'
     required: false
-    default: '12'
+    default: '18'
   show_full_output:
     description: 'When "true", claude-code-action streams full Claude prompts/responses to the GHA log. Useful for debugging on a sandbox base; set to "false" before agents see real secrets in their prompts.'
     required: false
