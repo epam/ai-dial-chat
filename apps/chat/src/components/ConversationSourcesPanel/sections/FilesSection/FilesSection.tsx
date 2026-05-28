@@ -2,9 +2,6 @@ import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentCard } from '@epam/ai-dial-conversation-input';
 import type { FC } from 'react';
 
-// Intentionally a single component used for both uploaded and generated files.
-// The two sections are structurally identical in this slice. Split into separate
-// components only if they require divergent behaviour or visuals in the future.
 interface Props {
   attachments: DisplayAttachment[];
   title: string;

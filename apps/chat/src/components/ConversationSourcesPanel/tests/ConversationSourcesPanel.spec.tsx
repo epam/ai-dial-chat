@@ -156,7 +156,9 @@ describe('ConversationSourcesPanel', () => {
     expect(texts).toContain('sidebar.sources.sections.sources');
     // Order: uploaded first, generated second, sources third
     const uploadedIdx = texts.indexOf('sidebar.sources.sections.uploadedFiles');
-    const generatedIdx = texts.indexOf('sidebar.sources.sections.generatedFiles');
+    const generatedIdx = texts.indexOf(
+      'sidebar.sources.sections.generatedFiles',
+    );
     const sourcesIdx = texts.indexOf('sidebar.sources.sections.sources');
     expect(uploadedIdx).toBeLessThan(generatedIdx);
     expect(generatedIdx).toBeLessThan(sourcesIdx);

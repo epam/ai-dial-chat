@@ -5,7 +5,7 @@ interface Props {
   emptyMessage: string;
 }
 
-// Links are not yet emitted by the backend — section ships header + empty placeholder only.
+// TODO: support links when assistant message references will be available
 const SourcesSection: FC<Props> = ({ title, emptyMessage }) => (
   <section className="mb-6">
     <h2 className="mb-3 text-base font-semibold">{title}</h2>

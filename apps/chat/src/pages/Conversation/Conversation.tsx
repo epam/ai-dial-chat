@@ -46,12 +46,12 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { close, setMessages } = useSourcesSidebar();
+  const { close: closeSourcesSidebar, setMessages } = useSourcesSidebar();
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-    return () => close();
-  }, [close, conversation?.messages, setMessages]);
+    return () => closeSourcesSidebar();
+  }, [closeSourcesSidebar, conversation?.messages, setMessages]);
 
   const startStream = useCallback(
     (

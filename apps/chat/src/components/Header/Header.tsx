@@ -8,7 +8,8 @@ import Logo from './Logo';
 
 const Header = () => {
   const { t } = useTranslation();
-  const { isOpen: isSourcesSidebarOpen, open: openSourcesSidebar } = useSourcesSidebar();
+  const { isOpen: isSourcesSidebarOpen, open: openSourcesSidebar } =
+    useSourcesSidebar();
 
   return (
     <header className="relative z-30 grid min-h-[49px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-secondary">
