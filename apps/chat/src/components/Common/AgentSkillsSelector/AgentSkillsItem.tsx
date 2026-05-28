@@ -169,7 +169,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
             data-qa="error-message"
           >
             <IconAlertCircleFilled size={16} className="shrink-0" />
-            <span className="text-xs">
+            <span className="break-words text-xs">
               {validationMessage ||
                 t(MarketplaceI18nKeys.AgentSkillsInvalidError)}
             </span>
