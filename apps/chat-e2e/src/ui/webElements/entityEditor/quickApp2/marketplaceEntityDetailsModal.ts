@@ -14,4 +14,8 @@ export class MarketplaceEntityDetailsModal extends BaseElement {
   public entityName = this.getChildElementBySelector(
     MarketplaceEntityDetailsModalSelector.entityName,
   );
+
+  public loginButton = this.getChildElementBySelector(
+    MarketplaceEntityDetailsModalSelector.loginButton,
+  );
 }

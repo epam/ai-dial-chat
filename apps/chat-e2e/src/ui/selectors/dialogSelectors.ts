@@ -378,6 +378,7 @@ export const MarketplaceEntityDetailsModalSelector = {
   container: '[data-qa="marketplace-entity-details"]',
   version: '[data-qa="version"]',
   entityName: '#entity-name',
+  loginButton: '[data-qa="login-button"]',
 };
 
 export const AddToolsetSettingsFormSelector = {

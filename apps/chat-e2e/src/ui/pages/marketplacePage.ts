@@ -98,10 +98,11 @@ export class MarketplacePage extends BasePage {
     );
   }
 
-  async openCreateQuickApp2Page() {
+  async openCreateQuickApp2Page(options: MarketplaceEntityOptions = {}) {
     await this.openCreateEntityPage(
       MarketplaceEntitiesTabs.AGENTS,
       QuickApp2SchemaId,
+      options,
     );
   }
 

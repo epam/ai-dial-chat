@@ -1,9 +1,19 @@
 import dialTest from '@/src/core/dialFixtures';
-import { AddAppMenuOptions, EntityEditorAppTypes } from '@/src/testData';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import {
+  AddAppMenuOptions,
+  EntityEditorAppTypes,
+  EntityEditorToolsetTypes,
+} from '@/src/testData';
+import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { keys } from '@/src/ui/keyboard';
+import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
+import { ToolsetLoginModal } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
+import { Locator, Page } from '@playwright/test';
+import { Response } from 'playwright-core';
 
-dialTest.only(
+dialTest(
   '[Agents & Toolsets] Default view when nothing is added\n' +
     '[Quick app 2.0]: Select Agents & Toolsets form is NOT open when user switch between steps after adding any item to this field\n' +
     '[Agents & Toolsets] Sorting: the mix of agents and toolsets sorted according to ASCII sorting order\n' +
@@ -217,6 +227,210 @@ dialTest.only(
         await baseAssertion.assertElementState(
           quickApp2EditorViewForm.codeInterpreterField,
           'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  '[Quick app 2.0]: Select Agents & Toolsets form is NOT open when login to selected toolset from card detailed view', // EPMRTC-7326
+  async ({
+    page,
+    marketplacePage,
+    marketplaceHeader,
+    addAppDropdownMenu,
+    entityEditorPage,
+    entityEditorHeader,
+    entityEditorGeneralForm,
+    quickApp2EditorViewForm,
+    agentAndToolsetSelectModal,
+    marketplaceEntityDetailsModal,
+    entityDetailsModal,
+    toolsetEditorViewForm,
+    confirmationDialog,
+    toolsetBuilder,
+    toolsetApiHelper,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-7326');
+    const appName = GeneratorUtil.randomApplicationName();
+    const toolsetName = GeneratorUtil.randomToolsetName();
+    const toolsetEndpoint = GeneratorUtil.randomUrl();
+    let oauthMockHelper!: OAuthMockHelper;
+    let loginPopup!: Page;
+
+    //TODO
+    // BUG-WORKAROUND: two ToolsetLoginDialog instances render the confirmation dialog
+    // (one in AgentAndToolsetSelector inside the QA2 form, another in the global ToolsetDialogs),
+    // so confirmationDialog.confirm() fails. replace the call with confirmationDialog.confirm({...}).
+    const clickConfirmButton = async (
+      confirmButton: Locator,
+      {
+        triggeredHttpMethod = undefined,
+        triggeredHttpHost = undefined,
+      }: {
+        triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' | 'GET';
+        triggeredHttpHost?: string;
+      } = {},
+    ) => {
+      if (isApiStorageType && triggeredHttpMethod) {
+        const predicate = (resp: Response) =>
+          triggeredHttpHost
+            ? resp.request().method() === triggeredHttpMethod &&
+              resp.url().includes(triggeredHttpHost)
+            : resp.request().method() === triggeredHttpMethod;
+        const respPromise = page.waitForResponse(predicate);
+        await confirmButton.click();
+        return respPromise;
+      }
+      await confirmButton.click();
+    };
+
+    await dialTest.step(
+      'Precondition: create toolset via API, convert it to OAuth via UI edit, set up mocks, complete the OAuth login flow and save & exit',
+      async () => {
+        // 1) Create the base toolset via API
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(toolsetName).build(),
+        );
+        const initialToolset =
+          (await toolsetApiHelper.getToolset(toolsetName))!;
+
+        // 2) Open the toolset edit page, fill endpoint and switch authentication to OAuth
+        await marketplacePage.openEditToolsetPage(initialToolset.id!);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetEditorViewForm.endpoint.fillInInput(toolsetEndpoint);
+        await toolsetEditorViewForm.oauthContainer.click();
+
+        // 3) Setup OAuth mocks
+        oauthMockHelper = new OAuthMockHelper(
+          page,
+          initialToolset,
+          toolsetEndpoint,
+        );
+        await oauthMockHelper.setupMocks();
+
+        // 4) Click Login — opens popup to the (mocked) authorization endpoint
+        oauthMockHelper.enableMocking();
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        ))!;
+
+        // 5) Navigate the popup to the OAuth callback to complete sign-in
+        await oauthMockHelper.navigateToCallback(loginPopup);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+
+        // 6) Save & Exit back to marketplace — toolset is now persisted as OAuth with global creds
+        await entityEditorHeader.saveAndExitButton.click();
+        await marketplacePage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step(
+      'Switch to Agents tab and open Quick app 2.0 creation via Add app dropdown',
+      async () => {
+        await marketplaceHeader.agentsTab.click();
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({ name: appName });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Add the OAuth toolset via select modal and confirm',
+      async () => {
+        await quickApp2EditorViewForm.addAgentsButton.click();
+        await agentAndToolsetSelectModal.searchInput.fillInInput(toolsetName);
+        await agentAndToolsetSelectModal.selectEntityByName(toolsetName);
+        await agentAndToolsetSelectModal.confirmButton.click();
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal,
+          'hidden',
+        );
+      },
+    );
+
+    //TODO workaround for the 6530 issue
+    await dialTest.step(
+      'Save and exit, then reopen the app via Edit button in the details modal',
+      async () => {
+        await entityEditorHeader.saveAndExitButton.click();
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        await entityDetailsModal.clickEditButton();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click the toolset chip, verify the details modal opens, then log out so the toolset requires user-level login',
+      async () => {
+        await quickApp2EditorViewForm.clickChipByName(toolsetName);
+        await baseAssertion.assertElementState(
+          marketplaceEntityDetailsModal,
+          'visible',
+        );
+        await entityDetailsModal.logoutButton.click();
+        await clickConfirmButton(
+          confirmationDialog
+            .getElementLocator()
+            .nth(1)
+            .locator(ConfirmationDialogSelectors.confirm),
+        );
+        await baseAssertion.assertElementState(
+          entityDetailsModal.loginButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Login in details modal, then click Log in in the toolset sign-in modal and complete the OAuth flow via popup',
+      async () => {
+        oauthMockHelper.enableMocking();
+        await entityDetailsModal.loginButton.click();
+        // BUG-WORKAROUND: same duplicate-dialog bug as above — two marketplace-toolset-signin
+        // modals render simultaneously; instantiate a scoped ToolsetLoginModal pointing to the
+        // second instance (the interactive one).
+        const signinModal = new ToolsetLoginModal(page);
+        signinModal.setElementLocator(signinModal.getElementLocator().nth(1));
+        await baseAssertion.assertElementState(signinModal, 'visible');
+        const popupPromise = page.waitForEvent('popup');
+        await signinModal.loginButton.click();
+        loginPopup = await popupPromise;
+        try {
+          await loginPopup.waitForLoadState('domcontentloaded');
+        } catch {
+          // popup may close before DOM loads if OAuth flow finishes fast
+        }
+        await oauthMockHelper.navigateToCallback(loginPopup);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify App settings step is open and select modal did NOT reopen',
+      async () => {
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal,
+          'hidden',
         );
       },
     );
