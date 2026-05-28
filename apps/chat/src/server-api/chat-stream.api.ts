@@ -1,5 +1,5 @@
 import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
-import { ApiEndpoints, getCsrfToken } from './base';
+import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -42,6 +42,9 @@ export const streamCompletion = (
       onError(err instanceof Error ? err : new Error(String(err)));
       return;
     }
+
+    const rotatedCsrf = response.headers.get('x-csrf-token');
+    if (rotatedCsrf) setCsrfToken(rotatedCsrf);
 
     if (!response.ok) {
       onError(

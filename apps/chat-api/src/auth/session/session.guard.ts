@@ -67,6 +67,7 @@ export class SessionGuard implements CanActivate {
         },
         req.cookies as Record<string, string> | undefined,
       );
+      res.setHeader('X-CSRF-Token', payload.csrf);
     }
 
     if (!payload.bucket) {

@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { generators } from 'openid-client';
+import { generators, type AuthorizationParameters } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
 import {
@@ -131,14 +131,17 @@ export class AuthController {
       corsOrigin,
     });
 
-    const authUrl = client.authorizationUrl({
+    const authorizationParams: AuthorizationParameters = {
       redirect_uri: redirectUri,
       scope: providerConfig.scope,
       state,
       nonce,
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
-    });
+      ...(providerConfig.audience ? { audience: providerConfig.audience } : {}),
+    };
+
+    const authUrl = client.authorizationUrl(authorizationParams);
 
     const txPayload = {
       state,

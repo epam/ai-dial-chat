@@ -43,7 +43,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
 
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex flex-col items-start gap-5">
+      <div className="flex w-full flex-col items-start gap-5">
         <div
           className={mergeClasses(
             'flex w-fit flex-col items-start gap-4',
@@ -63,14 +63,15 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             role="list"
             aria-label={startersAriaLabel}
             className={mergeClasses(
-              'flex flex-wrap gap-2 border-t pt-5',
+              'flex w-full flex-wrap gap-2 border-t pt-5',
               styles.startersDivider,
             )}
           >
             {starters.map((starter) => (
-              <div key={starter.const} role="listitem">
+              <div key={starter.const} role="listitem" className="min-w-[40px]">
                 <DialRoundedButton
                   label={starter.title}
+                  className="min-w-[40px]"
                   onClick={() => onSelectStarter(starter)}
                 />
               </div>

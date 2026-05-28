@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChatI18nKeys } from '../../../constants/translation-keys';
 import * as ThemeContext from '../../../context/ThemeContext';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
@@ -32,7 +33,7 @@ describe('Logo', () => {
 
     render(<Logo />);
 
-    const logo = screen.getByLabelText('logo');
+    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
     expect(logo).toBeTruthy();
     expect((logo as HTMLElement).style.backgroundImage).toBe(
       `url(${mockIconPath})`,
@@ -69,7 +70,7 @@ describe('Logo', () => {
 
     render(<Logo />);
 
-    const logo = screen.getByLabelText('logo');
+    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
     expect((logo as HTMLElement).style.backgroundImage).toBe(
       `url(${mockLightPath})`,
     );
@@ -89,7 +90,7 @@ describe('Logo', () => {
 
     render(<Logo />);
 
-    const logo = screen.getByLabelText('logo');
+    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
     expect((logo as HTMLElement).getAttribute('href')).toBe('/');
   });
 
@@ -106,7 +107,7 @@ describe('Logo', () => {
 
     render(<Logo />);
 
-    const logo = screen.getByLabelText('logo');
+    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
     expect((logo as HTMLElement).classList.contains('min-w-[125px]')).toBe(
       true,
     );
@@ -127,7 +128,7 @@ describe('Logo', () => {
     render(<Logo />);
 
     expect(screen.getByLabelText('logo loading')).toBeTruthy();
-    expect(screen.queryByLabelText('logo')).toBeNull();
+    expect(screen.queryByLabelText(ChatI18nKeys.Logo)).toBeNull();
     expect(mockGetIconPath).not.toHaveBeenCalled();
   });
 });
