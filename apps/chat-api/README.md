@@ -86,6 +86,8 @@ AUTH_COOKIE_SECURE=false
 | `DIAL_API_KEY`                 | —                       | AI DIAL authentication key                                                                                |
 | `THEMES_CONFIG_URL`            | —                       | Base URL for theme configuration and icons                                                                |
 | `THEMES_SERVICE_TIMEOUT_MS`    | `5000`                  | Timeout for theme service requests (milliseconds)                                                         |
+| `FILE_UPLOAD_MAX_BYTES`        | `536870912`             | Maximum file upload size in bytes (default 512 MB); multer rejects larger payloads with 413              |
+| `FILE_TRANSFER_TIMEOUT_MS`     | `30000`                 | Timeout for DIAL Core file upload/download fetch requests (milliseconds)                                  |
 
 ### 3. Run the Application
 

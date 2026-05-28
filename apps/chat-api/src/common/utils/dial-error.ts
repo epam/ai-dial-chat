@@ -1,8 +1,13 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
   NotFoundException,
+  PayloadTooLargeException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 export const handleDialError = (error: unknown): never => {
@@ -11,10 +16,18 @@ export const handleDialError = (error: unknown): never => {
   }
 
   if (isHttpError(error)) {
-    if (error.status === 404)
-      throw new NotFoundException('Deployment not found');
     if (error.status === 400)
       throw new BadRequestException('Invalid request to DIAL Core');
+    if (error.status === 401) throw new UnauthorizedException('Unauthorized');
+    if (error.status === 403) throw new ForbiddenException('Forbidden');
+    if (error.status === 404) throw new NotFoundException('Not found');
+    if (error.status === 413)
+      throw new PayloadTooLargeException('Payload too large');
+    if (error.status === 429)
+      throw new HttpException(
+        'Too many requests',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     if (error.status >= 500)
       throw new ServiceUnavailableException(
         'DIAL Core returned a server error',

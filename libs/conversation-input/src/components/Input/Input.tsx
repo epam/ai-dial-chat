@@ -21,6 +21,7 @@ import {
 import classNames from 'classnames';
 import {
   type FC,
+  type ReactNode,
   KeyboardEvent,
   useCallback,
   useEffect,
@@ -35,6 +36,26 @@ import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
 import { StopButton } from './StopButton.js';
+
+const DeploymentIcon: FC<{
+  src: string;
+  size: number;
+  fallback: ReactNode;
+}> = ({ src, size, fallback }) => {
+  const [failed, setFailed] = useState(false);
+  const ref = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handler = () => setFailed(true);
+    el.addEventListener('error', handler);
+    return () => el.removeEventListener('error', handler);
+  }, [src]);
+
+  if (failed) return <>{fallback}</>;
+  return <img ref={ref} src={src} alt="" width={size} height={size} />;
+};
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
@@ -59,6 +80,7 @@ export const Input: FC<InputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
+  resolveDeploymentIconUrl = resolveIconUrl,
 }) => {
   const cssVars = buildCssVars({
     '--ci-bg': colors?.background,
@@ -152,9 +174,15 @@ export const Input: FC<InputProps> = ({
   };
 
   const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
-  const selectedIconUrl = resolveIconUrl(selectedItem?.iconUrl);
+  const selectedIconUrl = selectedItem?.iconUrl
+    ? resolveDeploymentIconUrl(selectedItem.iconUrl)
+    : undefined;
   const selectorIcon = selectedIconUrl ? (
-    <img src={selectedIconUrl} alt="" width={18} height={18} />
+    <DeploymentIcon
+      src={selectedIconUrl}
+      size={18}
+      fallback={<IconRobot size={18} aria-hidden />}
+    />
   ) : (
     <IconRobot size={18} aria-hidden />
   );
@@ -175,13 +203,20 @@ export const Input: FC<InputProps> = ({
       return [];
     }
     return deployments.map((item) => {
-      const itemIconUrl = resolveIconUrl(item.iconUrl);
+      const itemIconUrl = item.iconUrl
+        ? resolveDeploymentIconUrl(item.iconUrl)
+        : undefined;
       const icon = itemIconUrl ? (
-        <img
+        <DeploymentIcon
           src={itemIconUrl}
-          alt=""
-          width={DIAL_ICON_SIZE.SM}
-          height={DIAL_ICON_SIZE.SM}
+          size={DIAL_ICON_SIZE.SM}
+          fallback={
+            item.type === 'application' ? (
+              <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
+            ) : (
+              <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
+            )
+          }
         />
       ) : item.type === 'application' ? (
         <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />

@@ -1,0 +1,51 @@
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+  registerDecorator,
+  ValidationOptions,
+} from 'class-validator';
+
+const IsValidFilePath = (validationOptions?: ValidationOptions) => {
+  return (object: object, propertyName: string) => {
+    registerDecorator({
+      name: 'isValidFilePath',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: unknown) {
+          if (typeof value !== 'string') return false;
+          if (value.startsWith('/')) return false;
+          if (value.includes('..')) return false;
+          return true;
+        },
+        defaultMessage() {
+          return 'path must not start with / or contain ..';
+        },
+      },
+    });
+  };
+};
+
+export class UploadFileDto {
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[\w.-]+$/)
+  @MaxLength(256)
+  @ApiProperty({ description: 'DIAL Core bucket name', example: 'my-bucket' })
+  bucket!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[\w.\-/]+$/)
+  @MaxLength(1024)
+  @IsValidFilePath()
+  @ApiProperty({
+    description: 'File path within the bucket (no leading slash, no ..)',
+    example: 'folder/file.pdf',
+  })
+  path!: string;
+}

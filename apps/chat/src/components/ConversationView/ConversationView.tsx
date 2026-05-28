@@ -23,6 +23,7 @@ import {
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
+import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
 import { buildMessageActions } from './buildMessageActions.js';
 
 const ConversationInput = lazy(async () => {
@@ -219,6 +220,7 @@ const ConversationView: FC<Props> = ({
             deployments={items}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
+            resolveDeploymentIconUrl={resolveCatalogIconUrl}
             modelSelectorLabels={{
               ariaLabel: t(CatalogI18nKeys.SelectorAriaLabel),
               loading: isLoading

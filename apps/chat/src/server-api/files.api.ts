@@ -1,0 +1,21 @@
+import type { FileUploadResponseDto } from '@epam/chat-api-client';
+import { filesApi } from './api-client';
+
+export const uploadFile = (
+  bucket: string,
+  path: string,
+  file: File,
+): Promise<FileUploadResponseDto> =>
+  filesApi.uploadFile({ bucket, path, file });
+
+// downloadFileRaw() is used instead of downloadFile() because the generator
+// emits `Blob | void` for application/octet-stream responses, which loses stream
+// semantics. The raw method returns the native fetch Response whose `.body` is a
+// ReadableStream and whose `.blob()` buffers the full content when needed.
+export const downloadFile = async (
+  bucket: string,
+  path: string,
+): Promise<Response> => {
+  const raw = await filesApi.downloadFileRaw({ bucket, path });
+  return raw.raw;
+};

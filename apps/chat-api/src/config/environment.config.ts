@@ -2,11 +2,13 @@ import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
   IsBoolean,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
+  Min,
 } from 'class-validator';
 
 export class EnvironmentVariables {
@@ -76,4 +78,16 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   @IsString()
   AUTH_PROVIDERS!: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  FILE_UPLOAD_MAX_BYTES?: number = 536_870_912;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  FILE_TRANSFER_TIMEOUT_MS?: number = 30_000;
 }

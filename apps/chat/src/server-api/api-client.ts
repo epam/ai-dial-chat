@@ -4,6 +4,7 @@ import {
   Configuration,
   ConversationsApi,
   DeploymentsApi,
+  FilesApi,
   Middleware,
   ModelsApi,
   RateApi,
@@ -59,6 +60,7 @@ const config = createApiConfiguration();
 
 export const applicationsApi = new ApplicationsApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
+export const filesApi = new FilesApi(config);
 export const modelsApi = new ModelsApi(config);
 export const conversationsApi = new ConversationsApi(config);
 export const authApi = new AuthApi(config);
