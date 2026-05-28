@@ -957,8 +957,13 @@ export const useFileManager = ({
     [dispatch, getFileId, files],
   );
 
+  const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
+
   const handleCreateFolder = useCallback(
-    (file: DialUploadFileItem, folderPath: string) => {
+    (file: DialUploadFileItem, folderPath: string, fileId: string) => {
+      if (deduplicatedFileIdsRef.current.has(fileId)) return;
+      deduplicatedFileIdsRef.current.add(fileId);
+
       dispatch(
         FilesActions.createNewFolder({
           files: [file],

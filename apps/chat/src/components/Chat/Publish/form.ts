@@ -18,7 +18,7 @@ export const PublicationRequestFormSchema = zodValidation.object({
     skipCheckRestrictedSymbols: true,
   }),
   [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: getEntityNameSchema({
-    name: "Author's name",
+    name: 'Author name',
     skipCheckRestrictedSymbols: true,
   }),
   [PublishRequestFieldsNames.RULES]: zodValidation.array(

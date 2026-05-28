@@ -2,6 +2,7 @@ import { useId } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
 import { useReviewBucket } from '@/src/hooks/useReviewBucket';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -308,6 +309,22 @@ export const FileManagerModal = memo(
 
     const reviewBucket = useReviewBucket();
 
+    const actionLabelsOptions = useMemo<UseFileManagerActionLabelsOptions>(
+      () => ({
+        actionsByTab: {
+          my_files: [
+            DialFileManagerActions.Delete,
+            DialFileManagerActions.Download,
+            DialFileManagerActions.Rename,
+          ],
+          shared: [DialFileManagerActions.Download],
+          organization: [DialFileManagerActions.Download],
+          review: [DialFileManagerActions.Download],
+        },
+      }),
+      [],
+    );
+
     const {
       currentPath,
       setCurrentPath,
@@ -345,18 +362,7 @@ export const FileManagerModal = memo(
       uploadEnabled,
       gridOptions,
     } = useFileManager({
-      actionLabelsOptions: {
-        actionsByTab: {
-          my_files: [
-            DialFileManagerActions.Delete,
-            DialFileManagerActions.Download,
-            DialFileManagerActions.Rename,
-          ],
-          shared: [DialFileManagerActions.Download],
-          organization: [DialFileManagerActions.Download],
-          review: [DialFileManagerActions.Download],
-        },
-      },
+      actionLabelsOptions,
       toolbarOptions: {
         newButtonVariant: ButtonVariant.Secondary,
       },
