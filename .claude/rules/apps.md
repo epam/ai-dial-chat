@@ -1,7 +1,7 @@
 ---
 paths:
-  - "apps/**/*.tsx"
-  - "apps/**/*.ts"
+  - 'apps/**/*.tsx'
+  - 'apps/**/*.ts'
 ---
 
 # Apps component conventions

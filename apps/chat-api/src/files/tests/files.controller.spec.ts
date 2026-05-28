@@ -15,7 +15,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { memoryStorage } = require('multer') as { memoryStorage: () => unknown };
 
 const TEST_USER = {

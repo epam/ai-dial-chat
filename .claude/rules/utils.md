@@ -1,7 +1,7 @@
 ---
 paths:
-  - "**/utils/**/*.ts"
-  - "**/utils/**/*.tsx"
+  - '**/utils/**/*.ts'
+  - '**/utils/**/*.tsx'
 ---
 
 # Utils conventions
