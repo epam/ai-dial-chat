@@ -15,10 +15,13 @@ export type MessageFormValueType = number | string | boolean | string[];
 export interface FormSchemaButtonOption {
   title: string;
   const: Exclude<MessageFormValueType, string[]>;
+  description?: string;
   [DialSchemaProperties.DialWidgetOptions]?: {
     confirmationMessage?: string;
     populateText?: string;
     submit?: boolean;
+    /** When `true`, option `description` is shown in read-only user messages. Defaults to `false`. */
+    showDescriptionInUserMessage?: boolean;
   };
 }
 

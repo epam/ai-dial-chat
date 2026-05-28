@@ -2,6 +2,8 @@ import { IconDotsVertical } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
+import { sanitize } from 'isomorphic-dompurify';
+import { marked } from 'marked';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -229,6 +231,11 @@ const ButtonsProperty = ({
   );
   const [hiddenOptionsModal, setHiddenOptionsModal] = useState(false);
 
+  const optionsWithDescription = useMemo(
+    () => visibleOptions.filter((option) => option.description),
+    [visibleOptions],
+  );
+
   const handleClick = useCallback(
     (option: FormSchemaButtonOption) => {
       if (
@@ -289,6 +296,20 @@ const ButtonsProperty = ({
           />
         )}
       </div>
+
+      {optionsWithDescription.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {optionsWithDescription.map((option) => (
+            <div
+              key={`${option.const}`}
+              className="text-base text-primary"
+              dangerouslySetInnerHTML={{
+                __html: sanitize(marked(option.description!, { async: false })),
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {!selectedConversations[0]?.messages.length && (
         <HiddenButtonsProperty
@@ -439,9 +460,14 @@ const PropertyRenderer = ({
     <div
       className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
-      <p className="whitespace-pre-line text-base text-primary">
-        {property.description}
-      </p>
+      {property.description && (
+        <div
+          className="text-base text-primary"
+          dangerouslySetInnerHTML={{
+            __html: sanitize(marked(property.description, { async: false })),
+          }}
+        />
+      )}
 
       {propertyType === FormSchemaPropertyType.Button && (
         <ButtonsProperty

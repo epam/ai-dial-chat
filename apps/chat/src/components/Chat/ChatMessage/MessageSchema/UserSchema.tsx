@@ -1,6 +1,8 @@
 import { memo, useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
+import { sanitize } from 'isomorphic-dompurify';
+import { marked } from 'marked';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -102,46 +104,76 @@ const UserSchemaView = memo(function UserSchemaView({
 
   return schemaPropertiesWithUserResponse.length ? (
     <div className="flex flex-col gap-6">
-      {schemaPropertiesWithUserResponse.map((row) => (
-        <div key={row.property}>
-          {!!row.description && (
-            <p className="mb-3 whitespace-pre-line text-base text-primary">
-              {row.description}
-            </p>
-          )}
+      {schemaPropertiesWithUserResponse.map((row) => {
+        const buttonDescriptions =
+          row.type === FormSchemaPropertyType.Button
+            ? row.options.filter(
+                (option) =>
+                  option.showDescriptionInUserMessage && option.description,
+              )
+            : [];
 
-          {row.type === FormSchemaPropertyType.Button && (
-            <div className="flex flex-wrap gap-2">
-              {row.options?.map((option) => (
-                <DialButton
-                  key={String(option.value)}
-                  className={classNames(
-                    'chat-button truncate',
-                    option.selected && 'button-accent-primary',
-                  )}
-                  disabled
-                  label={<DialEllipsisTooltip text={option.label} />}
-                />
-              ))}
-            </div>
-          )}
+        return (
+          <div key={row.property}>
+            {!!row.description && (
+              <div
+                className="mb-3 text-base text-primary"
+                dangerouslySetInnerHTML={{
+                  __html: sanitize(marked(row.description, { async: false })),
+                }}
+              />
+            )}
 
-          {row.type === FormSchemaPropertyType.Checkbox && (
-            <div className="flex flex-wrap gap-4">
-              {row.options?.map((option) => (
-                <Checkbox
-                  key={String(option.value)}
-                  checked={option.selected}
-                  caption={option.label}
-                  disabled={!option.selected}
-                  readonly={option.selected}
-                  onClick={emptyHandler}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+            {row.type === FormSchemaPropertyType.Button && (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {row.options.map((option) => (
+                    <DialButton
+                      key={String(option.value)}
+                      className={classNames(
+                        'chat-button truncate',
+                        option.selected && 'button-accent-primary',
+                      )}
+                      disabled
+                      label={<DialEllipsisTooltip text={option.label} />}
+                    />
+                  ))}
+                </div>
+                {buttonDescriptions.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-3">
+                    {buttonDescriptions.map((option) => (
+                      <div
+                        key={String(option.value)}
+                        className="text-base text-primary"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitize(
+                            marked(option.description!, { async: false }),
+                          ),
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {row.type === FormSchemaPropertyType.Checkbox && (
+              <div className="flex flex-wrap gap-4">
+                {row.options?.map((option) => (
+                  <Checkbox
+                    key={String(option.value)}
+                    checked={option.selected}
+                    caption={option.label}
+                    disabled={!option.selected}
+                    readonly={option.selected}
+                    onClick={emptyHandler}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   ) : null;
 });
