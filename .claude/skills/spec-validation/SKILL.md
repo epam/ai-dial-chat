@@ -27,10 +27,17 @@ PR's code changes stay consistent. Three layers, run in order:
 
 ## Inputs
 
-- Working tree at `$GITHUB_WORKSPACE`.
-- PR diff: `git diff origin/${GITHUB_BASE_REF}...HEAD`.
-- Spec workspace: `openspec/` — config at `openspec/config.yaml`, active
-  changes under `openspec/changes/`, living specs under `openspec/specs/`.
+- Working tree: the current checkout (repo root). Use `Read` / `Grep` /
+  `Glob` tools to inspect — do NOT reference `$GITHUB_WORKSPACE` in
+  Bash commands (Claude Code's Bash tool denies shell-variable
+  expansion).
+- PR diff: the agent-wrapper prompt provides the exact `git diff`
+  command with the literal base ref already substituted. Use that
+  command verbatim. Do NOT re-introduce `${GITHUB_BASE_REF}` — it
+  will be denied.
+- Spec workspace: `openspec/` — config at `openspec/config.yaml`,
+  active changes under `openspec/changes/`, living specs under
+  `openspec/specs/`. Use the `Read` tool to inspect specific files.
 
 ## Process
 
