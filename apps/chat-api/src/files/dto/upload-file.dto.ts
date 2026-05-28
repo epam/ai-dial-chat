@@ -43,7 +43,6 @@ export class UploadFileDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[\w.\-/]+$/)
   @MaxLength(1024)
   @IsValidFilePath()
   @ApiProperty({
