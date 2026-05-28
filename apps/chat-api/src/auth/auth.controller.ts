@@ -109,6 +109,9 @@ export class AuthController {
     @Query() query: LoginQueryDto,
     @Res() res: Response,
   ): Promise<void> {
+    this.logger.debug(
+      `login() start providerId=${params.providerId} callbackUrl=${query.callbackUrl ?? 'none'}`,
+    );
     const { client, config: providerConfig } = this.registry.getProvider(
       params.providerId,
     );
@@ -159,6 +162,9 @@ export class AuthController {
       bucket: '',
     });
 
+    this.logger.debug(
+      `login() redirecting to IdP redirectUri=${redirectUri} authUrl=${authUrl}`,
+    );
     res.cookie(getTransactionCookieName(this.config), txToken, {
       ...getCookieOptions(this.config),
       maxAge: 600 * 1000,
@@ -188,6 +194,7 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
+    this.logger.debug(`callback() start providerId=${params.providerId}`);
     if (query.error) {
       this.logger.warn(
         `IdP returned error for provider=${params.providerId}: ${query.error} - ${query.error_description ?? 'no description'}`,
@@ -259,6 +266,9 @@ export class AuthController {
       corsOrigin,
     });
 
+    this.logger.debug(
+      `callback() exchanging code for tokens redirectUri=${redirectUri}`,
+    );
     let tokenSet;
     try {
       const params2 = client.callbackParams(req);
@@ -271,6 +281,9 @@ export class AuthController {
       this.logger.error('Token exchange failed', err);
       throw new BadGatewayException('Token exchange failed');
     }
+    this.logger.debug(
+      `callback() token exchange succeeded sub=${tokenSet.claims().sub} at_exp=${tokenSet.expires_at ?? 'none'}`,
+    );
 
     const claims = tokenSet.claims();
     const now = Math.floor(Date.now() / 1000);
@@ -330,6 +343,10 @@ export class AuthController {
       bucket,
     };
 
+    this.logger.debug(
+      `callback() session created sid=${payload.sid} sub=${payload.sub} bucket=${payload.bucket || 'empty'} providerId=${payload.providerId}`,
+    );
+
     const sessionToken = await this.session.encrypt(payload);
     const cookieName = getSessionCookieName(this.config);
 
@@ -348,6 +365,9 @@ export class AuthController {
       maxAge: 0,
     });
 
+    this.logger.debug(
+      `callback() done, redirecting to callbackUrl=${callbackUrl}`,
+    );
     res.redirect(callbackUrl);
   }
 
@@ -357,6 +377,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Log out and clear session cookie' })
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
+    this.logger.debug('logout() start');
     // Protect against CSRF logout even though this route is @Public().
     // Native HTML form POSTs always carry an Origin header the browser sets.
     const origin = req.headers['origin'];
@@ -364,6 +385,9 @@ export class AuthController {
     const candidate =
       origin ?? (referer ? new URL(referer as string).origin : undefined);
     if (!candidate || !this.isOriginAllowed(candidate)) {
+      this.logger.debug(
+        `logout() blocked: origin check failed candidate=${candidate ?? 'none'}`,
+      );
       throw new ForbiddenException('Origin check failed');
     }
 
@@ -399,8 +423,12 @@ export class AuthController {
         const revocationEndpoint =
           client.issuer.metadata['revocation_endpoint'];
         if (revocationEndpoint && payload.rt) {
+          this.logger.debug(
+            `logout() revoking token for sub=${payload.sub} providerId=${payload.providerId}`,
+          );
           try {
             await client.revoke(payload.rt);
+            this.logger.debug('logout() token revocation succeeded');
           } catch (err) {
             this.logger.warn('Token revocation failed (non-fatal)', err);
           }
@@ -416,6 +444,9 @@ export class AuthController {
       }
     }
 
+    this.logger.debug(
+      `logout() done, redirecting to endSessionUrl=${endSessionUrl ?? '/'}`,
+    );
     res.redirect(endSessionUrl ?? '/');
   }
 
