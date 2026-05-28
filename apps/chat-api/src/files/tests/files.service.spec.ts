@@ -105,53 +105,52 @@ describe('FilesService', () => {
     it('throws UnauthorizedException on 401', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadFile.mockResolvedValue(errResponse(401));
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws ForbiddenException on 403', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadFile.mockResolvedValue(errResponse(403));
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('throws HttpException(429) on 429', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadFile.mockResolvedValue(errResponse(429));
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't'),
-      ).rejects.toThrow(HttpException);
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        HttpException,
+      );
     });
 
     it('throws BadGatewayException on 5xx', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadFile.mockResolvedValue(errResponse(500));
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't'),
-      ).rejects.toThrow(BadGatewayException);
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        BadGatewayException,
+      );
     });
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadFile.mockRejectedValue(new TypeError('fetch failed'));
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't'),
-      ).rejects.toThrow(ServiceUnavailableException);
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
     });
 
     it('throws ServiceUnavailableException on timeout', async () => {
       const { service, sdkClient } = makeService();
-      const timeoutErr = Object.assign(
-        new Error('The operation was aborted'),
-        { name: 'TimeoutError' },
-      );
+      const timeoutErr = Object.assign(new Error('The operation was aborted'), {
+        name: 'TimeoutError',
+      });
       sdkClient.uploadFile.mockRejectedValue(timeoutErr);
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't'),
-      ).rejects.toThrow(ServiceUnavailableException);
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
     });
   });
 
@@ -208,10 +207,9 @@ describe('FilesService', () => {
 
     it('throws ServiceUnavailableException on timeout', async () => {
       const { service, sdkClient } = makeService();
-      const timeoutErr = Object.assign(
-        new Error('The operation was aborted'),
-        { name: 'TimeoutError' },
-      );
+      const timeoutErr = Object.assign(new Error('The operation was aborted'), {
+        name: 'TimeoutError',
+      });
       sdkClient.downloadFile.mockRejectedValue(timeoutErr);
       await expect(service.downloadFile('b', 'p', 't')).rejects.toThrow(
         ServiceUnavailableException,

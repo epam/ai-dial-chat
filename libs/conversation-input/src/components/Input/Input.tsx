@@ -7,23 +7,14 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
-  DIAL_ICON_SIZE,
   DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
-  DialSearch,
-  ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconApps,
-  IconPaperclip,
-  IconPlus,
-  IconRobot,
-} from '@tabler/icons-react';
+import { IconPaperclip, IconPlus } from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
   type FC,
-  type ReactNode,
   KeyboardEvent,
   useCallback,
   useEffect,
@@ -31,6 +22,7 @@ import {
   useState,
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
+import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
@@ -38,26 +30,6 @@ import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
 import { StopButton } from './StopButton.js';
-
-const DeploymentIcon: FC<{
-  src: string;
-  size: number;
-  fallback: ReactNode;
-}> = ({ src, size, fallback }) => {
-  const [failed, setFailed] = useState(false);
-  const ref = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handler = () => setFailed(true);
-    el.addEventListener('error', handler);
-    return () => el.removeEventListener('error', handler);
-  }, [src]);
-
-  if (failed) return <>{fallback}</>;
-  return <img ref={ref} src={src} alt="" width={size} height={size} />;
-};
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
@@ -102,7 +74,6 @@ export const Input: FC<InputProps> = ({
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [modelSearchQuery, setModelSearchQuery] = useState('');
 
   useEffect(() => {
     if (messageProp) {
@@ -178,88 +149,19 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
-  const selectedIconUrl = selectedItem?.iconUrl
-    ? resolveDeploymentIconUrl(selectedItem.iconUrl)
-    : undefined;
-  const selectorIcon = selectedIconUrl ? (
-    <DeploymentIcon
-      src={selectedIconUrl}
-      size={18}
-      fallback={<IconRobot size={18} aria-hidden />}
-    />
-  ) : (
-    <IconRobot size={18} aria-hidden />
-  );
-  const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
-  const selectorAriaLabel = selectedLabel
-    ? `${modelSelectorLabels?.ariaLabel ?? 'Select model'}: ${selectedLabel}`
-    : (modelSelectorLabels?.ariaLabel ?? 'Select model');
-
-  const buildSelectorMenuItems = () => {
-    if (!deployments || deployments.length === 0) {
-      const stateLabel =
-        modelSelectorLabels?.loading ??
-        modelSelectorLabels?.error ??
-        modelSelectorLabels?.empty;
-      if (stateLabel) {
-        return [{ key: '__state', label: stateLabel, disabled: true }];
-      }
-      return [];
-    }
-    const query = modelSearchQuery.trim().toLowerCase();
-    const filtered = query
-      ? deployments.filter((item) =>
-          (item.displayName ?? item.id).toLowerCase().includes(query),
-        )
-      : deployments;
-
-    return filtered.map((item) => {
-      const itemIconUrl = item.iconUrl
-        ? resolveDeploymentIconUrl(item.iconUrl)
-        : undefined;
-
-      const icon = itemIconUrl ? (
-        <DeploymentIcon
-          src={itemIconUrl}
-          size={DIAL_ICON_SIZE.SM}
-          fallback={
-            item.type === 'application' ? (
-              <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
-            ) : (
-              <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
-            )
-          }
-        />
-      ) : item.type === 'application' ? (
-        <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
-      ) : (
-        <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
-      );
-      return {
-        key: item.id,
-        label: item.displayName ?? item.id,
-        icon,
-        onClick: () => onDeploymentChange?.(item.id),
-      };
-    });
-  };
-
-  const selectorMenuHeader =
-    deployments && deployments.length > 0 ? (
-      <div className="bg-layer-0 sticky top-0 z-10 px-2 pb-1 pt-2">
-        <DialSearch
-          value={modelSearchQuery}
-          placeholder="Search"
-          size={ElementSize.Small}
-          onChange={setModelSearchQuery}
-        />
-      </div>
-    ) : undefined;
-
-  const handleModelSelectorOpenChange = (open: boolean) => {
-    if (!open) setModelSearchQuery('');
-  };
+  const {
+    selectorIcon,
+    selectorAriaLabel,
+    menuItems,
+    menuHeader,
+    onOpenChange: handleModelSelectorOpenChange,
+  } = useModelSelector({
+    deployments,
+    selectedDeploymentId,
+    onDeploymentChange,
+    modelSelectorLabels,
+    resolveDeploymentIconUrl,
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -382,8 +284,8 @@ export const Input: FC<InputProps> = ({
               icon={selectorIcon}
               ariaLabel={selectorAriaLabel}
               menu={{
-                items: buildSelectorMenuItems(),
-                header: selectorMenuHeader,
+                items: menuItems,
+                header: menuHeader,
               }}
               placement="bottom-end"
               matchReferenceWidth={false}
