@@ -6,6 +6,23 @@ You are running the **{{stage}}** agent on a pull request.
 - PR diff: `git diff origin/{{base_ref}}...HEAD`.
 - Upstream agent outputs (when declared in `needs:`): `upstream/<agent-name>/stage-output.json`.
 
+## Tool constraints (read this before invoking the skill)
+
+Your `Bash` tool only accepts the specific patterns in `allowed_tools` (e.g. `Bash(git diff:*)`, `Bash(openspec:*)`, `Bash(trivy:*)`). It denies:
+
+- Any command not matching an allowed prefix (no `cat`, `head`, `tail`, `jq`, `ls`, `find`, `awk`, `sort`, etc.)
+- Shell variable expansion (`$VAR`, `${VAR}` — including `$GITHUB_BASE_REF`, `$GITHUB_WORKSPACE`)
+- Pipes (`|`), redirections (`>`, `>>`, `<`), and command chains (`&&`, `||`, `;`)
+
+For everything that *isn't* an allow-listed CLI invocation:
+
+- **Read files** with the `Read` tool (give an absolute path), not `cat`/`head`.
+- **Search** with the `Grep` tool, not `bash grep` / `awk` pipelines.
+- **Find files** with the `Glob` tool, not `find` / `ls`.
+- **Capture tool output to a file** with the tool's own `--output` flag, not shell `>`.
+
+If the skill body documents a bash one-liner that violates these rules, **translate it** to Claude-tool calls. Burning turns on denied bash commands is the most common failure mode for agents that hit `error_max_turns`.
+
 ## Task
 
 Invoke the local `/{{skill}}` skill against the inputs above. Follow its instructions verbatim; do not freelance criteria the skill doesn't cover. Map the skill's output to the response schema as described below.
