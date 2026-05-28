@@ -349,6 +349,35 @@ export const AddQuickApp2SettingsFormSelector = {
   agentsAndToolsetsList: '[data-qa="agents-and-toolsets-list"]',
   addAgentsButton: '[data-qa="add-agents-button"]',
   agentsAndToolsetsJsonToggle: '[data-qa="agents-and-toolsets-json-toggle"]',
+
+  // Chips inside agents-and-toolsets-list
+  agentChip: '[data-qa="agent-chip"]',
+  chipName: '[data-qa="chip-name"]',
+  chipVersion: '[data-qa="chip-version"]',
+
+  // Code Interpreter toggle
+  codeInterpreterToggle: '[data-qa="toggle-switch"]',
+
+  // Entity details panel (opens on chip click)
+  entityDetailsPanel: '[data-qa="entity-details-panel"]',
+  entityDetailsVersionSelect: '[data-qa="model-version-select"]',
+  entityDetailsLoginButton: '[data-qa="login-button"]',
+};
+
+export const AgentAndToolsetModalSelector = {
+  container:
+    '[role="dialog"][aria-modal="true"]:has([data-qa="search-agents"])',
+  searchInput: '[data-qa="search-agents"]',
+  myWorkspaceTab: '[data-qa="workspace"]',
+  marketplaceTab: '[data-qa="marketplace"]',
+  entity: '[data-qa="entity"]',
+  entityName: '#entity-name',
+};
+
+export const MarketplaceEntityDetailsModalSelector = {
+  container: '[data-qa="marketplace-entity-details"]',
+  version: '[data-qa="version"]',
+  entityName: '#entity-name',
 };
 
 export const AddToolsetSettingsFormSelector = {

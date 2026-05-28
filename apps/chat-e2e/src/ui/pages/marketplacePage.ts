@@ -7,6 +7,7 @@ import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
   MarketplaceUrlBuilder,
+  QuickApp2SchemaId,
 } from '@/src/testData';
 import { EntityEditorUrlBuilder } from '@/src/testData/marketplace/entityEditorUrlBuilder';
 import { BasePage, ExpectedApiResponse } from '@/src/ui/pages/basePage';
@@ -97,6 +98,13 @@ export class MarketplacePage extends BasePage {
     );
   }
 
+  async openCreateQuickApp2Page() {
+    await this.openCreateEntityPage(
+      MarketplaceEntitiesTabs.AGENTS,
+      QuickApp2SchemaId,
+    );
+  }
+
   async openCreateToolsetPage() {
     await this.openCreateEntityPage(
       MarketplaceEntitiesTabs.TOOLSETS,
@@ -109,6 +117,17 @@ export class MarketplacePage extends BasePage {
     await this.openEditEntityPage(
       id,
       MarketplaceEntitiesTabs.TOOLSETS,
+      undefined,
+      {
+        getEntities: true,
+      },
+    );
+  }
+
+  async openEditAgentPage(id: string) {
+    await this.openEditEntityPage(
+      id,
+      MarketplaceEntitiesTabs.AGENTS,
       undefined,
       {
         getEntities: true,

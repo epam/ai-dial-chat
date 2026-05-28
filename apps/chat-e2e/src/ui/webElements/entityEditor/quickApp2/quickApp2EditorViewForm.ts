@@ -1,5 +1,5 @@
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
-import { EntityEditorViewForm } from '@/src/ui/webElements';
+import { BaseElement, EntityEditorViewForm } from '@/src/ui/webElements';
 
 export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public orchestratorSection = this.getChildElementBySelector(
@@ -26,6 +26,10 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public codeInterpreterField =
     this.contextToolsSection.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.codeInterpreterField,
+    );
+  public codeInterpreterToggle =
+    this.codeInterpreterField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.codeInterpreterToggle,
     );
 
   // Agents & Toolsets — view modes
@@ -55,4 +59,56 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
     );
+
+  // Entity details panel (inline, opens when a chip is clicked)
+  public entityDetailsPanel =
+    this.agentsAndToolsetsField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.entityDetailsPanel,
+    );
+  public entityDetailsVersionSelect =
+    this.entityDetailsPanel.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.entityDetailsVersionSelect,
+    );
+  public entityDetailsLoginButton =
+    this.entityDetailsPanel.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.entityDetailsLoginButton,
+    );
+
+  public getChipByName(name: string): BaseElement {
+    return this.agentsAndToolsetsList.getChildElementBySelector(
+      `${AddQuickApp2SettingsFormSelector.agentChip}:has(${AddQuickApp2SettingsFormSelector.chipName}:text-is("${name}"))`,
+    );
+  }
+
+  public getChipVersionByName(name: string): BaseElement {
+    return this.getChipByName(name).getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.chipVersion,
+    );
+  }
+
+  public async clickChipByName(name: string): Promise<void> {
+    await this.getChipByName(name).click();
+  }
+
+  public async removeChipByName(name: string): Promise<void> {
+    await this.getChipByName(name)
+      .getChildElementBySelector('[aria-label="Remove item"]')
+      .click();
+  }
+
+  public get allChips(): BaseElement {
+    return this.agentsAndToolsetsList.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.agentChip,
+    );
+  }
+
+  public get allChipNames(): BaseElement {
+    return this.agentsAndToolsetsList.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.chipName,
+    );
+  }
+
+  public async getAllChipNameTexts(): Promise<string[]> {
+    return this.allChipNames.getElementLocator().allTextContents();
+  }
 }

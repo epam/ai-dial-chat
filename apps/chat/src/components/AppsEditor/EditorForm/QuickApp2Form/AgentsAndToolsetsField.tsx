@@ -428,25 +428,26 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   onConfigureClick={handleConfigureClick}
                 />
               </div>
-              {detailedViewEntity &&
-                isDialAiEntityModel(detailedViewEntity) && (
-                  <ApplicationDetails
-                    entity={detailedViewEntity}
-                    allEntities={allModels}
-                    FooterComponent={SimpleApplicationDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
-
-              {detailedViewEntity &&
-                isToolsetEntityModel(detailedViewEntity) && (
-                  <ToolsetDetails
-                    entity={detailedViewEntity}
-                    allEntities={allToolsets}
-                    FooterComponent={SimpleToolsetDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
+              {detailedViewEntity && (
+                <div data-qa="entity-details-panel">
+                  {isDialAiEntityModel(detailedViewEntity) && (
+                    <ApplicationDetails
+                      entity={detailedViewEntity}
+                      allEntities={allModels}
+                      FooterComponent={SimpleApplicationDetailsFooter}
+                      {...commonDetailsProps}
+                    />
+                  )}
+                  {isToolsetEntityModel(detailedViewEntity) && (
+                    <ToolsetDetails
+                      entity={detailedViewEntity}
+                      allEntities={allToolsets}
+                      FooterComponent={SimpleToolsetDetailsFooter}
+                      {...commonDetailsProps}
+                    />
+                  )}
+                </div>
+              )}
             </>
           );
         }}

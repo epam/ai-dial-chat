@@ -6,6 +6,7 @@ import {
   MarketplacePage,
 } from '../ui/pages';
 import {
+  AgentAndToolsetSelectModal,
   AgentInfo,
   Breadcrumb,
   Chat,
@@ -44,6 +45,7 @@ import {
   FoldersTree,
   InformationModal,
   ListboxMenu,
+  MarketplaceEntityDetailsModal,
   MessageTemplateModal,
   PromptBar,
   PublishingFilter,
@@ -229,6 +231,8 @@ const dialTest = test.extend<{
   externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
   quickApp2EditorContainer: QuickApp2EditorContainer;
   quickApp2EditorViewForm: QuickApp2EditorViewForm;
+  agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
+  marketplaceEntityDetailsModal: MarketplaceEntityDetailsModal;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -685,6 +689,12 @@ const dialTest = test.extend<{
     const quickApp2EditorViewForm =
       quickApp2EditorContainer.getEntityEditorViewForm();
     await use(quickApp2EditorViewForm);
+  },
+  agentAndToolsetSelectModal: async ({ page }, use) => {
+    await use(new AgentAndToolsetSelectModal(page));
+  },
+  marketplaceEntityDetailsModal: async ({ page }, use) => {
+    await use(new MarketplaceEntityDetailsModal(page));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();

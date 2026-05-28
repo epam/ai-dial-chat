@@ -84,6 +84,8 @@ export * from './entityEditor/externalApp/externalAppEditorViewForm';
 export * from './entityEditor/externalApp/externalAppEditorContainer';
 export * from './entityEditor/quickApp2/quickApp2EditorViewForm';
 export * from './entityEditor/quickApp2/quickApp2EditorContainer';
+export * from './entityEditor/quickApp2/agentAndToolsetSelectModal';
+export * from './entityEditor/quickApp2/marketplaceEntityDetailsModal';
 export * from './entityEditor/toolset/toolsetEditorViewForm';
 export * from './entityEditor/toolset/toolsetEditorContainer';
 export * from './replaceConfirmationModal';

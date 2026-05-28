@@ -760,6 +760,9 @@ export enum EntityEditorAppTypes {
   CodeApp = 'Code App',
 }
 
+export const QuickApp2SchemaId =
+  'mydial.epam.com/custom_application_schemas/quickapps2';
+
 export enum MarketplaceTabs {
   WORKSPACE = 'workspace',
 }
