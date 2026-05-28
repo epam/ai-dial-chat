@@ -29,9 +29,7 @@ export const handleDialError = (error: unknown): never => {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     if (error.status >= 500)
-      throw new ServiceUnavailableException(
-        'DIAL Core returned a server error',
-      );
+      throw new BadGatewayException('DIAL Core returned a server error');
   }
 
   throw new BadGatewayException('Unexpected response from DIAL Core');

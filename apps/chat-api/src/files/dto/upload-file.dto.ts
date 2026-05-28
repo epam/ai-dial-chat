@@ -8,6 +8,8 @@ import {
   ValidationOptions,
 } from 'class-validator';
 
+const FORBIDDEN_PATH_CHARS = /[:;,={}%&\\"]/;
+
 const IsValidFilePath = (validationOptions?: ValidationOptions) => {
   return (object: object, propertyName: string) => {
     registerDecorator({
@@ -20,10 +22,11 @@ const IsValidFilePath = (validationOptions?: ValidationOptions) => {
           if (typeof value !== 'string') return false;
           if (value.startsWith('/')) return false;
           if (value.includes('..')) return false;
+          if (FORBIDDEN_PATH_CHARS.test(value)) return false;
           return true;
         },
         defaultMessage() {
-          return 'path must not start with / or contain ..';
+          return 'path must not start with /, contain .., or include forbidden characters';
         },
       },
     });

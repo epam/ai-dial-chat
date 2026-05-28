@@ -3,7 +3,7 @@
 ### Requirement: Upload file to DIAL Core via BFF
 The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary) and `bucket` + `path` form fields, validate all inputs, and proxy the upload to DIAL Core `POST /v1/files/{bucket}/{path}` under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
 
-The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately. The multer `memoryStorage` engine MUST be used with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 50 MB).
+The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately. The multer `memoryStorage` engine MUST be used with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
 
 - **Rate limit**: `@Throttle({ default: { limit: 20, ttl: 60000 } })` (stricter than global 100/min).
 - **Swagger**: `@ApiConsumes('multipart/form-data')` and `@ApiBody` with schema describing `file`, `bucket`, and `path` fields.
@@ -88,7 +88,7 @@ The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file
 ### Requirement: Upload environment configuration
 The system SHALL add `FILE_UPLOAD_MAX_BYTES` and `FILE_TRANSFER_TIMEOUT_MS` to `EnvironmentVariables` with sensible defaults and class-validator decorators.
 
-- `FILE_UPLOAD_MAX_BYTES`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1)`, default `52_428_800` (50 MB).
+- `FILE_UPLOAD_MAX_BYTES`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1)`, default `536_870_912` (512 MB).
 - `FILE_TRANSFER_TIMEOUT_MS`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1000)`, default `30_000`.
 
 Both variables SHALL be documented in `apps/chat-api/README.md` and added as placeholders to `.env.example`.

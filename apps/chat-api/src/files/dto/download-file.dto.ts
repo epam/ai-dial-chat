@@ -8,15 +8,7 @@ import {
   ValidationOptions,
 } from 'class-validator';
 
-const FORBIDDEN_PATH_CHARS = /[\\<>:"|?*]/;
-
-const hasControlChar = (s: string): boolean => {
-  for (let i = 0; i < s.length; i++) {
-    const code = s.charCodeAt(i);
-    if (code <= 0x1f) return true;
-  }
-  return false;
-};
+const FORBIDDEN_PATH_CHARS = /[:;,={}%&\\"]/;
 
 const IsValidFilePath = (validationOptions?: ValidationOptions) => {
   return (object: object, propertyName: string) => {
@@ -31,7 +23,6 @@ const IsValidFilePath = (validationOptions?: ValidationOptions) => {
           if (value.startsWith('/')) return false;
           if (value.includes('..')) return false;
           if (FORBIDDEN_PATH_CHARS.test(value)) return false;
-          if (hasControlChar(value)) return false;
           return true;
         },
         defaultMessage() {
@@ -52,6 +43,7 @@ export class DownloadFileDto {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[\w.\-/]+$/)
   @MaxLength(1024)
   @IsValidFilePath()
   @ApiProperty({

@@ -1,6 +1,6 @@
 ## 1. Environment & Configuration
 
-- [x] 1.1 Add `FILE_UPLOAD_MAX_BYTES` (`@IsOptional`, `@Transform(parseInt)`, `@IsInt`, `@Min(1)`, default `52_428_800`) to `apps/chat-api/src/config/environment.config.ts`
+- [x] 1.1 Add `FILE_UPLOAD_MAX_BYTES` (`@IsOptional`, `@Transform(parseInt)`, `@IsInt`, `@Min(1)`, default `536_870_912`) to `apps/chat-api/src/config/environment.config.ts`
 - [x] 1.2 Add `FILE_TRANSFER_TIMEOUT_MS` (`@IsOptional`, `@Transform(parseInt)`, `@IsInt`, `@Min(1000)`, default `30_000`) to `apps/chat-api/src/config/environment.config.ts`
 - [x] 1.3 Add placeholder entries for both variables to `.env.example`
 - [x] 1.4 Document both variables in `apps/chat-api/README.md`

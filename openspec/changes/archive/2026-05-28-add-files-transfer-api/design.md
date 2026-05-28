@@ -47,7 +47,7 @@ Add `FILE_TRANSFER_TIMEOUT_MS` to `EnvironmentVariables` (default 30 000 ms) and
 - A. `diskStorage` — writes temp files to disk, needs cleanup.
 - B. `memoryStorage` — file bytes land in `req.file.buffer`, no disk I/O.
 
-**Decision: B (`memoryStorage`)**, with a multer `limits.fileSize` cap drawn from `FILE_UPLOAD_MAX_BYTES` env var (default 50 MB). Files are never persisted on the BFF — the buffer is forwarded in the DIAL Core request body immediately after validation.
+**Decision: B (`memoryStorage`)**, with a multer `limits.fileSize` cap drawn from `FILE_UPLOAD_MAX_BYTES` env var (default 512 MB). Files are never persisted on the BFF — the buffer is forwarded in the DIAL Core request body immediately after validation.
 
 NestJS wiring: `@UseInterceptors(FileInterceptor('file'))` + `@UploadedFile()` on the upload handler. Swagger gap: `@ApiConsumes('multipart/form-data')` + `@ApiBody({ schema: { type: 'object', … } })` is required because `@nestjs/swagger` does not auto-detect `multipart/form-data` from `FileInterceptor`.
 
