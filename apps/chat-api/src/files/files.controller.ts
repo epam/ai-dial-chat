@@ -102,8 +102,6 @@ export class FilesController {
       res.setHeader(key, value);
     }
 
-    Readable.fromWeb(stream as Parameters<typeof Readable.fromWeb>[0]).pipe(
-      res,
-    );
+    Readable.fromWeb(stream as ReadableStream).pipe(res);
   }
 }

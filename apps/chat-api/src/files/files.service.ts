@@ -19,18 +19,14 @@ interface UploadedFile {
 
 @Injectable()
 export class FilesService extends AppService {
-  private readonly logger = new Logger(FilesService.name);
+  protected readonly logger = new Logger(FilesService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
   }
 
   private getTimeoutMs(): number {
-    return (
-      (this.configService.get('FILE_TRANSFER_TIMEOUT_MS', {
-        infer: true,
-      }) as number | undefined) ?? 30_000
-    );
+    return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
   }
 
   async uploadFile(
@@ -87,13 +83,11 @@ export class FilesService extends AppService {
         return handleDialError({ status: response.status });
       }
 
-      const headers: Record<string, string> = {};
-      for (const header of SAFE_DOWNLOAD_HEADERS) {
-        const value = response.headers.get(header);
-        if (value !== null) {
-          headers[header] = value;
-        }
-      }
+      const headers = Object.fromEntries(
+        SAFE_DOWNLOAD_HEADERS.map(
+          (h) => [h, response.headers.get(h)] as const,
+        ).filter(([, v]) => v !== null),
+      ) as Record<string, string>;
 
       return { stream: response.body as ReadableStream, headers };
     } catch (err) {

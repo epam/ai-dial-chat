@@ -15,10 +15,7 @@ const { memoryStorage } = require('multer') as { memoryStorage: () => unknown };
       useFactory: (config: ConfigService<EnvironmentVariables>) => ({
         storage: memoryStorage(),
         limits: {
-          fileSize:
-            (config.get('FILE_UPLOAD_MAX_BYTES', { infer: true }) as
-              | number
-              | undefined) ?? 536_870_912,
+          fileSize: config.get<number>('FILE_UPLOAD_MAX_BYTES') ?? 536_870_912,
         },
       }),
     }),

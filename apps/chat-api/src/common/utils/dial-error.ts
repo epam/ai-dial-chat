@@ -11,7 +11,11 @@ import {
 } from '@nestjs/common';
 
 export const handleDialError = (error: unknown): never => {
-  if (error instanceof TypeError || isNetworkError(error)) {
+  if (
+    error instanceof TypeError ||
+    isNetworkError(error) ||
+    isTimeoutError(error)
+  ) {
     throw new ServiceUnavailableException('DIAL Core is unreachable');
   }
 
@@ -34,6 +38,9 @@ export const handleDialError = (error: unknown): never => {
 
   throw new BadGatewayException('Unexpected response from DIAL Core');
 };
+
+const isTimeoutError = (error: unknown): boolean =>
+  error instanceof Error && error.name === 'TimeoutError';
 
 const isNetworkError = (error: unknown): boolean => {
   return (
