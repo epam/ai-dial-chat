@@ -51,6 +51,7 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface ViewProps {
   conversation: ConversationInfo;
@@ -171,7 +172,7 @@ function ConversationView({
           )}
           hideTooltip={!isNameOrPathInvalid}
           triggerClassName={classNames(
-            'block max-h-5 flex-1 truncate whitespace-pre break-all text-start',
+            'block max-h-5 min-w-0 flex-1 text-start',
             conversation.publicationInfo?.isNotExist && 'text-secondary',
             !!additionalItemData?.publicationUrl &&
               conversation.publicationInfo?.action === PublishActions.DELETE &&
@@ -179,7 +180,10 @@ function ConversationView({
           )}
           dataQa="entity-name"
         >
-          {conversation.name}
+          <DialEllipsisTooltip
+            text={conversation.name}
+            id="entity-name-value"
+          />
         </Tooltip>
       </div>
     </>
