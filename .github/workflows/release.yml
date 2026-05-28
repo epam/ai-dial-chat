@@ -27,9 +27,6 @@ jobs:
     uses: epam/ai-dial-ci/.github/workflows/node_test.yml@4.3.0
     with:
       node-version: '24'
-      ort-enabled: false
-      style-checks-enabled: false
-      code-checks-enabled: false
 
   calculate_version:
     runs-on: ubuntu-24.04
