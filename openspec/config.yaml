@@ -144,7 +144,9 @@ rules:
     - For DIAL Core integrations in apps/chat-api/**, prefer @epam/ai-dial-typescript-sdk
       via the shared AppService SDK client. Use raw fetch only for non-DIAL upstreams or
       SDK gaps, and document why the exception is needed.
-    - Name handler functions with the handle prefix in React components
+    - Event callback props exposed by React components must use onEvent naming
+      (e.g. onSend, onScroll, onKeyDown)
+    - Handler functions defined inside React components must use handleEvent naming
       (e.g. handleSend, handleScroll, handleKeyDown)
     - Use semantic HTML elements (button, nav, main, section) before div/span
     - Apply ARIA attributes for dynamic content — role="log" + aria-live="polite" for chat
