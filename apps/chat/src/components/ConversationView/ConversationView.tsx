@@ -19,7 +19,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  CatalogI18nKeys,
   ActionsI18nKeys,
   ChatI18nKeys,
   DeploymentsI18nKeys,

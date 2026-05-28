@@ -72,6 +72,28 @@
     "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
     "attachmentTray": { "label": "Attached files" }
   },
+  "sidebar": {
+    "sources": {
+      "toggleOpen": "Open sidebar",
+      "toggleClose": "Close sidebar",
+      "ariaLabel": "Conversation sources",
+      "close": "Close",
+      "search": "Search files",
+      "searchDisabled": "Search coming soon",
+      "downloadAll": "Download all",
+      "downloadAllDisabled": "Download coming soon",
+      "sections": {
+        "uploadedFiles": "Uploaded Files",
+        "generatedFiles": "Generated Files",
+        "sources": "Sources"
+      },
+      "empty": {
+        "uploadedFiles": "No uploaded files in this conversation.",
+        "generatedFiles": "No generated files in this conversation.",
+        "sources": "No sources available."
+      }
+    }
+  },
   "auth": {
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",
