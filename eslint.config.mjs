@@ -20,12 +20,16 @@ export default [
     ],
   },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
-    plugins: {
-      prettier,
-      import: importPlugin,
-      'jsx-a11y': jsxA11y,
-    },
+    // `@nx/enforce-module-boundaries` is intended to police imports between Nx
+    // project source code. Bundler/tooling configs that sit at a project root
+    // (tailwind.config.js, vite.config.ts, etc.) are workspace-level concerns
+    // that legitimately reach across the source graph (e.g. a lib presetting
+    // the root Tailwind theme so its isolated build emits matching CSS). Scope
+    // the rule to `**/src/**` so it governs source code only — instead of
+    // adding per-path `allow` exceptions every time a build config needs to
+    // reach a sibling. The rest of the lint rules below keep their broader
+    // scope.
+    files: ['**/src/**/*.{ts,tsx,js,jsx,cts,mts,cjs,mjs}'],
     rules: {
       'no-console': ['error', { allow: ['warn', 'error', 'info'] }],
       '@nx/enforce-module-boundaries': [
@@ -41,6 +45,16 @@ export default [
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    plugins: {
+      prettier,
+      import: importPlugin,
+      'jsx-a11y': jsxA11y,
+    },
+    rules: {
       // Prettier rules
       'prettier/prettier': 'error',
       'react-hooks/set-state-in-effect': 'off',

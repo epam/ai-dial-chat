@@ -51,7 +51,7 @@ export const Input: FC<InputProps> = ({
   className,
   pendingDropFiles = [],
   onDropFilesConsumed,
-  pasteTextThreshold = 2000,
+  pasteTextThreshold = 4000,
   deployments,
   selectedDeploymentId,
   onDeploymentChange,

@@ -86,7 +86,7 @@ export interface InputProps {
   pendingDropFiles?: File[];
   /** Called after `pendingDropFiles` have been consumed so the parent can reset its state. */
   onDropFilesConsumed?: () => void;
-  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
   deployments?: DeploymentItemDto[];
