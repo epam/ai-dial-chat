@@ -145,9 +145,9 @@ export class Folders extends BaseElement {
 
   public getFolderName(name: string, index?: number) {
     const folderNameLocator = this.getFolderByName(name, index);
-    const folderNameWithContentLocator = folderNameLocator.locator(
-      FolderSelectors.folderNameWithContent(),
-    );
+    const folderNameWithContentLocator = folderNameLocator
+      .locator(FolderSelectors.folderName)
+      .locator(Tags.span);
     const emptyFolderNameLocator = folderNameLocator.locator(
       FolderSelectors.emptyFolderName(),
     );
