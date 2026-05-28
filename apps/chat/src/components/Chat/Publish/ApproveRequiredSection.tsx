@@ -152,6 +152,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
             <div className="w-full">
               <DialEllipsisTooltip
                 text={publication.name || getPublicationId(publication.url)}
+                id="folder-name-value"
               />
             </div>
           </div>

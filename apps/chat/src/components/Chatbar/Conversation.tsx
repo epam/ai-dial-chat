@@ -180,7 +180,10 @@ function ConversationView({
           )}
           dataQa="entity-name"
         >
-          <DialEllipsisTooltip text={conversation.name} />
+          <DialEllipsisTooltip
+            text={conversation.name}
+            id="entity-name-value"
+          />
         </Tooltip>
       </div>
     </>

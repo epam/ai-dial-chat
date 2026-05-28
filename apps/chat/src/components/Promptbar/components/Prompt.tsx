@@ -340,7 +340,10 @@ export const PromptComponent = memo(
                 )}
                 dataQa="entity-name"
               >
-                <DialEllipsisTooltip text={prompt.name} />
+                <DialEllipsisTooltip
+                  text={prompt.name}
+                  id="entity-name-value"
+                />
               </Tooltip>
             </div>
           </div>
