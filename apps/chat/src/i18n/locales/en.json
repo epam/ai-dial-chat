@@ -73,15 +73,13 @@
     "attachmentTray": { "label": "Attached files" }
   },
   "sidebar": {
-    "sources": {
+    "base": {
       "toggleOpen": "Open sidebar",
       "toggleClose": "Close sidebar",
+      "close": "Close"
+    },
+    "sources": {
       "ariaLabel": "Conversation sources",
-      "close": "Close",
-      "search": "Search files",
-      "searchDisabled": "Search coming soon",
-      "downloadAll": "Download all",
-      "downloadAllDisabled": "Download coming soon",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",

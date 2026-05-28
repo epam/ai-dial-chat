@@ -8,7 +8,7 @@ import Logo from './Logo';
 
 const Header = () => {
   const { t } = useTranslation();
-  const { isOpen: isSourcesSidebarOpen, open: openSourcesSidebar } =
+  const { isOpen: isSourcesSidebarOpen, handleOpen: openSourcesSidebar } =
     useSourcesSidebar();
 
   return (

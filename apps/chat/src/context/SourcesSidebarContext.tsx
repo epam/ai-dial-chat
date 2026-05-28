@@ -13,9 +13,9 @@ export interface SourcesSidebarContextValue {
   /** Whether the sidebar is currently open. */
   isOpen: boolean;
   /** Open the sidebar. */
-  open: () => void;
+  handleOpen: () => void;
   /** Close the sidebar and clear the messages. */
-  close: () => void;
+  handleClose: () => void;
   /** Messages of the active conversation; used to derive uploaded and generated files. */
   messages: Message[];
   /** Set conversation messages for the files sections. Pass `[]` on page unmount to clear stale data. */
@@ -35,8 +35,8 @@ export const SourcesSidebarProvider = ({
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => {
+  const handleOpen = useCallback(() => setIsOpen(true), []);
+  const handleClose = useCallback(() => {
     setIsOpen(false);
     setMessages([]);
   }, []);
@@ -44,8 +44,8 @@ export const SourcesSidebarProvider = ({
   return (
     <SourcesSidebarContext.Provider
       value={useMemo(
-        () => ({ isOpen, close, open, messages, setMessages }),
-        [isOpen, close, open, messages, setMessages],
+        () => ({ isOpen, handleClose, handleOpen, messages, setMessages }),
+        [isOpen, handleClose, handleOpen, messages, setMessages],
       )}
     >
       {children}

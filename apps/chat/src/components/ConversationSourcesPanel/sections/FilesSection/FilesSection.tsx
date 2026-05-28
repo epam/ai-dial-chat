@@ -10,9 +10,9 @@ interface Props {
 
 const FilesSection: FC<Props> = ({ attachments, title, emptyMessage }) => (
   <section className="mb-6">
-    <h2 className="mb-3 text-base font-semibold">{title}</h2>
+    <h2 className="dial-body-semi-text mb-3">{title}</h2>
     {attachments.length === 0 ? (
-      <p className="text-sm text-secondary">{emptyMessage}</p>
+      <p className="dial-small-text text-secondary">{emptyMessage}</p>
     ) : (
       <div role="list" className="grid grid-cols-3 gap-3">
         {attachments.map((att) => (

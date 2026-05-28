@@ -24,7 +24,6 @@
         "./libs/conversation-messages/*"
       ],
       "@epam/ai-dial-chat-shared/*": ["./libs/chat-shared/*"],
-      "@epam/ai-dial-sidebar": ["./libs/sidebar/src/index.ts"],
       "@epam/ai-dial-sidebar/*": ["./libs/sidebar/*"]
     }
   }

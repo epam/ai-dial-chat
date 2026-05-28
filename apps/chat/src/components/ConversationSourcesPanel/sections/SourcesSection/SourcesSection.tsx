@@ -8,8 +8,8 @@ interface Props {
 // TODO: support links when assistant message references will be available
 const SourcesSection: FC<Props> = ({ title, emptyMessage }) => (
   <section className="mb-6">
-    <h2 className="mb-3 text-base font-semibold">{title}</h2>
-    <p className="text-sm text-secondary">{emptyMessage}</p>
+    <h2 className="dial-body-semi-text mb-3">{title}</h2>
+    <p className="dial-small-text text-secondary">{emptyMessage}</p>
   </section>
 );
 

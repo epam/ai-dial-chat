@@ -29,14 +29,14 @@ describe('SourcesSidebarContext', () => {
 
   it('open() opens when closed', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.open());
+    act(() => result.current.handleOpen());
     expect(result.current.isOpen).toBe(true);
   });
 
   it('close() closes when open', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.open());
-    act(() => result.current.close());
+    act(() => result.current.handleOpen());
+    act(() => result.current.handleClose());
     expect(result.current.isOpen).toBe(false);
   });
 
@@ -50,7 +50,7 @@ describe('SourcesSidebarContext', () => {
 
   it('setMessages([]) clears messages without changing isOpen', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.open());
+    act(() => result.current.handleOpen());
     act(() => result.current.setMessages(makeMessages()));
     act(() => result.current.setMessages([]));
     expect(result.current.messages).toEqual([]);
@@ -59,9 +59,9 @@ describe('SourcesSidebarContext', () => {
 
   it('close() also clears messages', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.open());
+    act(() => result.current.handleOpen());
     act(() => result.current.setMessages(makeMessages()));
-    act(() => result.current.close());
+    act(() => result.current.handleClose());
     expect(result.current.isOpen).toBe(false);
     expect(result.current.messages).toEqual([]);
   });

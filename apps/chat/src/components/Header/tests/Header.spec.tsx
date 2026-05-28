@@ -67,14 +67,14 @@ describe('Header', () => {
     renderHeader();
     // i18n returns key as-is in tests
     expect(
-      screen.getByRole('button', { name: 'sidebar.sources.toggleOpen' }),
+      screen.getByRole('button', { name: 'sidebar.base.toggleOpen' }),
     ).toBeTruthy();
   });
 
   it('toggle button starts with aria-pressed=false', () => {
     renderHeader();
     const btn = screen.getByRole('button', {
-      name: 'sidebar.sources.toggleOpen',
+      name: 'sidebar.base.toggleOpen',
     });
     expect(btn.getAttribute('aria-pressed')).toBe('false');
   });
@@ -83,13 +83,13 @@ describe('Header', () => {
     const user = userEvent.setup();
     renderHeader();
     const btn = screen.getByRole('button', {
-      name: 'sidebar.sources.toggleOpen',
+      name: 'sidebar.base.toggleOpen',
     });
     await user.click(btn);
     // When sidebar is open the file-icon toggle disappears from the header —
     // the X button lives inside the sidebar panel itself.
     expect(
-      screen.queryByRole('button', { name: 'sidebar.sources.toggleOpen' }),
+      screen.queryByRole('button', { name: 'sidebar.base.toggleOpen' }),
     ).toBeNull();
   });
 });

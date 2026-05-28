@@ -1,5 +1,5 @@
 import type { Message } from '@epam/ai-dial-chat-shared';
-import { SidebarPanel } from '@epam/ai-dial-sidebar';
+import { SidebarPanel, SidebarSide } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
 import { type FC } from 'react';
@@ -12,49 +12,31 @@ import SourcesSection from './sections/SourcesSection/SourcesSection.js';
 
 interface Props {
   messages: Message[];
-  onSearch?: () => void;
-  onDownloadAll?: () => void;
 }
 
-const ConversationSourcesPanel: FC<Props> = ({
-  messages,
-  onSearch,
-  onDownloadAll,
-}) => {
+const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
   const { t } = useTranslation();
-  const { close } = useSourcesSidebar();
+  const { handleClose } = useSourcesSidebar();
   const { uploaded, generated } = useConversationSources(messages);
 
   return (
     <SidebarPanel
-      side="right"
+      side={SidebarSide.Right}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(SidebarI18nKeys.Close)}
-      onClose={close}
+      onClose={handleClose}
       leftActions={
         <DialGhostIconButton
           icon={<IconSearch size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label={t(SidebarI18nKeys.Search)}
-          disabled={!onSearch}
-          tooltipProps={{
-            tooltip: onSearch
-              ? t(SidebarI18nKeys.Search)
-              : t(SidebarI18nKeys.SearchDisabled),
-          }}
-          onClick={onSearch}
+          aria-label="Search"
+          disabled
         />
       }
       rightActions={
         <DialGhostIconButton
           icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label={t(SidebarI18nKeys.DownloadAll)}
-          disabled={!onDownloadAll}
-          tooltipProps={{
-            tooltip: onDownloadAll
-              ? t(SidebarI18nKeys.DownloadAll)
-              : t(SidebarI18nKeys.DownloadAllDisabled),
-          }}
-          onClick={onDownloadAll}
+          aria-label="Download all"
+          disabled
         />
       }
     >

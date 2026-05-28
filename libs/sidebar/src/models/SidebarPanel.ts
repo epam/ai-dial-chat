@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
 
 /** Which edge of the viewport the panel anchors to. */
-export type SidebarSide = 'left' | 'right';
+export enum SidebarSide {
+  /** Panel anchors to the left edge. */
+  Left = 'left',
+  /** Panel anchors to the right edge. */
+  Right = 'right',
+}
 
 /** CSS custom-property overrides for the `SidebarPanel` component. */
 export interface SidebarPanelColors {
