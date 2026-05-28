@@ -10,18 +10,15 @@ on:
         default: false
         description: Promote release to stable (for release-* branches only)
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   id-token: write
   contents: write
   packages: write
   security-events: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  ORT_CONFIG_VCS_REVISION: 5650fed55a20397b9abb9017a0c6bb674dc8481d
 
 jobs:
   release:
