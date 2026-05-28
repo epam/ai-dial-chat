@@ -50,12 +50,16 @@ result.
 
 Determine which OpenSpec changes are in scope for this PR:
 
-```bash
-git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" \
-  | grep '^openspec/changes/' \
-  | awk -F/ '{print $3}' \
-  | sort -u
-```
+1. Use the literal `git diff --name-only` command provided by the
+   agent-wrapper prompt (it substitutes the actual base ref — never
+   re-introduce `${GITHUB_BASE_REF}`; the Bash tool denies commands
+   containing shell variable expansion).
+2. Parse the file list **in-Claude**: pick entries whose path starts
+   with `openspec/changes/`, extract the change-name segment (the path
+   component immediately after `openspec/changes/`), deduplicate.
+3. Do NOT pipe through bash `grep`/`awk`/`sort` — those are not in
+   `allowed_tools`. Use the Grep tool (or just iterate the list in
+   reasoning) instead.
 
 For each touched change:
 

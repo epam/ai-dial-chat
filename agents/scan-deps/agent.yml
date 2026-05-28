@@ -9,7 +9,10 @@ tools:
   extra:
     - name: trivy
       version: "0.69.0"
-      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v{{version}}"
+      # `sudo sh -s --` runs the install script's final binary move with
+      # root. /usr/local/bin isn't writable by the runner user on
+      # GitHub-hosted ubuntu-latest; passwordless sudo is available.
+      install: "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v{{version}}"
 model: claude-sonnet-4-6
 phase: pilot
 cost_class: medium
