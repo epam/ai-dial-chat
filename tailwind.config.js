@@ -120,11 +120,8 @@ module.exports = {
 
     extend: {
       screens: {
-        mobile: { min: '360px', max: '767px' },
-        small_tablet: { min: '768px', max: '1023px' },
-        large_tablet: { min: '1024px', max: '1279px' },
-        desktop: { min: '1280px', max: '2559px' },
-        large_desktop: { min: '2560px' },
+        mobile: { max: '768px' },
+        desktop: { min: '769px' },
       },
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
