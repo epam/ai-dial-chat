@@ -1,17 +1,18 @@
 import {
   Conversation,
   ConversationMetadata,
-  MessageAttachment,
-  MessageRole,
   Message,
+  MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
+import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import { getConversationName } from './conversation.utils';
+import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 
 @Injectable()
 export class ConversationService extends AppService {
@@ -26,7 +27,7 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
     deploymentId: string,
-    attachments?: MessageAttachment[],
+    customContent?: MessageCustomContentDto,
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
@@ -34,12 +35,12 @@ export class ConversationService extends AppService {
     const conversationPath = `${uuid}__${name}`;
     const folderId = `${bucket}`; // TODO: check
 
-    const userMessage: Message = {
+    const userMessage: MessageDto = {
       id: crypto.randomUUID(),
-      role: MessageRole.User,
+      role: ChatMessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
-      ...(attachments?.length ? { custom_content: { attachments } } : {}),
+      custom_content: customContent,
     };
 
     // TODO: add temperature and other conversation settings
@@ -179,7 +180,7 @@ export class ConversationService extends AppService {
     bucket: string,
     message: string,
     model: string,
-    attachments?: MessageAttachment[],
+    customContent?: MessageCustomContentDto,
   ): Promise<ReadableStream<Uint8Array>> {
     const conversation = await this.getConversation(
       conversationPath,
@@ -196,7 +197,9 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
-      ...(attachments?.length ? { custom_content: { attachments } } : {}),
+      ...(customContent?.attachments && {
+        custom_content: { attachments: customContent.attachments },
+      }),
     };
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
@@ -206,6 +209,10 @@ export class ConversationService extends AppService {
       lastMessage?.role === MessageRole.User
         ? conversation.messages
         : [...conversation.messages, userMessage];
+
+    // configuration_value is sent as top-level custom_fields.configuration,
+    // not inside the messages array.
+    const configuration = customContent?.configuration_value;
 
     const messages = messagesForCompletion.map((m) => {
       const validAttachments = (m.custom_content?.attachments ?? []).filter(
@@ -226,7 +233,11 @@ export class ConversationService extends AppService {
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
-        body: { messages, stream: true },
+        body: {
+          messages,
+          stream: true,
+          ...(configuration ? { custom_fields: { configuration } } : {}),
+        },
         headers: {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',

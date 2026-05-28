@@ -11,6 +11,8 @@ import {
   DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
+  DialSearch,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconApps,
@@ -70,6 +72,8 @@ export const Input: FC<InputProps> = ({
   addMenuLabel = 'Add',
   removeLabel,
   retryLabel,
+  sendLabel,
+  stopLabel,
   colors,
   typography,
   className,
@@ -98,6 +102,7 @@ export const Input: FC<InputProps> = ({
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
 
   useEffect(() => {
     if (messageProp) {
@@ -202,10 +207,18 @@ export const Input: FC<InputProps> = ({
       }
       return [];
     }
-    return deployments.map((item) => {
+    const query = modelSearchQuery.trim().toLowerCase();
+    const filtered = query
+      ? deployments.filter((item) =>
+          (item.displayName ?? item.id).toLowerCase().includes(query),
+        )
+      : deployments;
+
+    return filtered.map((item) => {
       const itemIconUrl = item.iconUrl
         ? resolveDeploymentIconUrl(item.iconUrl)
         : undefined;
+
       const icon = itemIconUrl ? (
         <DeploymentIcon
           src={itemIconUrl}
@@ -230,6 +243,22 @@ export const Input: FC<InputProps> = ({
         onClick: () => onDeploymentChange?.(item.id),
       };
     });
+  };
+
+  const selectorMenuHeader =
+    deployments && deployments.length > 0 ? (
+      <div className="bg-layer-0 sticky top-0 z-10 px-2 pb-1 pt-2">
+        <DialSearch
+          value={modelSearchQuery}
+          placeholder="Search"
+          size={ElementSize.Small}
+          onChange={setModelSearchQuery}
+        />
+      </div>
+    ) : undefined;
+
+  const handleModelSelectorOpenChange = (open: boolean) => {
+    if (!open) setModelSearchQuery('');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,17 +381,28 @@ export const Input: FC<InputProps> = ({
             <DialDropdownIcon
               icon={selectorIcon}
               ariaLabel={selectorAriaLabel}
-              menu={{ items: buildSelectorMenuItems() }}
+              menu={{
+                items: buildSelectorMenuItems(),
+                header: selectorMenuHeader,
+              }}
+              placement="bottom-end"
+              matchReferenceWidth={false}
+              listClassName="!w-[240px] !max-h-80"
+              onOpenChange={handleModelSelectorOpenChange}
               buttonClassName={
                 isStreaming ? 'pointer-events-none opacity-50' : undefined
               }
             />
           )}
           {isStreaming ? (
-            <StopButton onStop={onStop} />
+            <StopButton onStop={onStop} ariaLabel={stopLabel} />
           ) : (
             canSend && (
-              <SendButton onSend={handleSend} disabled={!hasModelSelected} />
+              <SendButton
+                onSend={handleSend}
+                disabled={!hasModelSelected}
+                ariaLabel={sendLabel}
+              />
             )
           )}
         </div>

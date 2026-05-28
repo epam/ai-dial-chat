@@ -1,6 +1,5 @@
-import { StreamChunk } from '@epam/ai-dial-chat-shared';
-import type { AttachmentDto } from '@epam/chat-api-client';
-import { ApiEndpoints, getCsrfToken } from './base';
+import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
+import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -14,7 +13,7 @@ export const streamCompletion = (
   message: string,
   model: string,
   options: StreamCompletionOptions,
-  attachments?: AttachmentDto[],
+  customContent?: MessageCustomContent,
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -35,7 +34,7 @@ export const streamCompletion = (
           path,
           message,
           model,
-          ...(attachments?.length ? { attachments } : {}),
+          custom_content: customContent || {},
         }),
       });
     } catch (err) {
@@ -43,6 +42,9 @@ export const streamCompletion = (
       onError(err instanceof Error ? err : new Error(String(err)));
       return;
     }
+
+    const rotatedCsrf = response.headers.get('x-csrf-token');
+    if (rotatedCsrf) setCsrfToken(rotatedCsrf);
 
     if (!response.ok) {
       onError(

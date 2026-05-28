@@ -79,4 +79,8 @@ export interface ConversationInputProps {
    * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
    */
   resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
+  /** Accessible label for the send button. */
+  sendLabel?: string;
+  /** Accessible label for the stop button. */
+  stopLabel?: string;
 }

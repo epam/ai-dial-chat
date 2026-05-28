@@ -149,6 +149,9 @@ rules:
     - Use semantic HTML elements (button, nav, main, section) before div/span
     - Apply ARIA attributes for dynamic content — role="log" + aria-live="polite" for chat
       messages, role="alert" for errors
+    - All aria-label values must go through i18n — in apps use t() with a key from
+      translation-keys.ts; in libs expose an ariaLabel/ariaLabels prop with an English
+      default string (never hardcode English in apps, never use useTranslation in libs)
 
   specs:
     - Specify which context or hook owns the state being introduced

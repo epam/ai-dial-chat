@@ -36,6 +36,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
   alwaysVisible,
   className,
   tooltips,
+  ariaLabels,
 }) => {
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
 
@@ -64,14 +65,14 @@ export const MessageActions: FC<MessageActionsProps> = ({
           <DialGhostIconButton
             icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
-            aria-label="Edit message"
+            aria-label={ariaLabels?.editMessage ?? 'Edit message'}
             tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
             onClick={onEdit}
           />
           <DialGhostIconButton
             icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
-            aria-label="Delete message"
+            aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
             tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
             onClick={onDelete}
           />
@@ -81,7 +82,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           <DialGhostIconButton
             icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
-            aria-label="Regenerate response"
+            aria-label={ariaLabels?.regenerateResponse ?? 'Regenerate response'}
             tooltipProps={{ tooltip: tooltips?.regenerate ?? 'Regenerate' }}
             onClick={onRegenerate}
           />
@@ -94,7 +95,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               )
             }
             size={ElementSize.Small}
-            aria-label="Copy response"
+            aria-label={ariaLabels?.copyResponse ?? 'Copy response'}
             tooltipProps={{
               tooltip:
                 copied === 'copy'
@@ -112,7 +113,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               )
             }
             size={ElementSize.Small}
-            aria-label="Copy as markdown"
+            aria-label={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
             tooltipProps={{
               tooltip:
                 copied === 'markdown'
@@ -124,7 +125,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           <DialGhostIconButton
             icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
-            aria-label="Like response"
+            aria-label={ariaLabels?.likeResponse ?? 'Like response'}
             className={
               activeRating === MessageRating.Like
                 ? 'text-accent-primary'
@@ -136,7 +137,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           <DialGhostIconButton
             icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
             size={ElementSize.Small}
-            aria-label="Dislike response"
+            aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
             className={
               activeRating === MessageRating.Dislike
                 ? 'text-accent-primary'
