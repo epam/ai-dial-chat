@@ -33,17 +33,23 @@ That happens downstream.
 
 ### 1. Run Trivy
 
-Filesystem scan from repo root, JSON output, medium severity and above:
+Filesystem scan from repo root, JSON output, medium severity and above.
+**Use Trivy's `--output` flag, not shell redirection (`>`)** — Claude
+Code's Bash tool rejects shell-redirection operators and would deny the
+command:
 
 ```bash
-trivy fs --format json --severity HIGH,CRITICAL,MEDIUM --quiet . > /tmp/trivy.json
+trivy fs --format json --severity HIGH,CRITICAL,MEDIUM --quiet --output /tmp/trivy.json .
 ```
+
+Same effect: writes report to `/tmp/trivy.json`. No `>`, no `|`, no
+shell-variable expansion — exactly what `Bash(trivy:*)` allows.
 
 Notes:
 
 - `--quiet` suppresses interactive UI noise.
-- If the runner has no `/tmp/trivy.json` after the command, treat it as
-  a scanner failure (see *Heuristics*).
+- If `/tmp/trivy.json` is missing or zero-length after the command,
+  treat it as a scanner failure (see *Heuristics*).
 
 ### 2. Parse the report
 
