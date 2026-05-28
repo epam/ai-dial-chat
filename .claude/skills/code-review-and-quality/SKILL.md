@@ -87,6 +87,15 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - UI: avoidable re-renders, huge props, sync work on hot paths
 - Only flag with **measurable or clear scaling** reasoning when possible
 
+### 6. Responsive parity
+
+- UI changes use the project's named breakpoint prefixes (`mobile:` / `small_tablet:` / `large_tablet:` / `desktop:` / `large_desktop:`), not `sm:`/`md:`/`lg:` defaults or arbitrary `min-[…]:` queries
+- Authoring style is mobile-first — base classes describe the smallest supported viewport, larger bands are added via the named prefixes
+- Components that branch in JS use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts`, not direct `window.innerWidth` reads
+- Touch targets meet ~44×44 CSS px on mobile; no `:hover`-only affordances; no horizontal scroll at 360px
+- Verification story names which breakpoints were exercised — "desktop verified only" is a request-changes signal for any user-facing change
+- See `.claude/skills/responsive-design/SKILL.md` for the full rubric
+
 ## Repo-specific routing
 
 Use the repository skills and rules as the source of truth before applying generic advice:
@@ -99,6 +108,7 @@ Use the repository skills and rules as the source of truth before applying gener
 | `apps/chat-api/**`                     | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`           |
 | `libs/*` React components              | `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules from `AGENTS.md` |
 | UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives  |
+| Responsive / mobile parity             | `.claude/skills/responsive-design/SKILL.md`                                       |
 | CI status or self-healing fixes        | `.agents/skills/monitor-ci/SKILL.md`; do not replace it with ad hoc polling       |
 
 Do not import generic standards that conflict with these repo rules. For example, do not require a new REST response envelope, direct frontend REST helpers, raw HTML controls, or a generic project structure when local conventions say otherwise.
@@ -113,6 +123,7 @@ Use these as cross-cutting checks after applying repo-specific rules:
 - Avoid magic numbers; name domain thresholds, debounce delays, limits, and TTLs.
 - Avoid mutation of shared state. Local mutation is acceptable only when contained, intentional, and clearer or measurably faster.
 - Comments should explain why a choice exists, not restate what the code does.
+- React components should expose event callback props as `onEvent` and name internal handlers `handleEvent`.
 - No `console.log` in application code; use the app's logging pattern.
 - No TODO/FIXME in merge-ready code unless linked to an accepted follow-up and non-blocking by design.
 - Tests should assert observable behavior and meaningful edge/error paths, not implementation details.
@@ -228,6 +239,13 @@ Use as a literal template when writing a review:
 ### Performance
 
 - [ ] No obvious N+1 / unbounded work / UI hot-path issues
+
+### Responsive parity
+
+- [ ] Uses project's named breakpoint prefixes; mobile-first authoring
+- [ ] JS branches go through `useBreakpoint` / `useIsMobile`, not `window.innerWidth`
+- [ ] Touch targets, hover-only affordances, and 360px overflow checked
+- [ ] Verification names the breakpoints exercised
 
 ### Verification
 

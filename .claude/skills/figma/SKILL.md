@@ -28,6 +28,8 @@ URL parsing rules:
 
 If the design context includes **Code Connect** snippets, prefer those — they map directly to codebase components.
 
+**Responsive variants.** Before fetching, scan the file for sibling frames at mobile vs. desktop sizes (typically `375`/`390` and `1280`/`1440`/`1920`). When both exist, fetch both node IDs and reconcile the divergences (layout swaps, hidden sections, drawer vs. sidebar) **before** writing code. When only desktop is provided, ask the user before deriving a mobile version rather than guessing. See `.claude/skills/responsive-design/SKILL.md` for the breakpoint mapping and decision rubric.
+
 ### Step 2 — Map to project components
 
 Before writing any new code, check whether ui-kit or existing project components cover the need:
@@ -52,6 +54,7 @@ Grep("ComponentName", path="libs/")
 - Use Tailwind for all styling — no inline styles, no CSS modules unless they already exist in the target file
 - Do not copy raw hex colors from Figma; map to Tailwind tokens or CSS variables already in the project
 - Match the naming conventions of surrounding files (PascalCase components, kebab-case files)
+- Name React event callback props `onEvent` and component-local handlers `handleEvent`
 - Keep components small and focused — split at logical boundaries, not at line count
 
 ### Step 4 — Verify
@@ -60,7 +63,7 @@ After implementation:
 
 1. Run `npm exec nx lint <project>` — fix any lint errors before reporting done
 2. If the component has logic, add a unit test in the same lib
-3. If the dev server is running, open the component in the browser and compare with the Figma screenshot
+3. If the dev server is running, open the component in the browser and compare with the Figma screenshot at each breakpoint the design covers (360 / 768 / 1024 / 1280 / 2560 as applicable)
 
 ## Constraints
 

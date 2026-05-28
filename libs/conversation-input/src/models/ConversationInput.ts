@@ -63,7 +63,7 @@ export interface ConversationInputProps {
   dropLabel?: string;
   /** Tailwind (or custom) class applied to the drag-over overlay container. Defaults to `'rounded'`. */
   dropOverlayClassName?: string;
-  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
   deployments?: DeploymentItemDto[];
@@ -73,6 +73,12 @@ export interface ConversationInputProps {
   onDeploymentChange?: (id: string) => void;
   /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
   modelSelectorLabels?: ModelSelectorLabels;
+  /**
+   * Converts a raw `DeploymentItemDto.iconUrl` value to a URL usable in an `<img src>`.
+   * When omitted, the default resolver handles absolute URLs, root-relative paths, and `files/` IDs.
+   * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
+   */
+  resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Accessible label for the stop button. */

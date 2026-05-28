@@ -38,13 +38,16 @@ function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
 function makeContext(opts: { cookieValue?: string; isPublic?: boolean }): {
   context: ExecutionContext;
   req: Record<string, unknown>;
-  res: { cookie: ReturnType<typeof vi.fn> };
+  res: {
+    cookie: ReturnType<typeof vi.fn>;
+    setHeader: ReturnType<typeof vi.fn>;
+  };
 } {
   const req: Record<string, unknown> = {
     cookies: opts.cookieValue ? { [COOKIE_NAME]: opts.cookieValue } : {},
     user: undefined,
   };
-  const res = { cookie: vi.fn() };
+  const res = { cookie: vi.fn(), setHeader: vi.fn() };
   const context = {
     switchToHttp: () => ({
       getRequest: () => req,

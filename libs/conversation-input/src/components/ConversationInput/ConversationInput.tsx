@@ -23,6 +23,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
+  resolveDeploymentIconUrl,
   sendLabel,
   stopLabel,
 }) => {
@@ -94,6 +95,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           selectedDeploymentId={selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           modelSelectorLabels={modelSelectorLabels}
+          resolveDeploymentIconUrl={resolveDeploymentIconUrl}
           sendLabel={sendLabel}
           stopLabel={stopLabel}
         />

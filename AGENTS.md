@@ -46,8 +46,10 @@ Use these local skills directly:
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
+- `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
 
 Default behavior:
 
 - Implementation work should follow incremental slices with per-slice verification.
 - Before merge (or on explicit review requests), run the five-axis quality review.
+- UI work is mobile-first by default. The project's named Tailwind breakpoints (`mobile`, `small_tablet`, `large_tablet`, `desktop`, `large_desktop`) live in `tailwind.config.js`; do not introduce `sm:`/`md:`/`lg:`/`xl:` defaults. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` rather than reading `window.innerWidth`.
