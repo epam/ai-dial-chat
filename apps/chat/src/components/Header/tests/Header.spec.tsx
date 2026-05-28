@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChatI18nKeys } from '../../../constants/translation-keys';
 import * as ThemeContext from '../../../context/ThemeContext';
 import Header from '../Header';
 
@@ -28,7 +29,7 @@ describe('Header', () => {
 
   it('renders Logo component inside Header', () => {
     render(<Header />);
-    const logo = screen.getByLabelText('logo');
+    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
     expect(logo).toBeTruthy();
   });
 
