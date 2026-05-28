@@ -42,7 +42,7 @@ export const DialMarkdownEditor: FC<DialMarkdownEditorProps> = ({
     <div
       data-color-mode={theme}
       className={classNames(
-        '[&_.w-md-editor-toolbar]:[--color-fg-default:var(--text-secondary)]',
+        '[&_.w-md-editor-toolbar]:[--color-fg-default:var(--text-secondary)] [&_.wmde-markdown]:text-sm',
         '[&_.wmde-markdown]:!bg-layer-2 [&_.wmde-markdown]:!text-primary',
         className,
       )}
