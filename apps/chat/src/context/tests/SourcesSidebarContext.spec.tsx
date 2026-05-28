@@ -27,16 +27,16 @@ describe('SourcesSidebarContext', () => {
     expect(result.current.messages).toEqual([]);
   });
 
-  it('toggle opens when closed', () => {
+  it('open() opens when closed', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.toggle());
+    act(() => result.current.open());
     expect(result.current.isOpen).toBe(true);
   });
 
-  it('toggle closes when open', () => {
+  it('close() closes when open', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.toggle());
-    act(() => result.current.toggle());
+    act(() => result.current.open());
+    act(() => result.current.close());
     expect(result.current.isOpen).toBe(false);
   });
 
@@ -50,11 +50,20 @@ describe('SourcesSidebarContext', () => {
 
   it('setMessages([]) clears messages without changing isOpen', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
-    act(() => result.current.toggle());
+    act(() => result.current.open());
     act(() => result.current.setMessages(makeMessages()));
     act(() => result.current.setMessages([]));
     expect(result.current.messages).toEqual([]);
     expect(result.current.isOpen).toBe(true);
+  });
+
+  it('close() also clears messages', () => {
+    const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
+    act(() => result.current.open());
+    act(() => result.current.setMessages(makeMessages()));
+    act(() => result.current.close());
+    expect(result.current.isOpen).toBe(false);
+    expect(result.current.messages).toEqual([]);
   });
 
   it('throws when used outside provider', () => {
