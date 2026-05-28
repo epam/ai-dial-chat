@@ -11,6 +11,10 @@
     "ai-dial-ui-kit": {
       "command": "node",
       "args": ["./node_modules/@epam/ai-dial-ui-kit/dist/mcp-server.cjs"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--browser", "chrome"]
     }
   }
 }

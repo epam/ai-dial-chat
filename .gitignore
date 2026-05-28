@@ -45,6 +45,9 @@ Thumbs.db
 
 .claude/worktrees
 .claude/settings.local.json
+.playwright-mcp
+responsive-screenshots
+check-responsive.js
 .nx/polygraph
 vite.config.*.timestamp*
 vitest.config.*.timestamp*

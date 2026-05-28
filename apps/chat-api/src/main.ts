@@ -9,7 +9,9 @@ import {
   openApiDocumentOptions,
 } from './openapi/openapi.config';
 
-declare const module: any;
+declare const module: {
+  hot?: { accept: () => void; dispose: (cb: () => void) => void };
+};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

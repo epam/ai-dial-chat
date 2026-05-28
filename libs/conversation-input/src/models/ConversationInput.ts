@@ -63,7 +63,7 @@ export interface ConversationInputProps {
   dropLabel?: string;
   /** Tailwind (or custom) class applied to the drag-over overlay container. Defaults to `'rounded'`. */
   dropOverlayClassName?: string;
-  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `2000`. Pass `Infinity` to disable. */
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
   deployments?: DeploymentItemDto[];
