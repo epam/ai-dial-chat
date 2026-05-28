@@ -42,7 +42,16 @@ Rules:
   `src/components/RequireAuth/`; the widget implementation still belongs to the auth
   concern.
 
-## 2. Routing and API Boundaries
+## 2. Component and Event Naming
+
+- Event callback props exposed by React components use `onEvent` names, e.g.
+  `onSubmit`, `onClose`, `onKeyDown`.
+- Handler functions declared inside a component use `handleEvent` names, e.g.
+  `handleSubmit`, `handleClose`, `handleKeyDown`.
+- When adapting a prop callback inside a component, keep the external prop as
+  `onEvent` and call it from the local `handleEvent` function.
+
+## 3. Routing and API Boundaries
 
 - `main.tsx` owns top-level routing and providers.
 - Auth routes should import pages from `src/pages/auth/`.
@@ -56,7 +65,7 @@ Rules:
   work where errors are handled. Do not add it as a routine prefix for local
   async helpers in `useEffect`.
 
-## 3. Testing
+## 4. Testing
 
 - Use Testing Library role/label/text queries for user-observable behavior.
 - Run tasks through Nx, e.g. `npm exec nx run @epam/chat:test-ci--<path>` or

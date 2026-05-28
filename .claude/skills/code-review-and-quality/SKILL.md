@@ -113,6 +113,7 @@ Use these as cross-cutting checks after applying repo-specific rules:
 - Avoid magic numbers; name domain thresholds, debounce delays, limits, and TTLs.
 - Avoid mutation of shared state. Local mutation is acceptable only when contained, intentional, and clearer or measurably faster.
 - Comments should explain why a choice exists, not restate what the code does.
+- React components should expose event callback props as `onEvent` and name internal handlers `handleEvent`.
 - No `console.log` in application code; use the app's logging pattern.
 - No TODO/FIXME in merge-ready code unless linked to an accepted follow-up and non-blocking by design.
 - Tests should assert observable behavior and meaningful edge/error paths, not implementation details.

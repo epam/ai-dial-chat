@@ -52,6 +52,7 @@ Grep("ComponentName", path="libs/")
 - Use Tailwind for all styling — no inline styles, no CSS modules unless they already exist in the target file
 - Do not copy raw hex colors from Figma; map to Tailwind tokens or CSS variables already in the project
 - Match the naming conventions of surrounding files (PascalCase components, kebab-case files)
+- Name React event callback props `onEvent` and component-local handlers `handleEvent`
 - Keep components small and focused — split at logical boundaries, not at line count
 
 ### Step 4 — Verify
