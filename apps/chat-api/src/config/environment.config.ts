@@ -24,7 +24,7 @@ export class EnvironmentVariables {
   CORS_ORIGIN?: string = 'http://localhost:4207';
 
   @IsNotEmpty()
-  @IsUrl({ require_tld: false })
+  @IsString()
   DIAL_CORE_URL!: string;
 
   @IsOptional()
