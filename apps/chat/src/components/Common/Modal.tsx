@@ -107,7 +107,7 @@ function ModalView({
           >
             <Tag
               className={classNames(
-                'relative max-h-full rounded bg-layer-3 text-left',
+                'relative max-h-full rounded bg-layer-3 text-start',
                 containerClassName,
               )}
               role="dialog"
@@ -120,14 +120,14 @@ function ModalView({
               {!hideClose && (
                 <CloseButtonSmall
                   onClick={handleClose}
-                  className="absolute right-2 top-2 z-50"
+                  className="absolute end-2 top-2 z-50"
                   aria-label="Close dialog"
                 />
               )}
               {heading && typeof heading === 'string' ? (
                 <h4
                   className={classNames(
-                    'mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold',
+                    'mb-2 max-h-[50px] whitespace-pre-wrap text-start text-base font-semibold',
                     headingClassName,
                   )}
                   data-qa="modal-entity-name"
