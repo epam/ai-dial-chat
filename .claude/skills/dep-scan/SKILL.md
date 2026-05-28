@@ -53,6 +53,16 @@ Notes:
 
 ### 2. Parse the report
 
+**Use the `Read` tool** to load `/tmp/trivy.json` into your reasoning
+context. **Do NOT** attempt to use `cat`, `head`, `tail`, `jq`, `grep`,
+`awk`, or any other shell command to inspect the file — those aren't
+in the agent's `allowed_tools` (only `Bash(trivy:*)` is) and the Bash
+tool will deny them, burning turns on retries. The Read tool is the
+intended path for inspecting on-disk JSON.
+
+The file is on the order of tens-to-hundreds of KB; one Read call
+loads it cleanly.
+
 Trivy's structure:
 
 ```
