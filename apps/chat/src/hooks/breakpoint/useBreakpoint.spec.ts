@@ -69,55 +69,16 @@ describe('useBreakpoint', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns mobile when no min-width query matches', () => {
+  it('returns mobile when the 1024 query does not match', () => {
     const { result } = renderHook(() => useBreakpoint());
     expect(result.current).toBe('mobile');
   });
 
-  it('returns small_tablet when only the 768 query matches', () => {
-    // Prime the lists by calling matchMedia first so initial state sees them.
-    mock.matchMedia('(min-width: 768px)');
+  it('returns desktop when the 1024 query matches', () => {
     mock.matchMedia('(min-width: 1024px)');
-    mock.matchMedia('(min-width: 1280px)');
-    mock.matchMedia('(min-width: 2560px)');
-    mock.setWidth({
-      '(min-width: 768px)': true,
-      '(min-width: 1024px)': false,
-      '(min-width: 1280px)': false,
-      '(min-width: 2560px)': false,
-    });
-    const { result } = renderHook(() => useBreakpoint());
-    expect(result.current).toBe('small_tablet');
-  });
-
-  it('returns desktop when 1280 matches but 2560 does not', () => {
-    mock.matchMedia('(min-width: 768px)');
-    mock.matchMedia('(min-width: 1024px)');
-    mock.matchMedia('(min-width: 1280px)');
-    mock.matchMedia('(min-width: 2560px)');
-    mock.setWidth({
-      '(min-width: 768px)': true,
-      '(min-width: 1024px)': true,
-      '(min-width: 1280px)': true,
-      '(min-width: 2560px)': false,
-    });
+    mock.setWidth({ '(min-width: 1024px)': true });
     const { result } = renderHook(() => useBreakpoint());
     expect(result.current).toBe('desktop');
-  });
-
-  it('returns large_desktop when 2560 matches', () => {
-    mock.matchMedia('(min-width: 768px)');
-    mock.matchMedia('(min-width: 1024px)');
-    mock.matchMedia('(min-width: 1280px)');
-    mock.matchMedia('(min-width: 2560px)');
-    mock.setWidth({
-      '(min-width: 768px)': true,
-      '(min-width: 1024px)': true,
-      '(min-width: 1280px)': true,
-      '(min-width: 2560px)': true,
-    });
-    const { result } = renderHook(() => useBreakpoint());
-    expect(result.current).toBe('large_desktop');
   });
 
   it('updates when a media query changes', () => {
@@ -125,12 +86,7 @@ describe('useBreakpoint', () => {
     expect(result.current).toBe('mobile');
 
     act(() => {
-      mock.setWidth({
-        '(min-width: 768px)': true,
-        '(min-width: 1024px)': true,
-        '(min-width: 1280px)': true,
-        '(min-width: 2560px)': false,
-      });
+      mock.setWidth({ '(min-width: 1024px)': true });
     });
 
     expect(result.current).toBe('desktop');
@@ -146,9 +102,7 @@ describe('useBreakpoint', () => {
     unmount();
 
     act(() => {
-      mock.setWidth({
-        '(min-width: 768px)': true,
-      });
+      mock.setWidth({ '(min-width: 1024px)': true });
     });
     // No assertion error means the unmounted hook did not call setState.
     expect(true).toBe(true);

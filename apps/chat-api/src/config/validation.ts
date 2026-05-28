@@ -1,6 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { EnvironmentVariables } from './environment.config';
+
+const logger = new Logger('Config');
 
 export function validate(config: Record<string, unknown>) {
   const validatedConfig = plainToInstance(EnvironmentVariables, config, {
@@ -19,9 +22,8 @@ export function validate(config: Record<string, unknown>) {
     );
   }
 
-  console.debug(
-    '[Config] Environment validated. DIAL_CORE_URL=%s',
-    validatedConfig.DIAL_CORE_URL,
+  logger.log(
+    `Environment validated. DIAL_CORE_URL=${validatedConfig.DIAL_CORE_URL}`,
   );
 
   return validatedConfig;

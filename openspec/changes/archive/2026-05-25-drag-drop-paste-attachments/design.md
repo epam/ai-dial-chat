@@ -40,9 +40,9 @@ For pasted text: `new File([text], 'Pasted text', { type: 'text/plain' })`.
 
 Both produce a proper `File` instance that satisfies the existing `Attachment.file: File` field. This avoids making `file` optional in `libs/chat-shared`, which would ripple through the attachment-mapper and serialisation utilities.
 
-### 4. `pasteTextThreshold` prop defaults to 2000 characters
+### 4. `pasteTextThreshold` prop defaults to 4000 characters
 
-2000 characters (~400 words) is the crossover point where inline text starts to dominate the textarea rather than being a quick message. Below the threshold, paste behaves normally. The consuming app can tune or disable the feature by passing `Infinity`.
+4000 characters is the crossover point where inline text starts to dominate the textarea rather than being a quick message. Below the threshold, paste behaves normally. The consuming app can tune or disable the feature by passing `Infinity`.
 
 ### 5. Hook decomposition inside `libs/conversation-input`
 

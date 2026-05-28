@@ -6,7 +6,7 @@ Users have no way to attach files or images to a message except through the `+` 
 
 - The `ConversationInput` wrapper becomes a drag-and-drop target: dragging one or more files over it highlights the zone; dropping adds them as `Attachment`s via the same pipeline used by the file picker.
 - The `Input` component listens for `paste` events: pasting an image (e.g. a screenshot) creates an `AttachmentType.Image` attachment; pasting text longer than a configurable threshold creates an `AttachmentType.Pasted` attachment (rendered as a card) instead of inserting it into the textarea.
-- A new `pasteTextThreshold` prop (default `2000` characters) on `ConversationInput` and `Input` controls when text paste is treated as an attachment vs. inline.
+- A new `pasteTextThreshold` prop (default `4000` characters) on `ConversationInput` and `Input` controls when text paste is treated as an attachment vs. inline.
 - `AttachmentCard` gains a `pasted`-type rendering variant: a text-document icon, a "Pasted text" label, and no format extension badge.
 
 ## Capabilities

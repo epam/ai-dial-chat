@@ -1,27 +1,17 @@
 import { useEffect, useState } from 'react';
 
-export type Breakpoint =
-  | 'mobile'
-  | 'small_tablet'
-  | 'large_tablet'
-  | 'desktop'
-  | 'large_desktop';
+export type Breakpoint = 'mobile' | 'desktop';
 
 /**
  * Min-width queries ordered from largest to smallest. The first query that
- * matches wins; if none match, the viewport is in the `mobile` band (or below).
+ * matches wins; if none match, the viewport is in the `mobile` band.
  * Keep these aligned with the `screens` map in the root `tailwind.config.js`
  * so JS-driven branches and Tailwind utility prefixes resolve to the same band.
  */
 const BREAKPOINT_QUERIES: ReadonlyArray<{
   query: string;
   breakpoint: Breakpoint;
-}> = [
-  { query: '(min-width: 2560px)', breakpoint: 'large_desktop' },
-  { query: '(min-width: 1280px)', breakpoint: 'desktop' },
-  { query: '(min-width: 1024px)', breakpoint: 'large_tablet' },
-  { query: '(min-width: 768px)', breakpoint: 'small_tablet' },
-];
+}> = [{ query: '(min-width: 1024px)', breakpoint: 'desktop' }];
 
 const resolveBreakpoint = (): Breakpoint => {
   if (
@@ -44,8 +34,7 @@ const resolveBreakpoint = (): Breakpoint => {
  * Returns the current named breakpoint, kept in sync with viewport changes.
  *
  * Use only when a component must branch in JS — most responsive layout should
- * use Tailwind's `mobile:` / `small_tablet:` / `large_tablet:` / `desktop:` /
- * `large_desktop:` utility prefixes instead. See
+ * use Tailwind's `mobile:` / `desktop:` utility prefixes instead. See
  * `.claude/skills/responsive-design/SKILL.md` for the decision rubric.
  *
  * @example

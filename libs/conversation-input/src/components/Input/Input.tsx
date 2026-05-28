@@ -58,7 +58,7 @@ export const Input: FC<InputProps> = ({
   className,
   pendingDropFiles = [],
   onDropFilesConsumed,
-  pasteTextThreshold = 2000,
+  pasteTextThreshold = 4000,
   deployments,
   selectedDeploymentId,
   onDeploymentChange,
@@ -210,7 +210,7 @@ export const Input: FC<InputProps> = ({
 
   const selectorMenuHeader =
     deployments && deployments.length > 0 ? (
-      <div className="bg-layer-0 sticky top-0 z-10 px-2 pb-1 pt-2">
+      <div className="sticky top-0 z-10 bg-layer-0 px-2 pb-1 pt-2">
         <DialSearch
           value={modelSearchQuery}
           placeholder="Search"
