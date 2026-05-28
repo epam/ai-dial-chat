@@ -55,6 +55,8 @@ const MOCK_BUCKET_SERVICE = {
   getUserBucket: vi.fn().mockResolvedValue({ bucket: 'test-bucket' }),
 };
 
+let providerConfigOverride: Record<string, unknown> = {};
+
 async function buildApp(): Promise<INestApplication> {
   const keysServiceMock: Partial<KeysService> = {
     activeKey: ACTIVE_KEY,
@@ -90,6 +92,7 @@ async function buildApp(): Promise<INestApplication> {
           scope: 'openid email profile',
           rolesClaim: 'roles',
           postLogoutRedirectUri: 'https://app.example.com',
+          ...providerConfigOverride,
         },
       };
     }),
@@ -176,6 +179,7 @@ describe('AuthController (integration)', () => {
   let app: INestApplication | undefined;
 
   beforeEach(async () => {
+    providerConfigOverride = {};
     app = await buildApp();
   });
 
@@ -219,6 +223,22 @@ describe('AuthController (integration)', () => {
         .expect(302);
 
       expect(res.headers.location).toContain('keycloak.example.com');
+    });
+
+    it('passes provider audience to authorization request when configured', async () => {
+      await app?.close();
+      providerConfigOverride = { audience: 'https://dial-core.example.com' };
+      app = await buildApp();
+
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/login/keycloak')
+        .expect(302);
+
+      expect(MOCK_CLIENT.authorizationUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          audience: 'https://dial-core.example.com',
+        }),
+      );
     });
 
     it('returns 400 for unsafe callbackUrl query', async () => {
